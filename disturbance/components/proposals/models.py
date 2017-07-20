@@ -11,13 +11,17 @@ from django.contrib.sites.models import Site
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
-from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
-from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction
+from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification
+
+
+def update_proposal_doc_filename(instance, filename):
+    return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
 
 class ProposalType(models.Model):
     schema = JSONField()
@@ -82,6 +86,14 @@ class ProposalAssessorGroup(models.Model):
     class Meta:
         app_label = 'disturbance'
 
+class ProposalDocument(Document):
+    proposal = models.ForeignKey('Proposal',related_name='documents')
+    _file = models.FileField(upload_to=update_proposal_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+
+    class Meta:
+        app_label = 'disturbance'
+
 class Proposal(RevisionedMixin):
 
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
@@ -135,8 +147,7 @@ class Proposal(RevisionedMixin):
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
-    documents = models.ManyToManyField(Document)
-    hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
+    #hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
 
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
@@ -465,8 +476,8 @@ class DisturbanceLicence(Licence):
     proposal = models.ForeignKey(Proposal, on_delete=models.PROTECT, related_name='licences')
     purpose = models.TextField(blank=True)
     additional_information = models.TextField(blank=True)
-    licence_document = models.ForeignKey(Document, blank=True, null=True, related_name='licence_document')
-    cover_letter_document = models.ForeignKey(Document, blank=True, null=True, related_name='cover_letter_document')
+    licence_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='licence_document')
+    cover_letter_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='cover_letter_document')
     compliance_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
     replaced_by = models.ForeignKey('self', blank=True, null=True)
     regions = models.ManyToManyField(Region, blank=False)

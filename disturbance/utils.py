@@ -23,6 +23,7 @@ def create_data_from_form(schema, post_data, file_data, post_data_index=None,spe
         traceback.print_exc()
     if assessor_data:
         return [data],special_fields_list,assessor_data_list
+
     return [data],special_fields_list
 
 
@@ -44,6 +45,7 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
         elif item['type'] == 'file':
             if extended_item_name in file_data:
                 item_data[item['name']] = str(file_data.get(extended_item_name))
+                # TODO save the file here
             elif extended_item_name + '-existing' in post_data and len(post_data[extended_item_name + '-existing']) > 0:
                 item_data[item['name']] = post_data.get(extended_item_name + '-existing')
             else:

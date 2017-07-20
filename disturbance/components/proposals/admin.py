@@ -8,9 +8,13 @@ from disturbance.components.proposals import forms
 class ProposalTypeAdmin(admin.ModelAdmin):
     exclude=("site",) 
 
+class ProposalDocumentInline(admin.TabularInline):
+    model = models.ProposalDocument
+    extra = 0
+
 @admin.register(models.Proposal)
 class ProposalAdmin(admin.ModelAdmin):
-    pass
+    inlines =[ProposalDocumentInline,] 
 
 @admin.register(models.ProposalAssessorGroup)
 class ProposalAssessorGroupAdmin(admin.ModelAdmin):

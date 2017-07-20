@@ -56,3 +56,26 @@ class CommunicationsLogEntry(models.Model):
 
     class Meta:
         app_label = 'disturbance'
+
+@python_2_unicode_compatible
+class Document(models.Model):
+    name = models.CharField(max_length=100, blank=True,
+                            verbose_name='name', help_text='')
+    description = models.TextField(blank=True,
+                                   verbose_name='description', help_text='')
+    uploaded_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'disturbance'
+        abstract = True
+
+    @property
+    def path(self):
+        return self.file.path
+
+    @property
+    def filename(self):
+        return os.path.basename(self.path)
+
+    def __str__(self):
+        return self.name or self.filename

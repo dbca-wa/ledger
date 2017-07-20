@@ -160,7 +160,7 @@ module.exports = {
                 break;
             case 'file':
                 _elements.push(
-                    <File name={c.name} label={c.label} value={val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode}/>
+                    <File name={c.name} label={c.label} value={val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} docsUrl={this.status_data.docs_url} readonly={readonly}/>
                 )
                 break;
             case 'date':
@@ -288,13 +288,14 @@ module.exports = {
         return boxes;
     },
     status_data : {},
-    store_status_data(readonly,assessorData,assessorEmail,assessorMode,can_user_edit){
+    store_status_data(readonly,assessorData,assessorEmail,assessorMode,can_user_edit,docs_url){
         this.status_data = {
             'readonly': readonly,
             'assessorData': assessorData,
             'assessorInfo': assessorEmail,
             'assessorStatus': assessorMode,
-            'can_user_edit': can_user_edit
+            'can_user_edit': can_user_edit,
+            'docs_url': docs_url
         }
     },
     getVisibility(h,c,readonly,assessor_mode,assessor_can_assess){

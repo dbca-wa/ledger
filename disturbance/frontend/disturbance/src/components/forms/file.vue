@@ -6,12 +6,12 @@
         <div v-if="files">
             <div v-for="v in files">
                 <p>
-                    File: <a :href="v" target="_blank">{{v}}</a>
+                    File: <a :href="docsUrl+v" target="_blank">{{v}}</a>
                 </p>
                 <input :name="name+'-existing'" type="hidden" :value="value"/>
             </div>
         </div>
-        <div v-for="n in repeat">
+        <div v-if="!readonly" v-for="n in repeat">
             <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange"/><br/>
         </div>
 
@@ -40,7 +40,9 @@ export default {
                 return "image/*,application/pdf,text/csv,application/msword"
             }
         },
-        isRepeatable:Boolean
+        isRepeatable:Boolean,
+        readonly:Boolean,
+        docsUrl: String
     },
     data:function(){
         return {

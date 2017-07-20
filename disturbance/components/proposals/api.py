@@ -1,4 +1,5 @@
 import traceback
+import os
 import datetime
 import base64
 import geojson
@@ -23,19 +24,20 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser, Address, Document
+from ledger.accounts.models import EmailUser, Address 
 from ledger.address.models import Country
 from disturbance import utils
 from datetime import datetime, timedelta, date
 from disturbance.utils import create_data_from_form
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
+from disturbance.components.main.models import Document
 from disturbance.components.proposals.models import (
     ProposalType,
     Proposal,
+    ProposalDocument,
     Referral,
 )
-
 from disturbance.components.proposals.serializers import (
     SendReferralSerializer,
     ProposalTypeSerializer,
@@ -218,30 +220,46 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
     def draft(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
-            extracted_fields,special_fields = create_data_from_form(
-                instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
-            instance.data = extracted_fields
-            data = {
-                'region': special_fields.get('isRegionColumnForDashboard',None),
-                'title': special_fields.get('isTitleColumnForDashboard',None),
-                'activity': special_fields.get('isActivityColumnForDashboard',None),
-                'data': extracted_fields,
-                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
-            }
-            serializer = SaveProposalSerializer(instance, data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return redirect(reverse('external'))
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
+        with transaction.atomic():
+            try:
+                instance = self.get_object()
+                lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
+                extracted_fields,special_fields = create_data_from_form(
+                    instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
+                instance.data = extracted_fields
+                data = {
+                    'region': special_fields.get('isRegionColumnForDashboard',None),
+                    'title': special_fields.get('isTitleColumnForDashboard',None),
+                    'activity': special_fields.get('isActivityColumnForDashboard',None),
+                    'data': extracted_fields,
+                    'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
+                }
+                serializer = SaveProposalSerializer(instance, data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                # Save Documents
+                for f in request.FILES:
+                    try:
+                        #document = instance.documents.get(name=str(request.FILES[f]))
+                        document = instance.documents.get(input_name=f)
+                    except ProposalDocument.DoesNotExist:
+                        document = instance.documents.get_or_create(input_name=f)[0]
+
+                    document.name = str(request.FILES[f])
+                    
+                    if document._file and os.path.isfile(document._file.path):
+                        os.remove(document._file.path)
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+                return redirect(reverse('external'))
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise
+            except ValidationError as e:
+                raise serializers.ValidationError(repr(e.error_dict))
+            except Exception as e:
+                print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'])

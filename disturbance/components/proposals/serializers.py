@@ -33,6 +33,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
 
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
+    documents_url = serializers.SerializerMethodField()
     class Meta:
         model = Proposal
         fields = (
@@ -45,7 +46,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'customer_status',
                 'processing_status',
                 'review_status',
-                'hard_copy',
+                #'hard_copy',
                 'applicant',
                 'proxy_applicant',
                 'submitter',
@@ -57,8 +58,12 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'readonly',
                 'can_user_edit',
                 'can_user_view',
+                'documents_url'
                 )
         read_only_fields=('documents',)
+    
+    def get_documents_url(self,obj):
+        return '/media/proposals/{}/documents/'.format(obj.id)
 
     def get_readonly(self,obj):
         return False
@@ -105,7 +110,7 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'customer_status',
                 'processing_status',
                 'review_status',
-                'hard_copy',
+                #'hard_copy',
                 'applicant',
                 'proxy_applicant',
                 'submitter',
