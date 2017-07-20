@@ -620,6 +620,8 @@ class Referral(models.Model):
             try:
                 if request.user != self.referral:
                     raise exceptions.ReferralNotAuthorized()
+                if self.sent_from != 1:
+                    raise exceptions.ReferralCanNotSend()
                 self.proposal.processing_status = 'with_referral'
                 self.proposal.save()
                 referral = None
