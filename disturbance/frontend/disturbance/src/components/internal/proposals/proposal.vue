@@ -67,17 +67,17 @@
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Referrals</strong><br/>
                                 <div class="form-group">
-                                    <select :disabled="!canAction" ref="department_users" class="form-control">
+                                    <select :disabled="!canLimitedAction" ref="department_users" class="form-control">
                                         <option value="null"></option>
                                         <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                     </select>
                                     <template v-if='!sendingReferral'>
                                         <template v-if="selected_referral">
-                                            <a v-if="canAction" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                            <a v-if="canLimitedAction" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
                                         </template>
                                     </template>
                                     <template v-else>
-                                        <span v-if="canAction" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
+                                        <span v-if="canLimitedAction" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
                                             Sending Referral&nbsp;
                                             <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
                                         </span>
@@ -96,10 +96,10 @@
                                         <td>
                                             <small><strong>{{r.processing_status}}</strong></small><br/>
                                             <template v-if="r.processing_status == 'Awaiting'">
-                                                <small v-if="canAction"><a href="#">Remind</a> / <a href="#">Recall</a></small>
+                                                <small v-if="canLimitedAction"><a @click.prevent="remindReferral(r)" href="#">Remind</a> / <a @click.prevent="recallReferral(r)"href="#">Recall</a></small>
                                             </template>
                                             <template v-else>
-                                                <small v-if="canAction"><a href="#">Resend</a></small>
+                                                <small v-if="canLimitedAction"><a @click.prevent="resendReferral(r)" href="#">Resend</a></small>
                                             </template>
                                         </td>
                                     </tr>
@@ -112,11 +112,10 @@
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Currently assigned to</strong><br/>
                                 <div class="form-group">
-                                    <select @change="assignTo" ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="proposal.assigned_officer">
-                                        <option value="null">Unassigned</option>
+                                    <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="proposal.assigned_officer">
                                         <option v-for="member in proposal.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
                                     </select>
-                                    <a v-if="canAssess" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
+                                    <a v-if="canAssess && proposal.assigned_officer != proposal.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
                             <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAction">
@@ -295,6 +294,7 @@ export default {
             addressBody: 'addressBody'+vm._uid,
             contactsBody: 'contactsBody'+vm._uid,
             "proposal": null,
+            "original_proposal": null,
             "loading": [],
             selected_referral: '',
             form: null,
@@ -526,6 +526,9 @@ export default {
         },
         canAction: function(){
             return this.proposal && this.proposal.processing_status == 'With Assessor' && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+        },
+        canLimitedAction: function(){
+            return this.proposal && (this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Referral') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
         }
     },
     methods: {
@@ -563,34 +566,64 @@ export default {
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assign_request_user')))
             .then((response) => {
                 vm.proposal = response.body;
+                vm.original_proposal = helpers.copyObject(response.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
                 $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
                 $(vm.$refs.assigned_officer).trigger('change');
             }, (error) => {
-                console.log(error);
+                vm.proposal = helpers.copyObject(vm.original_proposal)
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
+                $(vm.$refs.assigned_officer).trigger('change');
+                swal(
+                    'Proposal Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
             });
         },
         assignTo: function(){
             let vm = this;
-            if ( vm.proposal.assigned_officer != 'null'){
-                let data = {'user_id': vm.proposal.assigned_officer};
+            if ( vm.proposal.assigned_officer != null && vm.proposal.assigned_officer != 'undefined'){
+                let data = {'assessor_id': vm.proposal.assigned_officer};
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assign_to')),JSON.stringify(data),{
                     emulateJSON:true
                 }).then((response) => {
                     vm.proposal = response.body;
+                    vm.original_proposal = helpers.copyObject(response.body);
                     vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
                     $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
                     $(vm.$refs.assigned_officer).trigger('change');
                 }, (error) => {
-                    console.log(error);
+                    vm.proposal = helpers.copyObject(vm.original_proposal)
+                    vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                    $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
+                    $(vm.$refs.assigned_officer).trigger('change');
+                    swal(
+                        'Proposal Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                    )
                 });
             }
             else{
-                vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.proposal.id+'/unassign')))
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/unassign')))
                 .then((response) => {
                     vm.proposal = response.body;
+                    vm.original_proposal = helpers.copyObject(res.body);
+                    vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                    $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
+                    $(vm.$refs.assigned_officer).trigger('change');
                 }, (error) => {
-                    console.log(error);
+                    vm.proposal = helpers.copyObject(vm.original_proposal)
+                    vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                    $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
+                    $(vm.$refs.assigned_officer).trigger('change');
+                    swal(
+                        'Proposal Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                    )
                 });
             }
         },
@@ -635,12 +668,19 @@ export default {
                     placeholder:"Select Officer"
                 }).
                 on("select2:select",function (e) {
-                   var selected = $(e.currentTarget);
-                   vm.$emit('input',selected[0])
-               }).
-               on("select2:unselect",function (e) {
                     var selected = $(e.currentTarget);
-                    vm.$emit('input',selected[0])
+                    vm.proposal.assigned_officer = selected.val();
+                    vm.assignTo();
+                }).on("select2:unselecting", function(e) {
+                    var self = $(this);
+                    setTimeout(() => {
+                        self.select2('close');
+                    }, 0);
+               }).on("select2:unselect",function (e) {
+                    var selected = $(e.currentTarget);
+                    vm.proposal.assigned_officer = null;
+                    console.log(vm.proposal.assigned_officer);
+                    vm.assignTo();
                });
                 vm.initialisedSelects = true;
             }
@@ -654,6 +694,7 @@ export default {
                 emulateJSON:true
             }).then((response) => {
                 vm.sendingReferral = false;
+                vm.original_proposal = helpers.copyObject(response.body);
                 vm.proposal = response.body;
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
                 swal(
@@ -672,8 +713,71 @@ export default {
                 )
                 vm.sendingReferral = false;
             });
+        },
+        remindReferral:function(r){
+            let vm = this;
             
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/remind')).then(response => {
+                vm.original_proposal = helpers.copyObject(response.body);
+                vm.proposal = response.body;
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                swal(
+                    'Referral Reminder',
+                    'A reminder has been sent to '+r.referral,
+                    'success'
+                )
+            },
+            error => {
+                swal(
+                    'Proposal Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
+        },
+        resendReferral:function(r){
+            let vm = this;
+            
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/resend')).then(response => {
+                vm.original_proposal = helpers.copyObject(response.body);
+                vm.proposal = response.body;
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                swal(
+                    'Referral Resent',
+                    'The referral has been resent to '+r.referral,
+                    'success'
+                )
+            },
+            error => {
+                swal(
+                    'Proposal Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
+        },
+        recallReferral:function(r){
+            let vm = this;
+            
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/recall')).then(response => {
+                vm.original_proposal = helpers.copyObject(response.body);
+                vm.proposal = response.body;
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                swal(
+                    'Referral Recall',
+                    'The referall has been recalled from '+r.referral,
+                    'success'
+                )
+            },
+            error => {
+                swal(
+                    'Proposal Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
         }
+        
     },
     mounted: function() {
         let vm = this;
@@ -702,6 +806,7 @@ export default {
           Vue.http.get(`/api/proposal/${to.params.proposal_id}/internal_proposal.json`).then(res => {
               next(vm => {
                 vm.proposal = res.body;
+                vm.original_proposal = helpers.copyObject(res.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
               });
             },
@@ -713,6 +818,7 @@ export default {
           Vue.http.get(`/api/proposal/${to.params.proposal_id}.json`).then(res => {
               next(vm => {
                 vm.proposal = res.body;
+                vm.original_proposal = helpers.copyObject(res.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
               });
             },

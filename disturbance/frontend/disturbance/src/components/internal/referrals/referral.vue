@@ -71,7 +71,17 @@
                                         <option value="null"></option>
                                         <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                     </select>
-                                    <a v-if="!isFinalised && !proposal.can_user_edit" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                    <template v-if='!sendingReferral'>
+                                        <template v-if="selected_referral">
+                                            <a v-if="!isFinalised && !proposal.can_user_edit && referral.sent_from == 1" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                        </template>
+                                    </template>
+                                    <template v-else>
+                                        <span v-if="!isFinalised && !proposal.can_user_edit && referral.sent_from == 1" class="text-primary pull-right">
+                                            Sending Referral&nbsp;
+                                            <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+                                        </span>
+                                    </template>
                                 </div>
                                 <table class="table small-table">
                                     <tr>
@@ -80,10 +90,10 @@
                                     </tr>
                                     <tr v-for="r in proposal.latest_referrals">
                                         <td>
-                                            {{r.referral}}<br/>
-                                            {{r.lodged_on | formatDate}}
+                                            <small><strong>{{r.referral}}</strong></small><br/>
+                                            <small><strong>{{r.lodged_on | formatDate}}</strong></small>
                                         </td>
-                                        <td>{{r.processing_status}}</td>
+                                        <td><small><strong>{{r.processing_status}}</strong></small></td>
                                     </tr>
                                 </table>
                                 <a v-if="!isFinalised" @click.prevent="" class="actionBtn top-buffer-s">Show Referrals</a>
@@ -91,7 +101,7 @@
                             <div class="col-sm-12">
                                 <div class="separator"></div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised">
+                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && referral.referral == proposal.current_assessor.id">
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <strong>Action</strong><br/>
@@ -256,6 +266,7 @@ export default {
             referral: null,
             "loading": [],
             selected_referral: '',
+            sendingReferral: false,
             form: null,
             members: [],
             department_users : [],
@@ -602,12 +613,12 @@ export default {
 
             let data = {'email':vm.selected_referral};
             vm.sendingReferral = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,(vm.referral.id+'/send_referral')),JSON.stringify(data),{
                 emulateJSON:true
             }).then((response) => {
                 vm.sendingReferral = false;
-                vm.org = response.body;
-                if (vm.org.address == null){ vm.org.address = {}; }
+                vm.referral = response.body;
+                vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
                 swal(
                     'Referral Sent',
                     'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
@@ -636,10 +647,14 @@ export default {
             }).then(() => { 
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
                     vm.referral = res.body;
-                    vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                    vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
                 },
-                err => {
-                    console.log(err);
+                error => {
+                    swal(
+                        'Referral Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                    )
                 });
             },(error) => {
             });
@@ -673,9 +688,6 @@ export default {
           //Vue.http.get(`/api/proposal/${to.params.proposal_id}/referral_proposal.json`).then(res => {
           Vue.http.get(helpers.add_endpoint_json(api_endpoints.referrals,to.params.referral_id)).then(res => {
               next(vm => {
-                /*vm.proposal = res.body;
-                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                */
                 vm.referral = res.body;
                 vm.referral.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
               });
@@ -687,8 +699,8 @@ export default {
     beforeRouteUpdate: function(to, from, next) {
           Vue.http.get(`/api/proposal/${to.params.proposal_id}/referall_proposal.json`).then(res => {
               next(vm => {
-                vm.proposal = res.body;
-                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.referral = res.body;
+                vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
               });
             },
             err => {

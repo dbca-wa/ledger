@@ -36,7 +36,7 @@ urlpatterns = [
     url(r'', include(api_patterns)),
     url(r'^$', views.DisturbanceRoutingView.as_view(), name='ds_home'),
     url(r'^internal/', views.InternalView.as_view(), name='internal'),
-    url(r'^internal/referral/(?P<pk>\d+)/$', views.ReferralView.as_view(), name='internal-referral-detail'),
+    url(r'^internal/proposal/(?P<proposal_pk>\d+)/referral/(?P<referral_pk>\d+)/$', views.ReferralView.as_view(), name='internal-referral-detail'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),

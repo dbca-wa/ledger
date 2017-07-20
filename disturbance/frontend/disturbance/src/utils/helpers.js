@@ -38,6 +38,9 @@ module.exports = {
   goBack: function ( vm ) {
     vm.$router.go( window.history.back() );
   },
+  copyObject: function(obj){
+        return JSON.parse(JSON.stringify(obj));
+  },
   getCookie: function ( name ) {
     var value = null;
     if ( document.cookie && document.cookie !== '' ) {

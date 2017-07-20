@@ -319,15 +319,32 @@ class Proposal(RevisionedMixin):
     def assign_officer(self,request,officer):
         with transaction.atomic():
             try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized() 
                 if not self.can_assess(officer):
-                    raise ValidationError('You are not authorised to perform this action')
+                    raise ValidationError('The selected person is not authorised to be assigned to this proposal')
                 if officer != self.assigned_officer:
                     self.assigned_officer = officer
                     self.save()
                     # Create a log entry for the proposal
-                    self.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_.format('{}({})'.format(officer.get_full_name(),officer.email)),request)
+                    self.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
                     # Create a log entry for the organisation
-                    self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_.format('{}({})'.format(officer.get_full_name(),officer.email)),request)
+                    self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
+            except:
+                raise
+
+    def unassign(self,request):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized() 
+                if self.assigned_officer:
+                    self.assigned_officer = None 
+                    self.save()
+                    # Create a log entry for the proposal
+                    self.log_user_action(ProposalUserAction.ACTION_UNASSIGN.format(self.id),request)
+                    # Create a log entry for the organisation
+                    self.applicant.log_user_action(ProposalUserAction.ACTION_UNASSIGN.format(self.id),request)
             except:
                 raise
 
@@ -474,8 +491,8 @@ class ProposalUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"
     ACTION_CREATE_PROFILE_ = "Create profile {}"
     ACTION_LODGE_APPLICATION = "Lodge proposal {}"
-    ACTION_ASSIGN_TO_ = "Assign to {}"
-    ACTION_UNASSIGN = "Unassign"
+    ACTION_ASSIGN_TO_ = "Assign proposal {} to {}"
+    ACTION_UNASSIGN = "Unassign proposal {}"
     ACTION_ACCEPT_ID = "Accept ID"
     ACTION_RESET_ID = "Reset ID"
     ACTION_ID_REQUEST_UPDATE = 'Request ID update'
@@ -499,6 +516,8 @@ class ProposalUserAction(UserAction):
     # Referrals
     ACTION_SEND_REFERRAL_TO = "Send referral {} for proposal {} to {}"
     ACTION_RESEND_REFERRAL_TO = "Resend referral {} for proposal {} to {}"
+    ACTION_REMIND_REFERRAL = "Send reminder for referral {} for proposal {} to {}"
+    RECALL_REFERRAL = "Referral {} for proposal {} has been recalled"
     CONCLUDE_REFERRAL = "Referral {} for proposal {} has been concluded by {}"
     
 
@@ -544,16 +563,43 @@ class Referral(models.Model):
     
     # Methods
 
-    def send_email(self,request):
-        pass
-
     def recall(self,request):
-        self.processing_status = 'recalled'
-        # TODO create action for recalling
-        #self.save()
+        with transaction.atomic():
+            if not self.proposal.can_assess(request.user):
+                raise exceptions.ProposalNotAuthorized() 
+            self.processing_status = 'recalled'
+            self.save()
+            # TODO Log proposal action
+            self.proposal.log_user_action(ProposalUserAction.RECALL_REFERRAL.format(self.id,self.proposal.id),request)
+            # TODO log organisation action
+            self.proposal.applicant.log_user_action(ProposalUserAction.RECALL_REFERRAL.format(self.id,self.proposal.id),request)
+
+    def remind(self,request):
+        with transaction.atomic():
+            if not self.proposal.can_assess(request.user):
+                raise exceptions.ProposalNotAuthorized() 
+            # Create a log entry for the proposal
+            self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            # Create a log entry for the organisation
+            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            # send email
+            send_referral_email_notification(self,request,reminder=True)
 
     def resend(self,request):
-        self.send_email()
+        with transaction.atomic():
+            if not self.proposal.can_assess(request.user):
+                raise exceptions.ProposalNotAuthorized() 
+            self.processing_status = 'with_referral'
+            self.proposal.processing_status = 'with_referral'
+            self.proposal.save()
+            self.sent_from = 1
+            self.save()
+            # Create a log entry for the proposal
+            self.proposal.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            # Create a log entry for the organisation
+            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            # send email
+            send_referral_email_notification(self,request)
 
     def complete(self,request):
         with transaction.atomic():
@@ -566,6 +612,45 @@ class Referral(models.Model):
                 self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
                 # TODO log organisation action
                 self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            except:
+                raise
+
+    def send_referral(self,request,referral_email):
+        with transaction.atomic():
+            try:
+                if request.user != self.referral:
+                    raise exceptions.ReferralNotAuthorized()
+                self.proposal.processing_status = 'with_referral'
+                self.proposal.save()
+                referral = None
+                # Validate if it is a deparment user
+                department_user = get_department_user(referral_email)
+                if not department_user:
+                    raise ValidationError('The user you want to send the referral to is not a member of the department')
+                # Check if the user is in ledger or create
+                
+                user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
+                if created:
+                    user.first_name = department_user['given_name']
+                    user.last_name = department_user['surname']
+                    user.save()
+                try:
+                    Referral.objects.get(referral=user,proposal=self.proposal)
+                    raise ValidationError('A referral has already been sent to this user')
+                except Referral.DoesNotExist:
+                    # Create Referral
+                    referral = Referral.objects.create(
+                        proposal = self.proposal,
+                        referral=user,
+                        sent_by=request.user,
+                        sent_from=2
+                    )
+                # Create a log entry for the proposal
+                self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
+                # Create a log entry for the organisation
+                self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
+                # send email
+                send_referral_email_notification(referral,request)
             except:
                 raise
 

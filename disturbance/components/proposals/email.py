@@ -15,13 +15,14 @@ class ReferralSendNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/proposals/send_referral_notification.html'
     txt_template = 'disturbance/emails/proposals/send_referral_notification.txt'
 
-def send_referral_email_notification(referral,request):
+def send_referral_email_notification(referral,request,reminder=False):
     email = ReferralSendNotificationEmail()
-    url = request.build_absolute_uri(reverse('internal-referral-detail',kwargs={'pk':referral.id}))
+    url = request.build_absolute_uri(reverse('internal-referral-detail',kwargs={'proposal_pk':referral.proposal.id,'referral_pk':referral.id}))
 
     context = {
         'proposal': referral.proposal,
-        'url': url
+        'url': url,
+        'reminder':reminder
     }
 
     msg = email.send(referral.referral.email, context=context)

@@ -142,7 +142,7 @@ export default {
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Action"],
+            proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Assigned Officer","Action"],
             proposal_options:{
                 autoWidth: false,
                 language: {
@@ -180,6 +180,7 @@ export default {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
+                    {data: "assigned_officer"},
                     {
                         mRender:function (data,type,full) {
                             let links = '';
