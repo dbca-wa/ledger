@@ -18,6 +18,7 @@ from disturbance.components.organisations.models import Organisation
 from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification
+from disturbance.ordered_model import OrderedModel
 
 
 def update_proposal_doc_filename(instance, filename):
@@ -173,7 +174,6 @@ class Proposal(RevisionedMixin):
     review_status = models.CharField('Review Status', max_length=30, choices=REVIEW_STATUS_CHOICES,
                                      default=REVIEW_STATUS_CHOICES[0][0])
 
-    requirements = models.ManyToManyField('Requirement', through='ProposalRequirement')
 
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
@@ -419,7 +419,7 @@ class Assessment(ProposalRequest):
     assigned_assessor = models.ForeignKey(EmailUser, blank=True, null=True)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     date_last_reminded = models.DateField(null=True, blank=True)
-    requirements = models.ManyToManyField('Requirement', through='AssessmentRequirement')
+    #requirements = models.ManyToManyField('Requirement', through='AssessmentRequirement')
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)
 
@@ -435,10 +435,9 @@ class ProposalDeclinedDetails(models.Model):
         app_label = 'disturbance'
 
 @python_2_unicode_compatible
-class Requirement(RevisionedMixin):
+class ProposalStandardRequirement(RevisionedMixin):
     text = models.TextField()
     code = models.CharField(max_length=10, unique=True)
-    one_off = models.BooleanField(default=False)
     obsolete = models.BooleanField(default=False)
 
     def __str__(self):
@@ -447,26 +446,25 @@ class Requirement(RevisionedMixin):
     class Meta:
         app_label = 'disturbance'
 
-class AssessmentRequirement(models.Model):
-    ACCEPTANCE_STATUS_CHOICES = (('not_specified', 'Not Specified'), ('accepted', 'Accepted'), ('declined', 'Declined'))
-    requirement = models.ForeignKey(Requirement)
-    assessment = models.ForeignKey(Assessment)
-    order = models.IntegerField()
-    acceptance_status = models.CharField('Acceptance Status', max_length=20, choices=ACCEPTANCE_STATUS_CHOICES,
-                                         default=ACCEPTANCE_STATUS_CHOICES[0][0])
+class ProposalRequirement(OrderedModel):
+    RECURRENCE_PATTERNS = [(1, 'Weekly'), (2, 'Monthly'), (3, 'Yearly')]
+    standard_requirement = models.ForeignKey(ProposalStandardRequirement,null=True,blank=True)
+    free_requirement = models.TextField(null=True,blank=True)
+    standard = models.BooleanField(default=True)
+    proposal = models.ForeignKey(Proposal,related_name='requirements')
+    due_date = models.DateField()
+    recurrence = models.BooleanField(default=False)
+    recurrence_pattern = models.SmallIntegerField(choices=RECURRENCE_PATTERNS,default=1)
+    recurrence_schedule = models.IntegerField(null=True,blank=True)
+    #order = models.IntegerField(default=1)
 
     class Meta:
-        unique_together = ('requirement', 'assessment', 'order')
         app_label = 'disturbance'
 
-class ProposalRequirement(models.Model):
-    requirement = models.ForeignKey(Requirement)
-    proposal = models.ForeignKey(Proposal)
-    order = models.IntegerField()
 
-    class Meta:
-        unique_together = ('requirement', 'proposal', 'order')
-        app_label = 'disturbance'
+    @property
+    def requirement(self):
+        return self.standard_requirement.text if self.standard else self.free_requirement
 
 @python_2_unicode_compatible
 class DisturbanceLicence(Licence):

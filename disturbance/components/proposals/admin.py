@@ -27,3 +27,7 @@ class ProposalAssessorGroupAdmin(admin.ModelAdmin):
         if obj and obj.default:
             return False
         return super(ProposalAssessorGroupAdmin, self).has_delete_permission(request, obj)
+
+@admin.register(models.ProposalStandardRequirement)
+class ProposalStandardRequirementAdmin(admin.ModelAdmin):
+    list_display = ['code','obsolete']

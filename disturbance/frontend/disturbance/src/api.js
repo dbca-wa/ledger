@@ -11,6 +11,8 @@ module.exports = {
     proposal_type:"/api/proposal_type",
     proposals:"/api/proposal.json",
     referrals:"/api/referrals.json",
+    proposal_standard_requirements:"/api/proposal_standard_requirements.json",
+    proposal_requirements:"/api/proposal_requirements.json",
     discard_proposal:function (id) {
       return `/api/proposal/${id}.json`;
     }

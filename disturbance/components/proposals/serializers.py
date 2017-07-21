@@ -5,7 +5,9 @@ from disturbance.components.proposals.models import (
                                     Proposal,
                                     ProposalUserAction,
                                     ProposalLogEntry,
-                                    Referral
+                                    Referral,
+                                    ProposalRequirement,
+                                    ProposalStandardRequirement
                                 )
 from disturbance.components.organisations.models import (
                                 Organisation
@@ -245,3 +247,15 @@ class DTReferralSerializer(serializers.ModelSerializer):
 
     def get_submitter(self,obj):
         return EmailUserSerializer(obj.proposal.submitter).data
+
+class ProposalRequirementSerializer(serializers.ModelSerializer):
+    due_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    class Meta:
+        model = ProposalRequirement
+        fields = ('id','due_date','free_requirement','standard_requirement','standard','order','proposal','recurrence','recurrence_schedule','recurrence_pattern','requirement')
+        readonly_fields = ('order','requirement')
+
+class ProposalStandardRequirementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProposalStandardRequirement
+        fields = ('id','code','text')

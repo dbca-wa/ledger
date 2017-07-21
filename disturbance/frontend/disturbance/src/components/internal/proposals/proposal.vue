@@ -148,124 +148,129 @@
         <div class="col-md-1"></div>
         <div class="col-md-8">
             <div class="row">
-                <div v-show="false" class="col-md-12">
-                    <div class="row">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3>Level of Approval</h3>
-                            </div>
-                            <div class="panel-body panel-collapse">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="row">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">Applicant
-                                    <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="detailsBody">
-                                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                    </a>
-                                </h3> 
-                            </div>
-                            <div class="panel-body panel-collapse collapse in" :id="detailsBody">
-                                  <form class="form-horizontal">
-                                      <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label">Name</label>
-                                        <div class="col-sm-6">
-                                            <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="proposal.applicant.name">
-                                        </div>
-                                      </div>
-                                      <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label" >ABN/ACN</label>
-                                        <div class="col-sm-6">
-                                            <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="proposal.applicant.abn">
-                                        </div>
-                                      </div>
-                                  </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="row">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">Address Details
-                                    <a class="panelClicker" :href="'#'+addressBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="addressBody">
-                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                    </a>
-                                </h3> 
-                            </div>
-                            <div class="panel-body panel-collapse collapse" :id="addressBody">
-                                  <form class="form-horizontal">
-                                      <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label">Street</label>
-                                        <div class="col-sm-6">
-                                            <input disabled type="text" class="form-control" name="street" placeholder="" v-model="proposal.applicant.address.line1">
-                                        </div>
-                                      </div>
-                                      <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
-                                        <div class="col-sm-6">
-                                            <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="proposal.applicant.address.locality">
-                                        </div>
-                                      </div>
-                                      <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label">State</label>
-                                        <div class="col-sm-2">
-                                            <input disabled type="text" class="form-control" name="country" placeholder="" v-model="proposal.applicant.address.state">
-                                        </div>
-                                        <label for="" class="col-sm-2 control-label">Postcode</label>
-                                        <div class="col-sm-2">
-                                            <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="proposal.applicant.address.postcode">
-                                        </div>
-                                      </div>
-                                      <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label" >Country</label>
-                                        <div class="col-sm-4">
-                                            <input disabled type="text" class="form-control" name="country" v-model="proposal.applicant.address.country"/>
-                                        </div>
-                                      </div>
-                                   </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="row">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">Contact Details
-                                    <a class="panelClicker" :href="'#'+contactsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="contactsBody">
-                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                    </a>
-                                </h3>
-                            </div>
-                            <div class="panel-body panel-collapse collapse" :id="contactsBody">
-                                <table ref="contacts_datatable" :id="contacts_table_id" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="row">
-                        <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                            <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
-                                <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-                                <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
-                                <input type='hidden' name="proposal_id" :value="1" />
-                                <div v-if="canAction" class="row" style="margin-bottom:20px;">
-                                  <div class="col-lg-12 pull-right">
-                                    <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
-                                  </div>
+                <template v-if="state='processing'">
+                    <div v-show="false" class="col-md-12">
+                        <div class="row">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3>Level of Approval</h3>
                                 </div>
-                            </Proposal>
-                        </form>
+                                <div class="panel-body panel-collapse">
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Applicant
+                                        <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="detailsBody">
+                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                        </a>
+                                    </h3> 
+                                </div>
+                                <div class="panel-body panel-collapse collapse in" :id="detailsBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Name</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="proposal.applicant.name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >ABN/ACN</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="proposal.applicant.abn">
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Address Details
+                                        <a class="panelClicker" :href="'#'+addressBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="addressBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                        </a>
+                                    </h3> 
+                                </div>
+                                <div class="panel-body panel-collapse collapse" :id="addressBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Street</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="street" placeholder="" v-model="proposal.applicant.address.line1">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="proposal.applicant.address.locality">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">State</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="country" placeholder="" v-model="proposal.applicant.address.state">
+                                            </div>
+                                            <label for="" class="col-sm-2 control-label">Postcode</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="proposal.applicant.address.postcode">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Country</label>
+                                            <div class="col-sm-4">
+                                                <input disabled type="text" class="form-control" name="country" v-model="proposal.applicant.address.country"/>
+                                            </div>
+                                          </div>
+                                       </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Contact Details
+                                        <a class="panelClicker" :href="'#'+contactsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="contactsBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                        </a>
+                                    </h3>
+                                </div>
+                                <div class="panel-body panel-collapse collapse" :id="contactsBody">
+                                    <table ref="contacts_datatable" :id="contacts_table_id" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <template>
+                    <Requirements :proposal="proposal"/>
+                </template>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
+                                <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
+                                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+                                    <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
+                                    <input type='hidden' name="proposal_id" :value="1" />
+                                    <div v-if="canAction" class="row" style="margin-bottom:20px;">
+                                      <div class="col-lg-12 pull-right">
+                                        <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
+                                      </div>
+                                    </div>
+                                </Proposal>
+                            </form>
+                        </div>
+                    </div>
             </div>
         </div>
         </div>
@@ -279,6 +284,7 @@ import Vue from 'vue'
 import ProposedDecline from './proposal_proposed_decline.vue'
 import AmmendmentRequest from './ammendment_request.vue'
 import datatable from '@vue-utils/datatable.vue'
+import Requirements from './proposal_requirements.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
     api_endpoints,
@@ -302,6 +308,8 @@ export default {
             department_users : [],
             contacts_table_initialised: false,
             initialisedSelects: false,
+            state:'processing',
+            state_options: ['requirements','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             contacts_options:{
                 language: {
@@ -495,7 +503,8 @@ export default {
         Proposal,
         datatable,
         ProposedDecline,
-        AmmendmentRequest
+        AmmendmentRequest,
+        Requirements
     },
     filters: {
         formatDate: function(data){

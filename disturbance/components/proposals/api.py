@@ -37,6 +37,8 @@ from disturbance.components.proposals.models import (
     Proposal,
     ProposalDocument,
     Referral,
+    ProposalRequirement,
+    ProposalStandardRequirement
 )
 from disturbance.components.proposals.serializers import (
     SendReferralSerializer,
@@ -50,6 +52,8 @@ from disturbance.components.proposals.serializers import (
     DTReferralSerializer,
     ReferralSerializer,
     ReferralProposalSerializer,
+    ProposalRequirementSerializer,
+    ProposalStandardRequirementSerializer
 )
 
 
@@ -102,6 +106,23 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.comms_logs.all()
             serializer = ProposalLogEntrySerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def requirements(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.requirements.all()
+            serializer = ProposalRequirementSerializer(qs,many=True)
             return Response(serializer.data) 
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -429,3 +450,55 @@ class ReferralViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+class ProposalRequirementViewSet(viewsets.ModelViewSet):
+    queryset = ProposalRequirement.objects.all()
+    serializer_class = ProposalRequirementSerializer
+
+    @detail_route(methods=['GET',])
+    def move_up(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.up()
+            instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def move_down(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.down()
+            instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+class ProposalStandardRequirementViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ProposalStandardRequirement.objects.all()
+    serializer_class = ProposalStandardRequirementSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset() 
+        search = request.GET.get('search')
+        if search:
+            queryset = queryset.filter(text__icontains=search)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
