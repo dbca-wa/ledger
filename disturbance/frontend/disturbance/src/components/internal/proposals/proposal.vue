@@ -22,7 +22,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row" v-if="canSeeSubmission">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                        Submission 
@@ -64,51 +64,53 @@
                             <div class="col-sm-12">
                                 <div class="separator"></div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s">
-                                <strong>Referrals</strong><br/>
-                                <div class="form-group">
-                                    <select :disabled="!canLimitedAction" ref="department_users" class="form-control">
-                                        <option value="null"></option>
-                                        <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
-                                    </select>
-                                    <template v-if='!sendingReferral'>
-                                        <template v-if="selected_referral">
-                                            <a v-if="canLimitedAction" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                            <template v-if="proposal.processing_status == 'With Assessor' || proposal.processing_status == 'With Referral'">
+                                <div class="col-sm-12 top-buffer-s">
+                                    <strong>Referrals</strong><br/>
+                                    <div class="form-group">
+                                        <select :disabled="!canLimitedAction" ref="department_users" class="form-control">
+                                            <option value="null"></option>
+                                            <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
+                                        </select>
+                                        <template v-if='!sendingReferral'>
+                                            <template v-if="selected_referral">
+                                                <a v-if="canLimitedAction" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                            </template>
                                         </template>
-                                    </template>
-                                    <template v-else>
-                                        <span v-if="canLimitedAction" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
-                                            Sending Referral&nbsp;
-                                            <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
-                                        </span>
-                                    </template>
+                                        <template v-else>
+                                            <span v-if="canLimitedAction" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
+                                                Sending Referral&nbsp;
+                                                <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+                                            </span>
+                                        </template>
+                                    </div>
+                                    <table class="table small-table">
+                                        <tr>
+                                            <th>Referral</th>
+                                            <th>Status/Action</th>
+                                        </tr>
+                                        <tr v-for="r in proposal.latest_referrals">
+                                            <td>
+                                                <small><strong>{{r.referral}}</strong></small><br/>
+                                                <small><strong>{{r.lodged_on | formatDate}}</strong></small>
+                                            </td>
+                                            <td>
+                                                <small><strong>{{r.processing_status}}</strong></small><br/>
+                                                <template v-if="r.processing_status == 'Awaiting'">
+                                                    <small v-if="canLimitedAction"><a @click.prevent="remindReferral(r)" href="#">Remind</a> / <a @click.prevent="recallReferral(r)"href="#">Recall</a></small>
+                                                </template>
+                                                <template v-else>
+                                                    <small v-if="canLimitedAction"><a @click.prevent="resendReferral(r)" href="#">Resend</a></small>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <a v-if="!isFinalised" @click.prevent="" class="actionBtn top-buffer-s">Show Referrals</a>
                                 </div>
-                                <table class="table small-table">
-                                    <tr>
-                                        <th>Referral</th>
-                                        <th>Status/Action</th>
-                                    </tr>
-                                    <tr v-for="r in proposal.latest_referrals">
-                                        <td>
-                                            <small><strong>{{r.referral}}</strong></small><br/>
-                                            <small><strong>{{r.lodged_on | formatDate}}</strong></small>
-                                        </td>
-                                        <td>
-                                            <small><strong>{{r.processing_status}}</strong></small><br/>
-                                            <template v-if="r.processing_status == 'Awaiting'">
-                                                <small v-if="canLimitedAction"><a @click.prevent="remindReferral(r)" href="#">Remind</a> / <a @click.prevent="recallReferral(r)"href="#">Recall</a></small>
-                                            </template>
-                                            <template v-else>
-                                                <small v-if="canLimitedAction"><a @click.prevent="resendReferral(r)" href="#">Resend</a></small>
-                                            </template>
-                                        </td>
-                                    </tr>
-                                </table>
-                                <a v-if="!isFinalised" @click.prevent="" class="actionBtn top-buffer-s">Show Referrals</a>
-                            </div>
-                            <div class="col-sm-12">
-                                <div class="separator"></div>
-                            </div>
+                                <div class="col-sm-12">
+                                    <div class="separator"></div>
+                                </div>
+                            </template>
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Currently assigned to</strong><br/>
                                 <div class="form-group">
@@ -118,27 +120,56 @@
                                     <a v-if="canAssess && proposal.assigned_officer != proposal.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
+                            <template v-if="proposal.processing_status == 'With Assessor (Requirements)' || proposal.processing_status == 'With Approver'">
+                                <div class="col-sm-12">
+                                    <strong>Proposal</strong><br/>
+                                    <a class="actionBtn" v-if="!showingProposal" @click.prevent="toggleProposal()">Show Proposal</a>
+                                    <a class="actionBtn" v-else @click.prevent="toggleProposal()">Hide Proposal</a>
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="separator"></div>
+                                </div>
+                            </template>
                             <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAction">
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <strong>Action</strong><br/>
+                                <template v-if="proposal.processing_status == 'With Assessor' || proposal.processing_status == 'With Referral'">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="">Enter Requirements</button><br/>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="enterRequirements()">Enter Requirements</button><br/>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="proposedDecline()">Decline</button>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="proposedDecline()">Decline</button>
+                                        </div>
                                     </div>
-                                </div>
+                                </template>
+                                <template v-else-if="proposal.processing_status == 'With Assessor (Requirements)'">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="">Back To Processing</button><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="">Issue Approval</button><br/>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -148,7 +179,7 @@
         <div class="col-md-1"></div>
         <div class="col-md-8">
             <div class="row">
-                <template v-if="state='processing'">
+                <template v-if="proposal.processing_status == 'With Assessor'">
                     <div v-show="false" class="col-md-12">
                         <div class="row">
                             <div class="panel panel-default">
@@ -252,9 +283,10 @@
                         </div>
                     </div>
                 </template>
-                <template>
+                <template v-else-if="proposal.processing_status == 'With Assessor (Requirements)'">
                     <Requirements :proposal="proposal"/>
                 </template>
+                <template v-if="canSeeSubmission || (!canSeeSubmission && showingProposal)">
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
@@ -271,6 +303,7 @@
                             </form>
                         </div>
                     </div>
+                </template>
             </div>
         </div>
         </div>
@@ -308,7 +341,7 @@ export default {
             department_users : [],
             contacts_table_initialised: false,
             initialisedSelects: false,
-            state:'processing',
+            showingProposal:false,
             state_options: ['requirements','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             contacts_options:{
@@ -530,14 +563,16 @@ export default {
             return this.proposal.processing_status == 'Declined' || this.proposal.status == 'Approved';
         },
         canAssess: function(){
-            //!isFinalised && !proposal.can_user_edit && (proposal.current_assessor.id == proposal.assigned_officer || proposal.assigned_officer == null )
             return this.proposal && this.proposal.assessor_mode.assessor_can_assess ? true : false;
         },
         canAction: function(){
-            return this.proposal && this.proposal.processing_status == 'With Assessor' && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+            return this.proposal && (this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
         },
         canLimitedAction: function(){
-            return this.proposal && (this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Referral') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+            return this.proposal && (this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Referral' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+        },
+        canSeeSubmission: function(){
+            return this.proposal && (this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Referral')
         }
     },
     methods: {
@@ -569,6 +604,9 @@ export default {
               )
           },err=>{
           });
+        },
+        toggleProposal:function(){
+            this.showingProposal = !this.showingProposal;
         },
         assignRequestUser: function(){
             let vm = this;
@@ -619,7 +657,7 @@ export default {
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/unassign')))
                 .then((response) => {
                     vm.proposal = response.body;
-                    vm.original_proposal = helpers.copyObject(res.body);
+                    vm.original_proposal = helpers.copyObject(response.body);
                     vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
                     $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
                     $(vm.$refs.assigned_officer).trigger('change');
@@ -635,6 +673,23 @@ export default {
                     )
                 });
             }
+        },
+        enterRequirements: function(){
+            let vm = this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/enter_requirements')))
+            .then((response) => {
+                vm.proposal = response.body;
+                vm.original_proposal = helpers.copyObject(response.body);
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+            }, (error) => {
+                vm.proposal = helpers.copyObject(vm.original_proposal)
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                swal(
+                    'Proposal Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
         },
         fetchDeparmentUsers: function(){
             let vm = this;

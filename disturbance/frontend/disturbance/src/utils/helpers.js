@@ -22,11 +22,11 @@ module.exports = {
         var error_str = '';
         var text = null;
         if (resp.status === 400) {
-            if (typeof resp.body == 'object'){
-                text = resp.body;
-            }
-            else if (Array.isArray(resp.body)){
+            if (Array.isArray(resp.body)){
                 text = resp.body[0];
+            }
+            else if (typeof resp.body == 'object'){
+                text = resp.body;
             }
             else{
                 text = resp.body;
@@ -42,6 +42,7 @@ module.exports = {
             }
             else{
                 error_str = text.replace(/[\[\]"]/g,'');
+                error_str = text.replace(/^['"](.*)['"]$/, '$1');
             }
         }
         else if ( resp.status === 404) {

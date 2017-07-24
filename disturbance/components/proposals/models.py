@@ -118,7 +118,8 @@ class Proposal(RevisionedMixin):
                                  ('draft', 'Draft'), 
                                  ('with_assessor', 'With Assessor'),
                                  ('with_referral', 'With Referral'),
-                                 ('ready_for_action', 'Ready for Action'),
+                                 ('with_assessor_requirements', 'With Assessor (Requirements)'),
+                                 ('with_approver', 'With Approver'),
                                  ('renewal', 'Renewal'),
                                  ('licence_amendment', 'Licence Amendment'), 
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
@@ -261,7 +262,12 @@ class Proposal(RevisionedMixin):
         return default_group
 
     def can_assess(self,user):
-        return self.__assessor_group() in user.proposalassessorgroup_set.all()
+        if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
+            return self.__assessor_group() in user.proposalassessorgroup_set.all()
+        elif self.processing_status == 'with_approver':
+            return false
+        else:
+            return False
 
     def has_assessor_mode(self,user):
         if self.assigned_officer: 
@@ -294,36 +300,39 @@ class Proposal(RevisionedMixin):
     def send_referral(self,request,referral_email):
         with transaction.atomic():
             try:
-                self.processing_status = 'with_referral'
-                self.save()
-                referral = None
-                # Validate if it is a deparment user
-                department_user = get_department_user(referral_email)
-                if not department_user:
-                    raise ValidationError('The user you want to send the referral to is not a member of the department')
-                # Check if the user is in ledger or create
-                
-                user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
-                if created:
-                    user.first_name = department_user['given_name']
-                    user.last_name = department_user['surname']
-                    user.save()
-                try:
-                    Referral.objects.get(referral=user,proposal=self)
-                    raise ValidationError('A referral has already been sent to this user')
-                except Referral.DoesNotExist:
-                    # Create Referral
-                    referral = Referral.objects.create(
-                        proposal = self,
-                        referral=user,
-                        sent_by=request.user 
-                    )
-                # Create a log entry for the proposal
-                self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
-                # Create a log entry for the organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
-                # send email
-                send_referral_email_notification(referral,request)
+                if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral':
+                    self.processing_status = 'with_referral'
+                    self.save()
+                    referral = None
+                    # Validate if it is a deparment user
+                    department_user = get_department_user(referral_email)
+                    if not department_user:
+                        raise ValidationError('The user you want to send the referral to is not a member of the department')
+                    # Check if the user is in ledger or create
+                    
+                    user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
+                    if created:
+                        user.first_name = department_user['given_name']
+                        user.last_name = department_user['surname']
+                        user.save()
+                    try:
+                        Referral.objects.get(referral=user,proposal=self)
+                        raise ValidationError('A referral has already been sent to this user')
+                    except Referral.DoesNotExist:
+                        # Create Referral
+                        referral = Referral.objects.create(
+                            proposal = self,
+                            referral=user,
+                            sent_by=request.user 
+                        )
+                    # Create a log entry for the proposal
+                    self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
+                    # Create a log entry for the organisation
+                    self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
+                    # send email
+                    send_referral_email_notification(referral,request)
+                else:
+                    raise exceptions.ProposalReferralCannotBeSent()
             except:
                 raise
 
@@ -358,6 +367,18 @@ class Proposal(RevisionedMixin):
                     self.applicant.log_user_action(ProposalUserAction.ACTION_UNASSIGN.format(self.id),request)
             except:
                 raise
+
+    def move_to_status(self,request,status):
+        if not self.can_assess(request.user):
+            raise exceptions.ProposalNotAuthorized()
+        if status in ['with_assessor','with_assessor_requirements','with_approver']:
+            if self.processing_status == 'with_referral' or self.can_user_edit:
+                raise ValidationError('You cannot change the current status at this time')
+            if self.processing_status != status:
+                self.processing_status = status
+                self.save()
+        else:
+            raise ValidationError('The provided status cannot be found.')
 
 class ProposalLogEntry(CommunicationsLogEntry):
     proposal = models.ForeignKey(Proposal, related_name='comms_logs')
@@ -627,41 +648,44 @@ class Referral(models.Model):
     def send_referral(self,request,referral_email):
         with transaction.atomic():
             try:
-                if request.user != self.referral:
-                    raise exceptions.ReferralNotAuthorized()
-                if self.sent_from != 1:
-                    raise exceptions.ReferralCanNotSend()
-                self.proposal.processing_status = 'with_referral'
-                self.proposal.save()
-                referral = None
-                # Validate if it is a deparment user
-                department_user = get_department_user(referral_email)
-                if not department_user:
-                    raise ValidationError('The user you want to send the referral to is not a member of the department')
-                # Check if the user is in ledger or create
-                
-                user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
-                if created:
-                    user.first_name = department_user['given_name']
-                    user.last_name = department_user['surname']
-                    user.save()
-                try:
-                    Referral.objects.get(referral=user,proposal=self.proposal)
-                    raise ValidationError('A referral has already been sent to this user')
-                except Referral.DoesNotExist:
-                    # Create Referral
-                    referral = Referral.objects.create(
-                        proposal = self.proposal,
-                        referral=user,
-                        sent_by=request.user,
-                        sent_from=2
-                    )
-                # Create a log entry for the proposal
-                self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
-                # Create a log entry for the organisation
-                self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
-                # send email
-                send_referral_email_notification(referral,request)
+                if self.proposal.processing_status == 'with_referral':
+                    if request.user != self.referral:
+                        raise exceptions.ReferralNotAuthorized()
+                    if self.sent_from != 1:
+                        raise exceptions.ReferralCanNotSend()
+                    self.proposal.processing_status = 'with_referral'
+                    self.proposal.save()
+                    referral = None
+                    # Validate if it is a deparment user
+                    department_user = get_department_user(referral_email)
+                    if not department_user:
+                        raise ValidationError('The user you want to send the referral to is not a member of the department')
+                    # Check if the user is in ledger or create
+                    
+                    user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
+                    if created:
+                        user.first_name = department_user['given_name']
+                        user.last_name = department_user['surname']
+                        user.save()
+                    try:
+                        Referral.objects.get(referral=user,proposal=self.proposal)
+                        raise ValidationError('A referral has already been sent to this user')
+                    except Referral.DoesNotExist:
+                        # Create Referral
+                        referral = Referral.objects.create(
+                            proposal = self.proposal,
+                            referral=user,
+                            sent_by=request.user,
+                            sent_from=2
+                        )
+                    # Create a log entry for the proposal
+                    self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
+                    # Create a log entry for the organisation
+                    self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(department_user['name'],department_user['email'])),request)
+                    # send email
+                    send_referral_email_notification(referral,request)
+                else:
+                    raise exceptions.ProposalReferralCannotBeSent()
             except:
                 raise
 

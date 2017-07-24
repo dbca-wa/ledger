@@ -216,6 +216,25 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET',])
+    def enter_requirements(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.move_to_status(request,'with_assessor_requirements')
+            serializer = InternalProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['post'])
     def assesor_send_referral(self, request, *args, **kwargs):
         try:
@@ -232,7 +251,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
             if hasattr(e,'error_dict'):
                 raise serializers.ValidationError(repr(e.error_dict))
             else:
-                print e
                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())

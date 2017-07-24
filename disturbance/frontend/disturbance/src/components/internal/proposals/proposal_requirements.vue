@@ -12,7 +12,7 @@
                 <div class="panel-body panel-collapse collapse in" :id="panelBody">
                     <form class="form-horizontal" action="index.html" method="post">
                         <div class="col-sm-12">
-                            <button @click.prevent="addRequirement()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Requirement</button>
+                            <button v-if="hasAssessorMode" @click.prevent="addRequirement()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Requirement</button>
                         </div>
                         <datatable ref="requirements_datatable" :id="'requirements-datatable-'+_uid" :dtOptions="requirement_options" :dtHeaders="requirement_headers"/>
                     </form>
@@ -86,9 +86,10 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            // TODO check permission to edit/delete the requirement 
-                            links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
-                            links +=  `<a href='#' class="deleteRequirement" data-id="${full.id}">Delete</a><br/>`;
+                            if (vm.proposal.assessor_mode.has_assessor_mode){
+                                links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
+                                links +=  `<a href='#' class="deleteRequirement" data-id="${full.id}">Delete</a><br/>`;
+                            }
                             return links;
                         },
                         orderable: false
@@ -97,8 +98,10 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             // TODO check permission to change the order
-                            links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up fa-2x"></i></a><br/>`;
-                            links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down fa-2x"></i></a><br/>`;
+                            if (vm.proposal.assessor_mode.has_assessor_mode){
+                                links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up fa-2x"></i></a><br/>`;
+                                links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down fa-2x"></i></a><br/>`;
+                            }
                             return links;
                         },
                         orderable: false
@@ -106,7 +109,8 @@ export default {
                 ],
                 processing: true,
                 drawCallback: function (settings) {
-                    $('#ArgumentsTable tr:last .dtMoveDown').remove();
+                    $(vm.$refs.requirements_datatable.table).find('tr:last .dtMoveDown').remove();
+                    $(vm.$refs.requirements_datatable.table).children('tbody').find('tr:first .dtMoveUp').remove();
 
                     // Remove previous binding before adding it
                     $('.dtMoveUp').unbind('click');
@@ -120,12 +124,19 @@ export default {
         }
     },
     watch:{
+        hasAssessorMode(){
+            // reload the table
+            this.updatedRequirements();
+        }
     },
     components:{
         datatable,
         RequirementDetail
     },
     computed:{
+        hasAssessorMode(){
+            return this.proposal.assessor_mode.has_assessor_mode;
+        }
     },
     methods:{
         addRequirement(){
@@ -159,6 +170,16 @@ export default {
                 console.log(error);
             })
         },
+        editRequirement(_id){
+            let vm = this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id)).then((response) => {
+                this.$refs.requirement_detail.requirement = response.body;
+                this.$refs.requirement_detail.requirement.due_date =  moment(response.body.due_date).format('DD/MM/YYYY');
+                this.addRequirement();
+            },(error) => {
+                console.log(error);
+            })
+        },
         updatedRequirements(){
             this.$refs.requirements_datatable.vmDataTable.ajax.reload();
         },
@@ -168,6 +189,11 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-id');
                 vm.removeRequirement(id);
+            });
+            vm.$refs.requirements_datatable.vmDataTable.on('click', '.editRequirement', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-id');
+                vm.editRequirement(id);
             });
         },
         sendDirection(req,direction){
