@@ -216,11 +216,17 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['GET',])
-    def enter_requirements(self, request, *args, **kwargs):
+    @detail_route(methods=['POST',])
+    def switch_status(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            instance.move_to_status(request,'with_assessor_requirements')
+            status = request.data.get('status')
+            if not status:
+                raise serializers.ValidationError('Status is required')
+            else:
+                if not status in ['with_assessor','with_assessor_requirements','with_approver']:
+                    raise serializers.ValidationError('The status provided is not allowed')
+            instance.move_to_status(request,status)
             serializer = InternalProposalSerializer(instance,context={'request':request})
             return Response(serializer.data) 
         except serializers.ValidationError:

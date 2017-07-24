@@ -164,6 +164,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
         self.fields['assessor_data'] = serializers.SerializerMethodField()
         self.fields['latest_referrals'] = ProposalReferralSerializer(many=True) 
         self.fields['allowed_assessors'] = EmailUserSerializer(many=True)
+        self.fields['proposed_issuance_approval'] = serializers.JSONField(required=False)
         
     def get_assessor_mode(self,obj):
         # TODO check if the proposal has been accepted or declined
