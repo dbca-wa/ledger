@@ -125,7 +125,7 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'can_user_edit',
                 'can_user_view',
                 )
-        read_only_fields=('documents',)
+        read_only_fields=('documents','requirements')
 
 class ApplicantSerializer(serializers.ModelSerializer):
     from disturbance.components.organisations.serializers import OrganisationAddressSerializer
