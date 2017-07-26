@@ -7,7 +7,8 @@ from disturbance.components.proposals.models import (
                                     ProposalLogEntry,
                                     Referral,
                                     ProposalRequirement,
-                                    ProposalStandardRequirement
+                                    ProposalStandardRequirement,
+                                    ProposalDeclinedDetails
                                 )
 from disturbance.components.organisations.models import (
                                 Organisation
@@ -149,23 +150,62 @@ class ProposalReferralSerializer(serializers.ModelSerializer):
         model = Referral
         fields = '__all__'
 
+class ProposalDeclinedDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProposalDeclinedDetails
+        fields = '__all__'
+
 class InternalProposalSerializer(BaseProposalSerializer):
     applicant = ApplicantSerializer()
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
     submitter = serializers.CharField(source='submitter.get_full_name')
+    proposaldeclineddetails = ProposalDeclinedDetailsSerializer()
+    #
+    assessor_mode = serializers.SerializerMethodField()
+    current_assessor = serializers.SerializerMethodField()
+    assessor_data = serializers.SerializerMethodField()
+    latest_referrals = ProposalReferralSerializer(many=True) 
+    allowed_assessors = EmailUserSerializer(many=True)
 
+    class Meta:
+        model = Proposal
+        fields = (
+                'id',
+                'activity',
+                'title',
+                'region',
+                'data',
+                'schema',
+                'customer_status',
+                'processing_status',
+                'review_status',
+                #'hard_copy',
+                'applicant',
+                'proxy_applicant',
+                'submitter',
+                'assigned_officer',
+                'assigned_approver',
+                'previous_application',
+                'lodgement_date',
+                'documents',
+                'requirements',
+                'readonly',
+                'can_user_edit',
+                'can_user_view',
+                'documents_url',
+                'assessor_mode',
+                'current_assessor',
+                'assessor_data',
+                'latest_referrals',
+                'allowed_assessors',
+                'proposed_issuance_approval',
+                'proposed_decline_status',
+                'proposaldeclineddetails'
+                )
+        read_only_fields=('documents','requirements')
 
-    def __init__(self,*args,**kwargs):
-        super(InternalProposalSerializer, self).__init__(*args, **kwargs)
-        self.fields['assessor_mode'] = serializers.SerializerMethodField()
-        self.fields['current_assessor'] = serializers.SerializerMethodField()
-        self.fields['assessor_data'] = serializers.SerializerMethodField()
-        self.fields['latest_referrals'] = ProposalReferralSerializer(many=True) 
-        self.fields['allowed_assessors'] = EmailUserSerializer(many=True)
-        self.fields['proposed_issuance_approval'] = serializers.JSONField(required=False)
-        
     def get_assessor_mode(self,obj):
         # TODO check if the proposal has been accepted or declined
         request = self.context['request']
@@ -260,3 +300,12 @@ class ProposalStandardRequirementSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProposalStandardRequirement
         fields = ('id','code','text')
+
+class PropedApprovalSerializer(serializers.Serializer):
+    expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
+    details = serializers.CharField()
+    cc_email = serializers.CharField()
+
+class PropedDeclineSerializer(serializers.Serializer):
+    reason = serializers.CharField()
+    cc_email = serializers.CharField(required=False)

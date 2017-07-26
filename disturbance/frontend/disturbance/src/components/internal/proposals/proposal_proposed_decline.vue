@@ -1,18 +1,37 @@
 <template lang="html">
     <div id="change-contact">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Proposed Decline" large>
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="title" large>
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="declineForm">
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
                             <div class="form-group">
-                                <label class="control-label pull-left"  for="Name">Provide Reason for the proposed decline </label>
-                                <textarea style="width: 70%;"class="form-control" name="name" v-model="decline.details"></textarea>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <label v-if="processing_status == 'With Approver'" class="control-label"  for="Name">Details</label>
+                                        <label v-else class="control-label"  for="Name">Provide Reason for the proposed decline </label>
+                                        <textarea style="width: 70%;"class="form-control" name="reason" v-model="decline.reason"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <label v-if="processing_status == 'With Approver'" class="control-label"  for="Name">CC email</label>
+                                        <label v-else class="control-label"  for="Name">Proposed CC email</label>
+                                        <input type="text" style="width: 70%;"class="form-control" name="cc_email" v-model="decline.cc_email"/>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </form>
                 </div>
+            </div>
+            <div slot="footer">
+                <button type="button" v-if="decliningProposal" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Declining</button>
+                <button type="button" v-else class="btn btn-default" @click="ok">Decline</button>
+                <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
     </div>
@@ -22,10 +41,9 @@
 //import $ from 'jquery'
 import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
-import api_endpoints from '../api'
-import {helpers} from "@/utils/hooks.js"
+import {helpers,api_endpoints} from "@/utils/hooks.js"
 export default {
-    name:'Add-Organisation-Contact',
+    name:'Decline-Proposal',
     components:{
         modal,
         alert
@@ -33,6 +51,11 @@ export default {
     props:{
             proposal_id:{
                 type:Number,
+                required: true
+            },
+            processing_status:{
+                type:String,
+                required: true
             },
     },
     data:function () {
@@ -41,7 +64,9 @@ export default {
             isModalOpen:false,
             form:null,
             decline: {},
+            decliningProposal: false,
             errors: false,
+            validation_form: null,
             errorString: '',
             successString: '',
             success:false,
@@ -51,6 +76,9 @@ export default {
         showError: function() {
             var vm = this;
             return vm.errors;
+        },
+        title: function(){
+            return this.processing_status == 'With Approver' ? 'Decline': 'Proposed Decline';
         }
     },
     methods:{
@@ -61,68 +89,52 @@ export default {
             }
         },
         cancel:function () {
+            this.close();
         },
         close:function () {
             this.isModalOpen = false;
-            this.contact = {};
-        },
-        fetchContact: function(id){
-            let vm = this;
-            vm.$http.get(api_endpoints.contact(id)).then((response) => {
-                vm.contact = response.body; vm.isModalOpen = true;
-            },(error) => {
-                console.log(error);
-            } );
+            this.decline = {};
+            this.errors = false;
+            $('.has-error').removeClass('has-error');
+            this.validation_form.resetForm();
         },
         sendData:function(){
             let vm = this;
             vm.errors = false;
-            //vm.$parent.loading.push('processing contact');
-            if (vm.contact.id){
-                let contact = vm.contact;
-                vm.$http.put(api_endpoints.organisation_contacts(contact.id),JSON.stringify(contact),{
+            let decline = JSON.parse(JSON.stringify(vm.decline));
+            vm.decliningProposal = true;
+            if (vm.processing_status != 'With Approver'){
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/proposed_decline'),JSON.stringify(decline),{
                         emulateJSON:true,
                     }).then((response)=>{
-                        //vm.$parent.loading.splice('processing contact',1);
+                        vm.decliningProposal = false;
                         vm.close();
+                        vm.$emit('refreshFromResponse',response);
                     },(error)=>{
-                        console.log(error);
                         vm.errors = true;
+                        vm.decliningProposal = false;
                         vm.errorString = helpers.apiVueResourceError(error);
-                        //vm.$parent.loading.splice('processing contact',1);
                     });
-            } else {
-                let contact = JSON.parse(JSON.stringify(vm.contact));
-                contact.organisation = vm.org_id;
-                vm.$http.post(api_endpoints.organisation_contacts,JSON.stringify(contact),{
+            }
+            else{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/final_decline'),JSON.stringify(decline),{
                         emulateJSON:true,
                     }).then((response)=>{
-                        //vm.$parent.loading.splice('processing contact',1);
+                        vm.decliningProposal = false;
                         vm.close();
-                        vm.$parent.addedContact();
+                        vm.$emit('refreshFromResponse',response);
                     },(error)=>{
-                        console.log(error);
                         vm.errors = true;
+                        vm.decliningProposal = false;
                         vm.errorString = helpers.apiVueResourceError(error);
-                        //vm.$parent.loading.splice('processing contact',1);
                     });
-                
             }
         },
         addFormValidations: function() {
             let vm = this;
-            $(vm.form).validate({
+            vm.validation_form = $(vm.form).validate({
                 rules: {
-                    arrival:"required",
-                    departure:"required",
-                    campground:"required",
-                    campsite:{
-                        required: {
-                            depends: function(el){
-                                return vm.campsites.length > 0;
-                            }
-                        }
-                    }
+                    reason:"required",
                 },
                 messages: {
                     arrival:"field is required",
@@ -156,9 +168,8 @@ export default {
    },
    mounted:function () {
        let vm =this;
-       vm.form = document.forms.addContactForm;
+       vm.form = document.forms.declineForm;
        vm.addFormValidations();
-       //console.log(validate);
    }
 }
 </script>

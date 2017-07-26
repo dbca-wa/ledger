@@ -53,7 +53,9 @@ from disturbance.components.proposals.serializers import (
     ReferralSerializer,
     ReferralProposalSerializer,
     ProposalRequirementSerializer,
-    ProposalStandardRequirementSerializer
+    ProposalStandardRequirementSerializer,
+    PropedApprovalSerializer,
+    PropedDeclineSerializer
 )
 
 
@@ -227,6 +229,90 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 if not status in ['with_assessor','with_assessor_requirements','with_approver']:
                     raise serializers.ValidationError('The status provided is not allowed')
             instance.move_to_status(request,status)
+            serializer = InternalProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def proposed_approval(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = PropedApprovalSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance.proposed_approval(request,serializer.validated_data)
+            serializer = InternalProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def final_approval(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = PropedApprovalSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance.final_approval(request,serializer.validated_data)
+            serializer = InternalProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def proposed_decline(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = PropedDeclineSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance.proposed_decline(request,serializer.validated_data)
+            serializer = InternalProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def final_decline(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = PropedDeclineSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance.final_decline(request,serializer.validated_data)
             serializer = InternalProposalSerializer(instance,context={'request':request})
             return Response(serializer.data) 
         except serializers.ValidationError:

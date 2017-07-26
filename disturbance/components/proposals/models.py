@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import json
 from django.db import models,transaction
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
@@ -80,13 +81,59 @@ class ProposalAssessorGroup(models.Model):
 
     @property
     def current_proposals(self):
-        assessable_states = ['with_assessor','with_referral'] 
+        assessable_states = ['with_assessor','with_referral','with_assessor_requirements'] 
         return Proposal.objects.filter(processing_status__in=assessable_states)
         
-    
+class TaggedProposalApproverGroupRegions(TaggedItemBase):
+    content_object = models.ForeignKey("ProposalApproverGroup")
+
     class Meta:
         app_label = 'disturbance'
 
+class TaggedProposalApproverGroupActivities(TaggedItemBase):
+    content_object = models.ForeignKey("ProposalApproverGroup")
+
+    class Meta:
+        app_label = 'disturbance'
+
+class ProposalApproverGroup(models.Model):
+    name = models.CharField(max_length=255)
+    members = models.ManyToManyField(EmailUser,blank=True)
+    regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalApproverGroupRegions,related_name = "+",blank=True)
+    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalApproverGroupActivities,related_name = "+",blank=True)
+    default = models.BooleanField(default=False)
+
+    class Meta:
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        try:
+            default = ProposalApproverGroup.objects.get(default=True)
+        except ProposalApproverGroup.DoesNotExist:
+            default = None
+
+        if self.pk:
+            if int(self.pk) != int(default.id):
+                if default and self.default:
+                    raise ValidationError('There can only be one default proposal approver group')
+        else:
+            if default and self.default:
+                raise ValidationError('There can only be one default proposal approver group')
+
+    def member_is_assigned(self,member):
+        for p in self.current_proposals:
+            if p.assigned_approver == member:
+                return True
+        return False
+
+    @property
+    def current_proposals(self):
+        assessable_states = ['with_approver'] 
+        return Proposal.objects.filter(processing_status__in=assessable_states)
+        
 class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
     _file = models.FileField(upload_to=update_proposal_doc_filename)
@@ -127,7 +174,7 @@ class Proposal(RevisionedMixin):
                                  ('awaiting_responses', 'Awaiting Responses'),
                                  ('ready_for_conditions', 'Ready for Conditions'),
                                  ('ready_to_issue', 'Ready to Issue'),
-                                 ('issued', 'Issued'),
+                                 ('approved', 'Approved'),
                                  ('declined', 'Declined'),
                                  ('discarded', 'Discarded'),
                                  )
@@ -164,6 +211,7 @@ class Proposal(RevisionedMixin):
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals')
 
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_assigned')
+    assigned_approver = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_approvals')
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[0][0])
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
@@ -179,6 +227,7 @@ class Proposal(RevisionedMixin):
 
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    proposed_decline_status = models.BooleanField(default=False)
     # Special Fields
     activity = models.CharField(max_length=255,null=True,blank=True)
     region = models.CharField(max_length=255,null=True,blank=True)
@@ -243,7 +292,10 @@ class Proposal(RevisionedMixin):
 
     @property
     def allowed_assessors(self):
-        group = self.__assessor_group()
+        if self.processing_status == 'with_approver':
+            group = self.__approver_group()
+        else:
+            group = self.__assessor_group()
         return group.members.all() if group else []
 
     def __assessor_group(self):
@@ -262,24 +314,43 @@ class Proposal(RevisionedMixin):
  
         return default_group
 
+    def __approver_group(self):
+        # TODO get list of approver groups based on region and activity
+        if self.region and self.activity:
+            try:
+                check_group = ProposalApproverGroup.objects.filter(
+                    activities__name__in=[self.activity],
+                    regions__name__in=self.regions_list         
+                ).distinct()
+                if check_group:
+                    return check_group[0]
+            except ProposalApproverGroup.DoesNotExist:
+                pass
+        default_group = ProposalApproverGroup.objects.get(default=True)
+ 
+        return default_group
+
     def can_assess(self,user):
         if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
             return self.__assessor_group() in user.proposalassessorgroup_set.all()
         elif self.processing_status == 'with_approver':
-            return false
+            return self.__approver_group() in user.proposalapprovergroup_set.all()
         else:
             return False
 
     def has_assessor_mode(self,user):
-        if self.assigned_officer: 
-            if self.assigned_officer == user:
-                return self.__assessor_group() in user.proposalassessorgroup_set.all()
-            else:
-                return False
+        status_without_assessor = ['with_approver','approved','declined']
+        if self.processing_status in status_without_assessor: 
+            return False
         else:
-            return self.__assessor_group() in user.proposalassessorgroup_set.all()
+            if self.assigned_officer: 
+                if self.assigned_officer == user:
+                    return self.__assessor_group() in user.proposalassessorgroup_set.all()
+                else:
+                    return False
+            else:
+                return self.__assessor_group() in user.proposalassessorgroup_set.all()
         
-
     def log_user_action(self, action, request):
         return ProposalUserAction.log_action(self, action, request.user)
 
@@ -349,13 +420,22 @@ class Proposal(RevisionedMixin):
                     raise exceptions.ProposalNotAuthorized() 
                 if not self.can_assess(officer):
                     raise ValidationError('The selected person is not authorised to be assigned to this proposal')
-                if officer != self.assigned_officer:
-                    self.assigned_officer = officer
-                    self.save()
-                    # Create a log entry for the proposal
-                    self.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
-                    # Create a log entry for the organisation
-                    self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
+                if self.processing_status == 'with_approver':
+                    if officer != self.assigned_approver:
+                        self.assigned_approver = officer
+                        self.save()
+                        # Create a log entry for the proposal
+                        self.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_APPROVER.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
+                        # Create a log entry for the organisation
+                        self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_APPROVER.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
+                else:
+                    if officer != self.assigned_officer:
+                        self.assigned_officer = officer
+                        self.save()
+                        # Create a log entry for the proposal
+                        self.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
+                        # Create a log entry for the organisation
+                        self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
             except:
                 raise
 
@@ -364,13 +444,22 @@ class Proposal(RevisionedMixin):
             try:
                 if not self.can_assess(request.user):
                     raise exceptions.ProposalNotAuthorized() 
-                if self.assigned_officer:
-                    self.assigned_officer = None 
-                    self.save()
-                    # Create a log entry for the proposal
-                    self.log_user_action(ProposalUserAction.ACTION_UNASSIGN.format(self.id),request)
-                    # Create a log entry for the organisation
-                    self.applicant.log_user_action(ProposalUserAction.ACTION_UNASSIGN.format(self.id),request)
+                if self.processing_status == 'with_approver':
+                    if self.assigned_approver:
+                        self.assigned_approver = None 
+                        self.save()
+                        # Create a log entry for the proposal
+                        self.log_user_action(ProposalUserAction.ACTION_UNASSIGN_APPROVER.format(self.id),request)
+                        # Create a log entry for the organisation
+                        self.applicant.log_user_action(ProposalUserAction.ACTION_UNASSIGN_APPROVER.format(self.id),request)
+                else:
+                    if self.assigned_officer:
+                        self.assigned_officer = None 
+                        self.save()
+                        # Create a log entry for the proposal
+                        self.log_user_action(ProposalUserAction.ACTION_UNASSIGN_ASSESSOR.format(self.id),request)
+                        # Create a log entry for the organisation
+                        self.applicant.log_user_action(ProposalUserAction.ACTION_UNASSIGN_ASSESSOR.format(self.id),request)
             except:
                 raise
 
@@ -385,6 +474,93 @@ class Proposal(RevisionedMixin):
                 self.save()
         else:
             raise ValidationError('The provided status cannot be found.')
+
+    def proposed_decline(self,request,details):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if self.processing_status != 'with_assessor':
+                    raise ValidationError('You cannot propose to decline if it is not with assessor')
+
+                ProposalDeclinedDetails.objects.update_or_create(
+                    proposal = self,
+                    defaults={'officer':request.user,'reason':details.get('reason'),'cc_email':details.get('cc_email',None)}
+                )
+                self.proposed_decline_status = True
+                self.move_to_status(request,'with_approver')
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+            except:
+                raise
+
+    def final_decline(self,request,details):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if self.processing_status != 'with_approver':
+                    raise ValidationError('You cannot decline if it is not with approver')
+
+                ProposalDeclinedDetails.objects.update_or_create(
+                    proposal = self,
+                    defaults={'officer':request.user,'reason':details.get('reason'),'cc_email':details.get('cc_email',None)}
+                )
+                self.proposed_decline_status = True
+                self.processing_status = 'declined'
+                self.customer_status = 'declined'
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_DECLINE.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_DECLINE.format(self.id),request)
+            except:
+                raise
+
+    def proposed_approval(self,request,details):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if self.processing_status != 'with_assessor_requirements':
+                    raise ValidationError('You cannot propose for approval if it is not with assessor for requirements')
+                self.proposed_issuance_approval = {
+                    'expiry_date' : details.get('expiry_date').strftime('%d/%m/%Y') if details.get('expiry_date') else None,
+                    'details': details.get('details'),
+                    'cc_email':details.get('cc_email')
+                }
+                self.proposed_decline_status = False
+                self.move_to_status(request,'with_approver')
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_PROPOSED_APPROVAL.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_PROPOSED_APPROVAL.format(self.id),request)
+            except:
+                raise
+
+    def final_approval(self,request,details):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if self.processing_status != 'with_approver':
+                    raise ValidationError('You cannot issue the approval if it is not with an approver')
+                self.proposed_issuance_approval = {
+                    'expiry_date' : details.get('expiry_date').strftime('%d/%m/%Y') if details.get('expiry_date') else None,
+                    'details': details.get('details'),
+                    'cc_email':details.get('cc_email')
+                }
+                self.proposed_decline_status = False
+                self.processing_status = 'approved'
+                self.customer_status = 'approved'
+                self.save()
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
+            except:
+                raise
 
 class ProposalLogEntry(CommunicationsLogEntry):
     proposal = models.ForeignKey(Proposal, related_name='comms_logs')
@@ -454,9 +630,10 @@ class Assessment(ProposalRequest):
         app_label = 'disturbance'
 
 class ProposalDeclinedDetails(models.Model):
-    proposal = models.ForeignKey(Proposal)
+    proposal = models.OneToOneField(Proposal)
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
+    cc_email = models.TextField(null=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -527,8 +704,10 @@ class ProposalUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"
     ACTION_CREATE_PROFILE_ = "Create profile {}"
     ACTION_LODGE_APPLICATION = "Lodge proposal {}"
-    ACTION_ASSIGN_TO_ = "Assign proposal {} to {}"
-    ACTION_UNASSIGN = "Unassign proposal {}"
+    ACTION_ASSIGN_TO_ASSESSOR = "Assign proposal {} to {} as the assessor"
+    ACTION_UNASSIGN_ASSESSOR = "Unassign assessor from proposal {}"
+    ACTION_ASSIGN_TO_APPROVER = "Assign proposal {} to {} as the approver"
+    ACTION_UNASSIGN_APPROVER = "Unassign approver from proposal {}"
     ACTION_ACCEPT_ID = "Accept ID"
     ACTION_RESET_ID = "Reset ID"
     ACTION_ID_REQUEST_UPDATE = 'Request ID update'
@@ -539,16 +718,16 @@ class ProposalUserAction(UserAction):
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
     ACTION_SEND_FOR_ASSESSMENT_TO_ = "Send for assessment to {}"
     ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
-    ACTION_ASSESSMENT_ASSIGN_TO_ = "Assign Assessment to {}"
-    ACTION_ASSESSMENT_UNASSIGN = "Unassign Assessment"
-    ACTION_DECLINE_APPLICATION = "Decline proposal"
+    ACTION_DECLINE = "Decline proposal {}"
     ACTION_ENTER_CONDITIONS = "Enter requirement"
     ACTION_CREATE_CONDITION_ = "Create requirement {}"
-    ACTION_ISSUE_LICENCE_ = "Issue Licence {}"
-    ACTION_DISCARD_APPLICATION = "Discard proposal {}"
+    ACTION_ISSUE_APPROVAL_ = "Issue Approval for proposal {}"
+    ACTION_DISCARD_PROPOSAL = "Discard proposal {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
+    ACTION_PROPOSED_APPROVAL = "Proposal {} has been proposed for approval"
+    ACTION_PROPOSED_DECLINE = "Proposal {} has been proposed for decline"
     # Referrals
     ACTION_SEND_REFERRAL_TO = "Send referral {} for proposal {} to {}"
     ACTION_RESEND_REFERRAL_TO = "Resend referral {} for proposal {} to {}"

@@ -111,20 +111,38 @@
                                     <div class="separator"></div>
                                 </div>
                             </template>
-                            <div class="col-sm-12 top-buffer-s">
+                            <div v-if="!isFinalised" class="col-sm-12 top-buffer-s">
                                 <strong>Currently assigned to</strong><br/>
                                 <div class="form-group">
-                                    <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="proposal.assigned_officer">
-                                        <option v-for="member in proposal.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
-                                    </select>
-                                    <a v-if="canAssess && proposal.assigned_officer != proposal.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
+                                    <template v-if="proposal.processing_status == 'With Approver'">
+                                        <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="proposal.assigned_approver">
+                                            <option v-for="member in proposal.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
+                                        </select>
+                                        <a v-if="canAssess && proposal.assigned_approver != proposal.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
+                                    </template>
+                                    <template v-else>
+                                        <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="proposal.assigned_officer">
+                                            <option v-for="member in proposal.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
+                                        </select>
+                                        <a v-if="canAssess && proposal.assigned_officer != proposal.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
+                                    </template>
                                 </div>
                             </div>
-                            <template v-if="proposal.processing_status == 'With Assessor (Requirements)' || proposal.processing_status == 'With Approver'">
+                            <template v-if="proposal.processing_status == 'With Assessor (Requirements)' || proposal.processing_status == 'With Approver' || isFinalised">
                                 <div class="col-sm-12">
                                     <strong>Proposal</strong><br/>
                                     <a class="actionBtn" v-if="!showingProposal" @click.prevent="toggleProposal()">Show Proposal</a>
                                     <a class="actionBtn" v-else @click.prevent="toggleProposal()">Hide Proposal</a>
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="separator"></div>
+                                </div>
+                            </template>
+                            <template v-if="proposal.processing_status == 'With Approver' || isFinalised">
+                                <div class="col-sm-12">
+                                    <strong>Requirements</strong><br/>
+                                    <a class="actionBtn" v-if="!showingRequirements" @click.prevent="toggleRequirements()">Show Requirements</a>
+                                    <a class="actionBtn" v-else @click.prevent="toggleRequirements()">Hide Requirements</a>
                                 </div>
                                 <div class="col-sm-12">
                                     <div class="separator"></div>
@@ -166,7 +184,30 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="">Issue Approval</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="proposedApproval()">Issue Approval</button><br/>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template v-else-if="proposal.processing_status == 'With Approver'">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12" v-if="proposal.proposed_decline_status">
+                                            <button style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="switchStatus('with_assessor')">Back To Processing</button><br/>
+                                        </div>
+                                        <div class="col-sm-12" v-else>
+                                            <button style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="switchStatus('with_assessor_requirements')">Back To Requirements</button><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12" v-if="!proposal.proposed_decline_status">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="issueProposal()">Issue</button><br/>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="declineProposal()">Decline</button><br/>
                                         </div>
                                     </div>
                                 </template>
@@ -179,18 +220,13 @@
         <div class="col-md-1"></div>
         <div class="col-md-8">
             <div class="row">
-                <template v-if="proposal.processing_status == 'With Assessor'">
-                    <div v-show="false" class="col-md-12">
-                        <div class="row">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <h3>Level of Approval</h3>
-                                </div>
-                                <div class="panel-body panel-collapse">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <template v-if="proposal.processing_status == 'With Approver' || isFinalised">
+                    <ApprovalScreen :proposal="proposal"/>
+                </template>
+                <template v-if="proposal.processing_status == 'With Assessor (Requirements)' || ((proposal.processing_status == 'With Approver' || isFinalised) && showingRequirements)">
+                    <Requirements :proposal="proposal"/>
+                </template>
+                <template v-if="canSeeSubmission || (!canSeeSubmission && showingProposal)">
                     <div class="col-md-12">
                         <div class="row">
                             <div class="panel panel-default">
@@ -282,11 +318,6 @@
                             </div>
                         </div>
                     </div>
-                </template>
-                <template v-else-if="proposal.processing_status == 'With Assessor (Requirements)'">
-                    <Requirements :proposal="proposal"/>
-                </template>
-                <template v-if="canSeeSubmission || (!canSeeSubmission && showingProposal)">
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
@@ -294,7 +325,7 @@
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
-                                    <div v-if="canAction" class="row" style="margin-bottom:20px;">
+                                    <div v-if="hasAssessorMode" class="row" style="margin-bottom:20px;">
                                       <div class="col-lg-12 pull-right">
                                         <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
                                       </div>
@@ -307,8 +338,9 @@
             </div>
         </div>
         </div>
-        <ProposedDecline ref="proposed_decline" :proposal_id="proposal.id"></ProposedDecline>
+        <ProposedDecline ref="proposed_decline" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
         <AmmendmentRequest ref="ammendment_request" :proposal_id="proposal.id"></AmmendmentRequest>
+        <ProposedApproval ref="proposed_approval" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"/>
     </div>
 </template>
 <script>
@@ -318,6 +350,8 @@ import ProposedDecline from './proposal_proposed_decline.vue'
 import AmmendmentRequest from './ammendment_request.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Requirements from './proposal_requirements.vue'
+import ProposedApproval from './proposed_issuance.vue'
+import ApprovalScreen from './proposal_approval.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
     api_endpoints,
@@ -342,6 +376,7 @@ export default {
             contacts_table_initialised: false,
             initialisedSelects: false,
             showingProposal:false,
+            showingRequirements:false,
             state_options: ['requirements','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             contacts_options:{
@@ -537,7 +572,9 @@ export default {
         datatable,
         ProposedDecline,
         AmmendmentRequest,
-        Requirements
+        Requirements,
+        ProposedApproval,
+        ApprovalScreen
     },
     filters: {
         formatDate: function(data){
@@ -560,16 +597,29 @@ export default {
           return (this.proposal) ? `/api/proposal/${this.proposal.id}/assessor_save.json` : '';
         },
         isFinalised: function(){
-            return this.proposal.processing_status == 'Declined' || this.proposal.status == 'Approved';
+            return this.proposal.processing_status == 'Declined' || this.proposal.processing_status == 'Approved';
         },
         canAssess: function(){
             return this.proposal && this.proposal.assessor_mode.assessor_can_assess ? true : false;
         },
+        hasAssessorMode:function(){
+            return this.proposal && this.proposal.assessor_mode.has_assessor_mode ? true : false;
+        },
         canAction: function(){
-            return this.proposal && (this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+            if (this.proposal.processing_status == 'With Approver'){
+                return this.proposal && (this.proposal.processing_status == 'With Approver' || this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_approver || this.proposal.assigned_approver == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+            }
+            else{
+                return this.proposal && (this.proposal.processing_status == 'With Approver' || this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+            }
         },
         canLimitedAction: function(){
-            return this.proposal && (this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Referral' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+            if (this.proposal.processing_status == 'With Approver'){
+                return this.proposal && (this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Referral' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_approver || this.proposal.assigned_approver == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+            }
+            else{
+                return this.proposal && (this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Referral' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+            }
         },
         canSeeSubmission: function(){
             return this.proposal && (this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Referral')
@@ -588,6 +638,20 @@ export default {
             return s.replace(/[,;]/g, '\n');
         },
         proposedDecline: function(){
+            this.$refs.proposed_decline.decline = helpers.copyObject(this.proposal.proposaldeclineddetails);
+            this.$refs.proposed_decline.isModalOpen = true;
+        },
+        proposedApproval: function(){
+            this.$refs.proposed_approval.approval = helpers.copyObject(this.proposal.proposed_issuance_approval);
+            this.$refs.proposed_approval.isModalOpen = true;
+        },
+        issueProposal:function(){
+            this.$refs.proposed_approval.approval = helpers.copyObject(this.proposal.proposed_issuance_approval);
+            this.$refs.proposed_approval.state = 'final_approval';
+            this.$refs.proposed_approval.isModalOpen = true;
+        },
+        declineProposal:function(){
+            this.$refs.proposed_decline.decline = helpers.copyObject(this.proposal.proposaldeclineddetails);
             this.$refs.proposed_decline.isModalOpen = true;
         },
         ammendmentRequest: function(){
@@ -608,6 +672,20 @@ export default {
         toggleProposal:function(){
             this.showingProposal = !this.showingProposal;
         },
+        toggleRequirements:function(){
+            this.showingRequirements = !this.showingRequirements;
+        },
+        updateAssignedOfficerSelect:function(){
+            let vm = this;
+            if (vm.proposal.processing_status == 'With Approver'){
+                $(vm.$refs.assigned_officer).val(vm.proposal.assigned_approver);
+                $(vm.$refs.assigned_officer).trigger('change');
+            }
+            else{
+                $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
+                $(vm.$refs.assigned_officer).trigger('change');
+            }
+        },
         assignRequestUser: function(){
             let vm = this;
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assign_request_user')))
@@ -615,13 +693,11 @@ export default {
                 vm.proposal = response.body;
                 vm.original_proposal = helpers.copyObject(response.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
-                $(vm.$refs.assigned_officer).trigger('change');
+                vm.updateAssignedOfficerSelect();
             }, (error) => {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
-                $(vm.$refs.assigned_officer).trigger('change');
+                vm.updateAssignedOfficerSelect();
                 swal(
                     'Proposal Error',
                     helpers.apiVueResourceError(error),
@@ -629,23 +705,40 @@ export default {
                 )
             });
         },
+        refreshFromResponse:function(response){
+            let vm = this;
+            vm.original_proposal = helpers.copyObject(response.body);
+            vm.proposal = helpers.copyObject(response.body);
+            vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+            vm.$nextTick(() => {
+                vm.initialiseAssignedOfficerSelect(true);
+                vm.updateAssignedOfficerSelect();
+            });
+        },
         assignTo: function(){
             let vm = this;
-            if ( vm.proposal.assigned_officer != null && vm.proposal.assigned_officer != 'undefined'){
-                let data = {'assessor_id': vm.proposal.assigned_officer};
+            let unassign = True;
+            let data = {};
+            if (vm.processing_status == 'With Approver'){
+                unassign = vm.proposal.assigned_approver != null && vm.proposal.assigned_approver != 'undefined' ? false: true;
+                data = {'assessor_id': vm.proposal.assigned_approver};
+            }
+            else{
+                unassign = vm.proposal.assigned_officer != null && vm.proposal.assigned_officer != 'undefined' ? false: true;
+                data = {'assessor_id': vm.proposal.assigned_officer};
+            }
+            if (!unassign){
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assign_to')),JSON.stringify(data),{
                     emulateJSON:true
                 }).then((response) => {
                     vm.proposal = response.body;
                     vm.original_proposal = helpers.copyObject(response.body);
                     vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                    $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
-                    $(vm.$refs.assigned_officer).trigger('change');
+                    vm.updateAssignedOfficerSelect();
                 }, (error) => {
                     vm.proposal = helpers.copyObject(vm.original_proposal)
                     vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                    $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
-                    $(vm.$refs.assigned_officer).trigger('change');
+                    vm.updateAssignedOfficerSelect();
                     swal(
                         'Proposal Error',
                         helpers.apiVueResourceError(error),
@@ -659,13 +752,11 @@ export default {
                     vm.proposal = response.body;
                     vm.original_proposal = helpers.copyObject(response.body);
                     vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                    $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
-                    $(vm.$refs.assigned_officer).trigger('change');
+                    vm.updateAssignedOfficerSelect();
                 }, (error) => {
                     vm.proposal = helpers.copyObject(vm.original_proposal)
                     vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                    $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
-                    $(vm.$refs.assigned_officer).trigger('change');
+                    vm.updateAssignedOfficerSelect();
                     swal(
                         'Proposal Error',
                         helpers.apiVueResourceError(error),
@@ -685,8 +776,8 @@ export default {
                 vm.original_proposal = helpers.copyObject(response.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
                 vm.$nextTick(() => {
-                    $(vm.$refs.assigned_officer).val(vm.proposal.assigned_officer);
-                    $(vm.$refs.assigned_officer).trigger('change');
+                    vm.initialiseAssignedOfficerSelect(true);
+                    vm.updateAssignedOfficerSelect();
                 });
             }, (error) => {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
@@ -716,6 +807,42 @@ export default {
                 this.popoversInitialised = true;
             }
         },
+        initialiseAssignedOfficerSelect:function(reinit=false){
+            let vm = this;
+            if (reinit){
+                $(vm.$refs.assigned_officer).data('select2') ? $(vm.$refs.assigned_officer).select2('destroy'): '';
+            }
+            // Assigned officer select
+            $(vm.$refs.assigned_officer).select2({
+                "theme": "bootstrap",
+                allowClear: true,
+                placeholder:"Select Officer"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                if (vm.proposal.processing_status == 'With Approver'){
+                    vm.proposal.assigned_approver = selected.val();
+                }
+                else{
+                    vm.proposal.assigned_officer = selected.val();
+                }
+                vm.assignTo();
+            }).on("select2:unselecting", function(e) {
+                var self = $(this);
+                setTimeout(() => {
+                    self.select2('close');
+                }, 0);
+            }).on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                if (vm.proposal.processing_status == 'With Approver'){
+                    vm.proposal.assigned_approver = null;
+                }
+                else{
+                    vm.proposal.assigned_officer = null;
+                }
+                vm.assignTo();
+            });
+        },
         initialiseSelects: function(){
             let vm = this;
             if (!vm.initialisedSelects){
@@ -727,32 +854,12 @@ export default {
                 on("select2:select",function (e) {
                     var selected = $(e.currentTarget);
                     vm.selected_referral = selected.val();
-               }).
-               on("select2:unselect",function (e) {
+                }).
+                on("select2:unselect",function (e) {
                     var selected = $(e.currentTarget);
                     vm.selected_referral = '' 
-               });
-                // Assigned officer select
-                $(vm.$refs.assigned_officer).select2({
-                    "theme": "bootstrap",
-                    allowClear: true,
-                    placeholder:"Select Officer"
-                }).
-                on("select2:select",function (e) {
-                    var selected = $(e.currentTarget);
-                    vm.proposal.assigned_officer = selected.val();
-                    vm.assignTo();
-                }).on("select2:unselecting", function(e) {
-                    var self = $(this);
-                    setTimeout(() => {
-                        self.select2('close');
-                    }, 0);
-               }).on("select2:unselect",function (e) {
-                    var selected = $(e.currentTarget);
-                    vm.proposal.assigned_officer = null;
-                    console.log(vm.proposal.assigned_officer);
-                    vm.assignTo();
-               });
+                });
+                vm.initialiseAssignedOfficerSelect();
                 vm.initialisedSelects = true;
             }
         },

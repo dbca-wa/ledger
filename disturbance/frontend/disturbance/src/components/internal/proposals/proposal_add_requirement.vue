@@ -163,6 +163,7 @@ export default {
             }
         },
         cancel:function () {
+            this.close()
         },
         close:function () {
             this.isModalOpen = false;

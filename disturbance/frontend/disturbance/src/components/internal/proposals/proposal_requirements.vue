@@ -70,11 +70,11 @@ export default {
                             if (full.recurrence){
                                 switch(full.recurrence_pattern){
                                     case 1:
-                                        return full.recurrence_schedule + ' time(s) per week';
+                                        return `Once per ${full.recurrence_schedule} week(s)`;
                                     case 2:
-                                        return full.recurrence_schedule + ' time(s) per month';
+                                        return `Once per ${full.recurrence_schedule} month(s)`;
                                     case 3:
-                                        return full.recurrence_schedule + ' time(s) per year';
+                                        return `Once per ${full.recurrence_schedule} year(s)`;
                                     default:
                                         return '';
                                 }
