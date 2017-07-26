@@ -642,7 +642,7 @@ export default {
             return s.replace(/[,;]/g, '\n');
         },
         proposedDecline: function(){
-            this.$refs.proposed_decline.decline = helpers.copyObject(this.proposal.proposaldeclineddetails);
+            this.$refs.proposed_decline.decline = this.proposal.proposaldeclineddetails != null ? helpers.copyObject(this.proposal.proposaldeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
         proposedApproval: function(){
