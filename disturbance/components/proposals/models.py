@@ -511,6 +511,7 @@ class Proposal(RevisionedMixin):
                 self.proposed_decline_status = True
                 self.processing_status = 'declined'
                 self.customer_status = 'declined'
+                self.save()
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_DECLINE.format(self.id),request)
                 # Log entry for organisation
