@@ -298,7 +298,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         if self.first_name:
-            return self.first_name.encode('utf-8').split(' ')[0]
+            return self.first_name.split(' ')[0]
         return self.email
 
     dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"
