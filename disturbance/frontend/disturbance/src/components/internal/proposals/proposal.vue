@@ -622,7 +622,7 @@ export default {
             }
         },
         canSeeSubmission: function(){
-            return this.proposal && (this.proposal.processing_status != 'With Assessor (Requirements)' || this.proposal.processing_status != 'With Approver')
+            return this.proposal && (this.proposal.processing_status != 'With Assessor (Requirements)' && this.proposal.processing_status != 'With Approver' && !this.isFinalised)
         }
     },
     methods: {
