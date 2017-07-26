@@ -380,7 +380,7 @@ def _create_letter_header_footer(canvas, doc):
 
 def _format_name(user, include_first_name=False):
     if user.title:
-        return '{} {}'.format(user.title, user.get_full_name() if include_first_name else user.last_name)
+        return u'{} {}'.format(user.title, user.get_full_name() if include_first_name else user.last_name)
     else:
         return user.get_full_name()
 

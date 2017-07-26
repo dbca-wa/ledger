@@ -276,7 +276,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     def clean(self):
         super(EmailUser, self).clean()
 
-        if self.dob < date(1900, 1, 1):
+        if (self.dob and self.dob < date(1900, 1, 1)):
             raise ValidationError({'dob': 'Date of birth cannot be before 01/01/1900'})
 
         self.email = self.email.lower() if self.email else self.email
@@ -289,16 +289,16 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         super(EmailUser, self).save(*args, **kwargs)
 
     def get_full_name(self):
-        full_name = '{} {}'.format(self.first_name, self.last_name)
+        full_name = u'{} {}'.format(self.first_name,self.last_name)
         return full_name.strip()
 
     def get_full_name_dob(self):
-        full_name_dob = '{} {} ({})'.format(self.first_name, self.last_name, self.dob.strftime('%d/%m/%Y'))
+        full_name_dob = u'{} {} ({})'.format(self.first_name,self.last_name, self.dob.strftime('%d/%m/%Y'))
         return full_name_dob.strip()
 
     def get_short_name(self):
         if self.first_name:
-            return self.first_name.split(' ')[0]
+            return self.first_name.encode('utf-8').split(' ')[0]
         return self.email
 
     dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"

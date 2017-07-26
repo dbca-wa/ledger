@@ -56,7 +56,6 @@ def get_all_assessors():
 def get_user_assessor_groups(user):
     return user.assessorgroup_set.all()
 
-
 def render_user_name(user, first_name_first=True):
     """
     Last name, Given name(s) or Last name, Given name(s) or just email if there are no given or last name
@@ -67,7 +66,7 @@ def render_user_name(user, first_name_first=True):
     result = ''
     if user is not None:
         if user.last_name or user.first_name:
-            format_ = '{first} {last}' if first_name_first else '{last}, {first}'
+            format_ = u'{first} {last}' if first_name_first else '{last}, {first}'
             result = format_.format(
                 first=user.first_name,
                 last=user.last_name

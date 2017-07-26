@@ -280,7 +280,7 @@ class ApplicationUserAction(UserAction):
         return cls.objects.create(
             application=application,
             who=user,
-            what=str(action)
+            what=u'{}'.format(action)
         )
 
     application = models.ForeignKey(Application)
