@@ -434,15 +434,19 @@ export default {
                     "url": helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/action_log'),
                     "dataSrc": '',
                 },
+                order: [],
                 columns:[
                     {
                         data:"who",
+                        orderable: false
                     },
                     {
                         data:"what",
+                        orderable: false
                     },
                     {
                         data:"when",
+                        orderable: false,
                         mRender:function(data,type,full){
                             return moment(data).format(vm.DATE_TIME_FORMAT)
                         }

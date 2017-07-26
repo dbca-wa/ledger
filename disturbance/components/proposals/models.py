@@ -738,6 +738,7 @@ class ProposalUserAction(UserAction):
 
     class Meta:
         app_label = 'disturbance'
+        ordering = ('-when',)
 
     @classmethod
     def log_action(cls, proposal, action, user):
