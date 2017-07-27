@@ -289,7 +289,7 @@ export default {
             // - global JS var 'parkstayGroundId'
             // - '1'
             parkstayGroundId: parseInt(getQueryParam('site_id', global.parkstayGroundId || '1')),
-            parkstayGroundRatisId: parseInt(getQueryParam('ratis_id', '0')),
+            parkstayGroundRatisId: parseInt(getQueryParam('parkstay_site_id', '0')),
             days: 5,
             numAdults: parseInt(getQueryParam('num_adult', 2)),
             numChildren: parseInt(getQueryParam('num_children', 0)),
