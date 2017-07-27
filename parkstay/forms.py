@@ -22,7 +22,7 @@ VehicleInfoFormset = forms.formset_factory(VehicleInfoForm, extra=1, max_num=8)
 
 
 class MakeBookingsForm(forms.Form):
-    num_adult = forms.IntegerField(min_value=0, max_value=16, label="Adults")
+    num_adult = forms.IntegerField(min_value=0, max_value=16, label="Adults (non-concessions)")
     num_child = forms.IntegerField(min_value=0, max_value=16, label="Children (ages 6-15)")
     num_concession = forms.IntegerField(min_value=0, max_value=16, label="Concessions")
     num_infant = forms.IntegerField(min_value=0, max_value=16, label="Infants (ages 0-5)")

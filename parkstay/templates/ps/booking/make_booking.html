@@ -43,9 +43,10 @@
                         <div class="col-md-12">
                             <p v-cloak>
                             {% verbatim %}
-                                <b>Your temporary reservation expires in {{ timeleft }}.</b> 
+                                <b>Time left to complete booking {{ timeleft }}.</b> 
                             {% endverbatim %}
-                                <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel</a>
+                                <a class="btn btn-info" href="{% url 'public_abort_booking' %}?change=true">Change in-progress booking</a>
+                                <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel in-progress booking</a>
                             </p>
                             {% if show_errors %}
                             <div class="alert alert-danger">
@@ -66,7 +67,7 @@
                                 </ul>
                             </div>
                             {% endif %}
-                            <h3 class="text-primary">Booking information</h3>
+                            <h3 class="text-primary">Booking for</h3>
                         </div>
                         <div class="col-md-2">
                               <img alt="campground"  class="img-thumbnail img-responsive" src="{{ booking.campground.first_image.image.url }}">

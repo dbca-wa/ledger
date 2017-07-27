@@ -2,6 +2,7 @@
 from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from django.core.urlresolvers import reverse
 from django.views.generic.base import View, TemplateView
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
@@ -45,7 +46,7 @@ class CampsiteAvailabilitySelector(TemplateView):
     def get(self, request, *args, **kwargs):
         # if page is called with ratis_id, inject the ground_id
         context = {}
-        ratis_id = request.GET.get('ratis_id', None)
+        ratis_id = request.GET.get('parkstay_site_id', None)
         if ratis_id:
             cg = Campground.objects.filter(ratis_id=ratis_id)
             if cg.exists():
@@ -102,12 +103,21 @@ class DashboardView(UserPassesTestMixin, TemplateView):
 
 def abort_booking_view(request, *args, **kwargs):
     try:
+        change = bool(request.GET.get('change',False))
         booking = utils.get_session_booking(request.session)
+        c_id = booking.campground.id
         # only ever delete a booking object if it's marked as temporary
         if booking.booking_type == 3:
             booking.delete()
         utils.delete_session_booking(request.session)
+        if change:
+            # Redirect to the availability screen
+            return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
+        else:
+            # Redirect to explore parks
+            return redirect(settings.EXPLORE_PARKS_URL+'/park-stay')
     except Exception as e:
+        print e
         pass
     return redirect('public_make_booking')
 
