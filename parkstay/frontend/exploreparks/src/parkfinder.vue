@@ -480,7 +480,7 @@ export default {
             sitesAltIcon: require('./assets/pin_alt.svg'),
             locationIcon: require('./assets/location.svg'),
             paginate: ['filterResults'],
-            selectedfFeature: null
+            selectedFeature: null
         }
     },
     computed: {
