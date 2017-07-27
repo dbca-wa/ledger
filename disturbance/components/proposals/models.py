@@ -196,7 +196,7 @@ class Proposal(RevisionedMixin):
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
-    proposed_issuance_approval = JSONField(blank=False, null=False)
+    proposed_issuance_approval = JSONField(blank=False, null=True)
     #hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
 
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
