@@ -117,7 +117,6 @@ def abort_booking_view(request, *args, **kwargs):
             # Redirect to explore parks
             return redirect(settings.EXPLORE_PARKS_URL+'/park-stay')
     except Exception as e:
-        print e
         pass
     return redirect('public_make_booking')
 
