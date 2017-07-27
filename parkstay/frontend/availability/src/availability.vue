@@ -33,7 +33,10 @@
             <div class="columns small-12 medium-12 large-12">
                 <div class="clearfix">
                     <a type="button" :href="parkstayUrl+'/booking'" class="button float-right warning continueBooking">
-                        Continue with your current booking
+                        Complete in-progress booking
+                    </a>
+                    <a type="button" :href="parkstayUrl+'/booking/abort?change=true'" class="button float-right warning continueBooking">
+                        Cancel in-progress booking
                     </a>
                 </div>
             </div>
@@ -73,7 +76,7 @@
                 <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
                     <div class="row">
                         <div class="small-6 columns">
-                            <label for="num_adults" class="text-right">Adults</label>
+                            <label for="num_adults" class="text-right">Adults (non-concessions)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="numAdults" name="num_adults" @change="update()" v-model="numAdults" min="0" max="16"/>
                         </div>
@@ -289,7 +292,7 @@ export default {
             // - global JS var 'parkstayGroundId'
             // - '1'
             parkstayGroundId: parseInt(getQueryParam('site_id', global.parkstayGroundId || '1')),
-            parkstayGroundRatisId: parseInt(getQueryParam('ratis_id', '0')),
+            parkstayGroundRatisId: parseInt(getQueryParam('parkstay_site_id', '0')),
             days: 5,
             numAdults: parseInt(getQueryParam('num_adult', 2)),
             numChildren: parseInt(getQueryParam('num_children', 0)),

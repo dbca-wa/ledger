@@ -20,7 +20,7 @@
                         <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
                             <div class="row">
                                 <div class="small-6 columns">
-                                    <label for="num_adults" class="text-right">Adults<label>
+                                    <label for="num_adults" class="text-right">Adults (non-concessions)<label>
                                 </div><div class="small-6 columns">
                                     <input type="number" id="numAdults" name="num_adults" v-model="numAdults" min="0" max="16"/></label>
                                 </div>
@@ -479,7 +479,8 @@ export default {
             sitesInPersonIcon: require('./assets/pin_offline.svg'),
             sitesAltIcon: require('./assets/pin_alt.svg'),
             locationIcon: require('./assets/location.svg'),
-            paginate: ['filterResults']
+            paginate: ['filterResults'],
+            selectedFeature: null
         }
     },
     computed: {
@@ -637,6 +638,36 @@ export default {
             })
 
         },
+        refreshPopup: function(){
+            let vm = this;
+            let feature = vm.selectedFeature;
+            if (feature != null){
+                vm.popup.setPosition(feature.getGeometry().getCoordinates());
+                // really want to make vue.js render this, except reactivity dies
+                // when you pass control of the popup element to OpenLayers :(
+                $("#mapPopupName")[0].innerHTML = feature.get('name');
+                if (feature.get('images')) {
+                    // console.log(feature.get('images')[0].image);
+                    $("#mapPopupImage").attr('src', feature.get('images')[0].image);
+                    $("#mapPopupImage").show();
+                } else {
+                    $("#mapPopupImage").hide();
+                }
+                if (feature.get('price_hint') && Number(feature.get('price_hint'))) {
+                    $("#mapPopupPrice")[0].innerHTML = '<small>From $' + feature.get('price_hint') + ' per night</small>';
+                } else {
+                    $("#mapPopupPrice")[0].innerHTML = '';
+                }
+                $("#mapPopupDescription")[0].innerHTML = feature.get('description');
+                $("#mapPopupInfo").attr('href', feature.get('info_url'));
+                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                if (feature.get('campground_type') == 0) {
+                    $("#mapPopupBook").show();
+                } else {
+                    $("#mapPopupBook").hide();
+                }
+            }
+        },
         groundFilter: function(feature) {
             return true;
         },
@@ -698,6 +729,7 @@ export default {
         },
         reload: debounce(function () {
             this.groundsSource.loadSource();
+            this.refreshPopup();
         }, 250),
         updateFilter: function() {
             var vm = this;
@@ -990,6 +1022,7 @@ export default {
 
         $('#mapPopupClose').on('click', function(ev) {
             vm.popup.setPosition(undefined);
+            vm.selectedFeature = null;
             return false;
         });
         this.popupContent = document.getElementById('mapPopupContent');
@@ -1080,6 +1113,7 @@ export default {
         // another loop to spawn the popup on click
         this.olmap.on('singleclick', function(ev) {
             var result = ev.map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
+                vm.selectedFeature = feature;
                 vm.popup.setPosition(feature.getGeometry().getCoordinates());
                 // really want to make vue.js render this, except reactivity dies
                 // when you pass control of the popup element to OpenLayers :(
