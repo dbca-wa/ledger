@@ -11,6 +11,7 @@ INSTALLED_APPS += [
     'disturbance.components.organisations',
     'disturbance.components.users',
     'disturbance.components.proposals',
+    'disturbance.components.approvals',
     'taggit',
     'rest_framework',
     'rest_framework_gis'
@@ -57,3 +58,12 @@ DEV_STATIC_URL = env('DEV_STATIC_URL')
 if DEV_STATIC and not DEV_STATIC_URL:
     raise ImproperlyConfigured('If running in DEV_STATIC, DEV_STATIC_URL has to be set')
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None 
+
+# Department details
+VIA_EMAIL = env('VIA_EMAIL','via@dbca.wa.gov.au')
+DEP_URL = env('DEP_URL','www.dbca.wa.gov.au')
+DEP_PHONE = env('DEP_PHONE','(08) 9219 9831')
+DEP_FAX = env('DEP_FAX','(08) 9423 8242')
+DEP_POSTAL = env('DEP_POSTAL','Locked Bag 104, Bentley Delivery Centre, Western Australia 6983')
+DEP_NAME = env('DEP_NAME','Department of Biodiversity,Conservation and Attractions')
+SITE_URL = env('SITE_URL','https://via-uat.dpaw.wa.gov.au')

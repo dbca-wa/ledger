@@ -196,7 +196,7 @@ class Proposal(RevisionedMixin):
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
-    proposed_issuance_approval = JSONField(blank=False, null=True)
+    proposed_issuance_approval = JSONField(blank=True, null=True)
     #hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
 
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
@@ -232,6 +232,7 @@ class Proposal(RevisionedMixin):
     activity = models.CharField(max_length=255,null=True,blank=True)
     region = models.CharField(max_length=255,null=True,blank=True)
     title = models.CharField(max_length=255,null=True,blank=True)
+    tenure = models.CharField(max_length=255,null=True,blank=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -330,6 +331,21 @@ class Proposal(RevisionedMixin):
  
         return default_group
 
+    def __check_proposal_filled_out(self):
+        if not self.data:
+            raise exceptions.ProposalNotComplete()
+        missing_fields = []
+        required_fields = {
+            'region':'Region/District',
+            'title': 'Title',
+            'activity': 'Activity'
+        }
+        for k,v in required_fields.items():
+            val = getattr(self,k)
+            if not val:
+                missing_fields.append(v)
+        return missing_fields
+
     def can_assess(self,user):
         if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
             return self.__assessor_group() in user.proposalassessorgroup_set.all()
@@ -354,9 +370,17 @@ class Proposal(RevisionedMixin):
     def log_user_action(self, action, request):
         return ProposalUserAction.log_action(self, action, request.user)
 
-    def submit(self,request):
+    def submit(self,request,viewset):
+        from disturbance.components.proposals.utils import save_proponent_data 
         with transaction.atomic():
             if self.can_user_edit:
+                # Save the data first
+                save_proponent_data(self,request,viewset)
+                # Check if the special fields have been completed
+                missing_fields = self.__check_proposal_filled_out()
+                if missing_fields:
+                    error_text = 'The proposal has these missing fields, {}'.format(','.join(missing_fields))
+                    raise exceptions.ProposalMissingFields(detail=error_text)
                 self.processing_status = 'with_assessor'
                 self.customer_status = 'with_assessor'
                 self.submitter = request.user
@@ -560,6 +584,35 @@ class Proposal(RevisionedMixin):
                 self.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
                 # Log entry for organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
+
+                # TODO if it is an ammendment proposal then check appropriately
+                checking_proposal = self
+                approval,created = Approval.objects.update_or_create(
+                    current_proposal = checking_proposal,
+                    defaults = {
+                        activity : self.activity,
+                        region : self.region, 
+                        tenure : self.tenure, 
+                        title : self.title,
+                        issue_date : timezone.now(),
+                        expiry_date : self.proposed_issuance_approval.get('expiry_date'),
+                        start_date : self.proposed_issuance_approval.get('start_date'),
+                        applicant : self.applicant 
+                        #extracted_fields = JSONField(blank=True, null=True)
+                    }
+                )
+                if created:
+                    # Log creation
+                    # Generate the document
+                    approval.generate_doc()
+                    # send the doc and log in approval and org
+                else:
+                    # Log update
+                    approval.replaced_by = request.user
+                    # Generate the document
+                    approval.generate_doc()
+                    # send the doc and log in approval and org
+        
             except:
                 raise
 
@@ -583,19 +636,6 @@ class ProposalRequest(models.Model):
 
     class Meta:
         app_label = 'disturbance'
-
-class IDRequest(ProposalRequest):
-    REASON_CHOICES = (('missing', 'There is currently no Photographic Identification uploaded'),
-                      ('expired', 'The current identification has expired'),
-                      ('not_recognised',
-                       'The current identification is not recognised by the Department of Parks and Wildlife'),
-                      ('illegible', 'The current identification image is of poor quality and cannot be made out.'),
-                      ('other', 'Other'))
-    reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
-
-    class Meta:
-        app_label = 'disturbance'
-
 
 class ComplianceRequest(ProposalRequest):
     REASON_CHOICES = (('outstanding', 'There are currently outstanding returns for the previous licence'),
@@ -670,36 +710,6 @@ class ProposalRequirement(OrderedModel):
     @property
     def requirement(self):
         return self.standard_requirement.text if self.standard else self.free_requirement
-
-@python_2_unicode_compatible
-class DisturbanceLicence(Licence):
-    MONTH_FREQUENCY_CHOICES = [(-1, 'One off'), (1, 'Monthly'), (3, 'Quarterly'), (6, 'Twice-Yearly'), (12, 'Yearly')]
-    DEFAULT_FREQUENCY = MONTH_FREQUENCY_CHOICES[0][0]
-
-    proposal = models.ForeignKey(Proposal, on_delete=models.PROTECT, related_name='licences')
-    purpose = models.TextField(blank=True)
-    additional_information = models.TextField(blank=True)
-    licence_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='licence_document')
-    cover_letter_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='cover_letter_document')
-    compliance_frequency = models.IntegerField(choices=MONTH_FREQUENCY_CHOICES, default=DEFAULT_FREQUENCY)
-    replaced_by = models.ForeignKey('self', blank=True, null=True)
-    regions = models.ManyToManyField(Region, blank=False)
-    renewal_sent = models.BooleanField(default=False)
-    extracted_fields = JSONField(blank=True, null=True)
-
-    class Meta:
-        app_label = 'disturbance'
-
-    def __str__(self):
-        return self.reference
-
-    @property
-    def reference(self):
-        return '{}-{}'.format(self.licence_number, self.licence_sequence)
-
-    @property
-    def is_issued(self):
-        return self.licence_number is not None and len(self.licence_number) > 0
 
 class ProposalUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"

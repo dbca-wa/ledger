@@ -15,3 +15,13 @@ class ReferralCanNotSend(PermissionDenied):
 class ProposalReferralCannotBeSent(PermissionDenied):
     default_detail = 'Referrals can only be sent if it is in the right processing status'
     default_code = 'proposal_referral_cannot_be_sent'
+
+class ProposalNotComplete(APIException):
+    status_code = 400
+    default_detail = 'The proposal is not complete'
+    default_code = 'proposal_incoplete'
+
+class ProposalMissingFields(APIException):
+    status_code = 400
+    default_detail = 'The proposal has missing required fields'
+    default_code = 'proposal_missing_fields'

@@ -75,15 +75,19 @@ export default {
             showCancelButton: true,
             confirmButtonText: 'Submit'
         }).then(() => {
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit')).then(res => {
+            let formData = new FormData(vm.form);
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
                 vm.proposal = res.body;
                 vm.$router.push({
                     name: 'submit_proposal',
                     params: { proposal: vm.proposal} 
                 });
-            },
-            err => {
-              console.log(err);
+            },err=>{
+                swal(
+                    'Submit Error',
+                    helpers.apiVueResourceError(err),
+                    'error'
+                )
             });
         },(error) => {
         });

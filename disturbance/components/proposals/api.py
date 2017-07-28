@@ -28,7 +28,7 @@ from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from disturbance import utils
 from datetime import datetime, timedelta, date
-from disturbance.utils import create_data_from_form
+from disturbance.components.proposals.utils import save_proponent_data,save_assessor_data
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from disturbance.components.main.models import Document
@@ -152,12 +152,25 @@ class ProposalViewSet(viewsets.ModelViewSet):
         serializer = InternalProposalSerializer(instance,context={'request':request})
         return Response(serializer.data)
 
-    @detail_route(methods=['GET',])
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.submit(request)
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        try:
+            instance = self.get_object()
+            instance.submit(request,self)
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET',])
     def assign_request_user(self, request, *args, **kwargs):
@@ -351,62 +364,25 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
     def draft(self, request, *args, **kwargs):
-        with transaction.atomic():
-            try:
-                instance = self.get_object()
-                lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
-                extracted_fields,special_fields = create_data_from_form(
-                    instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
-                instance.data = extracted_fields
-                data = {
-                    'region': special_fields.get('isRegionColumnForDashboard',None),
-                    'title': special_fields.get('isTitleColumnForDashboard',None),
-                    'activity': special_fields.get('isActivityColumnForDashboard',None),
-                    'data': extracted_fields,
-                    'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
-                }
-                serializer = SaveProposalSerializer(instance, data, partial=True)
-                serializer.is_valid(raise_exception=True)
-                self.perform_update(serializer)
-                # Save Documents
-                for f in request.FILES:
-                    try:
-                        #document = instance.documents.get(name=str(request.FILES[f]))
-                        document = instance.documents.get(input_name=f)
-                    except ProposalDocument.DoesNotExist:
-                        document = instance.documents.get_or_create(input_name=f)[0]
-                    document.name = str(request.FILES[f])
-                    if document._file and os.path.isfile(document._file.path):
-                        os.remove(document._file.path)
-                    document._file = request.FILES[f]
-                    document.save()
-                # End Save Documents
-                return redirect(reverse('external'))
-            except serializers.ValidationError:
-                print(traceback.print_exc())
-                raise
-            except ValidationError as e:
-                raise serializers.ValidationError(repr(e.error_dict))
-            except Exception as e:
-                print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+        try:
+            instance = self.get_object()
+            save_proponent_data(instance,request,self)
+            return redirect(reverse('external'))
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+        raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
     def assessor_save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
-            extracted_fields,special_fields,assessor_data = create_data_from_form(
-                instance.schema, request.POST, request.FILES,special_fields=lookable_fields,assessor_data=True)
-            instance.data = extracted_fields
-            data = {
-                'data': extracted_fields,
-                'assessor_data': assessor_data,
-            }
-            serializer = SaveProposalSerializer(instance, data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
+            save_assessor_data(instance,request,self)
             return redirect(reverse('external'))
         except serializers.ValidationError:
             print(traceback.print_exc())

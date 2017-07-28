@@ -1,6 +1,9 @@
 import re
+from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
+from disturbance.components.proposals.models import ProposalDocument
+from disturbance.components.proposals.serializers import SaveProposalSerializer
 import traceback
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
@@ -212,3 +215,66 @@ class SpecialFieldsSearch(object):
             item_data[item['name']] = item_data_list
         return item_data
 
+
+def save_proponent_data(instance,request,viewset):
+    with transaction.atomic():
+        try:
+            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
+            extracted_fields,special_fields = create_data_from_form(
+                instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
+            instance.data = extracted_fields
+            data = {
+                'region': special_fields.get('isRegionColumnForDashboard',None),
+                'title': special_fields.get('isTitleColumnForDashboard',None),
+                'activity': special_fields.get('isActivityColumnForDashboard',None),
+                'data': extracted_fields,
+                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
+                'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
+            }
+            serializer = SaveProposalSerializer(instance, data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            viewset.perform_update(serializer)
+            # Save Documents
+            for f in request.FILES:
+                try:
+                    #document = instance.documents.get(name=str(request.FILES[f]))
+                    document = instance.documents.get(input_name=f)
+                except ProposalDocument.DoesNotExist:
+                    document = instance.documents.get_or_create(input_name=f)[0]
+                document.name = str(request.FILES[f])
+                if document._file and os.path.isfile(document._file.path):
+                    os.remove(document._file.path)
+                document._file = request.FILES[f]
+                document.save()
+            # End Save Documents
+        except:
+            raise
+
+def save_assessor_data(instance,request,viewset):
+    with transaction.atomic():
+        try:
+            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
+            extracted_fields,special_fields,assessor_data = create_data_from_form(
+                instance.schema, request.POST, request.FILES,special_fields=lookable_fields,assessor_data=True)
+            data = {
+                'data': extracted_fields,
+                'assessor_data': assessor_data,
+            }
+            serializer = SaveProposalSerializer(instance, data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            viewset.perform_update(serializer)
+            # Save Documents
+            for f in request.FILES:
+                try:
+                    #document = instance.documents.get(name=str(request.FILES[f]))
+                    document = instance.documents.get(input_name=f)
+                except ProposalDocument.DoesNotExist:
+                    document = instance.documents.get_or_create(input_name=f)[0]
+                document.name = str(request.FILES[f])
+                if document._file and os.path.isfile(document._file.path):
+                    os.remove(document._file.path)
+                document._file = request.FILES[f]
+                document.save()
+            # End Save Documents
+        except:
+            raise
