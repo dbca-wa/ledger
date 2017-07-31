@@ -9,6 +9,7 @@ from disturbance.components.proposals import views as proposal_views
 from disturbance.components.users import api as users_api
 from disturbance.components.organisations import api as org_api
 from disturbance.components.proposals import api as proposal_api
+from disturbance.components.approvals import api as approval_api
 
 from ledger.urls import urlpatterns as ledger_patterns
 
@@ -17,6 +18,7 @@ router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
 router.register(r'proposal',proposal_api.ProposalViewSet)
 router.register(r'referrals',proposal_api.ReferralViewSet)
+router.register(r'approvals',approval_api.ApprovalViewSet)
 router.register(r'proposal_requirements',proposal_api.ProposalRequirementViewSet)
 router.register(r'proposal_standard_requirements',proposal_api.ProposalStandardRequirementViewSet)
 router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)

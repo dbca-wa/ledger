@@ -10,6 +10,7 @@ module.exports = {
     countries: "https://restcountries.eu/rest/v1/?fullText=true",
     proposal_type:"/api/proposal_type",
     proposals:"/api/proposal.json",
+    approvals:"/api/approvals.json",
     referrals:"/api/referrals.json",
     proposal_standard_requirements:"/api/proposal_standard_requirements.json",
     proposal_requirements:"/api/proposal_requirements.json",

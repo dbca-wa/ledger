@@ -4,7 +4,7 @@
             <div class="col-md-12 alert alert-success" v-if="proposal.processing_status == 'Approved'">
                 <p>The approval has been issued and has been emailed to {{proposal.applicant.name}}</p>
                 <p>Expiry date: {{proposal.proposed_issuance_approval.expiry_date}}
-                <p>Permit: permit.pdf</p>
+                <p>Permit: <a target="_blank" :href="proposal.permit">permit.pdf</a></p>
             </div>
             <div v-else class="col-md-12 alert alert-warning">
                 <p>The proposal was declined. The decision was emailed to {{proposal.applicant.name}}</p>
@@ -45,16 +45,21 @@
                             <div class="col-sm-12">
                                 <template v-if="!proposal.proposed_decline_status">
                                     <template v-if="isFinalised">
+                                        <p><strong>Decision: Issue</strong></p>
+                                        <p><strong>Start date: {{proposal.proposed_issuance_approval.start_date}}</strong></p>
                                         <p><strong>Expiry date: {{proposal.proposed_issuance_approval.expiry_date}}</strong></p>
+                                        <p><strong>CC emails: {{proposal.proposed_issuance_approval.cc_email}}</strong></p>
                                     </template>
                                     <template v-else>
                                         <p><strong>Proposed decision: Issue</strong></p>
+                                        <p><strong>Proposed start date: {{proposal.proposed_issuance_approval.start_date}}</strong></p>
                                         <p><strong>Proposed expiry date: {{proposal.proposed_issuance_approval.expiry_date}}</strong></p>
                                         <p><strong>Proposed cc emails: {{proposal.proposed_issuance_approval.cc_email}}</strong></p>
                                     </template>
                                 </template>
                                 <template v-else>
-                                    <strong>Proposed decision: Decline</strong>
+                                    <strong v-if="!isFinalised">Proposed decision: Decline</strong>
+                                    <strong v-else>Decision: Decline</strong>
                                 </template>
                             </div>
                         </div> 

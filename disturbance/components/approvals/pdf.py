@@ -13,7 +13,7 @@ from reportlab.lib.colors import HexColor
 from django.core.files import File
 from django.conf import settings
 
-from ledger.accounts.models import Document
+from disturbance.components.approvals.models import ApprovalDocument
 
 BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
                                    'bw_dpaw_header_logo.png')
@@ -91,7 +91,7 @@ def _create_approval_header(canvas, doc, draw_page_number=True):
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN
 
-    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, '{}'.format(settings.DEP_NAME.upper())
+    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, '{}'.format(settings.DEP_NAME.upper()))
 
     current_y -= 30
 
@@ -142,7 +142,7 @@ def _create_approval_header(canvas, doc, draw_page_number=True):
 
     if hasattr(doc, 'approval'):
         canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2,
-                          '{}' % (doc.approval.id))
+                          '{}'.format(doc.approval.id))
 
 def _create_approval(approval_buffer, approval, proposal):
     site_url = settings.SITE_URL
@@ -160,24 +160,22 @@ def _create_approval(approval_buffer, approval, proposal):
 
     elements = []
 
-    elements.append(Paragraph(approval.approval_type.act, styles['InfoTitleLargeCenter']))
-    elements.append(Paragraph(approval.approval_type.code.upper(), styles['InfoTitleLargeCenter']))
 
     title = approval.title.encode('UTF-8')
 
     elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
     elements.append(Paragraph(approval.activity, styles['InfoTitleLargeLeft']))
-    elements.append(Paragraph(approval.regions, styles['InfoTitleLargeLeft']))
+    elements.append(Paragraph(approval.region, styles['InfoTitleLargeLeft']))
     elements.append(Paragraph(approval.tenure if approval.tenure else '', styles['InfoTitleLargeRight']))
 
     # proposal requirements 
-    if proposal.conditions.exists():
+    if proposal.requirements.exists():
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('Requirements', styles['BoldLeft']))
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         conditionList = ListFlowable(
-            [Paragraph(a.condition.text, styles['Left']) for a in proposal.requirements.order_by('order')],
+            [Paragraph(a.requirement, styles['Left']) for a in proposal.requirements.order_by('order')],
             bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
         elements.append(conditionList)
     
@@ -213,7 +211,7 @@ def _create_approval(approval_buffer, approval, proposal):
 
     # proponent details
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    address = proposal.applicant_profile.postal_address
+    address = proposal.applicant.organisation.postal_address
     address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
                           Paragraph(address.line3, styles['Left']),
                           Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
@@ -250,27 +248,10 @@ def _layout_extracted_fields(extracted_fields):
         return False
 
     # information extracted from application
-    for field in extracted_fields:
-        if 'children' not in field:
-            if 'data' in field and field['data']:
-                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-                elements.append(Paragraph(field['label'], styles['BoldLeft']))
-
-                if field['help_text']:
-                    elements.append(Paragraph(field['help_text'], styles['ItalicLeft']))
-
-                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-                if field['type'] in ['text', 'text_area']:
-                    elements += _layout_paragraphs(field['data'])
-                elif field['type'] in ['radiobuttons', 'select']:
-                    elements.append(Paragraph(dict([i.values() for i in field['options']]).
-                                              get(field['data'], 'Not Specified'), styles['Left']))
-                else:
-                    elements.append(Paragraph(field['data'], styles['Left']))
-
-            elif field['type'] == 'label':
-                if any([option.get('data', 'off') == 'on' for option in field['options']]):
+    if extracted_fields:
+        for field in extracted_fields:
+            if 'children' not in field:
+                if 'data' in field and field['data']:
                     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
                     elements.append(Paragraph(field['label'], styles['BoldLeft']))
 
@@ -279,58 +260,76 @@ def _layout_extracted_fields(extracted_fields):
 
                     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-                    elements.append(Paragraph(', '.join([option['label'] for option in field['options']
-                                                        if option.get('data', 'off') == 'on']),
-                                    styles['Left']))
-        else:
-            if not __children_have_data(field):
-                continue
-
-            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-            elements.append(Paragraph(field['label'], styles['BoldLeft']))
-
-            if field['help_text']:
-                elements.append(Paragraph(field['help_text'], styles['ItalicLeft']))
-
-            table_data = []
-            for index, group in enumerate(field['children']):
-                if index == 0:
-                    heading_row = []
-                    for child_field in group:
-                        heading_row.append(Paragraph(child_field['label'], styles['BoldLeft']))
-                    if heading_row:
-                        table_data.append(heading_row)
-
-                row = []
-                for child_field in group:
-                    if child_field['type'] in ['radiobuttons', 'select']:
-                        row.append(Paragraph(dict([i.values() for i in child_field['options']]).
-                                             get(child_field['data'], 'Not Specified'), styles['Left']))
-                    elif child_field['type'] == 'label':
-                        if any([option.get('data', 'off') == 'on' for option in child_field['options']]):
-                            row.append(Paragraph(', '.join([option['label'] for option in child_field['options']
-                                                            if option.get('data', 'off') == 'on']),
-                                                 styles['Left']))
-                        else:
-                            row.append(Paragraph('Not Specified', styles['Left']))
+                    if field['type'] in ['text', 'text_area']:
+                        elements += _layout_paragraphs(field['data'])
+                    elif field['type'] in ['radiobuttons', 'select']:
+                        elements.append(Paragraph(dict([i.values() for i in field['options']]).
+                                                  get(field['data'], 'Not Specified'), styles['Left']))
                     else:
-                        row.append(Paragraph(child_field['data'], styles['Left']))
+                        elements.append(Paragraph(field['data'], styles['Left']))
 
-                if row:
-                    table_data.append(row)
+                elif field['type'] == 'label':
+                    if any([option.get('data', 'off') == 'on' for option in field['options']]):
+                        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+                        elements.append(Paragraph(field['label'], styles['BoldLeft']))
 
-            if table_data:
-                elements.append(Table(table_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
+                        if field['help_text']:
+                            elements.append(Paragraph(field['help_text'], styles['ItalicLeft']))
+
+                        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+                        elements.append(Paragraph(', '.join([option['label'] for option in field['options']
+                                                            if option.get('data', 'off') == 'on']),
+                                        styles['Left']))
+            else:
+                if not __children_have_data(field):
+                    continue
+
+                elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+                elements.append(Paragraph(field['label'], styles['BoldLeft']))
+
+                if field['help_text']:
+                    elements.append(Paragraph(field['help_text'], styles['ItalicLeft']))
+
+                table_data = []
+                for index, group in enumerate(field['children']):
+                    if index == 0:
+                        heading_row = []
+                        for child_field in group:
+                            heading_row.append(Paragraph(child_field['label'], styles['BoldLeft']))
+                        if heading_row:
+                            table_data.append(heading_row)
+
+                    row = []
+                    for child_field in group:
+                        if child_field['type'] in ['radiobuttons', 'select']:
+                            row.append(Paragraph(dict([i.values() for i in child_field['options']]).
+                                                 get(child_field['data'], 'Not Specified'), styles['Left']))
+                        elif child_field['type'] == 'label':
+                            if any([option.get('data', 'off') == 'on' for option in child_field['options']]):
+                                row.append(Paragraph(', '.join([option['label'] for option in child_field['options']
+                                                                if option.get('data', 'off') == 'on']),
+                                                     styles['Left']))
+                            else:
+                                row.append(Paragraph('Not Specified', styles['Left']))
+                        else:
+                            row.append(Paragraph(child_field['data'], styles['Left']))
+
+                    if row:
+                        table_data.append(row)
+
+                if table_data:
+                    elements.append(Table(table_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
 
     return elements
 
 def create_approval_doc(approval,proposal):
     approval_buffer = BytesIO()
 
-    _create_approval(approval_buffer, approval, proposal, approval.original_issue_date)
-
-    document = ApprovalDocument.objects.create(name=filename)
-    document.file.save(filename, File(approval_buffer), save=True)
+    _create_approval(approval_buffer, approval, proposal)
+    filename = 'approval-{}.pdf'.format(approval.id)
+    document = ApprovalDocument.objects.create(approval=approval,name=filename)
+    document._file.save(filename, File(approval_buffer), save=True)
 
     approval_buffer.close()
 
@@ -339,7 +338,7 @@ def create_approval_doc(approval,proposal):
 def create_approval_pdf_bytes(licence, application, site_url, original_issue_date):
     licence_buffer = BytesIO()
 
-    _create_approval(approval_buffer, approval, proposal, approval.original_issue_date)
+    _create_approval(approval_buffer, approval, proposal)
 
     # Get the value of the BytesIO buffer
     value = licence_buffer.getvalue()

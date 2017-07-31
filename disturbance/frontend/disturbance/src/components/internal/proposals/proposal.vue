@@ -646,7 +646,7 @@ export default {
             this.$refs.proposed_decline.isModalOpen = true;
         },
         proposedApproval: function(){
-            this.$refs.proposed_approval.approval = helpers.copyObject(this.proposal.proposed_issuance_approval);
+            this.$refs.proposed_approval.approval = this.proposal.proposed_issuance_approval != null ? helpers.copyObject(this.proposal.proposed_issuance_approval) : this.$refs.proposed_approval.initialiseRequirement();
             this.$refs.proposed_approval.isModalOpen = true;
         },
         issueProposal:function(){

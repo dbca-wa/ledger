@@ -129,7 +129,7 @@ export default {
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region","Activity","Title","Holder","Status","Expiry Date","Approval","Action"],
+            proposal_headers:["Number","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action"],
             proposal_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -145,14 +145,25 @@ export default {
                     {data: "activity"},
                     {data: "title"},
                     {data: "applicant"},
-                    {data: "processing_status"},
+                    {data: "status"},
                     {
-                        data: "lodgement_date",
+                        data: "start_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
-                    {data: "approval"},
+                    {
+                        data: "expiry_date",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                        }
+                    },
+                    {
+                        data: "licence_document",
+                        mRender:function(data,type,full){
+                            return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                        }
+                    },
                     {
                         mRender:function (data,type,full) {
                             let links = '';

@@ -14,7 +14,7 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="start_date" style="width: 70%;">
-                                            <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="approval.start_date">
+                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" v-model="approval.start_date">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
@@ -187,8 +187,7 @@ export default {
             let vm = this;
             vm.validation_form = $(vm.form).validate({
                 rules: {
-                    start_date:"required",
-                    due_date:"required",
+                    approval_cc:"required",
                     approval_details:"required",
                 },
                 messages: {

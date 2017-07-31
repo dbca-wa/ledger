@@ -202,7 +202,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'allowed_assessors',
                 'proposed_issuance_approval',
                 'proposed_decline_status',
-                'proposaldeclineddetails'
+                'proposaldeclineddetails',
+                'permit'
                 )
         read_only_fields=('documents','requirements')
 
@@ -290,7 +291,7 @@ class DTReferralSerializer(serializers.ModelSerializer):
         return EmailUserSerializer(obj.proposal.submitter).data
 
 class ProposalRequirementSerializer(serializers.ModelSerializer):
-    due_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    due_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
     class Meta:
         model = ProposalRequirement
         fields = ('id','due_date','free_requirement','standard_requirement','standard','order','proposal','recurrence','recurrence_schedule','recurrence_pattern','requirement')
@@ -301,10 +302,11 @@ class ProposalStandardRequirementSerializer(serializers.ModelSerializer):
         model = ProposalStandardRequirement
         fields = ('id','code','text')
 
-class PropedApprovalSerializer(serializers.Serializer):
-    expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
+class ProposedApprovalSerializer(serializers.Serializer):
+    expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    start_date = serializers.DateField(input_formats=['%d/%m/%Y'])
     details = serializers.CharField()
-    cc_email = serializers.CharField()
+    cc_email = serializers.CharField(required=False,allow_null=True)
 
 class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()

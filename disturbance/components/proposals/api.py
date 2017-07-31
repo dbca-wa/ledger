@@ -54,7 +54,7 @@ from disturbance.components.proposals.serializers import (
     ReferralProposalSerializer,
     ProposalRequirementSerializer,
     ProposalStandardRequirementSerializer,
-    PropedApprovalSerializer,
+    ProposedApprovalSerializer,
     PropedDeclineSerializer
 )
 
@@ -260,7 +260,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def proposed_approval(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = PropedApprovalSerializer(data=request.data)
+            serializer = ProposedApprovalSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             instance.proposed_approval(request,serializer.validated_data)
             serializer = InternalProposalSerializer(instance,context={'request':request})
@@ -281,7 +281,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def final_approval(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = PropedApprovalSerializer(data=request.data)
+            serializer = ProposedApprovalSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             instance.final_approval(request,serializer.validated_data)
             serializer = InternalProposalSerializer(instance,context={'request':request})

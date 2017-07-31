@@ -22,7 +22,7 @@ from disturbance.components.main.models import CommunicationsLogEntry, UserActio
 
 
 def update_approval_doc_filename(instance, filename):
-    return 'approvals/{}/documents/{}'.format(instance.proposal.id,filename)
+    return 'approvals/{}/documents/{}'.format(instance.id,filename)
 
 class ApprovalDocument(Document):
     approval = models.ForeignKey('Approval',related_name='documents')

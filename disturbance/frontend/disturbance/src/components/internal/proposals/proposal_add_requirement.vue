@@ -44,42 +44,44 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <div class="row">
-                                    <div class="col-sm-3">
-                                        <label class="control-label pull-left"  for="Name">Recurrence</label>
-                                    </div>
-                                    <div class="col-sm-9">
-                                        <label class="checkbox-inline"><input type="checkbox" v-model="requirement.recurrence"></label>
-                                    </div>
-                                </div>
-                            </div>
-                            <template v-if="requirement.recurrence">
+                            <template v-if="validDate">
                                 <div class="form-group">
                                     <div class="row">
                                         <div class="col-sm-3">
-                                            <label class="control-label pull-left"  for="Name">Recurrence pattern</label>
+                                            <label class="control-label pull-left"  for="Name">Recurrence</label>
                                         </div>
                                         <div class="col-sm-9">
-                                            <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="1" v-model="requirement.recurrence_pattern">Weekly</label>
-                                            <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="2" v-model="requirement.recurrence_pattern">Monthly</label>
-                                            <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="3" v-model="requirement.recurrence_pattern">Yearly</label>
+                                            <label class="checkbox-inline"><input type="checkbox" v-model="requirement.recurrence"></label>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <label class="control-label"  for="Name">
-                                                <strong class="pull-left">Recur every</strong> 
-                                                <input class="pull-left" style="width:10%; margin-left:10px;" type="number" name="schedule" v-model="requirement.recurrence_schedule"/> 
-                                                <strong v-if="requirement.recurrence_pattern == '1'" class="pull-left" style="margin-left:10px;">week(s)</strong>
-                                                <strong v-else-if="requirement.recurrence_pattern == '2'" class="pull-left" style="margin-left:10px;">month(s)</strong>
-                                                <strong v-else-if="requirement.recurrence_pattern == '3'" class="pull-left" style="margin-left:10px;">year(s)</strong>
-                                            </label>
+                                <template v-if="requirement.recurrence">
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-sm-3">
+                                                <label class="control-label pull-left"  for="Name">Recurrence pattern</label>
+                                            </div>
+                                            <div class="col-sm-9">
+                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="1" v-model="requirement.recurrence_pattern">Weekly</label>
+                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="2" v-model="requirement.recurrence_pattern">Monthly</label>
+                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="3" v-model="requirement.recurrence_pattern">Yearly</label>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <label class="control-label"  for="Name">
+                                                    <strong class="pull-left">Recur every</strong> 
+                                                    <input class="pull-left" style="width:10%; margin-left:10px;" type="number" name="schedule" v-model="requirement.recurrence_schedule"/> 
+                                                    <strong v-if="requirement.recurrence_pattern == '1'" class="pull-left" style="margin-left:10px;">week(s)</strong>
+                                                    <strong v-else-if="requirement.recurrence_pattern == '2'" class="pull-left" style="margin-left:10px;">month(s)</strong>
+                                                    <strong v-else-if="requirement.recurrence_pattern == '3'" class="pull-left" style="margin-left:10px;">year(s)</strong>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
                             </template>
                         </div>
                     </form>
@@ -127,6 +129,7 @@ export default {
             isModalOpen:false,
             form:null,
             requirement: {
+                due_date: '',
                 standard: true,
                 recurrence: false,
                 recurrence_pattern: '1',
@@ -147,15 +150,41 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
+            validDate: false
         }
     },
     computed: {
         showError: function() {
             var vm = this;
             return vm.errors;
+        },
+        due_date: {
+            cache: false,
+            get(){
+                if (this.requirement.due_date == undefined  || this.requirement.due_date == '' || this.requirement.due_date ==  null){
+                    return '';
+                }
+                else{
+                    return this.requirement.due_date;
+                }
+            }
         }
     },
+    watch: {
+        due_date: function(){
+            this.validDate = moment(this.requirement.due_date,'DD/MM/YYYY').isValid();
+        },
+    },
     methods:{
+        initialiseRequirement: function(){
+            this.requirement = {
+                due_date: '',
+                standard: true,
+                recurrence: false,
+                recurrence_pattern: '1',
+                proposal: vm.proposal_id
+            }
+        },
         ok:function () {
             let vm =this;
             if($(vm.form).valid()){
@@ -196,6 +225,11 @@ export default {
             else{
                 requirement.standard_requirement = '';
                 $(this.$refs.standard_req).val(null).trigger('change');
+            }
+            if (!requirement.due_date){
+                requirement.recurrence = false;
+                delete requirement.recurrence_pattern;
+                requirement.recurrence_schedule ? delete requirement.recurrence_schedule : '';
             }
             if (vm.requirement.id){
                 vm.updatingRequirement = true;
@@ -244,7 +278,6 @@ export default {
                             }
                         }
                     },
-                    due_date:"required",
                     schedule:{
                         required: {
                             depends: function(el){
@@ -287,7 +320,7 @@ export default {
                 if ($(vm.$refs.due_date).data('DateTimePicker').date()) {
                     vm.requirement.due_date =  e.date.format('DD/MM/YYYY');
                 }
-                else if ($(vm.$refs.proposalDateToPicker).data('date') === "") {
+                else if ($(vm.$refs.due_date).data('date') === "") {
                     vm.requirement.due_date = "";
                 }
              });

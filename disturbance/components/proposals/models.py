@@ -224,7 +224,7 @@ class Proposal(RevisionedMixin):
     review_status = models.CharField('Review Status', max_length=30, choices=REVIEW_STATUS_CHOICES,
                                      default=REVIEW_STATUS_CHOICES[0][0])
 
-
+    approval = models.ForeignKey('disturbance.Approval',null=True,blank=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     proposed_decline_status = models.BooleanField(default=False)
@@ -290,6 +290,10 @@ class Proposal(RevisionedMixin):
     @property
     def regions_list(self):
         return self.region.split(',') if self.region else []
+
+    @property
+    def permit(self):
+        return self.approval.licence_document._file.url if self.approval else None
 
     @property
     def allowed_assessors(self):
@@ -551,7 +555,8 @@ class Proposal(RevisionedMixin):
                 if self.processing_status != 'with_assessor_requirements':
                     raise ValidationError('You cannot propose for approval if it is not with assessor for requirements')
                 self.proposed_issuance_approval = {
-                    'expiry_date' : details.get('expiry_date').strftime('%d/%m/%Y') if details.get('expiry_date') else None,
+                    'start_date' : details.get('start_date').strftime('%d/%m/%Y'),
+                    'expiry_date' : details.get('expiry_date').strftime('%d/%m/%Y'),
                     'details': details.get('details'),
                     'cc_email':details.get('cc_email')
                 }
@@ -565,21 +570,25 @@ class Proposal(RevisionedMixin):
                 raise
 
     def final_approval(self,request,details):
+        from disturbance.components.approvals.models import Approval
         with transaction.atomic():
             try:
                 if not self.can_assess(request.user):
                     raise exceptions.ProposalNotAuthorized()
                 if self.processing_status != 'with_approver':
                     raise ValidationError('You cannot issue the approval if it is not with an approver')
+                if not self.applicant.organisation.postal_address:
+                    raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
+
                 self.proposed_issuance_approval = {
-                    'expiry_date' : details.get('expiry_date').strftime('%d/%m/%Y') if details.get('expiry_date') else None,
+                    'start_date' : details.get('start_date').strftime('%d/%m/%Y'),
+                    'expiry_date' : details.get('expiry_date').strftime('%d/%m/%Y'),
                     'details': details.get('details'),
                     'cc_email':details.get('cc_email')
                 }
                 self.proposed_decline_status = False
                 self.processing_status = 'approved'
                 self.customer_status = 'approved'
-                self.save()
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
                 # Log entry for organisation
@@ -590,15 +599,15 @@ class Proposal(RevisionedMixin):
                 approval,created = Approval.objects.update_or_create(
                     current_proposal = checking_proposal,
                     defaults = {
-                        activity : self.activity,
-                        region : self.region, 
-                        tenure : self.tenure, 
-                        title : self.title,
-                        issue_date : timezone.now(),
-                        expiry_date : self.proposed_issuance_approval.get('expiry_date'),
-                        start_date : self.proposed_issuance_approval.get('start_date'),
-                        applicant : self.applicant 
-                        #extracted_fields = JSONField(blank=True, null=True)
+                        'activity' : self.activity,
+                        'region' : self.region, 
+                        'tenure' : self.tenure, 
+                        'title' : self.title,
+                        'issue_date' : timezone.now(),
+                        'expiry_date' : details.get('expiry_date'),
+                        'start_date' : details.get('start_date'),
+                        'applicant' : self.applicant 
+                        #'extracted_fields' = JSONField(blank=True, null=True)
                     }
                 )
                 if created:
@@ -612,6 +621,8 @@ class Proposal(RevisionedMixin):
                     # Generate the document
                     approval.generate_doc()
                     # send the doc and log in approval and org
+                self.approval = approval
+                self.save()
         
             except:
                 raise
@@ -697,7 +708,7 @@ class ProposalRequirement(OrderedModel):
     free_requirement = models.TextField(null=True,blank=True)
     standard = models.BooleanField(default=True)
     proposal = models.ForeignKey(Proposal,related_name='requirements')
-    due_date = models.DateField()
+    due_date = models.DateField(null=True,blank=True)
     recurrence = models.BooleanField(default=False)
     recurrence_pattern = models.SmallIntegerField(choices=RECURRENCE_PATTERNS,default=1)
     recurrence_schedule = models.IntegerField(null=True,blank=True)
