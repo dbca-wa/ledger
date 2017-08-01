@@ -149,7 +149,41 @@ export default {
                     },
                     {data: "region"},
                     {data: "activity"},
-                    {data: "title"},
+                    {
+                        data: "title",
+                        'render': function (value) {
+                            var ellipsis = '...',
+                                truncated = _.truncate(value, {
+                                    length: 30,
+                                    omission: ellipsis,
+                                    separator: ' '
+                                }),
+                                result = '<span>' + truncated + '</span>',
+                                popTemplate = _.template('<a href="#" ' +
+                                    'role="button" ' +
+                                    'data-toggle="popover" ' +
+                                    'data-trigger="click" ' +
+                                    'data-placement="top auto"' +
+                                    'data-html="true" ' +
+                                    'data-content="<%= text %>" ' +
+                                    '>more</a>');
+                            if (_.endsWith(truncated, ellipsis)) {
+                                result += popTemplate({
+                                    text: value
+                                });
+                            }
+
+                            return result;
+                        },
+                        'createdCell': function (cell) {
+                            $(cell).find('[data-toggle="popover"]')
+                                .popover()
+                                .on('click', function (e) {
+                                    e.preventDefault();
+                                    return true;
+                                });
+                        }
+                    },
                     {
                         data: "submitter",
                         mRender:function (data,type,full) {
@@ -261,7 +295,41 @@ export default {
                     },
                     {data: "region"},
                     {data: "activity"},
-                    {data: "title"},
+                    {
+                        data: "title",
+                        'render': function (value) {
+                            var ellipsis = '...',
+                                truncated = _.truncate(value, {
+                                    length: 30,
+                                    omission: ellipsis,
+                                    separator: ' '
+                                }),
+                                result = '<span>' + truncated + '</span>',
+                                popTemplate = _.template('<a href="#" ' +
+                                    'role="button" ' +
+                                    'data-toggle="popover" ' +
+                                    'data-trigger="click" ' +
+                                    'data-placement="top auto"' +
+                                    'data-html="true" ' +
+                                    'data-content="<%= text %>" ' +
+                                    '>more</a>');
+                            if (_.endsWith(truncated, ellipsis)) {
+                                result += popTemplate({
+                                    text: value
+                                });
+                            }
+
+                            return result;
+                        },
+                        'createdCell': function (cell) {
+                            $(cell).find('[data-toggle="popover"]')
+                                .popover()
+                                .on('click', function (e) {
+                                    e.preventDefault();
+                                    return true;
+                                });
+                        }
+                    },
                     {
                         data: "submitter",
                         mRender:function (data,type,full) {

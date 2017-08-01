@@ -80,6 +80,10 @@ module.exports = {
 </script>
 
 <style lang="css">
+    table { table-layout: auto; }
+    td { 
+        word-wrap: break-word;
+    }
     td > a{
         border: none;
         border-radius: 2px;
@@ -98,9 +102,6 @@ module.exports = {
         text-decoration: none;
         background: transparent;
         color: #03a9f4;
-    }
-    td{
-        word-wrap: break-word;
     }
     table.table-bordered.dataTable tbody th, table.table-bordered.dataTable tbody td {
         border-bottom-width: 0;
