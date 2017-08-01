@@ -41,6 +41,15 @@ class ApprovalViewSet(viewsets.ModelViewSet):
     queryset = Approval.objects.all()
     serializer_class = ApprovalSerializer
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset() 
+        # Filter by org
+        org_id = request.GET.get('org_id',None)
+        if org_id:
+            queryset = queryset.filter(applicant_id=org_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
         user_orgs = [org.id for org in request.user.disturbance_organisations.all()];

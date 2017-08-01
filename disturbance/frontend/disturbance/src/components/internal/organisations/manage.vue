@@ -194,7 +194,7 @@
                     </div> 
                     <div :id="oTab" class="tab-pane fade">
                         <ProposalDashTable ref="proposals_table" level='internal' :url='proposals_url'/>
-                        <ApprovalDashTable ref="approvals_table" level='internal' :url='empty_list'/>
+                        <ApprovalDashTable ref="approvals_table" level='internal' :url='approvals_url'/>
                         <ComplianceDashTable ref="compliances_table" level='internal' :url='empty_list'/>
                     </div>
                 </div>
@@ -390,6 +390,7 @@ export default {
             commsTable : null,
             contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
             proposals_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/proposals'),
+            approvals_url: api_endpoints.approvals+'?org_id='+vm.$route.params.org_id,
             contacts_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -486,7 +487,7 @@ export default {
             // Fix the table responsiveness when tab is shown
             $('a[href="#'+vm.oTab+'"]').on('shown.bs.tab', function (e) {
                 vm.$refs.proposals_table.$refs.proposal_datatable.vmDataTable.columns.adjust().responsive.recalc();
-                //vm.$refs.approvals_datatable.$refs.proposals_table.vmDataTable.columns.adjust().responsive.recalc();
+                vm.$refs.approvals_table.$refs.proposal_datatable.vmDataTable.columns.adjust().responsive.recalc();
                 //vm.$refs.compliances_datatable.$refs.proposals_table.vmDataTable.columns.adjust().responsive.recalc();
             });
         },

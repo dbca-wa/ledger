@@ -215,6 +215,8 @@ export default {
                         })
                         vm.approval_status = statusTitles;
                     });
+                    // Fix the table rendering columns
+                    vm.$refs.proposal_datatable.vmDataTable.columns.adjust().responsive.recalc();
                 }
             }
         }
