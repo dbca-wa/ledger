@@ -291,7 +291,7 @@ class DTReferralSerializer(serializers.ModelSerializer):
         return EmailUserSerializer(obj.proposal.submitter).data
 
 class ProposalRequirementSerializer(serializers.ModelSerializer):
-    due_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
+    due_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     class Meta:
         model = ProposalRequirement
         fields = ('id','due_date','free_requirement','standard_requirement','standard','order','proposal','recurrence','recurrence_schedule','recurrence_pattern','requirement')

@@ -227,6 +227,7 @@ export default {
                 $(this.$refs.standard_req).val(null).trigger('change');
             }
             if (!requirement.due_date){
+                requirement.due_date = null;
                 requirement.recurrence = false;
                 delete requirement.recurrence_pattern;
                 requirement.recurrence_schedule ? delete requirement.recurrence_schedule : '';
