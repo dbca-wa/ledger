@@ -33,7 +33,7 @@
                                 <label for="">Status</label>
                                 <select class="form-control" v-model="filterProposalStatus">
                                     <option value="All">All</option>
-                                    <option v-for="s in status" :value="s">{{s}}</option>
+                                    <option v-for="s in proposal_status" :value="s">{{s}}</option>
                                 </select>
                             </div>
                         </div>
@@ -125,24 +125,10 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            external_status:[
-                'Temporary',
-                'Draft',
-                'Under Review',
-                'Approved',
-                'Declined'
-            ],
-            internal_status:[
-                'Temporary',
-                'Draft',
-                'With Assessor',
-                'With Referral',
-                'Issued',
-                'Declined'
-            ],
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
+            proposal_status: [],
             proposal_ex_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Action"],
             proposal_ex_options:{
                 autoWidth: false,
@@ -243,6 +229,15 @@ export default {
                             }
                         });
                         vm.proposal_submitters = submitters;
+                    });
+                    // Grab Status from the data in the table
+                    var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(6);
+                    statusColumn.data().unique().sort().each( function ( d, j ) {
+                        let statusTitles = [];
+                        $.each(d,(index,a) => {
+                            a != null && statusTitles.indexOf(a) < 0 ? statusTitles.push(a): '';
+                        })
+                        vm.proposal_status = statusTitles;
                     });
                 }
             },
@@ -348,6 +343,15 @@ export default {
                         });
                         vm.proposal_submitters = submitters;
                     });
+                    // Grab Status from the data in the table
+                    var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(6);
+                    statusColumn.data().unique().sort().each( function ( d, j ) {
+                        let statusTitles = [];
+                        $.each(d,(index,a) => {
+                            a != null && statusTitles.indexOf(a) < 0 ? statusTitles.push(a): '';
+                        })
+                        vm.proposal_status = statusTitles;
+                    });
                 }
             }
         }
@@ -386,9 +390,6 @@ export default {
         }
     },
     computed: {
-        status: function(){
-            return this.is_external ? this.external_status : this.internal_status;
-        },
         is_external: function(){
             return this.level == 'external';
         },

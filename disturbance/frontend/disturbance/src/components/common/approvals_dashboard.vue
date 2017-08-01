@@ -34,7 +34,7 @@
                                 <label for="">Status</label>
                                 <select class="form-control" v-model="filterProposalStatus">
                                     <option value="All">All</option>
-                                    <option v-for="s in status" :value="s">{{s}}</option>
+                                    <option v-for="s in approval_status" :value="s">{{s}}</option>
                                 </select>
                             </div>
                         </div>
@@ -111,21 +111,7 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            external_status:[
-                'Temporary',
-                'Draft',
-                'Submitted',
-                'Approved',
-                'Declined'
-            ],
-            internal_status:[
-                'Temporary',
-                'Draft',
-                'With Assessor',
-                'With Referral',
-                'Issued',
-                'Declined'
-            ],
+            approval_status:[],
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
@@ -208,6 +194,15 @@ export default {
                         })
                         vm.proposal_activityTitles = activityTitles;
                     });
+                    // Grab Status from the data in the table
+                    var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(5);
+                    statusColumn.data().unique().sort().each( function ( d, j ) {
+                        let statusTitles = [];
+                        $.each(d,(index,a) => {
+                            a != null && statusTitles.indexOf(a) < 0 ? statusTitles.push(a): '';
+                        })
+                        vm.approval_status = statusTitles;
+                    });
                 }
             }
         }
@@ -227,9 +222,9 @@ export default {
         filterProposalStatus: function() {
             let vm = this;
             if (vm.filterProposalStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search(vm.filterProposalStatus).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(5).search(vm.filterProposalStatus).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
             }
         },
         filterProposalRegion: function(){
