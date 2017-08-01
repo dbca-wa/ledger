@@ -602,34 +602,35 @@ class Proposal(RevisionedMixin):
                 # Log entry for organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
 
-                # TODO if it is an ammendment proposal then check appropriately
-                checking_proposal = self
-                approval,created = Approval.objects.update_or_create(
-                    current_proposal = checking_proposal,
-                    defaults = {
-                        'activity' : self.activity,
-                        'region' : self.region, 
-                        'tenure' : self.tenure, 
-                        'title' : self.title,
-                        'issue_date' : timezone.now(),
-                        'expiry_date' : details.get('expiry_date'),
-                        'start_date' : details.get('start_date'),
-                        'applicant' : self.applicant 
-                        #'extracted_fields' = JSONField(blank=True, null=True)
-                    }
-                )
-                if created:
-                    # Log creation
-                    # Generate the document
-                    approval.generate_doc()
-                    # send the doc and log in approval and org
-                else:
-                    # Log update
-                    approval.replaced_by = request.user
-                    # Generate the document
-                    approval.generate_doc()
-                    # send the doc and log in approval and org
-                self.approval = approval
+                if self.processing_status == 'approved':
+                    # TODO if it is an ammendment proposal then check appropriately
+                    checking_proposal = self
+                    approval,created = Approval.objects.update_or_create(
+                        current_proposal = checking_proposal,
+                        defaults = {
+                            'activity' : self.activity,
+                            'region' : self.region, 
+                            'tenure' : self.tenure, 
+                            'title' : self.title,
+                            'issue_date' : timezone.now(),
+                            'expiry_date' : details.get('expiry_date'),
+                            'start_date' : details.get('start_date'),
+                            'applicant' : self.applicant 
+                            #'extracted_fields' = JSONField(blank=True, null=True)
+                        }
+                    )
+                    if created:
+                        # Log creation
+                        # Generate the document
+                        approval.generate_doc()
+                        # send the doc and log in approval and org
+                    else:
+                        # Log update
+                        approval.replaced_by = request.user
+                        # Generate the document
+                        approval.generate_doc()
+                        # send the doc and log in approval and org
+                    self.approval = approval
                 self.save()
         
             except:
