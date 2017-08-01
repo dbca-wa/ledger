@@ -2,6 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from disturbance.components.proposals import models
 from disturbance.components.proposals import forms 
+from reversion.admin import VersionAdmin
 # Register your models here.
 
 @admin.register(models.ProposalType)
@@ -13,7 +14,7 @@ class ProposalDocumentInline(admin.TabularInline):
     extra = 0
 
 @admin.register(models.Proposal)
-class ProposalAdmin(admin.ModelAdmin):
+class ProposalAdmin(VersionAdmin):
     inlines =[ProposalDocumentInline,] 
 
 @admin.register(models.ProposalAssessorGroup)

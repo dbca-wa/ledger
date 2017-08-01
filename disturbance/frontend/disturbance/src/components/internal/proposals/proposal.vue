@@ -3,25 +3,7 @@
             <div class="row">
         <h3>Proposal: {{ proposal.id }}</h3>
         <div class="col-md-3">
-            <div class="row">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Logs
-                    </div>
-                    <div class="panel-body panel-collapse">
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <strong>Communications</strong><br/>
-                                <a ref="showCommsBtn" class="actionBtn">Show</a>
-                            </div>
-                            <div class="col-sm-12 top-buffer-s">
-                                <strong>Actions</strong><br/>
-                                <a tabindex="2" ref="showActionBtn" class="actionBtn">Show</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
             <div class="row" v-if="canSeeSubmission">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -352,6 +334,7 @@ import datatable from '@vue-utils/datatable.vue'
 import Requirements from './proposal_requirements.vue'
 import ProposedApproval from './proposed_issuance.vue'
 import ApprovalScreen from './proposal_approval.vue'
+import CommsLogs from '@common-utils/comms_logs.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
     api_endpoints,
@@ -416,157 +399,8 @@ export default {
             },
             contacts_table: null,
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
-            actionsTable: null,
-            actionsDtOptions:{
-                language: {
-                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-                },
-                responsive: true,
-                deferRender: true, 
-                autowidth: true,
-                order: [[2, 'desc']],
-                dom:
-                    "<'row'<'col-sm-5'l><'col-sm-6'f>>" +
-                    "<'row'<'col-sm-12'tr>>" +
-                    "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-                processing:true,
-                ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/action_log'),
-                    "dataSrc": '',
-                },
-                order: [],
-                columns:[
-                    {
-                        data:"who",
-                        orderable: false
-                    },
-                    {
-                        data:"what",
-                        orderable: false
-                    },
-                    {
-                        data:"when",
-                        orderable: false,
-                        mRender:function(data,type,full){
-                            return moment(data).format(vm.DATE_TIME_FORMAT)
-                        }
-                    },
-                ]
-            },
-            commsDtOptions:{
-                language: {
-                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-                },
-                responsive: true,
-                deferRender: true, 
-                autowidth: true,
-                order: [[0, 'desc']],
-                processing:true,
-                ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/comms_log'),
-                    "dataSrc": '',
-                },
-                columns:[
-                    {
-                        title: 'Date',
-                        data: 'created',
-                        render: function (date) {
-                            return moment(date).format(vm.DATE_TIME_FORMAT);
-                        }
-                    },
-                    {
-                        title: 'Type',
-                        data: 'type'
-                    },
-                    {
-                        title: 'Reference',
-                        data: 'reference'
-                    },
-                    {
-                        title: 'To',
-                        data: 'to',
-                        render: vm.commaToNewline
-                    },
-                    {
-                        title: 'CC',
-                        data: 'cc',
-                        render: vm.commaToNewline
-                    },
-                    {
-                        title: 'From',
-                        data: 'fromm',
-                        render: vm.commaToNewline
-                    },
-                    {
-                        title: 'Subject/Desc.',
-                        data: 'subject'
-                    },
-                    {
-                        title: 'Text',
-                        data: 'text',
-                        'render': function (value) {
-                            var ellipsis = '...',
-                                truncated = _.truncate(value, {
-                                    length: 100,
-                                    omission: ellipsis,
-                                    separator: ' '
-                                }),
-                                result = '<span>' + truncated + '</span>',
-                                popTemplate = _.template('<a href="#" ' +
-                                    'role="button" ' +
-                                    'data-toggle="popover" ' +
-                                    'data-trigger="click" ' +
-                                    'data-placement="top auto"' +
-                                    'data-html="true" ' +
-                                    'data-content="<%= text %>" ' +
-                                    '>more</a>');
-                            if (_.endsWith(truncated, ellipsis)) {
-                                result += popTemplate({
-                                    text: value
-                                });
-                            }
-
-                            return result;
-                        },
-                        'createdCell': function (cell) {
-                            //TODO why this is not working?
-                            // the call to popover is done in the 'draw' event
-                            $(cell).popover();
-                        }
-                    },
-                    {
-                        title: 'Documents',
-                        data: 'documents',
-                        'render': function (values) {
-                            var result = '';
-                            _.forEach(values, function (value) {
-                                // We expect an array [docName, url]
-                                // if it's a string it is the url
-                                var docName = '',
-                                    url = '';
-                                if (_.isArray(value) && value.length > 1){
-                                    docName = value[0];
-                                    url = value[1];
-                                }
-                                if (typeof s === 'string'){
-                                    url = value;
-                                    // display the first  chars of the filename
-                                    docName = _.last(value.split('/'));
-                                    docName = _.truncate(docName, {
-                                        length: 18,
-                                        omission: '...',
-                                        separator: ' '
-                                    });
-                                }
-                                result += '<a href="' + url + '" target="_blank"><p>' + docName+ '</p></a><br>';
-                            });
-                            return result;
-                        }
-                    }
-                ]
-            },
-            commsTable : null,
-            popoversInitialised: false,
+            comms_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/comms_log'),
+            logs_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/action_log'),
             panelClickersInitialised: false,
             sendingReferral: false,
         }
@@ -578,7 +412,8 @@ export default {
         AmmendmentRequest,
         Requirements,
         ProposedApproval,
-        ApprovalScreen
+        ApprovalScreen,
+        CommsLogs
     },
     filters: {
         formatDate: function(data){
@@ -804,13 +639,6 @@ export default {
                 vm.loading.splice('Loading Department Users',1);
             })
         },
-        initialisePopovers: function(){
-            if (!this.popoversInitialised){
-                helpers.initialiseActionLogs(this._uid,this.$refs.showActionBtn,this.actionsDtOptions,this.actionsTable);
-                helpers.initialiseCommLogs('-internal-proposal-'+this._uid,this.$refs.showCommsBtn,this.commsDtOptions,this.commsTable);
-                this.popoversInitialised = true;
-            }
-        },
         initialiseAssignedOfficerSelect:function(reinit=false){
             let vm = this;
             if (reinit){
@@ -978,7 +806,6 @@ export default {
             vm.panelClickersInitialised = true;
         }
         this.$nextTick(() => {
-            vm.initialisePopovers()
             vm.initialiseOrgContactTable();
             vm.initialiseSelects();
             vm.form = document.forms.new_proposal;
