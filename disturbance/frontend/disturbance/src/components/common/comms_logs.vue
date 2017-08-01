@@ -8,7 +8,17 @@
                 <div class="row">
                     <div class="col-sm-12">
                         <strong>Communications</strong><br/>
-                        <a ref="showCommsBtn" class="actionBtn">Show</a>
+                        <div class="row">
+                            <div class="col-sm-5">
+                                <a ref="showCommsBtn" class="actionBtn">Show</a>
+                            </div>
+                            <div class="col-sm-1">
+                                <span>|</span>
+                            </div> 
+                            <div class="col-sm-5">
+                                <a ref="addCommsBtn" class="actionBtn pull-right">Add Entry</a>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-sm-12 top-buffer-s">
                         <strong>Actions</strong><br/>
