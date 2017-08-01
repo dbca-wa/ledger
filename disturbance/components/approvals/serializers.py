@@ -11,7 +11,7 @@ from rest_framework import serializers
 class ApprovalSerializer(serializers.ModelSerializer):
     applicant = serializers.CharField(source='applicant.name')
     licence_document = serializers.CharField(source='licence_document._file.url')
-    status = serializers.SerializerMethodField()
+    status = serializers.CharField(source='get_status_display')
     class Meta:
         model = Approval
         fields = (
@@ -34,6 +34,3 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'extracted_fields',
             'status'
         )
-
-    def get_status(self,obj):
-        return 'Current'

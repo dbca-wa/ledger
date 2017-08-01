@@ -11,7 +11,7 @@
         </div>
     </div>
     <ProposalDashTable level='external' :url='proposals_url'/>
-    <ApprovalDashTable level='external' :url='empty_list'/>
+    <ApprovalDashTable level='external' :url='approvals_url'/>
     <ComplianceDashTable level='external' :url='empty_list'/>
 </div>
 </template>
@@ -32,6 +32,7 @@ export default {
         let vm = this;
         return {
             proposals_url: helpers.add_endpoint_json(api_endpoints.proposals,'user_list'),
+            approvals_url: helpers.add_endpoint_json(api_endpoints.approvals,'user_list'),
             empty_list: '/api/empty_list',
         }
     },
