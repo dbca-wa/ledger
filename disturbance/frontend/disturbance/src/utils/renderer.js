@@ -230,10 +230,11 @@ module.exports = {
                 // Assessor Data
                 var assessor_name = `${c.name}-Assessor`;
                 var assessor_val = _dt.assessor == '' ? val : _dt.assessor;
-                var assessor_visiblity = assessor_mode == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
-                assessor_visiblity = !assessor_visiblity;
+                var assessor_visibility = assessor_mode == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
+                assessor_visibility = !assessor_visibility;
+                console.log(assessor_visibility)
                 boxes.push(
-                    <AssessorText type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
+                    <AssessorText type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
                 )
                 // Referral Data
                 var current_referral_present = false;
@@ -260,17 +261,18 @@ module.exports = {
             else{
                 if (assessor_mode == 'assessor'){
                     var name = `${c.name}-Assessor`;
-                    var assessor_visiblity = assessor_mode != 'assessor' ? true : false;
+                    var assessor_visibility = assessor_mode == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
+                    assessor_visibility = !assessor_visibility;
                     boxes.push(
-                        <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
+                        <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
                     )
                 }
                 else if (assessor_mode == 'referral'){
                     // Add Assessor Box
                     var name = `${c.name}-Assessor`;
-                    var assessor_visiblity = assessor_mode != 'assessor' ? true : false;
+                    var assessor_visibility = assessor_mode != 'assessor' ? true : false;
                     boxes.push(
-                        <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visiblity}/>
+                        <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
                     )
                     // Add Referral Box
                     var referral_name = `${c.name}-Referral-${assessor_info.email}`;
