@@ -127,9 +127,21 @@ export default {
                 },
                 columns: [
                     {data: "id"},
-                    {data: "region"},
+                    {
+                        data: "region",
+                        'render': function (value) {
+                            return helpers.dtPopover(value);
+                        },
+                        'createdCell': helpers.dtPopoverCellFn
+                    },
                     {data: "activity"},
-                    {data: "title"},
+                    {
+                        data: "title",
+                        'render': function (value) {
+                            return helpers.dtPopover(value);
+                        },
+                        'createdCell': helpers.dtPopoverCellFn
+                    },
                     {data: "applicant"},
                     {data: "status"},
                     {

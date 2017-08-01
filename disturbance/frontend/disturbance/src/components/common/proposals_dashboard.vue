@@ -150,73 +150,17 @@ export default {
                     {
                         data: "region",
                         'render': function (value) {
-                            var ellipsis = '...',
-                                truncated = _.truncate(value, {
-                                    length: 30,
-                                    omission: ellipsis,
-                                    separator: ' '
-                                }),
-                                result = '<span>' + truncated + '</span>',
-                                popTemplate = _.template('<a href="#" ' +
-                                    'role="button" ' +
-                                    'data-toggle="popover" ' +
-                                    'data-trigger="click" ' +
-                                    'data-placement="top auto"' +
-                                    'data-html="true" ' +
-                                    'data-content="<%= text %>" ' +
-                                    '>more</a>');
-                            if (_.endsWith(truncated, ellipsis)) {
-                                result += popTemplate({
-                                    text: value
-                                });
-                            }
-
-                            return result;
+                            return helpers.dtPopover(value);
                         },
-                        'createdCell': function (cell) {
-                            $(cell).find('[data-toggle="popover"]')
-                                .popover()
-                                .on('click', function (e) {
-                                    e.preventDefault();
-                                    return true;
-                                });
-                        }
+                        'createdCell': helpers.dtPopoverCellFn
                     },
                     {data: "activity"},
                     {
                         data: "title",
                         'render': function (value) {
-                            var ellipsis = '...',
-                                truncated = _.truncate(value, {
-                                    length: 30,
-                                    omission: ellipsis,
-                                    separator: ' '
-                                }),
-                                result = '<span>' + truncated + '</span>',
-                                popTemplate = _.template('<a href="#" ' +
-                                    'role="button" ' +
-                                    'data-toggle="popover" ' +
-                                    'data-trigger="click" ' +
-                                    'data-placement="top auto"' +
-                                    'data-html="true" ' +
-                                    'data-content="<%= text %>" ' +
-                                    '>more</a>');
-                            if (_.endsWith(truncated, ellipsis)) {
-                                result += popTemplate({
-                                    text: value
-                                });
-                            }
-
-                            return result;
+                            return helpers.dtPopover(value);
                         },
-                        'createdCell': function (cell) {
-                            $(cell).find('[data-toggle="popover"]')
-                                .popover()
-                                .on('click', function (e) {
-                                    e.preventDefault();
-                                    return true;
-                                });
-                        }
+                        'createdCell': helpers.dtPopoverCellFn
                     },
                     {
                         data: "submitter",
@@ -330,73 +274,17 @@ export default {
                     {
                         data: "region",
                         'render': function (value) {
-                            var ellipsis = '...',
-                                truncated = _.truncate(value, {
-                                    length: 30,
-                                    omission: ellipsis,
-                                    separator: ' '
-                                }),
-                                result = '<span>' + truncated + '</span>',
-                                popTemplate = _.template('<a href="#" ' +
-                                    'role="button" ' +
-                                    'data-toggle="popover" ' +
-                                    'data-trigger="click" ' +
-                                    'data-placement="top auto"' +
-                                    'data-html="true" ' +
-                                    'data-content="<%= text %>" ' +
-                                    '>more</a>');
-                            if (_.endsWith(truncated, ellipsis)) {
-                                result += popTemplate({
-                                    text: value
-                                });
-                            }
-
-                            return result;
+                            return helpers.dtPopover(value);
                         },
-                        'createdCell': function (cell) {
-                            $(cell).find('[data-toggle="popover"]')
-                                .popover()
-                                .on('click', function (e) {
-                                    e.preventDefault();
-                                    return true;
-                                });
-                        }
+                        'createdCell': helpers.dtPopoverCellFn
                     },
                     {data: "activity"},
                     {
                         data: "title",
                         'render': function (value) {
-                            var ellipsis = '...',
-                                truncated = _.truncate(value, {
-                                    length: 30,
-                                    omission: ellipsis,
-                                    separator: ' '
-                                }),
-                                result = '<span>' + truncated + '</span>',
-                                popTemplate = _.template('<a href="#" ' +
-                                    'role="button" ' +
-                                    'data-toggle="popover" ' +
-                                    'data-trigger="click" ' +
-                                    'data-placement="top auto"' +
-                                    'data-html="true" ' +
-                                    'data-content="<%= text %>" ' +
-                                    '>more</a>');
-                            if (_.endsWith(truncated, ellipsis)) {
-                                result += popTemplate({
-                                    text: value
-                                });
-                            }
-
-                            return result;
+                            return helpers.dtPopover(value);
                         },
-                        'createdCell': function (cell) {
-                            $(cell).find('[data-toggle="popover"]')
-                                .popover()
-                                .on('click', function (e) {
-                                    e.preventDefault();
-                                    return true;
-                                });
-                        }
+                        'createdCell': helpers.dtPopoverCellFn
                     },
                     {
                         data: "submitter",
