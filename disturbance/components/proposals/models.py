@@ -193,6 +193,14 @@ class Proposal(RevisionedMixin):
         ('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
         ('accepted', 'Accepted'))
 
+    APPLICATION_TYPE_CHOICES = (
+        ('new_licence', 'New Licence'),
+        ('amendment', 'Amendment'),
+        ('renewal', 'Renewal'),
+    )
+
+    proposal_type = models.CharField('Proposal Type', max_length=40, choices=APPLICATION_TYPE_CHOICES,
+                                        default=APPLICATION_TYPE_CHOICES[0][0])
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
