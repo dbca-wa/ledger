@@ -258,6 +258,9 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
 def _layout_extracted_fields(extracted_fields):
     elements = []
 
+    if not extracted_fields:
+        return elements
+
     def __children_have_data(field):
         for group in field.get('children', []):
             for child_field in group:

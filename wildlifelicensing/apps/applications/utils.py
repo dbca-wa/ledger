@@ -188,6 +188,8 @@ def _extract_item_data(name, data):
 
 
 def update_licence_fields(licence_fields, post_data):
+    if not licence_fields:
+        return None
     for field in licence_fields:
         if 'children' not in field:
             if field['type'] == 'label':
