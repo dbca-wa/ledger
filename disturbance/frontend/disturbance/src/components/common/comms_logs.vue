@@ -16,7 +16,7 @@
                                 <span>|</span>
                             </div> 
                             <div class="col-sm-5">
-                                <a ref="addCommsBtn" class="actionBtn pull-right">Add Entry</a>
+                                <a ref="addCommsBtn" @click="addComm()" class="actionBtn pull-right">Add Entry</a>
                             </div>
                         </div>
                     </div>
@@ -27,11 +27,11 @@
                 </div>
             </div>
         </div>
+        <AddCommLog ref="add_comm" :url="comms_add_url"/>
     </div>
 </template>
 <script>
-require("select2/dist/css/select2.min.css");
-require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
+import AddCommLog from './add_comm_log.vue'
 import {
     api_endpoints,
     helpers
@@ -211,6 +211,7 @@ export default {
         }
     },
     components:{
+        AddCommLog
     },
     watch:{
     },
@@ -224,6 +225,9 @@ export default {
                 this.popoversInitialised = true;
             }
         },
+        addComm(){
+            this.$refs.add_comm.isModalOpen = true;
+        }
     },
     mounted: function(){
         let vm = this;

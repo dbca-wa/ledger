@@ -25,6 +25,9 @@ from disturbance.ordered_model import OrderedModel
 def update_proposal_doc_filename(instance, filename):
     return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
 
+def update_proposal_comms_log_filename(instance, filename):
+    return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
+
 class ProposalType(models.Model):
     schema = JSONField()
     activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
@@ -635,6 +638,13 @@ class Proposal(RevisionedMixin):
         
             except:
                 raise
+
+class ProposalLogDocument(Document):
+    log_entry = models.ForeignKey('ProposalLogEntry',related_name='documents')
+    _file = models.FileField(upload_to=update_proposal_comms_log_filename)
+
+    class Meta:
+        app_label = 'disturbance'
 
 class ProposalLogEntry(CommunicationsLogEntry):
     proposal = models.ForeignKey(Proposal, related_name='comms_logs')

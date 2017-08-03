@@ -47,10 +47,9 @@ class CommunicationsLogEntry(models.Model):
     reference = models.CharField(max_length=100, blank=True)
     subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
     text = models.TextField(blank=True)
-    documents = models.ManyToManyField(Document, blank=True)
 
-    customer = models.ForeignKey(EmailUser, null=True, related_name='customer')
-    staff = models.ForeignKey(EmailUser, null=True, related_name='staff')
+    customer = models.ForeignKey(EmailUser, null=True, related_name='+')
+    staff = models.ForeignKey(EmailUser, null=True, related_name='+')
 
     created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 

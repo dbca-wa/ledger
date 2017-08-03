@@ -13,6 +13,7 @@ from disturbance.components.proposals.models import (
 from disturbance.components.organisations.models import (
                                 Organisation
                             )
+from disturbance.components.main.serializers import CommunicationLogEntrySerializer 
 from rest_framework import serializers
 
 class ProposalTypeSerializer(serializers.ModelSerializer):
@@ -259,10 +260,13 @@ class ProposalUserActionSerializer(serializers.ModelSerializer):
         model = ProposalUserAction
         fields = '__all__'
 
-class ProposalLogEntrySerializer(serializers.ModelSerializer):
+class ProposalLogEntrySerializer(CommunicationLogEntrySerializer):
     class Meta:
         model = ProposalLogEntry
         fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
 
 class SendReferralSerializer(serializers.Serializer):
     email = serializers.EmailField()
