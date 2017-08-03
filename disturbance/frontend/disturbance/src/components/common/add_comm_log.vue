@@ -12,7 +12,7 @@
                                         <label class="control-label pull-left"  for="Name">To</label>
                                     </div>
                                     <div class="col-sm-4">
-                                        <input type="email" class="form-control" name="to" v-model="comms.to">
+                                        <input type="text" class="form-control" name="to" v-model="comms.to">
                                     </div>
                                 </div>
                             </div>
@@ -22,7 +22,7 @@
                                         <label class="control-label pull-left"  for="Name">From</label>
                                     </div>
                                     <div class="col-sm-4">
-                                        <input type="email" class="form-control" name="fromm" v-model="comms.fromm">
+                                        <input type="text" class="form-control" name="fromm" v-model="comms.fromm">
                                     </div>
                                 </div>
                             </div>
