@@ -207,6 +207,7 @@ class Proposal(RevisionedMixin):
                                         default=APPLICATION_TYPE_CHOICES[0][0])
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
+    comment_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
     proposed_issuance_approval = JSONField(blank=True, null=True)
     #hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')

@@ -10,22 +10,26 @@ def create_data_from_form(schema, post_data, file_data, post_data_index=None,spe
     data = {} 
     special_fields_list = []
     assessor_data_list = []
+    comment_data_list = {}
     special_fields_search = SpecialFieldsSearch(special_fields)
     if assessor_data:
         assessor_fields_search = AssessorDataSearch()
+        comment_fields_search = CommentDataSearch()
     try:
         for item in schema:
             data.update(_create_data_from_item(item, post_data, file_data, 0, ''))
             special_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
             if assessor_data:
                 assessor_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
+                comment_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
         special_fields_list = special_fields_search.special_fields
         if assessor_data:
             assessor_data_list = assessor_fields_search.assessor_data
+            comment_data_list = comment_fields_search.comment_data
     except:
         traceback.print_exc()
     if assessor_data:
-        return [data],special_fields_list,assessor_data_list
+        return [data],special_fields_list,assessor_data_list,comment_data_list
 
     return [data],special_fields_list
 
@@ -158,6 +162,64 @@ class AssessorDataSearch(object):
             item_data[item['name']] = item_data_list
         return item_data
 
+class CommentDataSearch(object):
+
+    def __init__(self,lookup_field='canBeEditedByAssessor'):
+        self.lookup_field = lookup_field
+        self.comment_data = {}
+
+    def extract_comment_data(self,item,post_data):
+        res = {} 
+        values = []
+        for k in post_data:
+            if re.match(item,k):
+                values.append({k:post_data[k]})
+        if values:
+            for v in values:
+                for k,v in v.items():
+                    parts = k.split('{}'.format(item))
+                    if len(parts) > 1:
+                        ref_parts = parts[1].split('-comment-field')
+                        if len(ref_parts) > 1:
+                            res = {'{}'.format(item):v}
+        return res
+
+    def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
+        item_data = {}
+        if 'name' in item:
+            extended_item_name = item['name'] 
+        else:
+            raise Exception('Missing name in item %s' % item['label'])
+
+        if 'children' not in item:
+            self.comment_data.update(self.extract_comment_data(extended_item_name,post_data))
+
+        else:
+            if 'repetition' in item:
+                item_data = self.generate_item_data_special_field(extended_item_name,item,item_data,post_data,file_data,len(post_data[item['name']]),suffix)
+            else:
+                item_data = self.generate_item_data_special_field(extended_item_name, item, item_data, post_data, file_data,1,suffix)
+
+
+        if 'conditions' in item:
+            for condition in item['conditions'].keys():
+                for child in item['conditions'][condition]:
+                    item_data.update(self.extract_special_fields(child, post_data, file_data, repetition, suffix))
+
+        return item_data
+
+    def generate_item_data_special_field(self,item_name,item,item_data,post_data,file_data,repetition,suffix):
+        item_data_list = []
+        for rep in xrange(0, repetition):
+            child_data = {}
+            for child_item in item.get('children'):
+                child_data.update(self.extract_special_fields(child_item, post_data, file_data, 0,
+                                                         '{}-{}'.format(suffix, rep)))
+            item_data_list.append(child_data)
+
+            item_data[item['name']] = item_data_list
+        return item_data
+
 class SpecialFieldsSearch(object):
 
     def __init__(self,lookable_fields):
@@ -254,11 +316,12 @@ def save_assessor_data(instance,request,viewset):
     with transaction.atomic():
         try:
             lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
-            extracted_fields,special_fields,assessor_data = create_data_from_form(
+            extracted_fields,special_fields,assessor_data,comment_data = create_data_from_form(
                 instance.schema, request.POST, request.FILES,special_fields=lookable_fields,assessor_data=True)
             data = {
                 'data': extracted_fields,
                 'assessor_data': assessor_data,
+                'comment_data': comment_data,
             }
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)

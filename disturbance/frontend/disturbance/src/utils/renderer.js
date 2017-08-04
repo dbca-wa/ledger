@@ -19,6 +19,7 @@ module.exports = {
         var is_readonly = this.status_data.readonly;
         var assessorStatus = this.status_data.assessorStatus;
         var assessorData = this.status_data.assessorData;
+        var commentData = this.status_data.commentData;
         var assessorInfo = this.status_data.assessorInfo;
         var assessorMode = false; 
         var assessorCanAssess = false; 
@@ -34,25 +35,28 @@ module.exports = {
         // Visibility 
         var visibility = this.getVisibility(h,c,is_readonly,assessorMode,assessorCanAssess)
         if (!visibility.visible){ return "" }
+        var assessor_visibility = assessorLevel == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
+        assessor_visibility = !assessor_visibility;
 
         // Editablility
         readonly = !visibility.editable;
 
         var val = (data) ? (data[c.name]) ? data[c.name] : null : null;
+        var comment_val = (commentData) ? (commentData[c.name]) ? commentData[c.name] : null : null;
         switch (c.type) {
             case 'text':
                 _elements.push(
-                    <TextField type="text" name={c.name} value={val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly}/>
+                    <TextField type="text" name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility}/>
                 )
                 break;
             case 'number':
                 _elements.push(
-                    <TextField type="number" name={c.name} value={val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly}/>
+                    <TextField type="number" name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly}/>
                 )
                 break;
             case 'email':
                 _elements.push(
-                    <TextField type="email" name={c.name} value={val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly}/>
+                    <TextField type="email" name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly}/>
                 )
                 break;
             case 'select':
@@ -62,19 +66,19 @@ module.exports = {
                 }
                 _elements.push(
                     <div>
-                        <Select readonly={readonly} name={c.name} label={c.label} value={c.value} options={c.options} help_text={c.help_text} value={val} handleChange={this.selectionChanged}  conditions={c.conditions}/>
+                        <Select readonly={readonly} name={c.name} label={c.label} value={c.value} comment_value={comment_val} options={c.options} help_text={c.help_text} value={val} handleChange={this.selectionChanged}  conditions={c.conditions}/>
                         <SelectConditions conditions={c.conditions} renderer={this} name={c.name} data={data} readonly={readonly} />
                     </div>
                 )
                 break;
             case 'multi-select':
                 _elements.push(
-                    <Select name={c.name} label={c.label} value={val} options={c.options} value={val} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} />
+                    <Select name={c.name} label={c.label} value={val} comment_value={comment_val} options={c.options} value={val} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} />
                 )
                 break;
             case 'text_area':
                 _elements.push(
-                    <TextArea readonly={readonly} name={c.name} value={val} label={c.label} help_text={c.help_text} />
+                    <TextArea readonly={readonly} name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={c.help_text} />
                 )
                 break;
             case 'label':
@@ -160,12 +164,12 @@ module.exports = {
                 break;
             case 'file':
                 _elements.push(
-                    <File name={c.name} label={c.label} value={val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} docsUrl={this.status_data.docs_url} readonly={readonly}/>
+                    <File name={c.name} label={c.label} value={val} comment_value={comment_val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} docsUrl={this.status_data.docs_url} readonly={readonly}/>
                 )
                 break;
             case 'date':
                 _elements.push(
-                    <DateField name={c.name} label={c.label} value={val}  handleChange={this.handleFileChange} readonly={readonly} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode}/>
+                    <DateField name={c.name} label={c.label} value={val} comment_value={comment_val}  handleChange={this.handleFileChange} readonly={readonly} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode}/>
                 )
                 break;
             default:
@@ -232,7 +236,6 @@ module.exports = {
                 var assessor_val = _dt.assessor == '' ? val : _dt.assessor;
                 var assessor_visibility = assessor_mode == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
                 assessor_visibility = !assessor_visibility;
-                console.log(assessor_visibility)
                 boxes.push(
                     <AssessorText type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
                 )
@@ -290,10 +293,11 @@ module.exports = {
         return boxes;
     },
     status_data : {},
-    store_status_data(readonly,assessorData,assessorEmail,assessorMode,can_user_edit,docs_url){
+    store_status_data(readonly,assessorData,commentData,assessorEmail,assessorMode,can_user_edit,docs_url){
         this.status_data = {
             'readonly': readonly,
             'assessorData': assessorData,
+            'commentData': commentData,
             'assessorInfo': assessorEmail,
             'assessorStatus': assessorMode,
             'can_user_edit': can_user_edit,

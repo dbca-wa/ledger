@@ -1,15 +1,35 @@
 <template lang="html">
-    <div class="form-group">
-        <label for="label" >{{ label }}</label>
-        <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" style="color:blue" :title="help_text">&nbsp;</i>
-        <i data-toggle="tooltip" v-if="help_text_assessor && assessorMode" data-placement="right" class="fa fa-question-circle" style="color:green" :title="help_text_assessor">&nbsp;</i>
-        <input :readonly="readonly" :type="type" class="form-control" :name="name" :value="value" />
+    <div>
+        <div class="form-group">
+            <label for="label" >{{ label }}</label>
+            <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" style="color:blue" :title="help_text">&nbsp;</i>
+            <i data-toggle="tooltip" v-if="help_text_assessor && assessorMode" data-placement="right" class="fa fa-question-circle" style="color:green" :title="help_text_assessor">&nbsp;</i>
+            <template v-if="assessorMode">
+                <a href="" v-if="!showingComment" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
+                <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
+            </template>
+            <input :readonly="readonly" :type="type" class="form-control" :name="name" :value="value" />
+        </div>
+        <Comment :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
     </div>
 </template>
 
 <script>
+import Comment from './comment.vue'
 export default {
-    props:["type","name","value","help_text","help_text_assessor","assessorMode","label","readonly"]
+    props:["type","name","comment_value","value","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly"],
+    components: {Comment},
+    data(){
+        let vm = this;
+        return {
+            showingComment: false
+        }
+    },
+    methods: {
+        toggleComment(){
+            this.showingComment = ! this.showingComment;
+        }
+    }
 }
 </script>
 
