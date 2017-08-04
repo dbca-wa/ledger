@@ -399,7 +399,7 @@ class Proposal(RevisionedMixin):
                 self.processing_status = 'with_assessor'
                 self.customer_status = 'with_assessor'
                 self.submitter = request.user
-                self.lodgement_date = timezone.now().strftime('%Y-%m-%d') 
+                self.lodgement_date = timezone.now() 
                 self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
