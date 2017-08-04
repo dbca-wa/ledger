@@ -78,7 +78,7 @@
                                         <td><small><strong>{{r.processing_status}}</strong></small></td>
                                     </tr>
                                 </table>
-                                <a v-if="!isFinalised" @click.prevent="" class="actionBtn top-buffer-s">Show Referrals</a>
+                                <MoreReferrals @refreshFromResponse="refreshFromResponse" :proposal="proposal" :canAction="false" :isFinalised="isFinalised"/>
                             </div>
                             <div class="col-sm-12">
                                 <div class="separator"></div>
@@ -231,6 +231,7 @@ import Proposal from '../../form.vue'
 import Vue from 'vue'
 import datatable from '@vue-utils/datatable.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
+import MoreReferrals from '@common-utils/more_referrals.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
     api_endpoints,
@@ -302,7 +303,8 @@ export default {
     components: {
         Proposal,
         datatable,
-        CommsLogs
+        CommsLogs,
+        MoreReferrals
     },
     filters: {
         formatDate: function(data){
@@ -332,6 +334,11 @@ export default {
         }
     },
     methods: {
+        refreshFromResponse:function(response){
+            let vm = this;
+            vm.proposal = helpers.copyObject(response.body);
+            vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+        },
         initialiseOrgContactTable: function(){
             let vm = this;
             if (vm.proposal && !vm.contacts_table_initialised){
