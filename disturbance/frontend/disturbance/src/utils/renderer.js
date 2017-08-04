@@ -78,7 +78,7 @@ module.exports = {
                 break;
             case 'text_area':
                 _elements.push(
-                    <TextArea readonly={readonly} name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={c.help_text} assessor_readonly={assessor_visibility}/>
+                    <TextArea readonly={readonly} name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={c.help_text} assessorMode={assessorMode} assessor_readonly={assessor_visibility}/>
                 )
                 break;
             case 'label':
