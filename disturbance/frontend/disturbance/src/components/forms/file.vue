@@ -1,28 +1,37 @@
 <template lang="html">
-    <div class="form-group">
-        <label>{{label}}</label>
-        <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" style="color:blue" :title="help_text">&nbsp;</i>
-        <i data-toggle="tooltip" v-if="help_text_assessor && assessorMode" data-placement="right" class="fa fa-question-circle" style="color:green" :title="help_text_assessor">&nbsp;</i>
-        <div v-if="files">
-            <div v-for="v in files">
-                <p>
-                    File: <a :href="docsUrl+v" target="_blank">{{v}}</a>
-                </p>
-                <input :name="name+'-existing'" type="hidden" :value="value"/>
+    <div>
+        <div class="form-group">
+            <label>{{label}}</label>
+            <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" style="color:blue" :title="help_text">&nbsp;</i>
+            <i data-toggle="tooltip" v-if="help_text_assessor && assessorMode" data-placement="right" class="fa fa-question-circle" style="color:green" :title="help_text_assessor">&nbsp;</i>
+            <template v-if="assessorMode">
+                <a href="" v-if="!showingComment" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
+                <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
+            </template>
+            <div v-if="files">
+                <div v-for="v in files">
+                    <p>
+                        File: <a :href="docsUrl+v" target="_blank">{{v}}</a>
+                    </p>
+                    <input :name="name+'-existing'" type="hidden" :value="value"/>
+                </div>
+            </div>
+            <div v-if="!readonly" v-for="n in repeat">
+                <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange"/><br/>
             </div>
         </div>
-        <div v-if="!readonly" v-for="n in repeat">
-            <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange"/><br/>
-        </div>
-
+        <Comment :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
     </div>
 </template>
 
 <script>
+import Comment from './comment.vue'
 export default {
     props:{
         name:String,
         label:String,
+        comment_value: String,
+        assessor_readonly: Boolean,
         help_text:String,
         help_text_assessor:String,
         assessorMode:{
@@ -44,13 +53,18 @@ export default {
         readonly:Boolean,
         docsUrl: String
     },
+    components: {Comment},
     data:function(){
         return {
             repeat:1,
-            files:[]
+            files:[],
+            showingComment: false
         }
     },
     methods:{
+        toggleComment(){
+            this.showingComment = ! this.showingComment;
+        },
         handleChange:function (e) {
             if (this.isRepeatable) {
                 let  el = $(e.target).attr('data-que');

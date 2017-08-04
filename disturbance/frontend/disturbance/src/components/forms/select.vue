@@ -4,6 +4,10 @@
             <label>{{ label }}</label>
             <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" style="color:blue" :title="help_text">&nbsp;</i>
             <i data-toggle="tooltip" v-if="help_text_assessor && assessorMode" data-placement="right" class="fa fa-question-circle" style="color:green" :title="help_text_assessor">&nbsp;</i>
+            <template v-if="assessorMode">
+                <a href="" v-if="!showingComment" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
+                <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
+            </template>
         
             <template v-if="readonly">
                 <select v-if="!isMultiple" disabled ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
@@ -32,6 +36,7 @@
                 </select>
             </template>
         </div>
+        <Comment :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
     </div>
 </template>
 
@@ -39,6 +44,7 @@
 var select2 = require('select2');
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
+import Comment from './comment.vue'
 export default {
     props:{
         'name':String,
@@ -46,6 +52,8 @@ export default {
         'help_text':String,
         'help_text_assessor':String,
         "value":[String,Array],
+        "comment_value": String,
+        "assessor_readonly": Boolean,
         "options":Array,
         "conditions":Object,
         "handleChange":null,
@@ -66,7 +74,8 @@ export default {
         return{
             selected: (this.isMultiple) ? [] : "",
             selectid: "select"+vm._uid,
-            multipleSelected: []
+            multipleSelected: [],
+            showingComment: false
         }
     },
     computed:{
@@ -74,7 +83,11 @@ export default {
             return JSON.stringify(this.conditions);
         },
     },
+    components: { Comment },
     methods:{
+        toggleComment(){
+            this.showingComment = ! this.showingComment;
+        },
         multipleSelection: function(val){
             if (Array.isArray(this.value)){
                 if (this.value.find(v => v == val)){
