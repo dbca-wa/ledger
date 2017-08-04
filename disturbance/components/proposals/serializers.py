@@ -261,6 +261,7 @@ class ProposalUserActionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProposalLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
     class Meta:
         model = ProposalLogEntry
         fields = '__all__'
@@ -268,13 +269,18 @@ class ProposalLogEntrySerializer(CommunicationLogEntrySerializer):
             'customer',
         )
 
+    def get_documents(self,obj):
+        return [[d.name,d._file.url()] for d in obj.documents.all()]
+
 class SendReferralSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 class DTReferralSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(source='proposal.get_processing_status_display')
+    referral_status = serializers.CharField(source='get_processing_status_display')
     proposal_lodgement_date = serializers.CharField(source='proposal.lodgement_date')
     submitter = serializers.SerializerMethodField()
+    referral = EmailUserSerializer()
     class Meta:
         model = Referral
         fields = (
@@ -285,9 +291,11 @@ class DTReferralSerializer(serializers.ModelSerializer):
             'applicant',
             'submitter',
             'processing_status',
+            'referral_status',
             'lodged_on',
             'proposal',
             'can_be_processed',
+            'referral',
             'proposal_lodgement_date'
         ) 
 

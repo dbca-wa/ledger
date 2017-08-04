@@ -90,6 +90,7 @@ module.exports = {
     initialiseCommLogs: function(vm_uid,ref,datatable_options,table){
         let vm = this;
         let commsLogId = 'comms-log-table'+vm_uid;
+        let popover_name = 'popover-'+ vm._uid;
         $(ref).popover({
             content: function() {
                 return ` 
@@ -101,6 +102,7 @@ module.exports = {
             container: 'body',
             placement: 'right',
             trigger: "click",
+            template: `<div class="popover ${popover_name}" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>`,
         }).on('inserted.bs.popover', function () {
             table = $('#'+commsLogId).DataTable(datatable_options);
 
@@ -116,12 +118,30 @@ module.exports = {
                     });
                 }
             });
+        }).on('shown.bs.popover', function () {
+            var el = ref;
+            var popoverheight = parseInt($('.'+popover_name).height());
+
+            var popover_bounding_top = parseInt($('.'+popover_name)[0].getBoundingClientRect().top);
+            var popover_bounding_bottom = parseInt($('.'+popover_name)[0].getBoundingClientRect().bottom);
+
+            var el_bounding_top = parseInt($(el)[0].getBoundingClientRect().top);
+            var el_bounding_bottom = parseInt($(el)[0].getBoundingClientRect().top);
+            
+            var diff = el_bounding_top - popover_bounding_top;
+
+            var position = parseInt($('.'+popover_name).position().top);
+            var pos2 = parseInt($(el).position().top) - 5;
+
+            var x = diff + 5;
+            $('.'+popover_name).children('.arrow').css('top', x + 'px');
         });
 
     },
     initialiseActionLogs: function(vm_uid,ref,datatable_options,table){
         let vm = this;
         let actionLogId = 'actions-log-table'+vm_uid;
+        let popover_name = 'popover-'+ vm._uid;
         $(ref).popover({
             content: function() {
                 return ` 
@@ -142,8 +162,26 @@ module.exports = {
             container: 'body',
             placement: 'right',
             trigger: "click",
+            template: `<div class="popover ${popover_name}" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>`,
         }).on('inserted.bs.popover', function () {
             table = $('#'+actionLogId).DataTable(datatable_options);
+        }).on('shown.bs.popover', function () {
+            var el = ref;
+            var popoverheight = parseInt($('.'+popover_name).height());
+
+            var popover_bounding_top = parseInt($('.'+popover_name)[0].getBoundingClientRect().top);
+            var popover_bounding_bottom = parseInt($('.'+popover_name)[0].getBoundingClientRect().bottom);
+
+            var el_bounding_top = parseInt($(el)[0].getBoundingClientRect().top);
+            var el_bounding_bottom = parseInt($(el)[0].getBoundingClientRect().top);
+            
+            var diff = el_bounding_top - popover_bounding_top;
+
+            var position = parseInt($('.'+popover_name).position().top);
+            var pos2 = parseInt($(el).position().top) - 5;
+
+            var x = diff + 5;
+            $('.'+popover_name).children('.arrow').css('top', x + 'px');
         });
     },
     dtPopover: function(value,truncate_length=30,trigger='hover'){

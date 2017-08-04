@@ -87,7 +87,7 @@
                                             </td>
                                         </tr>
                                     </table>
-                                    <a v-if="!isFinalised" @click.prevent="" class="actionBtn top-buffer-s">Show Referrals</a>
+                                    <MoreReferrals @refreshFromResponse="refreshFromResponse" :proposal="proposal" :canAction="canLimitedAction" :isFinalised="isFinalised"/>
                                 </div>
                                 <div class="col-sm-12">
                                     <div class="separator"></div>
@@ -335,6 +335,7 @@ import Requirements from './proposal_requirements.vue'
 import ProposedApproval from './proposed_issuance.vue'
 import ApprovalScreen from './proposal_approval.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
+import MoreReferrals from '@common-utils/more_referrals.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
     api_endpoints,
@@ -414,7 +415,8 @@ export default {
         Requirements,
         ProposedApproval,
         ApprovalScreen,
-        CommsLogs
+        CommsLogs,
+        MoreReferrals
     },
     filters: {
         formatDate: function(data){
@@ -557,7 +559,7 @@ export default {
         },
         assignTo: function(){
             let vm = this;
-            let unassign = True;
+            let unassign = true;
             let data = {};
             if (vm.processing_status == 'With Approver'){
                 unassign = vm.proposal.assigned_approver != null && vm.proposal.assigned_approver != 'undefined' ? false: true;

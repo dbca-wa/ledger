@@ -479,6 +479,15 @@ class ReferralViewSet(viewsets.ModelViewSet):
         serializer = DTReferralSerializer(qs, many=True)
         return Response(serializer.data)
 
+    @list_route(methods=['GET',])
+    def datatable_list(self, request, *args, **kwargs):
+        proposal = request.GET.get('proposal',None)
+        qs = self.get_queryset().all()
+        if proposal:
+            qs = qs.filter(proposal_id=int(proposal))
+        serializer = DTReferralSerializer(qs, many=True)
+        return Response(serializer.data)
+
     @detail_route(methods=['GET',])
     def complete(self, request, *args, **kwargs):
         try:
