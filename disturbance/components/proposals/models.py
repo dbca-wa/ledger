@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import datetime
 from django.db import models,transaction
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
@@ -399,7 +400,7 @@ class Proposal(RevisionedMixin):
                 self.processing_status = 'with_assessor'
                 self.customer_status = 'with_assessor'
                 self.submitter = request.user
-                self.lodgement_date = timezone.now().date 
+                self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
