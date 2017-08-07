@@ -13,6 +13,7 @@ import TextArea from '../components/forms/text-area.vue'
 import Label from '../components/forms/label.vue'
 import AssessorText from '../components/forms/readonly_text.vue'
 import HelpText from '../components/forms/help_text.vue'
+import CommentRadioCheckBox from '../components/forms/comment_icon_checkbox_radio.vue'
 
 module.exports = {
     renderChildren(h,c,data=null,assessorData=null,_readonly) {
@@ -96,6 +97,7 @@ module.exports = {
                         <label>{c.label}</label>
                             <HelpText help_text={c.help_text}/>
                             <HelpText help_text={c.help_text_assessor} assessorMode={assessorMode} isForAssessor={true}/>
+                            <CommentRadioCheckBox assessor_readonly={assessor_visibility} name={c.name} comment_value={comment_val} assessorMode={assessorMode} label={c.label}/>
                             {c.options.map(op =>{
                                 return(
                                     <Radio name={c.name} label={op.label} value={op.value} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly}/>

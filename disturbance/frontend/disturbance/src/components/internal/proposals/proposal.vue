@@ -497,6 +497,11 @@ export default {
             this.$refs.proposed_decline.isModalOpen = true;
         },
         ammendmentRequest: function(){
+            let values = '';
+            $('.deficiency').each((i,d) => {
+                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
+            }); 
+            this.$refs.ammendment_request.ammendment.details = values;
             this.$refs.ammendment_request.isModalOpen = true;
         },
         save: function(e) {
