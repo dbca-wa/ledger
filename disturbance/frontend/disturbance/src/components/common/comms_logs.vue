@@ -12,12 +12,14 @@
                             <div class="col-sm-5">
                                 <a ref="showCommsBtn" class="actionBtn">Show</a>
                             </div>
-                            <div class="col-sm-1">
-                                <span>|</span>
-                            </div> 
-                            <div class="col-sm-5">
-                                <a ref="addCommsBtn" @click="addComm()" class="actionBtn pull-right">Add Entry</a>
-                            </div>
+                            <template v-if="!disable_add_entry">
+                                <div class="col-sm-1">
+                                    <span>|</span>
+                                </div> 
+                                <div class="col-sm-5">
+                                    <a ref="addCommsBtn" @click="addComm()" class="actionBtn pull-right">Add Entry</a>
+                                </div>
+                            </template>
                         </div>
                     </div>
                     <div class="col-sm-12 top-buffer-s">
@@ -50,6 +52,10 @@ export default {
         comms_add_url:{
             type: String,
             required: true
+        },
+        disable_add_entry: {
+            type: Boolean,
+            default: true
         }
     },
     data() {
