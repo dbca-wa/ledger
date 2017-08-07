@@ -3,25 +3,7 @@
     <div class="row">
         <h3>Organisation Access Request {{ access.id }}</h3>
         <div class="col-md-3">
-            <div class="row">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Logs
-                    </div>
-                    <div class="panel-body panel-collapse">
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <strong>Communications</strong><br/>
-                                <a ref="showCommsBtn" class="actionBtn">Show</a>
-                            </div>
-                            <div class="col-sm-12 top-buffer-s">
-                                <strong>Actions</strong><br/>
-                                <a tabindex="2" ref="showActionBtn" class="actionBtn">Show</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -74,10 +56,10 @@
                                     <a v-if="!isFinalised" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s">
+                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised">
                                 <strong>Action</strong><br/>
-                                <button class="btn btn-primary" v-if="!isFinalised" @click.prevent="acceptRequest()">Accept</button><br/>
-                                <button class="btn btn-primary top-buffer-s" v-if="!isFinalised" @click.prevent="">Decline</button>
+                                <button class="btn btn-primary" @click.prevent="acceptRequest()">Accept</button><br/>
+                                <button class="btn btn-primary top-buffer-s" @click.prevent="">Decline</button>
                             </div>
                         </div>
                     </div>
@@ -145,6 +127,7 @@
 import $ from 'jquery'
 import Vue from 'vue'
 import datatable from '@vue-utils/datatable.vue'
+import CommsLogs from '@common-utils/comms_logs.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
   api_endpoints,
@@ -163,6 +146,8 @@ export default {
         DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
         members: [],
         // Filters
+        logs_url: helpers.add_endpoint_json(api_endpoints.organisation_requests,vm.$route.params.access_id+'/action_log'),
+        comms_url: helpers.add_endpoint_json(api_endpoints.organisation_requests,vm.$route.params.access_id+'/comms_log'),
         actionDtOptions:{
             language: {
                 processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -328,7 +313,8 @@ export default {
     })
   },
   components: {
-    datatable
+    datatable,
+    CommsLogs
   },
   computed: {
     isLoading: function () {
@@ -409,15 +395,10 @@ export default {
         });
 
     },
-    initialisePopovers: function(){
-        helpers.initialiseActionLogs(this._uid,this.$refs.showActionBtn,this.actionDtOptions,this.actionsTable);
-        helpers.initialiseCommLogs(this._uid,this.$refs.showCommsBtn,this.commsDtOptions,this.commsTable);
-    },
   },
   mounted: function () {
     let vm = this;
     this.fetchAccessGroupMembers();
-    vm.initialisePopovers();
   }
 }
 </script>

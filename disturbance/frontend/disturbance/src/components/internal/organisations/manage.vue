@@ -5,25 +5,7 @@
         <div class="row">
             <h3>{{ org.name }} - {{org.abn}}</h3>
             <div class="col-md-3">
-                <div class="row">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            Logs
-                        </div>
-                        <div class="panel-body panel-collapse">
-                            <div class="row">
-                                <div class="col-sm-12">
-                                    <strong>Communications</strong><br/>
-                                    <a ref="showCommsBtn" class="actionBtn">Show</a>
-                                </div>
-                                <div class="col-sm-12 top-buffer-s">
-                                    <strong>Actions</strong><br/>
-                                    <a tabindex="2" ref="showActionBtn" class="actionBtn">Show</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
             </div>
             <div class="col-md-1">
             </div>
@@ -215,6 +197,7 @@ import AddContact from '@common-utils/add_contact.vue'
 import ProposalDashTable from '@common-utils/proposals_dashboard.vue'
 import ApprovalDashTable from '@common-utils/approvals_dashboard.vue'
 import ComplianceDashTable from '@common-utils/compliances_dashboard.vue'
+import CommsLogs from '@common-utils/comms_logs.vue'
 import utils from '../utils'
 import api from '../api'
 export default {
@@ -243,151 +226,8 @@ export default {
             logsTable: null,
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             activate_tables: false,
-            logsDtOptions:{
-                language: {
-                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-                },
-                responsive: true,
-                deferRender: true, 
-                autowidth: true,
-                order: [[2, 'desc']],
-                dom:
-                    "<'row'<'col-sm-5'l><'col-sm-6'f>>" +
-                    "<'row'<'col-sm-12'tr>>" +
-                    "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-                processing:true,
-                ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/action_log'),
-                    "dataSrc": '',
-                },
-                columns:[
-                    {
-                        data:"who",
-                    },
-                    {
-                        data:"what",
-                    },
-                    {
-                        data:"when",
-                        mRender:function(data,type,full){
-                            return moment(data).format(vm.DATE_TIME_FORMAT)
-                        }
-                    },
-                ]
-            },
-            commsDtOptions:{
-                language: {
-                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-                },
-                responsive: true,
-                deferRender: true, 
-                autowidth: true,
-                order: [[0, 'desc']],
-                processing:true,
-                ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/comms_log'),
-                    "dataSrc": '',
-                },
-                columns:[
-                    {
-                        title: 'Date',
-                        data: 'created',
-                        render: function (date) {
-                            return moment(date).format(vm.DATE_TIME_FORMAT);
-                        }
-                    },
-                    {
-                        title: 'Type',
-                        data: 'type'
-                    },
-                    {
-                        title: 'Reference',
-                        data: 'reference'
-                    },
-                    {
-                        title: 'To',
-                        data: 'to',
-                        render: vm.commaToNewline
-                    },
-                    {
-                        title: 'CC',
-                        data: 'cc',
-                        render: vm.commaToNewline
-                    },
-                    {
-                        title: 'From',
-                        data: 'fromm',
-                        render: vm.commaToNewline
-                    },
-                    {
-                        title: 'Subject/Desc.',
-                        data: 'subject'
-                    },
-                    {
-                        title: 'Text',
-                        data: 'text',
-                        'render': function (value) {
-                            var ellipsis = '...',
-                                truncated = _.truncate(value, {
-                                    length: 100,
-                                    omission: ellipsis,
-                                    separator: ' '
-                                }),
-                                result = '<span>' + truncated + '</span>',
-                                popTemplate = _.template('<a href="#" ' +
-                                    'role="button" ' +
-                                    'data-toggle="popover" ' +
-                                    'data-trigger="click" ' +
-                                    'data-placement="top auto"' +
-                                    'data-html="true" ' +
-                                    'data-content="<%= text %>" ' +
-                                    '>more</a>');
-                            if (_.endsWith(truncated, ellipsis)) {
-                                result += popTemplate({
-                                    text: value
-                                });
-                            }
-
-                            return result;
-                        },
-                        'createdCell': function (cell) {
-                            //TODO why this is not working?
-                            // the call to popover is done in the 'draw' event
-                            $(cell).popover();
-                        }
-                    },
-                    {
-                        title: 'Documents',
-                        data: 'documents',
-                        'render': function (values) {
-                            var result = '';
-                            _.forEach(values, function (value) {
-                                // We expect an array [docName, url]
-                                // if it's a string it is the url
-                                var docName = '',
-                                    url = '';
-                                if (_.isArray(value) && value.length > 1){
-                                    docName = value[0];
-                                    url = value[1];
-                                }
-                                if (typeof s === 'string'){
-                                    url = value;
-                                    // display the first  chars of the filename
-                                    docName = _.last(value.split('/'));
-                                    docName = _.truncate(docName, {
-                                        length: 18,
-                                        omission: '...',
-                                        separator: ' '
-                                    });
-                                }
-                                result += '<a href="' + url + '" target="_blank"><p>' + docName+ '</p></a><br>';
-                            });
-                            return result;
-                        }
-                    }
-                ]
-            },
-            commsTable : null,
+            comms_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/comms_log'),
+            logs_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/action_log'),
             contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
             proposals_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/proposals'),
             approvals_url: api_endpoints.approvals+'?org_id='+vm.$route.params.org_id,
@@ -428,7 +268,8 @@ export default {
         ProposalDashTable,
         ApprovalDashTable,
         ComplianceDashTable,
-        AddContact
+        AddContact,
+        CommsLogs
     },
     computed: {
         isLoading: function () {
@@ -564,8 +405,6 @@ export default {
         let vm = this;
         this.personal_form = document.forms.personal_form;
         this.eventListeners();
-        helpers.initialiseActionLogs(this._uid,vm.$refs.showActionBtn,vm.logsDtOptions,vm.logsTable);
-        helpers.initialiseCommLogs(this._uid,vm.$refs.showCommsBtn,vm.commsDtOptions,vm.commsTable);
     },
 }
 </script>
