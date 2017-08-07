@@ -272,7 +272,7 @@ class ProposalLogEntrySerializer(CommunicationLogEntrySerializer):
         )
 
     def get_documents(self,obj):
-        return [[d.name,d._file.url()] for d in obj.documents.all()]
+        return [[d.name,d._file.url] for d in obj.documents.all()]
 
 class SendReferralSerializer(serializers.Serializer):
     email = serializers.EmailField()
