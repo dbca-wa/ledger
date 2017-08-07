@@ -200,11 +200,14 @@ export default {
             this.requirement = {
                 standard: true,
                 recurrence: false,
+                due_date: '',
                 recurrence_pattern: '1',
                 proposal: this.proposal_id
             };
             this.errors = false;
             $('.has-error').removeClass('has-error');
+            $(this.$refs.due_date).data('DateTimePicker').clear();
+            //$(this.$refs.due_date).clear();
             this.validation_form.resetForm();
         },
         fetchContact: function(id){
