@@ -175,7 +175,7 @@ module.exports = {
             default:
             return "";
         }
-        if (assessorMode && c.canBeEditedByAssessor){
+        if (assessorMode && $.inArray(c.type,['declaration','group','section','label']) == -1 && !c.canBeEditedByAssessor){
             var boxes = this.generateAssessorTextBoxes(h,c,val,assessorLevel,assessorData,assessorInfo);
             // Merge assessor boxes to _elements array
             Array.prototype.push.apply(_elements,boxes);
@@ -233,7 +233,7 @@ module.exports = {
                 var _dt = assessor_data.find(at => at.name == c.name)
                 // Assessor Data
                 var assessor_name = `${c.name}-Assessor`;
-                var assessor_val = _dt.assessor == '' ? val : _dt.assessor;
+                var assessor_val = _dt == undefined || _dt.assessor == '' ? val : _dt.assessor;
                 var assessor_visibility = assessor_mode == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
                 assessor_visibility = !assessor_visibility;
                 boxes.push(
@@ -241,14 +241,16 @@ module.exports = {
                 )
                 // Referral Data
                 var current_referral_present = false;
-                $.each(_dt.referrals,(i,v)=> {
-                    if (v.email == assessor_info.email){ current_referral_present = true; }
-                    var readonly = v.email == assessor_info.email && assessor_mode == 'referral' && this.status_data.assessorStatus.assessor_can_assess ? false : true;
-                    var referral_name = `${c.name}-Referral-${v.email}`;
-                    boxes.push(
-                        <AssessorText type="text" name={referral_name} value={v.value} label={v.full_name} help_text={c.help_text} readonly={readonly}/>
-                    )
-                });
+                if (_dt != undefined){
+                    $.each(_dt.referrals,(i,v)=> {
+                        if (v.email == assessor_info.email){ current_referral_present = true; }
+                        var readonly = v.email == assessor_info.email && assessor_mode == 'referral' && this.status_data.assessorStatus.assessor_can_assess ? false : true;
+                        var referral_name = `${c.name}-Referral-${v.email}`;
+                        boxes.push(
+                            <AssessorText type="text" name={referral_name} value={v.value} label={v.full_name} help_text={c.help_text} readonly={readonly}/>
+                        )
+                    });
+                }
                 if (assessor_mode == 'referral'){
                     if (!current_referral_present){
                         // Add Referral Box 
