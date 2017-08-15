@@ -1,7 +1,11 @@
 #from django.contrib.auth.models import User
 from social_core.exceptions import InvalidEmail
+from django.core.exceptions import ValidationError
 from .models import EmailUser, EmailIdentity
+from django.contrib import messages
 from django.contrib.auth import logout
+from django.core.validators import validate_email
+from django.urls import reverse
 
 def mail_validation(backend, details, is_new=False, *args, **kwargs):
     requires_validation = backend.REQUIRES_EMAIL_VALIDATION or \
@@ -16,9 +20,15 @@ def mail_validation(backend, details, is_new=False, *args, **kwargs):
                                            data['verification_code']):
                 raise InvalidEmail(backend)
         else:
-            backend.strategy.send_email_validation(backend, details['email'])
-            backend.strategy.session_set('email_validation_address',
-                                         details['email'])
+            try:
+                validate_email(details['email'])
+                backend.strategy.send_email_validation(backend, details['email'])
+                backend.strategy.session_set('email_validation_address',
+                                                 details['email'])
+            except Exception as e:
+                return backend.strategy.redirect(
+                    reverse('accounts:login_retry')
+                )
             return backend.strategy.redirect(
                 backend.strategy.setting('EMAIL_VALIDATION_URL')
             )
