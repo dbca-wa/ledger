@@ -17,9 +17,9 @@ Yours sincerely
 
 
 
-for Jim Sharp
-
 DIRECTOR GENERAL
+
+Department of Biodiversity, Conservation and Attractions
 
 {% now 'd/m/Y' %}
 

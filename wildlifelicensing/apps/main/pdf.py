@@ -258,6 +258,9 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
 def _layout_extracted_fields(extracted_fields):
     elements = []
 
+    if not extracted_fields:
+        return elements
+
     def __children_have_data(field):
         for group in field.get('children', []):
             for child_field in group:
@@ -424,8 +427,8 @@ def _create_letter_signature():
     signature_elements = []
     signature_elements.append(Paragraph('Yours sincerely', styles['LetterLeft']))
     signature_elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 4))
-    signature_elements.append(Paragraph('for Jim Sharp', styles['LetterLeft']))
     signature_elements.append(Paragraph('DIRECTOR GENERAL', styles['LetterLeft']))
+    signature_elements.append(Paragraph('Department of Biodiversity, Conservation and Attractions', styles['LetterLeft']))
     signature_elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     signature_elements.append(Paragraph(date.today().strftime(DATE_FORMAT), styles['LetterLeft']),)
