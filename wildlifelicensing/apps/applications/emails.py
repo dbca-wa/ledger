@@ -1,7 +1,5 @@
 import logging
 
-from PyPDF2 import PdfFileMerger, PdfFileReader
-from io import BytesIO
 from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.core.urlresolvers import reverse
 from django.conf import settings
@@ -251,7 +249,7 @@ def send_licence_issued_email(licence, application, request, to=None, cc=None, b
         elif licence.start_date:
             file_name += '_' + smart_text(licence.start_date)
         file_name += '.pdf'
-        attachment = (file_name, licence.licence_document.file, 'application/pdf')
+        attachment = (file_name, licence.licence_document.file.read(), 'application/pdf')
         attachments = [attachment]
     else:
         logger.error('The licence pk=' + licence.pk + ' has no document associated with it.')
@@ -263,18 +261,11 @@ def send_licence_issued_email(licence, application, request, to=None, cc=None, b
     if additional_attachments:
         other_attachments = []
         pdf_attachments = []
-        merger = PdfFileMerger()
-        current_attachment = attachments[0] if len(attachments) > 0 else None
-        merger.append(PdfFileReader(current_attachment[1].path))
         for a in additional_attachments:
             if a.file.name.endswith('.pdf'):
-                merger.append(PdfFileReader(a.file.path))
+                pdf_attachments.append(a)
             else:
                 other_attachments.append(a)
-        output = BytesIO()
-        merger.write(output)
-        attachments = [(current_attachment[0],output.getvalue(),'application/pdf')]
-        output.close()
         attachments += other_attachments
     msg = email.send(to, context=context, attachments=attachments, cc=cc, bcc=bcc)
     log_entry = _log_email(msg, application=application, sender=request.user)

@@ -1,7 +1,10 @@
 import re
 from datetime import date
 
+from PyPDF2 import PdfFileMerger, PdfFileReader
+from io import BytesIO
 from django.conf import settings
+from django.core.files import File
 from django.contrib import messages
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
@@ -74,9 +77,6 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         licence_filename = 'licence-%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
 
-        licence.licence_document = create_licence_pdf_document(licence_filename, licence, application,
-                                                               settings.WL_PDF_URL,
-                                                               original_issue_date)
 
         cover_letter_filename = 'cover-letter-%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
 
@@ -114,6 +114,33 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             for _file in request.FILES.getlist('attachments'):
                 doc = Document.objects.create(file=_file, name=_file.name)
                 attachments.append(doc)
+
+        # Merge documents
+        if attachments and not isinstance(attachments, list):
+            attachments = list(attachments)
+        if attachments:
+            other_attachments = []
+            pdf_attachments = []
+            merger = PdfFileMerger()
+            current_attachment = create_licence_pdf_document(licence_filename, licence, application,
+                                                               settings.WL_PDF_URL,
+                                                               original_issue_date)
+            merger.append(PdfFileReader(current_attachment.file.path))
+            for a in attachments:
+                if a.file.name.endswith('.pdf'):
+                    merger.append(PdfFileReader(a.file.path))
+                else:
+                    other_attachments.append(a)
+            output = BytesIO()
+            merger.write(output)
+            # Delete old document
+            current_attachment.delete()
+            # Attach new document
+            new_doc = Document.objects.create(name=licence_filename)
+            new_doc.file.save(licence_filename, File(output), save=True)
+            licence.licence_document = new_doc
+            licence.save()
+            output.close()
 
         # check we have an email address to send to
         if licence.profile.email and not licence.profile.user.is_dummy_user:
