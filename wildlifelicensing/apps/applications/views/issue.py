@@ -118,13 +118,14 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         # Merge documents
         if attachments and not isinstance(attachments, list):
             attachments = list(attachments)
+
+        current_attachment = create_licence_pdf_document(licence_filename, licence, application,
+                                                           settings.WL_PDF_URL,
+                                                           original_issue_date)
         if attachments:
             other_attachments = []
             pdf_attachments = []
             merger = PdfFileMerger()
-            current_attachment = create_licence_pdf_document(licence_filename, licence, application,
-                                                               settings.WL_PDF_URL,
-                                                               original_issue_date)
             merger.append(PdfFileReader(current_attachment.file.path))
             for a in attachments:
                 if a.file.name.endswith('.pdf'):
@@ -141,6 +142,9 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence.licence_document = new_doc
             licence.save()
             output.close()
+        else:
+            licence.licence_document = current_document
+            licence.save()
 
         # check we have an email address to send to
         if licence.profile.email and not licence.profile.user.is_dummy_user:
