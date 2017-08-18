@@ -143,7 +143,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             licence.save()
             output.close()
         else:
-            licence.licence_document = current_document
+            licence.licence_document = current_attachment
             licence.save()
 
         # check we have an email address to send to
