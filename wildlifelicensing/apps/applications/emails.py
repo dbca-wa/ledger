@@ -258,9 +258,10 @@ def send_licence_issued_email(licence, application, request, to=None, cc=None, b
         to = [licence.profile.email]
     if additional_attachments and not isinstance(additional_attachments, list):
         additional_attachments = list(additional_attachments)
+
+    other_attachments = []
+    pdf_attachments = []
     if additional_attachments:
-        other_attachments = []
-        pdf_attachments = []
         for a in additional_attachments:
             if a.file.name.endswith('.pdf'):
                 pdf_attachments.append(a)
@@ -272,7 +273,7 @@ def send_licence_issued_email(licence, application, request, to=None, cc=None, b
     if licence.licence_document is not None:
         log_entry.documents.add(licence.licence_document)
     if additional_attachments:
-        log_entry.documents.add(*additional_attachments)
+        log_entry.documents.add(*other_attachments)
     return log_entry
 
 
