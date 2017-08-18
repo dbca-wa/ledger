@@ -125,6 +125,53 @@ class WildlifeLicence(Licence):
     def is_issued(self):
         return self.licence_number is not None and len(self.licence_number) > 0
 
+    def search_extracted_fields(self,search):
+        extracted_fields = self.extracted_fields
+
+        if search == '': return ''
+
+        authorised_persons = []
+        all_species = []
+        # information extracted from application
+        for field in extracted_fields:
+            if 'children' in field and field['type'] == 'group':
+                if search in field['name']:
+                    if search == 'authorised_persons':
+                        authorised_person = {
+                            'given_names': '',
+                            'surname': ''
+                        }
+                        for index, group in enumerate(field['children']):
+                            for child_field in group:
+                                # Get surname
+                                if 'surname' in child_field['name'] and 'data' in child_field and child_field['data']:
+                                    authorised_person['surname'] = child_field['data']
+                                elif 'given_names' in child_field['name'] and 'data' in child_field and child_field['data']:
+                                    authorised_person['given_names'] = child_field['data']
+                            name = '{} {}'.format(authorised_person['surname'],authorised_person['given_names'])
+                            authorised_persons.append(name)
+                    elif search == 'species_estimated_number':
+                        species = {
+                            'name':'',
+                            'number':''
+                        }
+                        for index, group in enumerate(field['children']):
+                            for child_field in group:
+                                # Get surname
+                                if 'species_causing_damage' in child_field['name'] and 'data' in child_field and child_field['data']:
+                                    species['name'] = child_field['data']
+                                elif 'number_causing_damage' in child_field['name'] and 'data' in child_field and child_field['data']:
+                                    species['number'] = child_field['data']
+                            name = '{} : {}'.format(species['name'],species['number'])
+                            all_species.append(name)
+
+        if search == 'authorised_persons':
+            return authorised_persons
+        elif search == 'species_estimated_number':
+            return all_species
+        else:
+            return ''
+
 
 class DefaultCondition(models.Model):
     condition = models.ForeignKey(Condition)
