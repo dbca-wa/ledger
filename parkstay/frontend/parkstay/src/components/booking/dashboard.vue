@@ -457,10 +457,10 @@ export default {
                             bk[field] = (booking.editable)? "Paid":"Unpaid";
                         break;
                         case 8:
-                            bk[field] = Moment(booking.arrival).format("YYYY-MM-D");
+                            bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
                         break;
                         case 9:
-                            bk[field] = Moment(booking.departure).format("YYYY-MM-D");
+                            bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
                         break;
                         case 10:
                             bk[field] = booking.guests.adults;
