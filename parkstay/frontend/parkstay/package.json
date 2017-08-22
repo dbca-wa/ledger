@@ -46,7 +46,7 @@
     "bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.min.js",
     "vue": "vue/dist/vue.common",
     "select2": "./node_modules/select2/dist/js/select2.full.min.js",
-    "swal":"sweetalert2"
+    "swal": "sweetalert2"
   },
   "browserify-shim": {
     "jquery": "$",
@@ -88,6 +88,7 @@
     "formValidate": "^1.0.3",
     "jquery": "^3.1.1",
     "jquery-validation": "^1.15.1",
+    "lodash": "^4.17.4",
     "moment": "^2.15.2",
     "moment-range": "^3.0.3",
     "quill": "^1.1.5",

@@ -181,10 +181,12 @@ export default {
                         searchable:false,
                         mRender: function(data,type,full){
                             if (data === 'Cancelled' && full.cancellation_reason != null){
-                                return `<span>${data}</span><br/><br/><span>${full.cancellation_reason}</span>`;
+                                let val = helpers.dtPopover(full.cancellation_reason);
+                                return `<span>${data}</span><br/><br/>${val}`;
                             }
                             return data;
-                        }
+                        },
+                        'createdCell': helpers.dtPopoverCellFn
                     },
                     {
                         data:"arrival",
