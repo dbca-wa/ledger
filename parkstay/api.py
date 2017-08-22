@@ -1405,7 +1405,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             search = request.GET.get('search[value]')
             draw = request.GET.get('draw') if request.GET.get('draw') else 1
             start = request.GET.get('start') if request.GET.get('draw') else 1
-            length = request.GET.get('length') if request.GET.get('draw') else 10
+            length = request.GET.get('length') if request.GET.get('draw') else 'all'
             arrival = str(datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y')) if request.GET.get('arrival') else ''
             departure = str(datetime.strptime(request.GET.get('departure'),'%d/%m/%Y')) if request.GET.get('departure') else ''
             campground = request.GET.get('campground')
@@ -1458,9 +1458,9 @@ class BookingViewSet(viewsets.ModelViewSet):
                     sql += ' where' + sqlsearch
                     sqlCount += ' where ' + sqlsearch
 
-
-            sql = sql + ' limit {} '.format(length)
-            sql = sql + ' offset {} ;'.format(start)
+            if length != 'all':
+                sql = sql + ' limit {} '.format(length)
+                sql = sql + ' offset {} ;'.format(start)
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");

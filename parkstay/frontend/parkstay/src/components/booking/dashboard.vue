@@ -4,8 +4,11 @@
       <div class="well"     style="overflow: auto;">
           <div class="row">
               <div class="col-lg-12">
-                  <button type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
-                      <i class="fa fa-print" aria-hidden="true"></i> Print
+                  <button v-if="!exportingCSV" type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
+                      <i class="fa fa-file-excel-o" aria-hidden="true"></i> Export to CSV
+                  </button>
+                  <button v-else type="button" class="btn btn-default pull-right" disabled>
+                      <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Exporting to CSV
                   </button>
               </div>
           </div>
@@ -62,8 +65,6 @@
       <changebooking ref="changebooking" :booking_id="selected_booking" :campgrounds="campgrounds"/>
   </div>
    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
-   <confirmbox id="cancelBooking" :options="cancelBookingOptions" cancelText="Close"></confirmbox>
-   <confirmbox id="printBooking" :options="printBookingOptions"></confirmbox>
 </div>
 </template>
 
@@ -71,7 +72,6 @@
 import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal} from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
-import confirmbox from '../utils/confirmbox.vue'
 import changebooking from "./changebooking.vue"
 import modal from '../utils/bootstrap-modal.vue'
 import { mapGetters } from 'vuex'
@@ -81,52 +81,12 @@ export default {
         datatable,
         loader,
         changebooking,
-        confirmbox,
         modal
     },
     data:function () {
         let vm =this;
         return {
-            cancelBookingOptions: {
-                icon: "<i class='fa fa-exclamation-triangle fa-2x text-warning' aria-hidden='true'></i>",
-                message: "Are you sure you want to cancel this booking ?",
-                buttons: [{
-                    text: "Cancel Booking",
-                    event: "cbevent",
-                    bsColor: "btn-warning",
-                    handler: function() {
-                        vm.cancelBooking(vm.selected_booking);
-                        vm.selected_booking = -1;
-                    },
-                    autoclose: true
-                }],
-                id: 'cancelBooking'
-            },
-            printBookingOptions: {
-                icon: "<i class='fa fa-exclamation-circle fa-2x text-primary' aria-hidden='true'></i>",
-                message: "Please use the CSV button below for a better formarted document, otherwise use the print button to print the current page.",
-                buttons: [
-                    {
-                    text: "<i class=\"fa fa-file-excel-o\" aria-hidden=\"true\"></i> CSV",
-                    event: "dcsvevent",
-                    bsColor: "btn-default",
-                    handler: function() {
-                        vm.printCsv();
-                    },
-                    autoclose: true
-                    },
-                    {
-                        text: "<i class=\"fa fa-print\" aria-hidden=\"true\"></i> Print",
-                        event: "printevent",
-                        bsColor: "btn-default",
-                        handler: function() {
-                            window.print();
-                        },
-                        autoclose: true
-                    }
-                ],
-                id: 'printBooking'
-            },
+            exportingCSV: false,
             dtOptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -415,97 +375,124 @@ export default {
                 }
             });
         },
-        print:function () {
-            bus.$emit('showAlert', 'printBooking')
-        },
-        printCsv:function () {
-            let vm =this;
-            var json2csv = require('json2csv');
-            var fields = [...vm.dtHeaders];
-            fields.splice(vm.dtHeaders.length-1,1);
-            fields = [...fields,"Adults","Concession","Children","Infants","Regos"]
-            fields.splice(3,0,"Email");
-            fields.splice(4,0,"Phone");
-            var data = vm.$refs.bookings_table.vmDataTable.ajax.json().results;
-            var bookings = [];
-            $.each(data,function (i,booking) {
-                var bk = {};
-                $.each(fields,function (j,field) {
-                    switch (j) {
-                        case 0:
-                        bk[field] = booking.campground_name;
-                        break;
-                        case 1:
-                            bk[field] = booking.campground_region;
-                        break;
-                        case 2:
-                            bk[field] = booking.firstname +" "+ booking.lastname;
-                        break;
-                        case 3:
-                            bk[field] = booking.email;
-                        break;
-                        case 4:
-                            bk[field] = booking.phone;
-                        break;
-                        case 5:
-                            bk[field] = booking.id;
-                        break;
-                        case 6:
-                            bk[field] = booking.campground_site_type;
-                        break;
-                        case 7:
-                            bk[field] = (booking.editable)? "Paid":"Unpaid";
-                        break;
-                        case 8:
-                            bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
-                        break;
-                        case 9:
-                            bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
-                        break;
-                        case 10:
-                            bk[field] = booking.guests.adults;
-                        break;
-                        case 11:
-                            bk[field] =  booking.guests.concession;
-                        break;
-                        case 12:
-                            bk[field] =  booking.guests.children;
-                        break;
-                        case 13:
-                            bk[field] =  booking.guests.infants;
-                        break;
-                        case 14:
-                            bk[field] =  booking.regos.map(r =>{
-                                return Object.keys(r).map(k =>{
-                                    return k +" : "+ r[k]
-                                });
-                            }).join(", ");
-                        break;
-
-                    }
-                });
-                bookings.push(bk);
-            });
-            var csv = json2csv({ data:bookings, fields: fields });
-            var a = document.createElement("a"),
-            file = new Blob([csv], {type: 'text/csv'});
-            var filterCampground = (vm.filterCampground == 'All') ? "All Campgrounds " : $('#filterCampground')[0].selectedOptions[0].text;
-            var filterRegion = (vm.filterCampground == 'All') ? (vm.filterRegion == 'All')? "All Regions" : $('#filterRegion')[0].selectedOptions[0].text : "";
-            var filterDates = (vm.filterDateFrom) ? (vm.filterDateTo) ? "From "+vm.filterDateFrom + " To "+vm.filterDateTo: "From "+vm.filterDateFrom : (vm.filterDateTo) ? " To "+vm.filterDateTo : "" ;
-            var filename =  filterCampground +  "_" + filterRegion + "_" +filterDates+ ".csv";
-            if (window.navigator.msSaveOrOpenBlob) // IE10+
-                window.navigator.msSaveOrOpenBlob(file, filename);
-            else { // Others
-                var url = URL.createObjectURL(file);
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(function() {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 0);
+        printParams() {
+            let vm = this;
+            var str = [];
+            let obj = {
+                arrival : vm.filterDateFrom != null ? vm.filterDateFrom: '',
+                departure : vm.filterDateTo != null ? vm.filterDateTo:'' ,
+                campground : vm.filterCampground != 'All' ? vm.filterCampground : '',
+                region : vm.filterRegion != 'All' ? vm.filterRegion : ''
             }
+            for(var p in obj)
+                if (obj.hasOwnProperty(p)) {
+                str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                }
+            return str.join("&");
+        },
+        print:function () {
+            let vm =this;
+            vm.exportingCSV = true;
+
+            vm.$http.get(api_endpoints.bookings+'?'+vm.printParams()).then(res => {
+                var data = res.body.results;
+
+                var json2csv = require('json2csv');
+                var fields = [...vm.dtHeaders];
+                fields.splice(vm.dtHeaders.length-1,1);
+                fields = [...fields,"Adults","Concession","Children","Infants","Regos"]
+                fields.splice(3,0,"Email");
+                fields.splice(4,0,"Phone");
+                //var data = vm.$refs.bookings_table.vmDataTable.ajax.json().results;
+                var bookings = [];
+                $.each(data,function (i,booking) {
+                    var bk = {};
+                    $.each(fields,function (j,field) {
+                        switch (j) {
+                            case 0:
+                            bk[field] = booking.campground_name;
+                            break;
+                            case 1:
+                                bk[field] = booking.campground_region;
+                            break;
+                            case 2:
+                                bk[field] = booking.firstname +" "+ booking.lastname;
+                            break;
+                            case 3:
+                                bk[field] = booking.email;
+                            break;
+                            case 4:
+                                bk[field] = booking.phone;
+                            break;
+                            case 5:
+                                bk[field] = booking.id;
+                            break;
+                            case 6:
+                                bk[field] = booking.campground_site_type;
+                            break;
+                            case 7:
+                                bk[field] = (booking.editable)? "Paid":"Unpaid";
+                            break;
+                            case 8:
+                                bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
+                            break;
+                            case 9:
+                                bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
+                            break;
+                            case 10:
+                                bk[field] = booking.guests.adults;
+                            break;
+                            case 11:
+                                bk[field] =  booking.guests.concession;
+                            break;
+                            case 12:
+                                bk[field] =  booking.guests.children;
+                            break;
+                            case 13:
+                                bk[field] =  booking.guests.infants;
+                            break;
+                            case 14:
+                                bk[field] =  booking.regos.map(r =>{
+                                    return Object.keys(r).map(k =>{
+                                        return k +" : "+ r[k]
+                                    });
+                                }).join(", ");
+                            break;
+
+                        }
+                    });
+                    bookings.push(bk);
+                });
+                var csv = json2csv({ data:bookings, fields: fields });
+                var a = document.createElement("a"),
+                file = new Blob([csv], {type: 'text/csv'});
+                var filterCampground = (vm.filterCampground == 'All') ? "All Campgrounds " : $('#filterCampground')[0].selectedOptions[0].text;
+                var filterRegion = (vm.filterCampground == 'All') ? (vm.filterRegion == 'All')? "All Regions" : $('#filterRegion')[0].selectedOptions[0].text : "";
+                var filterDates = (vm.filterDateFrom) ? (vm.filterDateTo) ? "From "+vm.filterDateFrom + " To "+vm.filterDateTo: "From "+vm.filterDateFrom : (vm.filterDateTo) ? " To "+vm.filterDateTo : "" ;
+                var filename =  filterCampground +  "_" + filterRegion + "_" +filterDates+ ".csv";
+                if (window.navigator.msSaveOrOpenBlob) // IE10+
+                    window.navigator.msSaveOrOpenBlob(file, filename);
+                else { // Others
+                    var url = URL.createObjectURL(file);
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(function() {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    }, 0);
+                }
+                vm.exportingCSV = false;
+            },
+            (error) => {
+                vm.exportingCSV = false;
+                swal({
+                    type: 'error',
+                    title: 'Export Error', 
+                    text: helpers.apiVueResourceError(error), 
+                })
+            });
         }
     },
     mounted:function () {
