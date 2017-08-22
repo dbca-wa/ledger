@@ -244,7 +244,7 @@ export default {
                                     invoice_string += 'invoice='+n+'&';
                                 });
                                 invoice_string = invoice_string.slice(0,-1);
-                                var payment = (full.paid || full.status == 'Canceled') ? "View" : "Record";
+                                var payment = (full.paid || full.status == 'Cancelled') ? "View" : "Record";
                                 var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
                                 column += record_payment;
                             }

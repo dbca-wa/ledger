@@ -988,9 +988,9 @@ class Booking(models.Model):
             status = status.strip()
             if self.is_canceled:
                 if payment_status == 'over_paid' or payment_status == 'paid':
-                    return 'Canceled - Payment ({})'.format(status)
+                    return 'Cancelled - Payment ({})'.format(status)
                 else:
-                    return 'Canceled'
+                    return 'Cancelled'
             else:
                 return status
         return 'Paid'
