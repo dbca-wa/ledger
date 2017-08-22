@@ -198,7 +198,7 @@ export default {
                         orderable:false,
                         searchable:false,
                         mRender:function(data,type,full){
-                            return "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>";
+                            return full.status != 'Cancelled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
                         }
                     },
                     {
