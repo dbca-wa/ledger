@@ -1478,6 +1478,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 booking = Booking.objects.get(id=bk['id'])
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
+                bk['cancellation_reason'] = booking.cancellation_reason
                 bk['paid'] = booking.paid
                 bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
@@ -1609,11 +1610,20 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         http_status = status.HTTP_200_OK
         try:
+            reason = request.GET.get('reason',None)
+            if not reason:
+                raise serializers.ValidationError('A reason is needed before canceling a booking');
             booking  = self.get_object()
-            booking.cancelBooking()
+            booking.cancelBooking(reason)
             serializer = self.get_serializer(booking)
             return Response(serializer.data,status=status.HTTP_200_OK)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
 

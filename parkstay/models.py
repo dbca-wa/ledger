@@ -889,6 +889,7 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
+    cancellation_reason = models.TextField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
 
@@ -1057,7 +1058,10 @@ class Booking(models.Model):
 
         return amount
 
-    def cancelBooking(self):
+    def cancelBooking(self,reason):
+        if not reason:
+            raise ValidationError('A reason is needed before canceling a booking')
+        self.cancellation_reason = reason
         self.is_canceled = True
         self.campsites.all().delete()
         references = self.invoices.all().values('invoice_reference')

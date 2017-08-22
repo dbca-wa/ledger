@@ -68,7 +68,7 @@
 </template>
 
 <script>
-import {$,bus,datetimepicker,api_endpoints,helpers,Moment} from "../../hooks.js"
+import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal} from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import confirmbox from '../utils/confirmbox.vue'
@@ -218,7 +218,13 @@ export default {
                     {
                         data:"status",
                         orderable:false,
-                        //searchable:false
+                        searchable:false,
+                        mRender: function(data,type,full){
+                            if (data === 'Cancelled' && full.cancellation_reason != null){
+                                return `<span>${data}</span><br/><br/><span>${full.cancellation_reason}</span>`;
+                            }
+                            return data;
+                        }
                     },
                     {
                         data:"arrival",
@@ -345,7 +351,36 @@ export default {
 
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-cancel]',function (e) {
                 vm.selected_booking = JSON.parse($(this).attr('data-cancel'));
-                bus.$emit('showAlert', 'cancelBooking');
+                swal({
+                  title: 'Cancel Booking',
+                  text: "Provide a cancellation reason",
+                  type: 'warning',
+                  input: 'textarea',
+                  showCancelButton: true,
+                  confirmButtonText: 'Submit',
+                  showLoaderOnConfirm: true,
+                  preConfirm: function (reason) {
+                    return new Promise(function (resolve, reject) {
+                        vm.$http.delete(api_endpoints.booking(vm.selected_booking.id)+'?reason='+reason,{
+                            emulateJSON:true,
+                            headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}
+                        }).then((response)=>{
+                            resolve()
+                        },(error) =>{
+                            reject(helpers.apiVueResourceError(error));
+                        });
+                    })
+                  },
+                  allowOutsideClick: false
+                }).then(function (reason) {
+                    vm.$refs.bookings_table.vmDataTable.ajax.reload();
+                    swal({
+                        type: 'success',
+                        title: 'Booking Cancelled',
+                        html: 'Booking PS' + vm.selected_booking.id + ' has been cancelled'
+                    })
+                })
+                //bus.$emit('showAlert', 'cancelBooking');
             });
             vm.dateToPicker.on('dp.change', function(e){
                 if (vm.dateToPicker.data('DateTimePicker').date()) {

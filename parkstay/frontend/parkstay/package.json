@@ -45,7 +45,8 @@
     "jquery-validation": "./node_modules/jquery-validation/dist/jquery.validate.js",
     "bootstrap": "./node_modules/bootstrap/dist/js/bootstrap.min.js",
     "vue": "vue/dist/vue.common",
-    "select2": "./node_modules/select2/dist/js/select2.full.min.js"
+    "select2": "./node_modules/select2/dist/js/select2.full.min.js",
+    "swal":"sweetalert2"
   },
   "browserify-shim": {
     "jquery": "$",
@@ -94,6 +95,7 @@
     "select2": "^4.0.3",
     "select2-bootstrap-theme": "0.1.0-beta.9",
     "slick-carousel-browserify": "^1.6.12",
+    "sweetalert2": "^6.6.9",
     "vue": "^2.1.10",
     "vue-resource": "^1.0.3",
     "vue-router": "^2.0.1",
