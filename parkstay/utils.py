@@ -611,7 +611,7 @@ def update_booking(request,old_booking,booking_details):
                 old_booking.save()
                 booking.delete()
             delete_session_booking(request.session)
-            send_booking_invoice(booking)
+            send_booking_invoice(old_booking)
             return old_booking
         except:
             delete_session_booking(request.session)
