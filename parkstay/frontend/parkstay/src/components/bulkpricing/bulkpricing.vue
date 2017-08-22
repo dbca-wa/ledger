@@ -231,14 +231,14 @@ export default {
                 columns: [{
                     data: 'period_start',
                     mRender: function(data, type, full) {
-                        return Moment(data).format('MMMM Do, YYYY');
+                        return Moment(data).format('DD/MM/YYYY');
                     }
 
                 }, {
                     data: 'period_end',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return Moment(data).format('MMMM Do, YYYY');
+                            return Moment(data).format('DD/MM/YYYY');
                         }
                         else {
                             return '';

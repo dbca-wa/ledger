@@ -218,17 +218,23 @@ export default {
                     {
                         data:"status",
                         orderable:false,
-                        searchable:false
+                        //searchable:false
                     },
                     {
                         data:"arrival",
                         orderable:false,
-                        searchable:false
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            return Moment(data).format('DD/MM/YYYY');
+                        }
                     },
                     {
                         data:"departure",
                         orderable:false,
-                        searchable:false
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            return Moment(data).format('DD/MM/YYYY');
+                        }
                     },
                     {
                         mRender: function(data, type, full) {
