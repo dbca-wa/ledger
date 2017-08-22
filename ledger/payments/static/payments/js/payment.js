@@ -460,13 +460,13 @@ $(function(){
 
         $success_row.html(success_html);
         $success_div.removeClass('hide');
-        if (!$location_fieldset.hasClass('hide')) {
+        /*if (!$location_fieldset.hasClass('hide')) {
             $location_fieldset.addClass('hide');
         }
         if (!$storedcard_fieldset.hasClass('hide')) {
             $storedcard_fieldset.addClass('hide');
             $card_fieldset.removeClass('hide');
-        }
+        }*/
         reset_forms();
     }
     function success(reference,msg){
@@ -480,13 +480,13 @@ $(function(){
 
         $success_row.html(success_html);
         $success_div.removeClass('hide');
-        if (!$location_fieldset.hasClass('hide')) {
+        /*if (!$location_fieldset.hasClass('hide')) {
             $location_fieldset.addClass('hide');
         }
         if (!$storedcard_fieldset.hasClass('hide')) {
             $storedcard_fieldset.addClass('hide');
             $card_fieldset.removeClass('hide');
-        }
+        }*/
         reset_forms();
     }
     /*
