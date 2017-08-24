@@ -575,7 +575,7 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
     def get(self, request, *args, **kwargs):
         application = utils.get_session_application(self.request.session)
 
-        if not application.invoice_reference:
+        if not application.invoice_reference or not application.lodgement_number:
             application.lodgement_sequence += 1
             application.lodgement_date = datetime.now().date()
 
