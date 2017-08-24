@@ -17,7 +17,9 @@ var store = new Vuex.Store({
         parks:[],
         districts:[],
         campgrounds:[],
-        campsite_classes:[]
+        campsite_classes:[],
+        show_loader: false,
+        app_loader_text: ''
     },
     mutations: {
         SETALERT(state, a) {
@@ -37,7 +39,14 @@ var store = new Vuex.Store({
         },
         SETCAMPSITECLASSES(state,campsite_classes){
             state.campsite_classes = campsite_classes;
-        }
+        },
+        SET_LOADER_STATE(state,val){
+            state.show_loader = val;
+            !val ? state.app_loader_text = '': '';
+        },
+        SET_LOADER_TEXT(state,val){
+            state.app_loader_text = val;
+        },
     },
     actions: {
         updateAlert(context,payload) {
@@ -59,8 +68,13 @@ var store = new Vuex.Store({
             });
         },
         fetchCampgrounds(context){
-            $.get(api_endpoints.campgrounds,function(data) {
-                context.commit('SETCAMPGROUNDS',data);
+            return new Promise((resolve,reject) => {
+                Vue.http.get(api_endpoints.campgrounds).then((response) => {
+                    context.commit('SETCAMPGROUNDS',response.body);
+                    resolve(response.body);
+                }, (error) => {
+                    reject(error);
+                });
             });
         },
         fetchCampsiteClasses(context){
@@ -93,6 +107,12 @@ var store = new Vuex.Store({
         },
         campsite_classes: state => {
             return state.campsite_classes;
+        },
+        app_loader_state: (state) => {
+            return state.show_loader;
+        },
+        app_loader_text: (state) => {
+            return state.app_loader_text;
         }
     }
 });

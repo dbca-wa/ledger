@@ -338,6 +338,22 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
 
     return available
 
+def get_available_campsites_list_booking(campsite_qs,request, start_date, end_date,booking_campsites):
+    '''
+        Used to get the available campsites in the selected period
+        and the ones currently attached to a booking
+    '''
+    from parkstay.serialisers import CampsiteSerialiser
+    campsites = get_campsite_availability(campsite_qs, start_date, end_date)
+    available = []
+    for camp in campsites:
+        av = [item for sublist in campsites[camp].values() for item in sublist]
+        if ('booked' not in av):
+            if ('closed' not in av):
+                available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
+
+    return available
+
 def get_campsite_current_rate(request,campsite_id,start_date,end_date):
     res = []
     if start_date and end_date:

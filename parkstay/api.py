@@ -781,12 +781,36 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
+    def try_parsing_date(self,text):
+        for fmt in ('%Y/%m/%d', '%d/%m/%Y'):
+            try:
+                return datetime.strptime(text, fmt)
+            except ValueError:
+                pass
+        raise serializers.ValidationError('no valid date format found')
+
+
     @detail_route(methods=['get'])
     def available_campsites(self, request, format='json', pk=None):
         try:
-            start_date = datetime.strptime(request.GET.get('arrival'),'%Y/%m/%d').date()
-            end_date = datetime.strptime(request.GET.get('departure'),'%Y/%m/%d').date()
-            campsite_qs = Campsite.objects.all().filter(campground_id=self.get_object().id)
+            start_date = self.try_parsing_date(request.GET.get('arrival')).date()
+            end_date = self.try_parsing_date(request.GET.get('departure')).date()
+            campsite_qs = Campsite.objects.filter(campground_id=self.get_object().id)
+            http_status = status.HTTP_200_OK
+            available = utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
+
+            return Response(available,status=http_status)
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['get'])
+    def available_campsites_booking(self, request, format='json', pk=None):
+        try:
+            start_date = self.try_parsing_date(request.GET.get('arrival')).date()
+            end_date = self.try_parsing_date(request.GET.get('departure')).date()
+            campsite_qs = Campsite.objects.filter(campground_id=self.get_object().id)
             http_status = status.HTTP_200_OK
             available = utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
 

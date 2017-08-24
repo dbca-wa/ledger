@@ -437,9 +437,10 @@ class BookingSerializer(serializers.ModelSerializer):
     campground_site_type = serializers.CharField(source='campground.site_type',read_only=True)
     campsites = serializers.SerializerMethodField()
     invoices = serializers.SerializerMethodField()
+    regos = BookingRegoSerializer(many=True,read_only=True)
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos')
 
 
     def get_invoices(self,obj):

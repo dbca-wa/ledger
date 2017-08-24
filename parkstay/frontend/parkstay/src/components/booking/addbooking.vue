@@ -282,6 +282,7 @@
                     </div>
                 </div>
             </div>
+            </div>
         </form>
         <loader :isLoading="isLoading" >{{loading.join(' , ')}}...</loader>
         <modal :large="true" @cancel="finishBooking()" :force="true">

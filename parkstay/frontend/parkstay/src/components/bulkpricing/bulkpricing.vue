@@ -150,9 +150,9 @@
                                           <button type="button" class="btn btn-primary" style="margin-right:10px;" @click.prevent="sendData()">Save</button>
                                           <button type="button" class="btn btn-default" @click="goBack()" >Cancel</button>
                                       </div>
+                                    </form>
                                 </div>
                               </div>
-                            </form>
                           </div>
                 </div>
             </div>
