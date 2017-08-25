@@ -575,33 +575,32 @@ class ApplicationCompleteView(UserCanViewApplicationMixin, ApplicationEntryBaseV
     def get(self, request, *args, **kwargs):
         application = utils.get_session_application(self.request.session)
 
-        if not application.invoice_reference:
-            application.lodgement_sequence += 1
-            application.lodgement_date = datetime.now().date()
+        application.lodgement_sequence += 1
+        application.lodgement_date = datetime.now().date()
 
-            if application.customer_status == 'amendment_required':
-                # this is a 're-lodged' application after some amendment were required.
-                # from this point we assume that all the amendments have been amended.
-                AmendmentRequest.objects.filter(application=application).filter(status='requested').update(status='amended')
-                application.review_status = 'amended'
-                application.processing_status = 'ready_for_action'
-            else :
-                application.processing_status = 'new'
+        if application.customer_status == 'amendment_required':
+            # this is a 're-lodged' application after some amendment were required.
+            # from this point we assume that all the amendments have been amended.
+            AmendmentRequest.objects.filter(application=application).filter(status='requested').update(status='amended')
+            application.review_status = 'amended'
+            application.processing_status = 'ready_for_action'
+        else :
+            application.processing_status = 'new'
 
-            application.customer_status = 'under_review'
+        application.customer_status = 'under_review'
 
-            if not application.lodgement_number:
-                application.lodgement_number = '%s-%s' % (str(application.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
-                                                          str(application.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
+        if not application.lodgement_number:
+            application.lodgement_number = '%s-%s' % (str(application.licence_type.pk).zfill(LICENCE_TYPE_NUM_CHARS),
+                                                      str(application.pk).zfill(LODGEMENT_NUMBER_NUM_CHARS))
 
-            application.log_user_action(
-                ApplicationUserAction.ACTION_LODGE_APPLICATION.format(application),
-                request
-            )
-            # update invoice reference if received, else keep the same
-            application.invoice_reference = request.GET.get('invoice', application.invoice_reference)
+        application.log_user_action(
+            ApplicationUserAction.ACTION_LODGE_APPLICATION.format(application),
+            request
+        )
+        # update invoice reference if received, else keep the same
+        application.invoice_reference = request.GET.get('invoice', application.invoice_reference)
 
-            application.save(version_user=application.applicant, version_comment='Details Modified')
+        application.save(version_user=application.applicant, version_comment='Details Modified')
 
         context = {}
 
