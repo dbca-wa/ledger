@@ -1011,7 +1011,7 @@ class Booking(models.Model):
         other_bookings = Booking.objects.filter(Q(departure__gt=arrival,departure__lte=departure) | Q(arrival__gte=arrival,arrival__lt=departure),customer=customer)
         if self.pk:
             other_bookings.exclude(id=self.pk)
-        if customer and other_bookings:
+        if customer and other_bookings and self.booking_type != 3:
             raise ValidationError('You cannot make concurrent bookings.')
         if not self.campground.oracle_code:
             raise ValidationError('Campground does not have an Oracle code.')
@@ -1107,6 +1107,9 @@ class BookingVehicleRego(models.Model):
     rego = models.CharField(max_length=50)
     type = models.CharField(max_length=10,choices=VEHICLE_CHOICES)
     entry_fee = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('booking','rego')
 
 class ParkEntryRate(models.Model):
 

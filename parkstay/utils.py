@@ -115,6 +115,9 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                         campground=campsite.campground,
                         customer = customer
                     )
+        print 'weeeeh'
+        print end_date
+        print start_date
         for i in range((end_date-start_date).days):
             cb =    CampsiteBooking.objects.create(
                         campsite=campsite,
@@ -338,7 +341,7 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
 
     return available
 
-def get_available_campsites_list_booking(campsite_qs,request, start_date, end_date,booking_campsites):
+def get_available_campsites_list_booking(campsite_qs,request, start_date, end_date,booking):
     '''
         Used to get the available campsites in the selected period
         and the ones currently attached to a booking
@@ -348,9 +351,11 @@ def get_available_campsites_list_booking(campsite_qs,request, start_date, end_da
     available = []
     for camp in campsites:
         av = [item for sublist in campsites[camp].values() for item in sublist]
-        if ('booked' not in av):
+        if ('booked' not in av or camp in booking.campsite_id_list):
             if ('closed' not in av):
                 available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
+
+    #complete = [CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0]]
 
     return available
 
@@ -457,7 +462,9 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
         return total_price
 
 def check_date_diff(old_booking,new_booking):
-    if old_booking.arrival == new_booking.arrival:
+    if old_booking.arrival == new_booking.arrival and old_booking.departure == new_booking.departure:
+        return 4 # same days
+    elif old_booking.arrival == new_booking.arrival:
         old_booking_days = int((old_booking.departure - old_booking.arrival).days)
         new_days = int((new_booking.departure - new_booking.arrival).days)
         if new_days > old_booking_days:
@@ -479,17 +486,24 @@ def get_diff_days(old_booking,new_booking,additional=True):
         return int((new_booking.departure - old_booking.departure).days)
     return int((old_booking.departure - new_booking.departure).days)
 
-def create_temp_bookingupdate(request,arrival,departure,booking_details,old_booking,total_price,void_invoices=False):
+def create_temp_bookingupdate(request,arrival,departure,booking_details,old_booking,total_price):
+    # delete all the campsites in the old moving so as to transfer them to the new booking
+    old_booking.campsites.all().delete()
     booking = create_booking_by_site(booking_details['campsites'][0],
             start_date = arrival,
             end_date = departure,
-            num_adult = old_booking.details['num_adult'],
-            num_concession= old_booking.details['num_concession'],
-            num_child= old_booking.details['num_child'],
-            num_infant= old_booking.details['num_infant'],
+            num_adult = booking_details['num_adult'],
+            num_concession= booking_details['num_concession'],
+            num_child= booking_details['num_child'],
+            num_infant= booking_details['num_infant'],
             cost_total = total_price,
             customer = old_booking.customer
     )
+    # Move all the vehicles to the new booking
+    for r in old_booking.regos.all():
+        r.booking = booking
+        r.save()
+    
     lines = price_or_lineitems(request,booking,booking.campsite_id_list)
     booking_arrival = booking.arrival.strftime('%d-%m-%Y')
     booking_departure = booking.departure.strftime('%d-%m-%Y')
@@ -499,11 +513,10 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     internal_create_booking_invoice(booking, checkout_response)
 
     # Attach new invoices to old booking
-    if void_invoices:
-        for i in old_booking.invoices.all():
-            inv = Invoice.objects.get(reference=i.invoice_reference)
-            inv.voided = True
-            inv.save()
+    for i in old_booking.invoices.all():
+        inv = Invoice.objects.get(reference=i.invoice_reference)
+        inv.voided = True
+        inv.save()
     for i in booking.invoices.all():
         i.booking = old_booking
         i.save()
@@ -514,13 +527,22 @@ def update_booking(request,old_booking,booking_details):
     same_dates = False
     same_campsites = False
     same_campground = False
+    same_details = False
+    same_vehicles = True
     with transaction.atomic():
         try:
             set_session_booking(request.session, old_booking)
+            new_details = {}
+            new_details.update(old_booking.details)
+            # Update the guests
+            new_details['num_adult'] =  booking_details['num_adult']
+            new_details['num_concession'] = booking_details['num_concession']
+            new_details['num_child'] = booking_details['num_child']
+            new_details['num_infant'] = booking_details['num_infant']
             booking = Booking(
                 arrival = booking_details['start_date'],
                 departure =booking_details['end_date'],
-                details = old_booking.details,
+                details = new_details,
                 customer=old_booking.customer,
                 campground = Campground.objects.get(id=booking_details['campground']))
             # Check that the departure is not less than the arrival
@@ -536,8 +558,26 @@ def update_booking(request,old_booking,booking_details):
             # Check if the campsite is the same
             if old_booking.campsite_id_list.sort() == booking_details['campsites'].sort():
                 same_campsites = True
-
-            if same_campsites and same_dates:
+            # Check if the details have changed
+            if new_details == old_booking.details:
+                same_details = True
+            # Check if the vehicles have changed
+            current_regos = sorted([r.rego for r in old_booking.regos.all()])
+            if request.data.get('entryFees').get('regos'):
+                new_regos = request.data['entryFees'].pop('regos')
+                regos_serializers = []
+                for n in new_regos:
+                    if n['rego'] not in current_regos:
+                        n['booking'] = old_booking
+                        regos_serializers.append(BookingRegoSerializer(data=n))
+                        same_vehicles = False
+                # Create the new regos if they are there
+                if regos_serializers:
+                    for r in regos_serializers:
+                        r.is_valid(raise_exception=True)
+                        r.save()
+                        
+            if same_campsites and same_dates and same_vehicles and same_details:
                 return old_booking
 
             # Check difference of dates in booking
@@ -550,14 +590,18 @@ def update_booking(request,old_booking,booking_details):
             if old_booking.cost_total != total_price:
                 price_diff = True
 
-            if price_diff:
+            '''if price_diff:
                 if total_price > old_booking.cost_total:
-                    if date_diff == 1: # Additional days
+                    if date_diff in [1,4]: # Additional or same days
                         if same_campsites:
-                            new_arrival = old_booking.departure
-                            new_departure = new_arrival + timedelta(days=get_diff_days(old_booking,booking))
+                            if date_diff == 1:
+                                new_arrival = old_booking.departure
+                                new_departure = new_arrival + timedelta(days=get_diff_days(old_booking,booking))
 
-                            booking = create_temp_bookingupdate(request,new_arrival,new_departure,booking_details,old_booking,total_price)
+                                booking = create_temp_bookingupdate(request,new_arrival,new_departure,booking_details,old_booking,total_price)
+                            else:
+                                print 'woooiii'
+                                booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
 
                         else:
                             booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
@@ -574,7 +618,7 @@ def update_booking(request,old_booking,booking_details):
                         old_booking.save()
                         booking.delete()
                 elif total_price < old_booking.cost_total:
-                    if date_diff == 2: # Less days
+                    if date_diff in [2,4]: # Less or same days
                         if same_campsites:
                             old_booking.cost_total = total_price
                             # Remove extra campsite bookings
@@ -622,6 +666,24 @@ def update_booking(request,old_booking,booking_details):
                 old_booking.cost_total = booking.cost_total
                 old_booking.departure = booking.departure
                 old_booking.arrival = booking.arrival
+                if not same_campground:
+                    old_booking.campground = booking.campground
+                old_booking.save()
+                booking.delete()'''
+            if price_diff:
+                booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
+                # Attach campsite booking objects to old booking
+                for c in booking.campsites.all():
+                    c.booking = old_booking
+                    c.save()
+                # Move all the vehicles to the in new booking to the old booking
+                for r in booking.regos.all():
+                    r.booking = old_booking
+                    r.save()
+                old_booking.cost_total = booking.cost_total
+                old_booking.departure = booking.departure
+                old_booking.arrival = booking.arrival
+                old_booking.details = booking.details
                 if not same_campground:
                     old_booking.campground = booking.campground
                 old_booking.save()

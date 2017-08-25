@@ -116,16 +116,15 @@
                                   <div class="col-md-6 col-md-offset-4">
                                       <div class="form-group">
                                         <label class="required">{{v.description}}</label>
-                                        <input type="text" class="form-control" required="required" v-model="v.rego" @change="validateRego">
+                                        <input type="text" class="form-control vehicleLookup" required="required" v-model="v.rego" @change="validateRego">
                                       </div>
                                   </div>
                                 </div>
-                                <p><b>NOTE:</b> A vehicle entry fee is not required for the holder of a valid Park Pass.</p>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
-                              <button type="button" class="btn btn-primary btn-lg pull-right" @click="bookNow()">Save Changes</button>
+                              <button type="button" class="btn btn-primary btn-lg pull-right" @click="updateNow()">Save Changes</button>
                             </div>
                         </div>
                     </div>
@@ -365,11 +364,14 @@ export default {
                 vm.fetchingSites = true;
                 if (vm.selected_arrival && vm.selected_departure) {
                     vm.loading.push('fetching campsites');
-                    vm.$http.get(api_endpoints.available_campsites(vm.booking.campground, vm.booking.arrival, vm.booking.departure)).then((response) => {
+                    vm.$http.get(api_endpoints.available_campsites_booking(vm.booking.campground, vm.booking.arrival, vm.booking.departure,vm.booking.id)).then((response) => {
                         vm.fetchingSites = false;
                         vm.campsites = response.body;
                         if (vm.campsites.length > 0) {
-                            vm.selected_campsite = vm.campsites[0].id;
+                            let c_lookup = vm.campsites.find(c => parseInt(c.id) === parseInt(vm.selected_campsite));
+                            if (c_lookup == null || c_lookup == undefined){
+                                vm.selected_campsite = vm.campsites[0].id;
+                            }
                         }
                         vm.loading.splice('fetching campsites', 1);
                     }, (response) => {
@@ -555,6 +557,70 @@ export default {
             }
 
         },
+        updateNow(){
+            let vm = this;
+            let booking = {};
+            // Deal with booking vehicles
+            if (vm.isFormValid()){
+                vm.loading.push('updating booking');
+                booking.entryFees = {
+                    vehicle: 0,
+                    motorbike: 0,
+                    concession: 0,
+                    regos: []
+                };
+                $.each(vm.parkEntryVehicles, function(i, entry) {
+                    entry = JSON.parse(JSON.stringify(entry));
+                    if (entry.rego != null || entry.rego != "null") {
+                        booking.entryFees.regos.push({
+                            type: entry.id,
+                            rego: entry.rego,
+                        });
+                    }
+                    switch (entry.id) {
+                        case 'vehicle':
+                            booking.entryFees.vehicle++;
+                            break;
+                        case 'motorbike':
+                            booking.entryFees.motorbike++;
+                            break;
+                        case 'concession':
+                            booking.entryFees.concession++;
+                            break;
+
+                    }
+                });
+                // Deal with the rest of the booking
+                booking.arrival = vm.booking.arrival;
+                booking.departure = vm.booking.departure;
+                booking.guests = vm.booking.guests;
+                booking.campsites = [vm.selected_campsite];
+                booking.campground = vm.booking.campground
+                // Hide the alert
+                vm.$store.dispatch("updateAlert", {
+                    visible: false,
+                    type: "danger",
+                    message: ""
+                });
+                console.log(booking);
+                vm.$http.put(api_endpoints.booking(vm.booking.id), JSON.stringify(booking), {
+                    emulateJSON: true,
+                    headers: {
+                        'X-CSRFToken': helpers.getCookie('csrftoken')
+                    },
+                }).then((response) => {
+                    vm.loading.splice('updating booking', 1);
+                }, (error) => {
+                    let error_str = helpers.apiVueResourceError(error);
+                    vm.$store.dispatch("updateAlert", {
+                        visible: true,
+                        type: "danger",
+                        message: error_str
+                    });
+                    vm.loading.splice('updating booking', 1);
+                });
+            }
+        },
         bookNow: function() {
             let vm = this;
             if (vm.isFormValid()) {
@@ -652,8 +718,12 @@ export default {
         validateParkEntry: function() {
             let vm = this;
             var isValid = true;
+            let filled = 0;
+            $('.vehicleLookup').each((i,d) => {
+                $(d).val() != '' ? filled++ : '';  
+            });
             if (vm.booking.parkEntry.vehicles > 0) {
-                if (vm.booking.parkEntry.vehicles > vm.booking.parkEntry.regos) {
+                if (vm.booking.parkEntry.vehicles > filled) {
                     isValid = false;
                 }
             }
@@ -728,13 +798,12 @@ export default {
                 }
 
             }
-            vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
-            vm.updateParkEntryPrices();
-            vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+            //vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
+            //vm.updateParkEntryPrices();
+            //vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
         },
         initBooking(response) {
             let vm = this;
-            console.log('initin');
             vm.booking = JSON.parse(JSON.stringify(response.body));
             vm.booking.arrival = Moment(vm.booking.arrival).format('DD/MM/YYYY');
             vm.booking.departure = Moment(vm.booking.departure).format('DD/MM/YYYY');
@@ -764,7 +833,7 @@ export default {
             $.each(vm.booking.regos,(i,v) => {
                 vm.parkEntryPicker.map((vp) => {
                     if (vp.id == v.type){
-                        console.log('cars');
+                        vp.rego = v.rego;
                         vm.addVehicleCount(vp)
                     }
                     return vp;

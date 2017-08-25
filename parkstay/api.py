@@ -810,9 +810,16 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         try:
             start_date = self.try_parsing_date(request.GET.get('arrival')).date()
             end_date = self.try_parsing_date(request.GET.get('departure')).date()
+            booking_id = request.GET.get('booking',None) 
+            if not booking_id:
+                raise serializers.ValidationError('Booking has not been defined')
+            try:
+                booking = Booking.objects.get(id=booking_id)
+            except:
+                raise serializers.ValiadationError('The booking could not be retrieved')
             campsite_qs = Campsite.objects.filter(campground_id=self.get_object().id)
             http_status = status.HTTP_200_OK
-            available = utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
+            available = utils.get_available_campsites_list_booking(campsite_qs,request, start_date, end_date,booking)
 
             return Response(available,status=http_status)
         except ValidationError as e:
@@ -1607,14 +1614,19 @@ class BookingViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
 
             instance = self.get_object()
-            start_date = datetime.strptime(request.data['arrival'],'%Y-%m-%d').date()
-            end_date = datetime.strptime(request.data['departure'],'%Y-%m-%d').date()
+            start_date = datetime.strptime(request.data['arrival'],'%d/%m/%Y').date()
+            end_date = datetime.strptime(request.data['departure'],'%d/%m/%Y').date()
+            guests = request.data['guests']
 
             booking_details = {
                 'campsites':request.data['campsites'],
                 'start_date' : start_date,
                 'campground' : request.data['campground'],
-                'end_date' : end_date
+                'end_date' : end_date,
+                'num_adult' : guests['adults'],
+                'num_concession' : guests['concession'],
+                'num_child' : guests['children'],
+                'num_infant' : guests['infants'],
             }
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)
