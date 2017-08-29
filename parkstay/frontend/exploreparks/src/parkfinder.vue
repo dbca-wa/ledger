@@ -236,6 +236,10 @@
     content: "s";
 }
 
+.symb.MAINS:before {
+    content: "t";
+}
+
 .f6inject {
 
     .search-params hr {
@@ -458,6 +462,7 @@ export default {
                 {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
                 {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
                 //{name: 'Walk trail', symb: 'RW3', key: 'walktrail', 'remoteKey': ['WALK TRAIL']},
+                {name: 'Powered sites', symb: 'MAINS', key: 'walktrail', 'remoteKey': ['POWERED SITES']},
             ],
             hideExtraFilters: true,
             suggestions: {},
