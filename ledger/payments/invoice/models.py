@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import traceback
 import decimal
-from django.db import models
+from django.db import models,transaction
 from django.db.models import Q
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
@@ -112,7 +112,17 @@ class Invoice(models.Model):
         return self.__calculate_total_refunds()
 
     @property
+    def deduction_amount(self):
+        return self.__calculate_deductions()
+
+    @property
+    def transferable_amount(self):
+        return self.payment_amount - self.deduction_amount
+
+    @property
     def balance(self):
+        if self.voided:
+            return decimal.Decimal(0)
         amount = decimal.Decimal(self.amount - self.payment_amount)
         if amount < 0:
             amount =  decimal.Decimal(0)
@@ -163,9 +173,16 @@ class Invoice(models.Model):
             less the reversals for this invoice.
         '''
         payments = dict(self.cash_transactions.filter(type='payment').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+        move_ins = dict(self.cash_transactions.filter(type='move_in').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
         reversals = dict(self.cash_transactions.filter(type='reversal').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
+        move_outs = dict(self.cash_transactions.filter(type='move_out').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
 
-        return payments - reversals
+        return (payments + move_ins) - (reversals + move_outs)
+
+    def __calculate_deductions(self):
+        '''Calculate all the move out transactions for this invoice
+        '''
+        return dict(self.cash_transactions.filter(type='move_out').aggregate(amount__sum=Coalesce(Sum('amount'), decimal.Decimal('0')))).get('amount__sum')
 
     def __calculate_bpoint_payments(self):
         ''' Calcluate the total amount of bpoint payments and
@@ -250,6 +267,36 @@ class Invoice(models.Model):
         except Exception as e:
             traceback.print_exc()
             raise
+
+    def move_funds(self,amount,invoice,details):
+        from ledger.payments.models import CashTransaction
+        from ledger.payments.utils import update_payments 
+        with transaction.atomic():
+            try:
+                if self.transferable_amount < amount:
+                    raise ValidationError('The amount to be moved is more than the allowed transferable amount')
+                # Create a moveout transaction for current invoice
+                CashTransaction.objects.create(
+                    invoice = self, 
+                    amount = amount, 
+                    type = 'move_out', 
+                    source = 'cash',
+                    details = details,
+                    movement_reference = invoice.reference  
+                )
+                update_payments(self.reference)
+                # Create a move in transaction for other invoice
+                CashTransaction.objects.create(
+                    invoice = invoice, 
+                    amount = amount, 
+                    type = 'move_in', 
+                    source = 'cash',
+                    details = details,
+                    movement_reference = self.reference  
+                )
+                update_payments(invoice.reference)
+            except:
+                raise
 
 class InvoiceBPAY(models.Model):
     ''' Link between unmatched bpay payments and invoices

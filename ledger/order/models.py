@@ -18,6 +18,7 @@ class Line(CoreAbstractLine):
     partner_sku = models.CharField(_("Partner SKU"), max_length=128,null=True)
     payment_details = JSONField(default=DEFAULT_PAYMENT)
     refund_details = JSONField(default=DEFAULT_PAYMENT)
+    deduction_details = JSONField(default=DEFAULT_PAYMENT)
 
     @property
     def paid(self):
@@ -31,6 +32,14 @@ class Line(CoreAbstractLine):
     def refunded(self):
         amount = D(0.0)
         for k,v in self.refund_details.items():
+            for i,a in v.items():
+                amount += D(a)
+        return amount
+
+    @property
+    def deducted(self):
+        amount = D(0.0)
+        for k,v in self.deduction_details.items():
             for i,a in v.items():
                 amount += D(a)
         return amount

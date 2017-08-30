@@ -628,7 +628,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
                         'date':c.created.strftime('%d/%m/%Y'),
                         'type':c.get_source_display().lower().title() if c.type != 'refund' else 'Manual',
                         'details':"{}{}".format(c.get_type_display().lower().title(),": {}".format(c.details) if c.details else ''),
-                        'amount':'$ {}'.format(c.amount) if c.type != 'refund' else '$ -{}'.format(c.amount)
+                        'amount':'$ {}'.format(c.amount) if c.type not in ['refund','move_out'] else '$ -{}'.format(c.amount)
                     })
             #bpay
             bpay = invoice.bpay_transactions

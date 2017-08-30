@@ -317,7 +317,7 @@ def oracle_parser(date,system,system_name):
                         if i['code'] not in oracle_codes.keys():
                             oracle_codes[v] = D('0.0')
                         if i['id'] not in parser_codes[invoice.reference].keys():
-                            parser_codes[invoice.reference].update({k:{'code':v,'payment': D('0.0'),'refund': D('0.0')}})
+                            parser_codes[invoice.reference].update({k:{'code':v,'payment': D('0.0'),'refund': D('0.0'),'deductions': D('0.0'}})
 
                     # Start passing items in the invoice
                     for i in items:
@@ -327,6 +327,7 @@ def oracle_parser(date,system,system_name):
                         previous_invoices = OracleParserInvoice.objects.filter(reference=invoice.reference)
                         code_paid_amount = D('0.0')
                         code_refunded_amount = D('0.0')
+                        code_deducted_amount = D('0.0')
                         for p in previous_invoices:
                             details = dict(json.loads(p.details))
                             for k,v in details.items():
@@ -334,8 +335,10 @@ def oracle_parser(date,system,system_name):
                                 if int(k) == item_id:
                                     code_paid_amount +=  D(p_item['payment'])
                                     code_refunded_amount += D(p_item['refund'])
+                                    code_deducted_amount += D(p_item['deductions'])
 
                         # Deal with the current txn
+                        # Payments
                         paid_amount = D('0.0')
                         for k,v in i.payment_details['bpay'].items():
                             paid_amount += D(v)
@@ -349,6 +352,19 @@ def oracle_parser(date,system,system_name):
                                 if k == 'payment':
                                     item[k] += code_payable_amount
 
+                        # Deductions
+                        deducted_amount = D('0.0')
+                        for k,v in i.deduction_details['cash'].items():
+                            deducted_amount += D(v)
+                        code_deductable_amount = deducted_amount - code_deducted_amount
+                        if code_deductable_amount >= 0:
+                            oracle_codes[code] -= code_deductable_amount
+                            for k,v in parser_codes[invoice.reference][item_id].items():
+                                item = parser_codes[invoice.reference][item_id]
+                                if k == 'deductions':
+                                    item[k] += code_deductable_amount
+
+                        # Refunds
                         refunded_amount = D('0.0')
                         for k,v in i.refund_details['bpay'].items():
                             refunded_amount += D(v)
@@ -370,7 +386,7 @@ def oracle_parser(date,system,system_name):
             for k,v in parser_codes.items():
                 can_add = False
                 for g,h in v.items():
-                    if h['payment'] != 0 or h['refund'] != 0:
+                    if h['payment'] != 0 or h['refund'] != 0 or h['deductions'] != 0:
                         can_add = True
                 if can_add:
                     OracleParserInvoice.objects.create(reference=k,details=json.dumps(v),parser=op)
@@ -393,16 +409,20 @@ def update_payments(invoice_reference):
             raise ValidationError('The invoice with refererence {} does not exist'.format(invoice_reference))
         refunded = D(0.0)
         paid = D(0.0)
+        deductions = D(0.0)
         # Bpoint Transactions
         if i.order:
             for line in i.order.lines.all():
                 paid_amount = line.paid
                 refunded_amount = line.refunded
+                deducted_amount = line.deducted
                 amount = line.line_price_incl_tax
                 total_paid = i.payment_amount
                 total_refund = i.refund_amount
+                total_deductions = i.deduction_amount
                 paid += paid_amount
                 refunded += refunded_amount
+                deductions += deducted_amount
                 # Bpoint Amounts
                 for bpoint in i.bpoint_transactions:
                     if bpoint.approved:
@@ -464,7 +484,7 @@ def update_payments(invoice_reference):
                 # Cash Transactions
                 for c in i.cash_transactions.all():
                     if paid_amount < amount and paid < total_paid:
-                        if c.type == 'payment':
+                        if c.type in ['payment','move_in']:
                             remaining_amount = amount - paid_amount
                             if c.id in line.payment_details['cash'].keys():
                                 new_amount  = D(line.payment_details['cash'][c.id]) + remaining_amount if remaining_amount <= c.amount else c.amount
@@ -476,6 +496,19 @@ def update_payments(invoice_reference):
                                 line.payment_details['cash'][c.id] = str(new_amount)
                                 paid_amount += remaining_amount if remaining_amount <= c.amount else c.amount
                                 paid += paid_amount
+                    if deducted_amount < amount and deductions < total_deductions:
+                        if c.type == 'move_out':
+                            remaining_amount = amount - deducted_amount
+                            if c.id in line.deduction_details['cash'].keys():
+                                new_amount = D(line.deduction_details['cash'][c.id]) + remaining_amount if remaining_amount <= c.amount else c.amount
+                                line.deduction_details['cash'][c.id] = str(new_amount)
+                                deducted_amount += remaining_amount if remaining_amount <= c.amount else c.amount
+                                deductions += deducted_amount
+                            else:
+                                new_amount = D(0.0) + remaining_amount if remaining_amount <= c.amount else c.amount
+                                line.deduction_details['cash'][c.id] = str(new_amount)
+                                deducted_amount += remaining_amount if remaining_amount <= c.amount else c.amount
+                                deductions += deducted_amount
                     if refunded_amount < amount and refunded < total_refund:
                         if c.type == 'refund':
                             remaining_amount = amount - refunded_amount
