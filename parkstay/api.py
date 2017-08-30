@@ -1441,6 +1441,11 @@ class BookingViewSet(viewsets.ModelViewSet):
             departure = str(datetime.strptime(request.GET.get('departure'),'%d/%m/%Y')) if request.GET.get('departure') else ''
             campground = request.GET.get('campground')
             region = request.GET.get('region')
+            canceled = request.GET.get('canceled',None)
+            if canceled:
+                canceled = True if canceled.lower() in ['yes','true','t','1'] else False
+
+            canceled = 't' if canceled else 'f'
 
             sql = ''
             http_status = status.HTTP_200_OK
@@ -1474,6 +1479,9 @@ class BookingViewSet(viewsets.ModelViewSet):
                 if departure:
                     sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
                     sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+            # Search for cancelled bookings
+            sql += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
+            sqlCount += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
             if search:
                 sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
                 or lower(parkstay_region.name) LIKE lower(\'%{}%\')\

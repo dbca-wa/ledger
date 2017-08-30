@@ -13,7 +13,7 @@
               </div>
           </div>
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="form-group">
                   <label for="">Campground</label>
                   <select v-show="isLoading" class="form-control" >
@@ -25,7 +25,7 @@
                   </select>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="form-group">
                   <label for="">Region</label>
                   <select v-show="isLoading" class="form-control" name="">
@@ -37,7 +37,18 @@
                   </select>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
+                <div class="form-group">
+                  <label for="">Canceled</label>
+                  <select class="form-control" v-model="filterCanceled" id="filterCanceled">
+                        <option value="True">Yes</option>
+                        <option value="False">No</option>
+                  </select>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-bottom:10px;">
+            <div class="col-md-4">
                 <label for="">Date From</label>
                 <div class="input-group date" id="booking-date-from">
                   <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateFrom">
@@ -46,7 +57,7 @@
                   </span>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label for="">Date To</label>
                 <div class="input-group date" id="booking-date-to">
                   <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo">
@@ -110,6 +121,7 @@ export default {
                         if (vm.filterRegion != "All") {
                             d.region = vm.filterRegion
                         }
+                        d.canceled = vm.filterCanceled;
 
                         return d;
                     }
@@ -255,7 +267,8 @@ export default {
             filterCampground:"All",
             filterRegion:"All",
             filterDateFrom:"",
-            filterDateTo:""
+            filterDateTo:"",
+            filterCanceled: 'False'
         }
     },
     watch:{
@@ -264,6 +277,10 @@ export default {
             vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
         filterRegion: function() {
+            let vm = this;
+            vm.$refs.bookings_table.vmDataTable.ajax.reload();
+        },
+        filterCanceled: function() {
             let vm = this;
             vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
@@ -384,7 +401,8 @@ export default {
                 arrival : vm.filterDateFrom != null ? vm.filterDateFrom: '',
                 departure : vm.filterDateTo != null ? vm.filterDateTo:'' ,
                 campground : vm.filterCampground != 'All' ? vm.filterCampground : '',
-                region : vm.filterRegion != 'All' ? vm.filterRegion : ''
+                region : vm.filterRegion != 'All' ? vm.filterRegion : '',
+                canceled: vm.filterCanceled
             }
             for(var p in obj)
                 if (obj.hasOwnProperty(p)) {
