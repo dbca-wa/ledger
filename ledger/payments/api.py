@@ -22,6 +22,7 @@ from ledger.payments.models import TrackRefund
 from ledger.payments.utils import checkURL, createBasket, createCustomBasket, validSystem, systemid_check,update_payments
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv
+from ledger.payments.emails import send_refund_email 
 
 from ledger.accounts.models import EmailUser
 from ledger.catalogue.models import Product
@@ -492,6 +493,7 @@ class CashViewSet(viewsets.ModelViewSet):
                 txn = serializer.save()
                 if txn.type == 'refund':
                     TrackRefund.objects.create(user=request.user,type=1,refund_id=txn.id,details=serializer.validated_data['details'])
+                    send_refund_email(invoice,'manual',txn.amount)
                 update_payments(invoice.reference)
             http_status = status.HTTP_201_CREATED
             serializer = CashSerializer(txn)

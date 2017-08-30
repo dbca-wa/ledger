@@ -1,0 +1,9 @@
+{%  extends 'dpaw_payments/emails/base.txt' %}
+
+{% block content %}
+{% if refund_type == 'manual' %}
+    A refund of ${{amount}} has been made for invoice reference number {{reference}}.
+{% elif refund_type == 'card' %}
+    A refund of ${{amount}} has been made for invoice reference number {{reference}} to card number ending in {{card_ending}}.
+{% endif %}
+{% endblock %}
