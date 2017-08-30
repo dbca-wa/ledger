@@ -610,6 +610,7 @@ export default {
                     },
                 }).then((response) => {
                     vm.loading.splice('updating booking', 1);
+                    vm.finishBooking();
                 }, (error) => {
                     let error_str = helpers.apiVueResourceError(error);
                     vm.$store.dispatch("updateAlert", {
@@ -621,92 +622,8 @@ export default {
                 });
             }
         },
-        bookNow: function() {
-            let vm = this;
-            if (vm.isFormValid()) {
-                vm.loading.push('processing booking');
-                vm.booking.entryFees = {
-                    vehicle: 0,
-                    motorbike: 0,
-                    concession: 0,
-                    entry_fee: 0,
-                    regos: []
-                };
-                $.each(vm.parkEntryVehicles, function(i, entry) {
-                    entry = JSON.parse(JSON.stringify(entry));
-                    if (entry.rego != null || entry.rego != "null") {
-                        vm.booking.entryFees.regos.push({
-                            type: entry.id,
-                            rego: entry.rego,
-                            entry_fee: entry.entry_fee
-                        });
-                    }
-                    switch (entry.id) {
-                        case 'vehicle':
-                            vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.vehicle);
-                            vm.booking.entryFees.vehicle++;
-                            break;
-                        case 'motorbike':
-                            vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.motorbike);
-                            vm.booking.entryFees.motorbike++;
-                            break;
-                        case 'concession':
-                            vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.concession);
-                            vm.booking.entryFees.concession++;
-                            break;
-
-                    }
-                });
-                var booking = {
-                    arrival: vm.booking.arrival,
-                    departure: vm.booking.departure,
-                    guests: vm.booking.guests,
-                    campsite: vm.booking.campsite,
-                    parkEntry: vm.booking.entryFees,
-                    costs: {
-                        campground: vm.priceHistory,
-                        parkEntry: vm.parkPrices,
-                        total: vm.booking.price
-                    },
-                    customer: {
-                        email: vm.booking.email,
-                        first_name: vm.booking.firstname,
-                        last_name: vm.booking.surname,
-                        phone: vm.booking.phone,
-                        country: vm.booking.country,
-                        postcode: vm.booking.postcode,
-                    }
-                }
-                vm.$store.dispatch("updateAlert", {
-                    visible: false,
-                    type: "danger",
-                    message: ""
-                });
-                vm.$http.post(api_endpoints.bookings, JSON.stringify(booking), {
-                    emulateJSON: true,
-                    headers: {
-                        'X-CSRFToken': helpers.getCookie('csrftoken')
-                    },
-                }).then((response) => {
-                    vm.loading.splice('processing booking', 1);
-                    var frame = $('#invoice_frame');
-                    frame[0].src = '/ledger/payments/invoice/' + response.body.invoices[0];
-                    vm.isModalOpen = true;
-                }, (error) => {
-                    let error_str = helpers.apiVueResourceError(error);
-                    vm.$store.dispatch("updateAlert", {
-                        visible: true,
-                        type: "danger",
-                        message: error_str
-                    });
-                    vm.loading.splice('processing booking', 1);
-                });
-            }
-
-        },
         finishBooking: function() {
             let vm = this;
-            vm.isModalOpen = false;
             vm.$router.push({
                 name: "booking-dashboard"
             });
