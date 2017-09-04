@@ -916,6 +916,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'id': ground.id,
             'name': ground.name,
             'long_description': ground.long_description,
+            'map': ground.campground_map.url if ground.campground_map else None,
             'ongoing_booking': True if ongoing_booking else False,
             'arrival': start_date.strftime('%Y/%m/%d'),
             'days': length,
