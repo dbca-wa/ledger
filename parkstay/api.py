@@ -14,7 +14,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route, list_route,renderer_classes
+from rest_framework.decorators import detail_route, list_route,renderer_classes,authentication_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
@@ -1661,6 +1661,38 @@ class BookingViewSet(viewsets.ModelViewSet):
             booking.cancelBooking(reason)
             serializer = self.get_serializer(booking)
             return Response(serializer.data,status=status.HTTP_200_OK)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET'])
+    @authentication_classes([])
+    def booking_checkout_status(self, request, *args, **kwargs):
+        from django.utils import timezone
+        http_status = status.HTTP_200_OK
+        try:
+            print request.GET
+            instance = self.get_object()
+            response = {
+                'status': 'rejected',
+                'error': ''
+            }
+            # Check the type of booking
+            if instance.booking_type != 3:
+               response['error'] = 'This booking has already been paid for'
+               return Response(response,status=status.HTTP_200_OK)
+            # Check if the time for the booking has elapsed
+            if instance.expiry_time <= timezone.now():
+                response['error'] = 'This booking has expired'
+                return Response(response,status=status.HTTP_200_OK)
+            #if all is well    
+            response['status'] = 'approved'
+            return Response(response,status=status.HTTP_200_OK)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

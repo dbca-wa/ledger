@@ -115,9 +115,6 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                         campground=campsite.campground,
                         customer = customer
                     )
-        print 'weeeeh'
-        print end_date
-        print start_date
         for i in range((end_date-start_date).days):
             cb =    CampsiteBooking.objects.create(
                         campsite=campsite,
@@ -589,87 +586,6 @@ def update_booking(request,old_booking,booking_details):
             price_diff = False
             if old_booking.cost_total != total_price:
                 price_diff = True
-
-            '''if price_diff:
-                if total_price > old_booking.cost_total:
-                    if date_diff in [1,4]: # Additional or same days
-                        if same_campsites:
-                            if date_diff == 1:
-                                new_arrival = old_booking.departure
-                                new_departure = new_arrival + timedelta(days=get_diff_days(old_booking,booking))
-
-                                booking = create_temp_bookingupdate(request,new_arrival,new_departure,booking_details,old_booking,total_price)
-                            else:
-                                print 'woooiii'
-                                booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
-
-                        else:
-                            booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
-                            old_booking.campsites.all().delete()
-
-                        # Attach campsite booking objects to old booking
-                        for c in booking.campsites.all():
-                            c.booking = old_booking
-                            c.save()
-                        old_booking.cost_total = booking.cost_total
-                        old_booking.departure = booking.departure
-                        if not same_campground:
-                            old_booking.campground = booking.campground
-                        old_booking.save()
-                        booking.delete()
-                elif total_price < old_booking.cost_total:
-                    if date_diff in [2,4]: # Less or same days
-                        if same_campsites:
-                            old_booking.cost_total = total_price
-                            # Remove extra campsite bookings
-                            if booking.departure < old_booking.departure:
-                                old_booking.campsites.filter(date__gte=booking.departure).delete()
-                            elif booking.arrival > old_booking.arrival:
-                                old_booking.campsites.filter(date__lte=booking.arrival).delete()
-                            for i in old_booking.invoices.all():
-                                inv = Invoice.objects.get(reference=i.invoice_reference)
-                                inv.voided = True
-                                inv.save()
-                            # Generate New Invoice
-                            lines = price_or_lineitems(request,old_booking,old_booking.campsite_id_list)
-                            old_booking_arrival = datetime.strptime(old_booking.arrival,"%Y-%m-%d").date().strftime('%d-%m-%Y')
-                            booking_departure = datetime.strptime(booking.departure,"%Y-%m-%d").date().strftime('%d-%m-%Y')
-                            reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(old_booking.customer.first_name,old_booking.customer.last_name),old_booking_arrival,booking_departure,old_booking.campground.name)
-                            # Proceed to generate invoice
-                            checkout_response = checkout(request,old_booking,lines,invoice_text=reservation,internal=True)
-                            internal_create_booking_invoice(booking, checkout_response)
-                        else:
-                            booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
-                            old_booking.campsites.all().delete()
-                            # Attach campsite booking objects to old booking
-                            for c in booking.campsites.all():
-                                c.booking = old_booking
-                                c.save()
-
-                            old_booking.cost_total = booking.cost_total
-                        old_booking.departure = booking.departure
-                        old_booking.arrival = booking.arrival
-                        if not same_campground:
-                            old_booking.campground = booking.campground
-                        old_booking.save()
-                        if not same_campsites:
-                            booking.delete()
-
-            if date_diff == 3: # Different Days
-                booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price,void_invoices=True)
-                old_booking.campsites.all().delete()
-                # Attach campsite booking objects to old booking
-                for c in booking.campsites.all():
-                    c.booking = old_booking
-                    c.save()
-
-                old_booking.cost_total = booking.cost_total
-                old_booking.departure = booking.departure
-                old_booking.arrival = booking.arrival
-                if not same_campground:
-                    old_booking.campground = booking.campground
-                old_booking.save()
-                booking.delete()'''
             if price_diff:
                 booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
                 # Attach campsite booking objects to old booking
@@ -722,7 +638,6 @@ def create_or_update_booking(request,booking_details,updating=False):
             for r in regos_serializers:
                 r.is_valid(raise_exception=True)
                 r.save()
-        booking.booking_type = 1
         booking.save()
     return booking
 
@@ -743,7 +658,8 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             "products": lines,
             "custom_basket": True,
             "invoice_text": invoice_text,
-            "vouchers": vouchers
+            "vouchers": vouchers,
+            "check_url": request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id)) 
         }
         if internal or request.user.is_anonymous():
             parameters['basket_owner'] = booking.customer.id
@@ -755,7 +671,7 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         COOKIES = request.COOKIES
         if 'ps_booking' in request.session:
             COOKIES['ps_booking_internal'] = str(request.session['ps_booking'])
-        response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
+        response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=COOKIES,
                                  data=json.dumps(parameters))
         response.raise_for_status()
 
@@ -773,7 +689,6 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         e.args = (http_error_msg,)
         raise
 
-
 def internal_create_booking_invoice(booking, checkout_response):
     if not checkout_response.history:
         raise Exception('There was a problem retrieving the invoice for this booking')
@@ -789,9 +704,10 @@ def internal_create_booking_invoice(booking, checkout_response):
 
 def internal_booking(request,booking_details,internal=True,updating=False):
     json_booking = request.data
+    booking = None
     try:
+        booking = create_or_update_booking(request,booking_details,updating)
         with transaction.atomic():
-            booking = create_or_update_booking(request,booking_details,updating)
             set_session_booking(request.session,booking)
             # Get line items
             booking_arrival = booking.arrival.strftime('%d-%m-%Y')
@@ -801,12 +717,17 @@ def internal_booking(request,booking_details,internal=True,updating=False):
 
             # Proceed to generate invoice
             checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
+            # Change the type of booking
+            booking.booking_type = 1
+            booking.save()
             internal_create_booking_invoice(booking, checkout_response)
             delete_session_booking(request.session)
             send_booking_invoice(booking)
             return booking
 
     except:
+        if booking: 
+            booking.delete()
         raise
 
 def set_session_booking(session, booking):

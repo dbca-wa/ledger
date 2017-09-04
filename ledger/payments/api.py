@@ -757,6 +757,7 @@ class CheckoutSerializer(serializers.Serializer):
     vouchers = VoucherSerializer(many=True,required=False)
     custom_basket = serializers.BooleanField(default=False)
     invoice_text = serializers.CharField(required=False)
+    check_url = serializers.URLField(required=False)
 
     def validate(self, data):
         if data['proxy'] and not data['basket_owner']:
@@ -826,7 +827,8 @@ class CheckoutCreateView(generics.CreateAPIView):
             {"code": "<code>}
         ],
         "custom_basket": "false" (optional, default=False),
-        "invoice_text" : "" (optional)
+        "invoice_text" : "" (optional),
+        "check_url" : "" (optional)
     }
     '''
     serializer_class = CheckoutSerializer
@@ -865,7 +867,7 @@ class CheckoutCreateView(generics.CreateAPIView):
                 else:
                     basket = createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
 
-            redirect = HttpResponseRedirect(reverse('checkout:index')+'?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
+            redirect = HttpResponseRedirect(reverse('checkout:index')+'?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
                                                                                                 self.get_redirect_value(serializer,'card_method'),
                                                                                                 self.get_redirect_value(serializer,'basket_owner'),
                                                                                                 self.get_redirect_value(serializer,'template'),
@@ -878,7 +880,8 @@ class CheckoutCreateView(generics.CreateAPIView):
                                                                                                 self.get_redirect_value(serializer,'checkoutWithToken'),
                                                                                                 self.get_redirect_value(serializer,'bpay_format'),
                                                                                                 self.get_redirect_value(serializer,'icrn_format'),
-                                                                                                self.get_redirect_value(serializer,'invoice_text')))
+                                                                                                self.get_redirect_value(serializer,'invoice_text'),
+                                                                                                self.get_redirect_value(serializer,'check_url')))
             # inject the current basket into the redirect response cookies
             # or else, anonymous users will be directionless
             redirect.set_cookie(
