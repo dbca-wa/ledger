@@ -4,7 +4,7 @@ from django.forms import modelform_factory
 
 from reversion.admin import VersionAdmin
 
-from ledger.accounts.models import EmailUser, Document, Address, Profile
+from ledger.accounts.models import EmailUser, Document, Address, Profile, Organisation
 from ledger.accounts.forms import ProfileAdminForm
 
 
@@ -87,3 +87,7 @@ class AddressAdmin(VersionAdmin):
 @admin.register(Profile)
 class ProfileAdmin(VersionAdmin):
     form = ProfileAdminForm
+
+@admin.register(Organisation)
+class ProfileAdmin(VersionAdmin):
+    pass
