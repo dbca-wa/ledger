@@ -81,6 +81,9 @@ class PromoArea(models.Model):
     def __str__(self):
         return self.name
 
+def update_campground_map_filename(instance, filename):
+    return 'parkstay/campground_maps/{}/{}'.format(instance.id,filename)
+
 class Campground(models.Model):
     CAMPGROUND_TYPE_CHOICES = (
         (0, 'Bookable Online'),
@@ -126,6 +129,7 @@ class Campground(models.Model):
     check_out = models.TimeField(default=time(10))
     max_advance_booking = models.IntegerField(default =180)
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
+    campground_map = models.FileField(upload_to=update_campground_map_filename,null=True,blank=True)
 
     def __str__(self):
         return self.name
