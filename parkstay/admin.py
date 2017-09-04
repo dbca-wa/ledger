@@ -23,6 +23,10 @@ class CampgroundAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     list_filter = ('campground_type','site_type')
 
+@admin.register(models.CampgroundGroup)
+class CampgroundGroupAdmin(admin.ModelAdmin):
+    filter_horizontal = ('members','campgrounds')
+
 @admin.register(models.Campsite)
 class CampsiteAdmin(admin.ModelAdmin):
     list_display = ('name','campground',)

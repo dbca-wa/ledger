@@ -25,6 +25,7 @@ from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
 from ledger.address.models import Country
 from parkstay import utils
+from parkstay.helpers import can_view_campground
 from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
                                 District,
@@ -402,23 +403,26 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET',])
     @renderer_classes((JSONRenderer,))
     def datatable_list(self,request,format=None):
-        data = cache.get('campgrounds_dt')
-        if data is None:
+        queryset = cache.get('campgrounds_dt')
+        if queryset is None:
             queryset = self.get_queryset()
-            serializer = CampgroundDatatableSerializer(queryset,many=True)
-            data = serializer.data
-            cache.set('campgrounds_dt',data,3600)
+            cache.set('campgrounds_dt',queryset,3600)
+        qs = [c for c in queryset.all() if can_view_campground(request.user,c)]
+        serializer = CampgroundDatatableSerializer(qs,many=True)
+        data = serializer.data
         return Response(data)
 
+    @renderer_classes((JSONRenderer,))
     def list(self, request, format=None):
 
-        data = cache.get('campgrounds')
-        if data is None:
+        queryset = cache.get('campgrounds')
+        formatted = bool(request.GET.get("formatted", False))
+        if queryset is None:
             queryset = self.get_queryset()
-            formatted = bool(request.GET.get("formatted", False))
-            serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
-            data = serializer.data
-            cache.set('campgrounds',data,3600)
+            cache.set('campgrounds',queryset,3600)
+        qs = [c for c in queryset.all() if can_view_campground(request.user,c)]
+        serializer = self.get_serializer(qs, formatted=formatted, many=True, method='get')
+        data = serializer.data
         return Response(data)
 
     def retrieve(self, request, *args, **kwargs):

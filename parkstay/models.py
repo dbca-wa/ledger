@@ -21,6 +21,7 @@ from django.db.models.signals import post_delete, pre_save, post_save
 from parkstay.exceptions import BookingRangeWithinException
 from django.core.cache import cache
 from ledger.payments.models import Invoice
+from ledger.accounts.models import EmailUser
 
 # Create your models here.
 
@@ -293,6 +294,11 @@ class Campground(models.Model):
 
 def campground_image_path(instance, filename):
     return '/'.join(['parkstay', 'campground_images', filename])
+
+class CampgroundGroup(models.Model):
+    name = models.CharField(max_length=100)
+    members = models.ManyToManyField(EmailUser,blank=True)
+    campgrounds = models.ManyToManyField(Campground,blank=True)
 
 class CampgroundImage(models.Model):
     image = models.ImageField(max_length=255, upload_to=campground_image_path)
