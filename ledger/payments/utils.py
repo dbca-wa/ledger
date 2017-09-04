@@ -317,7 +317,7 @@ def oracle_parser(date,system,system_name):
                         if i['code'] not in oracle_codes.keys():
                             oracle_codes[v] = D('0.0')
                         if i['id'] not in parser_codes[invoice.reference].keys():
-                            parser_codes[invoice.reference].update({k:{'code':v,'payment': D('0.0'),'refund': D('0.0'),'deductions': D('0.0'}})
+                            parser_codes[invoice.reference].update({k:{'code':v,'payment': D('0.0'),'refund': D('0.0'),'deductions': D('0.0')}})
 
                     # Start passing items in the invoice
                     for i in items:
