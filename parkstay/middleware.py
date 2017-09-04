@@ -1,4 +1,5 @@
 import re
+import datetime
 
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -23,6 +24,11 @@ class BookingTimerMiddleware(object):
                 # expiry time has been hit, destroy the Booking then ditch it
                 booking.delete()
                 del request.session['ps_booking']
+            elif CHECKOUT_PATH.match(request.path) and request.method == 'POST':
+                # safeguard against e.g. part 1 of the multipart checkout confirmation process passing, then part 2 timing out.
+                # on POST boosts remaining time to at least 2 minutes
+                booking.expiry_time = max(booking.expiry_time, timezone.now()+datetime.timedelta(minutes=2))
+                booking.save()
 
         # force a redirect if in the checkout
         if ('ps_booking_internal' not in request.COOKIES) and CHECKOUT_PATH.match(request.path):
