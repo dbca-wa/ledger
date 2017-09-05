@@ -300,6 +300,9 @@ class CampgroundGroup(models.Model):
     members = models.ManyToManyField(EmailUser,blank=True)
     campgrounds = models.ManyToManyField(Campground,blank=True)
 
+    def __str__(self):
+        return self.name
+
 class CampgroundImage(models.Model):
     image = models.ImageField(max_length=255, upload_to=campground_image_path)
     campground = models.ForeignKey(Campground, related_name='images')
