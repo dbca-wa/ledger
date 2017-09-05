@@ -39,7 +39,7 @@
             </div>
             <div class="col-md-4">
                 <div class="form-group">
-                  <label for="">Canceled</label>
+                  <label for="">Cancelled</label>
                   <select class="form-control" v-model="filterCanceled" id="filterCanceled">
                         <option value="True">Yes</option>
                         <option value="False">No</option>
