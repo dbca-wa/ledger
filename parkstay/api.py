@@ -892,6 +892,9 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         if ground.campground_type != 0:
             return Response({'error': 'Campground doesn\'t support online bookings'}, status=400)
 
+        if not ground._is_open(start_date):
+            return Response({'error': 'Campground is closed for your selected dates'}, status=400)
+
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)
         if length > settings.PS_MAX_BOOKING_LENGTH:
