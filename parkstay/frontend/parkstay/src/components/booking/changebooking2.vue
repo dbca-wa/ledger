@@ -421,7 +421,7 @@ export default {
                 useCurrent: false,
             });
             vm.arrivalPicker.on('dp.change', function(e) {
-                vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+                vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
                 vm.selected_arrival = vm.booking.arrival;
                 vm.selected_departure = "";
                 vm.booking.departure = "";
@@ -434,7 +434,7 @@ export default {
             });
             vm.departurePicker.on('dp.change', function(e) {
                 if (vm.departurePicker.data('DateTimePicker').date()) {
-                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('DD/MM/YYYY');
                     vm.selected_departure = vm.booking.departure;
                 } else {
                     vm.booking.departure = null;
