@@ -94,13 +94,13 @@ class BpointTransaction(models.Model):
 
     # Methods
     # ==============================
-    def refund(self,amount,user,matched=True):
+    def refund(self,info,user,matched=True):
         from ledger.payments.facade import bpoint_facade 
         from ledger.payments.models import TrackRefund
 
         with transaction.atomic():
-            amount = amount['amount']
-            details = amount['details']
+            amount = info['amount']
+            details = info['details']
             try:
                 txn = None
                 if self.action == 'payment' or self.action == 'capture':
