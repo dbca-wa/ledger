@@ -14,7 +14,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route, list_route,renderer_classes,authentication_classes
+from rest_framework.decorators import detail_route, list_route,renderer_classes,authentication_classes,permission_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
@@ -1465,6 +1465,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 join parkstay_district on parkstay_park.district_id = parkstay_district.id\
                 full outer join accounts_emailuser on parkstay_booking.customer_id = accounts_emailuser.id\
                 join parkstay_region on parkstay_district.region_id = parkstay_region.id'
+                #join parkstay_campground.id = parkstay_campgroundgroup_members.campgroundgroup_id'
 
             sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
             sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
@@ -1675,8 +1676,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['GET'])
-    @authentication_classes([])
+    @detail_route(permission_classes=[],methods=['GET'])
     def booking_checkout_status(self, request, *args, **kwargs):
         from django.utils import timezone
         http_status = status.HTTP_200_OK
