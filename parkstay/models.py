@@ -915,7 +915,7 @@ class Booking(models.Model):
     @property
     def stay_dates(self):
         count = self.num_days
-        return '{} to {} ({} day{})'.format(self.arrival, self.departure, count, '' if count == 1 else 's')
+        return '{} to {} ({} day{})'.format(self.arrival.strftime('%d/%m/%Y'), self.departure.strftime('%d/%m/%Y'), count, '' if count == 1 else 's')
 
     @property
     def stay_guests(self):
