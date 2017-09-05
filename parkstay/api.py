@@ -1519,40 +1519,45 @@ class BookingViewSet(viewsets.ModelViewSet):
                 dict(zip(columns, row))
                 for row in cursor.fetchall()
             ]
+            clean_data = []
             for bk in data:
+                cg = None
                 booking = Booking.objects.get(id=bk['id'])
-                bk['editable'] = booking.editable
-                bk['status'] = booking.status
-                bk['cancellation_reason'] = booking.cancellation_reason
-                bk['paid'] = booking.paid
-                bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
-                bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
-                bk['guests'] = booking.guests
-                bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
-                if not bk['legacy_id']:
-                    try:
-                        customer = EmailUser.objects.get(id=bk['customer_id'])
-                        bk['firstname'] = customer.first_name
-                        bk['lastname'] = customer.last_name
-                        bk['email'] = customer.email if customer.email else ""
-                        bk['phone'] = customer.mobile_number if customer.mobile_number else ""
-                        if booking.is_canceled:
-                            bk['campground_site_type'] = ""
-                        else:
-                            bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
-                    except EmailUser.DoesNotExist:
-                        bk['firstname'] =  ""
+                cg = booking.campground
+                if cg and can_view_campground(request.user,cg):
+                    bk['editable'] = booking.editable
+                    bk['status'] = booking.status
+                    bk['cancellation_reason'] = booking.cancellation_reason
+                    bk['paid'] = booking.paid
+                    bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
+                    bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
+                    bk['guests'] = booking.guests
+                    bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
+                    if not bk['legacy_id']:
+                        try:
+                            customer = EmailUser.objects.get(id=bk['customer_id'])
+                            bk['firstname'] = customer.first_name
+                            bk['lastname'] = customer.last_name
+                            bk['email'] = customer.email if customer.email else ""
+                            bk['phone'] = customer.mobile_number if customer.mobile_number else ""
+                            if booking.is_canceled:
+                                bk['campground_site_type'] = ""
+                            else:
+                                bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
+                        except EmailUser.DoesNotExist:
+                            bk['firstname'] =  ""
+                            bk['lastname'] = ""
+                            bk['email'] = ""
+                            bk['phone'] = ""
+                    else:
+                        bk['firstname'] =  bk['legacy_name']
                         bk['lastname'] = ""
-                        bk['email'] = ""
-                        bk['phone'] = ""
-                else:
-                    bk['firstname'] =  bk['legacy_name']
-                    bk['lastname'] = ""
-                    bk['campground_site_type'] = ""
+                        bk['campground_site_type'] = ""
+                    clean_data.append(bk)
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
                 ('recordsFiltered',recordsFiltered),
-                ('results',data)
+                ('results',clean_data)
             ]),status=status.HTTP_200_OK)
         except serializers.ValidationError:
             print(traceback.print_exc())
