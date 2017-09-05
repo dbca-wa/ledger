@@ -1076,9 +1076,9 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         bookings_map[s.name]['availability'][offset][0] = False
                         if stat == 'closed':
-                            bookings_map[s.name]['availability'][offset][1] = 'Closed'
+                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
                         elif stat == 'booked':
-                            bookings_map[s.name]['availability'][offset][1] = 'Booked'
+                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
                         else:
                             bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
 
