@@ -127,7 +127,6 @@ class CashTransaction(models.Model):
             raise ValidationError("A {} cannot be made for an unpaid invoice.".format(self.type))
         if self.type == 'refund' and (self.invoice.payment_amount < decimal.Decimal(self.amount)):
             raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
-        print self.source
         if self.type  in ['move_out','move_in'] and self.source != 'cash':
             raise ValidationError('A movement of funds must always have the source as cash')
         if self.type in ['move_in','move_out'] and not self.movement_reference:
@@ -136,7 +135,7 @@ class CashTransaction(models.Model):
             elif self.type == 'move_in':
                 raise ValidationError('A reference number is required to show where the funds are coming from.')
         if self.pk is None:
-            if self.invoice.voided and self.type not in ['move_out']:
+            if self.invoice.voided and self.type not in ['move_out','refund']:
                 raise ValidationError('You cannot make a payment to voided invoice')
             if self.invoice.payment_status == 'paid' and self.type == 'payment':
                 raise ValidationError('This invoice has already been paid for.')
