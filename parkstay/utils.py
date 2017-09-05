@@ -509,14 +509,20 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
     internal_create_booking_invoice(booking, checkout_response)
 
+
+    # Get the new invoice
+    new_invoice = booking.invoices.first()
     # Attach new invoices to old booking
     for i in old_booking.invoices.all():
         inv = Invoice.objects.get(reference=i.invoice_reference)
         inv.voided = True
+        if inv.transferable_amount > 0:
+            #transfer to the new invoice
+            inv.move_funds(inv.transferable_amount,Invoice.objects.get(reference=new_invoice.invoice_reference),'Transfer of funds from {}'.format(inv.reference))
         inv.save()
-    for i in booking.invoices.all():
-        i.booking = old_booking
-        i.save()
+    # Change the booking for the selected invoice
+    new_invoice.booking = old_booking
+    new_invoice.save()
 
     return booking
 
@@ -659,8 +665,9 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             "custom_basket": True,
             "invoice_text": invoice_text,
             "vouchers": vouchers,
-            "check_url": request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id)) 
         }
+        if not internal:
+            parameters["check_url"] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
         if internal or request.user.is_anonymous():
             parameters['basket_owner'] = booking.customer.id
 
