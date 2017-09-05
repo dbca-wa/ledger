@@ -122,7 +122,7 @@
             <table class="hover">
                 <thead>
                     <tr>
-                        <th class="site">Campsite</th>
+                        <th class="site">Campsite&nbsp;<a class="float-right" target="_blank" :href="map" v-if="map">View Map</a> </th>
                         <th class="book">Book</th>
                         <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
                     </tr>
@@ -311,6 +311,7 @@ export default {
             classes: {},
             sites: [],
             long_description: '',
+            map: null,
             showMoreInfo: false,
             ongoing_booking: false 
         };
@@ -447,6 +448,7 @@ export default {
                         vm.days = data.days;
                         vm.classes = data.classes;
                         vm.long_description = data.long_description;
+                        vm.map = data.map;
                         vm.ongoing_booking = data.ongoing_booking;
 
                         if (data.sites.length == 0) {

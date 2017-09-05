@@ -130,3 +130,11 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     def get_invoice_text(self):
         return self._get('ledger','invoice_text')
+
+    # Last check url per system 
+    # ==========================
+    def set_last_check(self,text):
+        self._set('ledger','last_check',text)
+
+    def get_last_check(self):
+        return self._get('ledger','last_check')

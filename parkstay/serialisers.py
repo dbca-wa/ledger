@@ -250,6 +250,7 @@ class CampgroundDatatableSerializer(serializers.ModelSerializer):
 class CampgroundSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
     images = CampgroundImageSerializer(many=True,required=False)
+    campground_map = serializers.FileField(read_only=True,required=False,allow_empty_file=True)
     class Meta:
         model = Campground
         fields = (
@@ -280,6 +281,7 @@ class CampgroundSerializer(serializers.ModelSerializer):
             'images',
             'max_advance_booking',
             'oracle_code',
+            'campground_map'
         )
 
     def get_site_type(self, obj):
@@ -437,9 +439,10 @@ class BookingSerializer(serializers.ModelSerializer):
     campground_site_type = serializers.CharField(source='campground.site_type',read_only=True)
     campsites = serializers.SerializerMethodField()
     invoices = serializers.SerializerMethodField()
+    regos = BookingRegoSerializer(many=True,read_only=True)
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos')
 
 
     def get_invoices(self,obj):

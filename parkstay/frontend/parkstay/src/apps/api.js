@@ -98,6 +98,9 @@ module.exports = {
     available_campsites:function(campground,arrival,departure){
       return "/api/campgrounds/"+campground+"/available_campsites.json?arrival="+arrival+"&departure="+departure;
     },
+    available_campsites_booking:function(campground,arrival,departure,booking){
+      return "/api/campgrounds/"+campground+"/available_campsites_booking.json?arrival="+arrival+"&departure="+departure+"&booking="+booking;
+    },
     features:"/api/features.json",
     campsite_rate: "/api/campsite_rate.json",
     campsiterate_detail:function (id) {

@@ -95,7 +95,7 @@ export default {
                 columns: [{
                     data: 'range_start',
                     mRender: function(data, type, full) {
-                        return Moment(data).format('MMMM Do, YYYY');
+                        return Moment(data).format('DD/MM/YYYY');
                     },
                     orderable: false
 
@@ -103,7 +103,7 @@ export default {
                     data: 'range_end',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
+                            return Moment(data).add(1, 'day').format('DD/MM/YYYY');
                         }
                         else {
                             return '';

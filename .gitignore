@@ -91,6 +91,7 @@ import/
 importo.py
 build.css
 *.map
+parkstay/static/availability/
 
 #caches
 parkstay/cache/*

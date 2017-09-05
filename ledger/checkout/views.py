@@ -1,9 +1,12 @@
 import logging
+import requests
+import json
 from requests.exceptions import HTTPError, ConnectionError
 import traceback
 from decimal import Decimal as D
 from django.db import transaction
 from django.conf import settings
+from django.core.validators import URLValidator
 from django.utils import six
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -69,6 +72,15 @@ class IndexView(CoreIndexView):
         # Add invoice text
         if details.get('invoice_text'):
             self.checkout_session.set_invoice_text(details.get('invoice_text'))
+        # Add check url
+        if details.get('check_url'):
+            # Check if the url works
+            check = URLValidator()
+            try:
+                check(details.get('check_url'))
+            except ValidationError, e:
+                raise e
+            self.checkout_session.set_last_check(details.get('check_url'))
         return True
 
     def __validate_send_email(self, details):
@@ -211,8 +223,8 @@ class IndexView(CoreIndexView):
                 },
                 'invoice_text': request.GET.get('invoice_text',None),
                 'is_anonymous': request.user.is_anonymous(),
+                'check_url': request.GET.get('check_url',None)
             }
-
             # Check if all the required parameters are set
             # and redirect to appropriate page if not
             try:
@@ -399,6 +411,29 @@ class PaymentDetailsView(CorePaymentDetailsView):
         else:
             raise ValueError('{0} is not a supported BPAY method.'.format(method))
 
+    def handle_last_check(self,url):
+        try:
+            res = requests.get(url,cookies=self.request.COOKIES)
+            res.raise_for_status()
+
+            response = json.loads(res.content).get('status')
+            if response != 'approved':
+                error = json.loads(res.content).get('error',None)
+                if error:
+                    raise ValueError('Payment could not be completed at this moment due to the following error \n {}'.format(error))
+                else:
+                    raise ValueError('Payment could not be completed at this moment.')
+        except requests.exceptions.HTTPError as e:
+            if 400 <= e.response.status_code < 500:
+                http_error_msg = '{} Client Error: {} for url: {} > {}'.format(e.response.status_code, e.response.reason, e.response.url,e.response._content)
+
+            elif 500 <= e.response.status_code < 600:
+                http_error_msg = '{} Server Error: {} for url: {}'.format(e.response.status_code, e.response.reason, e.response.url)
+            e.message = http_error_msg
+
+            e.args = (http_error_msg,)
+            raise PaymentError(e)
+
     def handle_payment(self, order_number, total, **kwargs):
         """
         Make submission
@@ -407,6 +442,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # perform the preauth and capture in one step.  
         with transaction.atomic():
             method = self.checkout_session.payment_method()
+            # Last point to use the check url to see if the payment should be permitted
+            if self.checkout_session.get_last_check():
+                self.handle_last_check(self.checkout_session.get_last_check())
             if self.checkout_session.free_basket():
                 self.doInvoice(order_number,total)
             else:

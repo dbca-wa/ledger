@@ -14,7 +14,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route, list_route,renderer_classes
+from rest_framework.decorators import detail_route, list_route,renderer_classes,authentication_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
@@ -25,6 +25,7 @@ from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
 from ledger.address.models import Country
 from parkstay import utils
+from parkstay.helpers import can_view_campground
 from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
                                 District,
@@ -402,23 +403,26 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET',])
     @renderer_classes((JSONRenderer,))
     def datatable_list(self,request,format=None):
-        data = cache.get('campgrounds_dt')
-        if data is None:
+        queryset = cache.get('campgrounds_dt')
+        if queryset is None:
             queryset = self.get_queryset()
-            serializer = CampgroundDatatableSerializer(queryset,many=True)
-            data = serializer.data
-            cache.set('campgrounds_dt',data,3600)
+            cache.set('campgrounds_dt',queryset,3600)
+        qs = [c for c in queryset.all() if can_view_campground(request.user,c)]
+        serializer = CampgroundDatatableSerializer(qs,many=True)
+        data = serializer.data
         return Response(data)
 
+    @renderer_classes((JSONRenderer,))
     def list(self, request, format=None):
 
-        data = cache.get('campgrounds')
-        if data is None:
+        queryset = cache.get('campgrounds')
+        formatted = bool(request.GET.get("formatted", False))
+        if queryset is None:
             queryset = self.get_queryset()
-            formatted = bool(request.GET.get("formatted", False))
-            serializer = self.get_serializer(queryset, formatted=formatted, many=True, method='get')
-            data = serializer.data
-            cache.set('campgrounds',data,3600)
+            cache.set('campgrounds',queryset,3600)
+        qs = [c for c in queryset.all() if can_view_campground(request.user,c)]
+        serializer = self.get_serializer(qs, formatted=formatted, many=True, method='get')
+        data = serializer.data
         return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
@@ -781,14 +785,45 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
+    def try_parsing_date(self,text):
+        for fmt in ('%Y/%m/%d', '%d/%m/%Y'):
+            try:
+                return datetime.strptime(text, fmt)
+            except ValueError:
+                pass
+        raise serializers.ValidationError('no valid date format found')
+
+
     @detail_route(methods=['get'])
     def available_campsites(self, request, format='json', pk=None):
         try:
-            start_date = datetime.strptime(request.GET.get('arrival'),'%Y/%m/%d').date()
-            end_date = datetime.strptime(request.GET.get('departure'),'%Y/%m/%d').date()
-            campsite_qs = Campsite.objects.all().filter(campground_id=self.get_object().id)
+            start_date = self.try_parsing_date(request.GET.get('arrival')).date()
+            end_date = self.try_parsing_date(request.GET.get('departure')).date()
+            campsite_qs = Campsite.objects.filter(campground_id=self.get_object().id)
             http_status = status.HTTP_200_OK
             available = utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
+
+            return Response(available,status=http_status)
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['get'])
+    def available_campsites_booking(self, request, format='json', pk=None):
+        try:
+            start_date = self.try_parsing_date(request.GET.get('arrival')).date()
+            end_date = self.try_parsing_date(request.GET.get('departure')).date()
+            booking_id = request.GET.get('booking',None) 
+            if not booking_id:
+                raise serializers.ValidationError('Booking has not been defined')
+            try:
+                booking = Booking.objects.get(id=booking_id)
+            except:
+                raise serializers.ValiadationError('The booking could not be retrieved')
+            campsite_qs = Campsite.objects.filter(campground_id=self.get_object().id)
+            http_status = status.HTTP_200_OK
+            available = utils.get_available_campsites_list_booking(campsite_qs,request, start_date, end_date,booking)
 
             return Response(available,status=http_status)
         except ValidationError as e:
@@ -885,6 +920,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'id': ground.id,
             'name': ground.name,
             'long_description': ground.long_description,
+            'map': ground.campground_map.url if ground.campground_map else None,
             'ongoing_booking': True if ongoing_booking else False,
             'arrival': start_date.strftime('%Y/%m/%d'),
             'days': length,
@@ -1405,11 +1441,16 @@ class BookingViewSet(viewsets.ModelViewSet):
             search = request.GET.get('search[value]')
             draw = request.GET.get('draw') if request.GET.get('draw') else 1
             start = request.GET.get('start') if request.GET.get('draw') else 1
-            length = request.GET.get('length') if request.GET.get('draw') else 10
+            length = request.GET.get('length') if request.GET.get('draw') else 'all'
             arrival = str(datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y')) if request.GET.get('arrival') else ''
             departure = str(datetime.strptime(request.GET.get('departure'),'%d/%m/%Y')) if request.GET.get('departure') else ''
             campground = request.GET.get('campground')
             region = request.GET.get('region')
+            canceled = request.GET.get('canceled',None)
+            if canceled:
+                canceled = True if canceled.lower() in ['yes','true','t','1'] else False
+
+            canceled = 't' if canceled else 'f'
 
             sql = ''
             http_status = status.HTTP_200_OK
@@ -1443,6 +1484,9 @@ class BookingViewSet(viewsets.ModelViewSet):
                 if departure:
                     sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
                     sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+            # Search for cancelled bookings
+            sql += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
+            sqlCount += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
             if search:
                 sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
                 or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
@@ -1458,9 +1502,9 @@ class BookingViewSet(viewsets.ModelViewSet):
                     sql += ' where' + sqlsearch
                     sqlCount += ' where ' + sqlsearch
 
-
-            sql = sql + ' limit {} '.format(length)
-            sql = sql + ' offset {} ;'.format(start)
+            if length != 'all':
+                sql = sql + ' limit {} '.format(length)
+                sql = sql + ' offset {} ;'.format(start)
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");
@@ -1478,6 +1522,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 booking = Booking.objects.get(id=bk['id'])
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
+                bk['cancellation_reason'] = booking.cancellation_reason
                 bk['paid'] = booking.paid
                 bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
@@ -1582,14 +1627,19 @@ class BookingViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
 
             instance = self.get_object()
-            start_date = datetime.strptime(request.data['arrival'],'%Y-%m-%d').date()
-            end_date = datetime.strptime(request.data['departure'],'%Y-%m-%d').date()
+            start_date = datetime.strptime(request.data['arrival'],'%d/%m/%Y').date()
+            end_date = datetime.strptime(request.data['departure'],'%d/%m/%Y').date()
+            guests = request.data['guests']
 
             booking_details = {
                 'campsites':request.data['campsites'],
                 'start_date' : start_date,
                 'campground' : request.data['campground'],
-                'end_date' : end_date
+                'end_date' : end_date,
+                'num_adult' : guests['adults'],
+                'num_concession' : guests['concession'],
+                'num_child' : guests['children'],
+                'num_infant' : guests['infants'],
             }
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)
@@ -1609,11 +1659,52 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         http_status = status.HTTP_200_OK
         try:
+            reason = request.GET.get('reason',None)
+            if not reason:
+                raise serializers.ValidationError('A reason is needed before canceling a booking');
             booking  = self.get_object()
-            booking.cancelBooking()
+            booking.cancelBooking(reason)
             serializer = self.get_serializer(booking)
             return Response(serializer.data,status=status.HTTP_200_OK)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET'])
+    @authentication_classes([])
+    def booking_checkout_status(self, request, *args, **kwargs):
+        from django.utils import timezone
+        http_status = status.HTTP_200_OK
+        try:
+            print request.GET
+            instance = self.get_object()
+            response = {
+                'status': 'rejected',
+                'error': ''
+            }
+            # Check the type of booking
+            if instance.booking_type != 3:
+               response['error'] = 'This booking has already been paid for'
+               return Response(response,status=status.HTTP_200_OK)
+            # Check if the time for the booking has elapsed
+            if instance.expiry_time <= timezone.now():
+                response['error'] = 'This booking has expired'
+                return Response(response,status=status.HTTP_200_OK)
+            #if all is well    
+            response['status'] = 'approved'
+            return Response(response,status=status.HTTP_200_OK)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
 

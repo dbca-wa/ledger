@@ -21,6 +21,7 @@ from django.db.models.signals import post_delete, pre_save, post_save
 from parkstay.exceptions import BookingRangeWithinException
 from django.core.cache import cache
 from ledger.payments.models import Invoice
+from ledger.accounts.models import EmailUser
 
 # Create your models here.
 
@@ -81,6 +82,9 @@ class PromoArea(models.Model):
     def __str__(self):
         return self.name
 
+def update_campground_map_filename(instance, filename):
+    return 'parkstay/campground_maps/{}/{}'.format(instance.id,filename)
+
 class Campground(models.Model):
     CAMPGROUND_TYPE_CHOICES = (
         (0, 'Bookable Online'),
@@ -126,6 +130,7 @@ class Campground(models.Model):
     check_out = models.TimeField(default=time(10))
     max_advance_booking = models.IntegerField(default =180)
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
+    campground_map = models.FileField(upload_to=update_campground_map_filename,null=True,blank=True)
 
     def __str__(self):
         return self.name
@@ -289,6 +294,11 @@ class Campground(models.Model):
 
 def campground_image_path(instance, filename):
     return '/'.join(['parkstay', 'campground_images', filename])
+
+class CampgroundGroup(models.Model):
+    name = models.CharField(max_length=100)
+    members = models.ManyToManyField(EmailUser,blank=True)
+    campgrounds = models.ManyToManyField(Campground,blank=True)
 
 class CampgroundImage(models.Model):
     image = models.ImageField(max_length=255, upload_to=campground_image_path)
@@ -889,6 +899,7 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
+    cancellation_reason = models.TextField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
 
@@ -988,9 +999,9 @@ class Booking(models.Model):
             status = status.strip()
             if self.is_canceled:
                 if payment_status == 'over_paid' or payment_status == 'paid':
-                    return 'Canceled - Payment ({})'.format(status)
+                    return 'Cancelled - Payment ({})'.format(status)
                 else:
-                    return 'Canceled'
+                    return 'Cancelled'
             else:
                 return status
         return 'Paid'
@@ -1010,7 +1021,7 @@ class Booking(models.Model):
         other_bookings = Booking.objects.filter(Q(departure__gt=arrival,departure__lte=departure) | Q(arrival__gte=arrival,arrival__lt=departure),customer=customer)
         if self.pk:
             other_bookings.exclude(id=self.pk)
-        if customer and other_bookings:
+        if customer and other_bookings and self.booking_type != 3:
             raise ValidationError('You cannot make concurrent bookings.')
         if not self.campground.oracle_code:
             raise ValidationError('Campground does not have an Oracle code.')
@@ -1057,7 +1068,10 @@ class Booking(models.Model):
 
         return amount
 
-    def cancelBooking(self):
+    def cancelBooking(self,reason):
+        if not reason:
+            raise ValidationError('A reason is needed before canceling a booking')
+        self.cancellation_reason = reason
         self.is_canceled = True
         self.campsites.all().delete()
         references = self.invoices.all().values('invoice_reference')
@@ -1103,6 +1117,9 @@ class BookingVehicleRego(models.Model):
     rego = models.CharField(max_length=50)
     type = models.CharField(max_length=10,choices=VEHICLE_CHOICES)
     entry_fee = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('booking','rego')
 
 class ParkEntryRate(models.Model):
 

@@ -24,7 +24,8 @@ class CashAdmin(admin.ModelAdmin):
 
 @admin.register(models.Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('reference','order','payment_status')
+    search_fields = ('reference',)
 
 @admin.register(models.InvoiceBPAY)
 class InvoiceBpayAdmin(admin.ModelAdmin):

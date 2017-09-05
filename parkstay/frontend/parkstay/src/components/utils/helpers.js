@@ -1,3 +1,5 @@
+import $ from 'jquery'
+import _ from 'lodash'
 module.exports = {
     apiError: function(resp){
         var error_str = '';
@@ -57,5 +59,37 @@ module.exports = {
                 $(this).popover('hide');
             });
         });
+    },
+    dtPopover: function(value,truncate_length=30,trigger='hover'){
+        var ellipsis = '...',
+        truncated = _.truncate(value, {
+            length: truncate_length,
+            omission: ellipsis,
+            separator: ' '
+        }),
+        result = '<span>' + truncated + '</span>',
+        popTemplate = _.template('<a href="#" ' +
+            'role="button" ' +
+            'data-toggle="popover" ' +
+            'data-trigger="'+trigger+'" ' +
+            'data-placement="top auto"' +
+            'data-html="true" ' +
+            'data-content="<%= text %>" ' +
+            '>more</a>');
+        if (_.endsWith(truncated, ellipsis)) {
+            result += popTemplate({
+                text: value
+            });
+        }
+        return result;
+    },
+    dtPopoverCellFn: function(cell){
+        $(cell).find('[data-toggle="popover"]')
+            .popover()
+            .on('click', function (e) {
+                e.preventDefault();
+                return true;
+            });
     }
+
 };

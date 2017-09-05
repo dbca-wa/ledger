@@ -14,7 +14,9 @@ var awesomplete = require('awesomplete')
 var daterangepicker = require('bootstrap-daterangepicker')
 var formValidate = require('formValidate')
 var Moment = MomentRange.extendMoment(moment);
+var swal = require('sweetalert2');
 import api_endpoints from './apps/api.js';
+import store from './apps/store'
 import helpers from './components/utils/helpers.js'
 import {bus} from './components/utils/eventBus.js'
 export {
@@ -32,5 +34,7 @@ export {
     select2,
     daterangepicker,
     awesomplete,
-    formValidate
+    formValidate,
+    swal,
+    store
 }
