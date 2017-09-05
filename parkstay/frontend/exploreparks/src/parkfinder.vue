@@ -148,8 +148,8 @@
         </template>
         <template v-else>
             <div class="row align-center">
-                <div class="small-4 medium-4 large-4 columns">
-                    <h2 class="text-center">No Results Found</h2>
+                <div class="small-12 medium-12 large-12 columns">
+                    <h2 class="text-center">There are no campgrounds found matching your search criteria. Please change your search or click <a href="https://exploreparks.dbca.wa.gov.au/know/park-stay-search-tips">here</a> for more information.</h2>
                 </div>
             </div>
         </template>
