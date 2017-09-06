@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from ledger.payments.models import Invoice,OracleInterface
 from ledger.payments.utils import oracle_parser
-from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate)
+from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate, BookingVehicleRego)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 from parkstay.emails import send_booking_invoice
 
@@ -456,6 +456,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     if lines:
         return invoice_lines
     else:
+        print total_price
         return total_price
 
 def check_date_diff(old_booking,new_booking):
@@ -565,21 +566,49 @@ def update_booking(request,old_booking,booking_details):
             if new_details == old_booking.details:
                 same_details = True
             # Check if the vehicles have changed
-            current_regos = sorted([r.rego for r in old_booking.regos.all()])
+            current_regos = old_booking.regos.all()
+            current_vehicle_regos= sorted([r.rego for r in current_regos])
             if request.data.get('entryFees').get('regos'):
                 new_regos = request.data['entryFees'].pop('regos')
+                sent_regos = [r['rego'] for r in new_regos]
                 regos_serializers = []
+                update_regos_serializers = []
                 for n in new_regos:
-                    if n['rego'] not in current_regos:
-                        n['booking'] = old_booking
+                    if n['rego'] not in current_vehicle_regos:
+                        n['booking'] = old_booking.id
                         regos_serializers.append(BookingRegoSerializer(data=n))
                         same_vehicles = False
+                    else:
+                        booking_rego = BookingVehicleRego.objects.get(booking=old_booking,rego=n['rego'])
+                        n['booking'] = old_booking.id
+                        if booking_rego.type != n['type'] or booking_rego.entry_fee != n['entry_fee']:
+                            update_regos_serializers.append(BookingRegoSerializer(booking_rego,data=n))
                 # Create the new regos if they are there
                 if regos_serializers:
                     for r in regos_serializers:
                         r.is_valid(raise_exception=True)
                         r.save()
-                        
+                # Update the new regos if they are there
+                if update_regos_serializers:
+                    for r in update_regos_serializers:
+                        r.is_valid(raise_exception=True)
+                        r.save()
+                    same_vehicles = False
+
+                # Check if there are regos in place that need to be removed
+                stale_regos = []
+                for r in current_regos:
+                    if r.rego not in sent_regos:
+                        stale_regos.append(r.id)
+                # delete stale regos
+                if stale_regos:
+                    same_vehicles = False
+                    BookingVehicleRego.objects.filter(id__in=stale_regos).delete()
+            else:
+                same_vehicles = False
+                if current_regos:
+                    current_regos.delete()
+
             if same_campsites and same_dates and same_vehicles and same_details:
                 return old_booking
 

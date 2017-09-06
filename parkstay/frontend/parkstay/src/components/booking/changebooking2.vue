@@ -113,11 +113,18 @@
                                   </div>
                                 </div>
                                 <div class="row" v-for="v in parkEntryVehicles">
-                                  <div class="col-md-6 col-md-offset-4">
-                                      <div class="form-group">
-                                        <label class="required">{{v.description}}</label>
-                                        <input type="text" class="form-control vehicleLookup" required="required" v-model="v.rego" @change="validateRego">
-                                      </div>
+                                    <div class="col-md-6 col-md-offset-4">
+                                        <div class="form-group">
+                                            <label class="required">{{v.description}}</label>
+                                            <input type="text" class="form-control vehicleLookup" required="required" v-model="v.rego" @change="validateRego">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="checkbox-inline">
+                                            <label>Entry fee
+                                                <input type="checkbox" required="required" v-model="v.entry_fee">
+                                            </label>
+                                        </div>
                                   </div>
                                 </div>
                             </div>
@@ -575,6 +582,7 @@ export default {
                         booking.entryFees.regos.push({
                             type: entry.id,
                             rego: entry.rego,
+                            entry_fee: entry.entry_fee
                         });
                     }
                     switch (entry.id) {
@@ -751,6 +759,7 @@ export default {
                 vm.parkEntryPicker.map((vp) => {
                     if (vp.id == v.type){
                         vp.rego = v.rego;
+                        vp.entry_fee = v.entry_fee;
                         vm.addVehicleCount(vp)
                     }
                     return vp;
