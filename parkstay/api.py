@@ -1450,6 +1450,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             campground = request.GET.get('campground')
             region = request.GET.get('region')
             canceled = request.GET.get('canceled',None)
+            refund_status = request.GET.get('refund_status',None)
             if canceled:
                 canceled = True if canceled.lower() in ['yes','true','t','1'] else False
 
@@ -1531,6 +1532,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                     bk['editable'] = booking.editable
                     bk['status'] = booking.status
                     bk['vehicle_payment_status'] = booking.vehicle_payment_status
+                    bk['refund_status'] = booking.refund_status
                     bk['cancellation_reason'] = booking.cancellation_reason
                     bk['paid'] = booking.paid
                     bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
@@ -1557,7 +1559,16 @@ class BookingViewSet(viewsets.ModelViewSet):
                         bk['firstname'] =  bk['legacy_name']
                         bk['lastname'] = ""
                         bk['campground_site_type'] = ""
-                    clean_data.append(bk)
+                    if refund_status and canceled == 't':
+                        refund_statuses = ['All','Partially Refunded','Not Refunded','Refunded']
+                        if refund_status in refund_statuses:
+                            if refund_status == 'All':
+                                clean_data.append(bk)
+                            else:       
+                                if refund_status == booking.refund_status:
+                                    clean_data.append(bk)
+                    else:
+                        clean_data.append(bk)
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
                 ('recordsFiltered',recordsFiltered),

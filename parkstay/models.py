@@ -988,6 +988,10 @@ class Booking(models.Model):
         return False
 
     @property
+    def refund_status(self):
+        return self.__check_refund_status()
+
+    @property
     def outstanding(self):
         return self.__outstanding_amount()
 
@@ -1002,9 +1006,9 @@ class Booking(models.Model):
             status = status.strip()
             if self.is_canceled:
                 if payment_status == 'over_paid' or payment_status == 'paid':
-                    return 'Cancelled - Payment ({})'.format(status)
+                    return 'Canceled - Payment ({})'.format(status)
                 else:
-                    return 'Cancelled'
+                    return 'Canceled'
             else:
                 return status
         return 'Paid'
@@ -1055,6 +1059,29 @@ class Booking(models.Model):
         elif self.cost_total > amount:
             return 'partially_paid'
         else:return "paid"
+
+    def __check_refund_status(self):
+        invoices = []
+        amount = D('0.0')
+        refund_amount = D('0.0')
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
+            except Invoice.DoesNotExist:
+                pass
+        for i in invoices:
+            if i.voided:
+                amount += i.payment_amount
+                refund_amount += i.refund_amount
+
+        if amount == 0:
+            return 'Not Paid'
+        if refund_amount > 0 and amount > refund_amount:
+            return 'Partially Refunded'
+        elif refund_amount == amount:
+            return 'Refunded'
+        else:return "Not Refunded"
 
     def __outstanding_amount(self):
         invoices = []
