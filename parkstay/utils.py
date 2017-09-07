@@ -200,7 +200,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         end = min(end_date, closure.range_end)
         for i in range((end-start).days):
             for cs in campground_map[closure.campground.pk]:
-                results[cs][start+timedelta(days=i)][0] = 'closed'
+                #results[cs][start+timedelta(days=i)][0] = 'closed'
+                if not closure.campground._is_open(start+timedelta(days=i)):
+                    results[cs][start+timedelta(days=i)][0] = 'closed'
 
     # strike out campsite closures
     csbr_qs =    CampsiteBookingRange.objects.filter(
@@ -212,7 +214,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         start = max(start_date, closure.range_start)
         end = min(end_date, closure.range_end) if closure.range_end else end_date
         for i in range((end-start).days):
-            results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
+            #results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
+            if not closure.campsite._is_open(start+timedelta(days=i)):
+                results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
 
     # strike out days before today
     today = date.today()
