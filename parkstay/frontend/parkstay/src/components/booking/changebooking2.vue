@@ -46,10 +46,13 @@
                                             <div class="col-md-4">
                                                 <label class="control-label pull-left required"  for="Dates">Campsite: </label>
                                             </div>
-                                            <div class="col-md-8">
+                                            <div class="col-md-8" v-if="campsites.length > 0">
                                                 <select class="form-control" name="campground" v-model="selected_campsite">
                                                     <option v-for="c in campsites" :value="c.id">{{c.name}}</option>
                                                 </select>
+                                            </div>
+                                            <div class="col-md-8" v-else>
+                                                <h4>Sorry, no available campsites were found.</h4>
                                             </div>
                                         </div>
                                         <div class="form-group">
@@ -131,7 +134,7 @@
                         </div>
                         <div class="row">
                             <div class="col-md-12">
-                              <button type="button" class="btn btn-primary btn-lg pull-right" @click="updateNow()">Save Changes</button>
+                              <button type="button" :disabled="campsites.length == 0" class="btn btn-primary btn-lg pull-right" @click="updateNow()">Save Changes</button>
                             </div>
                         </div>
                     </div>
