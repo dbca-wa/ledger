@@ -968,7 +968,7 @@ class Booking(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if self.arrival > today <= self.departure:
+        if today <= self.departure:
             if not self.is_canceled:
                 return True
         return False
@@ -1101,6 +1101,9 @@ class Booking(models.Model):
     def cancelBooking(self,reason):
         if not reason:
             raise ValidationError('A reason is needed before canceling a booking')
+        today = datetime.now().date()
+        if today > self.departure:
+            raise ValidationError('You cannot cancel a booking past the departure date.')
         self.cancellation_reason = reason
         self.is_canceled = True
         self.campsites.all().delete()

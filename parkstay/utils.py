@@ -552,6 +552,9 @@ def update_booking(request,old_booking,booking_details):
             # Check that the departure is not less than the arrival
             if booking.departure < booking.arrival:
                 raise Exception('The departure date cannot be before the arrival date')
+            today = datetime.now().date()
+            if today > old_booking.departure:
+                raise ValidationError('You cannot change a booking past the departure date.')
 
             # Check if it is the same campground
             if old_booking.campground.id == booking.campground.id:
