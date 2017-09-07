@@ -1530,6 +1530,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 if cg and can_view_campground(request.user,cg):
                     bk['editable'] = booking.editable
                     bk['status'] = booking.status
+                    bk['vehicle_payment_status'] = booking.vehicle_payment_status
                     bk['cancellation_reason'] = booking.cancellation_reason
                     bk['paid'] = booking.paid
                     bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]

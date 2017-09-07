@@ -1106,7 +1106,6 @@ class Booking(models.Model):
             for line in lines:
                 total_paid += line.paid
                 price_dict[line.oracle_code] = line.unit_price_incl_tax
-            print total_paid
 
             remainder_amount = total_due - total_paid
             # Allocate amounts to each vehicle
@@ -1126,9 +1125,9 @@ class Booking(models.Model):
                         total_paid -= required_total
                         paid = True
                 payment_dict.append({
-                    'rego': r.rego,
-                    'type': r.type,
-                    'paid': paid 
+                    'Rego': r.rego.upper(),
+                    'Type': r.type,
+                    'Paid': 'Yes' if paid else 'No'
                 })
         else:
             pass

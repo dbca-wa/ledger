@@ -479,11 +479,11 @@ export default {
                                 bk[field] =  booking.guests.infants;
                             break;
                             case 14:
-                                bk[field] =  booking.regos.map(r =>{
+                                bk[field] =  booking.vehicle_payment_status.map(r =>{
                                     return Object.keys(r).map(k =>{
                                         return k +" : "+ r[k]
                                     });
-                                }).join(", ");
+                                }).join(" | ");
                             break;
 
                         }
