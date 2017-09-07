@@ -5,7 +5,7 @@
              <h4 class="panel-title">
                  <a role="button" data-toggle="collapse" href="#applications-collapse"
                     aria-expanded="false" aria-controls="applications-collapse">
-                     <h3>Campsite Types</h3>
+                     <h3>Camp Site Types</h3>
                  </a>
              </h4>
          </div>
@@ -28,7 +28,7 @@
                       </div>
                       <div class="col-md-4">
                           <div class="form-group pull-right">
-                              <router-link :to="{name:'campsite-type'}" style="margin-top: 20px;" class="btn btn-primary table_btn" >Add Campsite Type</router-link>
+                              <router-link :to="{name:'campsite-type'}" style="margin-top: 20px;" class="btn btn-primary table_btn" >Add Camp Site Type</router-link>
                           </div>
                       </div>
                   </form>

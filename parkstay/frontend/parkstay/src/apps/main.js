@@ -77,7 +77,7 @@ const routes = [
                             {
                                 path: '/',
                                 name: 'campsite-type',
-                                component: Campsite_type
+                                component: Campsite_type_dash
                             },
                             {
                                 path:':campsite_type_id',

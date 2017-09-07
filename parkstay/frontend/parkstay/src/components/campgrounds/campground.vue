@@ -31,7 +31,7 @@ openCampsite<template lang="html">
             <h4 class="panel-title">
                 <a role="button" data-toggle="collapse" href="#campsites"
                    aria-expanded="false" aria-controls="collapseOne">
-                    <h3>Campsites</h3>
+                    <h3>Camp Sites</h3>
                 </a>
             </h4>
         </div>
