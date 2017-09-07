@@ -1,6 +1,39 @@
 {%  extends 'ps/email/base_email.html' %}
 
 {% block content %}
-Please find attached the confirmation for your upcoming trip to <b>{{ booking.campground.name }}</b> in {{ booking.campground.park.name }}, from {{ booking.stay_dates }}. <br/>
-You must bring this confirmation with you to the campground.
+<p>Print or save this confirmation for presentation on arrival and at any time during your stay.</p>
+
+<p>Arrival: {{booking.arrival|date:"d/m/Y"}}</p>
+<p>Departure: {{booking.departure|date:"d/m/Y"}}</p><br />
+
+{% if booking.campground.site_type == 2 %}
+<p>Campsite: {{booking.first_campsite.get_type_display}}</p><br />
+{% else %}
+<p>Campsite: {{booking.first_campsite.name}}</p>
+{% endif %}
+<p>Campers: {{booking.stay_guests}}</p><br />
+
+{% for v in booking.vehicle_payment_status %}
+<p>Vehicle: {{v.Rego}}, {{v.type}}, {{v.Paid}}</p>
+{% endfor %}
+<br />
+
+{% if unpaid_vehicle %}
+    <p>Purchase a park entry pass at our <a href="https://shop.dpaw.wa.gov.au/park-passes">online store</a> or <a href="https://parks.dpaw.wa.gov.au/know/park-entry-fees">pay on arrival</a></p>
+{% endif %}
+
+<p>About {{booking.campground.name}} and booking conditions {{availability}}</p><br />
+
+<p>Before you go, check</p>
+
+<p>Your contact details and vehicle registration are correct [link to on screen details] The <a href="http://www.bom.gov.au/">Bureau of Meteorology</a> for weather forecasts and warnings <a href="https://www.emergency.wa.gov.au/">Emergency WA</a> for warnings and incidents The <a href="http://www.abc.net.au/">ABC</a> radio frequency for the area you are visiting (ABC local radio broadcasts emergency information)</p><br />
+
+<p>Contact us about your booking</p>
+<p>{{campground_email}}</p>
+{% if booking.campground.telephone %}
+<p>{{booking.campground.telephone}}</p>
+{% endif %}
+<br />
+
+<p>View my Park Stay WA bookings {{my_bookings}}</p>
 {% endblock %}

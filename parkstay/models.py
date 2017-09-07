@@ -191,6 +191,18 @@ class Campground(models.Model):
             return images[0]
         return None
 
+    @property
+    def email(self):
+        if self.contact:
+            return self.contact.email
+        return None
+
+    @property
+    def telephone(self):
+        if self.contact:
+            return self.contact.telephone
+        return None
+
     # Methods
     # =======================================
     def _is_open(self,period):

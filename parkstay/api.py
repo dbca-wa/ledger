@@ -97,6 +97,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
 from parkstay.helpers import is_officer, is_customer
 from parkstay import reports 
 from parkstay import pdf
+from parkstay import emails
 
 
 # API Views
@@ -1685,6 +1686,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError('A reason is needed before canceling a booking');
             booking  = self.get_object()
             booking.cancelBooking(reason)
+            emails.send_booking_cancelation(booking,request)
             serializer = self.get_serializer(booking)
             return Response(serializer.data,status=status.HTTP_200_OK)
         except serializers.ValidationError:
