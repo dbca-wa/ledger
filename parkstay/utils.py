@@ -12,9 +12,9 @@ from django.utils import timezone
 
 from ledger.payments.models import Invoice,OracleInterface
 from ledger.payments.utils import oracle_parser
-from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate)
+from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate, BookingVehicleRego)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
-from parkstay.emails import send_booking_invoice
+from parkstay.emails import send_booking_invoice,send_booking_confirmation
 
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
@@ -200,7 +200,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         end = min(end_date, closure.range_end)
         for i in range((end-start).days):
             for cs in campground_map[closure.campground.pk]:
-                results[cs][start+timedelta(days=i)][0] = 'closed'
+                #results[cs][start+timedelta(days=i)][0] = 'closed'
+                if not closure.campground._is_open(start+timedelta(days=i)):
+                    results[cs][start+timedelta(days=i)][0] = 'closed'
 
     # strike out campsite closures
     csbr_qs =    CampsiteBookingRange.objects.filter(
@@ -212,7 +214,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         start = max(start_date, closure.range_start)
         end = min(end_date, closure.range_end) if closure.range_end else end_date
         for i in range((end-start).days):
-            results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
+            #results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
+            if not closure.campsite._is_open(start+timedelta(days=i)):
+                results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
 
     # strike out days before today
     today = date.today()
@@ -456,6 +460,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     if lines:
         return invoice_lines
     else:
+        print total_price
         return total_price
 
 def check_date_diff(old_booking,new_booking):
@@ -509,14 +514,20 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
     internal_create_booking_invoice(booking, checkout_response)
 
+
+    # Get the new invoice
+    new_invoice = booking.invoices.first()
     # Attach new invoices to old booking
     for i in old_booking.invoices.all():
         inv = Invoice.objects.get(reference=i.invoice_reference)
         inv.voided = True
+        if inv.transferable_amount > 0:
+            #transfer to the new invoice
+            inv.move_funds(inv.transferable_amount,Invoice.objects.get(reference=new_invoice.invoice_reference),'Transfer of funds from {}'.format(inv.reference))
         inv.save()
-    for i in booking.invoices.all():
-        i.booking = old_booking
-        i.save()
+    # Change the booking for the selected invoice
+    new_invoice.booking = old_booking
+    new_invoice.save()
 
     return booking
 
@@ -545,6 +556,9 @@ def update_booking(request,old_booking,booking_details):
             # Check that the departure is not less than the arrival
             if booking.departure < booking.arrival:
                 raise Exception('The departure date cannot be before the arrival date')
+            today = datetime.now().date()
+            if today > old_booking.departure:
+                raise ValidationError('You cannot change a booking past the departure date.')
 
             # Check if it is the same campground
             if old_booking.campground.id == booking.campground.id:
@@ -559,21 +573,49 @@ def update_booking(request,old_booking,booking_details):
             if new_details == old_booking.details:
                 same_details = True
             # Check if the vehicles have changed
-            current_regos = sorted([r.rego for r in old_booking.regos.all()])
+            current_regos = old_booking.regos.all()
+            current_vehicle_regos= sorted([r.rego for r in current_regos])
             if request.data.get('entryFees').get('regos'):
                 new_regos = request.data['entryFees'].pop('regos')
+                sent_regos = [r['rego'] for r in new_regos]
                 regos_serializers = []
+                update_regos_serializers = []
                 for n in new_regos:
-                    if n['rego'] not in current_regos:
-                        n['booking'] = old_booking
+                    if n['rego'] not in current_vehicle_regos:
+                        n['booking'] = old_booking.id
                         regos_serializers.append(BookingRegoSerializer(data=n))
                         same_vehicles = False
+                    else:
+                        booking_rego = BookingVehicleRego.objects.get(booking=old_booking,rego=n['rego'])
+                        n['booking'] = old_booking.id
+                        if booking_rego.type != n['type'] or booking_rego.entry_fee != n['entry_fee']:
+                            update_regos_serializers.append(BookingRegoSerializer(booking_rego,data=n))
                 # Create the new regos if they are there
                 if regos_serializers:
                     for r in regos_serializers:
                         r.is_valid(raise_exception=True)
                         r.save()
-                        
+                # Update the new regos if they are there
+                if update_regos_serializers:
+                    for r in update_regos_serializers:
+                        r.is_valid(raise_exception=True)
+                        r.save()
+                    same_vehicles = False
+
+                # Check if there are regos in place that need to be removed
+                stale_regos = []
+                for r in current_regos:
+                    if r.rego not in sent_regos:
+                        stale_regos.append(r.id)
+                # delete stale regos
+                if stale_regos:
+                    same_vehicles = False
+                    BookingVehicleRego.objects.filter(id__in=stale_regos).delete()
+            else:
+                same_vehicles = False
+                if current_regos:
+                    current_regos.delete()
+
             if same_campsites and same_dates and same_vehicles and same_details:
                 return old_booking
 
@@ -659,8 +701,9 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             "custom_basket": True,
             "invoice_text": invoice_text,
             "vouchers": vouchers,
-            "check_url": request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id)) 
         }
+        if not internal:
+            parameters["check_url"] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
         if internal or request.user.is_anonymous():
             parameters['basket_owner'] = booking.customer.id
 
@@ -722,7 +765,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             booking.save()
             internal_create_booking_invoice(booking, checkout_response)
             delete_session_booking(request.session)
-            send_booking_invoice(booking)
+            send_booking_invoice(booking,request)
             return booking
 
     except:

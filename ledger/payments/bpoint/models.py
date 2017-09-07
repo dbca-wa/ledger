@@ -77,6 +77,40 @@ class BpointTransaction(models.Model):
         return Order.objects.get(number=Invoice.objects.get(reference=self.crn1).order_number)
 
     @property
+    def payment_allocated(self):
+        allocated = D('0.0')
+        try:
+            invoice = Invoice.objects.get(reference=self.crn1)
+        except Invoice.DoesNotExist:
+            invoice = None
+        if invoice and invoice.order:
+            lines = invoice.order.lines.all()
+            for line in lines:
+                for k,v in line.payment_details.items():
+                    if k == 'card':
+                        for i,a in v.items():
+                            if i == str(self.id):
+                                allocated += D(a)
+        return allocated
+
+    @property
+    def refund_allocated(self):
+        allocated = D('0.0')
+        try:
+            invoice = Invoice.objects.get(reference=self.crn1)
+        except Invoice.DoesNotExist:
+            invoice = None
+        if invoice and invoice.order:
+            lines = invoice.order.lines.all()
+            for line in lines:
+                for k,v in line.refund_details.items():
+                    if k == 'card':
+                        for i,a in v.items():
+                            if i == str(self.id):
+                                allocated += D(a)
+        return allocated
+
+    @property
     def refundable_amount(self):
         from ledger.payments.models import Invoice
         amount = D('0.0')
@@ -94,13 +128,13 @@ class BpointTransaction(models.Model):
 
     # Methods
     # ==============================
-    def refund(self,amount,user,matched=True):
+    def refund(self,info,user,matched=True):
         from ledger.payments.facade import bpoint_facade 
         from ledger.payments.models import TrackRefund
 
         with transaction.atomic():
-            amount = amount['amount']
-            details = amount['details']
+            amount = info['amount']
+            details = info['details']
             try:
                 txn = None
                 if self.action == 'payment' or self.action == 'capture':

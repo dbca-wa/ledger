@@ -31,12 +31,11 @@
                             {% endif %}
                             {% if request.user.is_staff %}
                             <li><router-link :to="{ name: 'cg_main' }">Campgrounds</router-link></li>
-                            <li><router-link :to="{ name: 'campsite-type' }">Campsite Types</router-link></li>
+                            <li><router-link :to="{ name: 'campsite-type' }">Camp Site Types</router-link></li>
                             <li><router-link :to="{ name: 'bulkpricing' }">Bulk Pricing</router-link></li>
                             <li><router-link :to="{ name: 'booking-dashboard' }">Existing Bookings</router-link></li>
                             {% else %}
                             <li><a href="{{EXPLORE_PARKS_SEARCH}}">Explore Parks</a></li>
-                            <li><a href="{{EXPLORE_PARKS_CONTACT}}">Contact Us</a></li>
                             {% endif %}
                         {% endblock %}
                     </ul>
@@ -64,9 +63,9 @@
                                 <ul class="dropdown-menu">
                                     {% if request.user.is_staff %}
                                         <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                        <li><a href="/dashboard/reports">Reports</a></li>
                                         <li role="separator" class="divider"></li>
                                     {% endif %}
-                                    <li><a href="/dashboard/reports">Reports</a></li>
                                     <li role="separator" class="divider"></li>
                                     <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
                                 </ul>

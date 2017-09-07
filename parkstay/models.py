@@ -191,6 +191,18 @@ class Campground(models.Model):
             return images[0]
         return None
 
+    @property
+    def email(self):
+        if self.contact:
+            return self.contact.email
+        return None
+
+    @property
+    def telephone(self):
+        if self.contact:
+            return self.contact.telephone
+        return None
+
     # Methods
     # =======================================
     def _is_open(self,period):
@@ -299,6 +311,9 @@ class CampgroundGroup(models.Model):
     name = models.CharField(max_length=100)
     members = models.ManyToManyField(EmailUser,blank=True)
     campgrounds = models.ManyToManyField(Campground,blank=True)
+
+    def __str__(self):
+        return self.name
 
 class CampgroundImage(models.Model):
     image = models.ImageField(max_length=255, upload_to=campground_image_path)
@@ -912,7 +927,7 @@ class Booking(models.Model):
     @property
     def stay_dates(self):
         count = self.num_days
-        return '{} to {} ({} day{})'.format(self.arrival, self.departure, count, '' if count == 1 else 's')
+        return '{} to {} ({} day{})'.format(self.arrival.strftime('%d/%m/%Y'), self.departure.strftime('%d/%m/%Y'), count, '' if count == 1 else 's')
 
     @property
     def stay_guests(self):
@@ -965,7 +980,7 @@ class Booking(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if self.arrival > today <= self.departure:
+        if today <= self.departure:
             if not self.is_canceled:
                 return True
         return False
@@ -985,6 +1000,10 @@ class Booking(models.Model):
         return False
 
     @property
+    def refund_status(self):
+        return self.__check_refund_status()
+
+    @property
     def outstanding(self):
         return self.__outstanding_amount()
 
@@ -999,9 +1018,9 @@ class Booking(models.Model):
             status = status.strip()
             if self.is_canceled:
                 if payment_status == 'over_paid' or payment_status == 'paid':
-                    return 'Cancelled - Payment ({})'.format(status)
+                    return 'Canceled - Payment ({})'.format(status)
                 else:
-                    return 'Cancelled'
+                    return 'Canceled'
             else:
                 return status
         return 'Paid'
@@ -1053,6 +1072,29 @@ class Booking(models.Model):
             return 'partially_paid'
         else:return "paid"
 
+    def __check_refund_status(self):
+        invoices = []
+        amount = D('0.0')
+        refund_amount = D('0.0')
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
+            except Invoice.DoesNotExist:
+                pass
+        for i in invoices:
+            if i.voided:
+                amount += i.payment_amount
+                refund_amount += i.refund_amount
+
+        if amount == 0:
+            return 'Not Paid'
+        if refund_amount > 0 and amount > refund_amount:
+            return 'Partially Refunded'
+        elif refund_amount == amount:
+            return 'Refunded'
+        else:return "Not Refunded"
+
     def __outstanding_amount(self):
         invoices = []
         amount = D('0.0')
@@ -1071,6 +1113,9 @@ class Booking(models.Model):
     def cancelBooking(self,reason):
         if not reason:
             raise ValidationError('A reason is needed before canceling a booking')
+        today = datetime.now().date()
+        if today > self.departure:
+            raise ValidationError('You cannot cancel a booking past the departure date.')
         self.cancellation_reason = reason
         self.is_canceled = True
         self.campsites.all().delete()
@@ -1084,6 +1129,52 @@ class Booking(models.Model):
                 pass
 
         self.save()
+    
+    @property
+    def vehicle_payment_status(self):
+        # Get current invoice
+        inv  = None
+        payment_dict = []
+        references = [i.invoice_reference for i in self.invoices.all()]
+        temp_invoices = Invoice.objects.filter(reference__in=references,voided=False)
+        if len(temp_invoices) == 1:
+            inv = temp_invoices[0]
+            # Get all lines 
+            total_paid = D('0.0')
+            total_due = D('0.0')
+            lines = inv.order.lines.filter(oracle_code=self.campground.park.oracle_code)
+
+            price_dict = {}
+            for line in lines:
+                total_paid += line.paid
+                price_dict[line.oracle_code] = line.unit_price_incl_tax
+
+            remainder_amount = total_due - total_paid
+            # Allocate amounts to each vehicle
+            for r in self.regos.all():
+                paid = False
+                if not r.entry_fee:
+                    paid = True
+                elif remainder_amount == 0:
+                    paid = True
+                elif total_paid == 0:
+                    pass
+                else:
+                    required_total = D('0.0')
+                    for k,v in price_dict.items():
+                        required_total += D(v)
+                    if required_total <= total_paid:
+                        total_paid -= required_total
+                        paid = True
+                payment_dict.append({
+                    'Rego': r.rego.upper(),
+                    'Type': r.type,
+                    'Paid': 'Yes' if paid else 'No'
+                })
+        else:
+            pass
+
+        return payment_dict
 
 class OutstandingBookingRecipient(models.Model):
     email = models.EmailField()

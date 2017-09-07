@@ -12,7 +12,7 @@
                             <div class="row">
     							<div class="col-md-6">
     								<div class="form-group">
-    									<label class="control-label" >Campsite Type</label>
+    									<label class="control-label" >Camp Site Type</label>
     									<select class="form-control" v-show="!campsite_classes.length > 0" >
     										<option>Loading...</option>
     									</select>
@@ -24,7 +24,7 @@
     							</div>
     							<div v-show="showName" class="col-md-6">
     								<div class="form-group">
-    									<label class="control-label" >Campsite Name</label>
+    									<label class="control-label" >Camp Site Name</label>
     									<input type="text" name="name" class="form-control"  v-model="campsite.name" required/>
     								</div>
     							</div>
@@ -88,7 +88,7 @@
     					</div>
     				</div>
                </form>
-               <loader :isLoading="isLoading">Saving Campsite Data...</loader>
+               <loader :isLoading="isLoading">Saving Camp Site Data...</loader>
            </div>
            <div style="margin-top:50px;">
                <!--stayHistory v-if="!createCampsite" ref="stay_dt" :object_id="myID" :datatableURL="stayHistoryURL"></stayHistory-->

@@ -46,10 +46,13 @@
                                             <div class="col-md-4">
                                                 <label class="control-label pull-left required"  for="Dates">Campsite: </label>
                                             </div>
-                                            <div class="col-md-8">
+                                            <div class="col-md-8" v-if="campsites.length > 0">
                                                 <select class="form-control" name="campground" v-model="selected_campsite">
                                                     <option v-for="c in campsites" :value="c.id">{{c.name}}</option>
                                                 </select>
+                                            </div>
+                                            <div class="col-md-8" v-else>
+                                                <h4>Sorry, no available campsites were found.</h4>
                                             </div>
                                         </div>
                                         <div class="form-group">
@@ -113,18 +116,25 @@
                                   </div>
                                 </div>
                                 <div class="row" v-for="v in parkEntryVehicles">
-                                  <div class="col-md-6 col-md-offset-4">
-                                      <div class="form-group">
-                                        <label class="required">{{v.description}}</label>
-                                        <input type="text" class="form-control vehicleLookup" required="required" v-model="v.rego" @change="validateRego">
-                                      </div>
+                                    <div class="col-md-6 col-md-offset-4">
+                                        <div class="form-group">
+                                            <label class="required">{{v.description}}</label>
+                                            <input type="text" class="form-control vehicleLookup" required="required" v-model="v.rego" @change="validateRego">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="checkbox-inline">
+                                            <label>Entry fee
+                                                <input type="checkbox" required="required" v-model="v.entry_fee">
+                                            </label>
+                                        </div>
                                   </div>
                                 </div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
-                              <button type="button" class="btn btn-primary btn-lg pull-right" @click="updateNow()">Save Changes</button>
+                              <button type="button" :disabled="campsites.length == 0" class="btn btn-primary btn-lg pull-right" @click="updateNow()">Save Changes</button>
                             </div>
                         </div>
                     </div>
@@ -421,7 +431,7 @@ export default {
                 useCurrent: false,
             });
             vm.arrivalPicker.on('dp.change', function(e) {
-                vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+                vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
                 vm.selected_arrival = vm.booking.arrival;
                 vm.selected_departure = "";
                 vm.booking.departure = "";
@@ -434,7 +444,7 @@ export default {
             });
             vm.departurePicker.on('dp.change', function(e) {
                 if (vm.departurePicker.data('DateTimePicker').date()) {
-                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('DD/MM/YYYY');
                     vm.selected_departure = vm.booking.departure;
                 } else {
                     vm.booking.departure = null;
@@ -575,6 +585,7 @@ export default {
                         booking.entryFees.regos.push({
                             type: entry.id,
                             rego: entry.rego,
+                            entry_fee: entry.entry_fee
                         });
                     }
                     switch (entry.id) {
@@ -751,6 +762,7 @@ export default {
                 vm.parkEntryPicker.map((vp) => {
                     if (vp.id == v.type){
                         vp.rego = v.rego;
+                        vp.entry_fee = v.entry_fee;
                         vm.addVehicleCount(vp)
                     }
                     return vp;

@@ -139,6 +139,33 @@ class BpayTransaction(models.Model):
                 pass
         
         return order
+
+    @property
+    def payment_allocated(self):
+        allocated = D('0.0')
+        if self.order:
+            lines = self.order.lines.all()
+            for line in lines:
+                for k,v in line.payment_details.items():
+                    if k == 'bpay':
+                        for i,a in v.items():
+                            if i == str(self.id):
+                                allocated += D(a)
+        return allocated
+
+    @property
+    def refund_allocated(self):
+        allocated = D('0.0')
+        if self.order:
+            lines = self.order.lines.all()
+            for line in lines:
+                for k,v in line.refund_details.items():
+                    if k == 'bpay':
+                        for i,a in v.items():
+                            if i == str(self.id):
+                                allocated += D(a)
+        return allocated
+
     @property
     def system(self):
         pass

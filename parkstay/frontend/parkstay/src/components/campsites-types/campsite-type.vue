@@ -5,7 +5,7 @@
              <h4 class="panel-title">
                  <a role="button" data-toggle="collapse" href="#applications-collapse"
                     aria-expanded="false" aria-controls="applications-collapse">
-                     <h3>Campsite Type</h3>
+                     <h3>Camp Site Type</h3>
                  </a>
              </h4>
          </div>
@@ -17,7 +17,7 @@
                         <form v-show="!isLoading">
                             <div class="panel panel-primary">
                                 <div class="panel-heading">
-                                    <h3 class="panel-title">Campsite Type Details</h3>
+                                    <h3 class="panel-title">Camp Site Type Details</h3>
                                 </div>
                                 <div class="panel-body">
                                     <div class="row">

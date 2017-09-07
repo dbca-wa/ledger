@@ -14,7 +14,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route, list_route,renderer_classes,authentication_classes
+from rest_framework.decorators import detail_route, list_route,renderer_classes,authentication_classes,permission_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
@@ -97,6 +97,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
 from parkstay.helpers import is_officer, is_customer
 from parkstay import reports 
 from parkstay import pdf
+from parkstay import emails
 
 
 # API Views
@@ -892,6 +893,9 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         if ground.campground_type != 0:
             return Response({'error': 'Campground doesn\'t support online bookings'}, status=400)
 
+        if not ground._is_open(start_date):
+            return Response({'error': 'Campground is closed for your selected dates'}, status=400)
+
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)
         if length > settings.PS_MAX_BOOKING_LENGTH:
@@ -1076,9 +1080,9 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         bookings_map[s.name]['availability'][offset][0] = False
                         if stat == 'closed':
-                            bookings_map[s.name]['availability'][offset][1] = 'Closed'
+                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
                         elif stat == 'booked':
-                            bookings_map[s.name]['availability'][offset][1] = 'Booked'
+                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
                         else:
                             bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
 
@@ -1447,6 +1451,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             campground = request.GET.get('campground')
             region = request.GET.get('region')
             canceled = request.GET.get('canceled',None)
+            refund_status = request.GET.get('refund_status',None)
             if canceled:
                 canceled = True if canceled.lower() in ['yes','true','t','1'] else False
 
@@ -1465,6 +1470,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 join parkstay_district on parkstay_park.district_id = parkstay_district.id\
                 full outer join accounts_emailuser on parkstay_booking.customer_id = accounts_emailuser.id\
                 join parkstay_region on parkstay_district.region_id = parkstay_region.id'
+                #join parkstay_campground.id = parkstay_campgroundgroup_members.campgroundgroup_id'
 
             sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
             sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
@@ -1518,40 +1524,56 @@ class BookingViewSet(viewsets.ModelViewSet):
                 dict(zip(columns, row))
                 for row in cursor.fetchall()
             ]
+            clean_data = []
             for bk in data:
+                cg = None
                 booking = Booking.objects.get(id=bk['id'])
-                bk['editable'] = booking.editable
-                bk['status'] = booking.status
-                bk['cancellation_reason'] = booking.cancellation_reason
-                bk['paid'] = booking.paid
-                bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
-                bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
-                bk['guests'] = booking.guests
-                bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
-                if not bk['legacy_id']:
-                    try:
-                        customer = EmailUser.objects.get(id=bk['customer_id'])
-                        bk['firstname'] = customer.first_name
-                        bk['lastname'] = customer.last_name
-                        bk['email'] = customer.email if customer.email else ""
-                        bk['phone'] = customer.mobile_number if customer.mobile_number else ""
-                        if booking.is_canceled:
-                            bk['campground_site_type'] = ""
-                        else:
-                            bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
-                    except EmailUser.DoesNotExist:
-                        bk['firstname'] =  ""
+                cg = booking.campground
+                if cg and can_view_campground(request.user,cg):
+                    bk['editable'] = booking.editable
+                    bk['status'] = booking.status
+                    bk['vehicle_payment_status'] = booking.vehicle_payment_status
+                    bk['refund_status'] = booking.refund_status
+                    bk['cancellation_reason'] = booking.cancellation_reason
+                    bk['paid'] = booking.paid
+                    bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
+                    bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
+                    bk['guests'] = booking.guests
+                    bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
+                    if not bk['legacy_id']:
+                        try:
+                            customer = EmailUser.objects.get(id=bk['customer_id'])
+                            bk['firstname'] = customer.first_name
+                            bk['lastname'] = customer.last_name
+                            bk['email'] = customer.email if customer.email else ""
+                            bk['phone'] = customer.mobile_number if customer.mobile_number else ""
+                            if booking.is_canceled:
+                                bk['campground_site_type'] = ""
+                            else:
+                                bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
+                        except EmailUser.DoesNotExist:
+                            bk['firstname'] =  ""
+                            bk['lastname'] = ""
+                            bk['email'] = ""
+                            bk['phone'] = ""
+                    else:
+                        bk['firstname'] =  bk['legacy_name']
                         bk['lastname'] = ""
-                        bk['email'] = ""
-                        bk['phone'] = ""
-                else:
-                    bk['firstname'] =  bk['legacy_name']
-                    bk['lastname'] = ""
-                    bk['campground_site_type'] = ""
+                        bk['campground_site_type'] = ""
+                    if refund_status and canceled == 't':
+                        refund_statuses = ['All','Partially Refunded','Not Refunded','Refunded']
+                        if refund_status in refund_statuses:
+                            if refund_status == 'All':
+                                clean_data.append(bk)
+                            else:       
+                                if refund_status == booking.refund_status:
+                                    clean_data.append(bk)
+                    else:
+                        clean_data.append(bk)
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
                 ('recordsFiltered',recordsFiltered),
-                ('results',data)
+                ('results',clean_data)
             ]),status=status.HTTP_200_OK)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -1664,6 +1686,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError('A reason is needed before canceling a booking');
             booking  = self.get_object()
             booking.cancelBooking(reason)
+            emails.send_booking_cancelation(booking,request)
             serializer = self.get_serializer(booking)
             return Response(serializer.data,status=status.HTTP_200_OK)
         except serializers.ValidationError:
@@ -1675,8 +1698,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['GET'])
-    @authentication_classes([])
+    @detail_route(permission_classes=[],methods=['GET'])
     def booking_checkout_status(self, request, *args, **kwargs):
         from django.utils import timezone
         http_status = status.HTTP_200_OK

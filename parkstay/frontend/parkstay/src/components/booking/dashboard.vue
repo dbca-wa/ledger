@@ -66,6 +66,17 @@
                   </span>
                 </div>
             </div>
+            <div class="col-md-4" v-if="filterCanceled == 'True'">
+                <div class="form-group">
+                  <label for="">Refund Status</label>
+                  <select class="form-control" v-model="filterRefundStatus" id="filterRefundStatus">
+                        <option value="All">All</option>
+                        <option value="Refunded">Refunded</option>
+                        <option value="Partially Refunded">Partially Refunded</option>
+                        <option value="Not Refunded">Not Refunded</option>
+                  </select>
+                </div>
+            </div>
           </div>
           <div class="row">
             <div class="col-lg-12">
@@ -122,6 +133,7 @@ export default {
                             d.region = vm.filterRegion
                         }
                         d.canceled = vm.filterCanceled;
+                        d.refund_status = vm.filterRefundStatus;
 
                         return d;
                     }
@@ -170,7 +182,7 @@ export default {
                         orderable:false,
                         searchable:false,
                         mRender:function(data,type,full){
-                            return full.status != 'Cancelled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
+                            return full.status != 'Canceled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
                         }
                     },
                     {
@@ -192,7 +204,7 @@ export default {
                         orderable:false,
                         searchable:false,
                         mRender: function(data,type,full){
-                            if (data === 'Cancelled' && full.cancellation_reason != null){
+                            if (data === 'Canceled' && full.cancellation_reason != null){
                                 let val = helpers.dtPopover(full.cancellation_reason);
                                 return `<span>${data}</span><br/><br/>${val}`;
                             }
@@ -230,7 +242,7 @@ export default {
                                     invoice_string += 'invoice='+n+'&';
                                 });
                                 invoice_string = invoice_string.slice(0,-1);
-                                var payment = (full.paid || full.status == 'Cancelled') ? "View" : "Record";
+                                var payment = (full.paid || full.status == 'Canceled') ? "View" : "Record";
                                 var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
                                 column += record_payment;
                             }
@@ -268,7 +280,8 @@ export default {
             filterRegion:"All",
             filterDateFrom:"",
             filterDateTo:"",
-            filterCanceled: 'False'
+            filterCanceled: 'False',
+            filterRefundStatus: 'All'
         }
     },
     watch:{
@@ -281,6 +294,10 @@ export default {
             vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
         filterCanceled: function() {
+            let vm = this;
+            vm.$refs.bookings_table.vmDataTable.ajax.reload();
+        },
+        filterRefundStatus: function() {
             let vm = this;
             vm.$refs.bookings_table.vmDataTable.ajax.reload();
         },
@@ -362,7 +379,7 @@ export default {
                     vm.$refs.bookings_table.vmDataTable.ajax.reload();
                     swal({
                         type: 'success',
-                        title: 'Booking Cancelled',
+                        title: 'Booking Canceled',
                         html: 'Booking PS' + vm.selected_booking.id + ' has been cancelled'
                     })
                 })
@@ -479,11 +496,11 @@ export default {
                                 bk[field] =  booking.guests.infants;
                             break;
                             case 14:
-                                bk[field] =  booking.regos.map(r =>{
+                                bk[field] =  booking.vehicle_payment_status.map(r =>{
                                     return Object.keys(r).map(k =>{
                                         return k +" : "+ r[k]
                                     });
-                                }).join(", ");
+                                }).join(" | ");
                             break;
 
                         }

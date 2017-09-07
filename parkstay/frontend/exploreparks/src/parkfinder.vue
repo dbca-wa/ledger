@@ -119,27 +119,40 @@
                 </div>
             </div>
         </div>
-        <paginate name="filterResults" class="resultList" :list="extentFeatures" :per="10">
-            <div class="row" v-for="f in paginated('filterResults')">
-                <div class="small-12 columns">
-                    <span class="searchTitle">{{ f.name }}</span>
+        <template v-if="extentFeatures.length > 0">
+            <paginate name="filterResults" class="resultList" :list="extentFeatures" :per="9">
+                <div class="row">
+                    <div class="small-12 medium-4 large-4 columns" v-for="f in paginated('filterResults')">
+                        <div class="row">
+                            <div class="small-12 columns">
+                                <span class="searchTitle">{{ f.name }}</span>
+                            </div>
+                            <div class="small-12 medium-12 large-12 columns" v-if="f.images">
+                                <img class="thumbnail" v-bind:src="f.images[0].image"/>
+                            </div>
+                            <div class="small-12 medium-9 large-9 columns">
+                                <div v-html="f.description"/>
+                                <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
+                                <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
+                                <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="small-12 medium-3 large-3 columns" v-if="f.images">
-                    <img class="thumbnail" v-bind:src="f.images[0].image"/>
-                </div>
-                <div class="small-12 medium-9 large-9 columns">
-                    <div v-html="f.description"/>
-                    <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
-                    <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
-                    <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+            </paginate>
+            <div class="row">
+                <paginate-links for="filterResults" :classes="{
+                    'ul': 'pagination'
+                }"></paginate-links>
+            </div>
+        </template>
+        <template v-else>
+            <div class="row align-center">
+                <div class="small-12 medium-12 large-12 columns">
+                    <h2 class="text-center">There are no campgrounds found matching your search criteria. Please change your search or click <a href="https://exploreparks.dbca.wa.gov.au/know/park-stay-search-tips">here</a> for more information.</h2>
                 </div>
             </div>
-        </paginate>
-        <div class="row">
-            <paginate-links for="filterResults" :classes="{
-                'ul': 'pagination'
-            }"></paginate-links>
-        </div>
+        </template>
     </div>
 </template>
 
