@@ -460,7 +460,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     if lines:
         return invoice_lines
     else:
-        print total_price
+        print(total_price)
         return total_price
 
 def check_date_diff(old_booking,new_booking):
