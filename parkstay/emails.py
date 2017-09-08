@@ -38,7 +38,7 @@ def send_booking_invoice(booking):
 
 def send_booking_confirmation(booking,request):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Your booking  REF {} at {}, {} is confirmed'.format(booking.confirmation_number,booking.campground.name,booking.campground.park.name)
+    email_obj.subject = 'Your booking  REF {} at {},{} is confirmed'.format(booking.confirmation_number,booking.campground.name,booking.campground.park.name)
     email_obj.html_template = 'ps/email/confirmation.html'
     email_obj.txt_template = 'ps/email/confirmation.txt'
 
@@ -51,7 +51,7 @@ def send_booking_confirmation(booking,request):
     unpaid_vehicle = False
 
     for v in booking.vehicle_payment_status:
-        if v.Paid == 'No':
+        if v.get('Paid') == 'No':
             unpaid_vehicle = True
             break
 
