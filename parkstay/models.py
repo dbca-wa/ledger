@@ -1147,6 +1147,7 @@ class Booking(models.Model):
             price_dict = {}
             for line in lines:
                 total_paid += line.paid
+                total_due += line.unit_price_incl_tax * line.quantity
                 price_dict[line.oracle_code] = line.unit_price_incl_tax
 
             remainder_amount = total_due - total_paid
