@@ -475,7 +475,7 @@ export default {
                                 bk[field] = booking.campground_site_type;
                             break;
                             case 7:
-                                bk[field] = (booking.editable)? "Paid":"Unpaid";
+                                bk[field] = booking.status;
                             break;
                             case 8:
                                 bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
