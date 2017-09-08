@@ -221,6 +221,12 @@ class MakeBookingsView(TemplateView):
                     entry_fee=vehicle.cleaned_data.get('entry_fee')
             )
 
+        # Check if number of people is exceeded in any of the campsites
+        for c in booking.campsites.all():
+            if booking.num_guests > c.campsite.max_people:
+                form.add_error(None, 'Number of people exceeded for the current camp site.')
+                return self.render_page(request, booking, form, vehicles, show_errors=True)
+
         # generate final pricing
         try:
             lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)

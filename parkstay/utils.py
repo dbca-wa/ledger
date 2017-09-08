@@ -55,6 +55,11 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
         # for now, pick the first campsite in the list
         site = sites[0]
 
+        # Prevent booking if max people passed
+        total_people = num_adult + num_concession + num_child + num_infant
+        if total_people > site.max_people:
+            raise ValidationError('Number of people exceeded for the selected period.')
+
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
                         booking_type=3,
@@ -98,6 +103,11 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
         for site_id, dates in availability.items():
             if not all([v[0] == 'open' for k, v in dates.items()]):
                 raise ValidationError('Campsite unavailable for specified time period.')
+
+        # Prevent booking if max people passed
+        total_people = num_adult + num_concession + num_child + num_infant
+        if total_people > campsite.max_people:
+            raise ValidationError('Number of people exceeded for the selected period.')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
