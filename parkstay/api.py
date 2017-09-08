@@ -1164,9 +1164,13 @@ def create_booking(request, *args, **kwargs):
                 num_child, num_infant
             )
     except ValidationError as e:
+        if hasattr(e,'error_dict'):
+            error = repr(e.error_dict)
+        else:
+            error = {'error':e[0].encode('utf-8')}
         return HttpResponse(geojson.dumps({
             'status': 'error',
-            'msg': str(e)
+            'msg': error,
         }), status=400, content_type='application/json')
 
     # add the booking to the current session
