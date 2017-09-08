@@ -98,6 +98,7 @@ from parkstay.helpers import is_officer, is_customer
 from parkstay import reports 
 from parkstay import pdf
 from parkstay import emails
+from parkstay import exceptions
 
 
 # API Views
@@ -894,7 +895,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'error': 'Campground doesn\'t support online bookings'}, status=400)
 
         if not ground._is_open(start_date):
-            return Response({'error': 'Campground is closed for your selected dates'}, status=400)
+            return Response({'closed': 'Campground is closed for your selected dates'}, status=status.HTTP_400_BAD_REQUEST)
 
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)

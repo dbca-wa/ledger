@@ -15,6 +15,13 @@
                 </div>
             </div>
         </div>
+        <div class="row" v-else-if="status == 'closed'">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="callout alert">
+                    Sorry, this campground is closed for the selected period. Please visit the <a href="https://parks-oim.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
+                </div>
+            </div>
+        </div>
         <div class="row" v-if="errorMsg">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
@@ -430,7 +437,7 @@ export default {
                 }
                 else{
                     vm.updateURL();
-                    var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'/?'+$.param({
+                    var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param({
                         arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                         departure: moment(vm.departureDate).format('YYYY/MM/DD'),
                         num_adult: vm.numAdults,
@@ -486,7 +493,7 @@ export default {
                         }
                     },
                     error: function(xhr, stat, err) {
-                        vm.status = 'offline';
+                        vm.status = xhr.responseJSON.hasOwnProperty('closed') ? 'closed': 'offline';
                     }
                 });
             }, 500)();
