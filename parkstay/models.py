@@ -200,7 +200,7 @@ class Campground(models.Model):
     @property
     def telephone(self):
         if self.contact:
-            return self.contact.telephone
+            return self.contact.phone_number
         return None
 
     # Methods
