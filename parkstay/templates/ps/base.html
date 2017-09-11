@@ -41,14 +41,11 @@
                                 <span class="icon-bar"></span>
                                 <span class="icon-bar"></span>
                             </button>
-                            {% if request.user.is_staff %}<a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Dashboard</div></a>{% else %}<a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Home</div></a>{% endif %}
+                            {% if request.user.is_staff %}<a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Campgrounds</div></a>{% else %}<a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">My Bookings</div></a>{% endif %}
                         </div>
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
-                                    {% if request.user.is_authenticated %}
-                                    <li><a href="{% url 'public_my_bookings'%}">My Bookings</a></li>
-                                    {% endif %}
                                     {% if request.user.is_staff %}
                                     <li><a href="{% url 'dash-campgrounds'%}">Campgrounds</a></li>
                                     <li><a href="{% url 'dash-campsite-types'%}">Camp Site Types</a></li>
