@@ -292,8 +292,14 @@
                             </p>
                         </div>
                         <div class="col-md-6">
-                          <button type="submit" class="btn btn-primary btn-lg pull-right">Proceed to payment</button>
-                        </div>
+                            <div class="row"> 
+                                <div class="col-md-8 col-md-offset-5">
+                                    <div class="checkbox">
+                                        <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="https://parkstay.dpaw.wa.gov.au/terms-and-conditions">terms and conditions</a></label>
+                                    </div>
+                                    <button :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
+                                </div>
+                            </div>
                     </div>
                 </div>
             </div>
@@ -330,7 +336,8 @@
             entryFee: 0,
             total: 0,
             concessionWarning: false,
-            vehicleCount: 1
+            vehicleCount: 1,
+            toc: false
         },
         filters:{
             formatMoney:function(n,c, d, t){
