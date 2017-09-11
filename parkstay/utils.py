@@ -59,6 +59,9 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
         total_people = num_adult + num_concession + num_child + num_infant
         if total_people > site.max_people:
             raise ValidationError('Number of people exceeded for the selected period.')
+        # Prevent booking if less than min people 
+        if total_people < site.min_people:
+            raise ValidationError('Number of people is less than the minimum allowed for the selected period.')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
@@ -108,6 +111,9 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
         total_people = num_adult + num_concession + num_child + num_infant
         if total_people > campsite.max_people:
             raise ValidationError('Number of people exceeded for the selected period.')
+        # Prevent booking if less than min people 
+        if total_people < site.min_people:
+            raise ValidationError('Number of people is less than the minimum allowed for the selected period.')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
