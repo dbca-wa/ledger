@@ -38,6 +38,7 @@ router.register(r'users',api.UsersViewSet)
 router.register(r'contacts',api.ContactViewSet)
 
 api_patterns = [
+    url(r'^api/profile$',api.GetProfile.as_view(), name='get-profile'),
     url(r'^api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),
     url(r'^api/search_suggest', api.search_suggest, name='search_suggest'),
     url(r'^api/create_booking', api.create_booking, name='create_booking'),
@@ -50,6 +51,7 @@ api_patterns = [
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'', include(api_patterns)),
+    url(r'^account/', views.AccountView.as_view(), name='account'),
     url(r'^$', views.ParkstayRoutingView.as_view(), name='ps_home'),
     url(r'^campsites/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^availability/$', views.CampsiteAvailabilitySelector.as_view(), name='campsite_availaiblity_selector'),

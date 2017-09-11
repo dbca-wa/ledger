@@ -153,5 +153,6 @@ module.exports = {
     usersLookup: function (q) {
        return  encodeURI("/api/users.json?q="+q);
    },
+   profile: "/api/profile",
    contacts:"/api/contacts.json"
 };

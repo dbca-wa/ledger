@@ -60,6 +60,10 @@ module.exports = {
             });
         });
     },
+    add_endpoint_json: function ( string, addition ) {
+        var res = string.split( ".json" )
+        return res[ 0 ] + '/' + addition + '.json';
+      },
     dtPopover: function(value,truncate_length=30,trigger='hover'){
         var ellipsis = '...',
         truncated = _.truncate(value, {

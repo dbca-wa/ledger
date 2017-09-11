@@ -66,6 +66,7 @@
                                         <li><a href="/dashboard/reports">Reports</a></li>
                                         <li role="separator" class="divider"></li>
                                     {% endif %}
+                                    <li><a href="{% url 'account' %}">Manage Account</a></li>
                                     <li role="separator" class="divider"></li>
                                     <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
                                 </ul>

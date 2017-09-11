@@ -92,7 +92,11 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     UsersSerializer,
                                     AccountsAddressSerializer,
                                     ParkEntryRateSerializer,
-                                    ReportSerializer
+                                    ReportSerializer,
+                                    UserSerializer,
+                                    UserAddressSerializer,
+                                    ContactSerializer as UserContactSerializer,
+                                    PersonalSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
 from parkstay import reports 
@@ -1888,6 +1892,72 @@ class UsersViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(queryset,many=True)
         return Response(serializer.data)
+
+    @detail_route(methods=['POST',],permission_classes=[])
+    def update_personal(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = PersonalSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',],permission_classes=[])
+    def update_contact(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = UserContactSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',],permission_classes=[])
+    def update_address(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = UserAddressSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            address, created = Address.objects.get_or_create(
+                line1 = serializer.validated_data['line1'],
+                locality = serializer.validated_data['locality'],
+                state = serializer.validated_data['state'],
+                country = serializer.validated_data['country'],
+                postcode = serializer.validated_data['postcode'],
+                user = instance 
+            )
+            instance.residential_address = address
+            instance.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 # Bulk Pricing
 # ===========================
 class BulkPricingView(generics.CreateAPIView):
@@ -1962,3 +2032,16 @@ class BookingRefundsReportView(views.APIView):
             raise
         except Exception as e:
             traceback.print_exc()
+
+class GetProfile(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = []
+    def get(self, request, format=None):
+        # Check if the user has any address and set to residential address
+        user = request.user
+        if not user.residential_address:
+            user.residential_address = user.profile_addresses.first() if user.profile_addresses.all() else None
+            user.save()
+        serializer  = UserSerializer(request.user)
+        return Response(serializer.data)
+
