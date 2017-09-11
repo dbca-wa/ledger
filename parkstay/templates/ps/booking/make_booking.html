@@ -249,7 +249,7 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" placeholder="Registration" v-model="vehicle[1]" required/>
+                            <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" placeholder="Registration" v-model="vehicle[1]" required v-on:change="updateLocalStorage"/>
                         </div>
                         <div class="col-md-4">
                             <div class="checkbox" v-if="pricing.vehicle"><label><input v-bind:name="'form-'+Number(index).toString()+'-entry_fee'" type="checkbox" v-model="vehicle[2]" v-on:change="updateVehicles"/> Entry fee</label></div>
@@ -337,7 +337,8 @@
             total: 0,
             concessionWarning: false,
             vehicleCount: 1,
-            toc: false
+            toc: false,
+            booking_id: {{ booking.id }}
         },
         filters:{
             formatMoney:function(n,c, d, t){
@@ -377,6 +378,14 @@
             }
         },
         methods:{
+            updateLocalStorage: function() {
+                var vm = this;
+                var data = {
+                    booking: vm.booking_id,
+                    vehicles: vm.vehicles
+                } 
+                localStorage.setItem('checkoutVehicleData',JSON.stringify(data));
+            },
             updateVehicles: function () {
                 var vm = this;
                 var diff = vm.vehicles.length - vm.vehicleCount
@@ -390,6 +399,8 @@
                     }
                 }
                 vm.calculateTotal();
+
+                vm.updateLocalStorage();
             },
             calculateTotal: function () {
                 var vm = this;
@@ -494,6 +505,29 @@
             document.forms.addBookingForm.num_concession.addEventListener('change', cbCalc);
             document.forms.addBookingForm.num_child.addEventListener('change', cbCalc);
             document.forms.addBookingForm.num_infant.addEventListener('change', cbCalc);
+
+            // update the vehicle data from local storage
+            var storedData = localStorage.getItem('checkoutVehicleData');
+            if (storedData){
+                try{
+                    storedData = JSON.parse(storedData);
+                    if (storedData.hasOwnProperty('booking') && storedData.hasOwnProperty('vehicles') && parseInt(storedData.booking) == parseInt(vm.booking_id)){ 
+                        if (Array.isArray(storedData.vehicles)){
+                            var length = storedData.vehicles.length;
+                            vm.vehicles = [];
+                            $.each(storedData.vehicles,(i,v)=>{
+                                vm.vehicles.push(v);
+                            });
+                            vm.vehicleCount = length;
+                        }
+                    }
+                    else{
+                        localStorage.removeItem('checkoutVehicleData');
+                    }
+                }
+                catch(e){
+                }
+            }
             vm.calculateTotal();
         }
     });
