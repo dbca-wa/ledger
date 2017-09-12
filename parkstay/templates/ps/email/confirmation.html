@@ -7,14 +7,18 @@
 <p>Departure: {{booking.departure|date:"d/m/Y"}}</p><br />
 
 {% if booking.campground.site_type == 2 %}
-<p>Campsite: {{booking.first_campsite.get_type_display}}</p><br />
+<p>Campsite: {{booking.first_campsite.type.name}}</p>
 {% else %}
-<p>Campsite: {{booking.first_campsite.name}}</p>
+<p>Campsite: {{booking.first_campsite.name}} ({{booking.first_campsite.type.name}})</p><br />
 {% endif %}
 <p>Campers: {{booking.stay_guests}}</p><br />
 
 {% for v in booking.vehicle_payment_status %}
-<p>Vehicle: {{v.Rego}}, {{v.Type}}, {{v.Paid}}</p>
+{% if v.get('Paid') == None %}
+    <p>Vehicle: {{v.Rego}}, {{v.Type}}</p>
+{% else %}
+    <p>Vehicle: {{v.Rego}}, {{v.Type}}, {% if v['Paid'] == 'Yes' %} Entry fee paid {% else %} Unpaid {% endif %}</p>
+{% endif %}
 {% endfor %}
 <br />
 

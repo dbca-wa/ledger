@@ -1154,7 +1154,9 @@ class Booking(models.Model):
             # Allocate amounts to each vehicle
             for r in self.regos.all():
                 paid = False
+                show_paid = True
                 if not r.entry_fee:
+                    show_paid = False
                     paid = True
                 elif remainder_amount == 0:
                     paid = True
@@ -1167,11 +1169,13 @@ class Booking(models.Model):
                     if required_total <= total_paid:
                         total_paid -= required_total
                         paid = True
-                payment_dict.append({
+                data = {
                     'Rego': r.rego.upper(),
-                    'Type': r.type,
-                    'Paid': 'Yes' if paid else 'No'
-                })
+                    'Type': r.get_type_display(),
+                }
+                if show_paid:
+                    data['Paid'] = 'Yes' if paid else 'No'
+                payment_dict.append(data)
         else:
             pass
 
