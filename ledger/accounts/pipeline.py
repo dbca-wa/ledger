@@ -14,17 +14,21 @@ def mail_validation(backend, details, is_new=False, *args, **kwargs):
                       (is_new or backend.setting('PASSWORDLESS', False))
     if requires_validation and send_validation:
         data = backend.strategy.request_data()
-        if 'verification_code' in data:
+        if 'verification_code' in data:     # sign-in URL request to authenticate a session
             backend.strategy.session_pop('email_validation_address')
             if not backend.strategy.validate_email(details['email'],
                                            data['verification_code']):
-                raise InvalidEmail(backend)
-        else:
+                return backend.strategy.redirect(
+                    reverse('accounts:login_expired')
+                )
+            # validation successful, continue on
+        else:       # need to generate a validation email then kick back to the login page
             try:
                 validate_email(details['email'])
-                backend.strategy.send_email_validation(backend, details['email'])
+                backend.strategy.send_email_validation(backend, 
+                                                       details['email'])
                 backend.strategy.session_set('email_validation_address',
-                                                 details['email'])
+                                             details['email'])
             except Exception as e:
                 return backend.strategy.redirect(
                     reverse('accounts:login_retry')

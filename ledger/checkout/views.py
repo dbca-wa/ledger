@@ -78,7 +78,7 @@ class IndexView(CoreIndexView):
             check = URLValidator()
             try:
                 check(details.get('check_url'))
-            except ValidationError, e:
+            except ValidationError as e:
                 raise e
             self.checkout_session.set_last_check(details.get('check_url'))
         return True

@@ -1712,7 +1712,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         from django.utils import timezone
         http_status = status.HTTP_200_OK
         try:
-            print request.GET
+            print(request.GET)
             instance = self.get_object()
             response = {
                 'status': 'rejected',
