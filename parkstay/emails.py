@@ -73,7 +73,7 @@ def send_booking_confirmation(booking,request):
     att.seek(0)
 
 
-    email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
+    email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
     booking.confirmation_sent = True
     booking.save()
 
