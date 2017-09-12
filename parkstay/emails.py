@@ -44,7 +44,12 @@ def send_booking_confirmation(booking,request):
 
     email = booking.customer.email
 
+    cc = None
+    bcc = [default_campground_email]
+
     campground_email = booking.campground.email if booking.campground.email else default_campground_email
+    if campground_email != default_campground_email:
+        cc = [campground_email]
 
     my_bookings_url = request.build_absolute_uri('/mybookings/')
     booking_availability = request.build_absolute_uri('/availability/?site_id={}'.format(booking.campground.id))
@@ -68,7 +73,7 @@ def send_booking_confirmation(booking,request):
     att.seek(0)
 
 
-    email_obj.send([email], from_address=campground_email, context=context, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
+    email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
     booking.confirmation_sent = True
     booking.save()
 
