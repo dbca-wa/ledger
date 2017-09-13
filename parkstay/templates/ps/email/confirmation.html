@@ -17,7 +17,7 @@
 {% if v.Paid %}
     <p>Vehicle: {{v.Rego}}, {{v.Type}}</p>
 {% else %}
-    <p>Vehicle: {{v.Rego}}, {{v.Type}}, {% if v.Paid == 'Yes' %} Entry fee paid {% else %} Unpaid {% endif %}</p>
+    <p>Vehicle: {{v.Rego}}, {{v.Type}}, {% if v.Paid == 'Yes' %} Entry fee paid {% elif v.Paid == 'No' %} Unpaid {% elif v.Paid == 'pass_required' %} Park Pass Required {% endif %}</p>
 {% endif %}
 {% endfor %}
 <br />

@@ -498,7 +498,20 @@ export default {
                             case 14:
                                 bk[field] =  booking.vehicle_payment_status.map(r =>{
                                     return Object.keys(r).map(k =>{
-                                        return k +" : "+ r[k]
+                                        if (k == 'Paid'){
+                                            if (r[k] == 'Yes'){
+                                                return "Status" +" : Entry Fee Paid";
+                                            }
+                                            else if( r[k] == 'No'){
+                                                return "Status" +" : Unpaid";
+                                            }
+                                            else if(r[k] == 'pass_required'){
+                                                return "Status" +" : Park Pass Required"
+                                            }
+                                        }
+                                        else{
+                                            return k +" : "+ r[k]
+                                        }
                                     });
                                 }).join(" | ");
                             break;

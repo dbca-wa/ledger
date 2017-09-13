@@ -1155,7 +1155,7 @@ class Booking(models.Model):
             for r in self.regos.all():
                 paid = False
                 show_paid = True
-                if not r.entry_fee:
+                if not r.park_entry_fee:
                     show_paid = False
                     paid = True
                 elif remainder_amount == 0:
@@ -1174,7 +1174,7 @@ class Booking(models.Model):
                     'Type': r.get_type_display(),
                 }
                 if show_paid:
-                    data['Paid'] = 'Yes' if paid else 'No'
+                    data['Paid'] = 'pass_required' if not r.entry_fee else 'Yes' if paid else 'No'
                 payment_dict.append(data)
         else:
             pass
@@ -1213,6 +1213,7 @@ class BookingVehicleRego(models.Model):
     rego = models.CharField(max_length=50)
     type = models.CharField(max_length=10,choices=VEHICLE_CHOICES)
     entry_fee = models.BooleanField(default=False)
+    park_entry_fee = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('booking','rego')

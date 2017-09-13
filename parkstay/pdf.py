@@ -143,7 +143,12 @@ def create_confirmation(confirmation_buffer, booking):
         for r in booking.vehicle_payment_status:
             data = [Paragraph(r['Type'], styles['Left']), Paragraph(r['Rego'], styles['Left'])]
             if r.get('Paid') != None:
-                data.append(Paragraph('Entry fee paid' if r['Paid'] else 'Unpaid', styles['Left']))
+                if r['Paid'] == 'Yes':
+                    data.append(Paragraph('Entry fee paid', styles['Left']))
+                elif r['Paid'] == 'No':
+                    data.append(Paragraph('Unpaid', styles['Left']))
+                elif r['Paid'] == 'pass_required':
+                    data.append(Paragraph('Park Pass Required', styles['Left']))
             vehicle_data.append(data)
             
         vehicles = Table(vehicle_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
