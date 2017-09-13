@@ -7,17 +7,17 @@
 <p>Departure: {{booking.departure|date:"d/m/Y"}}</p><br />
 
 {% if booking.campground.site_type == 2 %}
-<p>Campsite: {{booking.first_campsite.type.name}}</p>
+<p>Campsite: {{booking.first_campsite.type}}</p>
 {% else %}
-<p>Campsite: {{booking.first_campsite.name}} ({{booking.first_campsite.type.name}})</p><br />
+<p>Campsite: {{booking.first_campsite.name}} ({{booking.first_campsite.type}})</p><br />
 {% endif %}
 <p>Campers: {{booking.stay_guests}}</p><br />
 
 {% for v in booking.vehicle_payment_status %}
-{% if v.get('Paid') == None %}
+{% if v.Paid %}
     <p>Vehicle: {{v.Rego}}, {{v.Type}}</p>
 {% else %}
-    <p>Vehicle: {{v.Rego}}, {{v.Type}}, {% if v['Paid'] == 'Yes' %} Entry fee paid {% else %} Unpaid {% endif %}</p>
+    <p>Vehicle: {{v.Rego}}, {{v.Type}}, {% if v.Paid == 'Yes' %} Entry fee paid {% elif v.Paid == 'No' %} Unpaid {% elif v.Paid == 'pass_required' %} Park Pass Required {% endif %}</p>
 {% endif %}
 {% endfor %}
 <br />

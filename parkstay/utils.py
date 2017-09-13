@@ -58,10 +58,10 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
         # Prevent booking if max people passed
         total_people = num_adult + num_concession + num_child + num_infant
         if total_people > site.max_people:
-            raise ValidationError('Number of people exceeded for the selected period.')
+            raise ValidationError('Maximum number of people exceeded for the selected campsite')
         # Prevent booking if less than min people 
         if total_people < site.min_people:
-            raise ValidationError('Number of people is less than the minimum allowed for the selected period.')
+            raise ValidationError('Number of people is less than the minimum allowed for the selected campsite')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
@@ -110,10 +110,10 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
         # Prevent booking if max people passed
         total_people = num_adult + num_concession + num_child + num_infant
         if total_people > campsite.max_people:
-            raise ValidationError('Number of people exceeded for the selected period.')
+            raise ValidationError('Maximum number of people exceeded for the selected campsite')
         # Prevent booking if less than min people 
-        if total_people < site.min_people:
-            raise ValidationError('Number of people is less than the minimum allowed for the selected period.')
+        if total_people < campsite.min_people:
+            raise ValidationError('Number of people is less than the minimum allowed for the selected campsite')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
@@ -450,8 +450,11 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     else:
         vehicles = old_booking.regos.all()
     if vehicles:
-        if booking.campground.park.entry_fee_required and not booking.campground.park.oracle_code:
-            raise Exception('A park entry Oracle code has not been set for the park that the campground belongs to.')
+        if booking.campground.park.entry_fee_required:
+            # Update the booking vehicle regos with the park entry requirement
+            vehicles.update(park_entry_fee=True)
+            if not booking.campground.park.oracle_code:
+                raise Exception('A park entry Oracle code has not been set for the park that the campground belongs to.')
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
             'vehicle': vehicles.filter(entry_fee=True, type='vehicle'),

@@ -639,7 +639,7 @@ $(function(){
                 dataType: "json",
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function(resp){
-                    rf.displaySuccess(resp);
+                    rf.refund_modal.foundation('close');
                     rf.refund_form.reset();
                 },
                 error: function(resp){
@@ -706,7 +706,6 @@ $(function(){
         updateAlert:function (msg) {
            rf.modal_alert_text.text(msg);
            rf.show(rf.modal_alert);
-           setTimeout(function(){rf.hide(rf.modal_alert)},5000);
         }
     };
     rf.init();

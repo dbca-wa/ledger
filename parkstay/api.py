@@ -1468,26 +1468,35 @@ class BookingViewSet(viewsets.ModelViewSet):
 
             sql = ''
             http_status = status.HTTP_200_OK
-            sqlSelect = 'select parkstay_booking.id as id,parkstay_booking.customer_id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
+            sqlSelect = 'select distinct parkstay_booking.id as id,parkstay_booking.customer_id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
                 parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
                 parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
-            sqlCount = 'select count(*)'
+            sqlCount = 'select count(distinct parkstay_booking.id)'
 
             sqlFrom = ' from parkstay_booking\
                 join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
                 join parkstay_park on parkstay_campground.park_id = parkstay_park.id\
                 join parkstay_district on parkstay_park.district_id = parkstay_district.id\
                 full outer join accounts_emailuser on parkstay_booking.customer_id = accounts_emailuser.id\
-                join parkstay_region on parkstay_district.region_id = parkstay_region.id'
-                #join parkstay_campground.id = parkstay_campgroundgroup_members.campgroundgroup_id'
+                join parkstay_region on parkstay_district.region_id = parkstay_region.id\
+                left outer join parkstay_campgroundgroup_campgrounds cg on cg.campground_id = parkstay_booking.campground_id\
+                full outer join parkstay_campgroundgroup_members cm on cm.campgroundgroup_id = cg.campgroundgroup_id'
 
-            sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
-            sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
+            #sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
+            #sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
+
+            sql = sqlSelect + sqlFrom + " where "
+            sqlCount = sqlCount + sqlFrom + " where "
+
+            # Filter the camgrounds that the current user is allowed to view
+            sqlFilterUser = ' cm.emailuser_id = {}'.format(request.user.id)
+            sql += sqlFilterUser
+            sqlCount += sqlFilterUser
 
             if campground :
                 sqlCampground = ' parkstay_campground.id = {}'.format(campground)
-                sql += sqlCampground
-                sqlCount += sqlCampground
+                sql = sql + " and "+ sqlCampground
+                sqlCount = sqlCount + " and " +sqlCampground
             if region:
                 sqlRegion = " parkstay_region.id = {}".format(region)
                 sql = sql+" and "+ sqlRegion if campground else sql + sqlRegion
@@ -1520,6 +1529,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             if length != 'all':
                 sql = sql + ' limit {} '.format(length)
                 sql = sql + ' offset {} ;'.format(start)
+            else:
+                sql += ';'
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");
@@ -1538,47 +1549,46 @@ class BookingViewSet(viewsets.ModelViewSet):
                 cg = None
                 booking = Booking.objects.get(id=bk['id'])
                 cg = booking.campground
-                if cg and can_view_campground(request.user,cg):
-                    bk['editable'] = booking.editable
-                    bk['status'] = booking.status
-                    bk['vehicle_payment_status'] = booking.vehicle_payment_status
-                    bk['refund_status'] = booking.refund_status
-                    bk['cancellation_reason'] = booking.cancellation_reason
-                    bk['paid'] = booking.paid
-                    bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
-                    bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
-                    bk['guests'] = booking.guests
-                    bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
-                    if not bk['legacy_id']:
-                        try:
-                            customer = EmailUser.objects.get(id=bk['customer_id'])
-                            bk['firstname'] = customer.first_name
-                            bk['lastname'] = customer.last_name
-                            bk['email'] = customer.email if customer.email else ""
-                            bk['phone'] = customer.mobile_number if customer.mobile_number else ""
-                            if booking.is_canceled:
-                                bk['campground_site_type'] = ""
-                            else:
-                                bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
-                        except EmailUser.DoesNotExist:
-                            bk['firstname'] =  ""
-                            bk['lastname'] = ""
-                            bk['email'] = ""
-                            bk['phone'] = ""
-                    else:
-                        bk['firstname'] =  bk['legacy_name']
+                bk['editable'] = booking.editable
+                bk['status'] = booking.status
+                bk['vehicle_payment_status'] = booking.vehicle_payment_status
+                bk['refund_status'] = booking.refund_status
+                bk['cancellation_reason'] = booking.cancellation_reason
+                bk['paid'] = booking.paid
+                bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
+                bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
+                bk['guests'] = booking.guests
+                bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
+                if not bk['legacy_id']:
+                    try:
+                        customer = EmailUser.objects.get(id=bk['customer_id'])
+                        bk['firstname'] = customer.first_name
+                        bk['lastname'] = customer.last_name
+                        bk['email'] = customer.email if customer.email else ""
+                        bk['phone'] = customer.mobile_number if customer.mobile_number else ""
+                        if booking.is_canceled:
+                            bk['campground_site_type'] = ""
+                        else:
+                            bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
+                    except EmailUser.DoesNotExist:
+                        bk['firstname'] =  ""
                         bk['lastname'] = ""
-                        bk['campground_site_type'] = ""
-                    if refund_status and canceled == 't':
-                        refund_statuses = ['All','Partially Refunded','Not Refunded','Refunded']
-                        if refund_status in refund_statuses:
-                            if refund_status == 'All':
+                        bk['email'] = ""
+                        bk['phone'] = ""
+                else:
+                    bk['firstname'] =  bk['legacy_name']
+                    bk['lastname'] = ""
+                    bk['campground_site_type'] = ""
+                if refund_status and canceled == 't':
+                    refund_statuses = ['All','Partially Refunded','Not Refunded','Refunded']
+                    if refund_status in refund_statuses:
+                        if refund_status == 'All':
+                            clean_data.append(bk)
+                        else:       
+                            if refund_status == booking.refund_status:
                                 clean_data.append(bk)
-                            else:       
-                                if refund_status == booking.refund_status:
-                                    clean_data.append(bk)
-                    else:
-                        clean_data.append(bk)
+                else:
+                    clean_data.append(bk)
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
                 ('recordsFiltered',recordsFiltered),

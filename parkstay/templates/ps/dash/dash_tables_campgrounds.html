@@ -32,7 +32,7 @@
                             <li><router-link :to="{ name: 'booking-dashboard' }">Existing Bookings</router-link></li>
                             <li><a href="{% url 'public_my_bookings'%}">My Bookings</a></li>
                             {% else %}
-                            <li><a href="{{EXPLORE_PARKS_SEARCH}}">Explore Parks</a></li>
+                            <li><a href="{{EXPLORE_PARKS_SEARCH}}">Search for a place to stay</a></li>
                             {% endif %}
                         {% endblock %}
                     </ul>
