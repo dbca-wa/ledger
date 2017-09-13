@@ -14,10 +14,10 @@
 <p>Campers: {{booking.stay_guests}}</p><br />
 
 {% for v in booking.vehicle_payment_status %}
-{% if v.get('Paid') == None %}
+{% if v.Paid %}
     <p>Vehicle: {{v.Rego}}, {{v.Type}}</p>
 {% else %}
-    <p>Vehicle: {{v.Rego}}, {{v.Type}}, {% if v['Paid'] == 'Yes' %} Entry fee paid {% else %} Unpaid {% endif %}</p>
+    <p>Vehicle: {{v.Rego}}, {{v.Type}}, {% if v.Paid == 'Yes' %} Entry fee paid {% else %} Unpaid {% endif %}</p>
 {% endif %}
 {% endfor %}
 <br />
