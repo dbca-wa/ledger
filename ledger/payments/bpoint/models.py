@@ -78,6 +78,7 @@ class BpointTransaction(models.Model):
 
     @property
     def payment_allocated(self):
+        from ledger.payments.models import Invoice
         allocated = D('0.0')
         try:
             invoice = Invoice.objects.get(reference=self.crn1)
@@ -95,6 +96,7 @@ class BpointTransaction(models.Model):
 
     @property
     def refund_allocated(self):
+        from ledger.payments.models import Invoice
         allocated = D('0.0')
         try:
             invoice = Invoice.objects.get(reference=self.crn1)
@@ -130,7 +132,7 @@ class BpointTransaction(models.Model):
     # ==============================
     def refund(self,info,user,matched=True):
         from ledger.payments.facade import bpoint_facade 
-        from ledger.payments.models import TrackRefund
+        from ledger.payments.models import TrackRefund, Invoice
 
         with transaction.atomic():
             amount = info['amount']

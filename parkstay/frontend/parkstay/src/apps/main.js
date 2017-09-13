@@ -18,6 +18,7 @@ import Router from 'vue-router'
 import Campsite_type_dash from '../components/campsites-types/campsite-types-dash.vue'
 import Campsite_type from '../components/campsites-types/campsite-type.vue'
 import Bulkpricing from '../components/bulkpricing/bulkpricing.vue'
+import Profile from '../components/user/profile.vue'
 import alert from '../components/utils/alert.vue'
 import store from './store'
 import { mapGetters } from 'vuex'
@@ -57,6 +58,11 @@ const routes = [
             render (c) { return c('router-view') }
         },
         children: [
+            {
+                path: "account",
+                name: "profile",
+                component: Profile
+            },
             {
                 path:'dashboard',
                 component: {

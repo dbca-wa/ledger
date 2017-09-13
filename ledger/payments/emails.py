@@ -1,6 +1,6 @@
 from ledger.emails.emails import EmailBase
 
-ledger_email = 'ledger@dbca.wa.gov.au'
+ledger_email = 'no-reply@dbca.wa.gov.au'
 
 class TemplateEmailBase(EmailBase):
     subject = ''

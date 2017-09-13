@@ -15,7 +15,7 @@ Campsite: {{booking.first_campsite.name}}
 Campers: {{booking.stay_guests}}
 
 {% for v in booking.vehicle_payment_status %}
-Vehicle: {{v.Rego}}, {{v.type}}, {{v.Paid}}
+Vehicle: {{v.Rego}}, {{v.Type}}, {{v.Paid}}
 {% endfor %}
 
 

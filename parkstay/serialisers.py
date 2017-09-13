@@ -644,3 +644,55 @@ class BulkPricingSerializer(serializers.Serializer):
 class ReportSerializer(serializers.Serializer):
     start = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
     end = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
+
+# User Serializers
+# --------------------------
+class UserAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = (
+            'id',
+            'line1',
+            'locality',
+            'state',
+            'country',
+            'postcode'
+        ) 
+
+class UserSerializer(serializers.ModelSerializer):
+    residential_address = UserAddressSerializer()
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'last_name',
+            'first_name',
+            'email',
+            'residential_address',
+            'phone_number',
+            'mobile_number',
+        )
+
+class PersonalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'last_name',
+            'first_name',
+        )
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'email',
+            'phone_number',
+            'mobile_number',
+        )
+
+    def validate(self, obj):
+        if not obj.get('phone_number') and not obj.get('mobile_number'):
+            raise serializers.ValidationError('You must provide a mobile/phone number')
+        return obj

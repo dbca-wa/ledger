@@ -131,19 +131,21 @@ def create_confirmation(confirmation_buffer, booking):
     table_data = []
     table_data.append([Paragraph('Campground', styles['BoldLeft']), Paragraph('{}, {}'.format(booking.campground.name, booking.campground.park.name), styles['BoldLeft'])])
     campsite = '{}'.format(booking.first_campsite.type) if booking.campground.site_type == 2 else '{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
-    table_data.append([Paragraph('Campsite', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
+    table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
     
     table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph(booking.stay_dates, styles['Left'])])
     table_data.append([Paragraph('Number of guests', styles['BoldLeft']), Paragraph(booking.stay_guests, styles['Left'])])
     table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph('{} {} ({})'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''), booking.customer.email), styles['Left'])])
     table_data.append([Paragraph('Booking confirmation number', styles['BoldLeft']), Paragraph(booking.confirmation_number, styles['Left'])])
 
-    if booking.regos.exists():
+    if booking.vehicle_payment_status:
         vehicle_data = []
-        TYPES = {}
-        TYPES.update(BookingVehicleRego.VEHICLE_CHOICES)
-        for rego in booking.regos.all():
-            vehicle_data.append([Paragraph(TYPES[rego.type], styles['Left']), Paragraph(rego.rego, styles['Left']), Paragraph('Entry fee paid' if rego.entry_fee else 'Unpaid', styles['Left'])])
+        for r in booking.vehicle_payment_status:
+            data = [Paragraph(r['Type'], styles['Left']), Paragraph(r['Rego'], styles['Left'])]
+            if r.get('Paid') != None:
+                data.append(Paragraph('Entry fee paid' if r['Paid'] else 'Unpaid', styles['Left']))
+            vehicle_data.append(data)
+            
         vehicles = Table(vehicle_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
         table_data.append([Paragraph('Vehicles', styles['BoldLeft']), vehicles])
     else:

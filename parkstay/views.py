@@ -221,6 +221,16 @@ class MakeBookingsView(TemplateView):
                     entry_fee=vehicle.cleaned_data.get('entry_fee')
             )
 
+        # Check if number of people is exceeded in any of the campsites
+        for c in booking.campsites.all():
+            if booking.num_guests > c.campsite.max_people:
+                form.add_error(None, 'Number of people exceeded for the current camp site.')
+                return self.render_page(request, booking, form, vehicles, show_errors=True)
+            # Prevent booking if less than min people 
+            if booking.num_guests < c.campsite.min_people:
+                form.add_error('Number of people is less than the minimum allowed for the current campsite.')
+                return self.render_page(request, booking, form, vehicles, show_errors=True)
+
         # generate final pricing
         try:
             lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
@@ -344,3 +354,6 @@ class ParkstayRoutingView(TemplateView):
 
 class MapView(TemplateView):
     template_name = 'ps/map.html'
+
+class AccountView(LoginRequiredMixin,TemplateView):
+    template_name = 'ps/dash/dash_tables_campgrounds.html'

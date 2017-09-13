@@ -200,7 +200,7 @@ class Campground(models.Model):
     @property
     def telephone(self):
         if self.contact:
-            return self.contact.telephone
+            return self.contact.phone_number
         return None
 
     # Methods
@@ -1147,13 +1147,16 @@ class Booking(models.Model):
             price_dict = {}
             for line in lines:
                 total_paid += line.paid
+                total_due += line.unit_price_incl_tax * line.quantity
                 price_dict[line.oracle_code] = line.unit_price_incl_tax
 
             remainder_amount = total_due - total_paid
             # Allocate amounts to each vehicle
             for r in self.regos.all():
                 paid = False
+                show_paid = True
                 if not r.entry_fee:
+                    show_paid = False
                     paid = True
                 elif remainder_amount == 0:
                     paid = True
@@ -1166,11 +1169,13 @@ class Booking(models.Model):
                     if required_total <= total_paid:
                         total_paid -= required_total
                         paid = True
-                payment_dict.append({
+                data = {
                     'Rego': r.rego.upper(),
-                    'Type': r.type,
-                    'Paid': 'Yes' if paid else 'No'
-                })
+                    'Type': r.get_type_display(),
+                }
+                if show_paid:
+                    data['Paid'] = 'Yes' if paid else 'No'
+                payment_dict.append(data)
         else:
             pass
 
