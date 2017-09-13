@@ -92,6 +92,7 @@ importo.py
 build.css
 *.map
 parkstay/static/availability/
+parkstay/static/exploreparks/
 
 #caches
 parkstay/cache/*
