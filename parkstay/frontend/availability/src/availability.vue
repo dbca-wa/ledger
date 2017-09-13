@@ -26,7 +26,9 @@
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
                     Sorry, there was an error placing the booking: {{ errorMsg }} <br/>
+                    <template v-if="showSecondErrorLine">
                     Please try again later. If this reoccurs, please contact <a href="https://parks-oim.dpaw.wa.gov.au/contact-us">Parks and Visitor Services</a> with this error message, the campground and the time of the request.
+                    </template>
                 </div>
             </div>
         </div>
@@ -320,7 +322,8 @@ export default {
             long_description: '',
             map: null,
             showMoreInfo: false,
-            ongoing_booking: false 
+            ongoing_booking: false,
+            showSecondErrorLine: true,
         };
     },
     computed: {
@@ -493,7 +496,19 @@ export default {
                         }
                     },
                     error: function(xhr, stat, err) {
-                        vm.status = xhr.responseJSON.hasOwnProperty('closed') ? 'closed': 'offline';
+                        vm.showSecondErrorLine = true;
+                        var max_error = 'Maximum number of people exceeded for the selected campsite';
+                        var min_error = 'Number of people is less than the minimum allowed for the selected campsite';
+                        if (xhr.responseJSON.hasOwnProperty('closed')){
+                            vm.status = 'closed';
+                        }
+                        else if (xhr.responseJSON.hasOwnProperty('error') && (xhr.responseJSON.error == max_error || xhr.responseJSON.error == min_error)){
+                            vm.status = 'offline';
+                            vm.showSecondErrorLine = false;
+                        }
+                        else{
+                            vm.status = 'offline';
+                        }
                     }
                 });
             }, 500)();
