@@ -11,6 +11,7 @@ services:
 branches:
     only:
         - master
+        - parkstay
 env:
     global:
         - SECRET_KEY=SecretKeyForTravis
@@ -18,7 +19,10 @@ env:
         - PRODUCTION_EMAIL=False
         - EMAIL_INSTANCE="TEST"
         - NON_PROD_EMAIL="travis@dpaw.wa.gov.au"
+sudo: true
 install:
+    - sudo apt-get install postgresql-9.4-postgis-2.3 postgis -y -q
+    - pip install pip --upgrade
     - pip install -r requirements.txt
     - pip install coveralls
 before_script:
