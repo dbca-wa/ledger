@@ -44,9 +44,16 @@
                     <a type="button" :href="parkstayUrl+'/booking'" class="button float-right warning continueBooking">
                         Complete in-progress booking
                     </a>
-                    <a type="button" :href="parkstayUrl+'/booking/abort?change=true'" class="button float-right warning continueBooking">
-                        Cancel in-progress booking
-                    </a>
+                    <template v-if="ongoing_booking_id">
+                        <a type="button" :href="parkstayUrl+'/booking/abort?change=true'" class="button float-right warning continueBooking">
+                            Cancel in-progress booking
+                        </a>
+                    </template>
+                    <template v-else>
+                        <a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_to='ongoing_booking_id" class="button float-right warning continueBooking">
+                            Cancel in-progress booking
+                        </a>
+                    </template>
                 </div>
             </div>
         </div>
@@ -323,6 +330,7 @@ export default {
             map: null,
             showMoreInfo: false,
             ongoing_booking: false,
+            ongoing_booking_id: null,
             showSecondErrorLine: true,
         };
     },
@@ -460,6 +468,7 @@ export default {
                         vm.long_description = data.long_description;
                         vm.map = data.map;
                         vm.ongoing_booking = data.ongoing_booking;
+                        vm.ongoing_booking_id = data.ongoing_booking_id;
 
                         if (data.sites.length == 0) {
                             vm.status = 'empty';

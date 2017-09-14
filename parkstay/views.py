@@ -104,8 +104,17 @@ class DashboardView(UserPassesTestMixin, TemplateView):
 def abort_booking_view(request, *args, **kwargs):
     try:
         change = bool(request.GET.get('change',False))
+        change_to = bool(request.GET.get('change_to',None))
         booking = utils.get_session_booking(request.session)
-        c_id = booking.campground.id
+        if change_to:
+            try:
+                change_to = Booking.objects.get(id=change_to).id
+            except:
+                pass
+        if change_to:
+            c_id = change_to
+        else:
+            c_id = booking.campground.id
         # only ever delete a booking object if it's marked as temporary
         if booking.booking_type == 3:
             booking.delete()
