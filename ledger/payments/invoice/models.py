@@ -117,7 +117,7 @@ class Invoice(models.Model):
 
     @property
     def transferable_amount(self):
-        return self.payment_amount - self.deduction_amount
+        return self.payment_amount - ( self.deduction_amount + self.refund_amount )
 
     @property
     def balance(self):
