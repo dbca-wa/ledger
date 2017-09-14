@@ -20,5 +20,5 @@ if settings.LEDGER_GST < 0 or settings.LEDGER_GST > 99:
     raise ImproperlyConfigured('LEDGER_GST must be between 0 and 100')
 
 # test for BPAY CRN server
-if settings.BPAY_ALLOWED:
+if settings.BPAY_GATEWAY:
     test_connection()
