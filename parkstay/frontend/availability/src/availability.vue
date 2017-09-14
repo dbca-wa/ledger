@@ -44,13 +44,13 @@
                     <a type="button" :href="parkstayUrl+'/booking'" class="button float-right warning continueBooking">
                         Complete in-progress booking
                     </a>
-                    <template v-if="ongoing_booking_id">
-                        <a type="button" :href="parkstayUrl+'/booking/abort?change=true'" class="button float-right warning continueBooking">
+                    <template v-if="parseInt(vm.parkstayGroundRatisId) > 0">
+                        <a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_ratis='parkstayGroundRatisId" class="button float-right warning continueBooking">
                             Cancel in-progress booking
                         </a>
                     </template>
                     <template v-else>
-                        <a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_to='ongoing_booking_id" class="button float-right warning continueBooking">
+                        <a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_id='parkstayGroundId" class="button float-right warning continueBooking">
                             Cancel in-progress booking
                         </a>
                     </template>
