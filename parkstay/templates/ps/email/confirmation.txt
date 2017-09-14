@@ -15,8 +15,12 @@ Campsite: {{booking.first_campsite.name}}({{booking.first_campsite.type}})
 Campers: {{booking.stay_guests}}
 
 {% for v in booking.vehicle_payment_status %}
-{% if v.Paid %}
-Vehicle: {{v.Rego}}, {{v.Type}}, {{v.Paid}}
+{% if v.Paid == 'Yes' %}
+Vehicle: {{v.Rego}}, {{v.Type}}, Entry Fee Paid
+{% elif v.Paid == 'No' %}
+Vehicle: {{v.Rego}}, {{v.Type}}, Unpaid
+{% elif v.Paid == 'pass_required' %}
+Vehicle: {{v.Rego}}, {{v.Type}}, Park Pass Required
 {% else %}
 Vehicle: {{v.Rego}}, {{v.Type}}
 {% endif %}
