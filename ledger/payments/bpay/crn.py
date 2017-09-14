@@ -15,15 +15,11 @@ def test_connection():
         gateway.close()
 
 def getCRN(number):
-    if not settings.BPAY_ALLOWED:
-        return "CRN_BPAY_DISABLED"
     test_connection()
     crn = gateway.entry_point.getCRN()
     return crn.generateBPAYCrnWithMod10V05(str(number))
 
 def getICRN(number,amount,option='ICRNAMT'):
-    if not settings.BPAY_ALLOWED:
-        return "ICRN_BPAY_DISABLED"
     test_connection()
     crn = gateway.entry_point.getiCRN()
     if option == 'ICRNAMT':
