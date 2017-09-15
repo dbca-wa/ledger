@@ -255,18 +255,20 @@
                             <div class="checkbox" v-if="pricing.vehicle"><label><input v-bind:name="'form-'+Number(index).toString()+'-entry_fee'" type="checkbox" v-model="vehicle[2]" v-on:change="updateVehicles"/> Entry fee</label></div>
                         </div>
                     </div>
-                    <div class="row" v-cloak>
-                        <div class="col-md-12">
-                    {% verbatim %}
-                            <p>Entry fee total: <strong>${{ entryFee|formatMoney(2) }}</strong></p>
-                    {% endverbatim %}
+                    <template v-if="pricing.vehicle">
+                        <div class="row" v-cloak>
+                            <div class="col-md-12">
+                        {% verbatim %}
+                                <p>Entry fee total: <strong>${{ entryFee|formatMoney(2) }}</strong></p>
+                        {% endverbatim %}
+                            </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <b>NOTE:</b> A vehicle entry fee is not required for the holder of a valid <a href="https://shop.dpaw.wa.gov.au/park-passes">Park Pass</a>.
+                        <div class="row">
+                            <div class="col-md-12">
+                                <b>NOTE:</b> A vehicle entry fee is not required for the holder of a valid <a href="https://shop.dpaw.wa.gov.au/park-passes">Park Pass</a>.
+                            </div>
                         </div>
-                    </div>
+                    </template>
                 </div>
             </div>
         </div>

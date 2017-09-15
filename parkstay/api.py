@@ -931,6 +931,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'long_description': ground.long_description,
             'map': ground.campground_map.url if ground.campground_map else None,
             'ongoing_booking': True if ongoing_booking else False,
+            'ongoing_booking_id': ongoing_booking.id if ongoing_booking else None,
             'arrival': start_date.strftime('%Y/%m/%d'),
             'days': length,
             'adults': 1,
@@ -1519,18 +1520,13 @@ class BookingViewSet(viewsets.ModelViewSet):
                 or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search,search,search)
                 if search.isdigit:
                     sqlsearch = '{} or CAST (parkstay_booking.id as TEXT) like \'{}%\''.format(sqlsearch,search)
-                if arrival or campground or region:
-                    sql += " and ( "+ sqlsearch +" )"
-                    sqlCount +=  " and  ( "+ sqlsearch +" )"
-                else:
-                    sql += ' where' + sqlsearch
-                    sqlCount += ' where ' + sqlsearch
+
+                sql += " and ( "+ sqlsearch +" )"
+                sqlCount +=  " and  ( "+ sqlsearch +" )"
 
             if length != 'all':
                 sql = sql + ' limit {} '.format(length)
                 sql = sql + ' offset {} ;'.format(start)
-            else:
-                sql += ';'
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");

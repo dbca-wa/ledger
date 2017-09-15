@@ -426,7 +426,8 @@ export default {
                 departure : vm.filterDateTo != null ? vm.filterDateTo:'' ,
                 campground : vm.filterCampground != 'All' ? vm.filterCampground : '',
                 region : vm.filterRegion != 'All' ? vm.filterRegion : '',
-                canceled: vm.filterCanceled
+                canceled: vm.filterCanceled,
+                'search[value]': vm.$refs.bookings_table.vmDataTable.search()
             }
             for(var p in obj)
                 if (obj.hasOwnProperty(p)) {
