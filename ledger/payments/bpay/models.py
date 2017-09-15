@@ -281,7 +281,6 @@ class BillerCodeSystem(models.Model):
 
     class Meta:
         app_label = 'payments'
-        db_table = 'bpay_billercodesystem'
     
     def __str__(self):
         return '{} - Biller Code: {}'.format(self.system,self.biller_code)
@@ -292,4 +291,3 @@ class BillerCodeRecipient(models.Model):
     
     class Meta:
         app_label = 'payments'
-        db_table = 'bpay_billercoderecipient'
