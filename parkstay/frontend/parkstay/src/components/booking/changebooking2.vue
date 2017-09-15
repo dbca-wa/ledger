@@ -123,9 +123,10 @@
                                         </div>
                                     </div>
                                     <div class="col-md-2">
-                                        <div class="checkbox-inline">
-                                            <label>Entry fee
-                                                <input type="checkbox" required="required" v-model="v.entry_fee">
+                                        <label>Entry Fee</label>
+                                        <div class="form-check">
+                                            <label class="form-check-label">
+                                                <input class="form-check-input" type="checkbox" required="required" v-model="v.entry_fee">
                                             </label>
                                         </div>
                                   </div>
