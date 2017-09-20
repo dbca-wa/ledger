@@ -135,7 +135,7 @@ class Address(models.Model):
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
     oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses')
-    user = models.ForeignKey('EmailUser', related_name='profile_adresses')
+    user = models.ForeignKey('EmailUser', related_name='profile_addresses')
     hash = models.CharField(max_length=255, db_index=True, editable=False)
 
     def __str__(self):
@@ -289,11 +289,11 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         super(EmailUser, self).save(*args, **kwargs)
 
     def get_full_name(self):
-        full_name = u'{} {}'.format(self.first_name,self.last_name)
+        full_name = '{} {}'.format(self.first_name, self.last_name)
         return full_name.strip()
 
     def get_full_name_dob(self):
-        full_name_dob = u'{} {} ({})'.format(self.first_name,self.last_name, self.dob.strftime('%d/%m/%Y'))
+        full_name_dob = '{} {} ({})'.format(self.first_name, self.last_name, self.dob.strftime('%d/%m/%Y'))
         return full_name_dob.strip()
 
     def get_short_name(self):

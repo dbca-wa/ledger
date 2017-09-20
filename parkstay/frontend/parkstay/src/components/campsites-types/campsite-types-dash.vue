@@ -5,7 +5,7 @@
              <h4 class="panel-title">
                  <a role="button" data-toggle="collapse" href="#applications-collapse"
                     aria-expanded="false" aria-controls="applications-collapse">
-                     <h3>Campsite Types</h3>
+                     <h3>Camp Site Types</h3>
                  </a>
              </h4>
          </div>
@@ -28,7 +28,7 @@
                       </div>
                       <div class="col-md-4">
                           <div class="form-group pull-right">
-                              <router-link :to="{name:'campsite-type'}" style="margin-top: 20px;" class="btn btn-primary table_btn" >Add Campsite Type</router-link>
+                              <router-link :to="{name:'campsite-type'}" style="margin-top: 20px;" class="btn btn-primary table_btn" >Add Camp Site Type</router-link>
                           </div>
                       </div>
                   </form>
@@ -113,9 +113,10 @@ export default {
                     {
                         "data": "name",
                         mRender:function (data,type,full) {
-                            var max_length = 25;
+                            var max_length = 120;
+                            var popover_class = (data.length > max_length) ? "class='name_popover'" : "";
                             var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
-                            var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
+                            var column = '<td> <div '+popover_class+'tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
                             return column.replace('__NAME__', data);
                         }
                     },

@@ -1,5 +1,5 @@
 <template >
-        <div class="row" imagePicker>
+    <div class="row" imagePicker>
             <div class="form-group">
                 <div class="col-sm-12">
                     <span class="btn btn-primary btn-file">
@@ -34,9 +34,10 @@
 
                     </div>
                 </div>
-
+                
             </div>
         </div>
+    </div>
 </template>
 
 <script>
@@ -201,7 +202,7 @@ module.exports = {
 }
 .btn-file {
     position: relative;
-    width: 110px;
+    width: 120px;
     overflow: hidden;
 }
 .btn-file-large{

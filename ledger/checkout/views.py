@@ -1,7 +1,12 @@
 import logging
+import requests
+import json
 from requests.exceptions import HTTPError, ConnectionError
 import traceback
 from decimal import Decimal as D
+from django.db import transaction
+from django.conf import settings
+from django.core.validators import URLValidator
 from django.utils import six
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -11,6 +16,7 @@ from django.template.loader import get_template
 from django.template import TemplateDoesNotExist
 #
 from ledger.payment import forms, models
+from ledger.payments.helpers import is_payment_admin
 from oscar.core.loading import get_class, get_model, get_classes
 from oscar.apps.checkout import signals
 from oscar.apps.shipping.methods import NoShippingRequired
@@ -54,7 +60,7 @@ class IndexView(CoreIndexView):
         # validate bpay if present
         self.__validate_bpay(details.get('bpay_details'))
         # validate basket owner if present
-        self.__validate_basket_owner(details.get('basket_owner'))
+        self.__validate_basket_owner(details.get('basket_owner'), details.get('is_anonymous'))
         # validate if to associate invoice with token
         self.__validate_associate_token_details(details.get('associateInvoiceWithToken'))
         # validate force redirection
@@ -63,6 +69,18 @@ class IndexView(CoreIndexView):
         self.__validate_send_email(details.get('sendEmail'))
         # validate proxy
         self.__validate_proxy(details.get('proxy'))
+        # Add invoice text
+        if details.get('invoice_text'):
+            self.checkout_session.set_invoice_text(details.get('invoice_text'))
+        # Add check url
+        if details.get('check_url'):
+            # Check if the url works
+            check = URLValidator()
+            try:
+                check(details.get('check_url'))
+            except ValidationError as e:
+                raise e
+            self.checkout_session.set_last_check(details.get('check_url'))
         return True
 
     def __validate_send_email(self, details):
@@ -99,17 +117,20 @@ class IndexView(CoreIndexView):
         elif details == 'true' or details == 'True':
             self.checkout_session.redirect_forcefully(True)
 
-    def __validate_basket_owner(self,user_id):
+    def __validate_basket_owner(self, user_id, is_anonymous):
         ''' Check if the user entered for basket and order swapping is valid
         '''
         user = None
         if user_id:
             try:
                 user = EmailUser.objects.get(id=user_id)
+                self.checkout_session.owned_by(user.id)
+                # for anonymous sessions, pass oscar the email address.
+                # this fixes all of the check_user_email_is_captured checks
+                if is_anonymous:
+                    self.checkout_session.set_guest_email(user.email)
             except EmailUser.DoesNotExist:
                 raise
-            if user:
-                self.checkout_session.owned_by(user.id)
 
     def __validate_system(self, system):
         ''' Validate the system id
@@ -179,7 +200,7 @@ class IndexView(CoreIndexView):
     def get(self, request, *args, **kwargs):
         # We redirect immediately to shipping address stage if the user is
         # signed in.
-        if request.user.is_authenticated():
+        if True:
             # We raise a signal to indicate that the user has entered the
             # checkout process so analytics tools can track this event.
             signals.start_checkout.send_robust(
@@ -199,7 +220,10 @@ class IndexView(CoreIndexView):
                     'bpay_format': request.GET.get('bpay_method','crn'),
                     'icrn_format': request.GET.get('icrn_format','ICRNAMT'),
                     'icrn_date': request.GET.get('icrn_date', None),
-                }
+                },
+                'invoice_text': request.GET.get('invoice_text',None),
+                'is_anonymous': request.user.is_anonymous(),
+                'check_url': request.GET.get('check_url',None)
             }
             # Check if all the required parameters are set
             # and redirect to appropriate page if not
@@ -282,15 +306,20 @@ class PaymentDetailsView(CorePaymentDetailsView):
         custom_template = self.checkout_session.custom_template()
 
         ctx['store_card'] = True
-        if self.checkout_session.basket_owner():
+        user = None
+        # only load stored cards if the user is an admin or has legitimately logged in
+        if self.checkout_session.basket_owner() and is_payment_admin(self.request.user):
             user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
-        else:
+        elif self.request.user.is_authenticated():
             user = self.request.user
-        cards = user.stored_cards.all()
-        if cards:
-            ctx['cards'] = cards
+
+        if user:
+            cards = user.stored_cards.all()
+            if cards:
+                ctx['cards'] = cards
 
         ctx['custom_template'] = custom_template
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         ctx['payment_method'] = method
         ctx['bankcard_form'] = kwargs.get(
             'bankcard_form', forms.BankcardForm())
@@ -308,18 +337,25 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 return self.do_place_order(request)
             else:
                 return self.handle_place_order_submission(request)
-        else:
-            # Get the payment method either card or other
-            payment_method = request.POST.get('payment_method','')
-            self.checkout_session.pay_by(payment_method)
-            # Get if user wants to store the card
-            store_card = request.POST.get('store_card',False)
-            self.checkout_session.permit_store_card(bool(store_card))
-            # Get if user wants to checkout using a stored card
-            checkout_token = request.POST.get('checkout_token',False)
-            if checkout_token:
-                self.checkout_session.checkout_using_token(request.POST.get('card',''))
-        if payment_method == 'card' and not checkout_token:
+        # Validate the payment method
+        payment_method = request.POST.get('payment_method', '')
+        if payment_method == 'bpay' and settings.BPAY_ALLOWED:
+            self.checkout_session.pay_by('bpay')
+        elif payment_method == 'card':
+            self.checkout_session.pay_by('card')
+        elif payment_method: # someone's trying to pull a fast one, refresh the page
+            self.preview = False
+            return self.render_to_response(self.get_context_data())
+
+        # Get if user wants to store the card
+        store_card = request.POST.get('store_card',False)
+        self.checkout_session.permit_store_card(bool(store_card))
+        # Get if user wants to checkout using a stored card
+        checkout_token = request.POST.get('checkout_token',False)
+        if checkout_token:
+            self.checkout_session.checkout_using_token(request.POST.get('card',''))
+        
+        if self.checkout_session.payment_method() == 'card' and not checkout_token:
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
                 # Form validation failed, render page again with errors
@@ -329,7 +365,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 return self.render_to_response(ctx)
 
         # Render preview with bankcard hidden
-        if payment_method == 'card' and not checkout_token:
+        if self.checkout_session.payment_method() == 'card' and not checkout_token:
             return self.render_preview(request,bankcard_form=bankcard_form)
         else:
             return self.render_preview(request)
@@ -361,16 +397,42 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 order_number,
                 total.incl_tax,
                 crn_string,
-                system)
+                system,
+                self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '')
         elif method == 'icrn':
             return invoice_facade.create_invoice_icrn(
                 order_number,
                 total.incl_tax,
                 crn_string,
                 icrn_format,
-                system)
+                system,
+                self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '')
+
         else:
             raise ValueError('{0} is not a supported BPAY method.'.format(method))
+
+    def handle_last_check(self,url):
+        try:
+            res = requests.get(url,cookies=self.request.COOKIES)
+            res.raise_for_status()
+
+            response = json.loads(res.content).get('status')
+            if response != 'approved':
+                error = json.loads(res.content).get('error',None)
+                if error:
+                    raise ValueError('Payment could not be completed at this moment due to the following error \n {}'.format(error))
+                else:
+                    raise ValueError('Payment could not be completed at this moment.')
+        except requests.exceptions.HTTPError as e:
+            if 400 <= e.response.status_code < 500:
+                http_error_msg = '{} Client Error: {} for url: {} > {}'.format(e.response.status_code, e.response.reason, e.response.url,e.response._content)
+
+            elif 500 <= e.response.status_code < 600:
+                http_error_msg = '{} Server Error: {} for url: {}'.format(e.response.status_code, e.response.reason, e.response.url)
+            e.message = http_error_msg
+
+            e.args = (http_error_msg,)
+            raise PaymentError(e)
 
     def handle_payment(self, order_number, total, **kwargs):
         """
@@ -378,68 +440,77 @@ class PaymentDetailsView(CorePaymentDetailsView):
         """
         # Using preauth here (two-stage model). You could use payment to
         # perform the preauth and capture in one step.  
-        method = self.checkout_session.payment_method()
-        if self.checkout_session.free_basket():
-            self.doInvoice(order_number,total)
-        else:
-            if method == 'card':
-                try:
-                    #Generate Invoice
-                    invoice = self.doInvoice(order_number,total)
-                    # Swap user if in session
-                    if self.checkout_session.basket_owner():
-                        user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
-                    else:
-                        user = self.request.user
-                    # Get the payment action for bpoint
-                    card_method = self.checkout_session.card_method()
-                    # Check if the user is paying using a stored card
-                    if self.checkout_session.checkoutWithToken():
-                        try:
-                            token = BpointToken.objects.get(id=self.checkout_session.checkoutWithToken())
-                        except BpointToken.DoesNotExist:
-                            raise ValueError('This stored card does not exist.')
-                        if self.checkout_session.invoice_association():
-                            invoice.token = '{}|{}'.format(token.DVToken,token.expiry_date.strftime("%m%y"))
-                            invoice.save()
-                        else:
-                            bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, total.incl_tax)
-                    else:
-                        # Store card if user wants to store card
-                        if self.checkout_session.store_card():
-                            resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'],True)
-                            if self.checkout_session.invoice_association():
-                                invoice.token = resp
-                                invoice.save()
-                            else:
-                                resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
-                        else:
-                            if self.checkout_session.invoice_association():
-                                resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'])
-                                invoice.token = resp
-                                invoice.save()
-                            else:
-                                resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,kwargs['bankcard'])
-                    if not self.checkout_session.invoice_association():
-                        # Record payment source and event
-                        source_type, is_created = models.SourceType.objects.get_or_create(
-                            name='Bpoint')
-                        # amount_allocated if action is preauth and amount_debited if action is payment
-                        if card_method == 'payment':
-                            source = source_type.sources.model(
-                                source_type=source_type,
-                                amount_debited=total.incl_tax, currency=total.currency)
-                        elif card_method == 'preauth':
-                            source = source_type.sources.model(
-                                source_type=source_type,
-                                amount_allocated=total.incl_tax, currency=total.currency)
-                        self.add_payment_source(source)
-                        self.add_payment_event('Paid', total.incl_tax)
-                except Exception as e:
-                    raise
-            else:
-                #Generate Invoice
+        with transaction.atomic():
+            method = self.checkout_session.payment_method()
+            # Last point to use the check url to see if the payment should be permitted
+            if self.checkout_session.get_last_check():
+                self.handle_last_check(self.checkout_session.get_last_check())
+            if self.checkout_session.free_basket():
                 self.doInvoice(order_number,total)
+            else:
+                if method == 'card':
+                    try:
+                        #Generate Invoice
+                        invoice = self.doInvoice(order_number,total)
+                        # Swap user if in session
+                        if self.checkout_session.basket_owner():
+                            user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
+                        else:
+                            user = self.request.user
+                        # Get the payment action for bpoint
+                        card_method = self.checkout_session.card_method()
+                        # Check if the user is paying using a stored card
+                        if self.checkout_session.checkoutWithToken():
+                            try:
+                                token = BpointToken.objects.get(id=self.checkout_session.checkoutWithToken())
+                            except BpointToken.DoesNotExist:
+                                raise ValueError('This stored card does not exist.')
+                            if self.checkout_session.invoice_association():
+                                invoice.token = '{}|{}|{}'.format(token.DVToken,token.expiry_date.strftime("%m%y"),token.last_digits)
+                                invoice.save()
+                            else:
+                                bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, total.incl_tax)
+                        else:
+                            # Store card if user wants to store card
+                            if self.checkout_session.store_card():
+                                resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'],True)
+                                if self.checkout_session.invoice_association():
+                                    invoice.token = resp
+                                    invoice.save()
+                                else:
+                                    bankcard = kwargs['bankcard']
+                                    bankcard.last_digits = bankcard.number[-4:]
+                                    resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
+                            else:
+                                if self.checkout_session.invoice_association():
+                                    resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'])
+                                    invoice.token = resp
+                                    invoice.save()
+                                else:
+                                    bankcard = kwargs['bankcard']
+                                    bankcard.last_digits = bankcard.number[-4:]
+                                    resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
+                        if not self.checkout_session.invoice_association():
+                            # Record payment source and event
+                            source_type, is_created = models.SourceType.objects.get_or_create(
+                                name='Bpoint')
+                            # amount_allocated if action is preauth and amount_debited if action is payment
+                            if card_method == 'payment':
+                                source = source_type.sources.model(
+                                    source_type=source_type,
+                                    amount_debited=total.incl_tax, currency=total.currency)
+                            elif card_method == 'preauth':
+                                source = source_type.sources.model(
+                                    source_type=source_type,
+                                    amount_allocated=total.incl_tax, currency=total.currency)
+                            self.add_payment_source(source)
+                            self.add_payment_event('Paid', total.incl_tax)
+                    except Exception as e:
+                        traceback.print_exc()
+                        raise
+                else:
+                    #Generate Invoice
+                    self.doInvoice(order_number,total)
 
     def submit(self, user, basket, shipping_address, shipping_method,  # noqa (too complex (10))
                shipping_charge, billing_address, order_total,
@@ -494,7 +565,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # We define a general error message for when an unanticipated payment
         # error occurs.
         error_msg = _("A problem occurred while processing payment for this "
-                      "order - no payment has been taken.  Please "
+                      "order - no payment has been taken.")
+        if settings.BPAY_ALLOWED:
+            error_msg += _("  Please "
                       "use the pay later option if this problem persists")
 
         signals.pre_payment.send_robust(sender=self, view=self)
@@ -510,7 +583,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
             # their bankcard has expired, wrong card number - that kind of
             # thing. This type of exception is supposed to set a friendly error
             # message that makes sense to the customer.
-            msg = six.text_type(e) + '. You can alternatively use the pay later option.'
+            msg = six.text_type(e) + '.'
+            if settings.BPAY_ALLOWED:
+                msg += ' You can alternatively use the pay later option.'
             logger.warning(
                 "Order #%s: unable to take payment (%s) - restoring basket",
                 order_number, msg)
@@ -564,6 +639,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
             self.restore_frozen_basket()
             return self.render_preview(
                 self.request, error=msg, **payment_kwargs)
+
 
 # =========
 # Thank you

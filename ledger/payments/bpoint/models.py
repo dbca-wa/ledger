@@ -1,15 +1,20 @@
 from __future__ import unicode_literals
 import datetime
-from django.db import models
+from decimal import Decimal as D
+from django.db import models,transaction
+from django.db.models import Q
+from django.core.exceptions import ValidationError
 from ledger.payments.bpoint import settings as bpoint_settings
 from django.utils.encoding import python_2_unicode_compatible
 from oscar.apps.order.models import Order
 from ledger.accounts.models import EmailUser
+from ledger.payments.emails import send_refund_email
 
 class BpointTransaction(models.Model):
     ACTION_TYPES = (
         ('payment','payment'),
         ('refund','refund'),
+        ('unmatched_refund','unmatched_refund'),
         ('reversal','reversal'),
         ('preauth', 'preauth'),
         ('capture','capture')
@@ -52,9 +57,12 @@ class BpointTransaction(models.Model):
     original_txn = models.ForeignKey('self', to_field='txn_number', blank=True, null=True, help_text='Transaction number stored \
                                            if current transaction depends on a previous transaction \
                                            in the case where the action is a refund, reversal or capture')
+    dvtoken = models.CharField(max_length=128,null=True,blank=True,help_text='Stored card dv token')
+    last_digits = models.CharField(max_length=4,blank=True,null=True,help_text='Last four digits of card used during checkout')
     
     class Meta:
         ordering = ('-created',)
+        app_label = 'payments'
     
     def __unicode__(self):
         return self.txn_number
@@ -68,10 +76,110 @@ class BpointTransaction(models.Model):
         from ledger.payments.models import Invoice
         return Order.objects.get(number=Invoice.objects.get(reference=self.crn1).order_number)
 
+    @property
+    def payment_allocated(self):
+        from ledger.payments.models import Invoice
+        allocated = D('0.0')
+        try:
+            invoice = Invoice.objects.get(reference=self.crn1)
+        except Invoice.DoesNotExist:
+            invoice = None
+        if invoice and invoice.order:
+            lines = invoice.order.lines.all()
+            for line in lines:
+                for k,v in line.payment_details.items():
+                    if k == 'card':
+                        for i,a in v.items():
+                            if i == str(self.id):
+                                allocated += D(a)
+        return allocated
+
+    @property
+    def refund_allocated(self):
+        from ledger.payments.models import Invoice
+        allocated = D('0.0')
+        try:
+            invoice = Invoice.objects.get(reference=self.crn1)
+        except Invoice.DoesNotExist:
+            invoice = None
+        if invoice and invoice.order:
+            lines = invoice.order.lines.all()
+            for line in lines:
+                for k,v in line.refund_details.items():
+                    if k == 'card':
+                        for i,a in v.items():
+                            if i == str(self.id):
+                                allocated += D(a)
+        return allocated
+
+    @property
+    def refundable_amount(self):
+        from ledger.payments.models import Invoice
+        amount = D('0.0')
+        invoice = Invoice.objects.get(reference=self.crn1)
+        if self.action== 'payment' or self.action== 'capture':
+            refunds  = BpointTransaction.objects.filter(Q(action='refund') | Q(action='unnmatched_refund'),original_txn=self.txn_number)
+            for r in refunds:
+                amount += r.amount
+        refundable_amount = D(self.amount) - amount
+        if refundable_amount >= invoice.refundable_amount:
+            return invoice.refundable_amount
+        else:
+            return refundable_amount
+        
+
+    # Methods
+    # ==============================
+    def refund(self,info,user,matched=True):
+        from ledger.payments.facade import bpoint_facade 
+        from ledger.payments.models import TrackRefund, Invoice
+
+        with transaction.atomic():
+            amount = info['amount']
+            details = info['details']
+            try:
+                txn = None
+                if self.action == 'payment' or self.action == 'capture':
+
+                    card_details = self.dvtoken.split('|')
+                    card = TempBankCard(
+                        self.dvtoken,
+                        None 
+                    )
+                    card.last_digits = self.last_digits
+                    if self.approved:
+                        if amount <= self.refundable_amount:
+                            txn = bpoint_facade.pay_with_temptoken(
+                                        'refund' if matched else 'unmatched_refund',
+                                        'telephoneorder',
+                                        'single',
+                                        card,
+                                        self.order, 
+                                        self.crn1,
+                                        amount,
+                                        self.txn_number 
+                                    )
+                            if txn.approved:
+                                try:
+                                    BpointToken.objects.get(DVToken=txn.dvtoken)
+                                except BpointToken.DoesNotExist:
+                                    UsedBpointToken.objects.create(DVToken=txn.dvtoken)
+                                TrackRefund.objects.create(user=user,type=2,refund_id=txn.id,details=details)
+                                send_refund_email(Invoice.objects.get(reference=self.crn1),'card',txn.amount,card_ending=self.last_digits)
+                        else:
+                            raise ValidationError('The refund amount is greater than the amount refundable on this card.')
+                    else:
+                        raise ValidationError('A refund cannot be made to an unnapproved tranascation.')
+                else:
+                    raise ValidationError('The transaction has to be either a payment or capture in order to make a refund.')
+                return txn 
+            except:
+                raise
+
 class TempBankCard(object):
     def __init__(self,card_number,expiry_date,ccv=None):
         self.number=card_number
-        self.expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date()
+        self.expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date() if expiry_date else None
         self.ccv=ccv
 
 class BpointToken(models.Model):
@@ -90,6 +198,7 @@ class BpointToken(models.Model):
 
     class Meta:
         unique_together = ('user', 'masked_card','expiry_date','card_type')
+        app_label = 'payments'
 
     @property
     def last_digits(self):
@@ -109,3 +218,6 @@ class BpointToken(models.Model):
 class UsedBpointToken(models.Model):
     added = models.DateTimeField(auto_now_add=True)
     DVToken = models.CharField(max_length=128)
+
+    class Meta:
+        app_label = 'payments'

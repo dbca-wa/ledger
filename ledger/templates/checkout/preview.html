@@ -77,42 +77,68 @@
             <p class="col-sm-2 h4 align-right">{% trans "Total" %}</p>
         </div>
     </div>
-    {% for line in basket.all_lines %}
-        {% purchase_info_for_line request line as session %}
-        <div class="basket-items">
-            <div class="row">
-                <div class="col-sm-2">
-                    <div class="image_container">
-                        {% if line.product.primary_image.original.url %}
-                            {% with image=line.product.primary_image %}
-                                {% thumbnail image.original "100x100" upscale=False as thumb %}
-                                    <a href="{{ form.instance.product.get_absolute_url }}"><img class="thumbnail" src="{{ thumb.url }}" alt="{{ product.get_title }}"></a>
-                                {% endthumbnail %}
-                            {% endwith %}
-                        {% else %}
-                            <img class="thumbnail" src="https://static.dpaw.wa.gov.au/images/no-image.jpg" alt="{{ product.get_title }}">
-                        {% endif %}
+    {%if not basket.custom_ledger %}
+        {% for line in basket.all_lines %}
+            {% purchase_info_for_line request line as session %}
+            <div class="basket-items">
+                <div class="row">
+                    <div class="col-sm-2">
+                        <div class="image_container">
+                            {% if line.product.primary_image.original.url %}
+                                {% with image=line.product.primary_image %}
+                                    {% thumbnail image.original "100x100" upscale=False as thumb %}
+                                        <a href="{{ form.instance.product.get_absolute_url }}"><img class="thumbnail" src="{{ thumb.url }}" alt="{{ product.get_title }}"></a>
+                                    {% endthumbnail %}
+                                {% endwith %}
+                            {% else %}
+                                <img class="thumbnail" src="https://static.dpaw.wa.gov.au/images/no-image.jpg" alt="{{ product.get_title }}">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-sm-7">
+                        <h3>{% comment %}Temp comment to block users from accessing the shop pages. <a href="{{ line.product.get_absolute_url }}">{% endcomment %}{{ line.description }}{% comment %}</a>{% endcomment %}</h3>
+                        
+                    </div>
+                    <div class="col-sm-1 align-center">
+                        {{ line.quantity }}
+                    </div>
+                    <div class="col-sm-2 align-right">
+                        <p class="price_color">
+                            {% if not show_tax_separately and line.is_tax_known %}
+                                {{ line.line_price_incl_tax|currency:basket.currency }}
+                            {% else %}
+                                {{ line.line_price_excl_tax|currency:basket.currency }}
+                            {% endif %}
+                        </p>
                     </div>
                 </div>
-                <div class="col-sm-7">
-                    <h3>{% comment %}Temp comment to block users from accessing the shop pages. <a href="{{ line.product.get_absolute_url }}">{% endcomment %}{{ line.description }}{% comment %}</a>{% endcomment %}</h3>
-                    
-                </div>
-                <div class="col-sm-1 align-center">
-                    {{ line.quantity }}
-                </div>
-                <div class="col-sm-2 align-right">
-                    <p class="price_color">
-                        {% if not show_tax_separately and line.is_tax_known %}
-                            {{ line.line_price_incl_tax|currency:basket.currency }}
-                        {% else %}
-                            {{ line.line_price_excl_tax|currency:basket.currency }}
-                        {% endif %}
-                    </p>
+            </div>
+        {% endfor %}
+    {% else %}
+        {% for line in basket.all_lines %}
+            <div class="basket-items">
+                <div class="row">
+                    <div class="col-sm-2">
+                    </div>
+                    <div class="col-sm-7">
+                        <h3>{{ line.ledger_description }}</a></h3>
+                    </div>
+                    <div class="col-sm-1 align-center">
+                        {{ line.quantity }}
+                    </div>
+                    <div class="col-sm-2 align-right">
+                        <p class="price_color">
+                            {% if not show_tax_separately and line.is_tax_known %}
+                                {{ line.line_price_incl_tax|currency:basket.currency }}
+                            {% else %}
+                                {{ line.line_price_excl_tax|currency:basket.currency }}
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
-    {% endfor %}
+        {% endfor %}
+    {% endif %}
 
     <div class="row">
         <div class="col-sm-6">&nbsp;</div>

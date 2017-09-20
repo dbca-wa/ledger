@@ -50,6 +50,16 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
+                        <label>Infant Price: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input :readonly="selected_rate != ''" name="infant"  v-model="priceHistory.infant" type='text' class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
                         <label>Period start: </label>
                     </div>
                     <div class="col-md-4">
@@ -134,6 +144,7 @@ module.exports = {
                         vm.priceHistory.adult = rate.adult;
                         vm.priceHistory.concession = rate.concession;
                         vm.priceHistory.child = rate.child;
+                        vm.priceHistory.infant = rate.infant;
                     }
                 });
             }
@@ -142,6 +153,7 @@ module.exports = {
                 vm.priceHistory.adult = '';
                 vm.priceHistory.concession = '';
                 vm.priceHistory.child = '';
+                vm.priceHistory.infant = '';
             }
         }
     },
@@ -157,7 +169,7 @@ module.exports = {
             this.selected_rate = '';
             this.priceHistory.period_start= '';
             this.priceHistory.details= '';
-            
+
             this.errorString = '';
             this.isOpen = false;
         },
@@ -183,6 +195,7 @@ module.exports = {
                     adult: "required",
                     concession: "required",
                     child: "required",
+                    infant:"required",
                     period_start: "required",
                     details: {
                         required: {
@@ -196,6 +209,7 @@ module.exports = {
                     adult: "Enter an adult rate",
                     concession: "Enter a concession rate",
                     child: "Enter a child rate",
+                    infant: "Enter a infant rate",
                     period_start: "Enter a start date",
                     details: "Details required if Other reason is selected"
                 },

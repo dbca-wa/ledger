@@ -1,7 +1,11 @@
 #from django.contrib.auth.models import User
 from social_core.exceptions import InvalidEmail
+from django.core.exceptions import ValidationError
 from .models import EmailUser, EmailIdentity
+from django.contrib import messages
 from django.contrib.auth import logout
+from django.core.validators import validate_email
+from django.urls import reverse
 
 def mail_validation(backend, details, is_new=False, *args, **kwargs):
     requires_validation = backend.REQUIRES_EMAIL_VALIDATION or \
@@ -10,15 +14,25 @@ def mail_validation(backend, details, is_new=False, *args, **kwargs):
                       (is_new or backend.setting('PASSWORDLESS', False))
     if requires_validation and send_validation:
         data = backend.strategy.request_data()
-        if 'verification_code' in data:
+        if 'verification_code' in data:     # sign-in URL request to authenticate a session
             backend.strategy.session_pop('email_validation_address')
             if not backend.strategy.validate_email(details['email'],
                                            data['verification_code']):
-                raise InvalidEmail(backend)
-        else:
-            backend.strategy.send_email_validation(backend, details['email'])
-            backend.strategy.session_set('email_validation_address',
-                                         details['email'])
+                return backend.strategy.redirect(
+                    reverse('accounts:login_expired')
+                )
+            # validation successful, continue on
+        else:       # need to generate a validation email then kick back to the login page
+            try:
+                validate_email(details['email'])
+                backend.strategy.send_email_validation(backend, 
+                                                       details['email'])
+                backend.strategy.session_set('email_validation_address',
+                                             details['email'])
+            except Exception as e:
+                return backend.strategy.redirect(
+                    reverse('accounts:login_retry')
+                )
             return backend.strategy.redirect(
                 backend.strategy.setting('EMAIL_VALIDATION_URL')
             )

@@ -74,7 +74,7 @@ export default {
                 message: "Are you sure you want to Delete this closure Period",
                 buttons: [{
                     text: "Delete",
-                    event: "delete",
+                    event: "deleteClosure",
                     bsColor: "btn-danger",
                     handler: function() {
                         vm.deleteClosureRecord(vm.deleteClosure);
@@ -88,36 +88,37 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
-                order: [
-                    [0,'desc']
-                ],
                 ajax: {
-                    url: vm.datatableURL, 
+                    url: vm.datatableURL,
                     dataSrc: ''
                 },
                 columns: [{
                     data: 'range_start',
                     mRender: function(data, type, full) {
-                        return Moment(data).format('MMMM Do, YYYY');
-                    }
+                        return Moment(data).format('DD/MM/YYYY');
+                    },
+                    orderable: false
 
                 }, {
                     data: 'range_end',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
+                            return Moment(data).add(1, 'day').format('DD/MM/YYYY');
                         }
                         else {
                             return '';
                         }
-                    }
+                    },
+                    orderable: false
 
                 }, {
                     mRender: function(data,type, full){
                         return full.reason ? full.reason: '';
-                    }
+                    },
+                    orderable: false
                 }, {
-                    data: 'details'
+                    data: 'details',
+                    orderable: false
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
@@ -129,13 +130,14 @@ export default {
                         else {
                             return "";
                         }
-                    }
+                    },
+                    orderable: false
                 }],
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Details', 'Action'],            
+            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Details', 'Action'],
         }
     },
     methods: {
@@ -179,15 +181,15 @@ export default {
                     vm.showClose();
                 },
                 error:function (resp){
-                    
+
                 }
             });
         },
         addClosure: function() {
-            this.sendData(this.getAddURL(),'POST');   
+            this.sendData(this.getAddURL(),'POST');
         },
         updateClosure: function() {
-            this.sendData(this.closureURL(this.$refs.closeModal.closure_id),'PUT'); 
+            this.sendData(this.closureURL(this.$refs.closeModal.closure_id),'PUT');
         },
         sendData: function(url,method) {
             let vm = this;

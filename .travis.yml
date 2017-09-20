@@ -19,15 +19,22 @@ env:
         - PRODUCTION_EMAIL=False
         - EMAIL_INSTANCE="TEST"
         - NON_PROD_EMAIL="travis@dpaw.wa.gov.au"
+        - BPAY_ALLOWED=False
+sudo: true
 install:
+    - sudo apt-get install postgresql-9.4-postgis-2.3 postgis -y -q
     - pip install pip --upgrade
     - pip install -r requirements.txt
-    - pip install coveralls
 before_script:
     - psql -c 'create database travis_ci_test;' -U postgres
     - python manage_wl.py migrate --noinput
     - python manage_ps.py migrate --noinput
+    - python manage_wl.py load_ledger_fixtures
+    - python manage_wl.py load_fixtures
 script:
-    - coverage run --source="." manage_wl.py test
+    - COVERAGE_FILE=.coverage_ledger coverage run --source="." manage_wl.py test ledger
+    - COVERAGE_FILE=.coverage_wl coverage run --source="." manage_wl.py test wildlifelicensing
+    - COVERAGE_FILE=.coverage_ps coverage run --source="." manage_ps.py test parkstay
+    - coverage combine .coverage_ledger .coverage_wl .coverage_ps
 after_success:
     - coveralls

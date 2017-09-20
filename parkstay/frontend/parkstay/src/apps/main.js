@@ -2,19 +2,30 @@
 // so you don't have to do: import Vue from 'vue/dist/vue'
 // This is done with the browser options. For the config, see package.json
 import Vue from 'vue'
+import resource from 'vue-resource'
 import Campgrounds from '../components/campgrounds/campgrounds.vue'
 import Campground from '../components/campgrounds/campground.vue'
 import AddCampground from '../components/campgrounds/addCampground.vue'
 import Campsite from '../components/campsites/campsite.vue'
 import firstLevelSearch from '../components/booking/first-level-search.vue'
+import bookingDashboard from '../components/booking/dashboard.vue'
+import addBooking from '../components/booking/addbooking.vue'
+import BookingIndex from '../components/booking/index.vue'
+import editBooking from '../components/booking/changebooking2.vue'
 import page_404 from '../components/utils/404.vue'
+import Reports from '../components/reports/reports.vue'
 import Router from 'vue-router'
 import Campsite_type_dash from '../components/campsites-types/campsite-types-dash.vue'
 import Campsite_type from '../components/campsites-types/campsite-type.vue'
 import Bulkpricing from '../components/bulkpricing/bulkpricing.vue'
+import Profile from '../components/user/profile.vue'
+import alert from '../components/utils/alert.vue'
+import store from './store'
+import { mapGetters } from 'vuex'
 import $ from '../hooks'
 var css = require('../hooks-css.js');
 Vue.use(Router);
+Vue.use(resource);
 
 // Define global variables
 global.debounce = function (func, wait, immediate) {
@@ -48,6 +59,11 @@ const routes = [
         },
         children: [
             {
+                path: "account",
+                name: "profile",
+                component: Profile
+            },
+            {
                 path:'dashboard',
                 component: {
                     render (c) { return c('router-view') }
@@ -59,11 +75,6 @@ const routes = [
                         component: Campsite_type_dash
                     },
                     {
-                        path:'bulkpricing',
-                        name:'bulkpricing',
-                        component: Bulkpricing
-                    },
-                    {
                         path:'campsite-type',
                         component: {
                             render (c) { return c('router-view') }
@@ -72,7 +83,7 @@ const routes = [
                             {
                                 path: '/',
                                 name: 'campsite-type',
-                                component: Campsite_type
+                                component: Campsite_type_dash
                             },
                             {
                                 path:':campsite_type_id',
@@ -113,11 +124,44 @@ const routes = [
                                 component:Campsite
                             },
                         ]
+                    },{
+                        path:'bookings',
+                        /*component: {
+                            render (c) { return c('router-view') }
+                        },*/
+                        component: BookingIndex,
+                        children:[
+                            {
+                                path: '/',
+                                name: 'booking-dashboard',
+                                component: bookingDashboard,
+                            },
+                            {
+                                path: 'add/:cg',
+                                name: 'add-booking',
+                                component: addBooking,
+                            },
+                            {
+                                path: 'edit/:booking_id',
+                                name: 'edit-booking',
+                                component: editBooking
+                                /*beforeEnter:(to,from,next) => {
+                                    store.commit('SET_LOADER_STATE',true);
+                                    store.commit('SET_LOADER_TEXT','Loading Booking');
+                                    next();
+                                }*/
+                            },
+                        ]
                     },
                     {
                         path:'bulkpricing',
                         name:'bulkpricing',
                         component:Bulkpricing
+                    },
+                    {
+                        path:'reports',
+                        name:'reports',
+                        component:Reports
                     },
                 ]
             },
@@ -149,5 +193,30 @@ const router = new Router({
 });
 
 new Vue({
-  'router':router
+    router,
+}).$mount('#menu');
+
+new Vue({
+  'router':router,
+  store,
+  components:{
+      alert
+  },
+  watch:{
+      $route:function () {
+          let vm =this;
+          vm.$store.dispatch("updateAlert",{
+              visible:false,
+              type:"danger",
+              message: ""
+          });
+      }
+  },
+  computed:{
+      ...mapGetters([
+          "showAlert",
+          "alertType",
+          "alertMessage"
+      ])
+  }
 }).$mount('#app');
