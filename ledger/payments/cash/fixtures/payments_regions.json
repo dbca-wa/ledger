@@ -1,6 +1,6 @@
 [
     {
-        "model":"payments.region",
+        "model":"cash.region",
         "pk":1,
         "fields":
         {
@@ -8,7 +8,7 @@
         }
     },
     {
-        "model":"payments.region",
+        "model":"cash.region",
         "pk":2,
         "fields":
         {
@@ -16,7 +16,7 @@
         }
     },
     {
-        "model":"payments.region",
+        "model":"cash.region",
         "pk":3,
         "fields":
         {
@@ -24,7 +24,7 @@
         }
     },
     {
-        "model":"payments.region",
+        "model":"cash.region",
         "pk":4,
         "fields":
         {
@@ -32,7 +32,7 @@
         }
     },
     {
-        "model":"payments.region",
+        "model":"cash.region",
         "pk":5,
         "fields":
         {
@@ -40,7 +40,7 @@
         }
     },
     {
-        "model":"payments.region",
+        "model":"cash.region",
         "pk":6,
         "fields":
         {
@@ -48,7 +48,7 @@
         }
     },
     {
-        "model":"payments.region",
+        "model":"cash.region",
         "pk":7,
         "fields":
         {
@@ -56,7 +56,7 @@
         }
     },
     {
-        "model":"payments.region",
+        "model":"cash.region",
         "pk":8,
         "fields":
         {
@@ -64,7 +64,7 @@
         }
     },
     {
-        "model":"payments.region",
+        "model":"cash.region",
         "pk":9,
         "fields":
         {

@@ -1,6 +1,6 @@
 [
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":1,
         "fields":
         {
@@ -9,7 +9,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":2,
         "fields":
         {
@@ -18,7 +18,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":3,
         "fields":
         {
@@ -27,7 +27,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":4,
         "fields":
         {
@@ -36,7 +36,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":5,
         "fields":
         {
@@ -45,7 +45,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":6,
         "fields":
         {
@@ -54,7 +54,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":7,
         "fields":
         {
@@ -63,7 +63,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":8,
         "fields":
         {
@@ -72,7 +72,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":9,
         "fields":
         {
@@ -81,7 +81,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":10,
         "fields":
         {
@@ -90,7 +90,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":11,
         "fields":
         {
@@ -99,7 +99,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":12,
         "fields":
         {
@@ -108,7 +108,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":13,
         "fields":
         {
@@ -117,7 +117,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":14,
         "fields":
         {
@@ -126,7 +126,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":15,
         "fields":
         {
@@ -135,7 +135,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":16,
         "fields":
         {
@@ -144,7 +144,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":17,
         "fields":
         {
@@ -153,7 +153,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":18,
         "fields":
         {
@@ -162,7 +162,7 @@
         }
     },
     {
-        "model":"payments.district",
+        "model":"cash.district",
         "pk":19,
         "fields":
         {

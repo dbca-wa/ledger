@@ -29,7 +29,7 @@ class Invoice(models.Model):
         return 'Invoice #{0}'.format(self.reference)
 
     class Meta:
-        app_label = 'payments'
+        db_table = 'payments_invoice'
 
     # Properties
     # =============================================
@@ -302,10 +302,10 @@ class InvoiceBPAY(models.Model):
     ''' Link between unmatched bpay payments and invoices
     '''
     invoice = models.ForeignKey(Invoice)
-    bpay = models.ForeignKey('payments.BpayTransaction')
+    bpay = models.ForeignKey('bpay.BpayTransaction')
 
     class Meta:
-        app_label = 'payments'
+        db_table = 'payments_invoicebpay'
 
     def __str__(self):
         return 'Invoice No. {}: BPAY CRN {}'.format(self.invoice.reference,self.bpay.crn)

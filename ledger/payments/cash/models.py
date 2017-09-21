@@ -74,14 +74,14 @@ class Region(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
     class Meta:
-        app_label = 'payments'
+        db_table = 'payments_region'
 
 class District(models.Model):
     name = models.CharField(choices=DISTRICT_CHOICES,max_length=3,unique=True)
     region = models.ForeignKey(Region,related_name='districts')
 
     class Meta:
-        app_label = 'payments'
+        db_table = 'payments_district'
 
 class CashTransaction(models.Model):
     TRANSACTION_TYPES = (
@@ -110,7 +110,7 @@ class CashTransaction(models.Model):
     details = models.TextField(null=True, blank=True)
     movement_reference = models.CharField(max_length=50,null=True,blank=True)
     class Meta:
-        app_label = 'payments'
+        db_table = 'payments_cashtransaction'
 
     def save(self, *args, **kwargs):
         # Validations
