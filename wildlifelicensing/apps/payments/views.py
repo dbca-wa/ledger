@@ -53,6 +53,11 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
             ],
             "vouchers": []
         }
+        headers = {
+            'X-CSRFToken': request.COOKIES.get('csrftoken'),
+            'Referer': request.META.get('HTTP_REFERER'),
+        }
+        headers.update(JSON_REQUEST_HEADER_PARAMS)
 
         # senior discount
         if application.is_senior_offer_applicable:
@@ -62,7 +67,7 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
             reverse('payments:ledger-initial-checkout')
         )
 
-        response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
+        response = requests.post(url, headers=headers, cookies=request.COOKIES,
                                  data=json.dumps(parameters))
 
         return HttpResponse(response.content)

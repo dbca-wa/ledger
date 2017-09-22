@@ -12,6 +12,7 @@ branches:
     only:
         - master
         - parkstay
+        - parkstay_rebase
 env:
     global:
         - SECRET_KEY=SecretKeyForTravis
