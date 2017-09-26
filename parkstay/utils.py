@@ -783,7 +783,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             booking.save()
             internal_create_booking_invoice(booking, checkout_response)
             delete_session_booking(request.session)
-            send_booking_invoice(booking,request)
+            send_booking_invoice(booking)
             return booking
 
     except:
