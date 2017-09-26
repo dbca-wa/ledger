@@ -1413,8 +1413,9 @@ class CampgroundListener(object):
     @receiver(pre_save, sender=Campground)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = Campground.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = Campground.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
 
@@ -1525,8 +1526,9 @@ class BookingListener(object):
     @receiver(pre_save, sender=Booking)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = Booking.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = Booking.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
@@ -1541,8 +1543,9 @@ class CampsiteListener(object):
     @receiver(pre_save, sender=Campsite)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = Campsite.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = Campsite.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
 
@@ -1563,8 +1566,9 @@ class CampsiteRateListener(object):
     @receiver(pre_save, sender=CampsiteRate)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = CampsiteRate.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = CampsiteRate.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
@@ -1591,8 +1595,9 @@ class CampsiteStayHistoryListener(object):
     @receiver(pre_save, sender=CampsiteStayHistory)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = CampsiteStayHistory.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = CampsiteStayHistory.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
@@ -1618,8 +1623,9 @@ class CampgroundStayHistoryListener(object):
     @receiver(pre_save, sender=CampgroundStayHistory)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = CampgroundStayHistory.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = CampgroundStayHistory.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
@@ -1645,8 +1651,9 @@ class ParkEntryRateListener(object):
     @receiver(pre_save, sender=ParkEntryRate)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = ParkEntryRate.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = ParkEntryRate.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
             price_before = ParkEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
             if price_before:
                 price_before = price_before[0]

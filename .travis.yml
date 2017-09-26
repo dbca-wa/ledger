@@ -33,9 +33,9 @@ before_script:
     - python manage_wl.py load_ledger_fixtures
     - python manage_wl.py load_fixtures
 script:
-    - COVERAGE_FILE=.coverage_ledger coverage run --source="." manage_wl.py test --noinput -d ledger
-    - COVERAGE_FILE=.coverage_wl coverage run --source="." manage_wl.py test --noinput -d wildlifelicensing
-    - COVERAGE_FILE=.coverage_ps coverage run --source="." manage_ps.py test --noinput -d parkstay
+    - COVERAGE_FILE=.coverage_ledger coverage run --source="." manage_wl.py test --noinput ledger
+    - COVERAGE_FILE=.coverage_wl coverage run --source="." manage_wl.py test --noinput wildlifelicensing
+    - COVERAGE_FILE=.coverage_ps coverage run --source="." manage_ps.py test --noinput parkstay
     - coverage combine .coverage_ledger .coverage_wl .coverage_ps
 after_success:
     - coveralls
