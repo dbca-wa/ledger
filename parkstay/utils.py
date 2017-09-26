@@ -666,6 +666,9 @@ def update_booking(request,old_booking,booking_details):
                 booking.delete()
             delete_session_booking(request.session)
             send_booking_invoice(old_booking)
+            # send out the confirmation email if the booking is paid or over paid
+            if old_booking.status == 'Paid' or old_booking.status == 'Over Paid':
+                send_booking_confirmation(old_booking,request)
             return old_booking
         except:
             delete_session_booking(request.session)
