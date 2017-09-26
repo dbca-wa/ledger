@@ -312,16 +312,16 @@ export default {
                 });
             }
             if (this.initialised){
-                //vm.fetchSites();
+                vm.fetchSites();
+                //vm.updatePrices();
             }
-            //vm.updatePrices();
         },
         selected_departure: function() {
             let vm = this;
             if (this.initialised){
-                //vm.fetchSites();
+                vm.fetchSites();
+                //vm.updatePrices();
             }
-            //vm.updatePrices();
         },
         booking_type: function() {
             let vm = this;
