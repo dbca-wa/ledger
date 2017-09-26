@@ -38,7 +38,7 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <select @change="updateCampground" class="form-control" name="campground" v-model="booking.campground">
-                                                    <option v-for="c in campgrounds" :value="c.id">{{c.name}}</option>
+                                                    <option v-for="c in onlineCampgrounds" :value="c.id">{{c.name}}</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -278,6 +278,9 @@ export default {
             var entries = (vm.booking.parkEntry.vehicles <= 10) ? vm.booking.parkEntry.vehicles : 10;
             vm.booking.parkEntry.vehicles = entries;
             return entries;
+        },
+        onlineCampgrounds(){
+            return this.campgrounds.filter(c => c.campground_type === 0);
         },
         ...mapGetters({
             campgrounds: 'campgrounds'
