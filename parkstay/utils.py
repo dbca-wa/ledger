@@ -213,7 +213,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     )
     for closure in cgbr_qs:
         start = max(start_date, closure.range_start)
-        end = min(end_date, closure.range_end)
+        end = min(end_date, closure.range_end) if closure.range_end else end_date
         for i in range((end-start).days):
             for cs in campground_map[closure.campground.pk]:
                 #results[cs][start+timedelta(days=i)][0] = 'closed'
@@ -666,6 +666,9 @@ def update_booking(request,old_booking,booking_details):
                 booking.delete()
             delete_session_booking(request.session)
             send_booking_invoice(old_booking)
+            # send out the confirmation email if the booking is paid or over paid
+            if old_booking.status == 'Paid' or old_booking.status == 'Over Paid':
+                send_booking_confirmation(old_booking,request)
             return old_booking
         except:
             delete_session_booking(request.session)
@@ -783,7 +786,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             booking.save()
             internal_create_booking_invoice(booking, checkout_response)
             delete_session_booking(request.session)
-            send_booking_invoice(booking,request)
+            send_booking_invoice(booking)
             return booking
 
     except:

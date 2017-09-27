@@ -254,7 +254,7 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
 def addToInterface(date,oracle_codes,system_name):
     try:
         dt = datetime.datetime.strptime(date,'%Y-%m-%d')
-        trans_date = datetime.datetime.strptime(date,'%Y-%m-%d').strftime('%d/%m/%Y')
+        trans_date = datetime.datetime.strptime(date,'%Y-%m-%d')#.strftime('%d/%m/%Y')
         today = datetime.datetime.now().strftime('%Y-%m-%d')
         oracle_date = '{}-{}'.format(dt.strftime('%B').upper(),dt.strftime('%y'))
         try:
@@ -267,7 +267,7 @@ def addToInterface(date,oracle_codes,system_name):
                 if not found:
                     raise ValidationError('{} is not a valid account code'.format(k)) 
                 OracleInterface.objects.create(
-                    receipt_number = 0,
+                    receipt_number = None,
                     receipt_date = trans_date,
                     activity_name = k,
                     amount = v,
@@ -280,8 +280,8 @@ def addToInterface(date,oracle_codes,system_name):
     except:
         raise
 def oracle_parser(date,system,system_name):
-    with transaction.atomic():
-        try:
+    try:
+        with transaction.atomic():
             invoices = []
             invoice_list = []
             oracle_codes = {}
@@ -395,10 +395,10 @@ def oracle_parser(date,system,system_name):
             # Send an email with all the activity codes entered into the interface table
             sendInterfaceParserEmail(date,oracle_codes,system_name,system)
             return oracle_codes
-        except Exception as e:
-            error = traceback.format_exc()
-            sendInterfaceParserEmail(date,oracle_codes,system_name,system,error_email=True,error_string=error)
-            raise e
+    except Exception as e:
+        error = traceback.format_exc()
+        sendInterfaceParserEmail(date,oracle_codes,system_name,system,error_email=True,error_string=error)
+        raise e
 
 def update_payments(invoice_reference):
     with transaction.atomic():

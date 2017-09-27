@@ -96,7 +96,8 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     UserSerializer,
                                     UserAddressSerializer,
                                     ContactSerializer as UserContactSerializer,
-                                    PersonalSerializer
+                                    PersonalSerializer,
+                                    OracleSerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
 from parkstay import reports 
@@ -833,8 +834,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
 
             return Response(available,status=http_status)
         except ValidationError as e:
+            print(traceback.print_exc())
             raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
+            print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['get'])
@@ -2050,4 +2053,26 @@ class GetProfile(views.APIView):
             user.save()
         serializer  = UserSerializer(request.user)
         return Response(serializer.data)
+
+class OracleJob(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    #permission_classes = []
+    def get(self, request, format=None):
+        try:
+            data = {
+                "date":request.GET.get("date")
+            }
+            serializer = OracleSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'))
+            data = {'successful':True}
+            return Response(data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e[0]))
 
