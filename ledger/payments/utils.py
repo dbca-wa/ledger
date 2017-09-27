@@ -267,7 +267,7 @@ def addToInterface(date,oracle_codes,system_name):
                 if not found:
                     raise ValidationError('{} is not a valid account code'.format(k)) 
                 OracleInterface.objects.create(
-                    receipt_number = 0,
+                    receipt_number = None,
                     receipt_date = trans_date,
                     activity_name = k,
                     amount = v,
