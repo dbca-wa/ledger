@@ -24,7 +24,7 @@ class OracleParserInvoice(models.Model):
     details = JSONField() 
 
 class OracleInterface(models.Model):
-    receipt_number = models.IntegerField()
+    receipt_number = models.IntegerField(null=True,blank=True)
     receipt_date = models.DateField()
     activity_name = models.CharField(max_length=50)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
