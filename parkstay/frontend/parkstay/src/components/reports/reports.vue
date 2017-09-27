@@ -135,11 +135,40 @@
                 </div>
             </div>
         </form>
+        <form ref="oracle_form">
+            <div class="well well-sm">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-12">
+                            <h3 style="margin-bottom:20px;">Oracle Job</h3>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                      <label for="">Date</label>
+                                      <div class="input-group date" ref="oracleDatePicker">
+                                          <input type="text" class="form-control" name="oracle_date"  placeholder="DD/MM/YYYY" required>
+                                          <span class="input-group-addon">
+                                              <span class="glyphicon glyphicon-calendar"></span>
+                                          </span>
+                                      </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <button @click.prevent="runOracleJob()" class="btn btn-primary pull-left" >Run Job</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
 </template>
 
 <script>
-import {$,bus,datetimepicker,api_endpoints,helpers,Moment,validate} from "../../hooks.js"
+import {$,swal,bus,datetimepicker,api_endpoints,helpers,Moment,validate} from "../../hooks.js"
 export default {
     name:"reports",
     data:function () {
@@ -147,6 +176,8 @@ export default {
         return {
             form:null,
             refund_form:null,
+            oracle_form: null,
+            oracleDatePicker: null,
             accountsDateStartPicker:null,
             accountsDateEndPicker:null,
             flatDateStartPicker:null,
@@ -188,12 +219,14 @@ export default {
             let vm = this;
             vm.form = $('#payments-form');
             vm.refund_form = $('#refund_form');
+            vm.oracle_form = $(vm.$refs.oracle_form);
             vm.accountsDateStartPicker = $('#accountsDateStartPicker').datetimepicker(vm.datepickerOptions);
             vm.accountsDateEndPicker = $('#accountsDateEndPicker').datetimepicker(vm.datepickerOptions);
             vm.flatDateStartPicker = $('#flatDateStartPicker').datetimepicker(vm.datepickerOptions);
             vm.flatDateEndPicker = $('#flatDateEndPicker').datetimepicker(vm.datepickerOptions);
             vm.refundsStartPicker = $('#refundsStartPicker').datetimepicker(vm.datepickerOptions);
             vm.refundsEndPicker = $('#refundsEndPicker').datetimepicker(vm.datepickerOptions);
+            vm.oracleDatePicker = $(vm.$refs.oracleDatePicker).datetimepicker(vm.datepickerOptions);
 
             vm.flatDateStartPicker.on('dp.hide',function (e) {
                 vm.flatDateEndPicker.data("DateTimePicker").date(null);
@@ -209,6 +242,32 @@ export default {
             });
             vm.addFormValidations();
             vm.fetchRegions();
+        },
+        runOracleJob(){
+            let vm = this;
+            
+            if (vm.oracle_form.valid()){
+                let data = vm.oracleDatePicker.data("DateTimePicker").date().format('DD/MM/YYYY');
+                vm.$http.get('/api/oracle_job?date='+data).then((response) => {
+                    swal({
+                        type: 'success',
+                        title: 'Job Success', 
+                        text: 'The oracle job was completed successfully', 
+                    })
+                },(error) => {
+                    swal({
+                        type: 'error',
+                        title: 'Oracle Job Error', 
+                        text: helpers.apiVueResourceError(error), 
+                    })
+                })
+            }
+        },
+        fetchRegions:function () {
+            let vm = this;
+            $.get('/ledger/payments/api/regions?format=json',function (data) {
+                vm.regions = data;
+            });
         },
         fetchRegions:function () {
             let vm = this;
@@ -334,6 +393,35 @@ export default {
                 messages: {
                     refund_start_date: "Field is required",
                     refund_end_date: "Field is required",
+                },
+                showErrors:function(errorMap, errorList) {
+                    $.each(this.validElements(), function(index, element) {
+                        var $element = $(element);
+
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+
+                    // add or update tooltips
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                        $(error.element)
+                            .tooltip({
+                                trigger: "focus"
+                            })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
+            vm.oracle_form.validate({
+                rules: {
+                    date:'required', 
+                },
+                messages: {
+                    date: "Field is required",
                 },
                 showErrors:function(errorMap, errorList) {
                     $.each(this.validElements(), function(index, element) {
