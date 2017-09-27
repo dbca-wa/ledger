@@ -254,7 +254,7 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
 def addToInterface(date,oracle_codes,system_name):
     try:
         dt = datetime.datetime.strptime(date,'%Y-%m-%d')
-        trans_date = datetime.datetime.strptime(date,'%Y-%m-%d').strftime('%d/%m/%Y')
+        trans_date = datetime.datetime.strptime(date,'%Y-%m-%d')#.strftime('%d/%m/%Y')
         today = datetime.datetime.now().strftime('%Y-%m-%d')
         oracle_date = '{}-{}'.format(dt.strftime('%B').upper(),dt.strftime('%y'))
         try:
