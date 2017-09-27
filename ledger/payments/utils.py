@@ -280,8 +280,8 @@ def addToInterface(date,oracle_codes,system_name):
     except:
         raise
 def oracle_parser(date,system,system_name):
-    with transaction.atomic():
-        try:
+    try:
+        with transaction.atomic():
             invoices = []
             invoice_list = []
             oracle_codes = {}
@@ -291,6 +291,7 @@ def oracle_parser(date,system,system_name):
             bpay_txns = []
             bpoint_txns.extend([x for x in BpointTransaction.objects.filter(settlement_date=date,response_code=0)])
             bpay_txns.extend([x for x in BpayTransaction.objects.filter(p_date__contains=date, service_code=0)])
+            print 'walala'
             # Get the required invoices
             for b in bpoint_txns:
                 if b.crn1 not in invoice_list:
@@ -395,10 +396,10 @@ def oracle_parser(date,system,system_name):
             # Send an email with all the activity codes entered into the interface table
             sendInterfaceParserEmail(date,oracle_codes,system_name,system)
             return oracle_codes
-        except Exception as e:
-            error = traceback.format_exc()
-            sendInterfaceParserEmail(date,oracle_codes,system_name,system,error_email=True,error_string=error)
-            raise e
+    except Exception as e:
+        error = traceback.format_exc()
+        sendInterfaceParserEmail(date,oracle_codes,system_name,system,error_email=True,error_string=error)
+        raise e
 
 def update_payments(invoice_reference):
     with transaction.atomic():
