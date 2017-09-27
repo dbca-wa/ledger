@@ -696,3 +696,7 @@ class ContactSerializer(serializers.ModelSerializer):
         if not obj.get('phone_number') and not obj.get('mobile_number'):
             raise serializers.ValidationError('You must provide a mobile/phone number')
         return obj
+
+class OracleSerializer(serializers.Serializer):
+    date = serializers.DateField(input_formats=['%d/%m/%Y','%Y-%m-%d'])
+

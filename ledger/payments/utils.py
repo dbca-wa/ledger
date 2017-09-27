@@ -291,7 +291,6 @@ def oracle_parser(date,system,system_name):
             bpay_txns = []
             bpoint_txns.extend([x for x in BpointTransaction.objects.filter(settlement_date=date,response_code=0)])
             bpay_txns.extend([x for x in BpayTransaction.objects.filter(p_date__contains=date, service_code=0)])
-            print 'walala'
             # Get the required invoices
             for b in bpoint_txns:
                 if b.crn1 not in invoice_list:
