@@ -176,6 +176,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
 
             payment_details = item.get('item').payment_details
             refund_details = item.get('item').refund_details
+            deduction_details = item.get('item').deduction_details
             # Banked Cash
             for d in item['banked_dates']:
                 index = 0
@@ -195,6 +196,15 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                             banked_date_amounts[date_amount_index]['amounts'][source] += D(v)
 
                 for k,v in refund_details["cash"].items():
+                    c = CashTransaction.objects.get(id=int(k))
+                    source = c.source
+                    if source in ['cash','cheque','money_order']:
+                        if c.created.strftime(date_format) == d.get('date'):
+                            banked_oracle_codes[code][date_amount_index]['amounts'][source] -= D(v)
+                            item[source] -= D(v)
+                            banked_date_amounts[date_amount_index]['amounts'][source] -= D(v)
+
+                for k,v in deduction_details["cash"].items():
                     c = CashTransaction.objects.get(id=int(k))
                     source = c.source
                     if source in ['cash','cheque','money_order']:
