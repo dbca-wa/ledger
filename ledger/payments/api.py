@@ -917,13 +917,13 @@ class ReportSerializer(serializers.Serializer):
     district = serializers.ChoiceField(required=False,allow_null=True,choices=DISTRICT_CHOICES)
     items = serializers.BooleanField(default=False)
 
-    def validate_system(self,value):
+    '''def validate_system(self,value):
         try:
             if not validSystem(value):
                 raise serializers.ValidationError('This is not a valid system.')
         except Exception as e:
             raise serializers.ValidationError(str(e))
-        return value
+        return value'''
 
     def validate(self,data):
         if data['items'] and not (data['banked_start'] and data['banked_end']):
