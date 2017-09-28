@@ -267,7 +267,6 @@ def addToInterface(date,oracle_codes,system_name):
                 if not found:
                     raise ValidationError('{} is not a valid account code'.format(k)) 
                 OracleInterface.objects.create(
-                    receipt_number = None,
                     receipt_date = trans_date,
                     activity_name = k,
                     amount = v,
@@ -341,9 +340,11 @@ def oracle_parser(date,system,system_name):
                         # Payments
                         paid_amount = D('0.0')
                         for k,v in i.payment_details['bpay'].items():
-                            paid_amount += D(v)
+                            b_txn = BpayTransaction.objects.get(id=k)
+                            paid_amount += D(v) if b_txn.p_date.strftime('%Y-%m-%d') == date else D(0.0)
                         for k,v in i.payment_details['card'].items():
-                            paid_amount += D(v)
+                            b_txn = BpointTransaction.objects.get(id=k)
+                            paid_amount += D(v) if str(b_txn.settlement_date) == date else D(0.0)
                         code_payable_amount = paid_amount - code_paid_amount
                         if code_payable_amount >= 0:
                             oracle_codes[code] += code_payable_amount
@@ -355,7 +356,8 @@ def oracle_parser(date,system,system_name):
                         # Deductions
                         deducted_amount = D('0.0')
                         for k,v in i.deduction_details['cash'].items():
-                            deducted_amount += D(v)
+                            c_txn = CashTransaction.objects.get(id=k)
+                            deducted_amount += D(v) if c_txn.created.strftime('%Y-%m-%d') == date else D(0.0)
                         code_deductable_amount = deducted_amount - code_deducted_amount
                         if code_deductable_amount >= 0:
                             oracle_codes[code] -= code_deductable_amount
@@ -367,9 +369,11 @@ def oracle_parser(date,system,system_name):
                         # Refunds
                         refunded_amount = D('0.0')
                         for k,v in i.refund_details['bpay'].items():
-                            refunded_amount += D(v)
+                            b_txn = BpayTransaction.objects.get(id=k)
+                            refunded_amount += D(v) if b_txn.p_date.strftime('%Y-%m-%d') == date else D(0.0)
                         for k,v in i.refund_details['card'].items():
-                            refunded_amount += D(v)
+                            b_txn = BpointTransaction.objects.get(id=k)
+                            refunded_amount += D(v) if str(b_txn.settlement_date) == date else D(0.0)
                         code_refundable_amount = refunded_amount - code_refunded_amount
                         if code_refundable_amount >= 0:
                             oracle_codes[code] -= code_refundable_amount
