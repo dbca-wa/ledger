@@ -23,8 +23,16 @@ class OracleParserInvoice(models.Model):
     reference = models.CharField(max_length=50)
     details = JSONField() 
 
+def increment_receipt_number():
+    last_interface = OracleInterface.objects.all().order_by('id').last()
+    if not last_interface:
+         return 80000
+    receipt_no = last_interface.receipt_number
+    new_receipt_no = receipt_no + 1
+    return new_receipt_no
+
 class OracleInterface(models.Model):
-    receipt_number = models.IntegerField(null=True,blank=True)
+    receipt_number = models.IntegerField(null=True,blank=True,default=increment_receipt_number)
     receipt_date = models.DateField()
     activity_name = models.CharField(max_length=50)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
