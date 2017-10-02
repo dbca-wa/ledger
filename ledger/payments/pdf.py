@@ -163,7 +163,7 @@ class Remittance(Flowable):
         canvas.drawString((PAGE_WIDTH/3) * 2, current_y, 'Invoice Total')
         current_y -= 20
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
-        canvas.drawString(current_x, current_y, self.invoice.number)
+        canvas.drawString(current_x, current_y, self.invoice.reference)
         canvas.drawString(PAGE_WIDTH/3, current_y, self.invoice.created.strftime(DATE_FORMAT))
         canvas.drawString((PAGE_WIDTH/3) * 2, current_y, '${}'.format(self.invoice.amount))
     
@@ -206,7 +206,7 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Page')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2,str(canvas.getPageNumber()))
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Invoice Number')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, invoice.number)
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, invoice.reference)
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Total(AUD)')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, str(invoice.amount))
     canvas.restoreState()
