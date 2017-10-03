@@ -133,37 +133,38 @@ class WildlifeLicence(Licence):
         authorised_persons = []
         all_species = []
         # information extracted from application
-        for field in extracted_fields:
-            if 'children' in field and field['type'] == 'group':
-                if search in field['name']:
-                    if search == 'authorised_persons':
-                        authorised_person = {
-                            'given_names': '',
-                            'surname': ''
-                        }
-                        for index, group in enumerate(field['children']):
-                            for child_field in group:
-                                # Get surname
-                                if 'surname' in child_field['name'] and 'data' in child_field and child_field['data']:
-                                    authorised_person['surname'] = child_field['data']
-                                elif 'given_names' in child_field['name'] and 'data' in child_field and child_field['data']:
-                                    authorised_person['given_names'] = child_field['data']
-                            name = '{} {}'.format(authorised_person['surname'],authorised_person['given_names'])
-                            authorised_persons.append(name)
-                    elif search == 'species_estimated_number':
-                        species = {
-                            'name':'',
-                            'number':''
-                        }
-                        for index, group in enumerate(field['children']):
-                            for child_field in group:
-                                # Get surname
-                                if 'species_causing_damage' in child_field['name'] and 'data' in child_field and child_field['data']:
-                                    species['name'] = child_field['data']
-                                elif 'number_causing_damage' in child_field['name'] and 'data' in child_field and child_field['data']:
-                                    species['number'] = child_field['data']
-                            name = '{} : {}'.format(species['name'],species['number'])
-                            all_species.append(name)
+        if extracted_fields:
+            for field in extracted_fields:
+                if 'children' in field and field['type'] == 'group':
+                    if search in field['name']:
+                        if search == 'authorised_persons':
+                            authorised_person = {
+                                'given_names': '',
+                                'surname': ''
+                            }
+                            for index, group in enumerate(field['children']):
+                                for child_field in group:
+                                    # Get surname
+                                    if 'surname' in child_field['name'] and 'data' in child_field and child_field['data']:
+                                        authorised_person['surname'] = child_field['data']
+                                    elif 'given_names' in child_field['name'] and 'data' in child_field and child_field['data']:
+                                        authorised_person['given_names'] = child_field['data']
+                                name = '{} {}'.format(authorised_person['surname'],authorised_person['given_names'])
+                                authorised_persons.append(name)
+                        elif search == 'species_estimated_number':
+                            species = {
+                                'name':'',
+                                'number':''
+                            }
+                            for index, group in enumerate(field['children']):
+                                for child_field in group:
+                                    # Get surname
+                                    if 'species_causing_damage' in child_field['name'] and 'data' in child_field and child_field['data']:
+                                        species['name'] = child_field['data']
+                                    elif 'number_causing_damage' in child_field['name'] and 'data' in child_field and child_field['data']:
+                                        species['number'] = child_field['data']
+                                name = '{} : {}'.format(species['name'],species['number'])
+                                all_species.append(name)
 
         if search == 'authorised_persons':
             return authorised_persons
