@@ -1000,6 +1000,10 @@ class Booking(models.Model):
         return False
 
     @property
+    def amount_paid(self):
+        return self.__check_payment_amount()
+
+    @property
     def refund_status(self):
         return self.__check_refund_status()
 
@@ -1050,6 +1054,17 @@ class Booking(models.Model):
 
     def __str__(self):
         return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
+
+    def __check_payment_amount(self):
+        invoices = []
+        amount = D('0.0')
+        references = [i.invoice_reference for i in self.invoices.all()]
+        invoices = Invoice.objects.filter(reference__in=references,voided=False)
+
+        for i in invoices:
+            amount += i.payment_amount
+
+        return amount
 
     def __check_payment_status(self):
         invoices = []
