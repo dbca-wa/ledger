@@ -448,6 +448,8 @@ export default {
                 fields = [...fields,"Adults","Concession","Children","Infants","Regos"]
                 fields.splice(3,0,"Email");
                 fields.splice(4,0,"Phone");
+                fields.splice(8,0,'Amount Due')
+                fields.splice(9,0,'Amount Paid')
                 //var data = vm.$refs.bookings_table.vmDataTable.ajax.json().results;
                 var bookings = [];
                 $.each(data,function (i,booking) {
@@ -479,24 +481,30 @@ export default {
                                 bk[field] = booking.status;
                             break;
                             case 8:
-                                bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
+                                bk[field] = booking.cost_total;
                             break;
                             case 9:
-                                bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
+                                bk[field] = booking.amount_paid;
                             break;
                             case 10:
-                                bk[field] = booking.guests.adults;
+                                bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
                             break;
                             case 11:
-                                bk[field] =  booking.guests.concession;
+                                bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
                             break;
                             case 12:
-                                bk[field] =  booking.guests.children;
+                                bk[field] = booking.guests.adults;
                             break;
                             case 13:
-                                bk[field] =  booking.guests.infants;
+                                bk[field] =  booking.guests.concession;
                             break;
                             case 14:
+                                bk[field] =  booking.guests.children;
+                            break;
+                            case 15:
+                                bk[field] =  booking.guests.infants;
+                            break;
+                            case 16:
                                 bk[field] =  booking.vehicle_payment_status.map(r =>{
                                     return Object.keys(r).map(k =>{
                                         if (k == 'Paid'){

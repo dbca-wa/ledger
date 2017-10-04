@@ -1550,6 +1550,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 cg = booking.campground
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
+                bk['cost_total'] = booking.cost_total
+                bk['amount_paid'] = booking.amount_paid
                 bk['vehicle_payment_status'] = booking.vehicle_payment_status
                 bk['refund_status'] = booking.refund_status
                 bk['cancellation_reason'] = booking.cancellation_reason
