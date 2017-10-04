@@ -1516,7 +1516,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             sql += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
             sqlCount += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
             # Remove temporary bookings
-            sql += ' and parkstay_booking.booking_type <> 3'.format(canceled)
+            sql += ' and parkstay_booking.booking_type <> 3'
             sqlCount += ' and parkstay_booking.booking_type <> 3'
             if search:
                 sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
@@ -1565,21 +1565,14 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['guests'] = booking.guests
                 bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
                 if not bk['legacy_id'] and not bk['legacy_name']:
-                    try:
-                        customer = EmailUser.objects.get(id=bk['customer_id'])
-                        bk['firstname'] = booking.details.get('first_name','')
-                        bk['lastname'] = booking.details.get('last_name','')
-                        bk['email'] = customer.email if customer.email else ""
-                        bk['phone'] = customer.mobile_number if customer.mobile_number else ""
-                        if booking.is_canceled:
-                            bk['campground_site_type'] = ""
-                        else:
-                            bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
-                    except EmailUser.DoesNotExist:
-                        bk['firstname'] =  ""
-                        bk['lastname'] = ""
-                        bk['email'] = ""
-                        bk['phone'] = ""
+                    bk['firstname'] = booking.details.get('first_name','')
+                    bk['lastname'] = booking.details.get('last_name','')
+                    bk['email'] = booking.customer.email if booking.customer.email else ""
+                    bk['phone'] = booking.customer.mobile_number if booking.customer.mobile_number else ""
+                    if booking.is_canceled:
+                        bk['campground_site_type'] = ""
+                    else:
+                        bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
                 else:
                     bk['firstname'] =  bk['legacy_name']
                     bk['lastname'] = ""
