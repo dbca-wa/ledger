@@ -1515,6 +1515,9 @@ class BookingViewSet(viewsets.ModelViewSet):
             # Search for cancelled bookings
             sql += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
             sqlCount += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
+            # Remove temporary bookings
+            sql += ' and parkstay_booking.booking_type <> 3'.format(canceled)
+            sqlCount += ' and parkstay_booking.booking_type <> 3'
             if search:
                 sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
                 or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
