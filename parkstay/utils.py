@@ -688,6 +688,8 @@ def create_or_update_booking(request,booking_details,updating=False):
             cost_total=booking_details['cost_total'],
             customer=booking_details['customer'])
         
+        booking.details['first_name'] = booking_details['first_name']
+        booking.details['last_name'] = booking_details['last_name']
         booking.details['phone'] = booking_details['phone']
         booking.details['country'] = booking_details['country']
         booking.details['postcode'] = booking_details['postcode']

@@ -1518,9 +1518,10 @@ class BookingViewSet(viewsets.ModelViewSet):
             if search:
                 sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
                 or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
-                or lower(accounts_emailuser.first_name) LIKE lower(\'%{}%\')\
-                or lower(accounts_emailuser.last_name) LIKE lower(\'%{}%\')\
-                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search,search,search)
+                or lower(parkstay_booking.details->>\'first_name\') LIKE lower(\'%{}%\')\
+                or lower(parkstay_booking.details->>\'last_name\') LIKE lower(\'%{}%\')\
+                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')\
+                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search,search,search,search)
                 if search.isdigit:
                     sqlsearch = '{} or CAST (parkstay_booking.id as TEXT) like \'{}%\''.format(sqlsearch,search)
 
@@ -1641,6 +1642,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_infant' : guests['infant'],
                 'cost_total' : costs['total'],
                 'customer' : customer,
+                'first_name': emailUser['first_name'],
+                'last_name': emailUser['last_name'],
                 'country': emailUser['country'],
                 'postcode': emailUser['postcode'],
                 'phone': emailUser['phone'],
