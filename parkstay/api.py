@@ -1561,11 +1561,11 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                 bk['guests'] = booking.guests
                 bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
-                if not bk['legacy_id']:
+                if not bk['legacy_id'] and not bk['legacy_name']:
                     try:
                         customer = EmailUser.objects.get(id=bk['customer_id'])
-                        bk['firstname'] = customer.first_name
-                        bk['lastname'] = customer.last_name
+                        bk['firstname'] = booking.details.get('first_name','')
+                        bk['lastname'] = booking.details.get('last_name','')
                         bk['email'] = customer.email if customer.email else ""
                         bk['phone'] = customer.mobile_number if customer.mobile_number else ""
                         if booking.is_canceled:
