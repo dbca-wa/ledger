@@ -1503,12 +1503,12 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlCount = sqlCount + " and " +sqlCampground
             if region:
                 sqlRegion = " parkstay_region.id = {}".format(region)
-                sql = sql+" and "+ sqlRegion if campground else sql + sqlRegion
-                sqlCount = sqlCount +" and "+ sqlRegion if campground else sqlCount + sqlRegion
+                sql = sql+" and "+ sqlRegion
+                sqlCount = sqlCount +" and "+ sqlRegion
             if arrival:
                 sqlArrival= ' parkstay_booking.arrival >= \'{}\''.format(arrival)
-                sqlCount = sqlCount + " and "+ sqlArrival if campground or region else sqlCount + sqlArrival
-                sql = sql + " and "+ sqlArrival if campground or region else sql + sqlArrival
+                sqlCount = sqlCount + " and "+ sqlArrival
+                sql = sql + " and "+ sqlArrival
                 if departure:
                     sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
                     sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
