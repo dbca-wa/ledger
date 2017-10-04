@@ -1572,7 +1572,9 @@ class BookingViewSet(viewsets.ModelViewSet):
                     if booking.is_canceled:
                         bk['campground_site_type'] = ""
                     else:
-                        bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
+                        bk['campground_site_type'] = booking.first_campsite.type
+                        if booking.campground.site_type != 2:
+                            bk['campground_site_type'] = '{} - ({})'.format(booking.first_campsite.name,bk['campground_site_type'])
                 else:
                     bk['firstname'] =  bk['legacy_name']
                     bk['lastname'] = ""
