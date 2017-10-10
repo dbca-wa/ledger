@@ -15,7 +15,6 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
-build/
 develop-eggs/
 dist/
 downloads/
@@ -87,5 +86,3 @@ media/
 #parkstay import ignores
 import/
 importo.py
-build.js
-build.css
