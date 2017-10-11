@@ -7,7 +7,6 @@
             display: none;
         }
     </style>
-    <link rel="stylesheet" href="{% static 'ps/css/build.css' %}">
 {% endblock %}
 {% block menu %}
 <div class="topbar row" id="menu" v-cloak>
@@ -88,5 +87,7 @@
 {% endblock %}
 
 {% block custom_js %}
-  <script type="text/javascript" src="{% static 'ps/js/build.js' %}"></script>
+  <script type="text/javascript" src="{% static 'parkstay/js/manifest.js' %}"></script>
+  <script type="text/javascript" src="{% static 'parkstay/js/vendor.js' %}"></script>
+  <script type="text/javascript" src="{% static 'parkstay/js/parkstay.js' %}"></script>
 {% endblock %}

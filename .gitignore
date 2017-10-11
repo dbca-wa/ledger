@@ -73,6 +73,7 @@ target/
 /.project
 
 **/local/
+*.map
 
 # media
 media/

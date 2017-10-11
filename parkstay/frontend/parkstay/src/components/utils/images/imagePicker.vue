@@ -237,7 +237,7 @@ module.exports = {
 /* Slider */
 .slick-loading .slick-list
 {
-    background: #fff url('./ajax-loader.gif') center center no-repeat;
+    background: #fff url('/slick-carousel-browserify/slick/ajax-loader.gif') center center no-repeat;
 }
 
 /* Arrows */

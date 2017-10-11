@@ -2,7 +2,7 @@
   "name": "exploreparks",
   "version": "1.0.0",
   "description": "Parkstay modules for Explore Parks",
-  "author": "Scott Percival <scott.percival@dpaw.wa.gov.au>",
+  "author": "ASI <asi@dpaw.wa.gov.au>",
   "private": true,
   "scripts": {
     "dev": "node build/dev-server.js",

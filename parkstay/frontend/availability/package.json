@@ -2,7 +2,7 @@
   "name": "availability",
   "version": "1.0.0",
   "description": "Availability selector for Parkstay",
-  "author": "Scott Percival <scott.percival@dpaw.wa.gov.au>",
+  "author": "ASI <asi@dpaw.wa.gov.au>",
   "private": true,
   "scripts": {
     "dev": "node build/dev-server.js",
