@@ -910,7 +910,7 @@ class Booking(models.Model):
     departure = models.DateField()
     details = JSONField(null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
-    expiry_time = models.DateTimeField(null=True)
+    expiry_time = models.DateTimeField(blank=True, null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
