@@ -86,7 +86,7 @@ def send_booking_cancelation(booking,request):
     email = booking.customer.email
 
     campground_email = booking.campground.email if booking.campground.email else default_campground_email
-    my_bookings_url = request.build_absolute_uri('/mybookings/')
+    my_bookings_url = '{}/mybookings/'.format(settings.PARKSTAY_EXTERNAL_URL)
     context = {
         'booking': booking,
         'my_bookings': my_bookings_url,

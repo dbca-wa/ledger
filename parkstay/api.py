@@ -1503,24 +1503,28 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlCount = sqlCount + " and " +sqlCampground
             if region:
                 sqlRegion = " parkstay_region.id = {}".format(region)
-                sql = sql+" and "+ sqlRegion if campground else sql + sqlRegion
-                sqlCount = sqlCount +" and "+ sqlRegion if campground else sqlCount + sqlRegion
+                sql = sql+" and "+ sqlRegion
+                sqlCount = sqlCount +" and "+ sqlRegion
             if arrival:
                 sqlArrival= ' parkstay_booking.arrival >= \'{}\''.format(arrival)
-                sqlCount = sqlCount + " and "+ sqlArrival if campground or region else sqlCount + sqlArrival
-                sql = sql + " and "+ sqlArrival if campground or region else sql + sqlArrival
+                sqlCount = sqlCount + " and "+ sqlArrival
+                sql = sql + " and "+ sqlArrival
                 if departure:
                     sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
                     sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
             # Search for cancelled bookings
             sql += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
             sqlCount += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
+            # Remove temporary bookings
+            sql += ' and parkstay_booking.booking_type <> 3'
+            sqlCount += ' and parkstay_booking.booking_type <> 3'
             if search:
                 sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
                 or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
-                or lower(accounts_emailuser.first_name) LIKE lower(\'%{}%\')\
-                or lower(accounts_emailuser.last_name) LIKE lower(\'%{}%\')\
-                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search,search,search)
+                or lower(parkstay_booking.details->>\'first_name\') LIKE lower(\'%{}%\')\
+                or lower(parkstay_booking.details->>\'last_name\') LIKE lower(\'%{}%\')\
+                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')\
+                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search,search,search,search)
                 if search.isdigit:
                     sqlsearch = '{} or CAST (parkstay_booking.id as TEXT) like \'{}%\''.format(sqlsearch,search)
 
@@ -1550,6 +1554,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 cg = booking.campground
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
+                bk['cost_total'] = booking.cost_total
+                bk['amount_paid'] = booking.amount_paid
                 bk['vehicle_payment_status'] = booking.vehicle_payment_status
                 bk['refund_status'] = booking.refund_status
                 bk['cancellation_reason'] = booking.cancellation_reason
@@ -1558,22 +1564,17 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                 bk['guests'] = booking.guests
                 bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
-                if not bk['legacy_id']:
-                    try:
-                        customer = EmailUser.objects.get(id=bk['customer_id'])
-                        bk['firstname'] = customer.first_name
-                        bk['lastname'] = customer.last_name
-                        bk['email'] = customer.email if customer.email else ""
-                        bk['phone'] = customer.mobile_number if customer.mobile_number else ""
-                        if booking.is_canceled:
-                            bk['campground_site_type'] = ""
-                        else:
-                            bk['campground_site_type'] = Campsite.objects.get(id=booking.campsite_id_list[0]).type
-                    except EmailUser.DoesNotExist:
-                        bk['firstname'] =  ""
-                        bk['lastname'] = ""
-                        bk['email'] = ""
-                        bk['phone'] = ""
+                if not bk['legacy_id'] and not bk['legacy_name']:
+                    bk['firstname'] = booking.details.get('first_name','')
+                    bk['lastname'] = booking.details.get('last_name','')
+                    bk['email'] = booking.customer.email if booking.customer.email else ""
+                    bk['phone'] = booking.customer.mobile_number if booking.customer.mobile_number else ""
+                    if booking.is_canceled:
+                        bk['campground_site_type'] = ""
+                    else:
+                        bk['campground_site_type'] = booking.first_campsite.type
+                        if booking.campground.site_type != 2:
+                            bk['campground_site_type'] = '{} - ({})'.format(booking.first_campsite.name,bk['campground_site_type'])
                 else:
                     bk['firstname'] =  bk['legacy_name']
                     bk['lastname'] = ""
@@ -1639,6 +1640,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_infant' : guests['infant'],
                 'cost_total' : costs['total'],
                 'customer' : customer,
+                'first_name': emailUser['first_name'],
+                'last_name': emailUser['last_name'],
                 'country': emailUser['country'],
                 'postcode': emailUser['postcode'],
                 'phone': emailUser['phone'],

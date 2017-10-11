@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
 import traceback
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import JSONField, IntegerRangeField
 from ledger.payments.bpay.models import BpayTransaction, BpayFile, BillerCodeRecipient, BillerCodeSystem
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
@@ -46,6 +47,9 @@ class OracleInterface(models.Model):
 class OracleInterfaceSystem(models.Model):
     system_id = models.CharField(max_length=10)
     system_name = models.CharField(max_length=128)
+    deduct_percentage = models.BooleanField(default=False)
+    percentage = IntegerRangeField(validators=[MaxValueValidator(99), MinValueValidator(1)],null=True,blank=True)
+    percentage_account_code = models.CharField(max_length=50,null=True,blank=True)
 
     def __str__(self):
         return '{} - {}'.format(self.system_name, self.system_id)

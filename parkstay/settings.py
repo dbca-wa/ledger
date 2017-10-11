@@ -39,6 +39,8 @@ REST_FRAMEWORK = {
 # disable Django REST Framework UI on prod
 if not DEBUG:
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES']=('rest_framework.renderers.JSONRenderer',)
+else:
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES']=('rest_framework.renderers.JSONRenderer','rest_framework_csv.renderers.CSVRenderer')
 
 
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'parkstay', 'templates'))
@@ -74,5 +76,6 @@ CRON_CLASSES = [
     'parkstay.cron.UnpaidBookingsReportCronJob',
 ]
 
-CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','campgrounds@dpaw.wa.gov.au')
+CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','parkstaybookings@dbca.wa.gov.au')
 EXPLORE_PARKS_URL = env('EXPLORE_PARKS_URL','https://parks-oim.dpaw.wa.gov.au')
+PARKSTAY_EXTERNAL_URL = env('PARKSTAY_EXTERNAL_URL','https://parkstay.dbca.wa.gov.au')
