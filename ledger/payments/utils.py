@@ -266,11 +266,23 @@ def addToInterface(date,oracle_codes,system):
         if system.deduct_percentage and ( not system.percentage or not system.percentage_account_code):
             raise Exception('Deduction Percentage and an oracle account are required if deduction is enabled.')
 
+        deduction_code = None
         if system.deduct_percentage:
             try:
                 OracleAccountCode.objects.filter(active_receivables_activities=system.percentage_account_code)
             except OracleAccountCode.DoesNotExist:
                 raise ValidationError('The account code setup for oracle deduction does not exist.')
+            # Add the deducted amount to the oracle code specified in the system table
+            deduction_code = OracleInterface(
+                receipt_date = trans_date,
+                activity_name = system.percentage_account_code,
+                amount = initial_amount - remainder_amount,
+                customer_name = system.system_name,
+                description = k,
+                comments = '{} GST/{}'.format(k,date),
+                status = 'NEW',
+                status_date = today
+            )
         for k,v in oracle_codes.items():
             if v != 0:
                 found = OracleAccountCode.objects.filter(active_receivables_activities=k)
@@ -280,6 +292,8 @@ def addToInterface(date,oracle_codes,system):
                 if system.deduct_percentage:
                     initial_amount = D(v)
                     remainder_amount = ((100 - system.percentage)/ 100) * initial_amount
+
+                    deduction_code.amount += initial_amount - remainder_amount
                     # Add the deducted amount to the oracle code specified in the system table
                     OracleInterface.objects.create(
                         receipt_date = trans_date,
@@ -314,6 +328,8 @@ def addToInterface(date,oracle_codes,system):
                         status = 'NEW',
                         status_date = today
                     )
+        if system.deduct_percentage:
+            deduction_code.save()
     except:
         raise
 def oracle_parser(date,system,system_name):
