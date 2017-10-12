@@ -1567,8 +1567,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 if not bk['legacy_id'] and not bk['legacy_name']:
                     bk['firstname'] = booking.details.get('first_name','')
                     bk['lastname'] = booking.details.get('last_name','')
-                    bk['email'] = booking.customer.email if booking.customer.email else ""
-                    bk['phone'] = booking.customer.mobile_number if booking.customer.mobile_number else ""
+                    bk['email'] = booking.customer.email if booking.customer and booking.customer.email else ""
+                    bk['phone'] = booking.customer.mobile_number if booking.customer and booking.customer.mobile_number else ""
                     if booking.is_canceled:
                         bk['campground_site_type'] = ""
                     else:
