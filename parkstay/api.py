@@ -1175,7 +1175,7 @@ def create_booking(request, *args, **kwargs):
         if hasattr(e,'error_dict'):
             error = repr(e.error_dict)
         else:
-            error = {'error':e[0].encode('utf-8')}
+            error = {'error':str(e)}
         return HttpResponse(geojson.dumps({
             'status': 'error',
             'msg': error,
