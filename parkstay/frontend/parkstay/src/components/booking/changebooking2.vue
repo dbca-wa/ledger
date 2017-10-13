@@ -315,15 +315,15 @@ export default {
                 });
             }
             if (this.initialised){
-                //vm.fetchSites();
             }
+            vm.fetchSites();
             //vm.updatePrices();
         },
         selected_departure: function() {
             let vm = this;
             if (this.initialised){
-                //vm.fetchSites();
             }
+            vm.fetchSites();
             //vm.updatePrices();
         },
         booking_type: function() {
@@ -375,8 +375,8 @@ export default {
         fetchSites: function() {
             let vm = this;
             if (!vm.fetchingSites){
-                vm.fetchingSites = true;
                 if (vm.selected_arrival && vm.selected_departure) {
+                    vm.fetchingSites = true;
                     vm.loading.push('fetching campsites');
                     vm.$http.get(api_endpoints.available_campsites_booking(vm.booking.campground, vm.booking.arrival, vm.booking.departure,vm.booking.id)).then((response) => {
                         vm.fetchingSites = false;

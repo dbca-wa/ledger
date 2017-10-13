@@ -504,6 +504,11 @@ class RateDetailSerializer(serializers.Serializer):
                 raise serializers.ValidationError('This rate does not exist')
         return value
 
+    def validate(self,obj):
+        if obj.get('reason') == 1 and not obj.get('details'):
+            raise serializers.ValidationError('Details required if reason is other.')
+        return obj
+
 class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
     details = serializers.CharField(required=False)
@@ -514,7 +519,7 @@ class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
 
     def validate(self,obj):
         if obj.get('reason') == 1 and not obj.get('details'):
-            raise serializers.ValidationError('Details is required if the reason is other.')
+            raise serializers.ValidationError('Details required if the reason is other.')
         return obj
 
 
@@ -642,8 +647,8 @@ class BulkPricingSerializer(serializers.Serializer):
         return val
 
     def validate(self,obj):
-        if obj.get('reason') == 0 and not obj.get('details'):
-            raise serializers.ValidationError('Details are required if reason is other.')
+        if obj.get('reason') == 1  and not obj.get('details'):
+            raise serializers.ValidationError('Details required if reason is other.')
         return obj
 
 class ReportSerializer(serializers.Serializer):

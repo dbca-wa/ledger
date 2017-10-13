@@ -213,7 +213,7 @@ export default {
         },
         addHistory: function() {
             if (this.level == 'campsite'){ this.price.campsite = this.object_id; }
-            this.sendData(this.getAddURL(),'POST',JSON.stringify(vm.price));
+            this.sendData(this.getAddURL(),'POST',JSON.stringify(this.price));
         },
         updateHistory: function() {
             if (this.level == 'campsite'){
