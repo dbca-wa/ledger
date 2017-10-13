@@ -615,7 +615,7 @@ class BulkPricingSerializer(serializers.Serializer):
     child = serializers.DecimalField(max_digits=8, decimal_places=2)
     period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
     reason = serializers.IntegerField()
-    details =serializers.CharField()
+    details =serializers.CharField(required=False)
     type = serializers.ChoiceField(choices=TYPE_CHOICES)
 
     def validate_park(self, val):
@@ -640,6 +640,11 @@ class BulkPricingSerializer(serializers.Serializer):
         except PriceReason.DoesNotExist:
             raise
         return val
+
+    def validate(self,obj):
+        if obj.get('reason') == 0 and not obj.get('details'):
+            raise serializers.ValidationError('Details are required if reason is other.')
+        return obj
 
 class ReportSerializer(serializers.Serializer):
     start = serializers.DateTimeField(input_formats=['%d/%m/%Y'])

@@ -1996,7 +1996,7 @@ class BulkPricingView(generics.CreateAPIView):
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
                     'reason': PriceReason.objects.get(pk=serializer.data['reason']),
-                    'details': serializer.validated_data['details']
+                    'details': serializer.validated_data.get('details',None)
                 }
             if serializer.data['type'] == 'Park':
                 for c in serializer.data['campgrounds']:
