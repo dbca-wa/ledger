@@ -1564,9 +1564,9 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                 bk['guests'] = booking.guests
                 bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
-                if not bk['legacy_id'] and not bk['legacy_name']:
-                    bk['firstname'] = booking.details.get('first_name','')
-                    bk['lastname'] = booking.details.get('last_name','')
+                bk['firstname'] = booking.details.get('first_name','')
+                bk['lastname'] = booking.details.get('last_name','')
+                if booking.customer:
                     bk['email'] = booking.customer.email if booking.customer and booking.customer.email else ""
                     bk['phone'] = booking.customer.mobile_number if booking.customer and booking.customer.mobile_number else ""
                     if booking.is_canceled:
@@ -1576,8 +1576,6 @@ class BookingViewSet(viewsets.ModelViewSet):
                         if booking.campground.site_type != 2:
                             bk['campground_site_type'] = '{} - ({})'.format(booking.first_campsite.name,bk['campground_site_type'])
                 else:
-                    bk['firstname'] =  bk['legacy_name']
-                    bk['lastname'] = ""
                     bk['campground_site_type'] = ""
                 if refund_status and canceled == 't':
                     refund_statuses = ['All','Partially Refunded','Not Refunded','Refunded']
