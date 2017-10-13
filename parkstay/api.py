@@ -632,7 +632,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
                     'reason': PriceReason.objects.get(pk = serializer.validated_data['reason']),
-                    'details': serializer.validated_data['details'],
+                    'details': serializer.validated_data.get('details',None),
                     'update_level': 0
                 }
                 self.get_object().createCampsitePriceHistory(data)
@@ -674,7 +674,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
                     'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
-                    'details': serializer.validated_data['details'],
+                    'details': serializer.validated_data.get('details',None),
                     'update_level': 0
                 }
                 self.get_object().updatePriceHistory(dict(original_serializer.validated_data),new_data)
@@ -1367,7 +1367,7 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
                     'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
-                    'details': serializer.validated_data['details'],
+                    'details': serializer.validated_data.get('details',None),
                     'update_level': 1
                 }
                 self.get_object().createCampsitePriceHistory(data)
@@ -1408,7 +1408,7 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
                     'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
-                    'details': serializer.validated_data['details'],
+                    'details': serializer.validated_data.get('details',None),
                     'update_level': 1
                 }
                 self.get_object().updatePriceHistory(dict(original_serializer.validated_data),new_data)
