@@ -1564,20 +1564,18 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                 bk['guests'] = booking.guests
                 bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
-                if not bk['legacy_id'] and not bk['legacy_name']:
-                    bk['firstname'] = booking.details.get('first_name','')
-                    bk['lastname'] = booking.details.get('last_name','')
-                    bk['email'] = booking.customer.email if booking.customer.email else ""
-                    bk['phone'] = booking.customer.mobile_number if booking.customer.mobile_number else ""
+                bk['firstname'] = booking.details.get('first_name','')
+                bk['lastname'] = booking.details.get('last_name','')
+                if booking.customer:
+                    bk['email'] = booking.customer.email if booking.customer and booking.customer.email else ""
+                    bk['phone'] = booking.customer.mobile_number if booking.customer and booking.customer.mobile_number else ""
                     if booking.is_canceled:
                         bk['campground_site_type'] = ""
                     else:
-                        bk['campground_site_type'] = booking.first_campsite.type
+                        bk['campground_site_type'] = booking.first_campsite.type if booking.first_campsite else ""
                         if booking.campground.site_type != 2:
-                            bk['campground_site_type'] = '{} - ({})'.format(booking.first_campsite.name,bk['campground_site_type'])
+                            bk['campground_site_type'] = '{}{}'.format('{} - '.format(booking.first_campsite.name if booking.first_campsite else ""),'({})'.format(bk['campground_site_type'] if bk['campground_site_type'] else ""))
                 else:
-                    bk['firstname'] =  bk['legacy_name']
-                    bk['lastname'] = ""
                     bk['campground_site_type'] = ""
                 if refund_status and canceled == 't':
                     refund_statuses = ['All','Partially Refunded','Not Refunded','Refunded']
@@ -1996,7 +1994,7 @@ class BulkPricingView(generics.CreateAPIView):
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
                     'reason': PriceReason.objects.get(pk=serializer.data['reason']),
-                    'details': serializer.validated_data['details']
+                    'details': serializer.validated_data.get('details',None)
                 }
             if serializer.data['type'] == 'Park':
                 for c in serializer.data['campgrounds']:

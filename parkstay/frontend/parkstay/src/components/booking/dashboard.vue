@@ -165,7 +165,10 @@ export default {
                     },
                     {
                         mRender: function(data, type, full) {
-                            var name = full.firstname +" "+full.lastname;
+                            //var name = full.firstname +" "+full.lastname;
+                            var first_name = full.firstname ? full.firstname : '';
+                            var last_name = full.lastname ? full.lastname : '';
+                            var name = first_name +" "+ last_name;
                             var max_length = 25;
                             var short_name = (name.length > max_length) ? name.substring(0,max_length-1)+'...' : name;
                             var popover =  (name.length > max_length) ? "class=\"name_popover\"":"";

@@ -273,6 +273,15 @@ class Invoice(models.Model):
         from ledger.payments.utils import update_payments 
         with transaction.atomic():
             try:
+                # Move all the bpoint transactions to the new invoice
+                for txn in self.bpoint_transactions:
+                    txn.crn1 = invoice.reference
+                    txn.save()
+                # Move all the bpay transactions to the new invoice
+                for txn in self.bpay_transactions:
+                    txn.crn = invoice.reference
+                    txn.save()
+                # Move the remainder of the amount to the a cash transaction
                 if self.transferable_amount < amount:
                     raise ValidationError('The amount to be moved is more than the allowed transferable amount')
                 # Create a moveout transaction for current invoice
@@ -281,7 +290,7 @@ class Invoice(models.Model):
                     amount = amount, 
                     type = 'move_out', 
                     source = 'cash',
-                    details = details,
+                    details = 'Move funds to invoice {}'.format(invoice.reference),
                     movement_reference = invoice.reference  
                 )
                 update_payments(self.reference)
@@ -291,7 +300,7 @@ class Invoice(models.Model):
                     amount = amount, 
                     type = 'move_in', 
                     source = 'cash',
-                    details = details,
+                    details = 'Move funds from invoice {}'.format(self.reference),
                     movement_reference = self.reference  
                 )
                 update_payments(invoice.reference)

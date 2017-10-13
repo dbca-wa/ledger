@@ -48,7 +48,7 @@ class OracleInterfaceSystem(models.Model):
     system_id = models.CharField(max_length=10)
     system_name = models.CharField(max_length=128)
     deduct_percentage = models.BooleanField(default=False)
-    percentage = IntegerRangeField(validators=[MaxValueValidator(99), MinValueValidator(1)],null=True,blank=True)
+    percentage = models.PositiveIntegerField(validators=[MaxValueValidator(99), MinValueValidator(1)],null=True,blank=True)
     percentage_account_code = models.CharField(max_length=50,null=True,blank=True)
 
     def __str__(self):
