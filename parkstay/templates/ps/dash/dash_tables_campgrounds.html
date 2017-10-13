@@ -87,7 +87,11 @@
 {% endblock %}
 
 {% block custom_js %}
-  <script type="text/javascript" src="{% static 'parkstay/js/manifest.js' %}"></script>
-  <script type="text/javascript" src="{% static 'parkstay/js/vendor.js' %}"></script>
-  <script type="text/javascript" src="{% static 'parkstay/js/parkstay.js' %}"></script>
+{% if not DEV_STATIC %}
+    <script type="text/javascript" src="{% static 'parkstay/js/manifest.js' %}"></script>
+    <script type="text/javascript" src="{% static 'parkstay/js/vendor.js' %}"></script>
+    <script type="text/javascript" src="{% static 'parkstay/js/parkstay.js' %}"></script>
+{% else %}
+    <script type="text/javascript" src="{{ DEV_STATIC_URL }}"></script>
+{% endif %}
 {% endblock %}
