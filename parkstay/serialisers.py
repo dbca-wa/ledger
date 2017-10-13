@@ -647,7 +647,7 @@ class BulkPricingSerializer(serializers.Serializer):
         return val
 
     def validate(self,obj):
-        if obj.get('reason') ==  and not obj.get('details'):
+        if obj.get('reason') == 1  and not obj.get('details'):
             raise serializers.ValidationError('Details required if reason is other.')
         return obj
 
