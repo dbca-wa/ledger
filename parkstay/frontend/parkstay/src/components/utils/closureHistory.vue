@@ -92,6 +92,7 @@ export default {
                     url: vm.datatableURL,
                     dataSrc: ''
                 },
+                order: [],
                 columns: [{
                     data: 'range_start',
                     mRender: function(data, type, full) {
