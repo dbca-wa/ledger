@@ -2034,7 +2034,7 @@ class BookingRefundsReportView(views.APIView):
             report = reports.booking_refunds(serializer.validated_data['start'],serializer.validated_data['end'])
             if report:
                 response = HttpResponse(FileWrapper(report), content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename={}.csv'.format(filename)
+                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
                 return response
             else:
                 raise serializers.ValidationError('No report was generated.')

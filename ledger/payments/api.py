@@ -966,7 +966,7 @@ class ReportCreateView(views.APIView):
                                             district = serializer.validated_data['district'])
             if report:
                 response = HttpResponse(FileWrapper(report), content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename={}.csv'.format(filename)
+                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
                 return response
             else:
                 raise serializers.ValidationError('No report was generated.')
