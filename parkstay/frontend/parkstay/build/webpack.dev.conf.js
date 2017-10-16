@@ -4,6 +4,8 @@ var config = require('../config')
 var merge = require('webpack-merge')
 var baseWebpackConfig = require('./webpack.base.conf')
 var HtmlWebpackPlugin = require('html-webpack-plugin')
+var localIP = `"http://${require('my-local-ip')()}:${config.dev.port}/"`
+console.log(localIP);
 //var FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 
 // add hot-reload related code to entry chunks
@@ -17,6 +19,9 @@ module.exports = merge(baseWebpackConfig, {
   },
   // cheap-module-eval-source-map is faster for development
   devtool: '#cheap-module-eval-source-map',
+  output: {
+    publicPath: localIP.replace(/\"/g,"")
+  },
   plugins: [
     new webpack.DefinePlugin({
       'process.env': config.dev.env

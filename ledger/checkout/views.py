@@ -416,9 +416,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
             res = requests.get(url,cookies=self.request.COOKIES)
             res.raise_for_status()
 
-            response = json.loads(res.content).get('status')
+            response = json.loads(res.content.decode('utf-8')).get('status')
             if response != 'approved':
-                error = json.loads(res.content).get('error',None)
+                error = json.loads(res.content.decode('utf-8')).get('error',None)
                 if error:
                     raise ValueError('Payment could not be completed at this moment due to the following error \n {}'.format(error))
                 else:

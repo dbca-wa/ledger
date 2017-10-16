@@ -1691,7 +1691,10 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise
         except ValidationError as e:
-            raise serializers.ValidationError(repr(e.error_dict))
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -2034,7 +2037,7 @@ class BookingRefundsReportView(views.APIView):
             report = reports.booking_refunds(serializer.validated_data['start'],serializer.validated_data['end'])
             if report:
                 response = HttpResponse(FileWrapper(report), content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename={}.csv'.format(filename)
+                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
                 return response
             else:
                 raise serializers.ValidationError('No report was generated.')

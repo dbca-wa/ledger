@@ -101,7 +101,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
         # Loop through the payments and not the invoices
         for i in invoices:
             # Add items of invoice if not in list
-            if i.order:
+            if i.order and not i.voided:
                 if i.reference not in parsed_invoices.keys():
                     parsed_invoices[i.reference] = {'amount':i.amount,'paid':i.payment_amount,'refunded':i.refundable_amount}
                 for x in i.order.lines.all():

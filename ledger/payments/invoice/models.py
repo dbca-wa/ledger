@@ -24,6 +24,7 @@ class Invoice(models.Model):
     system = models.CharField(max_length=4,blank=True,null=True)
     token = models.CharField(max_length=80,null=True,blank=True)
     voided = models.BooleanField(default=False)
+    previous_invoice = models.ForeignKey('self',null=True,blank=True)
 
     def __unicode__(self):
         return 'Invoice #{0}'.format(self.reference)
@@ -105,7 +106,7 @@ class Invoice(models.Model):
     def payment_amount(self):
         ''' Total amount paid from bpay,bpoint and cash.
         '''
-        return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+        return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments() - self.__calculate_total_refunds()
 
     @property
     def refund_amount(self):
@@ -117,7 +118,7 @@ class Invoice(models.Model):
 
     @property
     def transferable_amount(self):
-        return self.payment_amount - ( self.deduction_amount + self.refund_amount )
+        return self.payment_amount - ( self.deduction_amount )
 
     @property
     def balance(self):
@@ -132,7 +133,7 @@ class Invoice(models.Model):
     def payment_status(self):
         ''' Payment status of the invoice.
         '''
-        amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+        amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments() - self.__calculate_total_refunds()
 
         if amount_paid == decimal.Decimal('0') and self.amount > 0:
             return 'unpaid'
@@ -282,27 +283,36 @@ class Invoice(models.Model):
                     txn.crn = invoice.reference
                     txn.save()
                 # Move the remainder of the amount to the a cash transaction
-                if self.transferable_amount < amount:
+                new_amount = self.__calculate_cash_payments()
+                if self.transferable_amount < new_amount:
                     raise ValidationError('The amount to be moved is more than the allowed transferable amount')
-                # Create a moveout transaction for current invoice
-                CashTransaction.objects.create(
-                    invoice = self, 
-                    amount = amount, 
-                    type = 'move_out', 
-                    source = 'cash',
-                    details = 'Move funds to invoice {}'.format(invoice.reference),
-                    movement_reference = invoice.reference  
-                )
-                update_payments(self.reference)
-                # Create a move in transaction for other invoice
-                CashTransaction.objects.create(
-                    invoice = invoice, 
-                    amount = amount, 
-                    type = 'move_in', 
-                    source = 'cash',
-                    details = 'Move funds from invoice {}'.format(self.reference),
-                    movement_reference = self.reference  
-                )
+                if new_amount > 0:
+                    # Create a moveout transaction for current invoice
+                    CashTransaction.objects.create(
+                        invoice = self, 
+                        amount = amount, 
+                        type = 'move_out', 
+                        source = 'cash',
+                        details = 'Move funds to invoice {}'.format(invoice.reference),
+                        movement_reference = invoice.reference  
+                    )
+                    update_payments(self.reference)
+                    # Create a move in transaction for other invoice
+                    CashTransaction.objects.create(
+                        invoice = invoice, 
+                        amount = amount, 
+                        type = 'move_in', 
+                        source = 'cash',
+                        details = 'Move funds from invoice {}'.format(self.reference),
+                        movement_reference = self.reference  
+                    )
+                # set the previous invoice in the new invoice
+                invoice.previous_invoice = self
+                invoice.save()
+
+                # Update the oracle interface invoices sp as to prevent duplicate sending of amounts to oracle
+                OracleParserInvoice.objects.filter(reference=self.reference).update(reference=invoice.reference)
+
                 update_payments(invoice.reference)
             except:
                 raise
