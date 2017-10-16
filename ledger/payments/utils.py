@@ -230,18 +230,18 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
             dt = datetime.datetime.strptime(trans_date,'%Y-%m-%d').strftime('%d/%m/%Y')
             _file = generateOracleParserFile(oracle_codes)
             email = EmailMessage(
-                'Oracle Interface Summary for {} for transactions received on {}'.format(system_name,dt),
+                'Oracle Interface for {} for transactions received on {}'.format(system_name,dt),
                 'Oracle Interface Summary File for {} for transactions received on {}'.format(system_name,dt),
                 settings.DEFAULT_FROM_EMAIL,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
             )
             email.attach('OracleInterface_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
         else:
-            dt = datetime.datetime.now().strftime('%d/%m/%Y')
-            t_date = datetime.datetime.strptime(trans_date, '%Y-%m-%d').strftime('%d/%m/%Y')
-            email = EmailMessage(
-                'Oracle Interface Summary Error for {} for transactions received on {} processed on {}'.format(system_name,t_date,dt),
-                'There was an error in generating a summary report for the oracle interface parser.Please refer to the following log output:\n\n\n{}'.format(error_string),
+            dt = datetime.datetime.strptime(trans_date,'%Y-%m-%d').strftime('%d/%m/%Y')
+            today = datetime.datetime.now().strftime('%d/%m/%Y')
+            subject = 'Oracle Interface Error for {} for transactions received on {}'.format(system_name,dt)
+            email = EmailMessage(subject,
+                'There was an error in generating a summary report for the oracle interface parser for transactions processed on {}.Please refer to the following log output:\n\n\n{}'.format(today,error_string),
                 settings.DEFAULT_FROM_EMAIL,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
             )
@@ -333,16 +333,16 @@ def addToInterface(date,oracle_codes,system):
     except:
         raise
 def oracle_parser(date,system,system_name):
+    invoices = []
+    invoice_list = []
+    oracle_codes = {}
+    parser_codes = {}
     try:
         try:
             ois = OracleInterfaceSystem.objects.get(system_id=system)
         except OracleInterfaceSystem.DoesNotExist:
             raise Exception('No system with id {} exists for integration with oracle'.format(system))
         with transaction.atomic():
-            invoices = []
-            invoice_list = []
-            oracle_codes = {}
-            parser_codes = {}
             op,created = OracleParser.objects.get_or_create(date_parsed=date)
             bpoint_txns = []
             bpay_txns = []
