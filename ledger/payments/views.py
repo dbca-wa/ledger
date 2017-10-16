@@ -72,7 +72,7 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
         ctx['months'] = self.month_choices
         ctx['years'] = self.year_choices
         ctx['regions'] = list(REGION_CHOICES)
-        invoices = Invoice.objects.filter(reference__in=self.request.GET.getlist('invoice'))
+        invoices = Invoice.objects.filter(reference__in=self.request.GET.getlist('invoice')).order_by('created')
         ctx['invoices'] = invoices
         if self.request.GET.get('amountProvided') == 'true':
             ctx['amountProvided'] = True
