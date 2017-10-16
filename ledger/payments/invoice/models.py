@@ -106,7 +106,7 @@ class Invoice(models.Model):
     def payment_amount(self):
         ''' Total amount paid from bpay,bpoint and cash.
         '''
-        return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+        return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments() - self.__calculate_total_refunds()
 
     @property
     def refund_amount(self):
@@ -118,7 +118,7 @@ class Invoice(models.Model):
 
     @property
     def transferable_amount(self):
-        return self.payment_amount - ( self.deduction_amount + self.refund_amount )
+        return self.payment_amount - ( self.deduction_amount )
 
     @property
     def balance(self):
@@ -133,7 +133,7 @@ class Invoice(models.Model):
     def payment_status(self):
         ''' Payment status of the invoice.
         '''
-        amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+        amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments() - self.__calculate_total_refunds()
 
         if amount_paid == decimal.Decimal('0') and self.amount > 0:
             return 'unpaid'
