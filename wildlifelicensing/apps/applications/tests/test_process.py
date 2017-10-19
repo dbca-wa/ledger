@@ -147,6 +147,9 @@ class TestStatusLifeCycle(TestCase):
 
         response = self.client.post(reverse('wl_applications:preview'))
 
+        # FIXME: simulate full checkout process instead of skipping
+        self.client.get(reverse('wl_applications:complete'))
+
         application.refresh_from_db()
 
         self.assertFalse(application.can_user_edit)
