@@ -251,16 +251,17 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
         print(traceback.print_exc())
         raise e
 
-def addToInterface(date,oracle_codes,system):
+def addToInterface(date,oracle_codes,system,override=False):
     try:
         dt = datetime.datetime.strptime(date,'%Y-%m-%d')
         trans_date = datetime.datetime.strptime(date,'%Y-%m-%d')#.strftime('%d/%m/%Y')
         today = datetime.datetime.now().strftime('%Y-%m-%d')
         oracle_date = '{}-{}'.format(dt.strftime('%B').upper(),dt.strftime('%y'))
-        try:
-            OracleOpenPeriod.objects.get(period_name=oracle_date)
-        except OracleOpenPeriod.DoesNotExist:
-            raise ValidationError('There is currently no open period for transactions done on {}'.format(trans_date))
+        if not override:
+            try:
+                OracleOpenPeriod.objects.get(period_name=oracle_date)
+            except OracleOpenPeriod.DoesNotExist:
+                raise ValidationError('There is currently no open period for transactions done on {}'.format(trans_date))
 
         # Check if the system deducts a percentage and sends to another oracle account code
         if system.deduct_percentage and ( not system.percentage or not system.percentage_account_code):
@@ -332,7 +333,7 @@ def addToInterface(date,oracle_codes,system):
             deduction_code.save()
     except:
         raise
-def oracle_parser(date,system,system_name):
+def oracle_parser(date,system,system_name,override=False):
     invoices = []
     invoice_list = []
     oracle_codes = {}
@@ -453,7 +454,7 @@ def oracle_parser(date,system,system_name):
                 if can_add:
                     OracleParserInvoice.objects.create(reference=k,details=json.dumps(v),parser=op)
             # Add items to oracle interface table
-            addToInterface(date,oracle_codes,ois)
+            addToInterface(date,oracle_codes,ois,override)
             # Send an email with all the activity codes entered into the interface table
             sendInterfaceParserEmail(date,oracle_codes,system_name,system)
             return oracle_codes
