@@ -659,7 +659,7 @@ def update_booking(request,old_booking,booking_details):
                 old_booking.cost_total = booking.cost_total
                 old_booking.departure = booking.departure
                 old_booking.arrival = booking.arrival
-                old_booking.details = booking.details
+                old_booking.details.update(booking.details)
                 if not same_campground:
                     old_booking.campground = booking.campground
                 old_booking.save()
