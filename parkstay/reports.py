@@ -79,7 +79,7 @@ def booking_refunds(start,end):
                 invoice = Invoice.objects.get(reference=b.crn1)
                 if invoice.system == '0019':
                     try:
-                        booking = BookingInvoice.objects.get(invoice_reference=e.invoice.reference).booking
+                        booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
                     except BookingInvoice.DoesNotExist:
                         pass
                         #raise ValidationError('Couldn\'t find a booking matched to invoice reference {}'.format(e.invoice.reference))
