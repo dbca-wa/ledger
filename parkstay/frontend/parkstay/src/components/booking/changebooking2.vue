@@ -198,13 +198,13 @@ export default {
                     helpText: "accepted concession cards"
                 },
                 {
-                    id: "child",
+                    id: "children",
                     name: "Children",
                     amount: 0,
                     description: "Ages 6-16"
                 },
                 {
-                    id: "infant",
+                    id: "infants",
                     name: "Infants",
                     amount: 0,
                     description: "Ages 0-5"
@@ -480,11 +480,11 @@ export default {
                 case 'concession':
                     vm.booking.guests.concession = guest.amount;
                     break;
-                case 'child':
-                    vm.booking.guests.child = guest.amount;
+                case 'children':
+                    vm.booking.guests.children = guest.amount;
                     break;
-                case 'infant':
-                    vm.booking.guests.infant = guest.amount;
+                case 'infants':
+                    vm.booking.guests.infants = guest.amount;
                     break;
                 default:
 
@@ -501,11 +501,11 @@ export default {
                 case 'concession':
                     vm.booking.guests.concession = guest.amount;
                     break;
-                case 'child':
-                    vm.booking.guests.child = guest.amount;
+                case 'children':
+                    vm.booking.guests.children = guest.amount;
                     break;
-                case 'infant':
-                    vm.booking.guests.infant = guest.amount;
+                case 'infants':
+                    vm.booking.guests.infants = guest.amount;
                     break;
                 default:
 
