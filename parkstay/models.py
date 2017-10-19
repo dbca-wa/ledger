@@ -1152,12 +1152,15 @@ class Booking(models.Model):
         payment_dict = []
         references = [i.invoice_reference for i in self.invoices.all()]
         temp_invoices = Invoice.objects.filter(reference__in=references,voided=False)
-        if len(temp_invoices) == 1:
-            inv = temp_invoices[0]
+        if len(temp_invoices) == 1 or self.legacy_id:
+            if not self.legacy_id:
+                inv = temp_invoices[0]
             # Get all lines 
             total_paid = D('0.0')
             total_due = D('0.0')
-            lines = inv.order.lines.filter(oracle_code=self.campground.park.oracle_code)
+            lines = []
+            if not self.legacy_id:
+                lines = inv.order.lines.filter(oracle_code=self.campground.park.oracle_code)
 
             price_dict = {}
             for line in lines:
@@ -1170,7 +1173,9 @@ class Booking(models.Model):
             for r in self.regos.all():
                 paid = False
                 show_paid = True
-                if not r.park_entry_fee:
+                if self.legacy_id:
+                    paid = False
+                elif not r.park_entry_fee:
                     show_paid = False
                     paid = True
                 elif remainder_amount == 0:
@@ -1189,7 +1194,7 @@ class Booking(models.Model):
                     'Type': r.get_type_display(),
                 }
                 if show_paid:
-                    data['Paid'] = 'pass_required' if not r.entry_fee else 'Yes' if paid else 'No'
+                    data['Paid'] = 'pass_required' if not r.entry_fee and not self.legacy_id else 'Yes' if paid else 'No'
                 payment_dict.append(data)
         else:
             pass
