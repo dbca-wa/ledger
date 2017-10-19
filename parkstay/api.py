@@ -1568,7 +1568,12 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['lastname'] = booking.details.get('last_name','')
                 if booking.customer:
                     bk['email'] = booking.customer.email if booking.customer and booking.customer.email else ""
-                    bk['phone'] = booking.customer.mobile_number if booking.customer and booking.customer.mobile_number else ""
+                    if booking.customer.phone_number:
+                        bk['phone'] = booking.customer.phone_number
+                    elif booking.customer.mobile_number:
+                        bk['phone'] = booking.customer.mobile_number
+                    else:
+                        bk['phone'] = '' 
                     if booking.is_canceled:
                         bk['campground_site_type'] = ""
                     else:
