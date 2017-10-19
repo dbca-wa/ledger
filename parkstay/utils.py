@@ -585,7 +585,7 @@ def update_booking(request,old_booking,booking_details):
             if (old_booking.arrival == booking.arrival) and (old_booking.departure == booking.departure):
                 same_dates = True
             # Check if the campsite is the same
-            if old_booking.campsite_id_list.sort() == booking_details['campsites'].sort():
+            if sorted(old_booking.campsite_id_list) == sorted(booking_details['campsites']):
                 same_campsites = True
             # Check if the details have changed
             if new_details == old_booking.details:
