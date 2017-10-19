@@ -2064,11 +2064,12 @@ class OracleJob(views.APIView):
     def get(self, request, format=None):
         try:
             data = {
-                "date":request.GET.get("date")
+                "date":request.GET.get("date"),
+                "override": request.GET.get("override")
             }
             serializer = OracleSerializer(data=data)
             serializer.is_valid(raise_exception=True)
-            utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'))
+            utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'),serializer.validated_data['override'])
             data = {'successful':True}
             return Response(data)
         except serializers.ValidationError:
