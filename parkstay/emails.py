@@ -38,7 +38,7 @@ def send_booking_invoice(booking):
 
 def send_booking_confirmation(booking,request):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Your booking  REF {} at {},{} is confirmed'.format(booking.confirmation_number,booking.campground.name,booking.campground.park.name)
+    email_obj.subject = 'Your booking {} at {} is confirmed'.format(booking.confirmation_number,booking.campground.name)
     email_obj.html_template = 'ps/email/confirmation.html'
     email_obj.txt_template = 'ps/email/confirmation.txt'
 
