@@ -378,22 +378,25 @@ def generate_trans_csv(system,start,end,region=None,district=None):
                 bpay = i.bpay_transactions.filter(p_date__gte=start, p_date__lte=end)
             # Write out the cash transactions
             for c in cash:
-                cash_info = {
-                    'Created': c.created.strftime('%Y-%m-%d'),
-                    'Payment Method': 'Cash',
-                    'Transaction Type': c.type.lower(),
-                    'Amount': c.amount,
-                    'Approved': 'True',
-                    'Source': c.source,
-                    'Product Names': item_names,
-                    'Product Codes': oracle_codes
-                }
-                writer.writerow(cash_info)
+                if c.type not in ['move_in','move_out']:
+                    cash_info = {
+                        'Created': c.created.strftime('%Y-%m-%d'),
+                        'Invoice': c.invoice.reference,
+                        'Payment Method': 'Cash',
+                        'Transaction Type': c.type.lower(),
+                        'Amount': c.amount,
+                        'Approved': 'True',
+                        'Source': c.source,
+                        'Product Names': item_names,
+                        'Product Codes': oracle_codes
+                    }
+                    writer.writerow(cash_info)
             if not district:
                 # Write out all bpay transactions
                 for b in bpay:
                     bpay_info = {
                         'Created': b.created.strftime('%Y-%m-%d'),
+                        'Invoice': b.crn,
                         'Payment Method': 'BPAY',
                         'Transaction Type': b.get_p_instruction_code_display(),
                         'Amount': b.amount,
@@ -407,6 +410,7 @@ def generate_trans_csv(system,start,end,region=None,district=None):
                 for bpt in bpoint:
                     bpoint_info = {
                         'Created': bpt.created.strftime('%Y-%m-%d'),
+                        'Invoice': bpt.crn1,
                         'Payment Method': 'BPOINT',
                         'Transaction Type': bpt.action.lower(),
                         'Amount': bpt.amount,
