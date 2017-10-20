@@ -453,7 +453,7 @@ export default {
     el: '#parkfinder',
     data: function () {
         return {
-            parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
+            parkstayUrl: process.env.PARKSTAY_URL || global.parkstayUrl,
             defaultCenter: [13775786.985667605, -2871569.067879858], // [123.75, -24.966],
             defaultLayers: [
                 ['dpaw:mapbox_outdoors', {}],
