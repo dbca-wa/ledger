@@ -89,7 +89,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     return booking
 
 
-def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,cost_total=0,customer=None):
+def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,cost_total=0,customer=None,updating_booking=False):
     """Create a new temporary booking in the system for a specific campsite."""
     # get campsite
     sites_qs = Campsite.objects.filter(pk=campsite_id)
@@ -104,8 +104,12 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
         # get availability for campsite, error out if booked/closed
         availability = get_campsite_availability(sites_qs, start_date, end_date)
         for site_id, dates in availability.items():
-            if not all([v[0] == 'open' for k, v in dates.items()]):
-                raise ValidationError('Campsite unavailable for specified time period.')
+            if updating_booking:
+                if not all([v[0] in ['open','tooearly'] for k, v in dates.items()]):
+                    raise ValidationError('Campsite unavailable for specified time period.')
+            else:
+                if not all([v[0] == 'open' for k, v in dates.items()]):
+                    raise ValidationError('Campsite unavailable for specified time period.')
 
         # Prevent booking if max people passed
         total_people = num_adult + num_concession + num_child + num_infant
@@ -517,7 +521,8 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
             num_child= booking_details['num_child'],
             num_infant= booking_details['num_infant'],
             cost_total = total_price,
-            customer = old_booking.customer
+            customer = old_booking.customer,
+            updating_booking = True
     )
     # Move all the vehicles to the new booking
     for r in old_booking.regos.all():
