@@ -1506,7 +1506,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sql = sql+" and "+ sqlRegion
                 sqlCount = sqlCount +" and "+ sqlRegion
             if arrival:
-                sqlArrival= ' parkstay_booking.arrival >= \'{}\''.format(arrival)
+                sqlArrival= ' parkstay_booking.departure >= \'{}\''.format(arrival)
                 sqlCount = sqlCount + " and "+ sqlArrival
                 sql = sql + " and "+ sqlArrival
                 if departure:
