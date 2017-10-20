@@ -1506,12 +1506,13 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sql = sql+" and "+ sqlRegion
                 sqlCount = sqlCount +" and "+ sqlRegion
             if arrival:
-                sqlArrival= ' parkstay_booking.departure >= \'{}\''.format(arrival)
+                sqlArrival= ' parkstay_booking.departure > \'{}\''.format(arrival)
                 sqlCount = sqlCount + " and "+ sqlArrival
                 sql = sql + " and "+ sqlArrival
-                if departure:
-                    sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
-                    sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+            if departure: 
+                sqlDeparture = ' parkstay_booking.arrival <= \'{}\''.format(departure)
+                sqlCount =  sqlCount + ' and ' + sqlDeparture
+                sql = sql + ' and ' + sqlDeparture
             # Search for cancelled bookings
             sql += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
             sqlCount += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
