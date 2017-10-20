@@ -71,7 +71,7 @@ OSCAR_BASKET_COOKIE_OPEN = 'parkstay_basket'
 
 
 CRON_CLASSES = [
-    'parkstay.cron.SendBookingsConfirmationCronJob',
+    #'parkstay.cron.SendBookingsConfirmationCronJob',
     'parkstay.cron.UnpaidBookingsReportCronJob',
     'parkstay.cron.OracleIntegrationCronJob',
 ]
