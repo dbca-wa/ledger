@@ -129,7 +129,7 @@
                     <select name="gear_type" v-model="gearType" @change="update()">
                         <option value="tent" v-if="gearTotals.tent">Tent</option>
                         <option value="campervan" v-if="gearTotals.campervan">Campervan</option>
-                        <option value="caravan" v-if="gearTotals.caravan">Caravan</option>
+                        <option value="caravan" v-if="gearTotals.caravan">Caravan / Camper trailer</option>
                     </select>
                 </label>
             </div>
