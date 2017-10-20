@@ -73,6 +73,7 @@ OSCAR_BASKET_COOKIE_OPEN = 'parkstay_basket'
 CRON_CLASSES = [
     'parkstay.cron.SendBookingsConfirmationCronJob',
     'parkstay.cron.UnpaidBookingsReportCronJob',
+    'parkstay.cron.OracleIntegrationCronJob',
 ]
 
 CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','parkstaybookings@dbca.wa.gov.au')
