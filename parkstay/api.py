@@ -1491,58 +1491,68 @@ class BookingViewSet(viewsets.ModelViewSet):
 
             sql = sqlSelect + sqlFrom + " where "
             sqlCount = sqlCount + sqlFrom + " where "
+            sqlParams = {}
 
             # Filter the camgrounds that the current user is allowed to view
-            sqlFilterUser = ' cm.emailuser_id = {}'.format(request.user.id)
+            sqlFilterUser = ' cm.emailuser_id = %(user)s'
             sql += sqlFilterUser
             sqlCount += sqlFilterUser
+            sqlParams['user'] = request.user.id
 
             if campground :
-                sqlCampground = ' parkstay_campground.id = {}'.format(campground)
+                sqlCampground = ' parkstay_campground.id = %(campground)s'
                 sql = sql + " and "+ sqlCampground
                 sqlCount = sqlCount + " and " +sqlCampground
+                sqlParams['campground'] = campground
             if region:
-                sqlRegion = " parkstay_region.id = {}".format(region)
+                sqlRegion = " parkstay_region.id = %(region)s"
                 sql = sql+" and "+ sqlRegion
                 sqlCount = sqlCount +" and "+ sqlRegion
+                sqlParams['region'] = region
             if arrival:
-                sqlArrival= ' parkstay_booking.departure > \'{}\''.format(arrival)
+                sqlArrival= ' parkstay_booking.departure > %(arrival)s'
                 sqlCount = sqlCount + " and "+ sqlArrival
                 sql = sql + " and "+ sqlArrival
+                sqlParams['arrival'] = arrival
             if departure: 
-                sqlDeparture = ' parkstay_booking.arrival <= \'{}\''.format(departure)
+                sqlDeparture = ' parkstay_booking.arrival <= %(departure)s'
                 sqlCount =  sqlCount + ' and ' + sqlDeparture
                 sql = sql + ' and ' + sqlDeparture
+                sqlParams['departure'] = departure
             # Search for cancelled bookings
-            sql += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
-            sqlCount += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
+            sql += ' and parkstay_booking.is_canceled = %(canceled)s'
+            sqlCount += ' and parkstay_booking.is_canceled = %(canceled)s'
+            sqlParams['canceled'] = canceled
             # Remove temporary bookings
             sql += ' and parkstay_booking.booking_type <> 3'
             sqlCount += ' and parkstay_booking.booking_type <> 3'
             if search:
-                sqlsearch = ' lower(parkstay_campground.name) LIKE lower(\'%{}%\')\
-                or lower(parkstay_region.name) LIKE lower(\'%{}%\')\
-                or lower(parkstay_booking.details->>\'first_name\') LIKE lower(\'%{}%\')\
-                or lower(parkstay_booking.details->>\'last_name\') LIKE lower(\'%{}%\')\
-                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')\
-                or lower(parkstay_booking.legacy_name) LIKE lower(\'%{}%\')'.format(search,search,search,search,search,search)
+                sqlsearch = ' lower(parkstay_campground.name) LIKE lower(%(wildSearch)s)\
+                or lower(parkstay_region.name) LIKE lower(%(wildSearch)s)\
+                or lower(parkstay_booking.details->>\'first_name\') LIKE lower(%(wildSearch)s)\
+                or lower(parkstay_booking.details->>\'last_name\') LIKE lower(%(wildSearch)s)\
+                or lower(parkstay_booking.legacy_name) LIKE lower(%(wildSearch)s)\
+                or lower(parkstay_booking.legacy_name) LIKE lower(%(wildSearch)s)'
+                sqlParams['wildSearch'] = '%{}%'.format(search)
                 if search.isdigit:
-                    sqlsearch = '{} or CAST (parkstay_booking.id as TEXT) like \'{}%\''.format(sqlsearch,search)
+                    sqlsearch += ' or CAST (parkstay_booking.id as TEXT) like %(upperSearch)s'
+                    sqlParams['upperSearch'] = '{}%'.format(search)
 
                 sql += " and ( "+ sqlsearch +" )"
                 sqlCount +=  " and  ( "+ sqlsearch +" )"
 
             if length != 'all':
-                sql = sql + ' limit {} '.format(length)
-                sql = sql + ' offset {} ;'.format(start)
+                sql = sql + ' limit %(length)s offset %(start)s;'
+                sqlParams['length'] = length
+                sqlParams['start'] = start
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");
             recordsTotal = cursor.fetchone()[0]
-            cursor.execute(sqlCount);
+            cursor.execute(sqlCount, sqlParams);
             recordsFiltered = cursor.fetchone()[0]
 
-            cursor.execute(sql)
+            cursor.execute(sql, sqlParams)
             columns = [col[0] for col in cursor.description]
             data = [
                 dict(zip(columns, row))
