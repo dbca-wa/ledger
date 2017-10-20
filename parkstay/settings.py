@@ -71,10 +71,13 @@ OSCAR_BASKET_COOKIE_OPEN = 'parkstay_basket'
 
 
 CRON_CLASSES = [
-    'parkstay.cron.SendBookingsConfirmationCronJob',
+    #'parkstay.cron.SendBookingsConfirmationCronJob',
     'parkstay.cron.UnpaidBookingsReportCronJob',
+    'parkstay.cron.OracleIntegrationCronJob',
 ]
 
 CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','parkstaybookings@dbca.wa.gov.au')
 EXPLORE_PARKS_URL = env('EXPLORE_PARKS_URL','https://parks-oim.dpaw.wa.gov.au')
 PARKSTAY_EXTERNAL_URL = env('PARKSTAY_EXTERNAL_URL','https://parkstay.dbca.wa.gov.au')
+DEV_STATIC = env('DEV_STATIC',False)
+DEV_STATIC_URL = env('DEV_STATIC_URL')

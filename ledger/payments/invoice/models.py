@@ -109,6 +109,12 @@ class Invoice(models.Model):
         return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments() - self.__calculate_total_refunds()
 
     @property
+    def total_payment(self):
+        ''' Total amount paid from bpay,bpoint and cash.
+        '''
+        return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
+
+    @property
     def refund_amount(self):
         return self.__calculate_total_refunds()
 

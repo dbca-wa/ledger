@@ -19,7 +19,7 @@ class UnpaidBookingsReportCronJob(CronJobBase):
         outstanding_bookings() 
 
 class OracleIntegrationCronJob(CronJobBase):
-    RUN_AT_TIMES = ['05:00']
+    RUN_AT_TIMES = ['01:00']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code = 'parkstay.oracle_integration'

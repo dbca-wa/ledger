@@ -53,7 +53,7 @@ class BookingAdmin(admin.ModelAdmin):
     list_display = ('arrival','departure','campground','legacy_id','legacy_name','cost_total')
     ordering = ('-arrival',)
     search_fileds = ('arrival','departure')
-    list_filter = ('arrival','departure')
+    list_filter = ('arrival','departure','campground')
     inlines = [BookingInvoiceInline,CampsiteBookingInline]
 
     def has_add_permission(self, request, obj=None):

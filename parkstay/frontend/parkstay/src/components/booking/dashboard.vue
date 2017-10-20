@@ -267,7 +267,7 @@ export default {
                     },
                 ]
             },
-            dtHeaders:["Campground","Region","Person","Confirmation #"," Campsite(Type)","Status","From","To","Action"],
+            dtHeaders:["Campground","Region","Person","Confirmation #"," Camp Site(Type)","Status","From","To","Action"],
             dateFromPicker:null,
             dateToPicker:null,
             datepickerOptions:{

@@ -61,17 +61,17 @@
                     <div class="small-12 medium-12 large-12 columns">
                         <label>Equipment</label>
                     </div>
-                    <div class="small-12 medium-12 large-3 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
                     </div>
-                    <div class="small-12 medium-12 large-3 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
                     </div>
-                    <div class="small-12 medium-12 large-3 columns">
+                    <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="gear_type" value="campervan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RV10"></i> Campervan</label>
                     </div>
-                    <div class="small-12 medium-12 large-3 columns">
-                        <label><input type="radio" name="gear_type" value="caravan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan</label>
+                    <div class="small-12 medium-12 large-5 columns">
+                        <label><input type="radio" name="gear_type" value="caravan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan / Camper trailer</label>
                     </div>
                 </div><div class="row"><div class="small-12 columns">
                     <hr class="search"/>
@@ -453,7 +453,7 @@ export default {
     el: '#parkfinder',
     data: function () {
         return {
-            parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
+            parkstayUrl: process.env.PARKSTAY_URL || global.parkstayUrl,
             defaultCenter: [13775786.985667605, -2871569.067879858], // [123.75, -24.966],
             defaultLayers: [
                 ['dpaw:mapbox_outdoors', {}],

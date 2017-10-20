@@ -1506,12 +1506,13 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sql = sql+" and "+ sqlRegion
                 sqlCount = sqlCount +" and "+ sqlRegion
             if arrival:
-                sqlArrival= ' parkstay_booking.arrival >= \'{}\''.format(arrival)
+                sqlArrival= ' parkstay_booking.departure > \'{}\''.format(arrival)
                 sqlCount = sqlCount + " and "+ sqlArrival
                 sql = sql + " and "+ sqlArrival
-                if departure:
-                    sql += ' and parkstay_booking.departure <= \'{}\''.format(departure)
-                    sqlCount += ' and parkstay_booking.departure <= \'{}\''.format(departure)
+            if departure: 
+                sqlDeparture = ' parkstay_booking.arrival <= \'{}\''.format(departure)
+                sqlCount =  sqlCount + ' and ' + sqlDeparture
+                sql = sql + ' and ' + sqlDeparture
             # Search for cancelled bookings
             sql += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
             sqlCount += ' and parkstay_booking.is_canceled = \'{}\''.format(canceled)
@@ -1568,7 +1569,12 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['lastname'] = booking.details.get('last_name','')
                 if booking.customer:
                     bk['email'] = booking.customer.email if booking.customer and booking.customer.email else ""
-                    bk['phone'] = booking.customer.mobile_number if booking.customer and booking.customer.mobile_number else ""
+                    if booking.customer.phone_number:
+                        bk['phone'] = booking.customer.phone_number
+                    elif booking.customer.mobile_number:
+                        bk['phone'] = booking.customer.mobile_number
+                    else:
+                        bk['phone'] = '' 
                     if booking.is_canceled:
                         bk['campground_site_type'] = ""
                     else:
@@ -2064,11 +2070,12 @@ class OracleJob(views.APIView):
     def get(self, request, format=None):
         try:
             data = {
-                "date":request.GET.get("date")
+                "date":request.GET.get("date"),
+                "override": request.GET.get("override")
             }
             serializer = OracleSerializer(data=data)
             serializer.is_valid(raise_exception=True)
-            utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'))
+            utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'),serializer.validated_data['override'])
             data = {'successful':True}
             return Response(data)
         except serializers.ValidationError:

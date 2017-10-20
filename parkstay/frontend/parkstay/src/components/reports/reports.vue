@@ -158,6 +158,11 @@
                                         <button @click.prevent="runOracleJob()" class="btn btn-primary pull-left" >Run Job</button>
                                     </div>
                                 </div>
+                                <div class="col-sm-6">
+                                    <div class="checkbox">
+                                      <label><input v-model="oracle_override" type="checkbox" value="">Override closed period check</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -196,7 +201,8 @@ export default {
                 code:'',
                 name:'',
                 districts:[]
-            }
+            },
+            oracle_override: false,
         };
     },
     watch:{
@@ -248,7 +254,8 @@ export default {
             
             if (vm.oracle_form.valid()){
                 let data = vm.oracleDatePicker.data("DateTimePicker").date().format('DD/MM/YYYY');
-                vm.$http.get('/api/oracle_job?date='+data).then((response) => {
+                let override = vm.oracle_override ? 'true': 'false';
+                vm.$http.get('/api/oracle_job?date='+data+'&override='+override).then((response) => {
                     swal({
                         type: 'success',
                         title: 'Job Success', 

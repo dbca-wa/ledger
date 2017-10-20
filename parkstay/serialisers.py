@@ -709,4 +709,5 @@ class ContactSerializer(serializers.ModelSerializer):
 
 class OracleSerializer(serializers.Serializer):
     date = serializers.DateField(input_formats=['%d/%m/%Y','%Y-%m-%d'])
+    override = serializers.BooleanField(default=False)
 

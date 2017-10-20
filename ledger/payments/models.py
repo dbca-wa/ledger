@@ -27,7 +27,7 @@ class OracleParserInvoice(models.Model):
 def increment_receipt_number():
     last_interface = OracleInterface.objects.all().order_by('id').last()
     if not last_interface:
-         return 80000
+         return settings.ORACLE_IMPORT_SEQUENCE
     receipt_no = last_interface.receipt_number
     new_receipt_no = receipt_no + 1
     return new_receipt_no

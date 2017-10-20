@@ -135,7 +135,7 @@ def create_confirmation(confirmation_buffer, booking):
     
     table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph(booking.stay_dates, styles['Left'])])
     table_data.append([Paragraph('Number of guests', styles['BoldLeft']), Paragraph(booking.stay_guests, styles['Left'])])
-    table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph('{} {} ({})'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''), booking.customer.email), styles['Left'])])
+    table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph('{} {} ({})'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''), booking.customer.email if booking.customer else None), styles['Left'])])
     table_data.append([Paragraph('Booking confirmation number', styles['BoldLeft']), Paragraph(booking.confirmation_number, styles['Left'])])
 
     if booking.vehicle_payment_status:

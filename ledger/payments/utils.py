@@ -251,16 +251,18 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
         print(traceback.print_exc())
         raise e
 
-def addToInterface(date,oracle_codes,system):
+def addToInterface(date,oracle_codes,system,override):
     try:
         dt = datetime.datetime.strptime(date,'%Y-%m-%d')
         trans_date = datetime.datetime.strptime(date,'%Y-%m-%d')#.strftime('%d/%m/%Y')
         today = datetime.datetime.now().strftime('%Y-%m-%d')
         oracle_date = '{}-{}'.format(dt.strftime('%B').upper(),dt.strftime('%y'))
-        try:
-            OracleOpenPeriod.objects.get(period_name=oracle_date)
-        except OracleOpenPeriod.DoesNotExist:
-            raise ValidationError('There is currently no open period for transactions done on {}'.format(trans_date))
+        new_codes = {}
+        if not override:
+            try:
+                OracleOpenPeriod.objects.get(period_name=oracle_date)
+            except OracleOpenPeriod.DoesNotExist:
+                raise ValidationError('There is currently no open period for transactions done on {}'.format(trans_date))
 
         # Check if the system deducts a percentage and sends to another oracle account code
         if system.deduct_percentage and ( not system.percentage or not system.percentage_account_code):
@@ -276,13 +278,14 @@ def addToInterface(date,oracle_codes,system):
             deduction_code = OracleInterface(
                 receipt_date = trans_date,
                 activity_name = system.percentage_account_code,
-                amount = initial_amount - remainder_amount,
+                amount = D(0.0), 
                 customer_name = system.system_name,
-                description = k,
-                comments = '{} GST/{}'.format(k,date),
+                description = system.percentage_account_code,
+                comments = '{} GST/{}'.format(system.percentage_account_code,date),
                 status = 'NEW',
                 status_date = today
             )
+            deduction_code.save()
         for k,v in oracle_codes.items():
             if v != 0:
                 found = OracleAccountCode.objects.filter(active_receivables_activities=k)
@@ -291,20 +294,9 @@ def addToInterface(date,oracle_codes,system):
                 
                 if system.deduct_percentage:
                     initial_amount = D(v)
-                    remainder_amount = ((100 - system.percentage)/ 100) * initial_amount
+                    remainder_amount = ((100 - system.percentage)/ D(100)) * initial_amount
 
                     deduction_code.amount += initial_amount - remainder_amount
-                    # Add the deducted amount to the oracle code specified in the system table
-                    OracleInterface.objects.create(
-                        receipt_date = trans_date,
-                        activity_name = system.percentage_account_code,
-                        amount = initial_amount - remainder_amount,
-                        customer_name = system.system_name,
-                        description = k,
-                        comments = '{} GST/{}'.format(k,date),
-                        status = 'NEW',
-                        status_date = today
-                    )
                     # Add the remainaing amount to the intial oracle account code
                     OracleInterface.objects.create(
                         receipt_date = trans_date,
@@ -316,7 +308,7 @@ def addToInterface(date,oracle_codes,system):
                         status = 'NEW',
                         status_date = today
                     )
-                    
+                    new_codes[k] = remainder_amount 
                 else:
                     OracleInterface.objects.create(
                         receipt_date = trans_date,
@@ -328,11 +320,14 @@ def addToInterface(date,oracle_codes,system):
                         status = 'NEW',
                         status_date = today
                     )
-        if system.deduct_percentage:
+                    new_codes[k] = remainder_amount
+        if system.deduct_percentage and deduction_code.amount > 0:
             deduction_code.save()
+            new_codes[deduction_code.activity_name] = deduction_code.amount
+        return new_codes
     except:
         raise
-def oracle_parser(date,system,system_name):
+def oracle_parser(date,system,system_name,override=False):
     invoices = []
     invoice_list = []
     oracle_codes = {}
@@ -453,9 +448,9 @@ def oracle_parser(date,system,system_name):
                 if can_add:
                     OracleParserInvoice.objects.create(reference=k,details=json.dumps(v),parser=op)
             # Add items to oracle interface table
-            addToInterface(date,oracle_codes,ois)
+            new_codes = addToInterface(date,oracle_codes,ois,override)
             # Send an email with all the activity codes entered into the interface table
-            sendInterfaceParserEmail(date,oracle_codes,system_name,system)
+            sendInterfaceParserEmail(date,new_codes,system_name,system)
             return oracle_codes
     except Exception as e:
         error = traceback.format_exc()
@@ -650,23 +645,23 @@ def update_payments(invoice_reference):
                                     refunded += new_amount
                     line.save()
             # Check if the whole amount paid on the invoice has been allocated otherwise add to the first line item
-            if i.payment_amount > paid:
+            if i.total_payment_amount > paid:
                 first_item = i.order.lines.first()
                 # Bpoint
-                for b in bpoint:
+                for b in bpoint_transactions:
                     if b.payment_allocated < b.amount:
                         if first_item.payment_details['card'].get(str(b.id)):
-                            D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated)
+                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated))
                 # Bpay
-                for b in bpay:
+                for b in bpay_transactions:
                     if b.payment_allocated < b.amount:
                         if first_item.payment_details['bpay'].get(str(b.id)):
-                            D(first_item.payment_details['bpay'][str(b.id)]) + (b.amount - b.payment_allocated)
+                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['bpay'][str(b.id)]) + (b.amount - b.payment_allocated))
                 # Cash
-                for b in cash:
+                for b in cash_transactions.all():
                     if b.payment_allocated < b.amount:
                         if first_item.payment_details['cash'].get(str(b.id)):
-                            D(first_item.payment_details['cash'][str(b.id)]) + (b.amount - b.payment_allocated)
+                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['cash'][str(b.id)]) + (b.amount - b.payment_allocated))
                 first_item.save()
         except:
             print(traceback.print_exc())
