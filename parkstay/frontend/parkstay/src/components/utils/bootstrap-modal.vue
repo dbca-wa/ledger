@@ -4,16 +4,16 @@
             <div class="modal-dialog" :class="modalClass">
                 <div class="modal-content">
                     <!--Header-->
-                    <div class="modal-header">
-                        <slot name="header">
+                    <slot name="header">
+                        <div class="modal-header">
                             <a type="button" class="close" @click="cancel">x</a>
                             <h4 class="modal-title">
                                 <slot name="title">
                                     {{title}}
                                 </slot>
                             </h4>
-                        </slot>
-                    </div>
+                        </div>
+                    </slot>
                     <!--Container-->
                     <div class="modal-body">
                         <slot></slot>

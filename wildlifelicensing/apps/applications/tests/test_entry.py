@@ -444,6 +444,9 @@ class ApplicationEntryTestCase(TestCase):
         self.assertRedirects(response, reverse('wl_payments:checkout_application', args=(application.pk,)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
+        # FIXME: simulate full checkout process instead of skipping
+        self.client.get(reverse('wl_applications:complete'))
+
         application.refresh_from_db()
 
         # check that the state of the application is new
@@ -607,6 +610,9 @@ class ApplicationEntrySecurity(TransactionTestCase):
         self.assertRedirects(response, reverse('wl_payments:checkout_application', args=(application.pk,)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
 
+        # FIXME: simulate full checkout process instead of skipping
+        self.client.get(reverse('wl_applications:complete'))
+
         application.refresh_from_db()
 
         # check that the state of the application is new/underreview
@@ -637,6 +643,9 @@ class ApplicationEntrySecurity(TransactionTestCase):
         # check that client is redirected to checkout
         self.assertRedirects(response, reverse('wl_payments:checkout_application', args=(application.pk,)),
                              status_code=302, target_status_code=200, fetch_redirect_response=False)
+
+        # FIXME: simulate full checkout process instead of skipping
+        self.client.get(reverse('wl_applications:complete'))
 
         application.refresh_from_db()
 

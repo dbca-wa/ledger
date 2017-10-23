@@ -1,3 +1,9 @@
+function hideBanner(){
+    $('#paymentBanner').addClass('hide');
+}
+function showBanner(){
+    $('#paymentBanner').removeClass('hide');
+}
 $(function(){
     $(document).foundation();
     var $other_form = $('#other_form');
@@ -9,10 +15,22 @@ $(function(){
     var $location_fieldset = $('#location_fieldset');
     var $card_fieldset = $('#card_fieldset');
     var $storedcard_fieldset = $('#storedcard_fieldset');
-    var invoice = $('#payment_div').data('reference');
+    var invoice = $('#invoice_selector').val();
+    var invoice_obj = null;
     var $regions = $('#regions');
-    
-    
+
+    // Money Inputs
+    var cfgCulture = 'en-AU';
+    $.preferCulture(cfgCulture);
+    $('.money').maskMoney();
+
+    // Update Status format
+    $('#invoice_status').html(formatStatus($('#invoice_status').html()));
+    $('.invoice_status').each(function(){
+        $(this).html(formatStatus($(this).html()));
+    });
+    $('#mainTabLoader').hide();
+
     //Datatables
     var unlinkedBPAYTable = $('#unlinkedBpayTable').DataTable({
         "ajax":{
@@ -37,7 +55,7 @@ $(function(){
             }
         ]
     });
-    
+
     var linkedBPAYTable = $('#linkedBpayTable').DataTable({
         "ajax":{
             "url":'/ledger/payments/api/invoices/'+invoice+'/linked_bpay.json',
@@ -61,6 +79,28 @@ $(function(){
             }
         ]
     });
+
+    var receivedPaymentsTable = $('#received_payments_table').DataTable({
+        "ajax":{
+            "url":'/ledger/payments/api/invoices/'+invoice+'/payments.json',
+            "dataSrc":""
+        },
+        "processing":true,
+        "columns":[
+            {
+                data: "date"
+            },
+            {
+                data: "type"
+            },
+            {
+                data: "details"
+            },
+            {
+                data: "amount"
+            },
+        ]
+    });
     // BPAY Buttons
     unlinkedBPAYTable.on('click','.bpay_link_btn',function(e){
         e.preventDefault();
@@ -69,7 +109,7 @@ $(function(){
             unlinkedBPAYTable.ajax.reload();
             linkedBPAYTable.ajax.reload();
         });
-        
+
     });
     linkedBPAYTable.on('click','.bpay_unlink_btn',function(e){
         e.preventDefault();
@@ -79,14 +119,29 @@ $(function(){
             unlinkedBPAYTable.ajax.reload();
         });
     });
-    // Display for the external cash payment feature
-    $('#other_external').click('on',function(){
-        if (this.checked) {
-            $location_fieldset.removeClass('hide');
+
+    $('#invoice_selector').on('change',function(){
+        var reference = $(this).val();
+        $('#payment_div').hide();
+        $('#mainTabLoader').show();
+        if (reference){
+            $.get('/ledger/payments/api/invoices/'+reference+'.json',function(resp){
+                set_invoice(resp);
+                // Received Payments
+                receivedPaymentsTable.ajax.url('/ledger/payments/api/invoices/'+reference+'/payments.json');
+                // Linked BPAY Payments
+                linkedBPAYTable.ajax.url('/ledger/payments/api/invoices/'+reference+'/linked_bpay.json');
+                linkedBPAYTable.ajax.reload();
+                invoice = resp.reference;
+                updateBanner();
+            });
         }
-        else{
-            $location_fieldset.addClass('hide');
-        }
+    });
+    // Refund Button
+    $("#refund_btn").click(function(e){
+        e.preventDefault();
+        var modal = $('#refundModal');
+        modal.foundation('open');
     });
     // Display for the stored card feature
     $('#use_stored').click('on',function(){
@@ -99,6 +154,23 @@ $(function(){
             $card_fieldset.removeClass('hide');
         }
     });
+    function getCookie(name) {
+        var value = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1).trim() === (name + '=')) {
+                    value = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return value;
+    }
+    function set_invoice(invoice){
+        invoice_obj = invoice;
+    }
     // Reset Forms
     function reset_forms() {
         $other_form[0].reset();
@@ -114,12 +186,11 @@ $(function(){
         var amount_paid = '';
         var redirect_url = $('#payment_div').data('redirect');
         $.get('/ledger/payments/api/invoices/'+invoice+'.json',function(resp){
-            status = resp.payment_status;
-            amount_paid = '$'+resp.payment_amount;
+            invoice_obj = resp;
             if (status === 'paid' && redirect_url) {
                 window.location.replace(redirect_url);
             }
-            updateBanner(status,amount_paid);
+            updateBanner();
         });
     }
     function checkInvoiceStatusNoRedirect(){
@@ -127,10 +198,8 @@ $(function(){
         var amount_paid = '';
         var redirect_url = $('#payment_div').data('redirect');
         $.get('/ledger/payments/api/invoices/'+invoice+'.json',function(resp){
-            status = resp.payment_status;
-            amount_paid = '$'+resp.payment_amount;
-            
-            updateBanner(status,amount_paid);
+            invoice_obj = resp;
+            updateBanner();
         });
     }
     function redirectPage(){
@@ -141,11 +210,61 @@ $(function(){
         e.preventDefault();
         redirectPage();
     });
-    function updateBanner(value,amount_paid) {
-        $('#invoice_status').html(value);
+    function formatMoney(n,c, d, t){
+        c = isNaN(c = Math.abs(c)) ? 2 : c;
+        d = d == undefined ? "." : d;
+        t = t == undefined ? "," : t;
+        var s = n < 0 ? "-" : "";
+        var i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c)));
+        var j = (j = i.length) > 3 ? j % 3 : 0;
+        return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+    }
+    function formatStatus(status){
+        var parts = [];
+        var res = '';
+        parts = status.split('_');
+        if (parts.length > 1){
+            for(i=0;i < parts.length; i++){
+                res += capitalizeFirstLetter(parts[i]) + ' ';
+            }
+        }
+        else{ res = capitalizeFirstLetter(status);}
+        return res
+    }
+    function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+    function updateBanner() {
+        var status = invoice_obj.payment_status;
+        var balance = '$'+formatMoney(invoice_obj.balance);
+        var amount_paid = '$'+formatMoney(invoice_obj.payment_amount);
+        var refundable_amount = '$'+formatMoney(invoice_obj.refundable_amount);
+        // Top banner
+        $('#invoice_status').html(formatStatus(status));
+        $('#invoice_balance').html(balance);
         $('#invoice_paid').html(amount_paid);
+        $('.refundable_amount').html(refundable_amount);
+        // Individual Invoice
+        $("strong.invoice_status[data-reference='"+invoice+"']").html(formatStatus(status));
+        $("strong.invoice_balance[data-reference='"+invoice+"']").html(balance);
+        $("strong.invoice_paid[data-reference='"+invoice+"']").html(amount_paid);
         if (!$success_div.hasClass('hide')) {
             setTimeout(function(){$success_div.addClass('hide');},3000);
+        }
+        rf.updateRefundModal();
+        $('#payment_div').show();
+        $('#mainTabLoader').hide();
+        showRecordPayment();
+        receivedPaymentsTable.ajax.reload();
+    }
+    function showRecordPayment(){
+        if (invoice_obj.payment_status != 'paid' && invoice_obj.payment_status != 'over_paid'){
+            if ($other_form.hasClass('hide')){
+                $other_form.removeClass('hide');
+            }
+        }
+        else{
+            $other_form.addClass('hide');
         }
     }
     /*
@@ -160,7 +279,7 @@ $(function(){
             $.get('/ledger/payments/api/regions/'+region+'.json',function(resp){
                 var districts = resp.districts;
                 $('#districts').html("");
-                if (districts.length > 0) {
+                if (districts) {
                     $('#districts').append('<option value="">---- Select District ----</option>');
                     $(districts).each(function(i){
                         $('#districts').append('<option value="'+districts[i].code+'">'+districts[i].name+'</option>');
@@ -182,49 +301,63 @@ $(function(){
         var type,source,payload,ref;
         var amount, orig_txn = null;
         var external = false;
-        
+        var amount = $('#other_amount').val();
+
         // Hide div if not hidden
         if (!$errors_div.hasClass('hide')) {
             $errors_div.addClass('hide');
         }
+        if(!amount){
+            formError('An amount has not been specified for the payment');
+            return
+        }
         // Get payload
         payload = {
             "invoice": invoice,
-            "type": $('#other_type').val(),
+            "amount": $('#other_amount').val(),
+            "type": 'payment',
             "source": $('#other_source').val()
-        }
-        // Check if the amount field is there and has a value
-        if ($('#other_amount').val()) {
-            payload["amount"] = $('#other_amount').val();
         }
         // Check if the original transaction field is there and has a value
         if ($('#other_orig_txn').val()) {
             payload["orig_txn"] = invoice;
         }
-        
-        // Check if the external checkbox is selected
-        if ($('#other_external').is(':checked')){
+
+        // Check if the external
+        var pay_region = $('#regions').val().trim();
+        if (pay_region) {
             payload['external'] = true;
             payload['region'] = $('#regions').val();
             payload['district'] = $('#districts').val();
-            payload['receipt'] = $('#receipt_number').val();
         }
-        
-        $.post("/ledger/payments/api/cash.json",payload, function(resp){
-            success(resp,invoice,$('#other_source').val());
-        })
-        .fail(function(resp){
-            error(resp);
-        })
-        .always(function(){
-            checkInvoiceStatus()
+        payload['receipt'] = $('#receipt_number').val();
+        // POST
+        $.ajax ({
+            beforeSend: function(xhrObj){
+              xhrObj.setRequestHeader("Content-Type","application/json");
+              xhrObj.setRequestHeader("Accept","application/json");
+            },
+            type: "POST",
+            url: "/ledger/payments/api/cash.json",
+            data: JSON.stringify(payload),
+            dataType: "json",
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function(resp){
+                success(resp,invoice,$('#other_source').val());
+            },
+            error: function(resp){
+                error(resp);
+            },
+            complete: function(resp){
+                checkInvoiceStatus();
+            }
         });
     }
     /*
     *  Make card payments with either stored cards or new cards
     */
     function cardPayment(){
-        
+
         // Hide div if not hidden
         if (!$errors_div.hasClass('hide')) {
             $errors_div.addClass('hide');
@@ -269,7 +402,7 @@ $(function(){
                 error(resp);
             },
             complete: function(resp){
-                checkInvoiceStatus();  
+                checkInvoiceStatus();
             }
         });
     }
@@ -284,7 +417,7 @@ $(function(){
             "link": link,
             "bpay": txn
         }
-        
+
         // POST
         $.ajax ({
             beforeSend: function(xhrObj){
@@ -295,6 +428,7 @@ $(function(){
             url: "/ledger/payments/api/invoices/"+invoice+"/link.json",
             data: JSON.stringify(payload),
             dataType: "json",
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function(resp){
                 if (!link) {
                     success(invoice,'This BPAY transaction has been unlinked from this invoice.');
@@ -308,7 +442,7 @@ $(function(){
                 error(resp);
             },
             complete: function(resp){
-                checkInvoiceStatusNoRedirect();  
+                checkInvoiceStatusNoRedirect();
             }
         });
     }
@@ -317,42 +451,42 @@ $(function(){
      */
     function success(resp,reference,source){
         var success_str = '';
-                         
+
         success_str = 'Invoice #'+reference+' successfully paid using '+source;
-        
+
         success_html = '<div class="columns small-12"><div class="success callout" data-closable="slide-out-right"> \
             <p class="text-center">'+success_str+'</p> \
         </div></div>';
-        
+
         $success_row.html(success_html);
         $success_div.removeClass('hide');
-        if (!$location_fieldset.hasClass('hide')) {
+        /*if (!$location_fieldset.hasClass('hide')) {
             $location_fieldset.addClass('hide');
         }
         if (!$storedcard_fieldset.hasClass('hide')) {
             $storedcard_fieldset.addClass('hide');
             $card_fieldset.removeClass('hide');
-        }
+        }*/
         reset_forms();
     }
     function success(reference,msg){
         var success_str = '';
-                         
+
         success_str = msg;
-        
+
         success_html = '<div class="columns small-12"><div class="success callout" data-closable="slide-out-right"> \
             <p class="text-center">'+success_str+'</p> \
         </div></div>';
-        
+
         $success_row.html(success_html);
         $success_div.removeClass('hide');
-        if (!$location_fieldset.hasClass('hide')) {
+        /*if (!$location_fieldset.hasClass('hide')) {
             $location_fieldset.addClass('hide');
         }
         if (!$storedcard_fieldset.hasClass('hide')) {
             $storedcard_fieldset.addClass('hide');
             $card_fieldset.removeClass('hide');
-        }
+        }*/
         reset_forms();
     }
     /*
@@ -375,11 +509,19 @@ $(function(){
         $errors_row.html(error_html);
         $errors_div.removeClass('hide');
     }
+    function formError(error){
+        // Show Errors
+        error_html = '<div class="columns small-12"><div class="alert callout" data-closable="slide-out-right"> \
+            <p class="text-center">'+error+'</p> \
+        </div></div>';
+        $errors_row.html(error_html);
+        $errors_div.removeClass('hide');
+    }
     $other_form.submit(function(e){
         e.preventDefault();
         otherPayment();
     });
-    
+
     $regions.change(function(){
         updateDistricts($(this).val());
     });
@@ -389,4 +531,182 @@ $(function(){
         e.preventDefault();
         cardPayment();
     });*/
+
+    /*****************************
+        REFUNDS
+    *****************************/
+
+    var rf = {
+        refund_option: $('div[data-refund-option]'),
+        refund_cards: $('div[data-refund-cards'),
+        refund_manual: $('div[data-refund-manual'),
+        refund_btn: $('#refund_btn'),
+        radios: $('#refundable_cards_radio'),
+        refund_option_select: $('#refund_option'),
+        refund_loader: $("#refundLoader"),
+        modal_alert: $('#modal_alert'),
+        modal_alert_btn: $("#refund_alert_btn"),
+        modal_alert_text: $('#modal_alert > .callout-text'),
+        refund_form : document.forms.refundForm,
+        cancel_refund_btn: $("#cancel_refund"),
+        refund_modal : $('#refundModal'),
+        init: function(){
+            var form = $(document.forms.refundForm).hide(100);
+            $.get('/ledger/payments/api/invoices/'+$('#invoice_selector').val()+'.json',function(resp){
+                set_invoice(resp);
+                rf.updateRefundModal();
+                rf.refund_loader.fadeOut(100);
+                rf.displayOption();
+                form.fadeIn(2000);
+                rf.refund_btn.on('click',function(e){
+                    rf.updateRefundModal();
+                });
+                rf.refund_option_select.on("change",function(){
+                    rf.displayOption();
+                });
+                rf.cancel_refund_btn.on("click",function(){
+                    rf.refund_modal.foundation('close');
+                });
+                rf.refund_modal.on("closed.zf.reveal",function(){
+                    rf.refund_form.reset();
+                    rf.hide(rf.modal_alert);
+                });
+                rf.modal_alert_btn.on("click",function(e){
+                    rf.hide(rf.modal_alert);
+                });
+            });
+            form.submit(function(e){
+                e.preventDefault();
+                var amount = rf.validateAmount();
+                if (amount) {
+                    if (invoice_obj.refundable_cards.length > 0 && rf.refund_option_select.val() == 1){
+                        rf.cardRefund(amount);
+                    }
+                    else{
+                        if(amount <= invoice_obj.refundable_amount){
+                            rf.manualRefund();
+                        }else{
+                            rf.displayError("The amount you are trying to refund is greater than the refundable amount.")
+                        }
+                    }
+                }
+            });
+        },
+        displayOption: function(){
+            if (invoice_obj.refundable_cards.length > 0 && rf.refund_option_select.val() == 1){
+                rf.hide(rf.refund_manual);
+                rf.show(rf.refund_cards);
+            }
+            else{
+                rf.hide(rf.refund_cards);
+                rf.show(rf.refund_manual);
+            }
+        },
+        updateRefundModal:function(){
+            invoice_obj.refundable ? rf.refund_btn.removeClass('hide'): rf.refund_btn.addClass('hide');
+            if(invoice_obj.refundable_cards.length > 0){
+                rf.radios.html('');
+                $.each(invoice_obj.refundable_cards,function(i,c){
+                    var input = '<label><input type="radio" name="refund_cards" value="'+c.id+'"/>';
+                    input += c.cardtype+' ending in '+c.last_digits + ' - Refundable Amount ($'+c.refundable_amount+')</label>';
+                    rf.radios.append(input);
+                });
+                rf.show(rf.refund_option);
+            }
+        },
+        validateAmount: function(){
+            var amount = $('#refundAmount').val();
+            if(!amount){
+               rf.displayError("An amount has not been specified for the refund");
+               return false
+           }
+           return amount;
+        },
+        cardRefund: function(amount){
+            payload = {
+                "amount": amount,
+                "details": $("#refund_details > textarea[name='refund_details']").val()
+            }
+            // POST
+            $.ajax ({
+                beforeSend: function(xhrObj){
+                  xhrObj.setRequestHeader("Content-Type","application/json");
+                  xhrObj.setRequestHeader("Accept","application/json");
+                },
+                type: "POST",
+                url: "/ledger/payments/api/bpoint/"+rf.refund_form.refund_cards.value+"/refund.json",
+                data: JSON.stringify(payload),
+                dataType: "json",
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                success: function(resp){
+                    rf.refund_modal.foundation('close');
+                    rf.refund_form.reset();
+                },
+                error: function(resp){
+                    var str = resp.responseText.replace(/[\[\]"]/g,'');
+                    str = str.replace(/[\{\}"]/g,'');
+                    rf.displayError(str);
+                },
+                complete: function(resp){
+                    checkInvoiceStatus();
+                }
+            });
+        },
+        manualRefund: function(){
+            // Get payload
+            payload = {
+                "invoice": invoice,
+                "amount": $('#refundAmount').val(),
+                "details": $("#refund_details > textarea[name='refund_details']").val(),
+                "type": 'refund',
+                "source": 'cash'
+            }
+            // POST
+            $.ajax ({
+                beforeSend: function(xhrObj){
+                  xhrObj.setRequestHeader("Content-Type","application/json");
+                  xhrObj.setRequestHeader("Accept","application/json");
+                },
+                type: "POST",
+                url: "/ledger/payments/api/cash.json",
+                data: JSON.stringify(payload),
+                dataType: "json",
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                success: function(resp){
+                    rf.refund_form.reset();
+                    $(rf.refund_modal).foundation('close');
+                },
+                error: function(resp){
+                    var str = resp.responseText.replace(/[\[\]"]/g,'');
+                    str = str.replace(/[\{\}"]/g,'');
+                    rf.displayError(str);
+                },
+                complete: function(resp){
+                    checkInvoiceStatus();
+                }
+            });
+            console.log($('#refundAmount').val());
+        },
+        show:function(field){
+            field.removeClass('hide',100);
+        },
+        hide:function(field){
+            field.addClass('hide',100);
+        },
+        displayError:function(msg){
+           rf.modal_alert.removeClass('success');
+           rf.modal_alert.addClass('alert');
+           rf.updateAlert(msg);
+        },
+        displaySuccess:function(resp){
+           rf.modal_alert.removeClass('alert');
+           rf.modal_alert.addClass('success');
+           rf.updateAlert("Refunded successfully.");
+        },
+        updateAlert:function (msg) {
+           rf.modal_alert_text.text(msg);
+           rf.show(rf.modal_alert);
+        }
+    };
+    rf.init();
 });

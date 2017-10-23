@@ -36,19 +36,39 @@
                                         </select>
                                     </div>
                                 </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="applications-filter-region">District: </label>
+                                        <select class="form-control" v-model="selected_district">
+                                            <option value="All">All</option>
+                                            <option v-for="district in districts" :value="district.name">{{ district.name }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="applications-filter-region">Park: </label>
+                                        <select class="form-control" v-model="selected_park">
+                                            <option value="All">All</option>
+                                            <option v-for="park in parks" :value="park.name">{{ park.name }}</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group pull-right">
                                     <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Campground</a>
+                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Campgrounds</a>
                                 </div>
                             </div>
                         </form>
-                        <datatable :dtHeaders="['Campground','Status','Region','Dogs Allowed','Campfires Allowed','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
+                        <datatable :dtHeaders="['Campground','Status','Region','District','Park','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <bulk-close :show="showBulkClose" ref="bulkClose"/>
 </div>
 </template>
 
@@ -60,7 +80,9 @@ import {
 import datatable from '../utils/datatable.vue'
 import pkCgClose from './closeCampground.vue'
 import pkCgOpen from './openCampground.vue'
+import bulkClose from '../utils/closureHistory/bulk-close.vue'
 import {bus} from '../utils/eventBus.js'
+import { mapGetters } from 'vuex'
 module.exports = {
     name: 'pk-campgrounds',
     data: function() {
@@ -68,13 +90,15 @@ module.exports = {
         return {
             grounds: [],
             rows: [],
-            regions: [],
             title: 'Campgrounds',
             selected_status: 'All',
             selected_region: 'All',
+            selected_park: 'All',
+            selected_district: 'All',
             isOpenAddCampground: false,
             isOpenOpenCG: false,
             isOpenCloseCG: false,
+            showBulkClose:false,
             dtoptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -86,10 +110,10 @@ module.exports = {
                     targets: 0
                 }, {
                     responsivePriority: 2,
-                    targets: 5
+                    targets: 3
                 }],
                 ajax: {
-                    "url": api_endpoints.campgrounds,
+                    "url": api_endpoints.campgrounds_datatable,
                     "dataSrc": ''
                 },
                 columns: [{
@@ -99,28 +123,29 @@ module.exports = {
                     "mRender": function(data, type, full) {
                         var status = (data == true) ? "Open" : "Temporarily Closed";
                         var column = "<td >__Status__</td>";
+                        column += data ? "" : "<br/><br/>"+full.current_closure  ;
                         return column.replace('__Status__', status);
                     }
                 }, {
                     "data": "region"
-                }, {
-                    "data": "dog_permitted",
-                    "mRender": function(data, type, full) {
-                        return vm.flagFormat(data);
-                    }
-                }, {
-                    "data": "dog_permitted",
-                    "mRender": function(data, type, full) {
-                        return vm.flagFormat(data);
-                    }
+                },{
+                    "data": "district"
+                },{
+                    "data": "park"
                 }, {
                     "mRender": function(data, type, full) {
                         var id = full.id;
+                        var addBooking = "<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>";
+                        var column = "";
+
                         if (full.active) {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a></td>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a>";
                         } else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a></td>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>";
                         }
+
+                        column += full.campground_type == '0' ? addBooking : "";
+                        column += "</td>";
                         column = column.replace(/__Current_Closure__/,full.current_closure);
                         return column.replace(/__ID__/g, id);
                     }
@@ -132,9 +157,21 @@ module.exports = {
     components: {
         pkCgClose,
         pkCgOpen,
-        datatable
+        datatable,
+        "bulk-close":bulkClose,
+    },
+    computed:{
+       ...mapGetters([
+         'regions',
+         'districts',
+         'parks'
+       ]),
     },
     watch: {
+        showBulkClose:function () {
+            this.$refs.bulkClose.isModalOpen = this.showBulkClose;
+            this.$refs.bulkClose.initSelectTwo();
+        },
         selected_region: function() {
             let vm = this;
             if (vm.selected_region != 'All') {
@@ -149,6 +186,22 @@ module.exports = {
                 vm.$refs.dtGrounds.vmDataTable.columns(1).search(vm.selected_status).draw();
             } else {
                 vm.$refs.dtGrounds.vmDataTable.columns(1).search('').draw();
+            }
+        },
+        selected_district: function() {
+            let vm = this;
+            if (vm.selected_district != 'All') {
+                vm.$refs.dtGrounds.vmDataTable.columns(3).search(vm.selected_district).draw();
+            } else {
+                vm.$refs.dtGrounds.vmDataTable.columns(3).search('').draw();
+            }
+        },
+        selected_park: function() {
+            let vm = this;
+            if (vm.selected_park != 'All') {
+                vm.$refs.dtGrounds.vmDataTable.columns(4).search(vm.selected_park).draw();
+            } else {
+                vm.$refs.dtGrounds.vmDataTable.columns(4).search('').draw();
             }
         }
     },
@@ -192,9 +245,21 @@ module.exports = {
         },
         fetchRegions: function() {
             let vm = this;
-            $.get(api_endpoints.regions,function(data){
-                vm.regions = data;
-            });
+            if (vm.regions.length == 0) {
+                vm.$store.dispatch("fetchRegions");
+            }
+        },
+        fetchParks: function() {
+            let vm = this;
+            if (vm.parks.length == 0) {
+                vm.$store.dispatch("fetchParks");
+            }
+        },
+        fetchDistricts: function() {
+            let vm = this;
+            if (vm.districts.length == 0) {
+                vm.$store.dispatch("fetchDistricts");
+            }
         }
     },
     mounted: function() {
@@ -221,10 +286,22 @@ module.exports = {
                 vm.showOpenCloseCG();
             }
         });
+        vm.$refs.dtGrounds.vmDataTable.on('click', '.addBooking', function(e) {
+            e.preventDefault();
+            var id = $(this).attr('data-campground');
+            vm.$router.push({
+                name: 'add-booking',
+                params: {
+                    "cg": id
+                }
+            });
+        });
          bus.$on('refreshCGTable', function(){
             vm.$refs.dtGrounds.vmDataTable.ajax.reload();
         });
         vm.fetchRegions();
+        vm.fetchParks();
+        vm.fetchDistricts();
     }
 };
 </script>

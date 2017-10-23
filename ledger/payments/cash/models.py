@@ -73,15 +73,23 @@ REGION_CHOICES = (
 class Region(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
+    class Meta:
+        db_table = 'payments_region'
+
 class District(models.Model):
     name = models.CharField(choices=DISTRICT_CHOICES,max_length=3,unique=True)
     region = models.ForeignKey(Region,related_name='districts')
+
+    class Meta:
+        db_table = 'payments_district'
 
 class CashTransaction(models.Model):
     TRANSACTION_TYPES = (
         ('payment','payment'),
         ('refund','refund'),
-        ('reversal','reversal')
+        ('reversal','reversal'),
+        ('move_in','Move Funds In'),
+        ('move_out','Move Funds out')
     )
     SOURCE_TYPES = (
         ('cash','cash'),
@@ -99,6 +107,10 @@ class CashTransaction(models.Model):
     district = models.CharField(choices=DISTRICT_CHOICES,max_length=3, null=True, blank=True)
     external = models.BooleanField(default=False)
     receipt = models.CharField(max_length=128,null=True,blank=True)
+    details = models.TextField(null=True, blank=True)
+    movement_reference = models.CharField(max_length=50,null=True,blank=True)
+    class Meta:
+        db_table = 'payments_cashtransaction'
 
     def save(self, *args, **kwargs):
         # Validations
@@ -115,11 +127,22 @@ class CashTransaction(models.Model):
             raise ValidationError("A {} cannot be made for an unpaid invoice.".format(self.type))
         if self.type == 'refund' and (self.invoice.payment_amount < decimal.Decimal(self.amount)):
             raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
+        if self.type  in ['move_out','move_in'] and self.source != 'cash':
+            raise ValidationError('A movement of funds must always have the source as cash')
+        if self.type in ['move_in','move_out'] and not self.movement_reference:
+            if self.type == 'move_out':
+                raise ValidationError('A reference number is required to show where the funds are moving to.')
+            elif self.type == 'move_in':
+                raise ValidationError('A reference number is required to show where the funds are coming from.')
         if self.pk is None:
+            if self.invoice.voided and self.type not in ['move_out','refund']:
+                raise ValidationError('You cannot make a payment to voided invoice')
             if self.invoice.payment_status == 'paid' and self.type == 'payment':
                 raise ValidationError('This invoice has already been paid for.')
             if (decimal.Decimal(self.amount) > self.invoice.balance) and self.type == 'payment':
                 raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
+            if (decimal.Decimal(self.amount) > self.invoice.refundable_amount) and self.type == 'refund':
+                raise ValidationError('The amount to be refunded is more than the amount refundable for this invoice.')
         else:
             orig = CashTransaction.objects.get(pk=self.pk)
             if orig.amount != self.amount:
@@ -132,3 +155,45 @@ class CashTransaction(models.Model):
                 self.district = None
                 self.region = None
                 self.receipt = None
+
+    @property
+    def payment_allocated(self):
+        allocated = decimal.Decimal('0.0')
+        invoice = self.invoice
+        if invoice.order:
+            lines = invoice.order.lines.all()
+            for line in lines:
+                for k,v in line.payment_details.items():
+                    if k == 'cash':
+                        for i,a in v.items():
+                            if i == str(self.id):
+                                allocated += decimal.Decimal(a)
+        return allocated
+
+    @property
+    def refund_allocated(self):
+        allocated = decimal.Decimal('0.0')
+        invoice = self.invoice
+        if invoice.order:
+            lines = invoice.order.lines.all()
+            for line in lines:
+                for k,v in line.refund_details.items():
+                    if k == 'cash':
+                        for i,a in v.items():
+                            if i == str(self.id):
+                                allocated += decimal.Decimal(a)
+        return allocated
+
+    @property
+    def deduction_allocated(self):
+        allocated = decimal.Decimal('0.0')
+        invoice = self.invoice
+        if invoice.order:
+            lines = invoice.order.lines.all()
+            for line in lines:
+                for k,v in line.deduction_details.items():
+                    if k == 'cash':
+                        for i,a in v.items():
+                            if i == str(self.id):
+                                allocated += decimal.Decimal(a)
+        return allocated

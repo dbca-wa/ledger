@@ -122,3 +122,19 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     def send_email(self):
         return self._get('ledger','send_email')
+
+    # Invoice Optional text
+    # ==========================
+    def set_invoice_text(self,text):
+        self._set('ledger','invoice_text',text)
+
+    def get_invoice_text(self):
+        return self._get('ledger','invoice_text')
+
+    # Last check url per system 
+    # ==========================
+    def set_last_check(self,text):
+        self._set('ledger','last_check',text)
+
+    def get_last_check(self):
+        return self._get('ledger','last_check')

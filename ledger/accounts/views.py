@@ -51,6 +51,18 @@ def first_time(request):
     return render(request, 'customers/firsttime.html', context)
 
 
+def login_retry(request):
+    messages.error(request, "There was an error validating your email address. Please try again.")
+    return bounce(request)
+
+
+def login_expired(request):
+    messages.error(request,
+                   "This sign-in link has already been used, or has expired. "
+                   "Please log in again to generate a new sign-in link.")
+    return bounce(request)
+
+
 def validation_sent(request):
     messages.success(request,
                      "An email has been sent to you. "

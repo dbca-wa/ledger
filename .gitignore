@@ -15,7 +15,6 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
-build/
 develop-eggs/
 dist/
 downloads/
@@ -44,7 +43,7 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .coverage
-.coverage.*
+.coverage*
 .cache
 nosetests.xml
 coverage.xml
@@ -74,6 +73,7 @@ target/
 /.project
 
 **/local/
+*.map
 
 # media
 media/
@@ -87,5 +87,3 @@ media/
 #parkstay import ignores
 import/
 importo.py
-build.js
-build.css

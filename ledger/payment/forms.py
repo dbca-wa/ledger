@@ -1,7 +1,10 @@
 from oscar.apps.payment.forms import *
+from oscar.apps.payment.bankcards import VISA,VISA_ELECTRON,MASTERCARD 
 from oscar.core.loading import get_model
 
 Bankcard = get_model('payment','Bankcard')
+
+VALID_CARDS = [VISA,VISA_ELECTRON,MASTERCARD]
 
 class BankcardForm(BankcardForm):
 

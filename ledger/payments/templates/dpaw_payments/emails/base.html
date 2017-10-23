@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        {% block greetings %}
+            <p>
+                Dear Sir/Madam,
+            </p>
+        {% endblock %}
+        {% block content %}
+        {% endblock %}
+        {% block signature %}
+            <p>
+                Yours sincerely,
+            </p>
+            <p></p>
+            <p>
+                Ledger Payment Services
+            </p>
+        {% endblock %}
+        {% block reply_statement %}
+            <p></p>
+            <p></p>
+            <p>
+                <strong><em>Please do not reply directly to this email.</em></strong>
+            </p> 
+        {% endblock %}
+    </body> 
+</html>
