@@ -249,6 +249,8 @@ class Invoice(models.Model):
                 )
                 if len(card_details) == 3:
                     card.last_digits = card_details[2]
+                else:
+                    card.last_digits = None
                 txn = bpoint_facade.pay_with_temptoken(
                         'payment',
                         'telephoneorder',
@@ -317,6 +319,8 @@ class Invoice(models.Model):
                 invoice.save()
 
                 # Update the oracle interface invoices sp as to prevent duplicate sending of amounts to oracle
+                
+                from ledger.payments.models import  OracleParserInvoice
                 OracleParserInvoice.objects.filter(reference=self.reference).update(reference=invoice.reference)
 
                 update_payments(invoice.reference)

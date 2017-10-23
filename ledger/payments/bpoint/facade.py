@@ -53,7 +53,7 @@ class Facade(object):
         if amount:
             amount = int(amount*100)
         if bank_card.last_digits:
-            bank_card_last_digits = bank_card.last_digits
+            bankcard_lastdigits = bank_card.last_digits
         # Handle any other exceptions that occur that are not from bpoint
         try:
             res = self.gateway.handle_txn(order_number,reference,action,amount,card_details,
@@ -80,7 +80,7 @@ class Facade(object):
             res.settlement_date,
             res.txn_number,
             res.dvtoken,
-            bank_card.last_digits
+            bankcard_lastdigits
         )
 
     def _create_txn(self,action,crn1,amount,amount_original,amount_surcharge,

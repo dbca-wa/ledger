@@ -350,7 +350,7 @@ def generate_trans_csv(system,start,end,region=None,district=None):
     if invoices:
         strIO = StringIO()
         fieldnames = ['Created', 'Payment Method', 'Transaction Type', 'Amount', 'Approved', 'Source', 'Product Names',
-                      'Product Codes']
+                      'Product Codes', 'Invoice']
         writer = csv.DictWriter(strIO, fieldnames=fieldnames)
         writer.writeheader()
         for i in invoices:

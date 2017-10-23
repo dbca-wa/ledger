@@ -645,7 +645,7 @@ def update_payments(invoice_reference):
                                     refunded += new_amount
                     line.save()
             # Check if the whole amount paid on the invoice has been allocated otherwise add to the first line item
-            if i.total_payment_amount > paid:
+            if i.total_payment > paid:
                 first_item = i.order.lines.first()
                 # Bpoint
                 for b in bpoint_transactions:
