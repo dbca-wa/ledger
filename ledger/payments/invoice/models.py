@@ -63,7 +63,7 @@ class Invoice(models.Model):
 
     @property
     def refundable_amount(self):
-        return self.payment_amount - self.__calculate_total_refunds()
+        return self.total_payment_amount - self.__calculate_total_refunds()
 
     @property
     def refundable(self):
@@ -109,7 +109,7 @@ class Invoice(models.Model):
         return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments() - self.__calculate_total_refunds()
 
     @property
-    def total_payment(self):
+    def total_payment_amount(self):
         ''' Total amount paid from bpay,bpoint and cash.
         '''
         return self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments()
@@ -240,6 +240,7 @@ class Invoice(models.Model):
         :return: BpointTransaction
         '''
         from ledger.payments.facade import bpoint_facade
+        from ledger.payments.utils import update_payments
         try:
             if self.token:
                 card_details = self.token.split('|')
@@ -270,6 +271,7 @@ class Invoice(models.Model):
                         UsedBpointToken.objects.create(DVToken=card_details[0])
                         self.token = ''
                         self.save()
+                    update_payments(self.reference)
                 return txn
             else:
                 raise ValidationError('This invoice doesn\'t have any tokens attached to it.')

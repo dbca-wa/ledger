@@ -645,20 +645,20 @@ def update_payments(invoice_reference):
                                     refunded += new_amount
                     line.save()
             # Check if the whole amount paid on the invoice has been allocated otherwise add to the first line item
-            if i.total_payment > paid:
+            if i.total_payment_amount > paid:
                 first_item = i.order.lines.first()
                 # Bpoint
-                for b in bpoint_transactions:
+                for b in i.bpoint_transactions:
                     if b.payment_allocated < b.amount:
                         if first_item.payment_details['card'].get(str(b.id)):
                             first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated))
                 # Bpay
-                for b in bpay_transactions:
+                for b in i.bpay_transactions:
                     if b.payment_allocated < b.amount:
                         if first_item.payment_details['bpay'].get(str(b.id)):
                             first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['bpay'][str(b.id)]) + (b.amount - b.payment_allocated))
                 # Cash
-                for b in cash_transactions.all():
+                for b in i.cash_transactions.all():
                     if b.payment_allocated < b.amount:
                         if first_item.payment_details['cash'].get(str(b.id)):
                             first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['cash'][str(b.id)]) + (b.amount - b.payment_allocated))

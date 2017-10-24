@@ -106,7 +106,7 @@ export default {
             return this.campground.id ? this.campground.id : 0;
         },
         priceHistoryDeleteURL: function (){
-            return api_endpoints.delete_campground_price(this.myID);
+            return api_endpoints.delete_campground_price(this.ID);
         }
     },
     data: function() {
@@ -125,6 +125,7 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
+                order: [],
                 ajax: {
                     url: api_endpoints.campground_price_history(this.$route.params.id),
                     dataSrc: ''

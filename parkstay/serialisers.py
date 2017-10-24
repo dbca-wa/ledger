@@ -492,7 +492,7 @@ class RateDetailSerializer(serializers.Serializer):
     infant = serializers.DecimalField(max_digits=5, decimal_places=2)
     period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
     reason = serializers.IntegerField()
-    details = serializers.CharField(required=False)
+    details = serializers.CharField(required=False,allow_blank=True)
     campsite = serializers.IntegerField(required=False)
 
 
@@ -511,7 +511,7 @@ class RateDetailSerializer(serializers.Serializer):
 
 class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
-    details = serializers.CharField(required=False)
+    details = serializers.CharField(required=False,allow_blank=True)
     class Meta:
         model = CampgroundPriceHistory
         fields = ('id','date_start','date_end','rate_id','adult','concession','child','infant','editable','deletable','reason','details')
@@ -534,7 +534,7 @@ class CampgroundPriceHistorySerializer(serializers.ModelSerializer):
 
 class CampsiteClassPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
-    details = serializers.CharField(required=False)
+    details = serializers.CharField(required=False,allow_blank=True)
     class Meta:
         model = CampsiteClassPriceHistory
         fields = ('id','date_start','date_end','rate_id','adult','concession','child','infant','editable','deletable','reason','details')

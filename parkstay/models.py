@@ -17,7 +17,7 @@ from datetime import date, time, datetime, timedelta
 from django.conf import settings
 from taggit.managers import TaggableManager
 from django.dispatch import receiver
-from django.db.models.signals import post_delete, pre_save, post_save
+from django.db.models.signals import post_delete, pre_save, post_save,pre_delete
 from parkstay.exceptions import BookingRangeWithinException
 from django.core.cache import cache
 from ledger.payments.models import Invoice
@@ -1594,17 +1594,25 @@ class CampsiteRateListener(object):
         else:
             try:
                 within = CampsiteRate.objects.get(Q(campsite=instance.campsite),Q(date_start__lte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) )
-                within.date_end = instance.date_start
+                within.date_end = instance.date_start - timedelta(days=2)
                 within.save()
-                instance.date_start = instance.date_start + timedelta(days=1)
             except CampsiteRate.DoesNotExist:
                 pass
+            # check if there is a newer record and set the end date as the previous record minus 1 day
+            x = CampsiteRate.objects.filter(Q(campsite=instance.campsite),Q(date_start__gte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) ).order_by('date_start')
+            if x:
+                x = x[0]
+                instance.date_end = x.date_start - timedelta(days=2)
 
     @staticmethod
-    @receiver(post_delete, sender=CampsiteRate)
-    def _post_delete(sender, instance, **kwargs):
+    @receiver(pre_delete, sender=CampsiteRate)
+    def _pre_delete(sender, instance, **kwargs):
         if not instance.date_end:
-            CampsiteRate.objects.filter(date_end=instance.date_start- timedelta(days=2),campsite=instance.campsite).update(date_end=None)
+            c = CampsiteRate.objects.filter(campsite=instance.campsite).order_by('-date_start').exclude(id=instance.id)
+            if c:
+                c = c[0] 
+                c.date_end = None
+                c.save() 
 
 class CampsiteStayHistoryListener(object):
     """
