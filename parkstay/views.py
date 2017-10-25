@@ -267,7 +267,7 @@ class MakeBookingsView(TemplateView):
                         phone_number=form.cleaned_data.get('phone'),
                         mobile_number=form.cleaned_data.get('phone')
                 )
-                Address.objects.create(line1='address', user=customer, postcode=emailUser['postcode'], country=form.cleaned_data.get('country'))
+                Address.objects.create(line1='address', user=customer, postcode=form.cleaned_data.get('postcode'), country=form.cleaned_data.get('country'))
         else:
             customer = request.user
         

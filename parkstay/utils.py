@@ -544,9 +544,8 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     for i in old_booking.invoices.all():
         inv = Invoice.objects.get(reference=i.invoice_reference)
         inv.voided = True
-        if inv.transferable_amount > 0:
-            #transfer to the new invoice
-            inv.move_funds(inv.transferable_amount,Invoice.objects.get(reference=new_invoice.invoice_reference),'Transfer of funds from {}'.format(inv.reference))
+        #transfer to the new invoice
+        inv.move_funds(inv.transferable_amount,Invoice.objects.get(reference=new_invoice.invoice_reference),'Transfer of funds from {}'.format(inv.reference))
         inv.save()
     # Change the booking for the selected invoice
     new_invoice.booking = old_booking
@@ -648,7 +647,7 @@ def update_booking(request,old_booking,booking_details):
             date_diff = check_date_diff(old_booking,booking)
 
             total_price = price_or_lineitems(request,booking,booking_details['campsites'],lines=False,old_booking=old_booking)
-            price_diff = False
+            price_diff = True
             if old_booking.cost_total != total_price:
                 price_diff = True
             if price_diff:

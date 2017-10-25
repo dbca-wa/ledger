@@ -1,5 +1,6 @@
 from django.db import models, connection
 from django.conf import settings
+from decimal import Decimal as D
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.utils.encoding import python_2_unicode_compatible
