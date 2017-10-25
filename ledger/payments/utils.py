@@ -475,7 +475,7 @@ def update_payments(invoice_reference):
                     refunded_amount = line.refunded
                     deducted_amount = line.deducted
                     amount = line.line_price_incl_tax
-                    total_paid = i.payment_amount
+                    total_paid = i.total_payment_amount
                     total_refund = i.refund_amount
                     total_deductions = i.deduction_amount
                     paid += paid_amount
@@ -649,19 +649,46 @@ def update_payments(invoice_reference):
                 first_item = i.order.lines.first()
                 # Bpoint
                 for b in i.bpoint_transactions:
-                    if b.payment_allocated < b.amount:
-                        if first_item.payment_details['card'].get(str(b.id)):
-                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated))
+                    if b.payment_allocated < b.amount and b.action == 'payment':
+                         if first_item.payment_details['card'].get(str(b.id)):
+                             first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated))
                 # Bpay
                 for b in i.bpay_transactions:
-                    if b.payment_allocated < b.amount:
-                        if first_item.payment_details['bpay'].get(str(b.id)):
-                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['bpay'][str(b.id)]) + (b.amount - b.payment_allocated))
+                    if b.payment_allocated < b.amount and b.p_instruction_code == '05' and b.type == '399':
+                         if first_item.payment_details['bpay'].get(str(b.id)):
+                            first_item.payment_details['bpay'][str(b.id)] = str(D(first_item.payment_details['bpay'][str(b.id)]) + (b.amount - b.payment_allocated))
                 # Cash
                 for b in i.cash_transactions.all():
-                    if b.payment_allocated < b.amount:
-                        if first_item.payment_details['cash'].get(str(b.id)):
-                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['cash'][str(b.id)]) + (b.amount - b.payment_allocated))
+                    if b.payment_allocated < b.amount and b.type in ['payment','move_in']:
+                         if first_item.payment_details['cash'].get(str(b.id)):
+                            first_item.payment_details['cash'][str(b.id)] = str(D(first_item.payment_details['cash'][str(b.id)]) + (b.amount - b.payment_allocated))
+                first_item.save()
+            print i.refund_amount
+            print refunded
+            if i.refund_amount > refunded:
+                first_item = i.order.lines.first()
+                # Bpoint
+                for b in i.bpoint_transactions:
+                    print '{} - {}'.format(b.id,b.refund_allocated)
+                    print 'here'
+                    if b.refund_allocated < b.amount and b.action == 'refund':
+                        print 'there'
+                        print first_item.refund_details['card']
+                        if first_item.refund_details['card'].get(str(b.id)):
+                            print b.amount - b.refund_allocated
+                            first_item.refund_details['card'][str(b.id)] = str(D(first_item.refund_details['card'][str(b.id)]) + (b.amount - b.refund_allocated))
+                        else:
+                            first_item.refund_details['card'][str(b.id)] = str(b.amount - b.refund_allocated)
+                # Bpay
+                for b in i.bpay_transactions:
+                    if b.refund_allocated < b.amount and b.p_instruction_code == '25' and b.type == '699':
+                        if first_item.refund_details['bpay'].get(str(b.id)):
+                            first_item.refund_details['bpay'][str(b.id)] = str(D(first_item.refund_details['bpay'][str(b.id)]) + (b.amount - b.refund_allocated))
+                # Cash
+                for b in i.cash_transactions.all():
+                    if b.refund_allocated < b.amount and b.type == 'refund':
+                        if first_item.refund_details['cash'].get(str(b.id)):
+                            first_item.refund_details['cash'][str(b.id)] = str(D(first_item.refund_details['cash'][str(b.id)]) + (b.amount - b.refund_allocated))
                 first_item.save()
         except:
             print(traceback.print_exc())

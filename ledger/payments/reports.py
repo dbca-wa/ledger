@@ -18,7 +18,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
     items = []
     oracle_codes = {}
     banked_oracle_codes = {}
-    date_format = '%A %d/%m/%y'
+    date_format = '%d/%m/%y'
 
     eftpos = []
     banked_cash = []
@@ -59,6 +59,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                 invoices.append(invoice)
                 invoice_list.append(str(b.crn))
 
+    invoice_list = list(set(invoice_list))
 
     if invoices:
         strIO = StringIO()
@@ -101,7 +102,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
         # Loop through the payments and not the invoices
         for i in invoices:
             # Add items of invoice if not in list
-            if i.order and not i.voided:
+            if i.order:# and not i.voided:
                 if i.reference not in parsed_invoices.keys():
                     parsed_invoices[i.reference] = {'amount':i.amount,'paid':i.payment_amount,'refunded':i.refundable_amount}
                 for x in i.order.lines.all():
@@ -177,6 +178,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
             payment_details = item.get('item').payment_details
             refund_details = item.get('item').refund_details
             deduction_details = item.get('item').deduction_details
+
             # Banked Cash
             for d in item['banked_dates']:
                 index = 0
@@ -213,6 +215,11 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                             item[source] -= D(v)
                             banked_date_amounts[date_amount_index]['amounts'][source] -= D(v)
 
+
+            #if code == 'NNP42 GST':
+            #    print payment_details
+            #    print refund_details
+            #    print 'current date {}'.format(l.get('date'))
             # Other transactions
             for d in oracle_codes[code]:
                 index = 0
@@ -222,6 +229,8 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                         break
                     index += 1
                 # EFT
+                if code == 'NNP42 GST':
+                    print '{} - {}'.format(l.get('date'),d)
                 for k,v in payment_details["cash"].items():
                     c = CashTransaction.objects.get(id=int(k))
                     source = c.source
@@ -244,8 +253,11 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                 for k,v in payment_details['card'].items():
                     c = BpointTransaction.objects.get(id=int(k))
                     if c.settlement_date.strftime(date_format) == d.get('date') and c.approved:
-                        oracle_codes[code][date_amount_index]['amounts']['card'] += D(v)
+                        #oracle_codes[code][date_amount_index]['amounts']['card'] += D(v)
+                        d['amounts']['card'] += D(v)
                         item['card'] += D(v)
+                        if code == 'NNP42 GST':
+                            print 'payments - {} - {} - {} -{} - invoice {} oracle_code {} crn {}'.format(c.settlement_date,D(v),d.get('date'),c.id,i.reference,d['amounts']['card'],c .crn1)    
                         date_amounts[date_amount_index]['amounts']['card'] += D(v)
 
                 for k,v in refund_details['card'].items():
@@ -253,6 +265,8 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                     if c.settlement_date.strftime(date_format) == d.get('date') and c.approved:
                         oracle_codes[code][date_amount_index]['amounts']['card'] -= D(v)
                         item['card'] -= D(v)
+                        if code == 'NNP42 GST':
+                            print 'refunds - {} - {} - {} -{} - invoice {} oracle_code {} crn {}'.format(c.settlement_date,D(v),d.get('date'),c.id,i.reference,d['amounts']['card'],c.crn1)    
                         date_amounts[date_amount_index]['amounts']['card'] -= D(v)
 
                 # BPAY
@@ -269,6 +283,8 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                         oracle_codes[code][date_amount_index]['amounts']['bpay'] -= D(v)
                         item['bpay'] -= D(v)
                         date_amounts[date_amount_index]['amounts']['bpay'] -= D(v)
+                if code == 'NNP42 GST':
+                    print '{} - {}\n\n'.format(l.get('date'),d['amounts']['card'])
 
         for code in oracle_codes:
             item_str = ''
@@ -349,7 +365,7 @@ def generate_trans_csv(system,start,end,region=None,district=None):
     invoices = Invoice.objects.filter(system=system)
     if invoices:
         strIO = StringIO()
-        fieldnames = ['Created', 'Payment Method', 'Transaction Type', 'Amount', 'Approved', 'Source', 'Product Names',
+        fieldnames = ['Created','Settlement Date', 'Payment Method', 'Transaction Type', 'Amount', 'Approved', 'Source', 'Product Names',
                       'Product Codes', 'Invoice']
         writer = csv.DictWriter(strIO, fieldnames=fieldnames)
         writer.writeheader()
@@ -381,6 +397,7 @@ def generate_trans_csv(system,start,end,region=None,district=None):
                 if c.type not in ['move_in','move_out']:
                     cash_info = {
                         'Created': c.created.strftime('%Y-%m-%d'),
+                        'Settlement Date': c.created.strftime('%Y-%m-%d'),
                         'Invoice': c.invoice.reference,
                         'Payment Method': 'Cash',
                         'Transaction Type': c.type.lower(),
@@ -396,6 +413,7 @@ def generate_trans_csv(system,start,end,region=None,district=None):
                 for b in bpay:
                     bpay_info = {
                         'Created': b.created.strftime('%Y-%m-%d'),
+                        'Settlement Date': b.p_date.strftime('%Y-%m-%d'),
                         'Invoice': b.crn,
                         'Payment Method': 'BPAY',
                         'Transaction Type': b.get_p_instruction_code_display(),
@@ -410,6 +428,7 @@ def generate_trans_csv(system,start,end,region=None,district=None):
                 for bpt in bpoint:
                     bpoint_info = {
                         'Created': bpt.created.strftime('%Y-%m-%d'),
+                        'Settlement Date': bpt.settlement_date.strftime('%Y-%m-%d'),
                         'Invoice': bpt.crn1,
                         'Payment Method': 'BPOINT',
                         'Transaction Type': bpt.action.lower(),
