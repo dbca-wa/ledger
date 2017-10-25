@@ -29,7 +29,7 @@
         <div class="row">
             <div class="col-lg-12"><div class="well">
                 <h3>Your session has expired, or you have not yet selected a campsite to book.</h3>
-                <p>Please visit the <a href="https://parks-oim.dpaw.wa.gov.au/park-stay">Explore Parks website</a> to start a new campground booking session.</p>
+                <p>Please visit the <a href="{{EXPLORE_PARKS_SEARCH}}">Explore Parks website</a> to start a new campground booking session.</p>
             </div></div>
         </div>
     </div>
@@ -221,7 +221,7 @@
                     <div class="row">
                         <div class="col-lg-12">
                             <h3 class="text-primary">Vehicles</h3>
-                            <p v-if="pricing.vehicle"><b><a href="https://parks-oim.dpaw.wa.gov.au/know/park-entry-fees" target="_blank">Entry fees</a> are required for each vehicle entering this park.</b></p>
+                            <p v-if="pricing.vehicle"><b><a href="{{EXPLORE_PARKS_ENTRY_FEES}}" target="_blank">Entry fees</a> are required for each vehicle entering this park.</b></p>
                             <p v-else>No entry fees are required for this park.</p>
                         </div>
                     </div>
@@ -297,7 +297,7 @@
                             <div class="row"> 
                                 <div class="col-md-8 col-md-offset-5">
                                     <div class="checkbox">
-                                        <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="https://parkstay.dpaw.wa.gov.au/terms-and-conditions">terms and conditions</a></label>
+                                        <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
                                     </div>
                                     <button :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
                                 </div>

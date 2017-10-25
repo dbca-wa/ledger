@@ -28,14 +28,17 @@ Vehicle: {{v.Rego}}, {{v.Type}}
 
 
 {% if unpaid_vehicle %}
-    Purchase a park entry pass at our <a href="https://shop.dpaw.wa.gov.au/park-passes">online store</a> or <a href="https://parks.dpaw.wa.gov.au/know/park-entry-fees">pay on arrival</a>
+    Purchase a park entry pass at our online store (https://shop.dpaw.wa.gov.au/park-passes) or pay on arrival ({{EXPLORE_PARKS_ENTRY_FEES}})
 {% endif %}
 
 About {{booking.campground.name}} and booking conditions {{availability}}
 
-Before you go, check
+Before you go, check:
 
-Your contact details and vehicle registration are correct [link to on screen details] The <a href="http://www.bom.gov.au/">Bureau of Meteorology</a> for weather forecasts and warnings <a href="https://www.emergency.wa.gov.au/">Emergency WA</a> for warnings and incidents The <a href="http://www.abc.net.au/">ABC</a> radio frequency for the area you are visiting (ABC local radio broadcasts emergency information)
+- Your contact details and vehicle registration are correct [link to on screen details] 
+- The Bureau of Meteorology (http://www.bom.gov.au) for weather forecasts and warnings 
+- Emergency WA (https://www.emergency.wa.gov.au) for warnings and incidents 
+- The ABC (http://www.abc.net.au) radio frequency for the area you are visiting (ABC local radio broadcasts emergency information)
 
 Contact us about your booking
 {{campground_email}}
