@@ -4,21 +4,21 @@
         <div class="row" v-if="status == 'offline'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
-                    Sorry, this campground doesn't yet support online bookings. Please visit the <a href="https://parks-oim.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
+                    Sorry, this campground doesn't yet support online bookings. Please visit the <a href="https://parks.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
                 </div>
             </div>
         </div>
         <div class="row" v-else-if="status == 'empty'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
-                    Sorry, this campground doesn't yet have any campsites assigned to it. Please visit the <a href="https://parks-oim.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
+                    Sorry, this campground doesn't yet have any campsites assigned to it. Please visit the <a href="https://parks.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
                 </div>
             </div>
         </div>
         <div class="row" v-else-if="status == 'closed'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
-                    Sorry, this campground is closed for the selected period. Please visit the <a href="https://parks-oim.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
+                    Sorry, this campground is closed for the selected period. Please visit the <a href="https://parks.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
                 </div>
             </div>
         </div>
@@ -27,7 +27,7 @@
                 <div class="callout alert">
                     Sorry, there was an error placing the booking: {{ errorMsg }} <br/>
                     <template v-if="showSecondErrorLine">
-                    Please try again later. If this reoccurs, please contact <a href="https://parks-oim.dpaw.wa.gov.au/contact-us">Parks and Visitor Services</a> with this error message, the campground and the time of the request.
+                    Please try again later. If this reoccurs, please contact <a href="https://parks.dpaw.wa.gov.au/contact-us">Parks and Visitor Services</a> with this error message, the campground and the time of the request.
                     </template>
                 </div>
             </div>
