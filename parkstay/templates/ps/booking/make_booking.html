@@ -302,6 +302,7 @@
                                     <button :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
                                 </div>
                             </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -517,7 +518,7 @@
                         if (Array.isArray(storedData.vehicles)){
                             var length = storedData.vehicles.length;
                             vm.vehicles = [];
-                            $.each(storedData.vehicles,(i,v)=>{
+                            $.each(storedData.vehicles, function(i,v) {
                                 vm.vehicles.push(v);
                             });
                             vm.vehicleCount = length;
