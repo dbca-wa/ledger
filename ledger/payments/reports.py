@@ -1,8 +1,11 @@
 from six.moves import StringIO
 import csv
+import pytz
 from datetime import timedelta
 from decimal import Decimal as D
 from ledger.payments.models import Invoice, CashTransaction, BpointTransaction, BpayTransaction
+
+PERTH_TIMEZONE = pytz.timezone('Australia/Perth')
 
 def daterange(start,end):
     for n in range(int ((end-start).days) + 1):
@@ -18,7 +21,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
     items = []
     oracle_codes = {}
     banked_oracle_codes = {}
-    date_format = '%A %d/%m/%y'
+    date_format = '%d/%m/%y'
 
     eftpos = []
     banked_cash = []
@@ -59,6 +62,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                 invoices.append(invoice)
                 invoice_list.append(str(b.crn))
 
+    invoice_list = list(set(invoice_list))
 
     if invoices:
         strIO = StringIO()
@@ -101,7 +105,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
         # Loop through the payments and not the invoices
         for i in invoices:
             # Add items of invoice if not in list
-            if i.order and not i.voided:
+            if i.order:# and not i.voided:
                 if i.reference not in parsed_invoices.keys():
                     parsed_invoices[i.reference] = {'amount':i.amount,'paid':i.payment_amount,'refunded':i.refundable_amount}
                 for x in i.order.lines.all():
@@ -177,6 +181,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
             payment_details = item.get('item').payment_details
             refund_details = item.get('item').refund_details
             deduction_details = item.get('item').deduction_details
+
             # Banked Cash
             for d in item['banked_dates']:
                 index = 0
@@ -212,6 +217,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                             banked_oracle_codes[code][date_amount_index]['amounts'][source] -= D(v)
                             item[source] -= D(v)
                             banked_date_amounts[date_amount_index]['amounts'][source] -= D(v)
+
 
             # Other transactions
             for d in oracle_codes[code]:
@@ -349,7 +355,7 @@ def generate_trans_csv(system,start,end,region=None,district=None):
     invoices = Invoice.objects.filter(system=system)
     if invoices:
         strIO = StringIO()
-        fieldnames = ['Created', 'Payment Method', 'Transaction Type', 'Amount', 'Approved', 'Source', 'Product Names',
+        fieldnames = ['Created','Settlement Date', 'Payment Method', 'Transaction Type', 'Amount', 'Approved', 'Source', 'Product Names',
                       'Product Codes', 'Invoice']
         writer = csv.DictWriter(strIO, fieldnames=fieldnames)
         writer.writeheader()
@@ -374,17 +380,18 @@ def generate_trans_csv(system,start,end,region=None,district=None):
             }'''
             cash = i.cash_transactions.filter(created__gte=start, created__lte=end, district=district)
             if not district:
-                bpoint = i.bpoint_transactions.filter(created__gte=start, created__lte=end)
+                bpoint = i.bpoint_transactions.filter(settlement_date__gte=start, settlement_date__lte=end)
                 bpay = i.bpay_transactions.filter(p_date__gte=start, p_date__lte=end)
             # Write out the cash transactions
             for c in cash:
                 if c.type not in ['move_in','move_out']:
                     cash_info = {
-                        'Created': c.created.strftime('%Y-%m-%d'),
+                        'Created': c.created.astimezone(PERTH_TIMEZONE).strftime('%d/%m/%Y %H:%M:%S'),
+                        'Settlement Date': c.created.strftime('%d/%m/%Y'),
                         'Invoice': c.invoice.reference,
                         'Payment Method': 'Cash',
                         'Transaction Type': c.type.lower(),
-                        'Amount': c.amount,
+                        'Amount': c.amount if c.type not in ['refund','move_out'] else '-{}'.format(c.amount),
                         'Approved': 'True',
                         'Source': c.source,
                         'Product Names': item_names,
@@ -395,11 +402,12 @@ def generate_trans_csv(system,start,end,region=None,district=None):
                 # Write out all bpay transactions
                 for b in bpay:
                     bpay_info = {
-                        'Created': b.created.strftime('%Y-%m-%d'),
+                        'Created': b.created.astimezone(PERTH_TIMEZONE).strftime('%d/%m/%Y %H:%M:%S'),
+                        'Settlement Date': b.p_date.strftime('%d/%m/%Y'),
                         'Invoice': b.crn,
                         'Payment Method': 'BPAY',
                         'Transaction Type': b.get_p_instruction_code_display(),
-                        'Amount': b.amount,
+                        'Amount': b.amount if b.p_instruction_code == '05' and b.type == '399' else '-{}'.format(b.amount),
                         'Approved': b.approved,
                         'Source': 'N/A',
                         'Product Names': item_names,
@@ -409,11 +417,12 @@ def generate_trans_csv(system,start,end,region=None,district=None):
                 # Write out all bpoint transactions
                 for bpt in bpoint:
                     bpoint_info = {
-                        'Created': bpt.created.strftime('%Y-%m-%d'),
+                        'Created': bpt.created.astimezone(PERTH_TIMEZONE).strftime('%d/%m/%Y %H:%M:%S'),
+                        'Settlement Date': bpt.settlement_date.strftime('%d/%m/%Y'),
                         'Invoice': bpt.crn1,
                         'Payment Method': 'BPOINT',
                         'Transaction Type': bpt.action.lower(),
-                        'Amount': bpt.amount,
+                        'Amount': bpt.amount if bpt.action not in ['refund'] else '-{}'.format(bpt.amount),
                         'Approved': bpt.approved,
                         'Source': 'N/A',
                         'Product Names': item_names,

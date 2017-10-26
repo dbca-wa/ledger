@@ -337,6 +337,8 @@ def oracle_parser(date,system,system_name,override=False):
             ois = OracleInterfaceSystem.objects.get(system_id=system)
         except OracleInterfaceSystem.DoesNotExist:
             raise Exception('No system with id {} exists for integration with oracle'.format(system))
+        if not ois.enabled:
+            raise Exception('The oracle job is not enabled for {}'.format(ois.system_name))
         with transaction.atomic():
             op,created = OracleParser.objects.get_or_create(date_parsed=date)
             bpoint_txns = []
@@ -475,7 +477,7 @@ def update_payments(invoice_reference):
                     refunded_amount = line.refunded
                     deducted_amount = line.deducted
                     amount = line.line_price_incl_tax
-                    total_paid = i.payment_amount
+                    total_paid = i.total_payment_amount
                     total_refund = i.refund_amount
                     total_deductions = i.deduction_amount
                     paid += paid_amount
@@ -649,19 +651,49 @@ def update_payments(invoice_reference):
                 first_item = i.order.lines.first()
                 # Bpoint
                 for b in i.bpoint_transactions:
-                    if b.payment_allocated < b.amount:
+                    if b.payment_allocated < b.amount and b.action == 'payment':
                         if first_item.payment_details['card'].get(str(b.id)):
-                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated))
+                             first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated))
+                        else:
+                            first_item.payment_details['card'][str(b.id)] = str(b.amount - b.payment_allocated)
                 # Bpay
                 for b in i.bpay_transactions:
-                    if b.payment_allocated < b.amount:
+                    if b.payment_allocated < b.amount and b.p_instruction_code == '05' and b.type == '399':
                         if first_item.payment_details['bpay'].get(str(b.id)):
-                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['bpay'][str(b.id)]) + (b.amount - b.payment_allocated))
+                            first_item.payment_details['bpay'][str(b.id)] = str(D(first_item.payment_details['bpay'][str(b.id)]) + (b.amount - b.payment_allocated))
+                        else:
+                            first_item.payment_details['bpay'][str(b.id)] = str(b.amount - b.payment_allocated)
                 # Cash
                 for b in i.cash_transactions.all():
-                    if b.payment_allocated < b.amount:
+                    if b.payment_allocated < b.amount and b.type in ['payment','move_in']:
                         if first_item.payment_details['cash'].get(str(b.id)):
-                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['cash'][str(b.id)]) + (b.amount - b.payment_allocated))
+                            first_item.payment_details['cash'][str(b.id)] = str(D(first_item.payment_details['cash'][str(b.id)]) + (b.amount - b.payment_allocated))
+                        else:
+                            first_item.payment_details['cash'][str(b.id)] = str(b.amount - b.payment_allocated)
+                first_item.save()
+            if i.refund_amount > refunded:
+                first_item = i.order.lines.first()
+                # Bpoint
+                for b in i.bpoint_transactions:
+                    if b.refund_allocated < b.amount and b.action == 'refund':
+                        if first_item.refund_details['card'].get(str(b.id)):
+                            first_item.refund_details['card'][str(b.id)] = str(D(first_item.refund_details['card'][str(b.id)]) + (b.amount - b.refund_allocated))
+                        else:
+                            first_item.refund_details['card'][str(b.id)] = str(b.amount - b.refund_allocated)
+                # Bpay
+                for b in i.bpay_transactions:
+                    if b.refund_allocated < b.amount and b.p_instruction_code == '25' and b.type == '699':
+                        if first_item.refund_details['bpay'].get(str(b.id)):
+                            first_item.refund_details['bpay'][str(b.id)] = str(D(first_item.refund_details['bpay'][str(b.id)]) + (b.amount - b.refund_allocated))
+                        else:
+                            first_item.refund_details['bpay'][str(b.id)] = str(b.amount - b.refund_allocated)
+                # Cash
+                for b in i.cash_transactions.all():
+                    if b.refund_allocated < b.amount and b.type == 'refund':
+                        if first_item.refund_details['cash'].get(str(b.id)):
+                            first_item.refund_details['cash'][str(b.id)] = str(D(first_item.refund_details['cash'][str(b.id)]) + (b.amount - b.refund_allocated))
+                        else:
+                            first_item.refund_details['cash'][str(b.id)] = str(b.amount - b.refund_allocated)
                 first_item.save()
         except:
             print(traceback.print_exc())
