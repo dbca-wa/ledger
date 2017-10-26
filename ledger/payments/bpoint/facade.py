@@ -80,11 +80,12 @@ class Facade(object):
             res.settlement_date,
             res.txn_number,
             res.dvtoken,
+            res.is_test_txn,
             bankcard_lastdigits
         )
 
     def _create_txn(self,action,crn1,amount,amount_original,amount_surcharge,
-                    type,cardtype,receipt_number,response_code,response_txt,processed,settlement_date,txn_number,dvtoken,bankcard_lastdigits=None):
+                    type,cardtype,receipt_number,response_code,response_txt,processed,settlement_date,txn_number,dvtoken,is_test,bankcard_lastdigits=None):
         '''
             Store a Bpoint Transaction object whether the bpoint
             transaction response was successful or not
@@ -110,6 +111,7 @@ class Facade(object):
                 settlement_date=settlement_date,
                 txn_number=txn_number,
                 dvtoken=dvtoken,
+                test_transaction=is_test,
                 last_digits = bankcard_lastdigits
             )
         except Exception as e:
