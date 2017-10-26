@@ -150,7 +150,8 @@ class BpointTransaction(models.Model):
                 self.order,
                 self.crn1,
                 self.amount,
-                None
+                None,
+                replay=True
             )
 
     def refund(self,info,user,matched=True):
