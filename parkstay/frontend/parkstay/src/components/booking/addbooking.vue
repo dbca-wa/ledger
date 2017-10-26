@@ -84,7 +84,7 @@
                             <div class="col-lg-12">
                                 <h3 class="text-primary">Campsite Booking</h3>
                                 <p>
-                                    Click <a href="https://parks-oim.dpaw.wa.gov.au/park-stay">here</a> to open the map of the campground to help you select the preferred campsite
+                                    Click <a target="_blank" :href="campground.campground_map">here</a> to open the map of the campground to help you select the preferred campsite
                                 </p>
                                 <ul class="nav nav-tabs">
                                     <li :class="{active:campground.site_type == 0}" v-show="campground.site_type == 0" ><a data-toggle="tab" href="#campsite-booking" @click.prevent="booking_type=booking_types.CAMPSITE">Campsite</a></li>
