@@ -205,7 +205,6 @@ class BpayFileList(viewsets.ReadOnlyModelViewSet):
 #                                                     #
 #######################################################
 class BpointTransactionSerializer(serializers.ModelSerializer):
-    original_txn = serializers.CharField(source='original_txn.txn_number')
     order = serializers.CharField(source='order.number')
     cardtype = serializers.SerializerMethodField()
     settlement_date = serializers.DateField(format='%B, %d %Y')

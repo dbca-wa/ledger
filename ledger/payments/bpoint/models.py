@@ -54,7 +54,7 @@ class BpointTransaction(models.Model):
     type = models.CharField(max_length=50, choices=TRANSACTION_TYPES)
     # store the txn number from Bpoint
     txn_number = models.CharField(unique=True, max_length=128, help_text='Transaction number used by BPOINT to identify a transaction')
-    original_txn = models.ForeignKey('self', to_field='txn_number', blank=True, null=True, help_text='Transaction number stored \
+    original_txn = models.CharField(max_length=128, blank=True, null=True, help_text='Transaction number stored \
                                            if current transaction depends on a previous transaction \
                                            in the case where the action is a refund, reversal or capture')
     dvtoken = models.CharField(max_length=128,null=True,blank=True,help_text='Stored card dv token')
