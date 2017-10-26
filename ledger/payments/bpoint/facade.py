@@ -80,11 +80,13 @@ class Facade(object):
             res.settlement_date,
             res.txn_number,
             res.dvtoken,
+            res.is_test_txn,
+            res.original_txn_number,
             bankcard_lastdigits
         )
 
     def _create_txn(self,action,crn1,amount,amount_original,amount_surcharge,
-                    type,cardtype,receipt_number,response_code,response_txt,processed,settlement_date,txn_number,dvtoken,bankcard_lastdigits=None):
+                    type,cardtype,receipt_number,response_code,response_txt,processed,settlement_date,txn_number,dvtoken,is_test,original_transaction,bankcard_lastdigits=None):
         '''
             Store a Bpoint Transaction object whether the bpoint
             transaction response was successful or not
@@ -110,6 +112,8 @@ class Facade(object):
                 settlement_date=settlement_date,
                 txn_number=txn_number,
                 dvtoken=dvtoken,
+                is_test=is_test,
+                original_txn=original_transaction,
                 last_digits = bankcard_lastdigits
             )
         except Exception as e:
@@ -176,7 +180,7 @@ class Facade(object):
                     if (decimal.Decimal(total) > inv.balance) and action == 'payment':
                         raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
 
-            txn = self._submit_info(order_number,reference,total,action,_type,sub_type,bankcard,orig_txn_number,replay=replay)
+            txn = self._submit_info(order_number,reference,total,action,_type,sub_type,bankcard,orig_txn_number)
             self.friendly_error_msg(txn)
             
             return txn
