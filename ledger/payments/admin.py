@@ -83,7 +83,8 @@ class BpointTransactionAdmin(admin.ModelAdmin):
                         'last_digits',
                         'is_test'
                     )
-    list_display = ('txn_number','receipt_number','crn1','action','amount','approved')
+    list_display = ('created','settlement_date','txn_number','receipt_number','crn1','action','amount','approved','is_test')
+    search_fields = ('created','amount','crn1')
     
     def has_delete_permission(self,*args,**kwargs):
         return False
