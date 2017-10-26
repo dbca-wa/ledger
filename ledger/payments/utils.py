@@ -337,6 +337,8 @@ def oracle_parser(date,system,system_name,override=False):
             ois = OracleInterfaceSystem.objects.get(system_id=system)
         except OracleInterfaceSystem.DoesNotExist:
             raise Exception('No system with id {} exists for integration with oracle'.format(system))
+        if not ois.enabled:
+            raise Exception('The oracle job is not enabled for {}'.format(ois.system_name))
         with transaction.atomic():
             op,created = OracleParser.objects.get_or_create(date_parsed=date)
             bpoint_txns = []
