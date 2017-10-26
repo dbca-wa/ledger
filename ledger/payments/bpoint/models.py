@@ -59,7 +59,7 @@ class BpointTransaction(models.Model):
                                            in the case where the action is a refund, reversal or capture')
     dvtoken = models.CharField(max_length=128,null=True,blank=True,help_text='Stored card dv token')
     last_digits = models.CharField(max_length=4,blank=True,null=True,help_text='Last four digits of card used during checkout')
-    test_transaction = models.BooleanField(default=False,help_text='Transaction is in test mode')
+    is_test = models.BooleanField(default=False,help_text='Transaction is in test mode')
     
     class Meta:
         ordering = ('-created',)

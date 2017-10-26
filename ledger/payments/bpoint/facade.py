@@ -111,7 +111,7 @@ class Facade(object):
                 settlement_date=settlement_date,
                 txn_number=txn_number,
                 dvtoken=dvtoken,
-                test_transaction=is_test,
+                is_test=is_test,
                 last_digits = bankcard_lastdigits
             )
         except Exception as e:

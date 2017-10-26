@@ -80,7 +80,8 @@ class BpointTransactionAdmin(admin.ModelAdmin):
                         'processed',
                         'settlement_date',
                         'dvtoken',
-                        'last_digits'
+                        'last_digits',
+                        'is_test'
                     )
     list_display = ('txn_number','receipt_number','crn1','action','amount','approved')
     
