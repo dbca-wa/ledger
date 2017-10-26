@@ -130,6 +130,28 @@ class BpointTransaction(models.Model):
 
     # Methods
     # ==============================
+    def replay_transaction(self):
+        from ledger.payments.facade import bpoint_facade 
+
+        if self.action != 'payment':
+            raise ValidationError('Cant replay non payment transactions')
+
+        card = TempBankCard(
+            self.dvtoken,
+            None
+        )
+        card.last_digits = self.last_digits
+        txn = bpoint_facade.pay_with_temptoken(
+                'payment',
+                'internet',
+                'single',
+                card,
+                self.order,
+                self.crn1,
+                self.amount,
+                None
+            )
+
     def refund(self,info,user,matched=True):
         from ledger.payments.facade import bpoint_facade 
         from ledger.payments.models import TrackRefund, Invoice
