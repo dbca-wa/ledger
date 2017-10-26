@@ -219,10 +219,6 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                             banked_date_amounts[date_amount_index]['amounts'][source] -= D(v)
 
 
-            #if code == 'NNP42 GST':
-            #    print payment_details
-            #    print refund_details
-            #    print 'current date {}'.format(l.get('date'))
             # Other transactions
             for d in oracle_codes[code]:
                 index = 0
@@ -232,8 +228,6 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                         break
                     index += 1
                 # EFT
-                if code == 'NNP42 GST':
-                    print '{} - {}'.format(l.get('date'),d)
                 for k,v in payment_details["cash"].items():
                     c = CashTransaction.objects.get(id=int(k))
                     source = c.source
@@ -256,11 +250,8 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                 for k,v in payment_details['card'].items():
                     c = BpointTransaction.objects.get(id=int(k))
                     if c.settlement_date.strftime(date_format) == d.get('date') and c.approved:
-                        #oracle_codes[code][date_amount_index]['amounts']['card'] += D(v)
-                        d['amounts']['card'] += D(v)
+                        oracle_codes[code][date_amount_index]['amounts']['card'] += D(v)
                         item['card'] += D(v)
-                        if code == 'NNP42 GST':
-                            print 'payments - {} - {} - {} -{} - invoice {} oracle_code {} crn {}'.format(c.settlement_date,D(v),d.get('date'),c.id,i.reference,d['amounts']['card'],c .crn1)    
                         date_amounts[date_amount_index]['amounts']['card'] += D(v)
 
                 for k,v in refund_details['card'].items():
@@ -268,8 +259,6 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                     if c.settlement_date.strftime(date_format) == d.get('date') and c.approved:
                         oracle_codes[code][date_amount_index]['amounts']['card'] -= D(v)
                         item['card'] -= D(v)
-                        if code == 'NNP42 GST':
-                            print 'refunds - {} - {} - {} -{} - invoice {} oracle_code {} crn {}'.format(c.settlement_date,D(v),d.get('date'),c.id,i.reference,d['amounts']['card'],c.crn1)    
                         date_amounts[date_amount_index]['amounts']['card'] -= D(v)
 
                 # BPAY
@@ -286,8 +275,6 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                         oracle_codes[code][date_amount_index]['amounts']['bpay'] -= D(v)
                         item['bpay'] -= D(v)
                         date_amounts[date_amount_index]['amounts']['bpay'] -= D(v)
-                if code == 'NNP42 GST':
-                    print '{} - {}\n\n'.format(l.get('date'),d['amounts']['card'])
 
         for code in oracle_codes:
             item_str = ''
