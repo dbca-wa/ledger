@@ -206,10 +206,12 @@ class BpointToken(models.Model):
 
     @property
     def bankcard(self):
-        return TempBankCard(
+        card = TempBankCard(
             self.DVToken,
             self.expiry_date.strftime("%m%y")
         )
+        card.last_digits = self.last_digits
+        return card
 
     def delete(self):
         UsedBpointToken.objects.create(DVToken=self.DVToken)
