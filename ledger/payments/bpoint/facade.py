@@ -152,7 +152,7 @@ class Facade(object):
 
         return res
 
-    def post_transaction(self, action,_type,sub_type,order_number=None,reference=None,total=None,bankcard=None,orig_txn_number=None):
+    def post_transaction(self, action,_type,sub_type,order_number=None,reference=None,total=None,bankcard=None,orig_txn_number=None,replay=False):
         '''Create a new transaction.
             Actions are:
             payment - Debit the card immediately
@@ -164,18 +164,19 @@ class Facade(object):
         try:
             if reference:
                 inv = Invoice.objects.get(reference=reference)
-                if action in ['reversal','refund'] and inv.payment_status == 'unpaid':
-                    raise ValidationError("A {} cannot be made for an unpaid invoice.".format(action))
-                if action == 'refund' and (inv.payment_amount < decimal.Decimal(total)):
-                    raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
-                if inv.payment_status == 'paid' and action == 'payment':
-                    raise ValidationError('This invoice has already been paid for.')
-                if inv.voided and action not in ['refund','unmatched_refund']:
-                    raise ValidationError('You cannot make a payment for an invoice that has been voided.')
-                if (decimal.Decimal(total) > inv.balance) and action == 'payment':
-                    raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
+                if not replay:
+                    if action in ['reversal','refund'] and inv.payment_status == 'unpaid':
+                        raise ValidationError("A {} cannot be made for an unpaid invoice.".format(action))
+                    if action == 'refund' and (inv.payment_amount < decimal.Decimal(total)):
+                        raise ValidationError("A refund greater than the amount paid for the invoice cannot be made.")
+                    if inv.payment_status == 'paid' and action == 'payment':
+                        raise ValidationError('This invoice has already been paid for.')
+                    if inv.voided and action not in ['refund','unmatched_refund']:
+                        raise ValidationError('You cannot make a payment for an invoice that has been voided.')
+                    if (decimal.Decimal(total) > inv.balance) and action == 'payment':
+                        raise ValidationError('The amount to be charged is more than the amount payable for this invoice.')
 
-            txn = self._submit_info(order_number,reference,total,action,_type,sub_type,bankcard,orig_txn_number)
+            txn = self._submit_info(order_number,reference,total,action,_type,sub_type,bankcard,orig_txn_number,replay=replay)
             self.friendly_error_msg(txn)
             
             return txn
@@ -224,11 +225,11 @@ class Facade(object):
         except BpointToken.DoesNotExist as e:
             raise UnableToTakePayment(str(e))
 
-    def pay_with_temptoken(self,action,_type,sub_type,token,order_number=None,reference=None,total=None,orig_txn_number=None):
+    def pay_with_temptoken(self,action,_type,sub_type,token,order_number=None,reference=None,total=None,orig_txn_number=None,replay=False):
         ''' Make a payment using a temp token
         '''
         try:
-            return self.post_transaction(action,_type,sub_type,order_number,reference,total,token,orig_txn_number)
+            return self.post_transaction(action,_type,sub_type,order_number,reference,total,token,orig_txn_number,replay=replay)
         except BpointToken.DoesNotExist as e:
             raise UnableToTakePayment(str(e))
 
