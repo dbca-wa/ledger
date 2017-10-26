@@ -1,5 +1,9 @@
 {%  extends 'ps/email/base_email.html' %}
 
+{% block greetings %}
+<p>{{booking.details.first_name}} {{booking.details.last_name}},</p>
+{% endblock %}
+
 {% block content %}
 <p>Print or save this confirmation for presentation on arrival and at any time during your stay.</p>
 
