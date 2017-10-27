@@ -10,7 +10,7 @@ from parkstay.emails import send_booking_confirmation
 from parkstay.utils import oracle_integration
 
 class UnpaidBookingsReportCronJob(CronJobBase):
-    RUN_AT_TIMES = ['05:30']
+    RUN_AT_TIMES = ['01:00']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code = 'parkstay.unpaid_bookings_report'
