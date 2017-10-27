@@ -11,7 +11,8 @@ from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransac
 def outstanding_bookings():
     try:
         outstanding = []
-        for b in Booking.objects.all():
+        today = datetime.date.today()
+        for b in Booking.objects.filter(is_canceled=False,departure__gte=today).exclude(booking_type__in=['1','3']):
             if not b.paid:
                 outstanding.append(b)
 
@@ -21,7 +22,8 @@ def outstanding_bookings():
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
         for o in outstanding:
-            writer.writerow([o.confirmation_number,o.customer.get_full_name(),o.campground.name,o.arrival.strftime('%d/%m/%Y'),o.departure.strftime('%d/%m/%Y'),o.outstanding])
+            fullname = '{} {}'.format(o.details.get('first_name'),o.details.get('last_name'))
+            writer.writerow([o.confirmation_number,fullname,o.campground.name,o.arrival.strftime('%d/%m/%Y'),o.departure.strftime('%d/%m/%Y'),o.outstanding])
         strIO.flush()
         strIO.seek(0)
         _file = strIO
