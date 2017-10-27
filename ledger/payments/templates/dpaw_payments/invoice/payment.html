@@ -212,7 +212,7 @@
                         <div class="tabs-panel" id="other">
                             <div class="row">
                                 <div class="columns large-12">
-                                    <form id="other_form" class="{% if invoices.0.payment_status == 'paid' or invoices.0.payment_status == 'over_paid' %}hide{% endif %}">
+                                    <form id="other_form" class="{% if invoices.0.payment_status == 'paid' or invoices.0.payment_status == 'over_paid' or invoices.0.voided %}hide{% endif %}">
                                         <h3> Record Payment</h3>
                                         <label>
                                                 Amount

@@ -258,7 +258,7 @@ $(function(){
         receivedPaymentsTable.ajax.reload();
     }
     function showRecordPayment(){
-        if (invoice_obj.payment_status != 'paid' && invoice_obj.payment_status != 'over_paid'){
+        if (invoice_obj.payment_status != 'paid' && invoice_obj.payment_status != 'over_paid' && !invoice_obj.voided){
             if ($other_form.hasClass('hide')){
                 $other_form.removeClass('hide');
             }
