@@ -557,6 +557,7 @@ class InvoiceTransactionSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'owner',
+            'voided',
             'order_number',
             'num_items',
             'amount',
