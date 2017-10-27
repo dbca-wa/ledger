@@ -116,6 +116,7 @@ export default {
                 responsive: true,
                 serverSide:true,
                 processing:true,
+                searchDelay: 800,
                 ajax: {
                     "url": api_endpoints.bookings,
                     "dataSrc": 'results',
