@@ -788,7 +788,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             # Proceed to generate invoice
             checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
             # Change the type of booking
-            booking.booking_type = 1
+            booking.booking_type = 0
             booking.save()
             internal_create_booking_invoice(booking, checkout_response)
             delete_session_booking(request.session)
