@@ -32,7 +32,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
     if not district:
         eftpos.extend([x for x in CashTransaction.objects.filter(created__gte=start, created__lte=end, source='eftpos').exclude(district__isnull=False)])
         banked_cash.extend([x for x in CashTransaction.objects.filter(created__gte=banked_start, created__lte=banked_end).exclude(source='eftpos').exclude(district__isnull=False)])
-        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date__gte=start, settlement_date__lte=end)])
+        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date__gte=start, settlement_date__lte=end).exclude(crn1__endswith='_test')])
         bpay.extend([x for x in BpayTransaction.objects.filter(p_date__gte=start, p_date__lte=end)])
     else:
         eftpos.extend([x for x in CashTransaction.objects.filter(created__gte=start, created__lte=end, source='eftpos',district=district)])
@@ -380,7 +380,7 @@ def generate_trans_csv(system,start,end,region=None,district=None):
             }'''
             cash = i.cash_transactions.filter(created__gte=start, created__lte=end, district=district)
             if not district:
-                bpoint = i.bpoint_transactions.filter(settlement_date__gte=start, settlement_date__lte=end)
+                bpoint = i.bpoint_transactions.filter(settlement_date__gte=start, settlement_date__lte=end).exclude(crn1__endswith='_test')
                 bpay = i.bpay_transactions.filter(p_date__gte=start, p_date__lte=end)
             # Write out the cash transactions
             for c in cash:
