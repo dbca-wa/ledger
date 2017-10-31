@@ -37,7 +37,8 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 
         convert_documents_to_url(application.data, application.documents.all(), '')
 
-        kwargs['application'] = serialize(application, posthook=format_application)
+        #kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
         kwargs['form_structure'] = application.licence_type.application_schema
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application),
                                           posthook=format_assessment)
@@ -92,7 +93,8 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         convert_documents_to_url(application.data, application.documents.all(), '')
 
-        kwargs['application'] = serialize(application, posthook=format_application)
+        #kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
         kwargs['form_structure'] = application.licence_type.application_schema
 
         kwargs['assessment'] = serialize(assessment, post_hook=format_assessment)
