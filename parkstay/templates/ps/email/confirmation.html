@@ -8,14 +8,14 @@
 <p>Print or save this confirmation for presentation on arrival and at any time during your stay.</p>
 
 <p>Arrival: {{booking.arrival|date:"d/m/Y"}}</p>
-<p>Departure: {{booking.departure|date:"d/m/Y"}}</p><br />
+<p>Departure: {{booking.departure|date:"d/m/Y"}}</p>
 
 {% if booking.campground.site_type == 2 %}
 <p>Campsite: {{booking.first_campsite.type}}</p>
 {% else %}
-<p>Campsite: {{booking.first_campsite.name}} ({{booking.first_campsite.type}})</p><br />
+<p>Campsite: {{booking.first_campsite.name}} ({{booking.first_campsite.type}})</p>
 {% endif %}
-<p>Campers: {{booking.stay_guests}}</p><br />
+<p>Campers: {{booking.stay_guests}}</p>
 
 {% for v in booking.vehicle_payment_status %}
 {% if not v.Paid %}
@@ -24,17 +24,23 @@
     <p>Vehicle: {{v.Rego}}, {{v.Type}}, {% if v.Paid == 'Yes' %} Entry fee paid {% elif v.Paid == 'No' %} Unpaid {% elif v.Paid == 'pass_required' %} Park Pass Required {% endif %}</p>
 {% endif %}
 {% endfor %}
+
+<p>Phone Number: {{phone_number}}</p>
 <br />
 
 {% if unpaid_vehicle %}
     <p>Purchase a park entry pass at our <a href="https://shop.dpaw.wa.gov.au/park-passes">online store</a> or <a href="{{EXPLORE_PARKS_ENTRY_FEES}}">pay on arrival</a></p>
 {% endif %}
 
-<p>About {{booking.campground.name}} and booking conditions {{availability}}</p><br />
+<a href="{{availability}}">About {{booking.campground.name}} and booking conditions</a>
 
-<p>Before you go, check</p>
+<p>Before you go, check:</p>
 
-<p>Your contact details and vehicle registration are correct [link to on screen details] The <a href="http://www.bom.gov.au/">Bureau of Meteorology</a> for weather forecasts and warnings <a href="https://www.emergency.wa.gov.au/">Emergency WA</a> for warnings and incidents The <a href="http://www.abc.net.au/">ABC</a> radio frequency for the area you are visiting (ABC local radio broadcasts emergency information)</p><br />
+<ul>
+    <li>Your contact details and vehicle registration are correct</li>
+    <li>The <a href="http://www.bom.gov.au/">Bureau of Meteorology</a> for weather forecasts and warnings <a href="https://www.emergency.wa.gov.au/">Emergency WA</a> for warnings and incidents</li>
+    <li>The <a href="http://www.abc.net.au/">ABC</a> radio frequency for the area you are visiting (ABC local radio broadcasts emergency information)</li>
+</ul>
 
 <p>Contact us about your booking</p>
 <p>{{campground_email}}</p>
@@ -43,5 +49,5 @@
 {% endif %}
 <br />
 
-<p>View my Park Stay WA bookings {{my_bookings}}</p>
+<a href="{{my_bookings}}">View my Park Stay WA bookings</a>
 {% endblock %}

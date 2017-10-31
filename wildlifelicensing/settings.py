@@ -34,7 +34,7 @@ BOOTSTRAP3 = {
 STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')))
 
 CRON_CLASSES = [
-    'wildlifelicensing.apps.applications.cron.AssessmentRemindersCronJob',
+    #'wildlifelicensing.apps.applications.cron.AssessmentRemindersCronJob',
     'wildlifelicensing.apps.main.cron.CheckLicenceRenewalsCronJob',
     'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
 ]

@@ -54,6 +54,17 @@ def send_booking_confirmation(booking,request):
     my_bookings_url = request.build_absolute_uri('/mybookings/')
     booking_availability = request.build_absolute_uri('/availability/?site_id={}'.format(booking.campground.id))
     unpaid_vehicle = False
+    mobile_number = booking.customer.mobile_number
+    booking_number = booking.details.get('phone',None)
+    phone_number = booking.customer.phone_number
+    tel = None
+    if booking_number:
+        tel = booking_number
+    elif mobile_number:
+        tel = mobile_number
+    else:
+        tel = phone_number
+    tel = tel if tel else ''
 
     for v in booking.vehicle_payment_status:
         if v.get('Paid') == 'No':
@@ -62,6 +73,7 @@ def send_booking_confirmation(booking,request):
 
     context = {
         'booking': booking,
+        'phone_number': tel,
         'campground_email': campground_email,
         'my_bookings': my_bookings_url,
         'availability': booking_availability,

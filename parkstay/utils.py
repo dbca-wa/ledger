@@ -218,10 +218,14 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     for closure in cgbr_qs:
         start = max(start_date, closure.range_start)
         end = min(end_date, closure.range_end) if closure.range_end else end_date
+        today = date.today()
         for i in range((end-start).days):
             for cs in campground_map[closure.campground.pk]:
                 #results[cs][start+timedelta(days=i)][0] = 'closed'
-                if not closure.campground._is_open(start+timedelta(days=i)):
+                if start+timedelta(days=i) == today:
+                    if not closure.campground._is_open(start+timedelta(days=i)):
+                        results[cs][start+timedelta(days=i)][0] = 'closed'
+                else:
                     results[cs][start+timedelta(days=i)][0] = 'closed'
 
     # strike out campsite closures

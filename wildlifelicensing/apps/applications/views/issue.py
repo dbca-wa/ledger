@@ -173,7 +173,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        kwargs['application'] = serialize(application, posthook=format_application)
+        #kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
 
         if application.licence:
             kwargs['issue_licence_form'] = IssueLicenceForm(instance=application.licence)
@@ -273,7 +274,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 messages.warning(request, 'Licence saved but not yet issued.')
 
                 return render(request, self.template_name, {
-                    'application': serialize(application, posthook=format_application),
+                    #'application': serialize(application, posthook=format_application),
+                    'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}}),
                     'issue_licence_form': issue_licence_form,
                     'extracted_fields': extracted_fields,
                     'payment_status': payment_status_verbose,
@@ -291,7 +293,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             messages.error(request, 'Please fix the errors below before saving / issuing the licence.')
 
             return render(request, self.template_name, {
-                'application': serialize(application, posthook=format_application),
+                #'application': serialize(application, posthook=format_application),
+                'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}}),
                 'issue_licence_form': issue_licence_form,
                 'extracted_fields': extracted_fields,
                 'payment_status': payment_status_verbose,

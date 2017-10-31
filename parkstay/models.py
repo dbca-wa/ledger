@@ -1392,9 +1392,15 @@ class CampgroundBookingRangeListener(object):
                     if linked_open:
                         linked_open = linked_open[0]
                         linked_open.range_start = instance.range_start
+                    else:
+                        linked_open = None
                 else:
-                     linked_open.range_start = today
-                if len(linked_open) > 0:
+                    if linked_open:
+                        linked_open = linked_open[0]
+                        linked_open.range_start = today
+                    else:
+                        linked_open = None
+                if linked_open:
                     linked_open[0].save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
@@ -1505,10 +1511,19 @@ class CampsiteBookingRangeListener(object):
             try:
                 linked_open = CampsiteBookingRange.objects.get(range_start=instance.range_end + timedelta(days=1), status=0)
                 if instance.range_start >= today:
-                    linked_open.range_start = instance.range_start
+                    if linked_open:
+                        linked_open = linked_open[0]
+                        linked_open.range_start = instance.range_start
+                    else:
+                        linked_open = None
                 else:
-                     linked_open.range_start = today
-                linked_open.save(skip_validation=True)
+                    if linked_open:
+                        linked_open = linked_open[0]
+                        linked_open.range_start = today
+                    else:
+                        linked_open = None
+                if linked_open:
+                    linked_open[0].save(skip_validation=True)
             except CampsiteBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
