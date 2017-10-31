@@ -25,7 +25,7 @@ class OracleIntegrationCronJob(CronJobBase):
     code = 'parkstay.oracle_integration'
 
     def do(self):
-        oracle_integration(str(date.today()),False)
+        oracle_integration(str(date.today()-timedelta(days=i)),False)
 
 class SendBookingsConfirmationCronJob(CronJobBase):
     RUN_EVERY_MINS = 5
