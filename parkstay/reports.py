@@ -49,7 +49,7 @@ def booking_refunds(start,end):
         cash.extend([x for x in CashTransaction.objects.filter(created__gte=start, created__lte=end,type='refund')])
 
         strIO = StringIO()
-        fieldnames = ['Confirmation Number', 'Name', 'Type','Amount','Oracle Code','Date','Refunded By']
+        fieldnames = ['Confirmation Number', 'Name', 'Type','Amount','Oracle Code','Date','Refunded By','Invoice']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
 
