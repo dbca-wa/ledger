@@ -78,6 +78,19 @@ CRON_CLASSES = [
     'parkstay.cron.OracleIntegrationCronJob',
 ]
 
+# Additional logging for parkstay
+LOGGING['handlers']['booking_checkout'] = {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'parkstay_booking_checkout.log'),
+            'formatter': 'verbose',
+            'maxBytes': 5242880
+        }
+LOGGING['loggers']['booking_checkout'] = {
+            'handlers': ['booking_checkout'],
+            'level': 'INFO'
+        }
+
 CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','parkstaybookings@dbca.wa.gov.au')
 EXPLORE_PARKS_URL = env('EXPLORE_PARKS_URL','https://parks-oim.dpaw.wa.gov.au')
 PARKSTAY_EXTERNAL_URL = env('PARKSTAY_EXTERNAL_URL','https://parkstay.dbca.wa.gov.au')
