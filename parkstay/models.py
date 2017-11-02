@@ -915,6 +915,7 @@ class Booking(models.Model):
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
     cancellation_reason = models.TextField(null=True,blank=True)
+    cancelation_time = models.DateTimeField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
 
@@ -1133,6 +1134,7 @@ class Booking(models.Model):
             raise ValidationError('You cannot cancel a booking past the departure date.')
         self.cancellation_reason = reason
         self.is_canceled = True
+        self.cancelation_time = timezone.now()
         self.campsites.all().delete()
         references = self.invoices.all().values('invoice_reference')
         for r in references:
