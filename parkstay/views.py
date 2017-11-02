@@ -317,16 +317,16 @@ class BookingSuccessView(TemplateView):
             try:
                 inv = Invoice.objects.get(reference=invoice_ref)
             except Invoice.DoesNotExist:
-                logger.error('User {} with id {} tried making a booking with an incorrect invoice'.format(booking.customer.get_full_name(),booking.customer.id))
+                logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
                 return redirect('public_make_booking')
 
             if inv.system not in ['0019']:
-                logger.error('User {} with id {} tried making a booking with an invoice from another system with reference number {}'.format(booking.customer.get_full_name(),booking.customer.id,inv.reference))
+                logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                 return redirect('public_make_booking')
 
             try:
                 b = BookingInvoice.objects.get(invoice_reference=invoice_ref)
-                logger.error('User {} with id {} tried making a booking with an already used invoice with reference number {}'.format(booking.customer.get_full_name(),booking.customer.id,inv.reference))
+                logger.error('{} tried making a booking with an already used invoice with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                 return redirect('public_make_booking')
             except BookingInvoice.DoesNotExist:
 
