@@ -260,14 +260,14 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
 
     # Get the current stay history
     stay_history = CampgroundStayHistory.objects.filter(
-                    #Q(range_start__lte=start_date,range_end__gte=start_date)|Q(range_start__lte=end_date,range_end__gte=end_date)
-                    Q(Q(range_start__lt=start_date,range_end__lt=end_date)&Q(range_end__gt=today))
+                    Q(range_start__lte=start_date,range_end__gte=start_date)|# filter start date is within period
+                    Q(range_start__lte=end_date,range_end__gte=end_date)|# filter end date is within period
+                    Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
                     ,campground=campsites_qs.first().campground)
     if stay_history:
         max_days = min([x.max_days for x in stay_history])
     else:
         max_days = settings.PS_MAX_BOOKING_LENGTH
-    #max_days = CampgroundStayHistory.objects.get(Q(Q(range_start__lte=start_date,range_end__gte=start_date)|Q(range_start__lte=end_date,range_end__gte=end_date))|Q(Q(range_start__lt=start_date,range_end__gt=end_date)&Q(range_end__gt=today))),campground=campsites_qs.first().campground).max_days
 
     # strike out days after the max_stay period
     for site in campsites_qs:
