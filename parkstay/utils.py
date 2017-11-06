@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from ledger.payments.models import Invoice,OracleInterface
 from ledger.payments.utils import oracle_parser
-from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange, CampsiteRate, ParkEntryRate, BookingVehicleRego)
+from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange,CampgroundStayHistory, CampsiteRate, ParkEntryRate, BookingVehicleRego)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 from parkstay.emails import send_booking_invoice,send_booking_confirmation
 
@@ -159,7 +159,8 @@ def get_open_campgrounds(campsites_qs, start_date, end_date):
         campsitebooking__date__range=(start_date, end_date-timedelta(days=1))
     # and also campgrounds where the book window is outside of the max advance range
     ).exclude(
-        campground__max_advance_booking__lte=(end_date-today).days
+        #campground__max_advance_booking__lte=(start_date-today).days - 1 
+        campground__max_advance_booking__lt=(start_date-today).days 
     )
 
     # get closures at campsite and campground level
@@ -252,6 +253,25 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     # strike out days after the max_advance_booking
     for site in campsites_qs:
         stop = today + timedelta(days=site.campground.max_advance_booking)
+        stop_mark = min(max(stop, start_date), end_date)
+        if start_date > stop:
+            for i in range((end_date-stop_mark).days):
+                results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
+
+    # Get the current stay history
+    stay_history = CampgroundStayHistory.objects.filter(
+                    #Q(range_start__lte=start_date,range_end__gte=start_date)|Q(range_start__lte=end_date,range_end__gte=end_date)
+                    Q(Q(range_start__lt=start_date,range_end__lt=end_date)&Q(range_end__gt=today))
+                    ,campground=campsites_qs.first().campground)
+    if stay_history:
+        max_days = min([x.max_days for x in stay_history])
+    else:
+        max_days = settings.PS_MAX_BOOKING_LENGTH
+    #max_days = CampgroundStayHistory.objects.get(Q(Q(range_start__lte=start_date,range_end__gte=start_date)|Q(range_start__lte=end_date,range_end__gte=end_date))|Q(Q(range_start__lt=start_date,range_end__gt=end_date)&Q(range_end__gt=today))),campground=campsites_qs.first().campground).max_days
+
+    # strike out days after the max_stay period
+    for site in campsites_qs:
+        stop = start_date + timedelta(days=max_days)
         stop_mark = min(max(stop, start_date), end_date)
         for i in range((end_date-stop_mark).days):
             results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
