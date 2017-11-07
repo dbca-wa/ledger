@@ -1147,17 +1147,20 @@ class Booking(models.Model):
 
         self.save()
 
-    def _generate_history(self):
+    def _generate_history(self,user=None):
         campsites = list(set([x.campsite.name for x in self.campsites.all()]))
+        vehicles = [{'rego':x.rego,'type':x.type,'entry_fee':x.entry_fee,'park_entry_fee':x.park_entry_fee} for x in self.regos.all()]
         BookingHistory.objects.create(
             booking = self,
+            updated_by=user,
             arrival = self.arrival,
             departure = self.departure,
             details = self.details,
             cost_total = self.cost_total,
             confirmation_sent = self.confirmation_sent,
             campground = self.campground.name,
-            campsites = campsites
+            campsites = campsites,
+            vehicles = vehicles
         )
     
     @property
@@ -1226,6 +1229,8 @@ class BookingHistory(models.Model):
     confirmation_sent = models.BooleanField()
     campground = models.CharField(max_length=100)
     campsites = JSONField()
+    vehicles = JSONField()
+    updated_by = models.ForeignKey(EmailUser,null=True,blank=True)
 
 class OutstandingBookingRecipient(models.Model):
     email = models.EmailField()
