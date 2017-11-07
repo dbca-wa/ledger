@@ -88,6 +88,7 @@ def record_txn(row,_file):
         type = row[1],
         cheque_num = row[3],
         crn = row[4],
+        original_crn = row[4],
         txn_ref = row[5],
         service_code = row[6],
         p_instruction_code = row[7],
