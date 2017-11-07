@@ -1146,6 +1146,19 @@ class Booking(models.Model):
                 pass
 
         self.save()
+
+    def _generate_history(self):
+        campsites = list(set([x.campsite.name for x in self.campsites.all()]))
+        BookingHistory.objects.create(
+            booking = self,
+            arrival = self.arrival,
+            departure = self.departure,
+            details = self.details,
+            cost_total = self.cost_total,
+            confirmation_sent = self.confirmation_sent,
+            campground = self.campground.name,
+            campsites = campsites
+        )
     
     @property
     def vehicle_payment_status(self):
@@ -1202,6 +1215,17 @@ class Booking(models.Model):
             pass
 
         return payment_dict
+
+class BookingHistory(models.Model):
+    booking = models.ForeignKey(Booking,related_name='history')
+    created = models.DateTimeField(auto_now_add=True)
+    arrival = models.DateField()
+    departure = models.DateField()
+    details = JSONField()
+    cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    confirmation_sent = models.BooleanField()
+    campground = models.CharField(max_length=100)
+    campsites = JSONField()
 
 class OutstandingBookingRecipient(models.Model):
     email = models.EmailField()
