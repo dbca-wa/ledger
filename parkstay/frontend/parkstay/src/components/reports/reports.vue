@@ -135,6 +135,35 @@
                 </div>
             </div>
         </form>
+        <form ref="booking_settlements_form">
+            <div class="well well-sm">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-12">
+                            <h3 style="margin-bottom:20px;">BPOINT Settlement Report</h3>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                      <label for="">Date</label>
+                                      <div class="input-group date" ref="bookingSettlementsDatePicker">
+                                          <input type="text" class="form-control" name="booking_settlement_date"  placeholder="DD/MM/YYYY" required>
+                                          <span class="input-group-addon">
+                                              <span class="glyphicon glyphicon-calendar"></span>
+                                          </span>
+                                      </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <button @click.prevent="getBookingSettlementsReport()" class="btn btn-primary pull-left" >Generate Settlement Report</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
         <form ref="oracle_form">
             <div class="well well-sm">
                 <div class="row">
@@ -183,6 +212,8 @@ export default {
             refund_form:null,
             oracle_form: null,
             oracleDatePicker: null,
+            booking_settlements_form: null,
+            bookingSettlementsDatePicker: null,
             accountsDateStartPicker:null,
             accountsDateEndPicker:null,
             flatDateStartPicker:null,
@@ -226,6 +257,7 @@ export default {
             vm.form = $('#payments-form');
             vm.refund_form = $('#refund_form');
             vm.oracle_form = $(vm.$refs.oracle_form);
+            vm.booking_settlements_form = $(vm.$refs.booking_settlements_form);
             vm.accountsDateStartPicker = $('#accountsDateStartPicker').datetimepicker(vm.datepickerOptions);
             vm.accountsDateEndPicker = $('#accountsDateEndPicker').datetimepicker(vm.datepickerOptions);
             vm.flatDateStartPicker = $('#flatDateStartPicker').datetimepicker(vm.datepickerOptions);
@@ -233,6 +265,7 @@ export default {
             vm.refundsStartPicker = $('#refundsStartPicker').datetimepicker(vm.datepickerOptions);
             vm.refundsEndPicker = $('#refundsEndPicker').datetimepicker(vm.datepickerOptions);
             vm.oracleDatePicker = $(vm.$refs.oracleDatePicker).datetimepicker(vm.datepickerOptions);
+            vm.bookingSettlementsDatePicker = $(vm.$refs.bookingSettlementsDatePicker).datetimepicker(vm.datepickerOptions);
 
             vm.flatDateStartPicker.on('dp.hide',function (e) {
                 vm.flatDateEndPicker.data("DateTimePicker").date(null);
@@ -268,6 +301,23 @@ export default {
                         text: helpers.apiVueResourceError(error), 
                     })
                 })
+            }
+        },
+        getBookingSettlementsReport(){
+            let vm = this;
+
+            if (vm.booking_settlements_form.valid()){
+                let data = vm.bookingSettlementsDatePicker.data("DateTimePicker").date().format('DD/MM/YYYY');
+                var url = '/api/reports/booking_settlements?settlement_date='+data; 
+                window.location.assign(url);
+                /*vm.$http.get(url).then((response) => {
+                },(error) => {
+                    swal({
+                        type: 'error',
+                        title: 'BPOINT Settlement Report Error', 
+                        text: helpers.apiVueResourceError(error), 
+                    })
+                })*/
             }
         },
         fetchRegions:function () {
@@ -425,10 +475,39 @@ export default {
             });
             vm.oracle_form.validate({
                 rules: {
-                    date:'required', 
+                    oracle_date:'required', 
                 },
                 messages: {
-                    date: "Field is required",
+                    oracle_date: "Field is required",
+                },
+                showErrors:function(errorMap, errorList) {
+                    $.each(this.validElements(), function(index, element) {
+                        var $element = $(element);
+
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+
+                    // add or update tooltips
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                        $(error.element)
+                            .tooltip({
+                                trigger: "focus"
+                            })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
+            vm.booking_settlements_form.validate({
+                rules: {
+                    booking_settlement_date:'required', 
+                },
+                messages: {
+                    booking_settlement_date: "Field is required",
                 },
                 showErrors:function(errorMap, errorList) {
                     $.each(this.validElements(), function(index, element) {

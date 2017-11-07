@@ -45,6 +45,7 @@ api_patterns = [
     url(r'^api/create_booking', api.create_booking, name='create_booking'),
     url(r'api/get_confirmation/(?P<booking_id>[0-9]+)/$', api.get_confirmation, name='get_confirmation'),
     url(r'^api/reports/booking_refunds$', api.BookingRefundsReportView.as_view(),name='booking-refunds-report'),
+    url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
     url(r'^api/',include(router.urls))
 ]
 
