@@ -675,6 +675,9 @@ def update_booking(request,old_booking,booking_details):
             if old_booking.cost_total != total_price:
                 price_diff = True
             if price_diff:
+                # Add history
+                old_booking._generate_history(user=request.user)
+
                 booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
                 # Attach campsite booking objects to old booking
                 for c in booking.campsites.all():
