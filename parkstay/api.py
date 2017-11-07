@@ -907,9 +907,9 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)
-        if length > settings.PS_MAX_BOOKING_LENGTH:
-            length = settings.PS_MAX_BOOKING_LENGTH
-            end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
+        #if length > settings.PS_MAX_BOOKING_LENGTH:
+        #    length = settings.PS_MAX_BOOKING_LENGTH
+        #    end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
 
         # fetch all the campsites and applicable rates for the campground
         context = {}

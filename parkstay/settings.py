@@ -22,7 +22,7 @@ MIDDLEWARE_CLASSES += [
 ]
 
 # maximum number of days allowed for a booking
-PS_MAX_BOOKING_LENGTH = 90
+PS_MAX_BOOKING_LENGTH = 28
 
 # minimum number of remaining campsites to trigger an availaiblity warning
 PS_CAMPSITE_COUNT_WARNING = 10
