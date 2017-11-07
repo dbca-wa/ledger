@@ -63,23 +63,22 @@ def booking_refunds(start,end):
                 except BookingInvoice.DoesNotExist:
                     pass
                     #raise ValidationError('Couldn\'t find a booking matched to invoice reference {}'.format(e.invoice.reference))
-                if booking:
-                    for line in invoice.order.lines.all():
-                        for k,v in line.refund_details['cash'].items():
-                            if k == str(e.id) and booking.customer:
-                                track = None
-                                try:
-                                    track = TrackRefund.objects.get(type=1,refund_id=k)
-                                except TrackRefund.DoesNotExist:
-                                    pass
-                                name = ''
-                                if track:
-                                    name = track.user.get_full_name() if track.user.get_full_name() else track.user.email
-                                if booking:
-                                    b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
-                                    writer.writerow([booking.confirmation_number,b_name,'Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,invoice.reference])
-                                else:
-                                    writer.writerow(['','','Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,invoice.reference])
+                for line in invoice.order.lines.all():
+                    for k,v in line.refund_details['cash'].items():
+                        if k == str(e.id) and booking.customer:
+                            track = None
+                            try:
+                                track = TrackRefund.objects.get(type=1,refund_id=k)
+                            except TrackRefund.DoesNotExist:
+                                pass
+                            name = ''
+                            if track:
+                                name = track.user.get_full_name() if track.user.get_full_name() else track.user.email
+                            if booking:
+                                b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
+                                writer.writerow([booking.confirmation_number,b_name,'Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,invoice.reference])
+                            else:
+                                writer.writerow(['','','Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,invoice.reference])
         for b in bpoint:
             booking, invoice = None, None
             try:
@@ -90,23 +89,55 @@ def booking_refunds(start,end):
                     except BookingInvoice.DoesNotExist:
                         pass
                         #raise ValidationError('Couldn\'t find a booking matched to invoice reference {}'.format(e.invoice.reference))
-                    if booking:
-                        for line in invoice.order.lines.all():
-                            for k,v in line.refund_details['card'].items():
-                                if k == str(b.id) and booking.customer:
-                                    track = None
-                                    try:
-                                        track = TrackRefund.objects.get(type=2,refund_id=k)
-                                    except TrackRefund.DoesNotExist:
-                                        pass
-                                    name = ''
-                                    if track:
-                                        name = track.user.get_full_name() if track.user.get_full_name() else track.user.email
-                                    if booking:
-                                        b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
-                                        writer.writerow([booking.confirmation_number,b_name,'Card',v,line.oracle_code,b.created.strftime('%d/%m/%Y'),name,invoice.reference])
-                                    else:
-                                        writer.writerow(['','','Card',v,line.oracle_code,b.created.strftime('%d/%m/%Y'),name,invoice.reference])
+                    for line in invoice.order.lines.all():
+                        for k,v in line.refund_details['card'].items():
+                            if k == str(b.id) and booking.customer:
+                                track = None
+                                try:
+                                    track = TrackRefund.objects.get(type=2,refund_id=k)
+                                except TrackRefund.DoesNotExist:
+                                    pass
+                                name = ''
+                                if track:
+                                    name = track.user.get_full_name() if track.user.get_full_name() else track.user.email
+                                if booking:
+                                    b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
+                                    writer.writerow([booking.confirmation_number,b_name,'Card',v,line.oracle_code,b.created.strftime('%d/%m/%Y'),name,invoice.reference])
+                                else:
+                                    writer.writerow(['','','Card',v,line.oracle_code,b.created.strftime('%d/%m/%Y'),name,invoice.reference])
+            except Invoice.DoesNotExist:
+                pass
+
+        strIO.flush()
+        strIO.seek(0)
+        return strIO
+    except:
+        raise
+
+def booking_bpoint_settlement_report(_date):
+    try:
+        bpoint, cash = [], []
+        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date=_date,response_code=0,crn1__startswith='0019').exclude(crn1__endswith='_test')])
+
+        strIO = StringIO()
+        fieldnames = ['Payment Date','Settlement Date','Confirmation Number','Name','Type','Amount','Invoice']
+        writer = csv.writer(strIO)
+        writer.writerow(fieldnames)
+
+        for b in bpoint:
+            booking, invoice = None, None
+            try:
+                invoice = Invoice.objects.get(reference=b.crn1)
+                try:
+                    booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
+                except BookingInvoice.DoesNotExist:
+                    pass
+                    
+                if booking:
+                    b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
+                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),booking.confirmation_number,b_name,str(b.action),b.amount,invoice.reference])
+                else:
+                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'','',str(b.action),b.amount,invoice.reference])
             except Invoice.DoesNotExist:
                 pass
 
