@@ -1570,7 +1570,10 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['amount_paid'] = booking.amount_paid
                 bk['vehicle_payment_status'] = booking.vehicle_payment_status
                 bk['refund_status'] = booking.refund_status
-                bk['cancellation_reason'] = booking.cancellation_reason
+                bk['is_canceled'] = 'Yes' if booking.is_canceled else 'No'
+                bk['cancelation_reason'] = booking.cancellation_reason
+                bk['canceled_by'] = booking.canceled_by.get_full_name() if booking.canceled_by else ''
+                bk['cancelation_time'] = booking.cancelation_time.strftime('%d/%m/%Y %H:M:%S') if booking.cancelation_time else ''
                 bk['paid'] = booking.paid
                 bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
