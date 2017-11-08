@@ -182,7 +182,6 @@ def bookings_report(_date):
 
         for b in history_bookings:
             b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
-            print b.booking.id
             writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.booking.confirmation_number,b_name,b.invoice.amount,b.invoice.reference,'Yes'])
             
 
