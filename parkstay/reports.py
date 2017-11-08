@@ -4,7 +4,7 @@ from six.moves import StringIO
 from wsgiref.util import FileWrapper
 from django.core.mail import EmailMessage 
 from django.conf import settings
-from parkstay.models import Booking, BookingInvoice, OutstandingBookingRecipient
+from parkstay.models import Booking, BookingInvoice, OutstandingBookingRecipient, BookingHistory
 from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransaction, BpointTransaction, BpayTransaction,Invoice, TrackRefund
 
 
@@ -117,7 +117,8 @@ def booking_refunds(start,end):
 def booking_bpoint_settlement_report(_date):
     try:
         bpoint, cash = [], []
-        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date=_date,response_code=0,crn1__startswith='0019').exclude(crn1__endswith='_test')])
+        bpoint.extend([x for x in BpointTransaction.objects.filter(created__date=_date,response_code=0,crn1__startswith='0019').exclude(crn1__endswith='_test')])
+        cash = CashTransaction.objects.filter(created__date=_date,invoice__reference__startswith='0019').exclude(type__in=['move_out','move_in'])
 
         strIO = StringIO()
         fieldnames = ['Payment Date','Settlement Date','Confirmation Number','Name','Type','Amount','Invoice']
@@ -140,6 +141,50 @@ def booking_bpoint_settlement_report(_date):
                     writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'','',str(b.action),b.amount,invoice.reference])
             except Invoice.DoesNotExist:
                 pass
+
+        for b in cash:
+            booking, invoice = None, None
+            try:
+                invoice = b.invoice 
+                try:
+                    booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
+                except BookingInvoice.DoesNotExist:
+                    pass
+                    
+                if booking:
+                    b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
+                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),booking.confirmation_number,b_name,str(b.action),b.amount,invoice.reference])
+                else:
+                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),'','',str(b.type),b.amount,invoice.reference])
+            except Invoice.DoesNotExist:
+                pass
+
+        strIO.flush()
+        strIO.seek(0)
+        return strIO
+    except:
+        raise
+
+def bookings_report(_date):
+    try:
+        bpoint, cash = [], []
+        bookings = Booking.objects.filter(created__date=_date)
+        history_bookings = BookingHistory.objects.filter(created__date=_date)
+
+        strIO = StringIO()
+        fieldnames = ['Date','Confirmation Number','Name','Amount','Invoice','Historical']
+        writer = csv.writer(strIO)
+        writer.writerow(fieldnames)
+
+        for b in bookings:
+            b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
+            writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name,b.active_invoice.amount,b.active_invoice.reference,'No'])
+
+        for b in history_bookings:
+            b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
+            print b.booking.id
+            writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.booking.confirmation_number,b_name,b.invoice.amount,b.invoice.reference,'Yes'])
+            
 
         strIO.flush()
         strIO.seek(0)

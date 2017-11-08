@@ -135,27 +135,45 @@
                 </div>
             </div>
         </form>
-        <form ref="booking_settlements_form">
             <div class="well well-sm">
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="col-lg-12">
-                            <h3 style="margin-bottom:20px;">BPOINT Settlement Report</h3>
-                        </div>
                         <div class="row">
-                            <div class="col-lg-12">
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                      <label for="">Date</label>
-                                      <div class="input-group date" ref="bookingSettlementsDatePicker">
-                                          <input type="text" class="form-control" name="booking_settlement_date"  placeholder="DD/MM/YYYY" required>
-                                          <span class="input-group-addon">
-                                              <span class="glyphicon glyphicon-calendar"></span>
-                                          </span>
-                                      </div>
+                            <div class="col-sm-12">
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <form ref="booking_settlements_form">
+                                            <h3 style="margin-bottom:20px;">Settlement Report</h3>
+                                            <div class="form-group">
+                                              <label for="">Date</label>
+                                              <div class="input-group date" ref="bookingSettlementsDatePicker">
+                                                  <input type="text" class="form-control" name="booking_settlement_date"  placeholder="DD/MM/YYYY" required>
+                                                  <span class="input-group-addon">
+                                                      <span class="glyphicon glyphicon-calendar"></span>
+                                                  </span>
+                                              </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <button @click.prevent="getBookingSettlementsReport()" class="btn btn-primary pull-left" >Generate Settlement Report</button>
+                                            </div>
+                                        </form>
                                     </div>
-                                    <div class="form-group">
-                                        <button @click.prevent="getBookingSettlementsReport()" class="btn btn-primary pull-left" >Generate Settlement Report</button>
+                                    <div class="col-sm-6">
+                                        <form ref="bookings_form">
+                                            <h3 style="margin-bottom:20px;">Bookings Report</h3>
+                                            <div class="form-group">
+                                              <label for="">Date</label>
+                                              <div class="input-group date" ref="bookingsDatePicker">
+                                                  <input type="text" class="form-control" name="bookings_date"  placeholder="DD/MM/YYYY" required>
+                                                  <span class="input-group-addon">
+                                                      <span class="glyphicon glyphicon-calendar"></span>
+                                                  </span>
+                                              </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <button @click.prevent="getBookingsReport()" class="btn btn-primary pull-left" >Generate Bookings Report</button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -163,7 +181,6 @@
                     </div>
                 </div>
             </div>
-        </form>
         <form ref="oracle_form">
             <div class="well well-sm">
                 <div class="row">
@@ -213,7 +230,9 @@ export default {
             oracle_form: null,
             oracleDatePicker: null,
             booking_settlements_form: null,
+            bookings_form: null,
             bookingSettlementsDatePicker: null,
+            bookingsDatePicker: null,
             accountsDateStartPicker:null,
             accountsDateEndPicker:null,
             flatDateStartPicker:null,
@@ -258,6 +277,7 @@ export default {
             vm.refund_form = $('#refund_form');
             vm.oracle_form = $(vm.$refs.oracle_form);
             vm.booking_settlements_form = $(vm.$refs.booking_settlements_form);
+            vm.bookings_form = $(vm.$refs.bookings_form);
             vm.accountsDateStartPicker = $('#accountsDateStartPicker').datetimepicker(vm.datepickerOptions);
             vm.accountsDateEndPicker = $('#accountsDateEndPicker').datetimepicker(vm.datepickerOptions);
             vm.flatDateStartPicker = $('#flatDateStartPicker').datetimepicker(vm.datepickerOptions);
@@ -266,6 +286,7 @@ export default {
             vm.refundsEndPicker = $('#refundsEndPicker').datetimepicker(vm.datepickerOptions);
             vm.oracleDatePicker = $(vm.$refs.oracleDatePicker).datetimepicker(vm.datepickerOptions);
             vm.bookingSettlementsDatePicker = $(vm.$refs.bookingSettlementsDatePicker).datetimepicker(vm.datepickerOptions);
+            vm.bookingsDatePicker = $(vm.$refs.bookingsDatePicker).datetimepicker(vm.datepickerOptions);
 
             vm.flatDateStartPicker.on('dp.hide',function (e) {
                 vm.flatDateEndPicker.data("DateTimePicker").date(null);
@@ -308,7 +329,24 @@ export default {
 
             if (vm.booking_settlements_form.valid()){
                 let data = vm.bookingSettlementsDatePicker.data("DateTimePicker").date().format('DD/MM/YYYY');
-                var url = '/api/reports/booking_settlements?settlement_date='+data; 
+                var url = '/api/reports/booking_settlements?date='+data; 
+                window.location.assign(url);
+                /*vm.$http.get(url).then((response) => {
+                },(error) => {
+                    swal({
+                        type: 'error',
+                        title: 'BPOINT Settlement Report Error', 
+                        text: helpers.apiVueResourceError(error), 
+                    })
+                })*/
+            }
+        },
+        getBookingsReport(){
+            let vm = this;
+
+            if (vm.bookings_form.valid()){
+                let data = vm.bookingsDatePicker.data("DateTimePicker").date().format('DD/MM/YYYY');
+                var url = '/api/reports/bookings?date='+data; 
                 window.location.assign(url);
                 /*vm.$http.get(url).then((response) => {
                 },(error) => {
@@ -508,6 +546,35 @@ export default {
                 },
                 messages: {
                     booking_settlement_date: "Field is required",
+                },
+                showErrors:function(errorMap, errorList) {
+                    $.each(this.validElements(), function(index, element) {
+                        var $element = $(element);
+
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+
+                    // add or update tooltips
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                        $(error.element)
+                            .tooltip({
+                                trigger: "focus"
+                            })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
+            vm.bookings_form.validate({
+                rules: {
+                    bookings_date:'required', 
+                },
+                messages: {
+                    bookings_date: "Field is required",
                 },
                 showErrors:function(errorMap, errorList) {
                     $.each(this.validElements(), function(index, element) {
