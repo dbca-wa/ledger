@@ -1034,6 +1034,11 @@ class Booking(models.Model):
     def confirmation_number(self):
         return 'PS{}'.format(self.pk)
 
+    @property
+    def active_invoice(self):
+        active_invoices = Invoice.objects.filter(reference__in=[x.invoice_reference for x in self.invoices.all() if x.active]).order_by('-created')
+        return active_invoices[0] if active_invoices else None
+
     # Methods
     # =================================
     def clean(self,*args,**kwargs):
@@ -1160,7 +1165,8 @@ class Booking(models.Model):
             confirmation_sent = self.confirmation_sent,
             campground = self.campground.name,
             campsites = campsites,
-            vehicles = vehicles
+            vehicles = vehicles,
+            invoice=self.active_invoice
         )
     
     @property
@@ -1231,6 +1237,7 @@ class BookingHistory(models.Model):
     campsites = JSONField()
     vehicles = JSONField()
     updated_by = models.ForeignKey(EmailUser,null=True,blank=True)
+    invoice=models.ForeignKey(Invoice,null=True,blank=True)
 
 class OutstandingBookingRecipient(models.Model):
     email = models.EmailField()
