@@ -80,12 +80,10 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
+                order: [],
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                order: [
-                    [0,'desc']
-                ],
                 ajax: {
                     url: api_endpoints.campgroundStayHistory(vm.object_id),
                     dataSrc: ''

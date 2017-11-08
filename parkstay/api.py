@@ -781,7 +781,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 queryset = CampgroundStayHistory.objects.filter(range_end__range = (start,end), range_start__range=(start,end) ).order_by("range_start")[:5]
                 serializer = CampgroundStayHistorySerializer(queryset,many=True,context={'request':request},method='get')
             else:
-                serializer = CampgroundStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request},method='get')
+                serializer = CampgroundStayHistorySerializer(self.get_object().stay_history.all().order_by('-range_start'),many=True,context={'request':request},method='get')
             res = serializer.data
 
             return Response(res,status=http_status)

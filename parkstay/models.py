@@ -1713,16 +1713,26 @@ class CampgroundStayHistoryListener(object):
         else:
             try:
                 within = CampgroundStayHistory.objects.get(Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
-                within.range_end = instance.range_start - timedelta(days=1)
+                within.range_end = instance.range_start - timedelta(days=2)
                 within.save()
             except CampgroundStayHistory.DoesNotExist:
                 pass
 
+            # check if there is a newer record and set the end date as the previous record minus 1 day
+            x = CampgroundStayHistory.objects.filter(Q(campground=instance.campground),Q(range_start__gte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) ).order_by('range_start')
+            if x:
+                x = x[0]
+                instance.date_end = x.date_start - timedelta(days=2)
+
     @staticmethod
-    @receiver(post_delete, sender=CampgroundStayHistory)
-    def _post_delete(sender, instance, **kwargs):
+    @receiver(pre_delete, sender=CampgroundStayHistory)
+    def _pre_delete(sender, instance, **kwargs):
         if not instance.range_end:
-            CampgroundStayHistory.objects.filter(range_end=instance.range_start- timedelta(days=1),campground=instance.campground).update(range_end=None)
+            c = CampgroundStayHistory.objects.filter(campground=instance.campground).order_by('-range_start').exclude(id=instance.id)
+            if c:
+                c = c[0]
+                c.date_end = None
+                c.save()
 
 class ParkEntryRateListener(object):
     """
