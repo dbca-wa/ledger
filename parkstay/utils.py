@@ -809,7 +809,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             # Get line items
             booking_arrival = booking.arrival.strftime('%d-%m-%Y')
             booking_departure = booking.departure.strftime('%d-%m-%Y')
-            reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.campground.name)
+            reservation = u"Reservation for {} from {} to {} at {}".format(u'{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.campground.name)
             lines = price_or_lineitems(request,booking,booking.campsite_id_list)
 
             # Proceed to generate invoice
