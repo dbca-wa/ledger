@@ -1439,7 +1439,7 @@ class CampgroundBookingRangeListener(object):
                     else:
                         linked_open = None
                 if linked_open:
-                    linked_open[0].save(skip_validation=True)
+                    linked_open.save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
@@ -1561,7 +1561,7 @@ class CampsiteBookingRangeListener(object):
                     else:
                         linked_open = None
                 if linked_open:
-                    linked_open[0].save(skip_validation=True)
+                    linked_open.save(skip_validation=True)
             except CampsiteBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
