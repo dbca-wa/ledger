@@ -195,6 +195,7 @@ export default {
         sendData: function(url,method) {
             let vm = this;
             var data = vm.$refs.closeModal.statusHistory;
+            data.closure_reason = data.reason;
             $.ajax({
                 url: url,
                 method: method,
