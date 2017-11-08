@@ -918,6 +918,7 @@ class Booking(models.Model):
     cancelation_time = models.DateTimeField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
+    canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
 
     # Properties
     # =================================
@@ -1131,13 +1132,15 @@ class Booking(models.Model):
 
         return amount
 
-    def cancelBooking(self,reason):
+    def cancelBooking(self,reason,user=None):
         if not reason:
             raise ValidationError('A reason is needed before canceling a booking')
         today = datetime.now().date()
         if today > self.departure:
             raise ValidationError('You cannot cancel a booking past the departure date.')
         self._generate_history()
+        if user:
+            self.canceled_by = user
         self.cancellation_reason = reason
         self.is_canceled = True
         self.cancelation_time = timezone.now()
@@ -1237,7 +1240,7 @@ class BookingHistory(models.Model):
     campground = models.CharField(max_length=100)
     campsites = JSONField()
     vehicles = JSONField()
-    updated_by = models.ForeignKey(EmailUser,null=True,blank=True)
+    updated_by = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True)
     invoice=models.ForeignKey(Invoice,null=True,blank=True)
 
 class OutstandingBookingRecipient(models.Model):

@@ -1724,7 +1724,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             if not reason:
                 raise serializers.ValidationError('A reason is needed before canceling a booking');
             booking  = self.get_object()
-            booking.cancelBooking(reason)
+            booking.cancelBooking(reason,user=request.user)
             emails.send_booking_cancelation(booking,request)
             serializer = self.get_serializer(booking)
             return Response(serializer.data,status=status.HTTP_200_OK)
