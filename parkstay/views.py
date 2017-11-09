@@ -283,8 +283,8 @@ class MakeBookingsView(TemplateView):
         booking.save()
 
         # generate invoice
-        reservation = "Reservation for {} from {} to {} at {}".format(
-                '{} {}'.format(booking.customer.first_name, booking.customer.last_name),
+        reservation = u"Reservation for {} from {} to {} at {}".format(
+               u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
                 booking.arrival,
                 booking.departure,
                 booking.campground.name
@@ -313,42 +313,45 @@ class BookingSuccessView(TemplateView):
         try:
             booking = utils.get_session_booking(request.session)
             invoice_ref = request.GET.get('invoice')
+            
+            if booking.booking_type == 1:
+                try:
+                    inv = Invoice.objects.get(reference=invoice_ref)
+                except Invoice.DoesNotExist:
+                    logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
+                    return redirect('public_make_booking')
 
-            try:
-                inv = Invoice.objects.get(reference=invoice_ref)
-            except Invoice.DoesNotExist:
-                logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
-                return redirect('public_make_booking')
+                if inv.system not in ['0019']:
+                    logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
+                    return redirect('public_make_booking')
 
-            if inv.system not in ['0019']:
-                logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
-                return redirect('public_make_booking')
+                try:
+                    b = BookingInvoice.objects.get(invoice_reference=invoice_ref)
+                    logger.error('{} tried making a booking with an already used invoice with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
+                    return redirect('public_make_booking')
+                except BookingInvoice.DoesNotExist:
 
-            try:
-                b = BookingInvoice.objects.get(invoice_reference=invoice_ref)
-                logger.error('{} tried making a booking with an already used invoice with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
-                return redirect('public_make_booking')
-            except BookingInvoice.DoesNotExist:
+                    # FIXME: replace with server side notify_url callback
+                    book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
 
-                # FIXME: replace with server side notify_url callback
-                book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+                    # set booking to be permanent fixture
+                    booking.booking_type = 1  # internet booking
+                    booking.expiry_time = None
+                    booking.save()
 
-                # set booking to be permanent fixture
-                booking.booking_type = 1  # internet booking
-                booking.expiry_time = None
-                booking.save()
+                    utils.delete_session_booking(request.session)
+                    request.session['ps_last_booking'] = booking.id
 
-                utils.delete_session_booking(request.session)
-                request.session['ps_last_booking'] = booking.id
-
-                # send out the invoice before the confirmation is sent
-                emails.send_booking_invoice(booking)
-                # for fully paid bookings, fire off confirmation email
-                if booking.paid:
-                    emails.send_booking_confirmation(booking,request) 
+                    # send out the invoice before the confirmation is sent
+                    emails.send_booking_invoice(booking)
+                    # for fully paid bookings, fire off confirmation email
+                    if booking.paid:
+                        emails.send_booking_confirmation(booking,request) 
 
         except Exception as e:
-            if ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
+            if 'ps_booking_internal' in request.COOKIES:
+                return redirect('home')
+            elif ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
                 booking = Booking.objects.get(id=request.session['ps_last_booking'])
             else:
                 return redirect('home')

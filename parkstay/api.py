@@ -93,6 +93,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     AccountsAddressSerializer,
                                     ParkEntryRateSerializer,
                                     ReportSerializer,
+                                    BookingSettlementReportSerializer,
                                     UserSerializer,
                                     UserAddressSerializer,
                                     ContactSerializer as UserContactSerializer,
@@ -213,7 +214,10 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             raise
         except ValidationError as e:
-            raise serializers.ValidationError(repr(e.error_dict))
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
@@ -576,7 +580,10 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise
         except ValidationError as e:
-            raise serializers.ValidationError(repr(e.error_dict))
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
@@ -780,7 +787,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 queryset = CampgroundStayHistory.objects.filter(range_end__range = (start,end), range_start__range=(start,end) ).order_by("range_start")[:5]
                 serializer = CampgroundStayHistorySerializer(queryset,many=True,context={'request':request},method='get')
             else:
-                serializer = CampgroundStayHistorySerializer(self.get_object().stay_history,many=True,context={'request':request},method='get')
+                serializer = CampgroundStayHistorySerializer(self.get_object().stay_history.all().order_by('-range_start'),many=True,context={'request':request},method='get')
             res = serializer.data
 
             return Response(res,status=http_status)
@@ -1569,7 +1576,10 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['amount_paid'] = booking.amount_paid
                 bk['vehicle_payment_status'] = booking.vehicle_payment_status
                 bk['refund_status'] = booking.refund_status
-                bk['cancellation_reason'] = booking.cancellation_reason
+                bk['is_canceled'] = 'Yes' if booking.is_canceled else 'No'
+                bk['cancelation_reason'] = booking.cancellation_reason
+                bk['canceled_by'] = booking.canceled_by.get_full_name() if booking.canceled_by else ''
+                bk['cancelation_time'] = booking.cancelation_time.strftime('%d/%m/%Y %H:M:%S') if booking.cancelation_time else ''
                 bk['paid'] = booking.paid
                 bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
@@ -1723,7 +1733,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             if not reason:
                 raise serializers.ValidationError('A reason is needed before canceling a booking');
             booking  = self.get_object()
-            booking.cancelBooking(reason)
+            booking.cancelBooking(reason,user=request.user)
             emails.send_booking_cancelation(booking,request)
             serializer = self.get_serializer(booking)
             return Response(serializer.data,status=status.HTTP_200_OK)
@@ -2051,6 +2061,60 @@ class BookingRefundsReportView(views.APIView):
             filename = 'Booking Refunds Report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
             # Generate Report
             report = reports.booking_refunds(serializer.validated_data['start'],serializer.validated_data['end'])
+            if report:
+                response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                return response
+            else:
+                raise serializers.ValidationError('No report was generated.')
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+
+class BookingSettlementReportView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+
+    def get(self,request,format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            #parse and validate data
+            report = None
+            data = {
+                "date":request.GET.get('date'),
+            }
+            serializer = BookingSettlementReportSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            filename = 'Booking Settlement Report-{}'.format(str(serializer.validated_data['date']))
+            # Generate Report
+            report = reports.booking_bpoint_settlement_report(serializer.validated_data['date'])
+            if report:
+                response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                return response
+            else:
+                raise serializers.ValidationError('No report was generated.')
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+
+class BookingReportView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+
+    def get(self,request,format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            #parse and validate data
+            report = None
+            data = {
+                "date":request.GET.get('date'),
+            }
+            serializer = BookingSettlementReportSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            filename = 'Booking Report-{}'.format(str(serializer.validated_data['date']))
+            # Generate Report
+            report = reports.bookings_report(serializer.validated_data['date'])
             if report:
                 response = HttpResponse(FileWrapper(report), content_type='text/csv')
                 response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)

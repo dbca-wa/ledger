@@ -116,7 +116,7 @@ module.exports = {
             this.statusHistory.details= '';
             this.statusHistory.reason = '';
             var today = new Date();
-            this.closeEndPicker.data('DateTimePicker').date(today);
+            this.closeEndPicker.data('DateTimePicker').clear();
             this.closeStartPicker.data('DateTimePicker').clear();
         },
         addClosure: function() {
@@ -185,11 +185,11 @@ module.exports = {
             useCurrent: false
         });
         vm.closeStartPicker.on('dp.change', function(e){
-            vm.statusHistory.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
-            vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
+            vm.statusHistory.range_start = vm.closeStartPicker.data('DateTimePicker').date() != null ? vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY') : '';
+            e.date != null ? vm.closeEndPicker.data("DateTimePicker").minDate(e.date): '';
         });
         vm.closeEndPicker.on('dp.change', function(e){
-            vm.statusHistory.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            vm.statusHistory.range_end = vm.closeEndPicker.data('DateTimePicker').date() != null  ? vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY') : '';
         });
         vm.form = $(document.forms.closeForm);
         vm.addFormValidations();

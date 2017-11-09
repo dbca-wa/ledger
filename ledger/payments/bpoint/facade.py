@@ -100,6 +100,7 @@ class Facade(object):
             txn = BpointTransaction.objects.create(
                 action=action,
                 crn1=crn1,
+                original_crn1=crn1,
                 amount=self.convert_amount(amount),
                 amount_original=self.convert_amount(amount_original),
                 amount_surcharge=self.convert_amount(amount_surcharge),

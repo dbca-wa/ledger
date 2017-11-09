@@ -655,6 +655,9 @@ class ReportSerializer(serializers.Serializer):
     start = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
     end = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
 
+class BookingSettlementReportSerializer(serializers.Serializer):
+    date = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
+
 # User Serializers
 # --------------------------
 class UserAddressSerializer(serializers.ModelSerializer):

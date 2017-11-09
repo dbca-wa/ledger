@@ -449,7 +449,7 @@ export default {
                 var json2csv = require('json2csv');
                 var fields = [...vm.dtHeaders];
                 fields.splice(vm.dtHeaders.length-1,1);
-                fields = [...fields,"Adults","Concession","Children","Infants","Regos"]
+                fields = [...fields,"Adults","Concession","Children","Infants","Regos","Canceled","Cancelation Reason","Cancelation Date","Canceled By"]
                 fields.splice(3,0,"Email");
                 fields.splice(4,0,"Phone");
                 fields.splice(8,0,'Amount Due')
@@ -527,6 +527,18 @@ export default {
                                         }
                                     });
                                 }).join(" | ");
+                            break;
+                            case 17:
+                                bk[field] = booking.is_canceled;
+                            break;
+                            case 18:
+                                bk[field] = booking.cancelation_reason;
+                            break;
+                            case 19:
+                                bk[field] = booking.cancelation_time;
+                            break;
+                            case 20:
+                                bk[field] = booking.canceled_by;
                             break;
 
                         }

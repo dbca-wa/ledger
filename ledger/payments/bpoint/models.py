@@ -46,6 +46,7 @@ class BpointTransaction(models.Model):
     amount_surcharge = models.DecimalField(default=0,decimal_places=2,max_digits=12)
     cardtype = models.CharField(max_length=2, choices=CARD_TYPES, blank=True, null=True)
     crn1 = models.CharField(max_length=50, help_text='Reference for the order that the transaction was made for')
+    original_crn1 = models.CharField(null=True,blank=True,max_length=50, help_text='Reference for the order that the transaction was made for')
     response_code = models.CharField(max_length=50)
     response_txt = models.CharField(max_length=128)
     receipt_number = models.CharField(max_length=50)

@@ -918,6 +918,7 @@ class Booking(models.Model):
     cancelation_time = models.DateTimeField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
+    canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
 
     # Properties
     # =================================
@@ -1034,6 +1035,11 @@ class Booking(models.Model):
     def confirmation_number(self):
         return 'PS{}'.format(self.pk)
 
+    @property
+    def active_invoice(self):
+        active_invoices = Invoice.objects.filter(reference__in=[x.invoice_reference for x in self.invoices.all() if x.active]).order_by('-created')
+        return active_invoices[0] if active_invoices else None
+
     # Methods
     # =================================
     def clean(self,*args,**kwargs):
@@ -1126,12 +1132,15 @@ class Booking(models.Model):
 
         return amount
 
-    def cancelBooking(self,reason):
+    def cancelBooking(self,reason,user=None):
         if not reason:
             raise ValidationError('A reason is needed before canceling a booking')
         today = datetime.now().date()
         if today > self.departure:
             raise ValidationError('You cannot cancel a booking past the departure date.')
+        self._generate_history()
+        if user:
+            self.canceled_by = user
         self.cancellation_reason = reason
         self.is_canceled = True
         self.cancelation_time = timezone.now()
@@ -1146,6 +1155,23 @@ class Booking(models.Model):
                 pass
 
         self.save()
+
+    def _generate_history(self,user=None):
+        campsites = list(set([x.campsite.name for x in self.campsites.all()]))
+        vehicles = [{'rego':x.rego,'type':x.type,'entry_fee':x.entry_fee,'park_entry_fee':x.park_entry_fee} for x in self.regos.all()]
+        BookingHistory.objects.create(
+            booking = self,
+            updated_by=user,
+            arrival = self.arrival,
+            departure = self.departure,
+            details = self.details,
+            cost_total = self.cost_total,
+            confirmation_sent = self.confirmation_sent,
+            campground = self.campground.name,
+            campsites = campsites,
+            vehicles = vehicles,
+            invoice=self.active_invoice
+        )
     
     @property
     def vehicle_payment_status(self):
@@ -1202,6 +1228,20 @@ class Booking(models.Model):
             pass
 
         return payment_dict
+
+class BookingHistory(models.Model):
+    booking = models.ForeignKey(Booking,related_name='history')
+    created = models.DateTimeField(auto_now_add=True)
+    arrival = models.DateField()
+    departure = models.DateField()
+    details = JSONField()
+    cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    confirmation_sent = models.BooleanField()
+    campground = models.CharField(max_length=100)
+    campsites = JSONField()
+    vehicles = JSONField()
+    updated_by = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True)
+    invoice=models.ForeignKey(Invoice,null=True,blank=True)
 
 class OutstandingBookingRecipient(models.Model):
     email = models.EmailField()
@@ -1403,7 +1443,7 @@ class CampgroundBookingRangeListener(object):
                     else:
                         linked_open = None
                 if linked_open:
-                    linked_open[0].save(skip_validation=True)
+                    linked_open.save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
@@ -1525,7 +1565,7 @@ class CampsiteBookingRangeListener(object):
                     else:
                         linked_open = None
                 if linked_open:
-                    linked_open[0].save(skip_validation=True)
+                    linked_open.save(skip_validation=True)
             except CampsiteBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
@@ -1676,16 +1716,26 @@ class CampgroundStayHistoryListener(object):
         else:
             try:
                 within = CampgroundStayHistory.objects.get(Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
-                within.range_end = instance.range_start - timedelta(days=1)
+                within.range_end = instance.range_start - timedelta(days=2)
                 within.save()
             except CampgroundStayHistory.DoesNotExist:
                 pass
 
+            # check if there is a newer record and set the end date as the previous record minus 1 day
+            x = CampgroundStayHistory.objects.filter(Q(campground=instance.campground),Q(range_start__gte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) ).order_by('range_start')
+            if x:
+                x = x[0]
+                instance.date_end = x.date_start - timedelta(days=2)
+
     @staticmethod
-    @receiver(post_delete, sender=CampgroundStayHistory)
-    def _post_delete(sender, instance, **kwargs):
+    @receiver(pre_delete, sender=CampgroundStayHistory)
+    def _pre_delete(sender, instance, **kwargs):
         if not instance.range_end:
-            CampgroundStayHistory.objects.filter(range_end=instance.range_start- timedelta(days=1),campground=instance.campground).update(range_end=None)
+            c = CampgroundStayHistory.objects.filter(campground=instance.campground).order_by('-range_start').exclude(id=instance.id)
+            if c:
+                c = c[0]
+                c.date_end = None
+                c.save()
 
 class ParkEntryRateListener(object):
     """
