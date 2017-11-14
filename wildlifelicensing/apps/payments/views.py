@@ -80,9 +80,9 @@ class ManualPaymentView(LoginRequiredMixin, RedirectView):
         #url = reverse('payments:invoice-payment', args=(application.invoice_reference,))
         url = '{}?invoice={}'.format(reverse('payments:invoice-payment'),application.invoice_reference)
  
-         params = {
-             'redirect_url': request.GET.get('redirect_url', reverse('wl_home'))
-         }
+        params = {
+            'redirect_url': request.GET.get('redirect_url', reverse('wl_home'))
+        }
  
         return redirect('{}&{}'.format(url, urlencode(params)))
 
