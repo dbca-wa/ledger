@@ -1479,7 +1479,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
             sql = ''
             http_status = status.HTTP_200_OK
-            sqlSelect = 'select distinct parkstay_booking.id as id,parkstay_booking.customer_id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
+            sqlSelect = 'select distinct parkstay_booking.id as id,parkstay_booking.created,parkstay_booking.customer_id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
                 parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
                 parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
             sqlCount = 'select count(distinct parkstay_booking.id)'
