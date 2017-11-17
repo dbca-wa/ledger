@@ -22,7 +22,7 @@ class BookingTimerMiddleware(object):
                 del request.session['ps_booking']
             elif timezone.now() > booking.expiry_time:
                 # expiry time has been hit, destroy the Booking then ditch it
-                booking.delete()
+                #booking.delete()
                 del request.session['ps_booking']
             elif CHECKOUT_PATH.match(request.path) and request.method == 'POST':
                 # safeguard against e.g. part 1 of the multipart checkout confirmation process passing, then part 2 timing out.
