@@ -285,8 +285,8 @@ class MakeBookingsView(TemplateView):
         # generate invoice
         reservation = u"Reservation for {} from {} to {} at {}".format(
                u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
-                booking.arrival,
-                booking.departure,
+                booking.arrival.strftime('%d-%m-%Y'),
+                booking.departure.strftime('%d-%m-%Y'),
                 booking.campground.name
         )
         

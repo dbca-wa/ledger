@@ -472,7 +472,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                         if not booking.campground.oracle_code:
                             raise Exception('The campground selected does not have an Oracle code attached to it.')
                         end_date = end + timedelta(days=1)
-                        invoice_lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,start.strftime('%d-%m-%Y'),end_date.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":booking.campground.oracle_code})
+                        invoice_lines.append({'ledger_description':'Camping fee {} ({} - {})'.format(k,start.strftime('%d-%m-%Y'),end_date.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":booking.campground.oracle_code})
                     else:
                         price = (num_days * Decimal(r[k])) * v
                         total_price += price
@@ -500,7 +500,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                     price =  park_entry_rate[k]
                     regos = ', '.join([x[0] for x in v.values_list('rego')])
                     invoice_lines.append({
-                        'ledger_description': 'Park Entry - {}'.format(k),
+                        'ledger_description': 'Park entry fee - {}'.format(k),
                         'quantity': v.count(),
                         'price_incl_tax': price,
                         'oracle_code': booking.campground.park.oracle_code
@@ -560,7 +560,7 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     lines = price_or_lineitems(request,booking,booking.campsite_id_list)
     booking_arrival = booking.arrival.strftime('%d-%m-%Y')
     booking_departure = booking.departure.strftime('%d-%m-%Y')
-    reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.campground.name)
+    reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival.strftime('%d-%m-%Y'trftime('%d-%m-%Y'),booking_departure.strftime('%d-%m-%Y'),booking.campground.name)
     # Proceed to generate invoice
     checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
     internal_create_booking_invoice(booking, checkout_response)
