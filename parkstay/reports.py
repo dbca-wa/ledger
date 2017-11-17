@@ -172,17 +172,17 @@ def bookings_report(_date):
         history_bookings = BookingHistory.objects.filter(created__date=_date)
 
         strIO = StringIO()
-        fieldnames = ['Date','Confirmation Number','Name','Amount','Invoice','Historical']
+        fieldnames = ['Date','Confirmation Number','Name','Amount','Invoice']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
 
         for b in bookings:
             b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
-            writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name,b.active_invoice.amount,b.active_invoice.reference,'No'])
+            writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name,b.active_invoice.amount,b.active_invoice.reference])
 
-        for b in history_bookings:
-            b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
-            writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.booking.confirmation_number,b_name,b.invoice.amount,b.invoice.reference,'Yes'])
+        #for b in history_bookings:
+        #    b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
+        #    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.booking.confirmation_number,b_name,b.invoice.amount,b.invoice.reference,'Yes'])
             
 
         strIO.flush()
