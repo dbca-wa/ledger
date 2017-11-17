@@ -168,7 +168,7 @@ def booking_bpoint_settlement_report(_date):
 def bookings_report(_date):
     try:
         bpoint, cash = [], []
-        bookings = Booking.objects.filter(created__date=_date)
+        bookings = Booking.objects.filter(created__date=_date).exclude(booking_type=3)
         history_bookings = BookingHistory.objects.filter(created__date=_date)
 
         strIO = StringIO()
