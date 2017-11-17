@@ -447,7 +447,9 @@ export default {
                 var data = res.body.results;
 
                 var json2csv = require('json2csv');
-                var fields = [...vm.dtHeaders];
+                var fields = ['Created']
+                //var fields = [...vm.dtHeaders];
+                var fields = [...fields,...vm.dtHeaders];
                 fields.splice(vm.dtHeaders.length-1,1);
                 fields = [...fields,"Adults","Concession","Children","Infants","Regos","Canceled","Cancelation Reason","Cancelation Date","Canceled By"]
                 fields.splice(3,0,"Email");
@@ -461,54 +463,57 @@ export default {
                     $.each(fields,function (j,field) {
                         switch (j) {
                             case 0:
-                            bk[field] = booking.campground_name;
+                                bk[field] = Moment(booking.created).format("DD/MM/YYYY HH:MM:SS");
                             break;
                             case 1:
-                                bk[field] = booking.campground_region;
+                                bk[field] = booking.campground_name;
                             break;
                             case 2:
-                                bk[field] = booking.firstname +" "+ booking.lastname;
+                                bk[field] = booking.campground_region;
                             break;
                             case 3:
-                                bk[field] = booking.email;
+                                bk[field] = booking.firstname +" "+ booking.lastname;
                             break;
                             case 4:
-                                bk[field] = booking.phone;
+                                bk[field] = booking.email;
                             break;
                             case 5:
-                                bk[field] = booking.id;
+                                bk[field] = booking.phone;
                             break;
                             case 6:
-                                bk[field] = booking.campground_site_type;
+                                bk[field] = booking.id;
                             break;
                             case 7:
-                                bk[field] = booking.status;
+                                bk[field] = booking.campground_site_type;
                             break;
                             case 8:
-                                bk[field] = booking.cost_total;
+                                bk[field] = booking.status;
                             break;
                             case 9:
-                                bk[field] = booking.amount_paid;
+                                bk[field] = booking.cost_total;
                             break;
                             case 10:
-                                bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
+                                bk[field] = booking.amount_paid;
                             break;
                             case 11:
-                                bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
+                                bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
                             break;
                             case 12:
-                                bk[field] = booking.guests.adults;
+                                bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
                             break;
                             case 13:
-                                bk[field] =  booking.guests.concession;
+                                bk[field] = booking.guests.adults;
                             break;
                             case 14:
-                                bk[field] =  booking.guests.children;
+                                bk[field] =  booking.guests.concession;
                             break;
                             case 15:
-                                bk[field] =  booking.guests.infants;
+                                bk[field] =  booking.guests.children;
                             break;
                             case 16:
+                                bk[field] =  booking.guests.infants;
+                            break;
+                            case 17:
                                 bk[field] =  booking.vehicle_payment_status.map(r =>{
                                     return Object.keys(r).map(k =>{
                                         if (k == 'Paid'){
@@ -528,16 +533,16 @@ export default {
                                     });
                                 }).join(" | ");
                             break;
-                            case 17:
+                            case 18:
                                 bk[field] = booking.is_canceled;
                             break;
-                            case 18:
+                            case 19:
                                 bk[field] = booking.cancelation_reason;
                             break;
-                            case 19:
+                            case 20:
                                 bk[field] = booking.cancelation_time;
                             break;
-                            case 20:
+                            case 21:
                                 bk[field] = booking.canceled_by;
                             break;
 

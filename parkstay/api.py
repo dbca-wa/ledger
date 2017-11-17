@@ -388,7 +388,33 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             if scrubbed['gear_type'] == 'all':
                 ground_ids.update((x[0] for x in Campground.objects.filter(campsites__isnull=True).values_list('id')))
 
-        queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+
+        # Filter out for the max period
+        today = date.today()
+        if scrubbed['arrival']:
+            start_date = scrubbed['arrival']
+        else:
+            start_date = today
+        if scrubbed['departure']:
+            end_date = scrubbed['departure']
+        else:
+            end_date = today + timedelta(days=1)
+
+        temp_queryset = Campground.objects.filter(id__in=ground_ids).order_by('name')
+        queryset = []
+        for q in temp_queryset:
+            # Get the current stay history
+            stay_history = CampgroundStayHistory.objects.filter(
+                            Q(range_start__lte=start_date,range_end__gte=start_date)|# filter start date is within period
+                            Q(range_start__lte=end_date,range_end__gte=end_date)|# filter end date is within period
+                            Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
+                            ,campground=q)
+            if stay_history:
+                max_days = min([x.max_days for x in stay_history])
+            else:
+                max_days = settings.PS_MAX_BOOKING_LENGTH
+            if (end_date - start_date).days <= max_days:            
+                queryset.append(q)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -1479,7 +1505,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
             sql = ''
             http_status = status.HTTP_200_OK
-            sqlSelect = 'select distinct parkstay_booking.id as id,parkstay_booking.customer_id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
+            sqlSelect = 'select distinct parkstay_booking.id as id,parkstay_booking.created,parkstay_booking.customer_id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
                 parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
                 parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
             sqlCount = 'select count(distinct parkstay_booking.id)'
