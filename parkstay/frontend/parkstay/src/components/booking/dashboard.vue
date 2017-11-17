@@ -463,7 +463,7 @@ export default {
                     $.each(fields,function (j,field) {
                         switch (j) {
                             case 0:
-                                bk[field] = Moment(booking.created).format("DD/MM/YYYY HH:MM:SS");
+                                bk[field] = Moment(booking.created).format("DD/MM/YYYY HH:mm:ss");
                             break;
                             case 1:
                                 bk[field] = booking.campground_name;
@@ -540,7 +540,7 @@ export default {
                                 bk[field] = booking.cancelation_reason;
                             break;
                             case 20:
-                                bk[field] = booking.cancelation_time ? Moment(booking.cancelation_time).format("DD/MM/YYYY HH:MM:SS") : '';
+                                bk[field] = booking.cancelation_time ? Moment(booking.cancelation_time).format("DD/MM/YYYY HH:mm:ss") : '';
                             break;
                             case 21:
                                 bk[field] = booking.canceled_by;
