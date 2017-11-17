@@ -314,7 +314,7 @@ class BookingSuccessView(TemplateView):
             booking = utils.get_session_booking(request.session)
             invoice_ref = request.GET.get('invoice')
             
-            if booking.booking_type == 1:
+            if booking.booking_type == 3:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
                 except Invoice.DoesNotExist:
