@@ -471,7 +471,8 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                         price = str((num_days * Decimal(r[k])))
                         if not booking.campground.oracle_code:
                             raise Exception('The campground selected does not have an Oracle code attached to it.')
-                        invoice_lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,start.strftime('%d-%m-%Y'),end.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":booking.campground.oracle_code})
+                        end_date = end + timedelta(days=1)
+                        invoice_lines.append({'ledger_description':'Campsite {} for {} ({} - {})'.format(campsite.name,k,start.strftime('%d-%m-%Y'),end_date.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":booking.campground.oracle_code})
                     else:
                         price = (num_days * Decimal(r[k])) * v
                         total_price += price
