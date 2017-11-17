@@ -1066,11 +1066,11 @@ class Booking(models.Model):
         invoices = []
         amount = D('0.0')
         references = [i.invoice_reference for i in self.invoices.all()]
-        invoices = Invoice.objects.filter(reference__in=references,voided=False)
-
-        for i in invoices:
-            amount += i.payment_amount
-
+        #invoices = Invoice.objects.filter(reference__in=references,voided=False)
+        if self.active_invoice:
+            amount = self.active_invoice.payment_amount
+        elif self.legacy_id:
+            amount =  D(self.cost_total)
         return amount
 
     def __check_payment_status(self):
