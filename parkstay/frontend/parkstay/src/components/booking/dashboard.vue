@@ -540,7 +540,7 @@ export default {
                                 bk[field] = booking.cancelation_reason;
                             break;
                             case 20:
-                                bk[field] = booking.cancelation_time;
+                                bk[field] = Moment(booking.cancelation_time).format("DD/MM/YYYY HH:MM:SS");
                             break;
                             case 21:
                                 bk[field] = booking.canceled_by;
