@@ -1,7 +1,9 @@
 import csv
+import pytz
 import datetime
 from six.moves import StringIO
 from wsgiref.util import FileWrapper
+from django.utils import timezone
 from django.core.mail import EmailMessage 
 from django.conf import settings
 from parkstay.models import Booking, BookingInvoice, OutstandingBookingRecipient, BookingHistory
@@ -135,8 +137,9 @@ def booking_bpoint_settlement_report(_date):
                     pass
                     
                 if booking:
-                    b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
-                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),booking.confirmation_number,b_name,str(b.action),b.amount,invoice.reference])
+                    b_name = u'{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
+                    created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
+                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),booking.confirmation_number,b_name.encode('utf-8'),str(b.action),b.amount,invoice.reference])
                 else:
                     writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'','',str(b.action),b.amount,invoice.reference])
             except Invoice.DoesNotExist:
@@ -152,8 +155,9 @@ def booking_bpoint_settlement_report(_date):
                     pass
                     
                 if booking:
-                    b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
-                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),booking.confirmation_number,b_name,str(b.action),b.amount,invoice.reference])
+                    b_name = u'{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
+                    created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
+                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),booking.confirmation_number,b_name.encode('utf-8'),str(b.action),b.amount,invoice.reference])
                 else:
                     writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),'','',str(b.type),b.amount,invoice.reference])
             except Invoice.DoesNotExist:
@@ -177,8 +181,9 @@ def bookings_report(_date):
         writer.writerow(fieldnames)
 
         for b in bookings:
-            b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
-            writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name,b.active_invoice.amount,b.active_invoice.reference])
+            b_name = u'{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
+            created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
+            writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name.encode('utf-8'),b.active_invoice.amount if b.active_invoice else '',b.active_invoice.reference if b.active_invoice else ''])
 
         #for b in history_bookings:
         #    b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
