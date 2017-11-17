@@ -452,10 +452,10 @@ export default {
                 var fields = [...fields,...vm.dtHeaders];
                 fields.splice(vm.dtHeaders.length-1,1);
                 fields = [...fields,"Adults","Concession","Children","Infants","Regos","Canceled","Cancelation Reason","Cancelation Date","Canceled By"]
-                fields.splice(3,0,"Email");
-                fields.splice(4,0,"Phone");
-                fields.splice(8,0,'Amount Due')
-                fields.splice(9,0,'Amount Paid')
+                fields.splice(4,0,"Email");
+                fields.splice(5,0,"Phone");
+                fields.splice(9,0,'Amount Due')
+                fields.splice(10,0,'Amount Paid')
                 //var data = vm.$refs.bookings_table.vmDataTable.ajax.json().results;
                 var bookings = [];
                 $.each(data,function (i,booking) {
@@ -540,7 +540,7 @@ export default {
                                 bk[field] = booking.cancelation_reason;
                             break;
                             case 20:
-                                bk[field] = Moment(booking.cancelation_time).format("DD/MM/YYYY HH:MM:SS");
+                                bk[field] = booking.cancelation_time ? Moment(booking.cancelation_time).format("DD/MM/YYYY HH:MM:SS") : '';
                             break;
                             case 21:
                                 bk[field] = booking.canceled_by;
