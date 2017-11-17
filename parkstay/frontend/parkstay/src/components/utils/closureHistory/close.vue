@@ -96,7 +96,7 @@ module.exports = {
             return this.statusHistory.id ? this.statusHistory.id : '';
         },
         requireDetails: function() {
-            return this.statusHistory.reason == '1';
+            return this.statusHistory.closure_reason == '1';
         },
     },
     components: {
@@ -115,6 +115,7 @@ module.exports = {
             this.statusHistory.status= '1';
             this.statusHistory.details= '';
             this.statusHistory.reason = '';
+            this.statusHistory.closure_reason = '';
             var today = new Date();
             this.closeEndPicker.data('DateTimePicker').clear();
             this.closeStartPicker.data('DateTimePicker').clear();
