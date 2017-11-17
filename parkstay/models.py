@@ -1037,7 +1037,7 @@ class Booking(models.Model):
 
     @property
     def active_invoice(self):
-        active_invoices = Invoice.objects.filter(reference__in=[x.invoice_reference for x in self.invoices.all() if x.active]).order_by('-created')
+        active_invoices = Invoice.objects.filter(reference__in=[x.invoice_reference for x in self.invoices.all()]).order_by('-created')
         return active_invoices[0] if active_invoices else None
 
     # Methods
@@ -1179,7 +1179,8 @@ class Booking(models.Model):
         inv  = None
         payment_dict = []
         references = [i.invoice_reference for i in self.invoices.all()]
-        temp_invoices = Invoice.objects.filter(reference__in=references,voided=False)
+        #temp_invoices = Invoice.objects.filter(reference__in=references,voided=False)
+        temp_invoices = [self.active_invoice] if self.active_invoice else []
         if len(temp_invoices) == 1 or self.legacy_id:
             if not self.legacy_id:
                 inv = temp_invoices[0]
