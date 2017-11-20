@@ -560,7 +560,7 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     lines = price_or_lineitems(request,booking,booking.campsite_id_list)
     booking_arrival = booking.arrival.strftime('%d-%m-%Y')
     booking_departure = booking.departure.strftime('%d-%m-%Y')
-    reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival.strftime('%d-%m-%Y'),booking_departure.strftime('%d-%m-%Y'),booking.campground.name)
+    reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.campground.name)
     # Proceed to generate invoice
     checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
     internal_create_booking_invoice(booking, checkout_response)
