@@ -1,0 +1,295 @@
+<template lang="html">
+    <div id="history-booking">
+        <modal @ok="ok()" @cancel="cancel()" title="Booking History" large>
+            <div class="row">
+                <div class="col-lg-12">
+                    <h3>Current Booking Details</h3>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <span><strong>Confirmation #</strong> : PS{{booking.id}}</span>
+                        </div>
+                        <div class="col-sm-3">
+                            <span><strong>Arrival</strong> : {{booking.arrival | formatDate}}</span>
+                        </div>
+                        <div class="col-sm-3">
+                            <span><strong>Departure</strong> : {{booking.arrival | formatDate}}</span>
+                        </div>
+                        <div class="col-sm-3">
+                            <span><strong>Cost</strong> : {{booking.cost_total | formatAmount }}</span>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:10px;">
+                        <div class="col-sm-3">
+                            <span><strong>Adults</strong> : {{booking.guests.adults}}</span>
+                        </div>
+                        <div class="col-sm-3">
+                            <span><strong>Adults (Concession)</strong> : {{booking.guests.concession}}</span>
+                        </div>
+                        <div class="col-sm-3">
+                            <span><strong>Children</strong> : {{booking.guests.children}}</span>
+                        </div>
+                        <div class="col-sm-3">
+                            <span><strong>Infants</strong> : {{booking.guests.infants}}</span>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:10px;">
+                        <div class="col-sm-4">
+                            <span><strong>Campground</strong> : {{booking.campground_name}}</span>
+                        </div>
+                        <div class="col-sm-8">
+                            <span><strong>Camp Site (Type)</strong> : {{booking.campground_site_type}}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12" style="margin-top:10px;">
+                    <h3>Booking History Details</h3>
+                    <datatable v-if="booking_id > 0" ref="booking_history_table" id="booking_history-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders"></datatable>
+                </div>
+            </div>
+        </modal>
+    </div>
+</template>
+
+<script>
+import modal from '../utils/bootstrap-modal.vue'
+import datatable from '../utils/datatable.vue'
+import {$,api_endpoints,helpers,datetimepicker,Moment} from "../../hooks.js"
+export default {
+    name:'BookingHistory',
+    components:{
+        modal,
+        alert,
+        datatable
+    },
+    props:{
+        booking_id:{
+            type:Number,
+        },
+    },
+    data:function () {
+        let vm = this;
+        return {
+            isModalOpen:false,
+            booking: {
+                guests: {}
+            },
+            dtHeaders:["Change Date","Arrival","Departure","Campground","Campsite","Updated By","Details"],
+            dtOptions:{
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                processing:true,
+                ajax: {
+                    "url": `/api/booking/${vm.booking_id}/history.json`,
+                    "dataSrc": ''
+                },
+                order: [],
+                /*columnDefs: [
+                    {
+                        responsivePriority: 1,
+                        targets: 0
+                    },
+                    {
+                        responsivePriority: 2,
+                        targets: 2
+                    },
+                    {
+                        responsivePriority: 3,
+                        targets: 8
+                    }
+                ],*/
+                columns:[
+                    {
+                        data:"created",
+                        orderable:false,
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            return Moment(data).format("DD/MM/YYYY HH:mm:ss");
+                        }
+                    },
+                    {
+                        data:"arrival",
+                        orderable:false,
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            var val = Moment(data).format("DD/MM/YYYY");
+                            if (vm.booking.arrival == data){
+                                return `<span style="color:green;">${val}</span>`;
+                            }
+                            else{
+                                return `<span style="color:green;">${val}</span>`;
+                            }
+                        }
+                    },
+                    {
+                        data:"departure",
+                        orderable:false,
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            var val = Moment(data).format("DD/MM/YYYY");
+                            if (vm.booking.departure == data){
+                                return `<span style="color:green;">${val}</span>`;
+                            }
+                            else{
+                                return `<span style="color:green;">${val}</span>`;
+                            }
+                        }
+                    },
+                    {
+                        data:"campground",
+                        orderable:false,
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            if (vm.booking.campground_name == data){
+                                return `<span style="color:green;">${data}</span>`;
+                            }
+                            else{
+                                return `<span style="color:green;">${data}</span>`;
+                            }
+                        }
+                    },
+                    {
+                        data:"campsites",
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        data:"updated_by",
+                        orderable:false,
+                    },
+                    {
+                        "className":      'details-control',
+                        "orderable":      false,
+                        "data":           null,
+                        "defaultContent": ''
+                    },
+                ]
+            }
+
+        }
+    },
+    computed: {
+    },
+    watch:{
+        booking_id(){
+            let vm = this;
+            vm.$nextTick(() => {
+                if (vm.booking_id >  0){
+                    vm.$refs.booking_history_table.vmDataTable.ajax.url(`/api/booking/${vm.booking_id}/history.json`);
+                    vm.$refs.booking_history_table.vmDataTable.ajax.reload();
+                    vm.addEventListeners();
+                }
+            });
+        }
+    },
+    filters:{
+        formatDate(_date){
+            return Moment(_date).format("DD/MM/YYYY");
+        },
+        formatAmount(amount){
+            return parseFloat(amount).toFixed(2);
+        }
+    },
+    methods:{
+        ok:function () {
+            let vm =this;
+            if($(vm.form).valid()){
+                vm.sendData();
+            }
+        },
+        cancel:function () {
+        },
+        close:function () {
+            this.isModalOpen = false;
+        },
+        format( d ) {
+            // `d` is the original data object for the row
+            var vehicles = '<table cellpadding="10" cellspacing="40" border="0" style="padding-left:50px;"><tr><th>Rego</th><th>Type</th><th>Entry Fee</th></tr>';
+            $.each(d.vehicles,function(i,v){
+                var entry = v.entry_fee ? '<i class="fa fa-check" style="color:green;"></i>' : '<i class="fa fa-times" style="color:red;"></i>';
+                vehicles += `<tr>
+                                <td>${v.rego}</td>
+                                <td>${v.type}</td>
+                                <td>${entry}</td>
+                            </tr>`
+            });
+            vehicles += '</table>';
+            return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+                '<tr>'+
+                    '<td>Adults:</td>'+
+                    `<td>${d.details.num_adult}</td>`+
+                '</tr>'+
+                '<tr>'+
+                    '<td>Adults (Concession):</td>'+
+                    `<td>${d.details.num_concession}</td>`+
+                '</tr>'+
+                '<tr>'+
+                    '<td>Children:</td>'+
+                    `<td>${d.details.num_child}</td>`+
+                '</tr>'+
+                '<tr>'+
+                    '<td>Infants:</td>'+
+                    `<td>${d.details.num_infant}</td>`+
+                '</tr>'+
+                '<tr>'+
+                    '<td>Invoice:</td>'+
+                    `<td><a href='/ledger/payments/invoice-pdf/${d.invoice}' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #${d.invoice}</a></td>`+
+                '</tr>'+
+                '<tr>'+
+                    '<td>Vehicles:</td>'+
+                    `<td>${vehicles}</td>`+
+                '</tr>'+
+            '</table>';
+        },
+        addEventListeners(){
+            let vm = this;
+
+            vm.$refs.booking_history_table.vmDataTable.on('click', 'td.details-control', function () {
+                var tr = $(this).closest('tr');
+                var row = vm.$refs.booking_history_table.vmDataTable.row( tr );
+         
+                if ( row.child.isShown() ) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                }
+                else {
+                    // Open this row
+                    row.child( vm.format(row.data()) ).show();
+                    tr.addClass('shown');
+                }
+            } ); 
+        }
+   },
+   mounted:function () {
+       let vm =this;
+        vm.$nextTick(() => {
+            vm.addEventListeners();
+        });
+   }
+}
+</script>
+
+<style lang="css">
+td.details-control {
+    cursor: pointer;
+    position: relative;
+}
+td.details-control:before {
+    content: "\f055";  /* this is your text. You can also use UTF-8 character codes as I do here */
+    font-family: FontAwesome;
+    position:absolute;
+    top: 7px;
+    left: 25%;
+    color: #32aad2;
+}
+tr.shown td.details-control:before {
+    content: "\f056";  /* this is your text. You can also use UTF-8 character codes as I do here */
+    font-family: FontAwesome;
+    position:absolute;
+    top: 7px;
+    left: 25%;
+    color: #32aad2;
+}
+</style>

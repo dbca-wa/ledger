@@ -1040,6 +1040,10 @@ class Booking(models.Model):
         active_invoices = Invoice.objects.filter(reference__in=[x.invoice_reference for x in self.invoices.all()]).order_by('-created')
         return active_invoices[0] if active_invoices else None
 
+    @property
+    def has_history(self):
+        return self.history.count() > 0
+
     # Methods
     # =================================
     def clean(self,*args,**kwargs):

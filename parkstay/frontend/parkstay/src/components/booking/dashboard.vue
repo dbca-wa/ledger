@@ -85,6 +85,7 @@
           </div>
       </div>
       <changebooking ref="changebooking" :booking_id="selected_booking" :campgrounds="campgrounds"/>
+      <bookingHistory ref="bookingHistory" :booking_id="selected_booking" />
   </div>
    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
 </div>
@@ -95,6 +96,7 @@ import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal} from "../../hook
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import changebooking from "./changebooking.vue"
+import bookingHistory from "./history.vue"
 import modal from '../utils/bootstrap-modal.vue'
 import { mapGetters } from 'vuex'
 export default {
@@ -103,7 +105,8 @@ export default {
         datatable,
         loader,
         changebooking,
-        modal
+        modal,
+        bookingHistory
     },
     data:function () {
         let vm =this;
@@ -256,6 +259,7 @@ export default {
                                 column += cancel_booking;
                                 column += change_booking;
                             }
+                            full.has_history ? column += "<a href='edit/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
                             $.each(full.active_invoices,(i,v) =>{
                                 invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
@@ -343,6 +347,18 @@ export default {
         },
         addEventListeners:function () {
             let vm =this;
+
+            /* View History */
+            vm.$refs.bookings_table.vmDataTable.on('click','a[data-history]',function (e) {
+                e.preventDefault();
+                var selected_booking = JSON.parse($(this).attr('data-history'));
+                vm.selected_booking = selected_booking.id;
+                vm.$refs.bookingHistory.booking = selected_booking;
+                vm.$refs.bookingHistory.isModalOpen = true;
+
+                //vm.$refs.changebooking.fetchBooking(vm.selected_booking);
+            });
+
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-change]',function (e) {
                 e.preventDefault();
                 var selected_booking = JSON.parse($(this).attr('data-change'));

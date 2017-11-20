@@ -28,6 +28,7 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 CampgroundStayHistory,
                                 ParkEntryRate,
                                 BookingVehicleRego,
+                                BookingHistory,
                             )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -657,6 +658,24 @@ class ReportSerializer(serializers.Serializer):
 
 class BookingSettlementReportSerializer(serializers.Serializer):
     date = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
+
+class BookingHistorySerializer(serializers.ModelSerializer):
+    updated_by = serializers.CharField(source='updated_by.get_full_name')
+    invoice = serializers.CharField(source='invoice.reference')
+    class Meta:
+        model = BookingHistory
+        fields = (
+            'created',
+            'arrival',
+            'departure',
+            'details',
+            'cost_total',
+            'campground',
+            'campsites',
+            'updated_by',
+            'invoice',
+            'vehicles'
+        )
 
 # User Serializers
 # --------------------------

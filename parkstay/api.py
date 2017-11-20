@@ -98,7 +98,8 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     UserAddressSerializer,
                                     ContactSerializer as UserContactSerializer,
                                     PersonalSerializer,
-                                    OracleSerializer
+                                    OracleSerializer,
+                                    BookingHistorySerializer
                                     )
 from parkstay.helpers import is_officer, is_customer
 from parkstay import reports 
@@ -1598,6 +1599,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 cg = booking.campground
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
+                bk['has_history'] = booking.has_history
                 bk['cost_total'] = booking.cost_total
                 bk['amount_paid'] = booking.amount_paid
                 bk['vehicle_payment_status'] = booking.vehicle_payment_status
@@ -1777,7 +1779,6 @@ class BookingViewSet(viewsets.ModelViewSet):
         from django.utils import timezone
         http_status = status.HTTP_200_OK
         try:
-            print(request.GET)
             instance = self.get_object()
             response = {
                 'status': 'rejected',
@@ -1794,6 +1795,22 @@ class BookingViewSet(viewsets.ModelViewSet):
             #if all is well    
             response['status'] = 'approved'
             return Response(response,status=status.HTTP_200_OK)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET'])
+    def history(self, request, *args, **kwargs):
+        http_status = status.HTTP_200_OK
+        try:
+            history = self.get_object().history.all()
+            data = BookingHistorySerializer(history,many=True).data
+            return Response(data,status=status.HTTP_200_OK)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
