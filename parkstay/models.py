@@ -992,6 +992,10 @@ class Booking(models.Model):
         return list(set([x['campsite'] for x in self.campsites.all().values('campsite')]))
 
     @property
+    def campsite_name_list(self):
+        return list(set([x.campsite.name for x in self.campsites.all()]))
+
+    @property
     def paid(self):
         if self.legacy_id:
             return True

@@ -1,6 +1,6 @@
 <template lang="html">
     <div id="history-booking">
-        <modal @ok="ok()" @cancel="cancel()" title="Booking History" large>
+        <modal :showOK="false" cancelText="Close" @ok="ok()" @cancel="cancel()" title="Booking History" large>
             <div class="row">
                 <div class="col-lg-12">
                     <h3>Current Booking Details</h3>
@@ -89,7 +89,7 @@ export default {
             booking: {
                 guests: {}
             },
-            dtHeaders:["Change Date","Arrival","Departure","Campground","Campsite","Updated By","Details"],
+            dtHeaders:["Change Date","Arrival","Departure","Campground","Camp Site","Updated By","Details"],
             dtOptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -168,7 +168,15 @@ export default {
                     {
                         data:"campsites",
                         orderable:false,
-                        searchable:false
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            if (vm.booking.campsite_names.sort().join(',') == data.sort().join(',')){
+                                return `<span style="color:green;">${data}</span>`;
+                            }
+                            else{
+                                return `<span style="color:red;">${data}</span>`;
+                            }
+                        }
                     },
                     {
                         data:"updated_by",
