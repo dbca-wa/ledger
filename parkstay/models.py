@@ -1257,6 +1257,9 @@ class BookingHistory(models.Model):
 class OutstandingBookingRecipient(models.Model):
     email = models.EmailField()
 
+    def __str__(self):
+        return self.email
+
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
