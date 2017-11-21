@@ -1142,7 +1142,7 @@ class Booking(models.Model):
         today = datetime.now().date()
         if today > self.departure:
             raise ValidationError('You cannot cancel a booking past the departure date.')
-        self._generate_history()
+        self._generate_history(user=user)
         if user:
             self.canceled_by = user
         self.cancellation_reason = reason
