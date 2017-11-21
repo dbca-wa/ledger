@@ -51,7 +51,7 @@ def booking_refunds(start,end):
         cash.extend([x for x in CashTransaction.objects.filter(created__gte=start, created__lte=end,type='refund')])
 
         strIO = StringIO()
-        fieldnames = ['Confirmation Number', 'Name', 'Type','Amount','Oracle Code','Date','Refunded By','Invoice']
+        fieldnames = ['Confirmation Number', 'Name', 'Type','Amount','Oracle Code','Date','Refunded By','Reason','Invoice']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
 
@@ -74,11 +74,13 @@ def booking_refunds(start,end):
                             except TrackRefund.DoesNotExist:
                                 pass
                             name = ''
+                            reason = ''
                             if track:
                                 name = track.user.get_full_name() if track.user.get_full_name() else track.user.email
+                                reason = track.details
                             if booking:
                                 b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
-                                writer.writerow([booking.confirmation_number,b_name,'Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,invoice.reference])
+                                writer.writerow([booking.confirmation_number,b_name,'Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,reason,invoice.reference])
                             else:
                                 writer.writerow(['','','Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,invoice.reference])
         for b in bpoint:
@@ -100,11 +102,13 @@ def booking_refunds(start,end):
                                 except TrackRefund.DoesNotExist:
                                     pass
                                 name = ''
+                                reason = ''
                                 if track:
                                     name = track.user.get_full_name() if track.user.get_full_name() else track.user.email
+                                    reason = track.details
                                 if booking:
                                     b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
-                                    writer.writerow([booking.confirmation_number,b_name,'Card',v,line.oracle_code,b.created.strftime('%d/%m/%Y'),name,invoice.reference])
+                                    writer.writerow([booking.confirmation_number,b_name,'Card',v,line.oracle_code,b.created.strftime('%d/%m/%Y'),name,reason,invoice.reference])
                                 else:
                                     writer.writerow(['','','Card',v,line.oracle_code,b.created.strftime('%d/%m/%Y'),name,invoice.reference])
             except Invoice.DoesNotExist:
