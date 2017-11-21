@@ -1225,6 +1225,8 @@ class Booking(models.Model):
                 data = {
                     'Rego': r.rego.upper(),
                     'Type': r.get_type_display(),
+                    'original_type': r.type,
+                    'Fee': r.entry_fee,
                 }
                 if show_paid:
                     data['Paid'] = 'pass_required' if not r.entry_fee and not self.legacy_id else 'Yes' if paid else 'No'

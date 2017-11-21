@@ -12,7 +12,7 @@
                             <span><strong>Arrival</strong> : {{booking.arrival | formatDate}}</span>
                         </div>
                         <div class="col-sm-3">
-                            <span><strong>Departure</strong> : {{booking.arrival | formatDate}}</span>
+                            <span><strong>Departure</strong> : {{booking.departure | formatDate}}</span>
                         </div>
                         <div class="col-sm-3">
                             <span><strong>Cost</strong> : {{booking.cost_total | formatAmount }}</span>
@@ -204,42 +204,50 @@ export default {
             this.isModalOpen = false;
         },
         format( d ) {
+            let vm = this;
             // `d` is the original data object for the row
-            var vehicles = '<table cellpadding="10" cellspacing="40" border="0" style="padding-left:50px;"><tr><th>Rego</th><th>Type</th><th>Entry Fee</th></tr>';
+
+            var new_vehicles = [];
+            var changed_vehicles = [];
+            var vehicles = '<table class="vehicle_history_data" cellpadding="10" cellspacing="40" border="0" style="padding:10px;"><tr><th>Rego</th><th>Type</th><th>Entry Fee</th></tr>';
             $.each(d.vehicles,function(i,v){
                 var entry = v.entry_fee ? '<i class="fa fa-check" style="color:green;"></i>' : '<i class="fa fa-times" style="color:red;"></i>';
-                vehicles += `<tr>
+
+                // Check if the vehicle is a new vehicle
+                var found = vm.booking.vehicle_payment_status.find(b => b.Rego == v.rego.toUpperCase());
+                var color = (found && found.Fee == v.entry_fee && found.Rego == v.rego.toUpperCase() && v.type == found.original_type) ? 'green': 'red';
+                vehicles += `<tr style="color: ${color};">
                                 <td>${v.rego}</td>
                                 <td>${v.type}</td>
                                 <td>${entry}</td>
                             </tr>`
             });
             vehicles += '</table>';
+            
+            // Adults
+            var adults = vm.booking.guests.adults == d.details.num_adult ? `<tr style='color:green;'><td>Adults:</td><td>${d.details.num_adult}</td></tr>`: `<tr style='color:red;'><td>Adults:</td><td>${d.details.num_adult}</td></tr>`;
+            // Concession
+            var concession = vm.booking.guests.concession == d.details.num_concession ? `<tr style='color:green;'><td>Adults (Concession):</td><td>${d.details.num_concession}</td></tr>`: `<tr style='color:red;'><td>Adults (Concession):</td><td>${d.details.num_concession}</td></tr>`;
+            // Children 
+            var children = vm.booking.guests.children == d.details.num_child ? `<tr style='color:green;'><td>Children:</td><td>${d.details.num_child}</td></tr>`: `<tr style='color:red;'><td>Children:</td><td>${d.details.num_child}</td></tr>`;
+            // Infants 
+            var infants = vm.booking.guests.infants == d.details.num_infant ? `<tr style='color:green;'><td>Infants:</td><td>${d.details.num_infant}</td></tr>`: `<tr style='color:red;'><td>Infants:</td><td>${d.details.num_infant}</td></tr>`;
+            // Invoice 
+            var invoice = `<tr><td>Invoice:</td><td><a href='/ledger/payments/invoice-pdf/${d.invoice}' target='_blank' class='text-primary' style='padding-left:0;'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #${d.invoice}</a></td></tr>`
+            // Cost 
+            var cost = parseFloat(vm.booking.cost_total) == parseFloat(d.cost_total) ? `<tr style='color:green;'><td>Cost:</td><td>${d.cost_total}</td></tr>`: `<tr style='color:red;'><td>Cost:</td><td>${d.cost_total}</td></tr>`;
+
             return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
-                '<tr>'+
-                    '<td>Adults:</td>'+
-                    `<td>${d.details.num_adult}</td>`+
-                '</tr>'+
-                '<tr>'+
-                    '<td>Adults (Concession):</td>'+
-                    `<td>${d.details.num_concession}</td>`+
-                '</tr>'+
-                '<tr>'+
-                    '<td>Children:</td>'+
-                    `<td>${d.details.num_child}</td>`+
-                '</tr>'+
-                '<tr>'+
-                    '<td>Infants:</td>'+
-                    `<td>${d.details.num_infant}</td>`+
-                '</tr>'+
-                '<tr>'+
-                    '<td>Invoice:</td>'+
-                    `<td><a href='/ledger/payments/invoice-pdf/${d.invoice}' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #${d.invoice}</a></td>`+
-                '</tr>'+
+                adults+
+                concession+
+                children+
+                infants+
                 '<tr>'+
                     '<td>Vehicles:</td>'+
                     `<td>${vehicles}</td>`+
                 '</tr>'+
+                cost+
+                invoice+
             '</table>';
         },
         addEventListeners(){
@@ -275,6 +283,9 @@ export default {
 td.details-control {
     cursor: pointer;
     position: relative;
+}
+.vehicle_history_data  td,.vehicle_history_data th {
+    padding-right: 10px;
 }
 td.details-control:before {
     content: "\f055";  /* this is your text. You can also use UTF-8 character codes as I do here */
