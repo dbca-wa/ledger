@@ -531,7 +531,8 @@ export default {
                             break;
                             case 17:
                                 bk[field] =  booking.vehicle_payment_status.map(r =>{
-                                    return Object.keys(r).map(k =>{
+                                    var val =Object.keys(r).map(k =>{
+                                        if (k == 'Fee' || k == 'original_type'){ return 'avoid'; }
                                         if (k == 'Paid'){
                                             if (r[k] == 'Yes'){
                                                 return "Status" +" : Entry Fee Paid";
@@ -547,6 +548,7 @@ export default {
                                             return k +" : "+ r[k]
                                         }
                                     });
+                                    return val.filter(i => i != 'avoid');
                                 }).join(" | ");
                             break;
                             case 18:
