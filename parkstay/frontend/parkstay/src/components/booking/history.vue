@@ -40,6 +40,22 @@
                             <span><strong>Camp Site (Type)</strong> : {{booking.campground_site_type}}</span>
                         </div>
                     </div>
+                    <div class="row" style="margin-top:10px;">
+                        <div class="col-sm-6">
+                            <h4>Vehicles</h4>
+                            <div class="row" v-for="v in booking.vehicle_payment_status">
+                                <div class="col-sm-4">
+                                    <span><strong>Rego</strong> : {{v.Rego}}</span>
+                                </div>
+                                <div class="col-sm-4">
+                                    <span><strong>Type</strong> : {{v.Type}}</span>
+                                </div>
+                                <div class="col-sm-4">
+                                    <span><strong>Entry Fee</strong> : <i v-if="v.Fee" class="fa fa-check" style="color:green;"></i><i v-else class="fa fa-times" style="color:red;"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-lg-12" style="margin-top:10px;">
                     <h3>Booking History Details</h3>
@@ -272,9 +288,6 @@ export default {
    },
    mounted:function () {
        let vm =this;
-        vm.$nextTick(() => {
-            vm.addEventListeners();
-        });
    }
 }
 </script>

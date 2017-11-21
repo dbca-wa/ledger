@@ -625,6 +625,10 @@ def update_booking(request,old_booking,booking_details):
             # Check if the vehicles have changed
             current_regos = old_booking.regos.all()
             current_vehicle_regos= sorted([r.rego for r in current_regos])
+
+            # Add history
+            new_history = old_booking._generate_history(user=request.user)
+
             if request.data.get('entryFees').get('regos'):
                 new_regos = request.data['entryFees'].pop('regos')
                 sent_regos = [r['rego'] for r in new_regos]
@@ -667,6 +671,7 @@ def update_booking(request,old_booking,booking_details):
                     current_regos.delete()
 
             if same_campsites and same_dates and same_vehicles and same_details:
+                new_history.delete()
                 return old_booking
 
             # Check difference of dates in booking
@@ -679,8 +684,6 @@ def update_booking(request,old_booking,booking_details):
             if old_booking.cost_total != total_price:
                 price_diff = True
             if price_diff:
-                # Add history
-                old_booking._generate_history(user=request.user)
 
                 booking = create_temp_bookingupdate(request,booking.arrival,booking.departure,booking_details,old_booking,total_price)
                 # Attach campsite booking objects to old booking
