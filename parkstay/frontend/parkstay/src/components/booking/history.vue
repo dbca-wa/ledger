@@ -118,7 +118,7 @@ export default {
                                 return `<span style="color:green;">${val}</span>`;
                             }
                             else{
-                                return `<span style="color:green;">${val}</span>`;
+                                return `<span style="color:red;">${val}</span>`;
                             }
                         }
                     },
@@ -132,7 +132,7 @@ export default {
                                 return `<span style="color:green;">${val}</span>`;
                             }
                             else{
-                                return `<span style="color:green;">${val}</span>`;
+                                return `<span style="color:red;">${val}</span>`;
                             }
                         }
                     },
@@ -145,7 +145,7 @@ export default {
                                 return `<span style="color:green;">${data}</span>`;
                             }
                             else{
-                                return `<span style="color:green;">${data}</span>`;
+                                return `<span style="color:red;">${data}</span>`;
                             }
                         }
                     },
