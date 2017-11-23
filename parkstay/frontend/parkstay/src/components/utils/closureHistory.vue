@@ -120,7 +120,10 @@ export default {
                     orderable: false
                 }, {
                     data: 'details',
-                    orderable: false
+                    orderable: false,
+                    mRender: function(data,type,full){
+                        return parseInt(full.closure_reason) == 1 ? data : '';
+                    }
                 }, {
                     data: 'editable',
                     mRender: function(data, type, full) {
