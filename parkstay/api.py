@@ -1088,7 +1088,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # don't group by class, list individual sites
         else:
-            sites_qs = sites_qs.order_by('campsite_class__name', 'name')
+            sites_qs = sites_qs.order_by('name')
 
             # from our campsite queryset, generate a digest for each site
             sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
