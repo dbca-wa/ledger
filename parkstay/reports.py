@@ -161,7 +161,7 @@ def booking_bpoint_settlement_report(_date):
                 if booking:
                     b_name = u'{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
                     created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),booking.confirmation_number,b_name.encode('utf-8'),str(b.action),b.amount,invoice.reference])
+                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),booking.confirmation_number,b_name.encode('utf-8'),str(b.type),b.amount,invoice.reference])
                 else:
                     writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),'','',str(b.type),b.amount,invoice.reference])
             except Invoice.DoesNotExist:
