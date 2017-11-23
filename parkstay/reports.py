@@ -67,7 +67,7 @@ def booking_refunds(start,end):
                     #raise ValidationError('Couldn\'t find a booking matched to invoice reference {}'.format(e.invoice.reference))
                 for line in invoice.order.lines.all():
                     for k,v in line.refund_details['cash'].items():
-                        if k == str(e.id) and booking.booking_type != 3:
+                        if k == str(e.id):
                             track = None
                             try:
                                 track = TrackRefund.objects.get(type=1,refund_id=k)
@@ -95,7 +95,7 @@ def booking_refunds(start,end):
                         #raise ValidationError('Couldn\'t find a booking matched to invoice reference {}'.format(e.invoice.reference))
                     for line in invoice.order.lines.all():
                         for k,v in line.refund_details['card'].items():
-                            if k == str(b.id) and booking.booking_type != 3:
+                            if k == str(b.id):
                                 track = None
                                 try:
                                     track = TrackRefund.objects.get(type=2,refund_id=k)
