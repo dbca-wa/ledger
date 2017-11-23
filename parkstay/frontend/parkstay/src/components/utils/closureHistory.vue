@@ -66,7 +66,8 @@ export default {
             closure: {
                 id:'',
                 status: 1,
-                reason: ''
+                reason: '',
+                closure_reason: ''
             },
             deleteClosure: null,
             deleteClosurePrompt: {
