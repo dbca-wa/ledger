@@ -42,10 +42,10 @@ def update_file_view(sender, instance, **kwargs):
         sql = 'CREATE OR REPLACE VIEW bpay_bpaycollection_v AS \
                 select date(created), count(*), sum(a.credit_total) as credit_total, \
                 sum(a.cheque_total) as cheque_total,sum(a.debit_total) as debit_total, \
-                (sum(a.credit_total)+sum(a.cheque_total)+sum(a.debit_total)) as total from bpay_bpayfile f\
+                (sum(a.credit_total)+sum(a.cheque_total)+sum(a.debit_total)) as total from payments_bpayfile f\
                 inner join \
                 (select file_id,sum(credit_amount) as credit_total,sum(cheque_amount) as cheque_total,\
-                sum(debit_amount) as debit_total from bpay_bpayaccountrecord GROUP BY \
+                sum(debit_amount) as debit_total from payments_bpayaccountrecord GROUP BY \
                 file_id,credit_amount,cheque_amount,debit_amount) a \
                 on f.id=a.file_id \
                 group by date(f.created);'
