@@ -300,6 +300,7 @@ export default {
             booking_type: "campsite",
             initialised: false,
             fetchingSites: false,
+            booking_price: 0,
         };
     },
     components: {
@@ -309,12 +310,6 @@ export default {
     computed: {
         isLoading: function() {
             return this.loading.length > 0;
-        },
-        booking_price: {
-            cache: false,
-            get: function(){
-                return this.booking.price;
-            }
         },
         maxEntryVehicles: function() {
             let vm = this;
@@ -331,7 +326,6 @@ export default {
     },
     filters: {
         formatMoney: function(n, c, d, t) {
-            console.log(n)
             c = isNaN(c = Math.abs(c)) ? 2 : c;
             d = d == undefined ? "." : d;
             t = t == undefined ? "," : t;
@@ -441,7 +435,7 @@ export default {
                     });
                     vm.updateParkEntryPrices()
                     vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
-                    console.log(vm.booking.price);
+                    vm.booking_price = vm.booking.price;
                 });
             } else {
                 $.each(vm.priceHistory,function (i,price) {
@@ -462,6 +456,8 @@ export default {
                         }
                     }
                 });
+                vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+                vm.booking_price = vm.booking.price;
             }
         },
         fetchSites: function() {
@@ -796,8 +792,6 @@ export default {
 
             let vm = this;
             var count = vm.booking.parkEntry.vehicles
-            console.log(count);
-            console.log(park_entry);
             if (park_entry.amount < 10 && count < 10) {
                 park_entry.amount = (park_entry.amount < 10) ? park_entry.amount += 1 : park_entry.amount;
                 vm.booking.parkEntry.vehicles++;
