@@ -132,9 +132,8 @@
                                   </div>
                                 </div>
                             </div>
-                            <!-- Test -->
                             <div class="col-lg-8 col-md-offset-1">
-                                <div class="row form-horizontal">
+                                <div class="row form-horizontal" v-if="initialised">
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label class="col-md-4" for="Total Price">Total Price <span class="text-muted">(GST inclusive.)</span></label>
@@ -166,7 +165,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- End Test -->
                         </div>
                         <div class="row">
                         </div>
@@ -880,12 +878,14 @@ export default {
                     return vp;
                 });
             })
-            vm.initialised = true;
+
             vm.$nextTick(() => {
                 vm.addEventListeners();
             });
-            //vm.$store.commit('SET_LOADER_STATE',false);
-
+            setTimeout(function(){
+                vm.generateBookingPrice();
+                vm.initialised = true;
+            },2000);
 
         }
     },
