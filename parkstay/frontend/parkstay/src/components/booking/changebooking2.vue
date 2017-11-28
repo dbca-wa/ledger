@@ -612,7 +612,9 @@ export default {
                 (i != vm.guestsPicker.length - 1) ? (g.amount > 0) ? text += g.amount + " " + g.name + ",  ": "": (g.amount > 0) ? text += g.amount + " " + g.name + " " : "";
             });
             vm.guestsText = text.replace(/,\s*$/, "");
-            vm.generateBookingPrice();
+            if(vm.initialised){
+                vm.generateBookingPrice();
+            }
         },
         updateParkEntryPrices: function() {
             let vm = this;
