@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib import admin
+from django.contrib.gis import admin
 from parkstay import models
 
 @admin.register(models.CampsiteClass)
@@ -17,11 +17,12 @@ class ParkAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 @admin.register(models.Campground)
-class CampgroundAdmin(admin.ModelAdmin):
+class CampgroundAdmin(admin.GeoModelAdmin):
     list_display = ('name','park','promo_area','campground_type','site_type','max_advance_booking')
     ordering = ('name',)
     search_fields = ('name',)
     list_filter = ('campground_type','site_type')
+    openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
 
 @admin.register(models.CampgroundGroup)
 class CampgroundGroupAdmin(admin.ModelAdmin):
