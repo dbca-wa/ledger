@@ -800,6 +800,7 @@ export default {
             vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
             vm.updateParkEntryPrices();
             vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+            vm.booking_price = vm.booking.price;
 
         },
         removeVehicleCount: function(park_entry) {
@@ -824,9 +825,10 @@ export default {
                 }
 
             }
-            //vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
-            //vm.updateParkEntryPrices();
-            //vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+            vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
+            vm.updateParkEntryPrices();
+            vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+            vm.booking_price = vm.booking.price;
         },
         initBooking(response) {
             let vm = this;
