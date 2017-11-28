@@ -122,20 +122,57 @@
                                             <input type="text" class="form-control vehicleLookup" required="required" v-model="v.rego" @change="validateRego">
                                         </div>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-2" v-if="park.entry_fee_required">
                                         <label>Entry Fee</label>
                                         <div class="form-check">
                                             <label class="form-check-label">
-                                                <input class="form-check-input" type="checkbox" required="required" v-model="v.entry_fee">
+                                                <input class="form-check-input" type="checkbox" required="required" v-model="v.entry_fee" @change="updatePrices">
                                             </label>
                                         </div>
                                   </div>
                                 </div>
                             </div>
+                            <!-- Test -->
+                            <div class="col-lg-8 col-md-offset-1">
+                                <div class="row form-horizontal">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label class="col-md-4" for="Total Price">Total Price <span class="text-muted">(GST inclusive.)</span></label>
+                                            <div class="col-md-8">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
+                                                    <input type="text" class="form-control" :placeholder="0|formatMoney(2)" :value="booking_price|formatMoney(2)" readonly="true">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-md-4" for="Old Total Price">Old Total Price <span class="text-muted">(GST inclusive.)</span></label>
+                                            <div class="col-md-8">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
+                                                    <input type="text" class="form-control" :placeholder="0|formatMoney(2)" :value="booking.cost_total|formatMoney(2)" readonly="true">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-md-4" for="Amount Paid">Amount Paid</label>
+                                            <div class="col-md-8">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
+                                                    <input type="text" class="form-control" :placeholder="0|formatMoney(2)" :value="booking.amount_paid|formatMoney(2)" readonly="true">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Test -->
                         </div>
                         <div class="row">
+                        </div>
+                        <div class="row" style="margin-top:20px;">
                             <div class="col-md-12">
-                              <button type="button" :disabled="campsites.length == 0" class="btn btn-primary btn-lg pull-right" @click="updateNow()">Save Changes</button>
+                              <button type="button" :disabled="campsites.length == 0" class="btn btn-primary btn-lg pull-right" style="margin-top:15px;" @click="updateNow()">Save Changes</button>
                             </div>
                         </div>
                     </div>
@@ -178,7 +215,7 @@ export default {
             booking: {
                 parkEntry: {
                     vehicles: 0
-                }
+                },
             },
             campsites: [],
             loading: [],
@@ -273,6 +310,12 @@ export default {
         isLoading: function() {
             return this.loading.length > 0;
         },
+        booking_price: {
+            cache: false,
+            get: function(){
+                return this.booking.price;
+            }
+        },
         maxEntryVehicles: function() {
             let vm = this;
             var entries = (vm.booking.parkEntry.vehicles <= 10) ? vm.booking.parkEntry.vehicles : 10;
@@ -288,6 +331,7 @@ export default {
     },
     filters: {
         formatMoney: function(n, c, d, t) {
+            console.log(n)
             c = isNaN(c = Math.abs(c)) ? 2 : c;
             d = d == undefined ? "." : d;
             t = t == undefined ? "," : t;
@@ -300,7 +344,7 @@ export default {
     watch: {
         selected_campsite: function() {
             let vm = this;
-            //vm.updatePrices();
+            vm.updatePrices();
         },
         selected_arrival: function() {
             let vm = this;
@@ -317,14 +361,14 @@ export default {
             if (this.initialised){
             }
             vm.fetchSites();
-            //vm.updatePrices();
+            vm.updatePrices();
         },
         selected_departure: function() {
             let vm = this;
             if (this.initialised){
             }
             vm.fetchSites();
-            //vm.updatePrices();
+            vm.updatePrices();
         },
         booking_type: function() {
             let vm = this;
@@ -346,8 +390,8 @@ export default {
             vm.booking.price = 0;
             if (vm.selected_campsite) {
                 if (vm.booking.arrival && vm.booking.departure) {
-                    var arrival = Moment(vm.booking.arrival, "YYYY-MM-DD");
-                    var departure = Moment(vm.booking.departure, "YYYY-MM-DD");
+                    var arrival = Moment(vm.selected_arrival, "DD/MM/YYYY");
+                    var departure = Moment(vm.selected_departure, "DD/MM/YYYY");
                     var nights = departure.diff(arrival, 'days');
                     vm.loading.push('updating prices');
                     vm.$http.get(api_endpoints.campsite_current_price(vm.booking.campsite, arrival.format("YYYY-MM-DD"), departure.format("YYYY-MM-DD"))).then((response) => {
@@ -370,6 +414,54 @@ export default {
                         vm.loading.splice('updating prices', 1);
                     });
                 }
+            }
+        },
+        generateBookingPrice:function () {
+            let vm =this;
+            vm.booking.price = 0;
+            if (vm.park.entry_fee_required){
+                vm.fetchParkPrices(function(){
+                    $.each(vm.priceHistory,function (i,price) {
+                        for (var guest in vm.booking.guests) {
+                            switch(guest){
+                                case 'adults':
+                                vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['adult']);
+                                break;
+                                case 'concession':
+                                vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['concession']);
+                                break;
+                                case 'children':
+                                vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['child']);
+                                break;
+                                case 'infants':
+                                vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['infant']);
+                                break;
+                            }
+                        }
+                    });
+                    vm.updateParkEntryPrices()
+                    vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+                    console.log(vm.booking.price);
+                });
+            } else {
+                $.each(vm.priceHistory,function (i,price) {
+                    for (var guest in vm.booking.guests) {
+                        switch(guest){
+                            case 'adults':
+                            vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['adult']);
+                            break;
+                            case 'concession':
+                            vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['concession']);
+                            break;
+                            case 'children':
+                            vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['child']);
+                            break;
+                            case 'infants':
+                            vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['infant']);
+                            break;
+                        }
+                    }
+                });
             }
         },
         fetchSites: function() {
@@ -415,10 +507,10 @@ export default {
             vm.loading.push('fetching park');
             vm.$http.get(api_endpoints.park(vm.campground.park)).then((response) => {
                 vm.park = response.body;
-                vm.loading.splice('fetching park', 1);
+                vm.loading.splice('fetching park details', 1);
             }, (error) => {
                 console.log(error);
-                vm.loading.splice('fetching park', 1);
+                vm.loading.splice('fetching park details', 1);
             });
         },
         addEventListeners: function() {
@@ -426,14 +518,16 @@ export default {
             vm.arrivalPicker = $(vm.bookingForm.arrival).closest('.date');
             vm.departurePicker = $(vm.bookingForm.departure).closest('.date');
             vm.arrivalPicker.datetimepicker({
+                //defaultDate: Moment(vm.selected_arrival,"DD/MM/YYYY"),
                 format: 'DD/MM/YYYY',
                 minDate: new Date(),
-                maxDate: Moment().add(parseInt(vm.campground.max_advance_booking), 'days')
+                //maxDate: Moment().add(parseInt(vm.campground.max_advance_booking), 'days')
             });
             vm.departurePicker.datetimepicker({
                 format: 'DD/MM/YYYY',
                 useCurrent: false,
             });
+
             vm.arrivalPicker.on('dp.change', function(e) {
                 vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
                 vm.selected_arrival = vm.booking.arrival;
@@ -441,10 +535,9 @@ export default {
                 vm.booking.departure = "";
                 var selected_date = e.date.clone(); //Object.assign({},e.date);
                 var minDate = selected_date.clone().add(1, 'days');
-                var maxDate = minDate.clone().add(28, 'days');
-                vm.departurePicker.data("DateTimePicker").maxDate(maxDate);
                 vm.departurePicker.data("DateTimePicker").minDate(minDate);
-                vm.departurePicker.data("DateTimePicker").date(null);
+                // Set the departure date to a day after the arrival date
+                vm.departurePicker.data("DateTimePicker").date(minDate);
             });
             vm.departurePicker.on('dp.change', function(e) {
                 if (vm.departurePicker.data('DateTimePicker').date()) {
@@ -455,6 +548,10 @@ export default {
                     vm.selected_departure = vm.booking.departure;
                 }
             });
+            // Set the initial minimum departure date for the booking
+            vm.departurePicker.data("DateTimePicker").minDate(Moment(vm.selected_arrival,"DD/MM/YYYY").add(1,'days'));
+
+            // TODO implement price widget when the dates are changed
             /*vm.$http.get(api_endpoints.campgroundCampsites(vm.campground.id)).then((response) => {
                 var campsites = response.body;
                 vm.$http.get(api_endpoints.campsite_current_price(campsites[0].id,Moment().format("YYYY-MM-DD"),Moment().add(1,'days').format("YYYY-MM-DD"))).then((response)=>{
@@ -532,15 +629,17 @@ export default {
                             switch (entry.id) {
                                 case 'vehicle':
                                     vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.vehicle);
-                                    vm.booking.entryFees.vehicle++;
+                                    //vm.booking.entryFees.vehicle++;
                                     break;
                                 case 'motorbike':
                                     vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.motorbike);
-                                    vm.booking.entryFees.motorbike++;
+                                    //vm.booking.entryFees.motorbike++;
                                     break;
                                 case 'concession':
                                     vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.concession);
-                                    vm.booking.entryFees.concession++;
+                                    //vm.booking.entryFees.concession++;
+                                    break;
+                                default:
                                     break;
                             }
                         }
@@ -551,7 +650,7 @@ export default {
         fetchParkPrices: function(calcprices) {
             let vm = this;
             if (vm.booking.arrival) {
-                var arrival = Moment(vm.booking.arrival, "YYYY-MM-DD").format("YYYY-MM-DD");
+                var arrival = Moment(vm.booking.arrival, "DD/MM/YYYY").format("YYYY-MM-DD");
                 vm.$http.get(api_endpoints.park_current_price(vm.park.id, arrival)).then((response) => {
                     var resp = response.body;
                     if (resp.constructor != Array) {
@@ -617,7 +716,6 @@ export default {
                     type: "danger",
                     message: ""
                 });
-                console.log(booking);
                 vm.$http.put(api_endpoints.booking(vm.booking.id), JSON.stringify(booking), {
                     emulateJSON: true,
                     headers: {
@@ -698,14 +796,16 @@ export default {
 
             let vm = this;
             var count = vm.booking.parkEntry.vehicles
+            console.log(count);
+            console.log(park_entry);
             if (park_entry.amount < 10 && count < 10) {
                 park_entry.amount = (park_entry.amount < 10) ? park_entry.amount += 1 : park_entry.amount;
                 vm.booking.parkEntry.vehicles++;
                 vm.parkEntryVehicles.push(JSON.parse(JSON.stringify(park_entry)));
             }
-            //vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
-            //vm.updateParkEntryPrices();
-            //vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+            vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
+            vm.updateParkEntryPrices();
+            vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
 
         },
         removeVehicleCount: function(park_entry) {
@@ -746,7 +846,9 @@ export default {
             vm.selected_departure = vm.booking.departure;
             // set the campground
             vm.campground = vm.booking.campground ? vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.campground)) : null;
-            vm.addEventListeners();
+            // fetch park details
+            vm.fetchPark();
+            // fetch the sites
             vm.fetchSites();
             // Update guests
             let guests = vm.booking.guests;
@@ -761,7 +863,13 @@ export default {
             vm.generateGuestCountText();
             // Update Vehicles
             vm.booking.parkEntry = { 'vehicles': 0};
-            let vehilce_length = vm.booking.regos.length;
+            vm.booking.entryFees = {
+                vehicle : 0,
+                motorbike: 0,
+                concession:0,
+                entry_fee: 0,
+                regos:[]
+            };
             $.each(vm.booking.regos,(i,v) => {
                 vm.parkEntryPicker.map((vp) => {
                     if (vp.id == v.type){
@@ -769,11 +877,17 @@ export default {
                         vp.entry_fee = v.entry_fee;
                         vm.addVehicleCount(vp)
                     }
+                    vp.rego = '';
+                    vp.entry_fee = true;
                     return vp;
                 });
             })
             vm.initialised = true;
+            vm.$nextTick(() => {
+                vm.addEventListeners();
+            });
             //vm.$store.commit('SET_LOADER_STATE',false);
+
 
         }
     },
