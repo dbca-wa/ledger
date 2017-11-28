@@ -336,11 +336,12 @@ def generateParserSummary(files):
 
 def sendSummaryEmail(summary):
     dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+    recipients = BpayJobRecipient.objects.all()
     email = EmailMessage(
         'BPAY Summary {}'.format(dt),
         'BPAY Summary File for {}'.format(dt),
         settings.DEFAULT_FROM_EMAIL,
-        to=[settings.NOTIFICATION_EMAIL]
+        to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
     )
     email.attach('summary.txt', summary, 'text/plain')
     email.send()

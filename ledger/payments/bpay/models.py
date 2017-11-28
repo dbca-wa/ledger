@@ -9,6 +9,15 @@ from django.core.exceptions import ValidationError
 from oscar.apps.order.models import Order
 import datetime
 
+class BpayJobRecipient(models.Model):
+    email = models.EmailField(unique=True)
+
+    class Meta:
+        db_table = 'payments_bpayjobrecipient'
+
+    def __unicode__(self):
+        return self.email
+
 class BpayFile(models.Model):
     inserted = models.DateTimeField(auto_now_add=True)
     created = models.DateTimeField(help_text='File Creation Date Time.')

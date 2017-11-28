@@ -42,6 +42,10 @@ class BpayTransactionAdmin(admin.ModelAdmin):
         'p_date'
     )
 
+@admin.register(models.BpayJobRecipient)
+class BpayJobRecipient(admin.ModelAdmin):
+    pass
+
 @admin.register(models.BpayFile)
 class BpayFileAdmin(admin.ModelAdmin):
     list_display = (
