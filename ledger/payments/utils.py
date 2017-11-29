@@ -321,7 +321,7 @@ def addToInterface(date,oracle_codes,system,override):
                         status_date = today
                     )
                     new_codes[k] = remainder_amount
-        if system.deduct_percentage and deduction_code.amount > 0:
+        if system.deduct_percentage and deduction_code.amount != 0:
             deduction_code.save()
             new_codes[deduction_code.activity_name] = deduction_code.amount
         return new_codes
@@ -343,7 +343,7 @@ def oracle_parser(date,system,system_name,override=False):
             op,created = OracleParser.objects.get_or_create(date_parsed=date)
             bpoint_txns = []
             bpay_txns = []
-            bpoint_txns.extend([x for x in BpointTransaction.objects.filter(settlement_date=date,response_code=0)])
+            bpoint_txns.extend([x for x in BpointTransaction.objects.filter(settlement_date=date,response_code=0).exclude(crn1__endswith='_test')])
             bpay_txns.extend([x for x in BpayTransaction.objects.filter(p_date__contains=date, service_code=0)])
             # Get the required invoices
             for b in bpoint_txns:
@@ -378,7 +378,7 @@ def oracle_parser(date,system,system_name,override=False):
                         code = i.oracle_code
                         item_id = i.id
                         # Check previous parser results for this invoice
-                        previous_invoices = OracleParserInvoice.objects.filter(reference=invoice.reference)
+                        previous_invoices = OracleParserInvoice.objects.filter(reference=invoice.reference,parser__date_parsed=date)
                         code_paid_amount = D('0.0')
                         code_refunded_amount = D('0.0')
                         code_deducted_amount = D('0.0')
@@ -390,8 +390,7 @@ def oracle_parser(date,system,system_name,override=False):
                                     code_paid_amount +=  D(p_item['payment'])
                                     code_refunded_amount += D(p_item['refund'])
                                     code_deducted_amount += D(p_item['deductions'])
-
-                        # Deal with the current txn
+                        # Deal with the current item
                         # Payments
                         paid_amount = D('0.0')
                         for k,v in i.payment_details['bpay'].items():

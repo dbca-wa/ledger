@@ -16,9 +16,9 @@ class Line(CoreAbstractLine):
     partner_name = models.CharField(
         _("Partner name"), max_length=128, blank=True,null=True)
     partner_sku = models.CharField(_("Partner SKU"), max_length=128,null=True)
-    payment_details = JSONField(default=DEFAULT_PAYMENT)
-    refund_details = JSONField(default=DEFAULT_PAYMENT)
-    deduction_details = JSONField(default=DEFAULT_PAYMENT)
+    payment_details = JSONField(db_index=True,default=DEFAULT_PAYMENT)
+    refund_details = JSONField(db_index=True,default=DEFAULT_PAYMENT)
+    deduction_details = JSONField(db_index=True,default=DEFAULT_PAYMENT)
 
     @property
     def paid(self):
