@@ -1,9 +1,10 @@
 from six.moves import StringIO
 import csv
 import pytz
-from datetime import timedelta
+from datetime import timedelta,datetime
 from decimal import Decimal as D
 from ledger.payments.models import Invoice, CashTransaction, BpointTransaction, BpayTransaction
+from ledger.order.models import Line
 
 PERTH_TIMEZONE = pytz.timezone('Australia/Perth')
 
@@ -16,7 +17,6 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
     invoices = []
     invoice_list = []
     dates, banked_dates = [], []
-    parsed_invoices = {}
     date_amounts, banked_date_amounts = [], []
     items = []
     oracle_codes = {}
@@ -105,10 +105,10 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
         # Loop through the payments and not the invoices
         for i in invoices:
             # Add items of invoice if not in list
+
             if i.order:# and not i.voided:
-                if i.reference not in parsed_invoices.keys():
-                    parsed_invoices[i.reference] = {'amount':i.amount,'paid':i.payment_amount,'refunded':i.refundable_amount}
-                for x in i.order.lines.all():
+                lines = i.order.lines.all()
+                for x in lines:
                     #print((i, i.__dict__, x, x.oracle_code))
                     item_date_amounts, banked_item_dates_amounts = [], []
                     for d in dates:
@@ -194,7 +194,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                 for k,v in payment_details["cash"].items():
                     c = CashTransaction.objects.get(id=int(k))
                     source = c.source
-                    if source in ['cash','cheque','money_order']:
+                    if source in set(['cash','cheque','money_order']):
                         if c.created.strftime(date_format) == d.get('date'):
                             banked_oracle_codes[code][date_amount_index]['amounts'][source] += D(v)
                             item[source] += D(v)
@@ -203,7 +203,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                 for k,v in refund_details["cash"].items():
                     c = CashTransaction.objects.get(id=int(k))
                     source = c.source
-                    if source in ['cash','cheque','money_order']:
+                    if source in set(['cash','cheque','money_order']):
                         if c.created.strftime(date_format) == d.get('date'):
                             banked_oracle_codes[code][date_amount_index]['amounts'][source] -= D(v)
                             item[source] -= D(v)
@@ -212,7 +212,7 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
                 for k,v in deduction_details["cash"].items():
                     c = CashTransaction.objects.get(id=int(k))
                     source = c.source
-                    if source in ['cash','cheque','money_order']:
+                    if source in set(['cash','cheque','money_order']):
                         if c.created.strftime(date_format) == d.get('date'):
                             banked_oracle_codes[code][date_amount_index]['amounts'][source] -= D(v)
                             item[source] -= D(v)
@@ -359,9 +359,9 @@ def generate_trans_csv(system,start,end,region=None,district=None):
     bpay = None
 
     # Get all transactions
-    cash = CashTransaction.objects.filter(created__gte=start, created__lte=end,district=district).order_by('-created')
-    bpoint = BpointTransaction.objects.filter(settlement_date__gte=start, settlement_date__lte=end).order_by('-created').exclude(crn1__endswith='_test')
-    bpay = BpayTransaction.objects.filter(p_date__gte=start, p_date__lte=end).order_by('-created')
+    cash = CashTransaction.objects.filter(created__gte=start, created__lte=end,district=district,invoice__system=system).order_by('-created')
+    bpoint = BpointTransaction.objects.filter(settlement_date__gte=start, settlement_date__lte=end,crn1__startswith=system).order_by('-created').exclude(crn1__endswith='_test')
+    bpay = BpayTransaction.objects.filter(p_date__gte=start, p_date__lte=end,crn__startswith=system).order_by('-created')
 
     # Print the header
     strIO = StringIO()
