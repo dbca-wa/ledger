@@ -359,9 +359,9 @@ def generate_trans_csv(system,start,end,region=None,district=None):
     bpay = None
 
     # Get all transactions
-    cash = CashTransaction.objects.filter(created__gte=start, created__lte=end,district=district)
-    bpoint = BpointTransaction.objects.filter(settlement_date__gte=start, settlement_date__lte=end).exclude(crn1__endswith='_test')
-    bpay = BpayTransaction.objects.filter(p_date__gte=start, p_date__lte=end)
+    cash = CashTransaction.objects.filter(created__gte=start, created__lte=end,district=district).order_by('-created')
+    bpoint = BpointTransaction.objects.filter(settlement_date__gte=start, settlement_date__lte=end).order_by('-created').exclude(crn1__endswith='_test')
+    bpay = BpayTransaction.objects.filter(p_date__gte=start, p_date__lte=end).order_by('-created')
 
     # Print the header
     strIO = StringIO()
