@@ -352,83 +352,120 @@ def generate_items_csv(system,start,end,banked_start,banked_end,region=None,dist
 def generate_trans_csv(system,start,end,region=None,district=None):
     # Get invoices matching the system and date range
     strIO = None
-    invoices = Invoice.objects.filter(system=system)
-    if invoices:
-        strIO = StringIO()
-        fieldnames = ['Created','Settlement Date', 'Payment Method', 'Transaction Type', 'Amount', 'Approved', 'Source', 'Product Names',
-                      'Product Codes', 'Invoice']
-        writer = csv.DictWriter(strIO, fieldnames=fieldnames)
-        writer.writeheader()
-        for i in invoices:
-            items = item_codes = bpay = bpoint = cash = None
-            item_names = []
-            oracle_codes = []
-            # Get all items for this invoice
-            if i.order:
-                items = i.order.lines.all().values('title', 'oracle_code')
-                for item in items:
-                    item_names.append(item.get('title'))
-                    code = item.get('oracle_code')
-                    if not code: code = 'N\A'
-                    oracle_codes.append(code)
-                item_names = '|'.join(item_names)
-                oracle_codes = '|'.join(oracle_codes)
-            # Get all transactions for this invoice
-            '''params = {
-                'created__gte':start,
-                'created__lte': end
-            }'''
-            cash = i.cash_transactions.filter(created__gte=start, created__lte=end, district=district)
-            if not district:
-                bpoint = i.bpoint_transactions.filter(settlement_date__gte=start, settlement_date__lte=end).exclude(crn1__endswith='_test')
-                bpay = i.bpay_transactions.filter(p_date__gte=start, p_date__lte=end)
-            # Write out the cash transactions
-            for c in cash:
-                if c.type not in ['move_in','move_out']:
-                    cash_info = {
-                        'Created': c.created.astimezone(PERTH_TIMEZONE).strftime('%d/%m/%Y %H:%M:%S'),
-                        'Settlement Date': c.created.strftime('%d/%m/%Y'),
-                        'Invoice': c.invoice.reference,
-                        'Payment Method': 'Cash',
-                        'Transaction Type': c.type.lower(),
-                        'Amount': c.amount if c.type not in ['refund','move_out'] else '-{}'.format(c.amount),
-                        'Approved': 'True',
-                        'Source': c.source,
-                        'Product Names': item_names,
-                        'Product Codes': oracle_codes
-                    }
-                    writer.writerow(cash_info)
-            if not district:
-                # Write out all bpay transactions
-                for b in bpay:
-                    bpay_info = {
-                        'Created': b.created.astimezone(PERTH_TIMEZONE).strftime('%d/%m/%Y %H:%M:%S'),
-                        'Settlement Date': b.p_date.strftime('%d/%m/%Y'),
-                        'Invoice': b.crn,
-                        'Payment Method': 'BPAY',
-                        'Transaction Type': b.get_p_instruction_code_display(),
-                        'Amount': b.amount if b.p_instruction_code == '05' and b.type == '399' else '-{}'.format(b.amount),
-                        'Approved': b.approved,
-                        'Source': 'N/A',
-                        'Product Names': item_names,
-                        'Product Codes': oracle_codes
-                    }
-                    writer.writerow(bpay_info)
-                # Write out all bpoint transactions
-                for bpt in bpoint:
-                    bpoint_info = {
-                        'Created': bpt.created.astimezone(PERTH_TIMEZONE).strftime('%d/%m/%Y %H:%M:%S'),
-                        'Settlement Date': bpt.settlement_date.strftime('%d/%m/%Y'),
-                        'Invoice': bpt.crn1,
-                        'Payment Method': 'BPOINT',
-                        'Transaction Type': bpt.action.lower(),
-                        'Amount': bpt.amount if bpt.action not in ['refund'] else '-{}'.format(bpt.amount),
-                        'Approved': bpt.approved,
-                        'Source': 'N/A',
-                        'Product Names': item_names,
-                        'Product Codes': oracle_codes
-                    }
-                    writer.writerow(bpoint_info)
-        strIO.flush()
-        strIO.seek(0)
+    invoices = []
+
+    cash = None
+    bpoint = None
+    bpay = None
+
+    # Get all transactions
+    cash = CashTransaction.objects.filter(created__gte=start, created__lte=end,district=district)
+    bpoint = BpointTransaction.objects.filter(settlement_date__gte=start, settlement_date__lte=end).exclude(crn1__endswith='_test')
+    bpay = BpayTransaction.objects.filter(p_date__gte=start, p_date__lte=end)
+
+    # Print the header
+    strIO = StringIO()
+    fieldnames = ['Created','Settlement Date', 'Payment Method', 'Transaction Type', 'Amount', 'Approved', 'Source', 'Product Names',
+                  'Product Codes', 'Invoice']
+    writer = csv.DictWriter(strIO, fieldnames=fieldnames)
+    writer.writeheader()
+
+    # Iterate through transactions
+    for c in cash:
+        i = c.invoice
+        items = item_codes = None
+        item_names = []
+        oracle_codes = []
+        # Get all items for this invoice
+        if i.order:
+            items = i.order.lines.all().values('title', 'oracle_code')
+            for item in items:
+                item_names.append(item.get('title'))
+                code = item.get('oracle_code')
+                if not code: code = 'N\A'
+                oracle_codes.append(code)
+            item_names = '|'.join(item_names)
+            oracle_codes = '|'.join(oracle_codes)
+
+        
+        if c.type not in ['move_in','move_out']:
+            cash_info = {
+                'Created': c.created.astimezone(PERTH_TIMEZONE).strftime('%d/%m/%Y %H:%M:%S'),
+                'Settlement Date': c.created.strftime('%d/%m/%Y'),
+                'Invoice': c.invoice.reference,
+                'Payment Method': 'Cash',
+                'Transaction Type': c.type.lower(),
+                'Amount': c.amount if c.type not in ['refund','move_out'] else '-{}'.format(c.amount),
+                'Approved': 'True',
+                'Source': c.source,
+                'Product Names': item_names,
+                'Product Codes': oracle_codes
+            }
+            writer.writerow(cash_info)
+    if not district:
+        # Write out all bpay transactions
+        if bpay:
+            for b in bpay:
+                i = Invoice.objects.get(reference=b.crn)
+                items = item_codes = None
+                item_names = []
+                oracle_codes = []
+                # Get all items for this invoice
+                if i.order:
+                    items = i.order.lines.all().values('title', 'oracle_code')
+                    for item in items:
+                        item_names.append(item.get('title'))
+                        code = item.get('oracle_code')
+                        if not code: code = 'N\A'
+                        oracle_codes.append(code)
+                    item_names = '|'.join(item_names)
+                    oracle_codes = '|'.join(oracle_codes)
+
+                bpay_info = {
+                    'Created': b.created.astimezone(PERTH_TIMEZONE).strftime('%d/%m/%Y %H:%M:%S'),
+                    'Settlement Date': b.p_date.strftime('%d/%m/%Y'),
+                    'Invoice': b.crn,
+                    'Payment Method': 'BPAY',
+                    'Transaction Type': b.get_p_instruction_code_display(),
+                    'Amount': b.amount if b.p_instruction_code == '05' and b.type == '399' else '-{}'.format(b.amount),
+                    'Approved': b.approved,
+                    'Source': 'N/A',
+                    'Product Names': item_names,
+                    'Product Codes': oracle_codes
+                }
+                writer.writerow(bpay_info)
+        # Write out all bpoint transactions
+        if bpoint:
+            for bpt in bpoint:
+                i = Invoice.objects.get(reference=bpt.crn1)
+                items = item_codes = None
+                item_names = []
+                oracle_codes = []
+                # Get all items for this invoice
+                if i.order:
+                    items = i.order.lines.all().values('title', 'oracle_code')
+                    for item in items:
+                        item_names.append(item.get('title'))
+                        code = item.get('oracle_code')
+                        if not code: code = 'N\A'
+                        oracle_codes.append(code)
+                    item_names = '|'.join(item_names)
+                    oracle_codes = '|'.join(oracle_codes)
+
+                bpoint_info = {
+                    'Created': bpt.created.astimezone(PERTH_TIMEZONE).strftime('%d/%m/%Y %H:%M:%S'),
+                    'Settlement Date': bpt.settlement_date.strftime('%d/%m/%Y'),
+                    'Invoice': bpt.crn1,
+                    'Payment Method': 'BPOINT',
+                    'Transaction Type': bpt.action.lower(),
+                    'Amount': bpt.amount if bpt.action not in ['refund'] else '-{}'.format(bpt.amount),
+                    'Approved': bpt.approved,
+                    'Source': 'N/A',
+                    'Product Names': item_names,
+                    'Product Codes': oracle_codes
+                }
+                writer.writerow(bpoint_info)
+
+    strIO.flush()
+    strIO.seek(0)
     return strIO
