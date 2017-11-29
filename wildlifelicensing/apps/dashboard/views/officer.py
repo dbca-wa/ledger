@@ -300,23 +300,32 @@ class DataTableApplicationsOfficerView(OfficerRequiredMixin, base.DataTableAppli
         discarded = obj.processing_status == 'discarded'
         declined = obj.processing_status == 'declined'
 
+        action = ''
         if obj.processing_status == 'ready_for_conditions':
-            return '<a href="{0}">Enter Conditions</a>'.format(
+            action += '<a href="{0}">Enter Conditions</a>'.format(
                 reverse('wl_applications:enter_conditions', args=[obj.pk]),
             )
         elif obj.processing_status == 'ready_to_issue':
-            return '<a href="{0}">Issue Licence</a>'.format(
+            action += '<a href="{0}">Issue Licence</a>'.format(
                 reverse('wl_applications:issue_licence', args=[obj.pk]),
             )
         elif any([issued, discarded, declined]):
-            return '<a href="{0}">{1}</a>'.format(
+            action += '<a href="{0}">{1}</a>'.format(
                 reverse('wl_applications:view_application_officer', args=[obj.pk]),
                 'View (read-only)'
             )
         else:
-            return '<a href="{0}">Process</a>'.format(
+            action += '<a href="{0}">Process</a>'.format(
                 reverse('wl_applications:process', args=[obj.pk]),
             )
+
+        if obj.invoice_reference:
+            url = '{}?invoice={}'.format(reverse('payments:invoice-payment'),obj.invoice_reference)
+            action += '<br \><a target="_blank" href="{0}"> View Payment</a>'.format(
+                url
+            )
+
+        return action
 
     def get_initial_queryset(self):
         return Application.objects.exclude(processing_status__in=['draft', 'temp']).exclude(customer_status='temp')
