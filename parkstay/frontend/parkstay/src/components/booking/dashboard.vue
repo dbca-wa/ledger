@@ -19,7 +19,7 @@
                   <select v-show="isLoading" class="form-control" >
                       <option value="">Loading...</option>
                   </select>
-                  <select v-if="!isLoading" class="form-control" v-model="filterCampground" id="filterCampground">
+                  <select ref="campgroundSelector" v-if="!isLoading" class="form-control" v-model="filterCampground" id="filterCampground">
                       <option value="All">All</option>
                       <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
                   </select>
@@ -31,7 +31,7 @@
                   <select v-show="isLoading" class="form-control" name="">
                         <option value="">Loading...</option>
                   </select>
-                  <select v-if="!isLoading" class="form-control" v-model="filterRegion" id="filterRegion">
+                  <select ref="regionSelector" v-if="!isLoading" class="form-control" v-model="filterRegion" id="filterRegion">
                         <option value="All">All</option>
                         <option v-for="region in regions" :value="region.id">{{region.name}}</option>
                   </select>
@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal} from "../../hooks.js"
+import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swali,select2} from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import changebooking from "./changebooking.vue"
@@ -359,6 +359,34 @@ export default {
                 //vm.$refs.changebooking.fetchBooking(vm.selected_booking);
             });
 
+            /* Campground Selector*/
+            $(vm.$refs.campgroundSelector).select2({
+                "theme": "bootstrap",
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterCampground = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterCampground = "All";
+            }); 
+            /* End Campground Selector*/
+
+            /* Region Selector*/
+            $(vm.$refs.regionSelector).select2({
+                "theme": "bootstrap",
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterRegion = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterRegion = "All";
+            }); 
+            /* End Region Selector*/
+            
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-change]',function (e) {
                 e.preventDefault();
                 var selected_booking = JSON.parse($(this).attr('data-change'));
@@ -607,6 +635,8 @@ export default {
         vm.fetchCampgrounds();
         vm.fetchRegions();
         vm.addEventListeners();
+        // Set the from date to todays date as default
+        vm.filterDateFrom = Moment().format('DD/MM/YYYY')
     }
 
 }
