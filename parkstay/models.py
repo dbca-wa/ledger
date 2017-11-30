@@ -1019,7 +1019,7 @@ class Booking(models.Model):
 
     @property
     def status(self):
-        if not self.legacy_id:
+        if (self.legacy_id and self.invoices.count() >= 1) or not self.legacy_id:
             payment_status = self.__check_payment_status()
             status =  ''
             parts = payment_status.split('_')
