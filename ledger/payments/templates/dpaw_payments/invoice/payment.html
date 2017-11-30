@@ -99,7 +99,7 @@
                     </div>
                     <!-- /Show Invoice Status -->
                     <!-- /Show Success -->
-                    <div class="tabs-content vertical" data-tabs-content="payment-tabs" id="payment_div" {% if redirect_url %} data-redirect={{redirect_url}} {%endif%} data-reference={{invoice.reference}}>
+                    <div class="tabs-content vertical" data-tabs-content="payment-tabs" id="payment_div" {% if redirect_url %} data-redirect={{redirect_url}} {%endif%} {% if callback_url %} data-callback={{callback_url}} {%endif%} data-reference={{invoice.reference}}>
                         <div class="tabs-panel is-active" id="details">
                             {% for invoice in invoices %}
                             <!-- Show Invoice status -->

@@ -24,6 +24,7 @@ from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
 from ledger.address.models import Country
+from ledger.payments.models import Invoice
 from parkstay import utils
 from parkstay.helpers import can_view_campground
 from datetime import datetime,timedelta, date
@@ -104,6 +105,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
 from parkstay.helpers import is_officer, is_customer
 from parkstay import reports 
 from parkstay import pdf
+from parkstay.perms import PaymentCallbackPermission
 from parkstay import emails
 from parkstay import exceptions
 
@@ -1616,6 +1618,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
                 bk['firstname'] = booking.details.get('first_name','')
                 bk['lastname'] = booking.details.get('last_name','')
+                if not booking.paid:
+                    bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
                 if booking.customer:
                     bk['email'] = booking.customer.email if booking.customer and booking.customer.email else ""
                     if booking.customer.phone_number:
@@ -1766,6 +1770,53 @@ class BookingViewSet(viewsets.ModelViewSet):
             emails.send_booking_cancelation(booking,request)
             serializer = self.get_serializer(booking)
             return Response(serializer.data,status=status.HTTP_200_OK)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(permission_classes=[PaymentCallbackPermission],methods=['GET','POST'])
+    def payment_callback(self, request, *args, **kwargs):
+        from django.utils import timezone
+        http_status = status.HTTP_200_OK
+        try:
+            response = {
+                'status': 'rejected',
+                'error': ''
+            }
+            if request.method == 'GET':
+                response = {'status': 'accessible'}
+            elif request.method == 'POST':
+                instance = self.get_object()
+                
+                invoice_ref = request.data.get('invoice',None)
+                if invoice_ref:
+                    try:
+                        invoice = Invoice.objects.get(reference=invoice_ref)
+                        if invoice.payment_status in ['paid','over_paid']:
+                            # Get the latest cash payment and see if it was paid in the last 1 minute
+                            latest_cash = invoice.cash_transactions.last()
+                            # Check if the transaction came in the last 10 seconds
+                            if (timezone.now() - latest_cash.created).seconds < 10 and instance.paid:
+                                # Send out the confirmation pdf
+                                emails.send_booking_confirmation(instance,request)
+                            else:
+                                reponse['error'] = 'Booking is not fully paid or the transaction was not done in the last 10 secs'
+                        else:
+                            reponse['error'] = 'Invoice is not fully paid'
+                    
+                    except Invoice.DoesNotExist:
+                        response['error'] = 'Invoice was not found'
+                else:
+                    response['error'] = 'Invoice was not found'
+                    
+            
+                response['status'] = 'approved'
+            return Response(response,status=status.HTTP_200_OK)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

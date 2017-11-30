@@ -344,6 +344,7 @@ $(function(){
             headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function(resp){
                 success(resp,invoice,$('#other_source').val());
+                sendCallback();
             },
             error: function(resp){
                 error(resp);
@@ -351,6 +352,30 @@ $(function(){
             complete: function(resp){
                 checkInvoiceStatus();
             }
+        });
+    }
+    function sendCallback(){
+        var callback_url = $('#payment_div').data('callback');
+        console.log('sending');
+        var payload = {
+            'invoice': invoice
+        }
+        $.ajax ({
+            beforeSend: function(xhrObj){
+              xhrObj.setRequestHeader("Content-Type","application/json");
+              xhrObj.setRequestHeader("Accept","application/json");
+            },
+            type: "POST",
+            url: callback_url,
+            data: JSON.stringify(payload),
+            dataType: "json",
+            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            success: function(resp){
+                console.log('callback sent');
+            },
+            error: function(resp){
+                console.error(resp);
+            },
         });
     }
     /*

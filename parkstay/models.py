@@ -997,7 +997,7 @@ class Booking(models.Model):
 
     @property
     def paid(self):
-        if self.legacy_id:
+        if self.legacy_id and self.invoices.count() < 1:
             return True
         else:
             payment_status = self.__check_payment_status()

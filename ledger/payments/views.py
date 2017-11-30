@@ -1,5 +1,6 @@
 import json
 from datetime import date
+from urlparse import urlparse
 from django.views import generic
 from django.conf import settings
 from django.shortcuts import render
@@ -80,6 +81,14 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
             try:
                 checkURL(self.request.GET.get('redirect_url'))
                 ctx['redirect_url'] = self.request.GET.get('redirect_url')
+            except:
+                pass
+        if self.request.GET.get('callback_url'):
+            try:
+                checkURL(self.request.GET.get('callback_url'))
+                domain = urlparse(self.request.GET.get('callback_url')).netloc.split('.')[1]
+                if 'dbca.wa.gov.au' == domain or settings.DEBUG:
+                    ctx['callback_url'] = self.request.GET.get('callback_url')
             except:
                 pass
         if self.request.GET.get('custom_template'):
