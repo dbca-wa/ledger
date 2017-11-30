@@ -10,8 +10,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from ledger.payments.models import Invoice,OracleInterface
-from ledger.payments.utils import oracle_parser
+from ledger.payments.models import Invoice,OracleInterface,CashTransaction
+from ledger.payments.utils import oracle_parser,update_payments
 from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange,CampgroundStayHistory, CampsiteRate, ParkEntryRate, BookingVehicleRego)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 from parkstay.emails import send_booking_invoice,send_booking_confirmation
@@ -576,6 +576,21 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
 
     # Get the new invoice
     new_invoice = booking.invoices.first()
+
+    # Check if the booking is a legacy booking and doesn't have an invoice
+    if old_booking.legacy_id and old_booking.invoices.count() < 1:
+        # Create a cash transaction in order to fix the outstnding invoice payment
+        CashTransaction.objects.create(
+            invoice = Invoice.objects.get(reference=new_invoice.invoice_reference),
+            amount = old_booking.cost_total,
+            type = 'move_in',
+            source = 'cash',
+            details = 'Transfer of funds from migrated booking',
+            movement_reference='Migrated Booking Funds'
+        )
+        # Update payment details for the new invoice
+        update_payments(new_invoice.invoice_reference)
+
     # Attach new invoices to old booking
     for i in old_booking.invoices.all():
         inv = Invoice.objects.get(reference=i.invoice_reference)
