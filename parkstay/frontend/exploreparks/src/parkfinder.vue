@@ -59,7 +59,7 @@
                     <hr/>
                 </div></div><div class="row">
                     <div class="small-12 medium-12 large-12 columns">
-                        <label>Equipment</label>
+                        <label>Select equipment</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
@@ -77,7 +77,7 @@
                     <hr class="search"/>
                 </div></div><div class="row">
                     <div class="small-12 medium-12 large-12 columns">
-                        <label>Features</label>
+                        <label>Select features</label>
                     </div>
                     <template v-for="filt in filterList">
                         <div class="small-12 medium-12 large-4 columns">
