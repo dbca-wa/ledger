@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swali,select2} from "../../hooks.js"
+import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal,select2} from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import changebooking from "./changebooking.vue"
