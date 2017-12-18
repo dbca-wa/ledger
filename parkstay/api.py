@@ -1577,10 +1577,15 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sql += " and ( "+ sqlsearch +" )"
                 sqlCount +=  " and  ( "+ sqlsearch +" )"
 
+            sql += ' ORDER BY parkstay_booking.arrival DESC'
+
             if length != 'all':
-                sql = sql + ' limit %(length)s offset %(start)s;'
+                sql = sql + ' limit %(length)s offset %(start)s'
                 sqlParams['length'] = length
                 sqlParams['start'] = start
+
+            sql += ';'
+            print(sql)
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");

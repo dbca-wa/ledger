@@ -4,8 +4,9 @@
   "author": "ASI <asi@dpaw.wa.gov.au>",
   "private": true,
   "scripts": {
-    "dev": "node build/dev-server.js",
-    "build": "node build/build.js"
+    "dev-server": "node build/dev-server.js",
+    "build": "node build/build.js",
+    "dev": "node build/build-inplace.js"
   },
   "dependencies": {
     "awesomplete": "^1.1.1",

@@ -176,18 +176,18 @@ def booking_bpoint_settlement_report(_date):
 def bookings_report(_date):
     try:
         bpoint, cash = [], []
-        bookings = Booking.objects.filter(created__date=_date).exclude(booking_type=3)
+        bookings = Booking.objects.filter(created__date=_date)
         history_bookings = BookingHistory.objects.filter(created__date=_date)
 
         strIO = StringIO()
-        fieldnames = ['Date','Confirmation Number','Name','Amount','Invoice']
+        fieldnames = ['Date','Confirmation Number','Name','Amount','Invoice','Booking Type']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
 
         for b in bookings:
             b_name = u'{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
             created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-            writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name.encode('utf-8'),b.active_invoice.amount if b.active_invoice else '',b.active_invoice.reference if b.active_invoice else ''])
+            writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name.encode('utf-8'),b.active_invoice.amount if b.active_invoice else '',b.active_invoice.reference if b.active_invoice else '',b.booking_type])
 
         #for b in history_bookings:
         #    b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
