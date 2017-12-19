@@ -113,6 +113,7 @@ class Campground(models.Model):
     address = JSONField(null=True,blank=True)
     features = models.ManyToManyField('Feature')
     description = models.TextField(blank=True, null=True)
+    additional_info = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
     # Tags for communications methods available and access type
     tags = TaggableManager(blank=True)
