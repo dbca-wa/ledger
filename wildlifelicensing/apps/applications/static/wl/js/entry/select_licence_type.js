@@ -5,7 +5,7 @@ define(['jQuery', 'js/wl.bootstrap-treeview'], function ($) {
         return text.toLowerCase().replace(/ /g,'-').replace(/[^\w-]+/g,'');
     }
 
-    function _init(categories) {
+    function _initCategories(categories) {
         $.each(categories, function(index, value) {
             var $tree = $('#' + _convertToSlug(value.name));
 
@@ -30,6 +30,10 @@ define(['jQuery', 'js/wl.bootstrap-treeview'], function ($) {
                 }
             });
         });
+    }
+
+    function _init(options) {
+        _initCategories(options.categories);
     }
 
     return {

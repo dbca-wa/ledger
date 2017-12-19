@@ -18,7 +18,9 @@ from wildlifelicensing.apps.payments.forms import PaymentsReportForm
 
 
 def to_string(obj):
-    return str(obj) if obj else ''
+    if isinstance(obj,unicode):
+        return str(obj.encode('utf-8')) if obj else ''
+    return str(obj).encode('utf-8') if obj else ''
 
 
 class ReportHelper:
@@ -152,6 +154,8 @@ class LicencesReportView(OfficerRequiredMixin, View):
         'Additional Info',
         'Replaced By',
         'Lodgement Number',
+        'Species',
+        'Authorised Persons'
     )
 
     @staticmethod
@@ -169,6 +173,8 @@ class LicencesReportView(OfficerRequiredMixin, View):
             to_string(licence.additional_information),
             licence.replaced_by.reference if licence.replaced_by else '',
             application.reference if application else '',
+            ','.join(licence.search_extracted_fields('species_estimated_number')),
+            ','.join(licence.search_extracted_fields('authorised_persons'))
         )
 
     ALL_HEADERS = \

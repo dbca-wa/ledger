@@ -5,6 +5,7 @@ import uuid
 import base64
 import binascii
 import hashlib
+from decimal import Decimal as D
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -16,8 +17,11 @@ from datetime import date, time, datetime, timedelta
 from django.conf import settings
 from taggit.managers import TaggableManager
 from django.dispatch import receiver
-from django.db.models.signals import post_delete, pre_save, post_save
+from django.db.models.signals import post_delete, pre_save, post_save,pre_delete
 from parkstay.exceptions import BookingRangeWithinException
+from django.core.cache import cache
+from ledger.payments.models import Invoice
+from ledger.accounts.models import EmailUser
 
 # Create your models here.
 
@@ -35,13 +39,16 @@ NUMBER_VEHICLE_CHOICES = (
     (3, 'One vehicle + small trailer/large vehicle')
 )
 
-class CustomerContact(models.Model):
+class Contact(models.Model):
     name = models.CharField(max_length=255, unique=True)
     phone_number = models.CharField(max_length=50, null=True, blank=True)
     email = models.EmailField(max_length=255)
-    description = models.TextField()
-    opening_hours = models.TextField()
-    other_services = models.TextField()
+    description = models.TextField(null=True,blank=True)
+    opening_hours = models.TextField(null=True)
+    other_services = models.TextField(null=True)
+
+    def __str__(self):
+        return "{}: {}".format(self.name, self.phone_number)
 
 
 class Park(models.Model):
@@ -49,9 +56,20 @@ class Park(models.Model):
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
     entry_fee_required = models.BooleanField(default=True)
+    oracle_code = models.CharField(max_length=50, null=True,blank=True)
+    wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
+
+    def clean(self,*args,**kwargs):
+        if self.entry_fee_required and not self.oracle_code:
+            raise ValidationError('A park entry oracle code is required if entry fee is required.')
+
+    def save(self,*args,**kwargs):
+        cache.delete('parks')
+        self.full_clean()
+        super(Park,self).save(*args,**kwargs)
 
     class Meta:
         unique_together = (('name',),)
@@ -59,22 +77,20 @@ class Park(models.Model):
 
 class PromoArea(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
 
     def __str__(self):
         return self.name
 
-class Contact(models.Model):
-    name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=12)
-
-    def __str__(self):
-        return "{}: {}".format(self.name, self.phone_number)
+def update_campground_map_filename(instance, filename):
+    return 'parkstay/campground_maps/{}/{}'.format(instance.id,filename)
 
 class Campground(models.Model):
     CAMPGROUND_TYPE_CHOICES = (
         (0, 'Bookable Online'),
         (1, 'Not Bookable Online'),
         (2, 'Other Accomodation'),
+        (3, 'Unpublished'),
     )
     CAMPGROUND_PRICE_LEVEL_CHOICES = (
         (0, 'Campground level'),
@@ -83,17 +99,18 @@ class Campground(models.Model):
     )
     SITE_TYPE_CHOICES = (
         (0, 'Bookable Per Site'),
-        (1, 'Bookable Per Site Type')
+        (1, 'Bookable Per Site Type'),
+        (2, 'Bookable Per Site Type (hide site number)'),
     )
 
     name = models.CharField(max_length=255, null=True)
     park = models.ForeignKey('Park', on_delete=models.PROTECT, related_name='campgrounds')
     ratis_id = models.IntegerField(default=-1)
     contact = models.ForeignKey('Contact', on_delete=models.PROTECT, blank=True, null=True)
-    campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=0)
+    campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=3)
     promo_area = models.ForeignKey('PromoArea', on_delete=models.PROTECT,blank=True, null=True)
     site_type = models.SmallIntegerField(choices=SITE_TYPE_CHOICES, default=0)
-    address = JSONField(null=True)
+    address = JSONField(null=True,blank=True)
     features = models.ManyToManyField('Feature')
     description = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
@@ -104,15 +121,24 @@ class Campground(models.Model):
     othertransport = models.TextField(blank=True, null=True)
     key = models.CharField(max_length=255, blank=True, null=True)
     price_level = models.SmallIntegerField(choices=CAMPGROUND_PRICE_LEVEL_CHOICES, default=0)
-    customer_contact = models.ForeignKey('CustomerContact', blank=True, null=True, on_delete=models.PROTECT)
+    info_url = models.CharField(max_length=255, blank=True)
+    long_description = models.TextField(blank=True,null=True)
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     dog_permitted = models.BooleanField(default=False)
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
+    max_advance_booking = models.IntegerField(default =180)
+    oracle_code = models.CharField(max_length=50,null=True,blank=True)
+    campground_map = models.FileField(upload_to=update_campground_map_filename,null=True,blank=True)
 
     def __str__(self):
         return self.name
+
+    def save(self,*args,**kwargs):
+        cache.delete('campgrounds')
+        cache.delete('campgrounds_dt')
+        super(Campground,self).save(*args,**kwargs)
 
     class Meta:
         unique_together = (('name', 'park'),)
@@ -124,6 +150,10 @@ class Campground(models.Model):
         return self.park.district.region.name
 
     @property
+    def district(self):
+        return self.park.district.name
+
+    @property
     def active(self):
         return self._is_open(datetime.now().date())
 
@@ -131,7 +161,8 @@ class Campground(models.Model):
     def current_closure(self):
         closure = self._get_current_closure()
         if closure:
-            return 'Start: {} End: {}'.format(closure.range_start, closure.range_end)
+            return 'Start: {} End: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y') if closure.range_end else "")
+        return ''
 
     @property
     def dog_permitted(self):
@@ -148,6 +179,29 @@ class Campground(models.Model):
             return False
         except Feature.DoesNotExist:
             return True
+
+    @property
+    def campsite_classes(self):
+        return list(set([c.campsite_class.id for c in self.campsites.all()]))
+
+    @property
+    def first_image(self):
+        images = self.images.all()
+        if images.count():
+            return images[0]
+        return None
+
+    @property
+    def email(self):
+        if self.contact:
+            return self.contact.email
+        return None
+
+    @property
+    def telephone(self):
+        if self.contact:
+            return self.contact.phone_number
+        return None
 
     # Methods
     # =======================================
@@ -175,8 +229,9 @@ class Campground(models.Model):
         closure_period = None
         period = datetime.now().date()
         if not self.active:
-            closure = self.booking_ranges.get(Q(range_start__lte=period),~Q(status=0),Q(range_end__isnull=True) |Q(range_end__gte=period))
-            closure_period = closure
+            closure = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__isnull=True) |Q(range_end__gte=period)).order_by('updated_on')
+            if closure:
+                closure_period = closure[0]
         return closure_period
 
     def open(self, data):
@@ -188,22 +243,28 @@ class Campground(models.Model):
             if within:
                 within.updated_on = timezone.now()
                 within.save(skip_validation=True)
+
         except CampgroundBookingRange.DoesNotExist:
         #if (self.__get_current_closure().range_start <= b.range_start and not self.__get_current_closure().range_end) or (self.__get_current_closure().range_start <= b.range_start <= self.__get_current_closure().range_end):
         #    self.__get_current_closure().delete()
             b.save()
 
     def close(self, data):
-        if not self.active:
-            raise ValidationError('This campground is already closed.')
         b = CampgroundBookingRange(**data)
         try:
             within = CampgroundBookingRange.objects.filter(Q(campground=b.campground),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
                 within.save(skip_validation=True)
+                if within.range_start != b.range_start or within.range_end != b.range_end:
+                    raise ValidationError('{} campground is already closed.'.format(within.campground.name))
+            else:
+                b.save()
         except CampgroundBookingRange.DoesNotExist:
             b.save()
+        except:
+            raise
+
 
     def createCampsitePriceHistory(self,data):
         '''Create Multiple campsite rates
@@ -246,6 +307,14 @@ class Campground(models.Model):
 def campground_image_path(instance, filename):
     return '/'.join(['parkstay', 'campground_images', filename])
 
+class CampgroundGroup(models.Model):
+    name = models.CharField(max_length=100)
+    members = models.ManyToManyField(EmailUser,blank=True)
+    campgrounds = models.ManyToManyField(Campground,blank=True)
+
+    def __str__(self):
+        return self.name
+
 class CampgroundImage(models.Model):
     image = models.ImageField(max_length=255, upload_to=campground_image_path)
     campground = models.ForeignKey(Campground, related_name='images')
@@ -253,7 +322,7 @@ class CampgroundImage(models.Model):
 
     class Meta:
         ordering = ('id',)
-    
+
     def get_file_extension(self, file_name, decoded_file):
         import imghdr
 
@@ -263,14 +332,14 @@ class CampgroundImage(models.Model):
 
     def strip_b64_header(self, content):
         if ';base64,' in content:
-            header, base64_data = content.split(';base64,') 
+            header, base64_data = content.split(';base64,')
             return base64_data
         return content
 
     def _calculate_checksum(self, content):
         checksum = hashlib.md5()
         checksum.update(content.read())
-        return base64.b64encode(checksum.digest())    
+        return base64.b64encode(checksum.digest())
 
     def createImage(self, content):
         base64_data = self.strip_b64_header(content)
@@ -306,7 +375,7 @@ class CampgroundImage(models.Model):
             os.remove(self.image)
         except:
             pass
-        super(CampgroundImage,self).delete(*args,**kwargs)    
+        super(CampgroundImage,self).delete(*args,**kwargs)
 
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
@@ -331,7 +400,7 @@ class BookingRange(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if self.status != 0 and((self.range_start <= today and not self.range_end) or (self.range_start > today and not self.range_end) or ( self.range_start > datetime.now().date() <= self.range_end)):
+        if self.status != 0 and((self.range_start <= today and not self.range_end) or (self.range_start <= today and self.range_end > today) or (self.range_start > today and not self.range_end) or ( self.range_start >= today <= self.range_end)):
             return True
         elif self.status == 0 and ((self.range_start <= today and not self.range_end) or self.range_start > today):
             return True
@@ -352,6 +421,11 @@ class BookingRange(models.Model):
             return True
         return False
 
+    def clean(self, *args, **kwargs):
+        print(self.__dict__)
+        if self.range_end and self.range_end < self.range_start:
+            raise ValidationError('The end date cannot be before the start date.')
+
     def save(self, *args, **kwargs):
         skip_validation = bool(kwargs.pop('skip_validation',False))
         if not skip_validation:
@@ -362,6 +436,9 @@ class BookingRange(models.Model):
             self.open_reason = OpenReason.objects.get(pk=1)
 
         super(BookingRange, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return '{} {} - {}'.format(self.status, self.range_start, self.range_end)
 
 class StayHistory(models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -430,6 +507,7 @@ class CampgroundBookingRange(BookingRange):
                 raise ValidationError('This Booking Range is not editable')
             if self.range_start < datetime.now().date() and original.range_start != self.range_start:
                 raise ValidationError('The start date can\'t be in the past')
+        super(CampgroundBookingRange,self).clean(*args, **kwargs)
 
 
 class Campsite(models.Model):
@@ -459,7 +537,7 @@ class Campsite(models.Model):
 
     @property
     def price(self):
-        return 'Set at {}'.format(self.campground.get_price_level_display()) 
+        return 'Set at {}'.format(self.campground.get_price_level_display())
 
     @property
     def can_add_rate(self):
@@ -477,7 +555,8 @@ class Campsite(models.Model):
     def current_closure(self):
         closure = self.__get_current_closure()
         if closure:
-            return 'Start: {} End: {}'.format(closure.range_start, closure.range_end)
+            return 'Start: {} End: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y') if closure.range_end else "")
+        return ''
     # Methods
     # =======================================
     def __is_campground_open(self):
@@ -540,7 +619,7 @@ class Campsite(models.Model):
                 within.save(skip_validation=True)
         except CampsiteBookingRange.DoesNotExist:
             b.save()
-    
+
     @staticmethod
     def bulk_create(number,data):
         try:
@@ -588,7 +667,6 @@ class CampsiteBookingRange(BookingRange):
 
     def clean(self, *args, **kwargs):
         original = None
-
         # Preventing ranges within other ranges
         within = CampsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
         if within:
@@ -600,10 +678,14 @@ class CampsiteBookingRange(BookingRange):
             if self.range_start < datetime.now().date() and original.range_start != self.range_start:
                 raise ValidationError('The start date can\'t be in the past')
 
+    def __str__(self):
+        return '{}: {} {} - {}'.format(self.campsite, self.status, self.range_start, self.range_end)
 
 class CampsiteStayHistory(StayHistory):
     campsite = models.ForeignKey('Campsite', on_delete=models.PROTECT,related_name='stay_history')
 
+class CampgroundStayHistory(StayHistory):
+    campground = models.ForeignKey('Campground', on_delete=models.PROTECT,related_name='stay_history')
 
 class Feature(models.Model):
     TYPE_CHOICES = (
@@ -651,6 +733,7 @@ class CampsiteClass(models.Model):
     features = models.ManyToManyField('Feature')
     deleted = models.BooleanField(default=False)
     description = models.TextField(null=True)
+    max_vehicles = models.PositiveIntegerField(default=1)
 
     def __str__(self):
         return self.name
@@ -712,16 +795,19 @@ class CampsiteClass(models.Model):
                         r.delete()
         except Exception as e:
             raise
+
+
 class CampsiteBooking(models.Model):
     BOOKING_TYPE_CHOICES = (
         (0, 'Reception booking'),
         (1, 'Internet booking'),
-        (2, 'Black booking')
+        (2, 'Black booking'),
+        (3, 'Temporary reservation')
     )
 
     campsite = models.ForeignKey('Campsite', db_index=True, on_delete=models.PROTECT)
     date = models.DateField(db_index=True)
-    booking = models.ForeignKey('Booking', on_delete=models.PROTECT, null=True)
+    booking = models.ForeignKey('Booking',related_name="campsites", on_delete=models.CASCADE, null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
 
     def __str__(self):
@@ -808,14 +894,430 @@ class CampsiteRate(models.Model):
             setattr(self, attr, value)
         self.save()
 
+
 class Booking(models.Model):
-    legacy_id = models.IntegerField(unique=True)
-    legacy_name = models.CharField(max_length=255, blank=True)
+    BOOKING_TYPE_CHOICES = (
+        (0, 'Reception booking'),
+        (1, 'Internet booking'),
+        (2, 'Black booking'),
+        (3, 'Temporary reservation')
+    )
+
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
+    legacy_id = models.IntegerField(unique=True, blank=True, null=True)
+    legacy_name = models.CharField(max_length=255, blank=True,null=True)
     arrival = models.DateField()
     departure = models.DateField()
-    details = JSONField(null=True)
+    details = JSONField(null=True, blank=True)
+    booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
+    expiry_time = models.DateTimeField(blank=True, null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     campground = models.ForeignKey('Campground', null=True)
+    is_canceled = models.BooleanField(default=False)
+    cancellation_reason = models.TextField(null=True,blank=True)
+    cancelation_time = models.DateTimeField(null=True,blank=True)
+    confirmation_sent = models.BooleanField(default=False)
+    created = models.DateTimeField(default=timezone.now)
+    canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
+
+    # Properties
+    # =================================
+    @property
+    def num_days(self):
+        return (self.departure-self.arrival).days
+
+    @property
+    def stay_dates(self):
+        count = self.num_days
+        return '{} to {} ({} day{})'.format(self.arrival.strftime('%d/%m/%Y'), self.departure.strftime('%d/%m/%Y'), count, '' if count == 1 else 's')
+
+    @property
+    def stay_guests(self):
+        num_adult = self.details.get('num_adult', 0)
+        num_concession = self.details.get('num_concession', 0)
+        num_infant = self.details.get('num_infant', 0)
+        num_child = self.details.get('num_child', 0)
+        return '{} adult{}, {} concession{}, {} child{}, {} infant{}'.format(
+            num_adult, '' if num_adult == 1 else 's',
+            num_concession, '' if num_concession == 1 else 's',
+            num_child, '' if num_child == 1 else 'ren',
+            num_infant, '' if num_infant == 1 else 's',
+        )
+
+    @property
+    def num_guests(self):
+        if self.details:
+            num_adult = self.details.get('num_adult', 0)
+            num_concession = self.details.get('num_concession', 0)
+            num_infant = self.details.get('num_infant', 0)
+            num_child = self.details.get('num_child', 0)
+            return num_adult + num_concession + num_infant + num_child
+        return 0
+
+    @property
+    def guests(self):
+        if self.details:
+            num_adult = self.details.get('num_adult', 0)
+            num_concession = self.details.get('num_concession', 0)
+            num_infant = self.details.get('num_infant', 0)
+            num_child = self.details.get('num_child', 0)
+            return {
+                "adults" : num_adult,
+                "concession" : num_concession,
+                "infants" : num_infant,
+                "children": num_child
+            }
+        return {
+            "adults" : 0,
+            "concession" : 0,
+            "infants" : 0,
+            "children": 0
+        }
+
+    @property
+    def first_campsite(self):
+        cb = self.campsites.all().first()
+        return cb.campsite if cb else None
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if today <= self.departure:
+            if not self.is_canceled:
+                return True
+        return False
+
+    @property
+    def campsite_id_list(self):
+        return list(set([x['campsite'] for x in self.campsites.all().values('campsite')]))
+
+    @property
+    def campsite_name_list(self):
+        return list(set([x.campsite.name for x in self.campsites.all()]))
+
+    @property
+    def paid(self):
+        if self.legacy_id and self.invoices.count() < 1:
+            return True
+        else:
+            payment_status = self.__check_payment_status()
+            if payment_status == 'paid' or payment_status == 'over_paid':
+                return True
+        return False
+
+    @property
+    def amount_paid(self):
+        return self.__check_payment_amount()
+
+    @property
+    def refund_status(self):
+        return self.__check_refund_status()
+
+    @property
+    def outstanding(self):
+        return self.__outstanding_amount()
+
+    @property
+    def status(self):
+        if (self.legacy_id and self.invoices.count() >= 1) or not self.legacy_id:
+            payment_status = self.__check_payment_status()
+            status =  ''
+            parts = payment_status.split('_')
+            for p in parts:
+                status += '{} '.format(p.title())
+            status = status.strip()
+            if self.is_canceled:
+                if payment_status == 'over_paid' or payment_status == 'paid':
+                    return 'Canceled - Payment ({})'.format(status)
+                else:
+                    return 'Canceled'
+            else:
+                return status
+        return 'Paid'
+
+    @property
+    def confirmation_number(self):
+        return 'PS{}'.format(self.pk)
+
+    @property
+    def active_invoice(self):
+        active_invoices = Invoice.objects.filter(reference__in=[x.invoice_reference for x in self.invoices.all()]).order_by('-created')
+        return active_invoices[0] if active_invoices else None
+
+    @property
+    def has_history(self):
+        return self.history.count() > 0
+
+    # Methods
+    # =================================
+    def clean(self,*args,**kwargs):
+        #Check for existing bookings in current date range
+        arrival = self.arrival
+        departure = self.departure
+        customer = self.customer
+
+        other_bookings = Booking.objects.filter(Q(departure__gt=arrival,departure__lte=departure) | Q(arrival__gte=arrival,arrival__lt=departure),customer=customer)
+        if self.pk:
+            other_bookings.exclude(id=self.pk)
+        if customer and other_bookings and self.booking_type != 3:
+            raise ValidationError('You cannot make concurrent bookings.')
+        if not self.campground.oracle_code:
+            raise ValidationError('Campground does not have an Oracle code.')
+        if self.campground.park.entry_fee_required and not self.campground.park.oracle_code:
+            raise ValidationError('Park does not have an Oracle code.')
+        super(Booking,self).clean(*args,**kwargs)
+
+    def __str__(self):
+        return '{}: {} - {}'.format(self.customer, self.arrival, self.departure)
+
+    def __check_payment_amount(self):
+        invoices = []
+        amount = D('0.0')
+        references = [i.invoice_reference for i in self.invoices.all()]
+        #invoices = Invoice.objects.filter(reference__in=references,voided=False)
+        if self.active_invoice:
+            amount = self.active_invoice.payment_amount
+        elif self.legacy_id:
+            amount =  D(self.cost_total)
+        return amount
+
+    def __check_payment_status(self):
+        invoices = []
+        amount = D('0.0')
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
+            except Invoice.DoesNotExist:
+                pass
+        for i in invoices:
+            if not i.voided:
+                amount += i.payment_amount
+
+        if amount == 0:
+            return 'unpaid'
+        if self.cost_total < amount:
+            return 'over_paid'
+        elif self.cost_total > amount:
+            return 'partially_paid'
+        else:return "paid"
+
+    def __check_refund_status(self):
+        invoices = []
+        amount = D('0.0')
+        refund_amount = D('0.0')
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
+            except Invoice.DoesNotExist:
+                pass
+        for i in invoices:
+            if i.voided:
+                amount += i.payment_amount
+                refund_amount += i.refund_amount
+
+        if amount == 0:
+            return 'Not Paid'
+        if refund_amount > 0 and amount > refund_amount:
+            return 'Partially Refunded'
+        elif refund_amount == amount:
+            return 'Refunded'
+        else:return "Not Refunded"
+
+    def __outstanding_amount(self):
+        invoices = []
+        amount = D('0.0')
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
+            except Invoice.DoesNotExist:
+                pass
+        for i in invoices:
+            if not i.voided:
+                amount += i.balance
+
+        return amount
+
+    def cancelBooking(self,reason,user=None):
+        if not reason:
+            raise ValidationError('A reason is needed before canceling a booking')
+        today = datetime.now().date()
+        if today > self.departure:
+            raise ValidationError('You cannot cancel a booking past the departure date.')
+        self._generate_history(user=user)
+        if user:
+            self.canceled_by = user
+        self.cancellation_reason = reason
+        self.is_canceled = True
+        self.cancelation_time = timezone.now()
+        self.campsites.all().delete()
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                i = Invoice.objects.get(reference=r.get("invoice_reference"))
+                i.voided = True
+                i.save()
+            except Invoice.DoesNotExist:
+                pass
+
+        self.save()
+
+    def _generate_history(self,user=None):
+        campsites = list(set([x.campsite.name for x in self.campsites.all()]))
+        vehicles = [{'rego':x.rego,'type':x.type,'entry_fee':x.entry_fee,'park_entry_fee':x.park_entry_fee} for x in self.regos.all()]
+        BookingHistory.objects.create(
+            booking = self,
+            updated_by=user,
+            arrival = self.arrival,
+            departure = self.departure,
+            details = self.details,
+            cost_total = self.cost_total,
+            confirmation_sent = self.confirmation_sent,
+            campground = self.campground.name,
+            campsites = campsites,
+            vehicles = vehicles,
+            invoice=self.active_invoice
+        )
+    
+    @property
+    def vehicle_payment_status(self):
+        # Get current invoice
+        inv  = None
+        payment_dict = []
+        references = [i.invoice_reference for i in self.invoices.all()]
+        #temp_invoices = Invoice.objects.filter(reference__in=references,voided=False)
+        temp_invoices = [self.active_invoice] if self.active_invoice else []
+        if len(temp_invoices) == 1 or self.legacy_id:
+            if not self.legacy_id:
+                inv = temp_invoices[0]
+            # Get all lines 
+            total_paid = D('0.0')
+            total_due = D('0.0')
+            lines = []
+            if not self.legacy_id:
+                lines = inv.order.lines.filter(oracle_code=self.campground.park.oracle_code)
+
+            price_dict = {}
+            for line in lines:
+                total_paid += line.paid
+                total_due += line.unit_price_incl_tax * line.quantity
+                price_dict[line.oracle_code] = line.unit_price_incl_tax
+
+            remainder_amount = total_due - total_paid
+            # Allocate amounts to each vehicle
+            for r in self.regos.all():
+                paid = False
+                show_paid = True
+                if self.legacy_id:
+                    paid = False
+                elif not r.park_entry_fee:
+                    show_paid = False
+                    paid = True
+                elif remainder_amount == 0:
+                    paid = True
+                elif total_paid == 0:
+                    pass
+                else:
+                    required_total = D('0.0')
+                    for k,v in price_dict.items():
+                        required_total += D(v)
+                    if required_total <= total_paid:
+                        total_paid -= required_total
+                        paid = True
+                data = {
+                    'Rego': r.rego.upper(),
+                    'Type': r.get_type_display(),
+                    'original_type': r.type,
+                    'Fee': r.entry_fee,
+                }
+                if show_paid:
+                    data['Paid'] = 'pass_required' if not r.entry_fee and not self.legacy_id else 'Yes' if paid else 'No'
+                payment_dict.append(data)
+        else:
+            pass
+
+        return payment_dict
+
+class BookingHistory(models.Model):
+    booking = models.ForeignKey(Booking,related_name='history')
+    created = models.DateTimeField(auto_now_add=True)
+    arrival = models.DateField()
+    departure = models.DateField()
+    details = JSONField()
+    cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    confirmation_sent = models.BooleanField()
+    campground = models.CharField(max_length=100)
+    campsites = JSONField()
+    vehicles = JSONField()
+    updated_by = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True)
+    invoice=models.ForeignKey(Invoice,null=True,blank=True)
+
+class OutstandingBookingRecipient(models.Model):
+    email = models.EmailField()
+
+    def __str__(self):
+        return self.email
+
+class BookingInvoice(models.Model):
+    booking = models.ForeignKey(Booking, related_name='invoices')
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    def __str__(self):
+        return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False
+
+class BookingVehicleRego(models.Model):
+    """docstring for BookingVehicleRego."""
+    VEHICLE_CHOICES = (
+        ('vehicle','Vehicle'),
+        ('motorbike','Motorcycle'),
+        ('concession','Vehicle (concession)')
+    )
+    booking = models.ForeignKey(Booking, related_name = "regos")
+    rego = models.CharField(max_length=50)
+    type = models.CharField(max_length=10,choices=VEHICLE_CHOICES)
+    entry_fee = models.BooleanField(default=False)
+    park_entry_fee = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('booking','rego')
+
+class ParkEntryRate(models.Model):
+
+    vehicle = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    concession = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    motorbike = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    period_start = models.DateField()
+    period_end = models.DateField(null=True,blank=True)
+    reason = models.ForeignKey("PriceReason",on_delete=models.PROTECT)
+    details = models.TextField(null = True, blank= True)
+
+    def clean(self,*args,**kwargs):
+        if self.reason.id == 1 and not self.details:
+            raise ValidationError("Details cannot be empty if reason is Other")
+        super(ParkEntryRate,self).clean(*args,**kwargs)
+
+    def save(self, *args,**kwargs):
+        self.full_clean()
+        super(ParkEntryRate,self).save(*args,**kwargs)
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        return (self.period_start > today and not self.period_end) or ( self.period_start > today <= self.period_end)
+
 
 # REASON MODELS
 # =====================================
@@ -830,9 +1332,9 @@ class Reason(models.Model):
     # Properties
     # ==============================
     def code(self):
-        return self.__get_code() 
+        return self.__get_code()
 
-    # Methods 
+    # Methods
     # ==============================
     def __get_code(self):
         length = len(str(self.id))
@@ -862,6 +1364,7 @@ class ViewPriceHistory(models.Model):
     child = models.DecimalField(max_digits=8, decimal_places=2)
     details = models.TextField()
     reason_id = models.IntegerField()
+    infant = models.DecimalField(max_digits=8, decimal_places=2)
 
     class Meta:
         abstract =True
@@ -921,9 +1424,10 @@ class CampgroundBookingRangeListener(object):
             delattr(instance, "_original_instance")
         else:
             try:
-                within = CampgroundBookingRange.objects.get(~Q(id=instance.id),Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
-                within.range_end = instance.range_start
-                within.save(skip_validation=True)
+                within = CampgroundBookingRange.objects.filter(~Q(id=instance.id),Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                for w in within:
+                    w.range_end = instance.range_start
+                    w.save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
         if instance.status == 0 and not instance.range_end:
@@ -939,12 +1443,21 @@ class CampgroundBookingRangeListener(object):
         today = datetime.now().date()
         if instance.status != 0 and instance.range_end:
             try:
-                linked_open = CampgroundBookingRange.objects.get(range_start=instance.range_end + timedelta(days=1), status=0)
+                linked_open = CampgroundBookingRange.objects.filter(range_start=instance.range_end + timedelta(days=1), status=0).order_by('updated_on')
                 if instance.range_start >= today:
-                    linked_open.range_start = instance.range_start
+                    if linked_open:
+                        linked_open = linked_open[0]
+                        linked_open.range_start = instance.range_start
+                    else:
+                        linked_open = None
                 else:
-                     linked_open.range_start = today
-                linked_open.save(skip_validation=True)
+                    if linked_open:
+                        linked_open = linked_open[0]
+                        linked_open.range_start = today
+                    else:
+                        linked_open = None
+                if linked_open:
+                    linked_open.save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
@@ -955,6 +1468,7 @@ class CampgroundBookingRangeListener(object):
                     CampgroundBookingRange.objects.create(campsite=instance.campground,range_start=today,status=0)
             except:
                 pass
+        cache.delete('campgrounds_dt')
 
     @staticmethod
     @receiver(post_save, sender=CampgroundBookingRange)
@@ -981,8 +1495,9 @@ class CampgroundListener(object):
     @receiver(pre_save, sender=Campground)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = Campground.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = Campground.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
 
@@ -1010,9 +1525,9 @@ class CampgroundListener(object):
                             cr = CampsiteRate(campsite=c,rate_id=ch.rate_id,date_start=today + timedelta(days=1))
                             cr.save()
                         except CampsiteClassPriceHistory.DoesNotExist:
-                            pass 
+                            pass
                         except Exception:
-                            pass 
+                            pass
 
 class CampsiteBookingRangeListener(object):
     """
@@ -1052,10 +1567,19 @@ class CampsiteBookingRangeListener(object):
             try:
                 linked_open = CampsiteBookingRange.objects.get(range_start=instance.range_end + timedelta(days=1), status=0)
                 if instance.range_start >= today:
-                    linked_open.range_start = instance.range_start
+                    if linked_open:
+                        linked_open = linked_open[0]
+                        linked_open.range_start = instance.range_start
+                    else:
+                        linked_open = None
                 else:
-                     linked_open.range_start = today
-                linked_open.save(skip_validation=True)
+                    if linked_open:
+                        linked_open = linked_open[0]
+                        linked_open.range_start = today
+                    else:
+                        linked_open = None
+                if linked_open:
+                    linked_open.save(skip_validation=True)
             except CampsiteBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
@@ -1077,11 +1601,29 @@ class CampsiteBookingRangeListener(object):
         # Check if its a closure and has an end date to create new opening range
         if instance.status != 0 and instance.range_end:
             another_open = CampsiteBookingRange.objects.filter(campsite=instance.campsite,range_start=datetime.now().date()+timedelta(days=1),status=0)
+
             if not another_open:
                 try:
                     CampsiteBookingRange.objects.create(campsite=instance.campsite,range_start=instance.range_end+timedelta(days=1),status=0)
                 except BookingRangeWithinException as e:
                     pass
+
+class BookingListener(object):
+    """
+    Event listener for Bookings
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=Booking)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = Booking.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            instance.full_clean()
 
 class CampsiteListener(object):
     """
@@ -1092,8 +1634,9 @@ class CampsiteListener(object):
     @receiver(pre_save, sender=Campsite)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = Campsite.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = Campsite.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
 
@@ -1114,24 +1657,33 @@ class CampsiteRateListener(object):
     @receiver(pre_save, sender=CampsiteRate)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = CampsiteRate.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = CampsiteRate.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
             try:
                 within = CampsiteRate.objects.get(Q(campsite=instance.campsite),Q(date_start__lte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) )
-                within.date_end = instance.date_start
+                within.date_end = instance.date_start - timedelta(days=2)
                 within.save()
-                instance.date_start = instance.date_start + timedelta(days=1)
             except CampsiteRate.DoesNotExist:
                 pass
+            # check if there is a newer record and set the end date as the previous record minus 1 day
+            x = CampsiteRate.objects.filter(Q(campsite=instance.campsite),Q(date_start__gte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) ).order_by('date_start')
+            if x:
+                x = x[0]
+                instance.date_end = x.date_start - timedelta(days=2)
 
     @staticmethod
-    @receiver(post_delete, sender=CampsiteRate)
-    def _post_delete(sender, instance, **kwargs): 
+    @receiver(pre_delete, sender=CampsiteRate)
+    def _pre_delete(sender, instance, **kwargs):
         if not instance.date_end:
-            CampsiteRate.objects.filter(date_end=instance.date_start- timedelta(days=2),campsite=instance.campsite).update(date_end=None)
+            c = CampsiteRate.objects.filter(campsite=instance.campsite).order_by('-date_start').exclude(id=instance.id)
+            if c:
+                c = c[0] 
+                c.date_end = None
+                c.save() 
 
 class CampsiteStayHistoryListener(object):
     """
@@ -1142,8 +1694,9 @@ class CampsiteStayHistoryListener(object):
     @receiver(pre_save, sender=CampsiteStayHistory)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = CampsiteStayHistory.objects.get(pk=instance.pk)
-            setattr(instance, "_original_instance", original_instance)
+            original_instance = CampsiteStayHistory.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
@@ -1156,6 +1709,95 @@ class CampsiteStayHistoryListener(object):
 
     @staticmethod
     @receiver(post_delete, sender=CampsiteStayHistory)
-    def _post_delete(sender, instance, **kwargs): 
+    def _post_delete(sender, instance, **kwargs):
         if not instance.range_end:
             CampsiteStayHistory.objects.filter(range_end=instance.range_start- timedelta(days=1),campsite=instance.campsite).update(range_end=None)
+
+class CampgroundStayHistoryListener(object):
+    """
+    Event listener for Campground Stay History
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=CampgroundStayHistory)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = CampgroundStayHistory.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                within = CampgroundStayHistory.objects.get(Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                within.range_end = instance.range_start - timedelta(days=2)
+                within.save()
+            except CampgroundStayHistory.DoesNotExist:
+                pass
+
+            # check if there is a newer record and set the end date as the previous record minus 1 day
+            x = CampgroundStayHistory.objects.filter(Q(campground=instance.campground),Q(range_start__gte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) ).order_by('range_start')
+            if x:
+                x = x[0]
+                instance.date_end = x.date_start - timedelta(days=2)
+
+    @staticmethod
+    @receiver(pre_delete, sender=CampgroundStayHistory)
+    def _pre_delete(sender, instance, **kwargs):
+        if not instance.range_end:
+            c = CampgroundStayHistory.objects.filter(campground=instance.campground).order_by('-range_start').exclude(id=instance.id)
+            if c:
+                c = c[0]
+                c.date_end = None
+                c.save()
+
+class ParkEntryRateListener(object):
+    """
+    Event listener for ParkEntryRate
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=ParkEntryRate)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = ParkEntryRate.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
+            price_before = ParkEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+            if price_before:
+                price_before = price_before[0]
+                price_before.period_end = instance.period_start
+                instance.period_start = instance.period_start + timedelta(days=1)
+                price_before.save()
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                price_before = ParkEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+                if price_before:
+                    price_before = price_before[0]
+                    price_before.period_end = instance.period_start
+                    price_before.save()
+                    instance.period_start = instance.period_start + timedelta(days=1)
+                price_after = ParkEntryRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
+                if price_after:
+                    price_after = price_after[0]
+                    instance.period_end = price_after.period_start - timedelta(days=1)
+            except Exception as e:
+                pass
+
+    @staticmethod
+    @receiver(post_delete, sender=ParkEntryRate)
+    def _post_delete(sender, instance, **kwargs):
+        price_before = ParkEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+        price_after = ParkEntryRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
+        if price_after:
+            price_after = price_after[0]
+            if price_before:
+                price_before = price_before[0]
+                price_before.period_end =  price_after.period_start - timedelta(days=1)
+                price_before.save()
+        elif price_before:
+            price_before = price_before[0]
+            price_before.period_end = None
+            price_before.save()

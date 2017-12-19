@@ -1,4 +1,10 @@
 import re
+from datetime import date
+
+from PyPDF2 import PdfFileMerger, PdfFileReader
+from io import BytesIO
+from django.conf import settings
+from django.core.files import File
 from django.contrib import messages
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
@@ -38,7 +44,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         if payment_status == payment_utils.PAYMENT_STATUS_AWAITING:
             raise PaymentException('Payment is required before licence can be issued')
-        elif payment_status == payment_utils.PAYMENT_STATUS_CC_READY:
+        elif payment_status == payment_utils.PAYMENT_STATUSES.get(payment_utils.PAYMENT_STATUS_CC_READY):
             payment_utils.invoke_credit_card_payment(application)
 
         licence = application.licence
@@ -64,14 +70,13 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
         licence.licence_sequence += 1
 
+        licence.issue_date = date.today()
+
         # reset renewal_sent flag in case of reissue
         licence.renewal_sent = False
 
         licence_filename = 'licence-%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
 
-        licence.licence_document = create_licence_pdf_document(licence_filename, licence, application,
-                                                               request.build_absolute_uri(reverse('home')),
-                                                               original_issue_date)
 
         cover_letter_filename = 'cover-letter-%s-%d.pdf' % (licence.licence_number, licence.licence_sequence)
 
@@ -110,6 +115,37 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
                 doc = Document.objects.create(file=_file, name=_file.name)
                 attachments.append(doc)
 
+        # Merge documents
+        if attachments and not isinstance(attachments, list):
+            attachments = list(attachments)
+
+        current_attachment = create_licence_pdf_document(licence_filename, licence, application,
+                                                           settings.WL_PDF_URL,
+                                                           original_issue_date)
+        if attachments:
+            other_attachments = []
+            pdf_attachments = []
+            merger = PdfFileMerger()
+            merger.append(PdfFileReader(current_attachment.file.path))
+            for a in attachments:
+                if a.file.name.endswith('.pdf'):
+                    merger.append(PdfFileReader(a.file.path))
+                else:
+                    other_attachments.append(a)
+            output = BytesIO()
+            merger.write(output)
+            # Delete old document
+            current_attachment.delete()
+            # Attach new document
+            new_doc = Document.objects.create(name=licence_filename)
+            new_doc.file.save(licence_filename, File(output), save=True)
+            licence.licence_document = new_doc
+            licence.save()
+            output.close()
+        else:
+            licence.licence_document = current_attachment
+            licence.save()
+
         # check we have an email address to send to
         if licence.profile.email and not licence.profile.user.is_dummy_user:
             to = [licence.profile.email]
@@ -137,23 +173,41 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
-        kwargs['application'] = serialize(application, posthook=format_application)
+        #kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
 
         if application.licence:
             kwargs['issue_licence_form'] = IssueLicenceForm(instance=application.licence)
 
             kwargs['extracted_fields'] = application.licence.extracted_fields
         else:
-            purposes = '\n\n'.join(Assessment.objects.filter(application=application).values_list('purpose', flat=True))
+            licence_initial_data = {
+                'is_renewable': application.licence_type.is_renewable,
+                'default_period': application.licence_type.default_period,
+            }
+
+            if application.previous_application is not None and application.previous_application.licence is not None:
+                previous_licence = application.previous_application.licence
+
+                licence_initial_data['regions'] = previous_licence.regions.all().values_list('pk', flat=True)
+                licence_initial_data['locations'] = previous_licence.locations
+                licence_initial_data['purpose'] = previous_licence.purpose
+                licence_initial_data['additional_information'] = previous_licence.additional_information
+                licence_initial_data['cover_letter_message'] = previous_licence.cover_letter_message
+
+                if application.application_type == 'amendment':
+                    licence_initial_data['end_date'] = previous_licence.end_date
+
+            if 'purpose' not in licence_initial_data or len(licence_initial_data['purpose']) == 0:
+                licence_initial_data['purpose'] = '\n\n'.join(Assessment.objects.filter(application=application).
+                                                              values_list('purpose', flat=True))
 
             if hasattr(application.licence_type, 'returntype'):
-                return_frequency = application.licence_type.returntype.month_frequency
+                licence_initial_data['return_frequency'] = application.licence_type.returntype.month_frequency
             else:
-                return_frequency = -1
+                licence_initial_data['return_frequency'] = -1
 
-            kwargs['issue_licence_form'] = IssueLicenceForm(purpose=purposes,
-                                                            is_renewable=application.licence_type.is_renewable,
-                                                            return_frequency=return_frequency)
+            kwargs['issue_licence_form'] = IssueLicenceForm(**licence_initial_data)
 
             kwargs['extracted_fields'] = extract_licence_fields(application.licence_type.application_schema,
                                                                 application.data)
@@ -173,12 +227,17 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=self.args[0])
 
+        is_save = request.POST.get('submissionType') == 'save'
+        skip_required = is_save
+
         # get extract fields from licence if it exists, else extract from application data
         if application.licence is not None:
-            issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence, files=request.FILES)
+            issue_licence_form = IssueLicenceForm(request.POST, instance=application.licence, files=request.FILES,
+                                                  skip_required=skip_required)
             extracted_fields = application.licence.extracted_fields
         else:
-            issue_licence_form = IssueLicenceForm(request.POST, files=request.FILES)
+            issue_licence_form = IssueLicenceForm(request.POST, files=request.FILES,
+                                                  skip_required=skip_required)
             extracted_fields = extract_licence_fields(application.licence_type.application_schema, application.data)
 
         # update contents of extracted field based on posted data
@@ -211,11 +270,12 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             application.licence = licence
             application.save()
 
-            if request.POST.get('submissionType') == 'save':
-                messages.success(request, 'Licence saved but not yet issued.')
+            if is_save:
+                messages.warning(request, 'Licence saved but not yet issued.')
 
                 return render(request, self.template_name, {
-                    'application': serialize(application, posthook=format_application),
+                    #'application': serialize(application, posthook=format_application),
+                    'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}}),
                     'issue_licence_form': issue_licence_form,
                     'extracted_fields': extracted_fields,
                     'payment_status': payment_status_verbose,
@@ -233,7 +293,8 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
             messages.error(request, 'Please fix the errors below before saving / issuing the licence.')
 
             return render(request, self.template_name, {
-                'application': serialize(application, posthook=format_application),
+                #'application': serialize(application, posthook=format_application),
+                'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}}),
                 'issue_licence_form': issue_licence_form,
                 'extracted_fields': extracted_fields,
                 'payment_status': payment_status_verbose,
@@ -265,6 +326,7 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
 
         if issue_licence_form.is_valid():
             licence = issue_licence_form.save(commit=False)
+            licence.issue_date = date.today()
             licence.licence_type = application.licence_type
             licence.profile = application.applicant_profile
             licence.holder = application.applicant
@@ -279,7 +341,7 @@ class PreviewLicenceView(OfficerRequiredMixin, View):
             response = HttpResponse(content_type='application/pdf')
 
             response.write(create_licence_pdf_bytes(filename, licence, application,
-                                                    request.build_absolute_uri(reverse('home')),
+                                                    settings.WL_PDF_URL,
                                                     original_issue_date))
 
             return response

@@ -32,7 +32,7 @@ class ReturnType(models.Model):
         validator = datapackage.DataPackage(self.data_descriptor)
         try:
             validator.validate()
-        except Exception as e:
+        except Exception:
             raise ValidationError('Data package errors: {}'.format([str(e[0]) for e in validator.iter_errors()]))
         # Check that there is at least one resources defined (not required by the standard)
         if len(self.resources) == 0:
@@ -45,7 +45,7 @@ class ReturnType(models.Model):
                 schema = resource.get('schema')
                 try:
                     jsontableschema.validate(schema)
-                except Exception as e:
+                except Exception:
                     raise ValidationError(
                         'Schema errors for resource "{}": {}'.format(
                             resource.get('name'),
@@ -70,11 +70,19 @@ class ReturnType(models.Model):
 
 
 class Return(RevisionedMixin):
-    STATUS_CHOICES = [('current', 'Current'), ('future', 'Future'), ('draft', 'Draft'), ('submitted', 'Submitted'),
-                      ('accepted', 'Accepted'), ('declined', 'Declined')]
+    STATUS_CHOICES = [
+        ('current', 'Current'),
+        ('future', 'Future'),
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('amendment_required', 'Amendment Required'),
+        ('amended', 'Amended'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined')
+    ]
     DEFAULT_STATUS = STATUS_CHOICES[1][0]
 
-    CUSTOMER_EDITABLE_STATE = ['current', 'draft']
+    CUSTOMER_EDITABLE_STATE = ['current', 'draft', 'amendment_required']
 
     return_type = models.ForeignKey(ReturnType)
     licence = models.ForeignKey(WildlifeLicence)
@@ -102,7 +110,20 @@ class Return(RevisionedMixin):
         """
         :return: True if the return is in one of the editable status.
         """
-        return self.customer_status in self.CUSTOMER_EDITABLE_STATE
+        return self.status in self.CUSTOMER_EDITABLE_STATE
+
+    @property
+    def pending_amendments_qs(self):
+        return ReturnAmendmentRequest.objects.filter(ret=self, status='requested')
+
+
+class ReturnAmendmentRequest(models.Model):
+    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+
+    ret = models.ForeignKey(Return)
+    status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
+    reason = models.TextField(blank=False)
+    officer = models.ForeignKey(EmailUser, null=True)
 
 
 class ReturnTable(RevisionedMixin):

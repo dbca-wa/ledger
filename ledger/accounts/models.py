@@ -135,7 +135,7 @@ class Address(models.Model):
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
     oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses')
-    user = models.ForeignKey('EmailUser', related_name='profile_adresses')
+    user = models.ForeignKey('EmailUser', related_name='profile_addresses')
     hash = models.CharField(max_length=255, db_index=True, editable=False)
 
     def __str__(self):
@@ -275,6 +275,10 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     def clean(self):
         super(EmailUser, self).clean()
+
+        if (self.dob and self.dob < date(1900, 1, 1)):
+            raise ValidationError({'dob': 'Date of birth cannot be before 01/01/1900'})
+
         self.email = self.email.lower() if self.email else self.email
         post_clean.send(sender=self.__class__, instance=self)
 

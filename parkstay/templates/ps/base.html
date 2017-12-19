@@ -7,10 +7,10 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta charset="UTF-8"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
             {% bootstrap_css %}
-                <link type="text/css" href="{% static 'ps/css/base.css' %}" rel="stylesheet">
+                <link type="text/css" href="{% static 'ps/css/base.css' %}" rel="stylesheet"/>
             {% block extra_css %}
             {% endblock %}
             {% block extra_js %}
@@ -21,7 +21,6 @@
                 {% endblock %}
             </title>
 
-        </meta>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
     <body>
@@ -31,7 +30,7 @@
             {% endblock %}
         </header>
         {% block menu %}
-        <div class="row">
+        <div class="topbar">
             <div class="container-fluid">
                 <nav class="navbar navbar-default">
                     <div class="container">
@@ -42,14 +41,19 @@
                                 <span class="icon-bar"></span>
                                 <span class="icon-bar"></span>
                             </button>
-                            <a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Dashboard</div></a>
+                            {% if request.user.is_staff %}<a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Campgrounds</div></a>{% else %}<a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">My Bookings</div></a>{% endif %}
                         </div>
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
                                 {% block left_menu_items %}
+                                    {% if request.user.is_staff %}
                                     <li><a href="{% url 'dash-campgrounds'%}">Campgrounds</a></li>
-                                    <li><a href="{% url 'dash-campsite-types'%}">Campsite Types</a></li>
+                                    <li><a href="{% url 'dash-campsite-types'%}">Camp Site Types</a></li>
                                     <li><a href="{% url 'dash-bulkpricing'%}">Bulk Pricing</a></li>
+                                    <li><a href="{% url 'dash-bookings'%}">Existing Bookings</a></li>
+                                    {% else %}
+                                    <li><a href="{{EXPLORE_PARKS_SEARCH}}">Search for a place to stay</a></li>
+                                    {% endif %}
                                 {% endblock %}
                             </ul>
                             <ul class="nav navbar-nav navbar-right">
@@ -76,8 +80,11 @@
                                         <ul class="dropdown-menu">
                                             {% if request.user.is_staff %}
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                                <li><a href="/dashboard/reports">Reports</a></li>
                                                 <li role="separator" class="divider"></li>
                                             {% endif %}
+                                            <li><a href="{% url 'account' %}">Manage Account</a></li>
+                                            <li role="separator" class="divider"></li>
                                             <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
                                         </ul>
                                     </li>
@@ -112,6 +119,15 @@
         {% block modals %}
         {% endblock %}
         {% block custom_js %}
+        <script src="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+        <script src="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
         {% endblock %}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-108679294-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'UA-108679294-1');
+        </script>
     </body>
 </html>

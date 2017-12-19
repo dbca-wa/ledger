@@ -79,6 +79,33 @@ def send_assessment_requested_email(assessment, request):
     _log_email(msg, application=application, sender=request.user)
 
 
+class ApplicationAssessmentAssignedEmail(TemplateEmailBase):
+    subject = 'Wildlife licensing [{} {}]: assessment assigned.'
+    html_template = 'wl/emails/application_assessment_assigned.html'
+    txt_template = 'wl/emails/application_assessment_assigned.txt'
+
+    def __init__(self, application):
+        self.subject = _format_application_email_subject(self.subject, application)
+
+
+def send_assessment_assigned_email(assessment, request):
+    application = assessment.application
+    assigned_assessor = assessment.assigned_assessor
+    if assigned_assessor is not None and assigned_assessor.email:
+        recipient = assigned_assessor.email
+        email = ApplicationAssessmentAssignedEmail(application)
+        url = request.build_absolute_uri(
+            reverse('wl_applications:enter_conditions_assessor',
+                    args=[application.pk, assessment.pk])
+        )
+        context = {
+            'url': url
+        }
+        msg = email.send(recipient, context=context)
+
+        _log_email(msg, application=application, sender=request.user)
+
+
 class ApplicationAssessmentReminderEmail(TemplateEmailBase):
     subject = 'Wildlife licensing [{} {}]: Reminder - assessment required'
     html_template = 'wl/emails/application_assessment_reminder.html'
@@ -231,14 +258,22 @@ def send_licence_issued_email(licence, application, request, to=None, cc=None, b
         to = [licence.profile.email]
     if additional_attachments and not isinstance(additional_attachments, list):
         additional_attachments = list(additional_attachments)
+
+    other_attachments = []
+    pdf_attachments = []
     if additional_attachments:
-        attachments += additional_attachments
+        for a in additional_attachments:
+            if a.file.name.endswith('.pdf'):
+                pdf_attachments.append(a)
+            else:
+                other_attachments.append(a)
+        attachments += other_attachments
     msg = email.send(to, context=context, attachments=attachments, cc=cc, bcc=bcc)
     log_entry = _log_email(msg, application=application, sender=request.user)
     if licence.licence_document is not None:
         log_entry.documents.add(licence.licence_document)
     if additional_attachments:
-        log_entry.documents.add(*additional_attachments)
+        log_entry.documents.add(*other_attachments)
     return log_entry
 
 

@@ -71,8 +71,9 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
 def extract_licence_fields(schema, data):
     licence_fields = []
 
-    for item in schema:
-        _extract_licence_fields_from_item(item, data, licence_fields)
+    if schema is not None:
+        for item in schema:
+            _extract_licence_fields_from_item(item, data, licence_fields)
 
     return licence_fields
 
@@ -187,6 +188,8 @@ def _extract_item_data(name, data):
 
 
 def update_licence_fields(licence_fields, post_data):
+    if not licence_fields:
+        return None
     for field in licence_fields:
         if 'children' not in field:
             if field['type'] == 'label':
@@ -305,8 +308,6 @@ def clone_application_with_status_reset(application, is_licence_amendment=False)
 
     application.licence = None
 
-    application.is_licence_amendment = is_licence_amendment
-
     if not is_licence_amendment:
         application.invoice_reference = ''
 
@@ -366,6 +367,8 @@ def format_application(instance, attrs):
     attrs['licence_type']['default_conditions'] = serialize([ap.condition for ap in instance.licence_type.defaultcondition_set.order_by('order')])
     attrs['conditions'] = serialize([ap.condition for ap in instance.applicationcondition_set.order_by('order')])
 
+    attrs['applicant_profile']['user'] = serialize(instance.applicant_profile.user,exclude=['postal_address','residential_address','billing_address'])
+    attrs['applicant_profile']['postal_address'] = serialize(instance.applicant_profile.postal_address,exclude=['user','oscar_address'])
     if instance.applicant.identification is not None and instance.applicant.identification.file is not None: 
         attrs['applicant']['identification']['url'] = instance.applicant.identification.file.url
     if instance.applicant.senior_card is not None and instance.applicant.senior_card.file is not None: 

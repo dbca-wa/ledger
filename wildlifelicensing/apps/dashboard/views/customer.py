@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.urlresolvers import reverse, reverse_lazy
@@ -9,6 +10,8 @@ from wildlifelicensing.apps.dashboard.views import base
 from wildlifelicensing.apps.main.models import WildlifeLicence
 from wildlifelicensing.apps.returns.models import Return
 from wildlifelicensing.apps.returns.utils import is_return_overdue, is_return_due_soon
+
+logger = logging.getLogger(__name__)
 
 
 def _get_user_applications(user):
@@ -40,6 +43,9 @@ class TableCustomerView(LoginRequiredMixin, base.TablesBaseView):
             },
             {
                 'title': 'Profile'
+            },
+            {
+                'title': 'Type'
             },
             {
                 'title': 'Status'
@@ -190,6 +196,7 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
         'lodgement_number',
         'licence_type',
         'applicant_profile',
+        'application_type',
         'customer_status',
         'lodgement_date',
         'action'
@@ -198,6 +205,7 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
         'lodgement_number',
         ['licence_type.short_name', 'licence_type.name'],
         'applicant_profile',
+        'application_type',
         'customer_status',
         'lodgement_date',
         '']
@@ -217,7 +225,8 @@ class DataTableApplicationCustomerView(base.DataTableApplicationBaseView):
 
     @staticmethod
     def _search_lodgement_number(search):
-        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        # testing to see if search term contains no spaces and two hyphens,
+        # meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             lodgement_number, lodgement_sequence = '-'.join(components[:2]), '-'.join(components[2:])
@@ -312,19 +321,28 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             replacing_application = Application.objects.get(previous_application=application)
 
             if replacing_application.licence is not None and replacing_application.licence.is_issued:
-                if replacing_application.is_licence_amendment:
+                if replacing_application.application_type == 'amendment':
                     return 'Amended'
                 else:
                     return 'Renewed'
         except Application.DoesNotExist:
             pass
 
-        expiry_days = (instance.end_date - datetime.date.today()).days
-        if instance.end_date < datetime.date.today():
-            return '<span class="label label-danger">Expired</span>'
-        elif expiry_days <= 30 and instance.is_renewable:
-            return '<span class="label label-warning">Due for renewal</span>'
+        if instance.end_date is not None:
+            expiry_days = (instance.end_date - datetime.date.today()).days
+            if instance.end_date < datetime.date.today():
+                return '<span class="label label-danger">Expired</span>'
+            elif expiry_days <= 30 and instance.is_renewable:
+                return '<span class="label label-warning">Due for renewal</span>'
+            else:
+                return 'Current'
         else:
+            # should not happen
+            message = "The licence ref:{ref} pk:{pk} has no end date!".format(
+                ref=instance.reference,
+                pk=instance.pk
+            )
+            logger.exception(Exception(message))
             return 'Current'
 
     @staticmethod
@@ -333,7 +351,7 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             application = Application.objects.get(licence=instance)
             replacing_application = Application.objects.get(previous_application=application)
             if replacing_application.licence is None or not replacing_application.licence.is_issued:
-                if replacing_application.is_licence_amendment:
+                if replacing_application.application_type == 'amendment':
                     return 'Amendment Pending'
                 else:
                     return 'Renewal Pending'
@@ -342,19 +360,33 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
         except Application.DoesNotExist:
             pass
 
-        expiry_days = (instance.end_date - datetime.date.today()).days
-        if expiry_days <= 30 and instance.is_renewable:
-            url = reverse('wl_applications:renew_licence', args=(instance.pk,))
-            return '<a href="{0}">Renew</a>'.format(url)
-        elif instance.end_date >= datetime.date.today():
-            url = reverse('wl_applications:amend_licence', args=(instance.pk,))
-            return '<a href="{0}">Amend</a>'.format(url)
+        renew_url = reverse('wl_applications:renew_licence', args=(instance.pk,))
+        amend_url = reverse('wl_applications:amend_licence', args=(instance.pk,))
+
+        if instance.end_date is not None:
+            expiry_days = (instance.end_date - datetime.date.today()).days
+            if instance.is_renewable:
+                if 30 >= expiry_days > 0:
+                    return '<a href="{0}">Amend</a> / <a href="{1}">Renew</a>'.format(amend_url, renew_url)
+                elif expiry_days <= 0:
+                    return '<a href="{0}">Renew</a>'.format(renew_url)
+            if instance.end_date >= datetime.date.today():
+                return '<a href="{0}">Amend</a>'.format(amend_url)
+            else:
+                return 'N/A'
         else:
+            # should not happen
+            message = "The licence ref:{ref} pk:{pk} has no end date!".format(
+                ref=instance.reference,
+                pk=instance.pk
+            )
+            logger.exception(Exception(message))
             return 'N/A'
 
     @staticmethod
     def _search_licence_number(search):
-        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        # testing to see if search term contains no spaces and two hyphens,
+        # meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])
@@ -364,7 +396,8 @@ class DataTableLicencesCustomerView(base.DataTableBaseView):
             return Q(licence_number__icontains=search)
 
     def get_initial_queryset(self):
-        return WildlifeLicence.objects.filter(holder=self.request.user)
+        # should only see the issued customer's licence
+        return WildlifeLicence.objects.filter(holder=self.request.user).filter(licence_number__isnull=False)
 
 
 class DataTableReturnsCustomerView(base.DataTableBaseView):
@@ -423,6 +456,9 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
         elif instance.status == 'draft':
             url = reverse('wl_returns:enter_return', args=(instance.pk,))
             return '<a href="{0}">Edit Return</a>'.format(url)
+        elif instance.status == 'amendment_required':
+            url = reverse('wl_returns:enter_return', args=(instance.pk,))
+            return '<a href="{0}">Amend Return</a>'.format(url)
         else:
             url = reverse('wl_returns:view_return', args=(instance.pk,))
             return '<a href="{0}">View Return (read-only)</a>'.format(url)
@@ -443,7 +479,8 @@ class DataTableReturnsCustomerView(base.DataTableBaseView):
 
     @staticmethod
     def _search_licence_number(search):
-        # testing to see if search term contains no spaces and two hyphens, meaning it's a lodgement number with a sequence
+        # testing to see if search term contains no spaces and two hyphens,
+        # meaning it's a lodgement number with a sequence
         if search and search.count(' ') == 0 and search.count('-') == 2:
             components = search.split('-')
             licence_number, licence_sequence = '-'.join(components[:2]), '-'.join(components[2:])

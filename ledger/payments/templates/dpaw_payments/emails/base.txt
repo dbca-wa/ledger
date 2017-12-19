@@ -1,0 +1,18 @@
+{% block greetings %}
+Dear Sir/Madam,
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block signature %}
+Yours sincerely,
+
+Ledger Payment Services
+{% endblock %}
+
+
+
+{% block reply_statement %}
+Please do not reply directly to this email.
+{% endblock %}

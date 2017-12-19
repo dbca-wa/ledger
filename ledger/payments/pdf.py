@@ -8,6 +8,7 @@ from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen.canvas import Canvas
+from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 
@@ -58,6 +59,7 @@ styles.add(ParagraphStyle(name='BoldRight', fontName=BOLD_FONTNAME, fontSize=MED
 styles.add(ParagraphStyle(name='Center', alignment=enums.TA_CENTER))
 styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
+styles.add(ParagraphStyle(name='LongString', alignment=enums.TA_LEFT,wordWrap='CJK'))
 
 class BrokenLine(Flowable):
 
@@ -161,13 +163,14 @@ class Remittance(Flowable):
         canvas.drawString((PAGE_WIDTH/3) * 2, current_y, 'Invoice Total')
         current_y -= 20
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
-        canvas.drawString(current_x, current_y, self.invoice.number)
+        canvas.drawString(current_x, current_y, self.invoice.reference)
         canvas.drawString(PAGE_WIDTH/3, current_y, self.invoice.created.strftime(DATE_FORMAT))
         canvas.drawString((PAGE_WIDTH/3) * 2, current_y, '${}'.format(self.invoice.amount))
     
     def draw(self):
-        self.__logo_line()
-        self.__payment_line()
+        if settings.BPAY_ALLOWED:
+            self.__logo_line()
+            self.__payment_line()
         self.__footer_line()
 
 
@@ -189,28 +192,33 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'ABN: 38 052 249 024')
 
     # Invoice address details
-    invoice_details_offset = 30
+    invoice_details_offset = 37
     current_y -= 20
     invoice = doc.invoice
     canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
     current_x = PAGE_MARGIN + 5
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.owner.get_full_name())
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2,invoice.owner.username)
-    current_x += 454
+    current_x += 452
     #write Invoice details
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),'Date')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.created.strftime(DATE_FORMAT))
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Page')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2,str(canvas.getPageNumber()))
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Invoice Number')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, invoice.number)
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, invoice.reference)
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Total(AUD)')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, str(invoice.amount))
+    if invoice.payment_amount > 0:
+        canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Paid(AUD)')
+        canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, str(invoice.payment_amount))
+        canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, 'Outstanding(AUD)')
+        canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, str(invoice.balance))
     canvas.restoreState()
     
 def _create_invoice(invoice_buffer, invoice):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN + 250, PAGE_WIDTH - 2 * PAGE_MARGIN,
-                             PAGE_HEIGHT -430 , id='EveryPagesFrame',showBoundary=0)
+                             PAGE_HEIGHT -450 , id='EveryPagesFrame',showBoundary=0)
     remit_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 600, id='RemitFrame',showBoundary=0)
     every_page_template = PageTemplate(id='EveryPages', frames=[every_page_frame,remit_frame], onPage=_create_header)
@@ -234,17 +242,23 @@ def _create_invoice(invoice_buffer, invoice):
         ])
     items = invoice.order.lines.all()
     discounts = invoice.order.basket_discounts
+    if invoice.text:
+        elements.append(Paragraph(invoice.text, styles['Left']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
     data = [
-        ['Item','Product', 'Quantity','Unit Price','GST', 'Amount']
+        ['Item','Product', 'Quantity','Unit Price','GST', 'Total']
     ]
     val = 1
+    s = styles["BodyText"]
+    s.wordWrap = 'CJK'
+
     for item in items:
         data.append(
             [
                 val,
-                Paragraph(item.description, styles['Normal']),
+                Paragraph(item.description, s),
                 item.quantity,
-                '${}'.format(item.line_price_before_discounts_excl_tax),
+                '${}'.format(item.unit_price_excl_tax),
                 '${}'.format(item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
                 '${}'.format(item.line_price_before_discounts_incl_tax)
             ]
@@ -276,16 +290,21 @@ def _create_invoice(invoice_buffer, invoice):
     t= Table(
             data,
             style=invoice_table_style,
-            hAlign='LEFT'
+            hAlign='LEFT',
+            colWidths=(
+            0.7 * inch,
+            None,
+            0.7 * inch,
+            1.0 * inch,
+            1.0 * inch,
+            1.0 * inch,
+            )
         )
-    t._argW[1] = 3.4 * inch
-    t._argW[2] = 0.7 * inch
-    for x in range (3,6):
-        t._argW[x] = 1.0 * inch
     elements.append(t)
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
     # /Products Table
-    elements.append(Paragraph('Your application cannot be processed until payment is received.', styles['Left']))
+    if invoice.payment_status != 'paid' and invoice.payment_status != 'over_paid':
+        elements.append(Paragraph('Your application cannot be processed until payment is received.', styles['Left']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 6))
     

@@ -4,7 +4,7 @@
     <div class="modal-body">
         <form id="closeCGForm" class="form-horizontal">
             <div class="row">
-			    <alert :show.sync="showError" type="danger"></alert>
+			    <alert :show.sync="showError" type="danger">{{errorString}}</alert>
                 <div class="form-group">
                     <div class="col-md-2">
                         <label for="open_cg_range_start">Closure start: </label>

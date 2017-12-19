@@ -80,7 +80,7 @@ module.exports = {
             return this.$parent.isOpenOpenCG;
         },
         requireDetails: function () {
-            return (this.formdata.reason === 'other')? true: false;
+            return (this.formdata.reason === '1')? true: false;
         }
     },
     components: {

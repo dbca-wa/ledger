@@ -10,8 +10,10 @@ fixture_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../fixtur
 
 
 def load_fixture(apps, schema_editor):
-    call_command('loaddata', os.path.join(fixture_dir, 'payments_regions.json'))
-    call_command('loaddata', os.path.join(fixture_dir, 'payments_districts.json'))
+    pass
+    # call "manage.py load_ledger_fixtures" to do this instead
+    #call_command('loaddata', os.path.join(fixture_dir, 'payments_regions.json'))
+    #call_command('loaddata', os.path.join(fixture_dir, 'payments_districts.json'))
 
 
 class Migration(migrations.Migration):

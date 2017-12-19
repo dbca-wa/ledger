@@ -149,7 +149,7 @@ def _create_licence_header(canvas, doc, draw_page_number=True):
 def _create_licence(licence_buffer, licence, application, site_url, original_issue_date):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
-    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_licence_header)
+    every_page_template = PageTemplate(id='EveryPages', frames=[every_page_frame], onPage=_create_licence_header)
 
     doc = BaseDocTemplate(licence_buffer, pageTemplates=[every_page_template], pagesize=A4)
 
@@ -257,6 +257,9 @@ def _create_licence(licence_buffer, licence, application, site_url, original_iss
 
 def _layout_extracted_fields(extracted_fields):
     elements = []
+
+    if not extracted_fields:
+        return elements
 
     def __children_have_data(field):
         for group in field.get('children', []):
@@ -380,7 +383,7 @@ def _create_letter_header_footer(canvas, doc):
 
 def _format_name(user, include_first_name=False):
     if user.title:
-        return '{} {}'.format(user.title, user.get_full_name() if include_first_name else user.last_name)
+        return u'{} {}'.format(user.title, user.get_full_name() if include_first_name else user.last_name)
     else:
         return user.get_full_name()
 
@@ -394,9 +397,6 @@ def _create_letter_address(licence):
     address_elements.append(Spacer(1, LETTER_ADDRESS_BUFFER_HEIGHT))
 
     address_elements.append(Paragraph(_format_name(addressee, include_first_name=True), styles['LetterLeft']))
-
-    if licence.profile.institution:
-        address_elements.append(Paragraph(licence.profile.institution, styles['LetterLeft']))
 
     address_elements.append(Paragraph(address.line1, styles['LetterLeft']))
 
@@ -427,8 +427,8 @@ def _create_letter_signature():
     signature_elements = []
     signature_elements.append(Paragraph('Yours sincerely', styles['LetterLeft']))
     signature_elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 4))
-    signature_elements.append(Paragraph('for Jim Sharp', styles['LetterLeft']))
     signature_elements.append(Paragraph('DIRECTOR GENERAL', styles['LetterLeft']))
+    signature_elements.append(Paragraph('Department of Biodiversity, Conservation and Attractions', styles['LetterLeft']))
     signature_elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     signature_elements.append(Paragraph(date.today().strftime(DATE_FORMAT), styles['LetterLeft']),)
@@ -440,7 +440,7 @@ def _create_cover_letter(cover_letter_buffer, licence, site_url):
     cover_letter_frame = Frame(LETTER_PAGE_MARGIN, LETTER_PAGE_MARGIN, PAGE_WIDTH - 2 * LETTER_PAGE_MARGIN,
                                PAGE_HEIGHT - 160, id='CoverLetterFrame')
 
-    every_cover_letter_template = PageTemplate(id='CoverLetter', frames=cover_letter_frame,
+    every_cover_letter_template = PageTemplate(id='CoverLetter', frames=[cover_letter_frame],
                                                onPage=_create_letter_header_footer)
 
     doc = BaseDocTemplate(cover_letter_buffer, pageTemplates=[every_cover_letter_template], pagesize=A4)
@@ -504,7 +504,7 @@ def _create_licence_renewal_elements(licence):
 def _create_licence_renewal(licence_renewal_buffer, licence, site_url):
     licence_renewal_frame = Frame(LETTER_PAGE_MARGIN, LETTER_PAGE_MARGIN, PAGE_WIDTH - 2 * LETTER_PAGE_MARGIN,
                                   PAGE_HEIGHT - 160, id='LicenceRenewalFrame')
-    licence_renewal_template = PageTemplate(id='LicenceRenewalFrame', frames=licence_renewal_frame,
+    licence_renewal_template = PageTemplate(id='LicenceRenewalFrame', frames=[licence_renewal_frame],
                                             onPage=_create_letter_header_footer)
 
     doc = BaseDocTemplate(licence_renewal_buffer, pageTemplates=[licence_renewal_template], pagesize=A4)
@@ -520,7 +520,7 @@ def _create_licence_renewal(licence_renewal_buffer, licence, site_url):
 def _create_bulk_licence_renewal(licences, site_url, buf=None):
     bulk_licence_renewal_frame = Frame(LETTER_PAGE_MARGIN, LETTER_PAGE_MARGIN, PAGE_WIDTH - 2 * LETTER_PAGE_MARGIN,
                                        PAGE_HEIGHT - 160, id='BulkLicenceRenewalFrame')
-    bulk_licence_renewal_template = PageTemplate(id='BulkLicenceRenewalFrame', frames=bulk_licence_renewal_frame,
+    bulk_licence_renewal_template = PageTemplate(id='BulkLicenceRenewalFrame', frames=[bulk_licence_renewal_frame],
                                                  onPage=_create_letter_header_footer)
 
     if buf is None:

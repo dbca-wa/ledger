@@ -12,6 +12,8 @@ from ledger.accounts.models import Document
 
 logger = logging.getLogger('log')
 
+MAX_SUBJECT_LENGTH = 76
+
 
 def _render(template, context):
     if isinstance(context, dict):
@@ -29,7 +31,7 @@ class TemplateEmailBase(object):
     subject = ''
     html_template = 'wl/emails/base_email.html'
     # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
-    txt_template = 'wl/emails/base-email.txt'
+    txt_template = 'wl/emails/base_email.txt'
 
     def send_to_user(self, user, context=None):
         return self.send(user.email, context=context)
@@ -47,6 +49,9 @@ class TemplateEmailBase(object):
         :param cc:
         :return:
         """
+        # subject can be no longer than MAX_SUBJECT_LENGTH
+        if len(self.subject) > MAX_SUBJECT_LENGTH:
+            self.subject = '{}..'.format(self.subject[:MAX_SUBJECT_LENGTH - 2])
         # The next line will throw a TemplateDoesNotExist if html template cannot be found
         html_template = loader.get_template(self.html_template)
         # render html

@@ -11,14 +11,14 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser
 
 from wildlifelicensing.apps.payments import utils as payment_utils
-from wildlifelicensing.apps.main.models import Condition, AssessorGroup
+from wildlifelicensing.apps.main.models import Condition
 from wildlifelicensing.apps.main.mixins import OfficerRequiredMixin, OfficerOrAssessorRequiredMixin
 from wildlifelicensing.apps.main.serializers import WildlifeLicensingJSONEncoder
 from wildlifelicensing.apps.applications.models import Application, ApplicationCondition, Assessment, \
     AssessmentCondition, ApplicationUserAction
 from wildlifelicensing.apps.applications.utils import append_app_document_to_schema_data, convert_documents_to_url, \
     get_log_entry_to, format_application, format_assessment, ASSESSMENT_CONDITION_ACCEPTANCE_STATUSES
-from wildlifelicensing.apps.applications.emails import send_assessment_done_email
+from wildlifelicensing.apps.applications.emails import send_assessment_done_email, send_assessment_assigned_email
 from wildlifelicensing.apps.applications.views.process import determine_processing_status
 from wildlifelicensing.apps.applications.mixins import CanPerformAssessmentMixin
 from wildlifelicensing.apps.applications.forms import ApplicationLogEntryForm
@@ -37,7 +37,8 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
 
         convert_documents_to_url(application.data, application.documents.all(), '')
 
-        kwargs['application'] = serialize(application, posthook=format_application)
+        #kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
         kwargs['form_structure'] = application.licence_type.application_schema
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application),
                                           posthook=format_assessment)
@@ -71,7 +72,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         if request.POST.get('submissionType') == 'backToProcessing':
             return redirect('wl_applications:process', *args)
         elif request.POST.get('submissionType') == 'save':
-            messages.success(request, 'Conditions saved')
+            messages.warning(request, 'Conditions saved')
             return render(request, self.template_name, self.get_context_data())
         else:
             return redirect('wl_applications:issue_licence', *args, **kwargs)
@@ -92,7 +93,8 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         convert_documents_to_url(application.data, application.documents.all(), '')
 
-        kwargs['application'] = serialize(application, posthook=format_application)
+        #kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
         kwargs['form_structure'] = application.licence_type.application_schema
 
         kwargs['assessment'] = serialize(assessment, post_hook=format_assessment)
@@ -240,6 +242,8 @@ class AssignAssessorView(OfficerOrAssessorRequiredMixin, View):
             assessment.application.log_user_action(
                 ApplicationUserAction.ACTION_ASSESSMENT_ASSIGN_TO_.format(name),
                 request)
+            if assessment.assigned_assessor != request.user:
+                send_assessment_assigned_email(assessment, request)
         else:
             assigned_assessor = {'id': 0, 'text': 'Unassigned'}
             assessment.application.log_user_action(

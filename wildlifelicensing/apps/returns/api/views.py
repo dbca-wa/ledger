@@ -1,4 +1,5 @@
-import csv
+import unicodecsv as csv
+
 from collections import OrderedDict
 
 from django.core.urlresolvers import reverse
@@ -6,6 +7,7 @@ from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
 from django.utils import timezone
+from django.utils.encoding import smart_text
 
 from wildlifelicensing.apps.returns.api.mixins import APIUserRequiredMixin
 from wildlifelicensing.apps.returns.models import ReturnType, ReturnRow
@@ -25,7 +27,7 @@ class ExplorerView(APIUserRequiredMixin, View):
     (@see ReturnsDataView view)
     """
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         queryset = ReturnType.objects.all()
         # for API purpose, increase the session timeout
         set_api_session_timeout(request)
@@ -101,6 +103,6 @@ class ReturnsDataView(APIUserRequiredMixin, View):
         for ret_row in qs:
             row = []
             for field in schema.field_names:
-                row.append(unicode(ret_row.data.get(field, '')))
+                row.append(smart_text(ret_row.data.get(field, ''), errors='replace'))
             writer.writerow(row)
         return response

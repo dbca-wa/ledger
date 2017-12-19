@@ -19,18 +19,19 @@ openCampsite<template lang="html">
                       <campgroundAttr :createCampground=false :campground="campground">
                       </campgroundAttr>
                   </div>
-                <priceHistory ref="price_dt" level="campground" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="myID"></priceHistory>
-                <closureHistory ref="cg_closure_dt" :object_id="myID" :datatableURL="closureHistoryURL"></closureHistory>
+                <stay-history :object_id="ID" :datatableURL="stayHistoryURL"style="margin-top:100px;"></stay-history>
+                <priceHistory ref="price_dt" level="campground" :dt_options="ph_options" :historyDeleteURL="priceHistoryDeleteURL" :showAddBtn="hasCampsites" v-show="campground.price_level==0" :object_id="ID"></priceHistory>
+                <closureHistory ref="cg_closure_dt" :object_id="ID" :datatableURL="closureHistoryURL"></closureHistory>
                </div>
             </div>
          </div>
       </div>
-      <div class="panel panel-default" id="applications">
+      <div class="panel panel-default" id="applications" style="margin-top:50px;">
         <div class="panel-heading" role="tab" id="applications-heading">
             <h4 class="panel-title">
                 <a role="button" data-toggle="collapse" href="#campsites"
                    aria-expanded="false" aria-controls="collapseOne">
-                    <h3>Campsites</h3>
+                    <h3>Camp Sites</h3>
                 </a>
             </h4>
         </div>
@@ -63,6 +64,7 @@ import campgroundAttr from './campground-attr.vue'
 import confirmbox from '../utils/confirmbox.vue'
 import pkCsClose from '../campsites/closureHistory/closeCampsite.vue'
 import pkCsOpen from '../campsites/closureHistory/openCampsite.vue'
+import stayHistory from '../utils/stayHistory/stayHistory.vue'
 import {
     bus
 }
@@ -84,7 +86,8 @@ export default {
         pkCsClose,
         pkCsOpen,
         closureHistory,
-        priceHistory
+        priceHistory,
+        "stay-history":stayHistory
     },
     computed: {
         closureHistoryURL: function() {
@@ -93,7 +96,7 @@ export default {
         priceHistoryURL: function() {
             return api_endpoints.campground_price_history(this.$route.params.id);
         },
-        myID: function(){
+        ID: function(){
             return parseInt(this.$route.params.id);
         },
         hasCampsites: function() {
@@ -103,12 +106,13 @@ export default {
             return this.campground.id ? this.campground.id : 0;
         },
         priceHistoryDeleteURL: function (){
-            return api_endpoints.delete_campground_price(this.myID);
+            return api_endpoints.delete_campground_price(this.ID);
         }
     },
     data: function() {
         let vm = this;
         return {
+            stayHistoryURL:api_endpoints.campgroundStayHistory(this.$route.params.id),
             campground: {
                 address:{},
                 images: []
@@ -121,9 +125,7 @@ export default {
                 responsive: true,
                 processing: true,
                 deferRender: true,
-                order: [
-                    [0,'desc']
-                ],
+                order: [],
                 ajax: {
                     url: api_endpoints.campground_price_history(this.$route.params.id),
                     dataSrc: ''
@@ -131,14 +133,14 @@ export default {
                 columns: [{
                     data: 'date_start',
                     mRender: function(data, type, full) {
-                        return Moment(data).format('MMMM Do, YYYY');
+                        return Moment(data).format('DD/MM/YYYY');
                     }
 
                 }, {
                     data: 'date_end',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return Moment(data).add(1, 'day').format('MMMM Do, YYYY');
+                            return Moment(data).add(1, 'day').format('DD/MM/YYYY');
                         }
                         else {
                             return '';
@@ -255,14 +257,15 @@ export default {
                 message: "Are you sure you want to Delete ?",
                 buttons: [{
                     text: "Delete",
-                    event: "delete",
+                    event: "deleteRange",
                     bsColor: "btn-danger",
                     handler: function() {
                         vm.deleteBookingRange(vm.deleteRange);
                         vm.deleteRange = null;
                     },
                     autoclose: true
-                }]
+                }],
+                id: 'deleteRange'
             },
 
         }

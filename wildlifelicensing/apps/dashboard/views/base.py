@@ -19,7 +19,6 @@ from django.utils.http import urlencode
 
 from ledger.licence.models import LicenceType
 from wildlifelicensing.apps.applications.models import Application
-from wildlifelicensing.apps.applications.utils import remove_temp_applications_for_user
 from wildlifelicensing.apps.dashboard.forms import LoginForm
 from wildlifelicensing.apps.main.helpers import is_officer, is_assessor, render_user_name
 
@@ -52,6 +51,12 @@ def render_lodgement_number(application):
     else:
         return ''
 
+def render_application_document(application):
+    if application is not None:
+        return '<a href="{0}" target="_blank">View <img height="20" src="{1}"></img></a>'.format(
+            reverse('wl_applications:view_application_pdf', args=(application.pk,)), static('wl/img/pdf.png'))
+    else:
+        return ''
 
 def render_licence_number(licence):
     if licence is not None and licence.licence_number and licence.licence_sequence:
@@ -444,8 +449,6 @@ class TablesBaseView(TemplateView):
         return self.request.GET.dict()
 
     def get_context_data(self, **kwargs):
-        remove_temp_applications_for_user(self.request.user)
-
         if 'dataJSON' not in kwargs:
             data = {
                 'applications': self.get_applications_context_data() or None,

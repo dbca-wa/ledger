@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import date
 
 from django.utils import six
 from django import forms
@@ -9,7 +9,7 @@ from django.forms.widgets import SelectMultiple
 
 from dateutil.relativedelta import relativedelta
 
-from wildlifelicensing.apps.main.models import WildlifeLicence, CommunicationsLogEntry
+from wildlifelicensing.apps.main.models import WildlifeLicence, Region, CommunicationsLogEntry
 
 DATE_FORMAT = '%d/%m/%Y'
 
@@ -74,9 +74,8 @@ class IssueLicenceForm(forms.ModelForm):
 
     class Meta:
         model = WildlifeLicence
-        fields = ['issue_date', 'start_date', 'end_date', 'is_renewable', 'return_frequency', 'regions', 'purpose',
-                  'locations',
-                  'additional_information', 'cover_letter_message']
+        fields = ['start_date', 'end_date', 'is_renewable', 'return_frequency', 'regions', 'purpose',
+                  'locations', 'additional_information', 'cover_letter_message']
         widgets = {
             'regions': SelectMultiple(
                 attrs={"class": "hidden"}
@@ -88,11 +87,15 @@ class IssueLicenceForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        purpose = kwargs.pop('purpose', None)
-
+        regions = kwargs.pop('regions', Region.objects.none())
+        end_date = kwargs.pop('end_date', None)
         is_renewable = kwargs.pop('is_renewable', False)
-
+        default_period = kwargs.pop('default_period', None)
         return_frequency = kwargs.pop('return_frequency', WildlifeLicence.DEFAULT_FREQUENCY)
+        locations = kwargs.pop('locations', '')
+        purpose = kwargs.pop('purpose', '')
+        additional_information = kwargs.pop('additional_information', '')
+        cover_letter_message = kwargs.pop('cover_letter_message', '')
 
         skip_required = kwargs.pop('skip_required', False)
 
@@ -101,33 +104,45 @@ class IssueLicenceForm(forms.ModelForm):
         if skip_required:
             for field in self.fields.values():
                 field.required = False
-
-        if purpose is not None:
-            self.fields['purpose'].initial = purpose
+        else:
+            # enforce required for some fields not required at the ledger (Licence) model level
+            required = ['start_date', 'end_date']
+            for field_name in required:
+                field = self.fields.get(field_name)
+                if field is not None:
+                    field.required = True
 
         self.fields['is_renewable'].widget = forms.CheckboxInput()
 
-        # if a licence instance has not been passed in nor any POST data (i.e. this is creating the 'get' version of the form)
+        # if a licence instance has not been passed in nor any POST data (i.e. get version of form)
         if 'instance' not in kwargs and len(args) == 0:
-            today_date = datetime.now()
-            self.fields['issue_date'].initial = today_date.strftime(DATE_FORMAT)
+            today_date = date.today()
+
             self.fields['start_date'].initial = today_date.strftime(DATE_FORMAT)
 
-            self.fields['issue_date'].localize = False
+            if end_date is not None:
+                self.fields['end_date'].initial = end_date
+            elif default_period is not None:
+                end_date = today_date + relativedelta(days=default_period)
 
-            one_year_today = today_date + relativedelta(years=1, days=-1)
+                self.fields['end_date'].initial = end_date.strftime(DATE_FORMAT)
 
-            self.fields['end_date'].initial = one_year_today.strftime(DATE_FORMAT)
-
+            self.fields['regions'].initial = regions
             self.fields['is_renewable'].initial = is_renewable
-
             self.fields['return_frequency'].initial = return_frequency
+            self.fields['locations'].initial = locations
+            self.fields['purpose'].initial = purpose
+            self.fields['additional_information'].initial = additional_information
+            self.fields['cover_letter_message'].initial = cover_letter_message
 
     def clean(self):
         cleaned_data = super(IssueLicenceForm, self).clean()
 
-        if cleaned_data.get('end_date') < cleaned_data.get('start_date'):
-            raise forms.ValidationError('End date must be greater than start date')
+        end_date = cleaned_data.get('end_date')
+        start_date = cleaned_data.get('start_date')
+        if end_date is not None and start_date is not None and end_date < start_date:
+            msg = 'End date must be greater than start date'
+            self.add_error('end_date', msg)
 
 
 class CommunicationsLogEntryForm(forms.ModelForm):

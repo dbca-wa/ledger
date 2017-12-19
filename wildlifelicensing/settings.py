@@ -34,7 +34,7 @@ BOOTSTRAP3 = {
 STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')))
 
 CRON_CLASSES = [
-    'wildlifelicensing.apps.applications.cron.AssessmentRemindersCronJob',
+    #'wildlifelicensing.apps.applications.cron.AssessmentRemindersCronJob',
     'wildlifelicensing.apps.main.cron.CheckLicenceRenewalsCronJob',
     'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
 ]
@@ -50,3 +50,5 @@ WL_SENIOR_VOUCHER_CODE = env('WL_SENIOR_VOUCHER_CODE', 'WL_SENIOR_VOUCHER')
 
 # next setting is necessary to resolve absolute URL for the emails sent by the tasks running in cron.
 DEFAULT_HOST = env('DEFAULT_HOST', "https://wildlifelicensing.dpaw.wa.gov.au")
+DATA_UPLOAD_MAX_NUMBER_FIELDS = env('DATA_UPLOAD_MAX_NUMBER_FIELDS', None)
+WL_PDF_URL=env('WL_PDF_URL','https://wildlifelicensing.dpaw.wa.gov.au')

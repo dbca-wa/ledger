@@ -4,16 +4,16 @@
             <div class="modal-dialog" :class="modalClass">
                 <div class="modal-content">
                     <!--Header-->
-                    <div class="modal-header">
-                        <slot name="header">
+                    <slot name="header">
+                        <div class="modal-header">
                             <a type="button" class="close" @click="cancel">x</a>
                             <h4 class="modal-title">
                                 <slot name="title">
                                     {{title}}
                                 </slot>
                             </h4>
-                        </slot>
-                    </div>
+                        </div>
+                    </slot>
                     <!--Container-->
                     <div class="modal-body">
                         <slot></slot>
@@ -21,8 +21,8 @@
                     <!--Footer-->
                     <div class="modal-footer">
                         <slot name="footer">
-                            <button id="okBtn" type="button" :class="okClass" @click="ok">{{okText}}</button>
-                            <button type="button" :class="cancelClass" @click="cancel">{{cancelText}}</button>
+                            <button v-if="showOK" id="okBtn" type="button" :class="okClass" @click="ok">{{okText}}</button>
+                            <button v-if="showCancel" type="button" :class="cancelClass" @click="cancel">{{cancelText}}</button>
                         </slot>
                     </div>
                 </div>
@@ -63,6 +63,14 @@
             transition: {
                 type: String,
                 default: 'modal'
+            },
+            showOK: {
+                type: Boolean,
+                default: true
+            },
+            showCancel: {
+                type: Boolean,
+                default: true
             },
             okText: {
                 type: String,

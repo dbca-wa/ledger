@@ -53,6 +53,11 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
             ],
             "vouchers": []
         }
+        headers = {
+            'X-CSRFToken': request.COOKIES.get('csrftoken'),
+            'Referer': request.META.get('HTTP_REFERER'),
+        }
+        headers.update(JSON_REQUEST_HEADER_PARAMS)
 
         # senior discount
         if application.is_senior_offer_applicable:
@@ -62,7 +67,7 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
             reverse('payments:ledger-initial-checkout')
         )
 
-        response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=request.COOKIES,
+        response = requests.post(url, headers=headers, cookies=request.COOKIES,
                                  data=json.dumps(parameters))
 
         return HttpResponse(response.content)
@@ -72,13 +77,14 @@ class ManualPaymentView(LoginRequiredMixin, RedirectView):
     def get(self, request, *args, **kwargs):
         application = get_object_or_404(Application, pk=args[0])
 
-        url = reverse('payments:invoice-payment', args=(application.invoice_reference,))
-
+        #url = reverse('payments:invoice-payment', args=(application.invoice_reference,))
+        url = '{}?invoice={}'.format(reverse('payments:invoice-payment'),application.invoice_reference)
+ 
         params = {
             'redirect_url': request.GET.get('redirect_url', reverse('wl_home'))
         }
-
-        return redirect('{}?{}'.format(url, urlencode(params)))
+ 
+        return redirect('{}&{}'.format(url, urlencode(params)))
 
 
 class PaymentsReportView(LoginRequiredMixin, View):

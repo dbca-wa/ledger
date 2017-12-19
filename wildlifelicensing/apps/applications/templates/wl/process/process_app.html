@@ -108,6 +108,16 @@
                                             {% endif %}
                                         </div>
                                     {% endwith %}
+                                    {% with proxy=data.application.proxy_applicant %}
+                                        {% if proxy %}
+                                            <div class="row bottom-buffer-xs">
+                                                <div class="col-md-12">
+                                                    <label>Proxy</label>
+                                                    <div>{{ proxy.first_name }} {{ proxy.last_name }}</div>
+                                                </div>
+                                            </div>
+                                        {%  endif %}
+                                    {% endwith %}
                                     <div class="row">
                                         <div class="col-md-5">
                                             <label>Lodged on</label>
@@ -186,7 +196,7 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                        {% if not data.application.is_licence_amendment %}
+                                        {% if data.application.application_type == 'renewal' %}
                                             <div>
                                                 <label>Returns</label>
                                                 {% if data.returns_outstanding %}

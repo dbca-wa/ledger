@@ -4,6 +4,8 @@ import os
 import datetime
 import re
 
+from rest_framework import status
+
 from django.contrib.auth.models import Group
 from django.core import mail
 from django.core.urlresolvers import reverse
@@ -72,6 +74,7 @@ class SocialClient(Client):
         else:
             login_url = re.search('(?P<url>https?://[^\s]+)', mail.outbox[0].body).group('url')
             response = self.get(login_url, follow=True)
+            clear_mailbox()
         return response
 
     def logout(self):
@@ -115,6 +118,7 @@ def get_or_create_default_customer(include_default_profile=False):
     user, created = get_or_create_user(TestData.DEFAULT_CUSTOMER)
 
     if include_default_profile:
+        create_default_country()
         address = Address.objects.create(user=user, **TestData.DEFAULT_ADDRESS)
         profile = Profile.objects.create(user=user, postal_address=address, **TestData.DEFAULT_PROFILE)
         profile.user = user
@@ -236,6 +240,121 @@ def get_response_error_messages(response):
 
 def has_response_error_messages(response):
     return len(get_response_error_messages(response)) > 0
+
+
+class BaseUserTestCase(TestCase):
+    """
+    A test case that provides some users
+    """
+    client_class = SocialClient
+
+    def _pre_setup(self):
+        super(BaseUserTestCase, self)._pre_setup()
+        self.customer = get_or_create_default_customer(include_default_profile=True)
+        self.officer = get_or_create_default_officer()
+        self.assessor = get_or_create_default_assessor()
+        self.all_users = [
+            self.officer,
+            self.assessor,
+            self.customer
+        ]
+
+    def _post_teardown(self):
+        super(BaseUserTestCase, self)._post_teardown()
+        self.client.logout()
+
+
+class BasePermissionViewTestCase(BaseUserTestCase):
+    view_url = None
+
+    @property
+    def permissions(self):
+        """
+        Override this method to define permissions for relevant method.
+        Example:
+        {
+            'get': {
+                'allowed': [self.officer],
+                'forbidden': [self.customer, self.assessor],
+                'kwargs': {}
+            }
+            'post': {
+                'allowed': [self.officer],
+                'forbidden': [self.customer, self.assessor]
+                'kwargs': {
+                    'data': {}
+                }
+            },
+        }
+        Note: the kwargs are passed to the request method. Useful for post data
+        """
+        return None
+
+    def test_permissions(self):
+        if not self.view_url:
+            return
+        permissions = self.permissions or {}
+        verbs = ['get', 'post', 'put', 'patch', 'delete']
+        for verb in verbs:
+            method = getattr(self.client, verb)
+            if callable(method):
+                if verb in permissions:
+                    allowed = permissions[verb].get('allowed', [])
+                    forbidden = permissions[verb].get('forbidden', self.all_users)
+                    kwargs = permissions[verb].get('kwargs', {})
+                    for user in allowed:
+                        self.client.login(user.email)
+                        response = method(self.view_url, **kwargs)
+                        expected_status = status.HTTP_200_OK
+                        self.assertEqual(
+                            response.status_code, expected_status,
+                            msg="{got} != {expected} for user {user} with method {verb} at {url} with params {kwargs}".format(
+                                got=response.status_code,
+                                expected=expected_status,
+                                user=user.email,
+                                verb=verb,
+                                url=self.view_url,
+                                kwargs=kwargs,
+                            )
+                        )
+                        self.client.logout()
+
+                    for user in forbidden:
+                        self.client.login(user.email)
+                        response = method(self.view_url, **kwargs)
+                        expected_status = status.HTTP_403_FORBIDDEN
+                        self.assertEqual(
+                            response.status_code, expected_status,
+                            msg="{got} != {expected} for user {user} with method {verb} at {url} with params {kwargs}".format(
+                                got=response.status_code,
+                                expected=expected_status,
+                                user=user.email,
+                                verb=verb,
+                                url=self.view_url,
+                                kwargs=kwargs,
+                            )
+                        )
+                        self.client.logout()
+                else:
+                    # method not in the permissions list should return 405 (or 403)
+                    for user in self.all_users:
+                        self.client.login(user.email)
+                        response = method(self.view_url, **kwargs)
+                        expected_statuses = [status.HTTP_405_METHOD_NOT_ALLOWED, status.HTTP_403_FORBIDDEN]
+                        self.assertIn(
+                            response.status_code, expected_statuses,
+                            msg="{got} != {expected} for user {user} with method {verb} at {url} with params {kwargs}".format(
+                                got=response.status_code,
+                                expected=expected_statuses,
+                                user=user.email,
+                                verb=verb,
+                                url=self.view_url,
+                                kwargs=kwargs,
+                            )
+                        )
+                        self.client.logout()
+            else:
+                self.fail('Method {} is not supported by client.'.format(verb))
 
 
 class HelpersTest(TestCase):

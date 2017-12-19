@@ -8,12 +8,14 @@
 
 {% load users %}
 
+{% load application_filters %}
+
 {% block breadcrumbs %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
                 <ol class="breadcrumb wl-breadcrumbs">
-                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li><strong>{{ application|get_application_verb }} Application</strong></li>
                     <li class="active">Application Complete</li>
                 </ol>
             </div>
@@ -41,7 +43,7 @@
             Thank you. Your application will now be reviewed.
         </p>
         <p>
-            You can see the status of the application on your home screen dashboard in the “Applications” table and view a
+            You can see the status of the application on your home screen dashboard in the "Applications" table and view a
             read-only version of the application. 
         </p>
         <p>

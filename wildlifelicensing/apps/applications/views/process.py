@@ -81,7 +81,8 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
         data = {
             'user': serialize(request.user),
-            'application': serialize(application, posthook=format_application),
+            #'application': serialize(application, posthook=format_application),
+            'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}}),
             'form_structure': application.licence_type.application_schema,
             'officers': officers,
             'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application),
@@ -100,7 +101,10 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
     def _process_decline(self, application):
         request = self.request
+        mutable = request.POST._mutable
+        request.POST._mutable = True
         request.POST['application'] = application.pk
+        request.POST._mutable = mutable
         if 'officer' not in request.POST:
             request.POST['officer'] = request.user.pk
         form = ApplicationDeclinedDetailsForm(request.POST)
@@ -343,7 +347,13 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
         application = get_object_or_404(Application, pk=request.POST['applicationID'])
 
         ass_group = get_object_or_404(AssessorGroup, pk=request.POST['assGroupID'])
-        assessment = Assessment.objects.get_or_create(application=application, assessor_group=ass_group)[0]
+        assessment = Assessment.objects.get_or_create(
+            application=application,
+            assessor_group=ass_group,
+            defaults={
+                'officer': self.request.user
+            }
+        )[0]
 
         assessment.status = 'awaiting_assessment'
 

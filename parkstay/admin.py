@@ -1,6 +1,6 @@
 from django.contrib import messages
-from django.contrib import admin
-from parkstay import models 
+from django.contrib.gis import admin
+from parkstay import models
 
 @admin.register(models.CampsiteClass)
 class CampsiteClassAdmin(admin.ModelAdmin):
@@ -17,11 +17,16 @@ class ParkAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 @admin.register(models.Campground)
-class CampgroundAdmin(admin.ModelAdmin):
-    list_display = ('name','park','promo_area','campground_type','site_type')
+class CampgroundAdmin(admin.GeoModelAdmin):
+    list_display = ('name','park','promo_area','campground_type','site_type','max_advance_booking')
     ordering = ('name',)
     search_fields = ('name',)
     list_filter = ('campground_type','site_type')
+    openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
+
+@admin.register(models.CampgroundGroup)
+class CampgroundGroupAdmin(admin.ModelAdmin):
+    filter_horizontal = ('members','campgrounds')
 
 @admin.register(models.Campsite)
 class CampsiteAdmin(admin.ModelAdmin):
@@ -36,12 +41,24 @@ class FeatureAdmin(admin.ModelAdmin):
     ordering = ('name',)
     search_fields = ('name',)
 
+class BookingInvoiceInline(admin.TabularInline):
+    model = models.BookingInvoice
+    extra = 0
+
+class CampsiteBookingInline(admin.TabularInline):
+    model = models.CampsiteBooking
+    extra = 0
+
 @admin.register(models.Booking)
 class BookingAdmin(admin.ModelAdmin):
     list_display = ('arrival','departure','campground','legacy_id','legacy_name','cost_total')
     ordering = ('-arrival',)
     search_fileds = ('arrival','departure')
-    list_filter = ('arrival','departure')
+    list_filter = ('arrival','departure','campground')
+    inlines = [BookingInvoiceInline,CampsiteBookingInline]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 @admin.register(models.CampsiteBooking)
 class CampsiteBookingAdmin(admin.ModelAdmin):
@@ -100,8 +117,11 @@ class ClosureReason(ReasonAdmin):
 class OpenReason(ReasonAdmin):
     pass
 
+@admin.register(models.OutstandingBookingRecipient)
+class OutstandingBookingRecipient(admin.ModelAdmin):
+    pass
+
 admin.site.register(models.Rate)
 admin.site.register(models.Region)
 admin.site.register(models.District)
 admin.site.register(models.PromoArea)
-

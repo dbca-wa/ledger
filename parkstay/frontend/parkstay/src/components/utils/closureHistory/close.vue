@@ -34,13 +34,13 @@
                     </div>
                 </div>
             </div>
-            <reason type="close" v-model="statusHistory.reason" ></reason>
+            <reason type="close" v-model="statusHistory.closure_reason" ></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Details: </label>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-4">
                         <textarea name="closure_details" v-model="statusHistory.details" class="form-control" id="close_cg_details"></textarea>
                     </div>
                 </div>
@@ -96,7 +96,7 @@ module.exports = {
             return this.statusHistory.id ? this.statusHistory.id : '';
         },
         requireDetails: function() {
-            return this.statusHistory.reason == '1';
+            return this.statusHistory.closure_reason == '1';
         },
     },
     components: {
@@ -115,8 +115,9 @@ module.exports = {
             this.statusHistory.status= '1';
             this.statusHistory.details= '';
             this.statusHistory.reason = '';
+            this.statusHistory.closure_reason = '';
             var today = new Date();
-            this.closeEndPicker.data('DateTimePicker').date(today);
+            this.closeEndPicker.data('DateTimePicker').clear();
             this.closeStartPicker.data('DateTimePicker').clear();
         },
         addClosure: function() {
@@ -185,11 +186,11 @@ module.exports = {
             useCurrent: false
         });
         vm.closeStartPicker.on('dp.change', function(e){
-            vm.statusHistory.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
-            vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
+            vm.statusHistory.range_start = vm.closeStartPicker.data('DateTimePicker').date() != null ? vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY') : '';
+            e.date != null ? vm.closeEndPicker.data("DateTimePicker").minDate(e.date): '';
         });
         vm.closeEndPicker.on('dp.change', function(e){
-            vm.statusHistory.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            vm.statusHistory.range_end = vm.closeEndPicker.data('DateTimePicker').date() != null  ? vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY') : '';
         });
         vm.form = $(document.forms.closeForm);
         vm.addFormValidations();
