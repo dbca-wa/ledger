@@ -504,6 +504,13 @@ export default {
                 fields.splice(9,0,'Amount Due')
                 fields.splice(10,0,'Amount Paid')
                 fields.splice(22,0,'Booking Type')
+                var booking_types = {
+                    0: 'Reception booking',
+                    1: 'Internet booking',
+                    2: 'Black booking',
+                    3: 'Temporary reservation',
+                };
+
                 //var data = vm.$refs.bookings_table.vmDataTable.ajax.json().results;
                 var bookings = [];
                 $.each(data,function (i,booking) {
@@ -596,7 +603,11 @@ export default {
                                 bk[field] = booking.canceled_by;
                             break;
                             case 22:
-                                bk[field] = booking.booking_type;
+                                if (typeof booking_types[booking.booking_type] !== 'undefined') {
+                                    bk[field] = booking_types[booking.booking_type];
+                                } else {
+                                    bk[field] = booking.booking_type;
+                                }
                             break;                   
                         }
                     });
