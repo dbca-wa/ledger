@@ -1585,7 +1585,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['start'] = start
 
             sql += ';'
-            print(sql)
+            #print(sql)
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");
@@ -1599,13 +1599,16 @@ class BookingViewSet(viewsets.ModelViewSet):
                 dict(zip(columns, row))
                 for row in cursor.fetchall()
             ]
+            bookings_qs = Booking.objects.filter(id__in=[b['id'] for b in data]).prefetch_related('campground', 'campsites', 'campsites__campsite', 'customer', 'regos', 'history', 'invoices', 'canceled_by')
+            booking_map = {b.id: b for b in bookings_qs}
             clean_data = []
             for bk in data:
                 cg = None
-                booking = Booking.objects.get(id=bk['id'])
+                booking = booking_map[bk['id']]
                 cg = booking.campground
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
+                bk['booking_type'] = booking.booking_type
                 bk['has_history'] = booking.has_history
                 bk['cost_total'] = booking.cost_total
                 bk['amount_paid'] = booking.amount_paid
@@ -1620,7 +1623,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                 bk['guests'] = booking.guests
                 bk['campsite_names'] = booking.campsite_name_list
-                bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
+                bk['regos'] = [{r.type: r.rego} for r in booking.regos.all()]
                 bk['firstname'] = booking.details.get('first_name','')
                 bk['lastname'] = booking.details.get('last_name','')
                 if not booking.paid:
@@ -1636,9 +1639,10 @@ class BookingViewSet(viewsets.ModelViewSet):
                     if booking.is_canceled:
                         bk['campground_site_type'] = ""
                     else:
-                        bk['campground_site_type'] = booking.first_campsite.type if booking.first_campsite else ""
+                        first_campsite = booking.first_campsite
+                        bk['campground_site_type'] = first_campsite.type if first_campsite else ""
                         if booking.campground.site_type != 2:
-                            bk['campground_site_type'] = '{}{}'.format('{} - '.format(booking.first_campsite.name if booking.first_campsite else ""),'({})'.format(bk['campground_site_type'] if bk['campground_site_type'] else ""))
+                            bk['campground_site_type'] = '{}{}'.format('{} - '.format(first_campsite.name if first_campsite else ""),'({})'.format(bk['campground_site_type'] if bk['campground_site_type'] else ""))
                 else:
                     bk['campground_site_type'] = ""
                 if refund_status and canceled == 't':
@@ -1651,6 +1655,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                                 clean_data.append(bk)
                 else:
                     clean_data.append(bk)
+            
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
                 ('recordsFiltered',recordsFiltered),

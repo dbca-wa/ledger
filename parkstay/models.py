@@ -994,7 +994,7 @@ class Booking(models.Model):
 
     @property
     def campsite_name_list(self):
-        return list(set([x.campsite.name for x in self.campsites.all()]))
+        return list(set(self.campsites.values_list('campsite__name', flat=True)))
 
     @property
     def paid(self):
@@ -1107,12 +1107,8 @@ class Booking(models.Model):
         invoices = []
         amount = D('0.0')
         refund_amount = D('0.0')
-        references = self.invoices.all().values('invoice_reference')
-        for r in references:
-            try:
-                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
-            except Invoice.DoesNotExist:
-                pass
+        references = self.invoices.all().values_list('invoice_reference', flat=True)
+        invoices = Invoice.objects.filter(reference__in=references)
         for i in invoices:
             if i.voided:
                 amount += i.payment_amount
