@@ -1,6 +1,6 @@
 import json
 from datetime import date
-from urlparse import urlparse
+from six.moves.urllib import parse as urlparse
 from django.views import generic
 from django.conf import settings
 from django.shortcuts import render

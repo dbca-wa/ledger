@@ -16,16 +16,16 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='line',
             name='deduction_details',
-            field=django.contrib.postgres.fields.jsonb.JSONField(db_index=True, default={b'bpay': {}, b'card': {}, b'cash': {}}),
+            field=django.contrib.postgres.fields.jsonb.JSONField(db_index=True, default={'bpay': {}, 'card': {}, 'cash': {}}),
         ),
         migrations.AlterField(
             model_name='line',
             name='payment_details',
-            field=django.contrib.postgres.fields.jsonb.JSONField(db_index=True, default={b'bpay': {}, b'card': {}, b'cash': {}}),
+            field=django.contrib.postgres.fields.jsonb.JSONField(db_index=True, default={'bpay': {}, 'card': {}, 'cash': {}}),
         ),
         migrations.AlterField(
             model_name='line',
             name='refund_details',
-            field=django.contrib.postgres.fields.jsonb.JSONField(db_index=True, default={b'bpay': {}, b'card': {}, b'cash': {}}),
+            field=django.contrib.postgres.fields.jsonb.JSONField(db_index=True, default={'bpay': {}, 'card': {}, 'cash': {}}),
         ),
     ]

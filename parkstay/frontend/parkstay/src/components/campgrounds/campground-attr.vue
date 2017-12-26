@@ -140,7 +140,14 @@
 											</div>
 										</div>
 									</div>
-
+                                    <div class="row" style="margin-top: 40px;">
+										<div class="col-md-12">
+											<div class="form-group">
+												<label class="control-label" >Additional confirmation information</label>
+												<div id="additional_info" class="form-control"></div>
+											</div>
+										</div>
+									</div>
 									<div class="row" style="margin-top: 40px;">
 										<div class="col-sm-8">
 											<div class="form-group">
@@ -328,7 +335,6 @@ export default {
                     .parents('.form-group').addClass('has-error');
                 return false;
             }
-
             return true;
         },
         sendData: function(url, method) {
@@ -512,6 +518,14 @@ export default {
 			vm.validateEditor();
         });
 
+        vm.editor=new Editor('#additional_info',{
+            modules:{
+                toolbar:true
+            },
+            theme: 'snow'
+        });
+        vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.additional_info, 'api');
+        
         vm.form = $('#attForm');
         vm.addFormValidations();
 		vm.$http.get(api_endpoints.contacts).then((response) => {

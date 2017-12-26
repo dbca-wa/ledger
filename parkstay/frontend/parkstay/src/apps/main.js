@@ -2,6 +2,9 @@
 // so you don't have to do: import Vue from 'vue/dist/vue'
 // This is done with the browser options. For the config, see package.json
 import Vue from 'vue'
+if (process.env.NODE_ENV == "development") {
+    Vue.config.devtools = true;
+}
 import resource from 'vue-resource'
 import Campgrounds from '../components/campgrounds/campgrounds.vue'
 import Campground from '../components/campgrounds/campground.vue'
