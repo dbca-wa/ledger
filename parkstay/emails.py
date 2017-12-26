@@ -71,13 +71,17 @@ def send_booking_confirmation(booking,request):
             unpaid_vehicle = True
             break
 
+    if additional_info:
+        additional_info = booking.campground.additional_info
+
     context = {
         'booking': booking,
         'phone_number': tel,
         'campground_email': campground_email,
         'my_bookings': my_bookings_url,
         'availability': booking_availability,
-        'unpaid_vehicle': unpaid_vehicle
+        'unpaid_vehicle': unpaid_vehicle,
+        'additional_info': additional_info
     }
 
     att = BytesIO()
