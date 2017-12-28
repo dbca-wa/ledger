@@ -2,7 +2,7 @@ from django.http import HttpResponse,JsonResponse
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import View, TemplateView
-from disturbance.utils import create_data_from_form
+from disturbance.components.proposals.utils import create_data_from_form
 from disturbance.components.proposals.models import Proposal
 import json,traceback
 

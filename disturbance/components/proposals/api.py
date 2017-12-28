@@ -26,7 +26,6 @@ from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser, Address 
 from ledger.address.models import Country
-from disturbance import utils
 from datetime import datetime, timedelta, date
 from disturbance.components.proposals.utils import save_proponent_data,save_assessor_data
 from django.urls import reverse
