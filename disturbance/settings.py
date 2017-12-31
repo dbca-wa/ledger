@@ -12,6 +12,7 @@ INSTALLED_APPS += [
     'disturbance.components.users',
     'disturbance.components.proposals',
     'disturbance.components.approvals',
+    'disturbance.components.compliances',
     'taggit',
     'rest_framework',
     'rest_framework_gis'

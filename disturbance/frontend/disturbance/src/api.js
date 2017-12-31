@@ -12,6 +12,7 @@ module.exports = {
     proposals:"/api/proposal.json",
     approvals:"/api/approvals.json",
     referrals:"/api/referrals.json",
+    compliances:"/api/compliances.json",
     proposal_standard_requirements:"/api/proposal_standard_requirements.json",
     proposal_requirements:"/api/proposal_requirements.json",
     discard_proposal:function (id) {

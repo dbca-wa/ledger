@@ -129,7 +129,7 @@ export default {
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region","Activity","Title","Holder","Status","Expiry Date","Approval","Action"],
+            proposal_headers:["Number","Region/District","Activity","Title","Approval","Holder","Status","Due Date","Assigned To","Action"],
             proposal_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -140,19 +140,30 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
-                    {data: "id"},
-                    {data: "region"},
+                    {
+                        data: "id",
+                        mRender:function (data,type,full) {
+                            return `C${data}`;
+                        }
+                    },
+                    {data: "regions"},
                     {data: "activity"},
                     {data: "title"},
-                    {data: "applicant"},
+                    {
+                        data: "approval",
+                        mRender:function (data,type,full) {
+                            return `A${data}`;
+                        }
+                    },
+                    {data: "holder"},
                     {data: "processing_status"},
                     {
-                        data: "lodgement_date",
+                        data: "due_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
-                    {data: "approval"},
+                    {data: "assigned_to"},
                     {
                         mRender:function (data,type,full) {
                             let links = '';

@@ -6,6 +6,7 @@ import Organisation from '../organisations/manage.vue'
 import Proposal from '../proposals/proposal.vue'
 import Referral from '../referrals/referral.vue'
 import ApprovalDash from '../approvals/dashboard.vue'
+import ComplianceDash from '../compliances/dashboard.vue'
 export default
 {
     path: '/internal',
@@ -25,6 +26,11 @@ export default
             path: 'approvals',
             component: ApprovalDash,
             name:"internal-approvals-dash"
+        },
+        {
+            path: 'compliances',
+            component: ComplianceDash,
+            name:"internal-compliances-dash"
         },
         {
             path: 'search',
