@@ -517,14 +517,13 @@ export default {
             vm.campground.description = text;
 			vm.validateEditor();
         });
-
-        vm.editor=new Editor('#additional_info',{
+        
+        vm.additional_info = new Editor('#additional_info', {
             modules:{
                 toolbar:true
             },
             theme: 'snow'
         });
-        vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.additional_info, 'api');
         
         vm.form = $('#attForm');
         vm.addFormValidations();
