@@ -35,6 +35,10 @@ Vehicle: {{v.Rego}}, {{v.Type}}
     Purchase a park entry pass at our online store (https://shop.dpaw.wa.gov.au/park-passes) or pay on arrival ({{EXPLORE_PARKS_ENTRY_FEES}})
 {% endif %}
 
+{% if booking.campground.additional_info %}
+    <p>Additional information confirmation: {{booking.campground.additional_info}}</p>
+{% endif %}
+
 About {{booking.campground.name}} and booking conditions {{availability}}
 
 Before you go, check:

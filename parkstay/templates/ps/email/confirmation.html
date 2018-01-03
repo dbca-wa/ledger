@@ -32,6 +32,10 @@
     <p>Purchase a park entry pass at our <a href="https://shop.dpaw.wa.gov.au/park-passes">online store</a> or <a href="{{EXPLORE_PARKS_ENTRY_FEES}}">pay on arrival</a></p>
 {% endif %}
 
+{% if booking.campground.additional_info %}
+    <p>Additional information confirmation: {{booking.campground.additional_info}}</p>
+{% endif %}
+
 <a href="{{availability}}">About {{booking.campground.name}} and booking conditions</a>
 
 <p>Before you go, check:</p>

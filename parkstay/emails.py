@@ -70,8 +70,8 @@ def send_booking_confirmation(booking,request):
         if v.get('Paid') == 'No':
             unpaid_vehicle = True
             break
-
-    if additional_info:
+   
+    if booking.campground.additional_info:
         additional_info = booking.campground.additional_info
 
     context = {
