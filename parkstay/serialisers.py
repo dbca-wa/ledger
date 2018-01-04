@@ -282,7 +282,8 @@ class CampgroundSerializer(serializers.ModelSerializer):
             'images',
             'max_advance_booking',
             'oracle_code',
-            'campground_map'
+            'campground_map',
+            'additional_info'
         )
 
     def get_site_type(self, obj):
