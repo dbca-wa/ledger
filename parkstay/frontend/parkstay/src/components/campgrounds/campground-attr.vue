@@ -213,6 +213,7 @@ export default {
         let vm = this;
         return {
             selected_price_set: this.priceSet[0],
+            additional_info: null,
             editor: null,
             editor_updated: false,
             features: [],
@@ -524,6 +525,7 @@ export default {
             },
             theme: 'snow'
         });
+        vm.additional_info.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
         
         vm.form = $('#attForm');
         vm.addFormValidations();
