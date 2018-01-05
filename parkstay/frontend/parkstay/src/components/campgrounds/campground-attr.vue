@@ -144,7 +144,7 @@
 										<div class="col-md-12">
 											<div class="form-group">
 												<label class="control-label" >Additional confirmation information</label>
-												<div id="additional_info" class="form-control"></div>
+												<textarea id="additional_info" class="form-control" v-model="campground.additional_info"/>
 											</div>
 										</div>
 									</div>
@@ -213,7 +213,6 @@ export default {
         let vm = this;
         return {
             selected_price_set: this.priceSet[0],
-            additional_info: null,
             editor: null,
             editor_updated: false,
             features: [],
@@ -307,7 +306,7 @@ export default {
         },
 		validateForm:function () {
 			let vm = this;
-			var isValid = vm.validateEditor($('#editor')) && vm.validateEditor($('#additional_info'));
+			var isValid = vm.validateEditor($('#editor'));
             return  vm.form.valid() && isValid;
 		},
         create: function() {
@@ -517,19 +516,6 @@ export default {
 			vm.validateEditor($('#editor'));
         });
         
-        vm.additional_info = new Editor('#additional_info', {
-            modules:{
-                toolbar:true
-            },
-            theme: 'snow'
-        });
-        vm.additional_info.clipboard.dangerouslyPasteHTML(0, vm.campground.additional_info, 'api');
-        vm.additional_info.on('text-change', function (delta, oldDelta, source) {
-            var text = $('#additional_info >.ql-editor').html();
-            vm.campground.additional_info = text;
-			vm.validateEditor($('#additional_info'));
-        });
-        
         vm.form = $('#attForm');
         vm.addFormValidations();
 		vm.$http.get(api_endpoints.contacts).then((response) => {
@@ -543,10 +529,6 @@ export default {
         var changed = false;
         if (vm.campground.description != null && vm.editor_updated == false) {
             vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
-            changed = true;
-        }
-        if (vm.campground.additional_info != null && vm.editor_updated == false) {
-            vm.additional_info.clipboard.dangerouslyPasteHTML(0, vm.campground.additional_info, 'api');
             changed = true;
         }
         if (changed) {
