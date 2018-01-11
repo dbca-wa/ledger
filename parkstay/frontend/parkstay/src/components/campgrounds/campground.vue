@@ -1,4 +1,4 @@
-openCampsite<template lang="html">
+<template lang="html">
    <div class="panel-group" id="applications-accordion" role="tablist" aria-multiselectable="true">
         <pkCsClose ref="closeCampsite" @closeCampsite="closeCampsite()"></pkCsClose>
         <pkCsOpen ref="openCampsite" @openCampsite="openCampsite()"></pkCsOpen>
@@ -42,7 +42,8 @@ openCampsite<template lang="html">
                   <div class="row">
                      <div class="well">
                         <div class="col-sm-offset-8 col-sm-4">
-                            <router-link :to="{name:'add_campsite',params:{id:campground_id}}" class="btn btn-primary pull-right table_btn">Add Campsite</router-link>
+                            <button @click="showBulkCloseCampsites = true" class="btn btn-primary pull-right table_btn" >Close Campsites</button> 
+                            <router-link :to="{name:'add_campsite',params:{id:campground_id}}" class="btn btn-primary pull-right table_btn" style="margin-right: 1em;">Add Campsite</router-link>
                         </div>
                         <datatable ref="cg_campsites_dt" :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
                      </div>
@@ -52,6 +53,7 @@ openCampsite<template lang="html">
         </div>
     </div>
     <confirmbox id="deleteRange" :options="deletePrompt"></confirmbox>
+    <bulk-close-campsites v-on:bulkCloseCampsites="bulkCloseCampsites" v-if="showBulkCloseCampsites" v-on:close="showBulkCloseCampsites = false" ref="bulkCloseCampsites" v-bind:campsites="campsites"/>
    </div>
 
 </template>
@@ -62,6 +64,7 @@ import closureHistory from '../utils/closureHistory.vue'
 import priceHistory from '../utils/priceHistory/priceHistory.vue'
 import campgroundAttr from './campground-attr.vue'
 import confirmbox from '../utils/confirmbox.vue'
+import bulkCloseCampsites from '../campsites/closureHistory/bulkClose.vue'
 import pkCsClose from '../campsites/closureHistory/closeCampsite.vue'
 import pkCsOpen from '../campsites/closureHistory/openCampsite.vue'
 import stayHistory from '../utils/stayHistory/stayHistory.vue'
@@ -87,7 +90,8 @@ export default {
         pkCsOpen,
         closureHistory,
         priceHistory,
-        "stay-history":stayHistory
+        "stay-history":stayHistory,
+        "bulk-close-campsites":bulkCloseCampsites
     },
     computed: {
         closureHistoryURL: function() {
@@ -120,6 +124,7 @@ export default {
             campsites: [],
             isOpenOpenCS: false,
             isOpenCloseCS: false,
+            showBulkCloseCampsites: false,
             deleteRange: null,
             ph_options: {
                 responsive: true,
@@ -317,12 +322,34 @@ export default {
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    vm.$refs.closeCampsite.close();
+                    vm.showBulkCloseCampsites = false;
                     vm.refreshCampsiteClosures();
                 },
                 error:function (resp){
-                    vm.$refs.closeCampsite.errors = true;
-                    vm.$refs.closeCampsite.errorString = helpers.apiError(resp);
+                    vm.$refs.bulkCloseCampsites.errors = true;
+                    vm.$refs.bulkCloseCampsites.errorString = helpers.apiError(resp);
+                }
+            });
+        },
+        bulkCloseCampsites: function() {
+            let vm = this;
+            var data = vm.$refs.bulkCloseCampsites.formdata;
+            console.log(vm.$refs.bulkCloseCampsites);
+            console.log(data);
+            $.ajax({
+                url: api_endpoints.bulk_close_campsites(),
+                method: 'POST',
+                xhrFields: { withCredentials:true },
+                data: data,
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    vm.$refs.bulkCloseCampsites.close();
+                    vm.refreshCampsiteClosures();
+                },
+                error:function (resp){
+                    vm.$refs.bulkCloseCampsites.errors = true;
+                    vm.$refs.bulkCloseCampsites.errorString = helpers.apiError(resp);
                 }
             });
         },
