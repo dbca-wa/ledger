@@ -224,6 +224,34 @@ class CampsiteViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
+    def close_campsites(self, closure_data, campsites):
+        for campsite in campsites:
+            closure_data['campsite'] = campsite
+            try:
+                serializer = CampsiteBookingRangeSerializer(data=closure_data, method='post')
+                serializer.is_valid(raise_exception=True)
+                instance = Campsite.objects.get(pk=campsite)
+                instance.close(dict(serializer.validated_data))
+            except Exception as e:
+                raise
+
+    @list_route(methods=['post'])
+    def bulk_close(self, request, format='json', pk=None):
+        with transaction.atomic():
+            try:
+                http_status = status.HTTP_200_OK
+                closure_data = request.data.copy()
+                campsites = closure_data.pop('campsites[]')
+                self.close_campsites(closure_data, campsites)
+                return Response('All selected campsites closed')
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e[0]))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e[0]))
+
+
     @detail_route(methods=['get'])
     def status_history(self, request, format='json', pk=None):
         try:
@@ -616,6 +644,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
+
     def close_campgrounds(self,closure_data,campgrounds):
         for campground in campgrounds:
             closure_data['campground'] = campground
