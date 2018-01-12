@@ -322,12 +322,12 @@ export default {
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
                 success: function(data, stat, xhr) {
-                    vm.showBulkCloseCampsites = false;
+                    vm.$refs.closeCampsite.close();
                     vm.refreshCampsiteClosures();
                 },
                 error:function (resp){
-                    vm.$refs.bulkCloseCampsites.errors = true;
-                    vm.$refs.bulkCloseCampsites.errorString = helpers.apiError(resp);
+                    vm.$refs.closeCampsite.errors = true;
+                    vm.$refs.closeCampsite.errorString = helpers.apiError(resp);
                 }
             });
         },
