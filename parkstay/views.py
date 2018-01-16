@@ -391,5 +391,5 @@ class ParkstayRoutingView(TemplateView):
 class MapView(TemplateView):
     template_name = 'ps/map.html'
 
-class AccountView(LoginRequiredMixin,TemplateView):
-    template_name = 'ps/dash/dash_tables_campgrounds.html'
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'ps/profile.html'

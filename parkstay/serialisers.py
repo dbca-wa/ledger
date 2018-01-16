@@ -715,6 +715,21 @@ class PersonalSerializer(serializers.ModelSerializer):
             'first_name',
         )
 
+class PhoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'phone_number',
+            'mobile_number',
+        )
+
+    def validate(self, obj):
+        if not obj.get('phone_number') and not obj.get('mobile_number'):
+            raise serializers.ValidationError('You must provide a mobile/phone number')
+        return obj
+
+
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser

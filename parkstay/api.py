@@ -99,6 +99,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     UserAddressSerializer,
                                     ContactSerializer as UserContactSerializer,
                                     PersonalSerializer,
+                                    PhoneSerializer,
                                     OracleSerializer,
                                     BookingHistorySerializer
                                     )
@@ -2066,7 +2067,7 @@ class UsersViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset,many=True)
         return Response(serializer.data)
 
-    @detail_route(methods=['POST',],permission_classes=[])
+    @detail_route(methods=['POST',])
     def update_personal(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -2085,7 +2086,7 @@ class UsersViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['POST',],permission_classes=[])
+    @detail_route(methods=['POST',])
     def update_contact(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -2104,7 +2105,7 @@ class UsersViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['POST',],permission_classes=[])
+    @detail_route(methods=['POST',])
     def update_address(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -2262,7 +2263,7 @@ class BookingReportView(views.APIView):
 
 class GetProfile(views.APIView):
     renderer_classes = [JSONRenderer,]
-    permission_classes = []
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         # Check if the user has any address and set to residential address
         user = request.user
@@ -2272,9 +2273,85 @@ class GetProfile(views.APIView):
         serializer  = UserSerializer(request.user)
         return Response(serializer.data)
 
+
+class UpdateProfilePersonal(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            instance = request.user
+            serializer = PersonalSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+class UpdateProfileContact(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticated] 
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            instance = request.user
+            serializer = PhoneSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+class UpdateProfileAddress(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticated] 
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            instance = request.user
+            serializer = UserAddressSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            address, created = Address.objects.get_or_create(
+                line1 = serializer.validated_data.get('line1'),
+                locality = serializer.validated_data.get('locality'),
+                state = serializer.validated_data.get('state'),
+                country = serializer.validated_data.get('country'),
+                postcode = serializer.validated_data.get('postcode'),
+                user = instance
+            )
+            instance.residential_address = address
+            instance.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
 class OracleJob(views.APIView):
     renderer_classes = [JSONRenderer,]
-    #permission_classes = []
     def get(self, request, format=None):
         try:
             data = {
