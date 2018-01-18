@@ -129,7 +129,7 @@ class Address(models.Model):
     line2 = models.CharField('Line 2', max_length=255, blank=True)
     line3 = models.CharField('Line 3', max_length=255, blank=True)
     locality = models.CharField('Suburb / Town', max_length=255)
-    state = models.CharField(max_length=255, choices=STATE_CHOICES, default='WA', blank=True)
+    state = models.CharField(max_length=255, default='WA', blank=True)
     country = CountryField(default='AU')
     postcode = models.CharField(max_length=10)
     # A field only used for searching addresses.
