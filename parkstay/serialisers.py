@@ -1,5 +1,6 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser, Address
+from ledger.address.models import Country
 from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 Rate,
@@ -678,6 +679,18 @@ class BookingHistorySerializer(serializers.ModelSerializer):
             'vehicles'
         )
 
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = (
+            'iso_3166_1_a2',
+            'printable_name',
+            'name',
+            'display_order'
+        )
+
+
 # User Serializers
 # --------------------------
 class UserAddressSerializer(serializers.ModelSerializer):
@@ -691,6 +704,13 @@ class UserAddressSerializer(serializers.ModelSerializer):
             'country',
             'postcode'
         ) 
+
+    def validate(self, obj):
+        print('UHHHH')
+        if not obj.get('state'):
+            raise serializers.ValidationError('State is required.')
+        return obj
+
 
 class UserSerializer(serializers.ModelSerializer):
     residential_address = UserAddressSerializer()

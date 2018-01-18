@@ -101,7 +101,7 @@
                             <label for="" class="col-sm-3 control-label" >Country</label>
                             <div class="col-sm-4">
                                 <select class="form-control" name="country" v-model="profile.residential_address.country">
-                                    <option v-for="c in countries" v-bind:value="c.alpha2Code">{{ c.name }}</option>
+                                    <option v-for="c in countries" v-bind:value="c.iso_3166_1_a2">{{ c.printable_name }}</option>
                                 </select>
                                 <template v-if="errorAddress && errorAddress.country">
                                     <span class="help-block" v-for="err in errorAddress.country">{{ err }}</span>
@@ -171,7 +171,7 @@
 <script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.18.0/moment.min.js"></script>
 <script src="//static.dpaw.wa.gov.au/static/libs/vue/2.4.2/vue.min.js"></script>
 <script type="text/javascript">
-    var API_COUNTRIES = "https://restcountries.eu/rest/v1/?fullText=true";
+    var API_COUNTRIES = "/api/countries";
     var API_PROFILE = "/api/profile";
 
     var getCookie = function(name) {

@@ -95,6 +95,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     ParkEntryRateSerializer,
                                     ReportSerializer,
                                     BookingSettlementReportSerializer,
+                                    CountrySerializer,
                                     UserSerializer,
                                     UserAddressSerializer,
                                     ContactSerializer as UserContactSerializer,
@@ -2050,6 +2051,11 @@ class PriceReasonViewSet(viewsets.ReadOnlyModelViewSet):
 class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
+
+class CountryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Country.objects.order_by('-display_order', 'printable_name')
+    serializer_class = CountrySerializer
+    permission_classes = [IsAuthenticated]
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()

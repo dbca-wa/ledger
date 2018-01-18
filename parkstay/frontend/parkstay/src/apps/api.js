@@ -151,7 +151,7 @@ module.exports = {
     },
     booking_refunds:process.env.PARKSTAY_URL + "/api/reports/booking_refunds",
     //other
-    countries:"https://restcountries.eu/rest/v1/?fullText=true",
+    countries: process.env.PARKSTAY_URL + "/api/countries.json",
     users: process.env.PARKSTAY_URL + "/api/users.json",
     usersLookup: function (q) {
        return  encodeURI(process.env.PARKSTAY_URL + "/api/users.json?q="+q);
