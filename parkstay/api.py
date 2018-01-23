@@ -932,12 +932,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
+class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
-    permission_classes = []
 
-    def retrieve(self, request, pk=None, ratis_id=None , format=None):
+    def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
         """Fetch full campsite availability for a campground."""
         # convert GET parameters to objects
         ground = self.get_object()
@@ -993,7 +992,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # fetch availability map
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
-
+        
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,
@@ -1009,7 +1008,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'maxAdults': 30,
             'maxChildren': 30,
             'sites': [],
-            'classes': {}
+            'classes': {},
         }
 
         # group results by campsite class
@@ -1041,7 +1040,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'name': c[2],
                     'id': None,
                     'type': c[1],
-                    'price': '${}'.format(sum(rate.values())),
+                    'price': '${}'.format(sum(rate.values())) if not show_all else False,
                     'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
                     'breakdown': OrderedDict(),
                     'gearType': {
@@ -1066,7 +1065,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                 # get campsite class key
                 key = s.campsite_class.pk
                 # if there's not a free run of slots
-                if not all([v[0] == 'open' for k, v in availability[s.pk].items()]):
+                if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
                     # clear the campsite from the campsite class map
                     if s.pk in class_sites_map[key]:
                         class_sites_map[key].remove(s.pk)
@@ -1134,7 +1133,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'id': v[0],
                     'type': ground.campground_type,
                     'class': v[1].pk,
-                    'price': '${}'.format(sum(v[2].values())),
+                    'price': '${}'.format(sum(v[2].values())) if not show_all else False,
                     'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)],
                     'gearType': {
                         'tent': v[3],
@@ -1151,7 +1150,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             # update results based on availability map
             for s in sites_qs:
                 # if there's not a free run of slots
-                if not all([v[0] == 'open' for k, v in availability[s.pk].items()]):
+                if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
                     # update the days that are non-open
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         bookings_map[s.name]['availability'][offset][0] = False
@@ -1166,8 +1165,15 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
             return Response(result)
 
-class AvailabilityRatisViewSet(AvailabilityViewSet):
+class AvailabilityViewSet(BaseAvailabilityViewSet):
+    permission_classes = []
+
+class AvailabilityRatisViewSet(BaseAvailabilityViewSet):
     lookup_field = 'ratis_id'
+
+class AvailabilityAdminViewSet(BaseAvailabilityViewSet):
+    def retrieve(self, request, *args, **kwargs):
+        return super(AvailabilityAdminViewSet, self).retrieve(request, *args, show_all=True, **kwargs)
 
 @csrf_exempt
 @require_http_methods(['POST'])
