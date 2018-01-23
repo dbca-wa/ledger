@@ -84,8 +84,7 @@
                     <input id="date-departure" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
-            <div v-if="!useAdminApi" disabled class="columns small-6 medium-6 large-3">
-            <div class="small-6 medium-6 large-3 columns">
+            <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns">
                 <label>
                     Guests 
                     <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
@@ -125,7 +124,7 @@
                     </div>
                 </div>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div v-if="!useAdminApi" class="columns small-6 medium-6 large-3">
                 <label>Equipment
                     <select name="gear_type" v-model="gearType" @change="update()">
                         <option value="tent" v-if="gearTotals.tent">Tent</option>
@@ -134,7 +133,6 @@
                     </select>
                 </label>
             </div>           
-        </div>
         </div>
         <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
             <table class="hover">
