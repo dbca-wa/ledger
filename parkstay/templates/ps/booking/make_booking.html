@@ -91,10 +91,10 @@
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label pull-left required">Campsite: </label>
                                         <div class="col-sm-8">
-                                        {% if campsite.site_type == 2 %}
-                                            {{ campsite.type }}
-                                        {% else %} 
-                                            {{ campsite.name }} ({{ campsite.type }})
+                                        {% if booking.campground.site_type == 2 %}
+                                            {{ booking.first_campsite.type }}
+                                        {% else %}
+                                            {{ booking.first_campsite.name }} ({{ booking.first_campsite.type }})
                                         {% endif %}
                                         </div>
                                     </div>
