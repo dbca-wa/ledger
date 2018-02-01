@@ -56,6 +56,8 @@ class CampsiteAvailabilitySelector(TemplateView):
                 context['ground_id'] = cg.first().id
         return render(request, self.template_name, context)
 
+class AvailabilityAdmin(TemplateView):
+    template_name = 'ps/availability_admin.html'
 
 class CampgroundFeed(ICalFeed):
     timezone = 'UTC+8'

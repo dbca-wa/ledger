@@ -136,6 +136,7 @@ module.exports = {
                     "mRender": function(data, type, full) {
                         var id = full.id;
                         var addBooking = "<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>";
+                        var availability_admin = "<br/><a target='_blank' href='/availability_admin/?site_id=__ID__' >Availability</a>";
                         var column = "";
 
                         if (full.active) {
@@ -145,6 +146,7 @@ module.exports = {
                         }
 
                         column += full.campground_type == '0' ? addBooking : "";
+                        column += full.campground_type == '0' ? availability_admin:"";
                         column += "</td>";
                         column = column.replace(/__Current_Closure__/,full.current_closure);
                         return column.replace(/__ID__/g, id);
@@ -295,7 +297,7 @@ module.exports = {
                     "cg": id
                 }
             });
-        });
+        });     
          bus.$on('refreshCGTable', function(){
             vm.$refs.dtGrounds.vmDataTable.ajax.reload();
         });

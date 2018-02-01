@@ -348,6 +348,7 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
         super(CampsiteStayHistorySerializer, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['reason'] = serializers.CharField(source='reason.text')
+
 class CampgroundStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
     range_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])

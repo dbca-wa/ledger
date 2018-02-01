@@ -12,6 +12,7 @@ router = routers.DefaultRouter()
 router.register(r'campground_map', api.CampgroundMapViewSet)
 router.register(r'campground_map_filter', api.CampgroundMapFilterViewSet)
 router.register(r'availability', api.AvailabilityViewSet, 'availability')
+router.register(r'availability_admin', api.AvailabilityAdminViewSet)
 router.register(r'availability_ratis', api.AvailabilityRatisViewSet, 'availability_ratis')
 router.register(r'campgrounds', api.CampgroundViewSet)
 router.register(r'campsites', api.CampsiteViewSet)
@@ -62,6 +63,7 @@ urlpatterns = [
     url(r'^$', views.ParkstayRoutingView.as_view(), name='ps_home'),
     url(r'^campsites/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^availability/$', views.CampsiteAvailabilitySelector.as_view(), name='campsite_availaiblity_selector'),
+    url(r'^availability_admin/$', views.AvailabilityAdmin.as_view(), name='availability_admin'),
     #url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.CampgroundFeed(), name='campground_calendar'),
     url(r'^dashboard/campgrounds$', views.DashboardView.as_view(), name='dash-campgrounds'),
     url(r'^dashboard/campsite-types$', views.DashboardView.as_view(), name='dash-campsite-types'),
