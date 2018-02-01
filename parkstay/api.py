@@ -1169,6 +1169,7 @@ class AvailabilityViewSet(BaseAvailabilityViewSet):
     permission_classes = []
 
 class AvailabilityRatisViewSet(BaseAvailabilityViewSet):
+    permission_classes = []
     lookup_field = 'ratis_id'
 
 class AvailabilityAdminViewSet(BaseAvailabilityViewSet):
