@@ -1007,6 +1007,16 @@ class Booking(models.Model):
         return False
 
     @property
+    def unpaid(self):
+        if self.legacy_id and self.invoices.count() < 1:
+            return False
+        else:
+            payment_status = self.__check_payment_status()
+            if payment_status == 'unpaid':
+                return True
+        return False
+
+    @property
     def amount_paid(self):
         return self.__check_payment_amount()
 
