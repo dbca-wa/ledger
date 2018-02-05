@@ -292,6 +292,7 @@ class MakeBookingsView(TemplateView):
                 booking.campground.name
         )
         
+        logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id))
 
         response = utils.checkout(request, booking, lines, invoice_text=reservation)
         result =  HttpResponse(
@@ -332,7 +333,7 @@ class BookingSuccessView(TemplateView):
                     logger.error('{} tried making a booking with an already used invoice with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                     return redirect('public_make_booking')
                 except BookingInvoice.DoesNotExist:
-
+                    logger.info('{} finished temporary booking {}, creating new BookingInvoice with reference {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id, invoice_ref))
                     # FIXME: replace with server side notify_url callback
                     book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
 

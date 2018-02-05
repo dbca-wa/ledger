@@ -260,6 +260,10 @@ LOGGING = {
 #        'oscar.checkout': {
 #            'handlers': ['file'],
 #            'level': 'INFO'
+#        },
+#        'bpoint_dpaw': {
+#            'handlers': ['file'],
+#            'level': 'INFO'
 #        }
     }
 }
