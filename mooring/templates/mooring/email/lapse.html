@@ -1,0 +1,6 @@
+{%  extends 'mooring/email/base_email.html' %}
+
+{% block content %}
+Temporary bookings expire after {{ settings.PS_UNPAID_BOOKING_LAPSE_DAYS }} days without payment. As {{ settings.PS_UNPAID_BOOKING_LAPSE_DAYS }} days have elapsed, your temporary booking for {{ booking.campground.name }} has been cancelled.<br/>
+To re-establish your booking, please visit the <a href="https://parks-oim.dpaw.wa.gov.au/park-stay">Park Stay</a> website and apply again.
+{% endblock %}

@@ -1,0 +1,11 @@
+[
+    {
+        "model": "parkstay.openreason",
+        "pk":1,
+        "fields":
+        {
+            "text":"Other",
+            "editable": false
+        }
+    }
+]

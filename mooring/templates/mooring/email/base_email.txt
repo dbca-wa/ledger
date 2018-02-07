@@ -1,0 +1,13 @@
+{% block greetings %}
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block signature %}
+{% endblock %}
+
+
+
+{% block reply_statement %}
+{% endblock %}
