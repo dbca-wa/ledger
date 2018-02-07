@@ -213,7 +213,7 @@ class Proposal(RevisionedMixin):
     #hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
 
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
-                                       default=CUSTOMER_STATUS_CHOICES[0][0])
+                                       default=CUSTOMER_STATUS_CHOICES[1][0])
     applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='proposals')
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
@@ -226,7 +226,7 @@ class Proposal(RevisionedMixin):
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_assigned')
     assigned_approver = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_approvals')
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
-                                         default=PROCESSING_STATUS_CHOICES[0][0])
+                                         default=PROCESSING_STATUS_CHOICES[1][0])
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
                                        default=ID_CHECK_STATUS_CHOICES[0][0])
     compliance_check_status = models.CharField('Return Check Status', max_length=30, choices=COMPLIANCE_CHECK_STATUS_CHOICES,
