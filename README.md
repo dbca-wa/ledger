@@ -20,7 +20,7 @@ A `.env` file should be created in the project root and used to set
 required environment variables at run time. Example content:
 
     DEBUG=True
-    DATABASE_URL="postgres://USER:PASSWORD@HOST:PORT/NAME"
+    DATABASE_URL="postgis://USER:PASSWORD@HOST:PORT/NAME"
     SECRET_KEY="ThisIsASecretKey"
     DEFAULT_HOST="https://website.domain/"
     EMAIL_HOST="emailhost"
