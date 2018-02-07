@@ -107,7 +107,7 @@ class DocumentListener(object):
 
 
 @python_2_unicode_compatible
-class Address(models.Model):
+class BaseAddress(models.Model):
     """Generic address model, intended to provide billing and shipping
     addresses.
     Taken from django-oscar address AbstrastAddress class.
@@ -134,16 +134,13 @@ class Address(models.Model):
     postcode = models.CharField(max_length=10)
     # A field only used for searching addresses.
     search_text = models.TextField(editable=False)
-    oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses')
-    user = models.ForeignKey('EmailUser', related_name='profile_addresses')
     hash = models.CharField(max_length=255, db_index=True, editable=False)
 
     def __str__(self):
         return self.summary
 
     class Meta:
-        verbose_name_plural = 'addresses'
-        unique_together = ('user','hash')
+        abstract = True
 
     def clean(self):
         # Strip all whitespace
@@ -155,7 +152,7 @@ class Address(models.Model):
     def save(self, *args, **kwargs):
         self._update_search_text()
         self.hash = self.generate_hash()
-        super(Address, self).save(*args, **kwargs)
+        super(BaseAddress, self).save(*args, **kwargs)
 
     def _update_search_text(self):
         search_fields = filter(
@@ -193,6 +190,14 @@ class Address(models.Model):
             Returns a hash of the address summary
         """
         return zlib.crc32(self.summary.strip().upper().encode('UTF8'))
+
+class Address(BaseAddress):
+    user = models.ForeignKey('EmailUser', related_name='profile_adresses')
+    oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses')
+    class Meta:
+        verbose_name_plural = 'addresses'
+        unique_together = ('user','hash')
+
 
 @python_2_unicode_compatible
 class EmailIdentity(models.Model):
@@ -275,10 +280,6 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     def clean(self):
         super(EmailUser, self).clean()
-
-        if (self.dob and self.dob < date(1900, 1, 1)):
-            raise ValidationError({'dob': 'Date of birth cannot be before 01/01/1900'})
-
         self.email = self.email.lower() if self.email else self.email
         post_clean.send(sender=self.__class__, instance=self)
 
@@ -458,6 +459,26 @@ class Profile(RevisionedMixin):
         else:
             return '{}'.format(self.email)
 
+@python_2_unicode_compatible
+class Organisation(models.Model):
+    """This model represents the details of a company or other organisation.
+    Management of these objects will be delegated to 0+ EmailUsers.
+    """
+    name = models.CharField(max_length=128, unique=True)
+    abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
+    # TODO: business logic related to identification file upload/changes.
+    identification = models.FileField(upload_to='uploads/%Y/%m/%d', null=True, blank=True)
+    postal_address = models.ForeignKey('OrganisationAddress', related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
+    billing_address = models.ForeignKey('OrganisationAddress', related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return self.name
+
+class OrganisationAddress(BaseAddress):
+    organisation = models.ForeignKey(Organisation, null=True,blank=True, related_name='adresses')
+    class Meta:
+        verbose_name_plural = 'organisation addresses'
+        unique_together = ('organisation','hash')
 
 class ProfileListener(object):
     """
@@ -644,3 +665,5 @@ class EmailUserReport(models.Model):
     class Meta:
         managed = False
         db_table = 'accounts_emailuser_report_v'
+
+
