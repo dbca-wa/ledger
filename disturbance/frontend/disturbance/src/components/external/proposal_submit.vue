@@ -9,7 +9,7 @@
                         <table>
                             <tr>
                                 <td><strong>Proposal:</strong></td>
-                                <td><strong>{{proposal.id}}</strong></td>
+                                <td><strong>{{proposal.lodgement_number}}</strong></td>
                             </tr>
                             <tr>
                                 <td><strong>Date/Time:</strong></td>

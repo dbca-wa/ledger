@@ -253,6 +253,14 @@ class Proposal(RevisionedMixin):
     def __str__(self):
         return str(self.id)
 
+    #Append 'P' to Proposal id to generate Lodgement number. Lodgement number and lodgement sequence are used to generate Reference.
+    def save(self, *args, **kwargs):
+        super(Proposal, self).save(*args,**kwargs)
+        if self.lodgement_number == '':
+            new_lodgment_id = 'P{}'.format(self.pk)
+            self.lodgement_number = new_lodgment_id
+            self.save()
+
     @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)

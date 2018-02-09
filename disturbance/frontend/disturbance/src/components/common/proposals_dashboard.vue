@@ -144,7 +144,7 @@ export default {
                     {
                         data: "id",
                         mRender:function(data,type,full){
-                            return 'P'+data;
+                            return full.lodgement_number;
                         }
                     },
                     {
@@ -268,7 +268,7 @@ export default {
                     {
                         data: "id",
                         mRender:function(data,type,full){
-                            return 'P'+data;
+                            return full.lodgement_number;
                         }
                     },
                     {

@@ -81,7 +81,7 @@
                 return (
                     <div>
                         <div id="scrollspy-heading" class="col-lg-12" >
-                            <h3>Proposal: <small>{vm.proposal.id}</small></h3>
+                            <h3>Proposal: <small>{vm.proposal.lodgement_number}</small></h3>
                         </div>
                         <div class="col-md-3" >
                             <div class="panel panel-default fixed">

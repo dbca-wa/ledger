@@ -38,6 +38,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Proposal
         fields = (
@@ -62,13 +63,16 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'readonly',
                 'can_user_edit',
                 'can_user_view',
-                'documents_url'
+                'documents_url',
+                'reference',
+                'lodgement_number',
+                'lodgement_sequence'
                 )
         read_only_fields=('documents',)
     
     def get_documents_url(self,obj):
         return '/media/proposals/{}/documents/'.format(obj.id)
-
+        
     def get_readonly(self,obj):
         return False
 
@@ -127,8 +131,14 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'readonly',
                 'can_user_edit',
                 'can_user_view',
+                'reference',
+                'lodgement_number',
+                'lodgement_sequence'
+               
                 )
         read_only_fields=('documents','requirements')
+
+
 
 class ApplicantSerializer(serializers.ModelSerializer):
     from disturbance.components.organisations.serializers import OrganisationAddressSerializer
@@ -206,7 +216,10 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'proposed_issuance_approval',
                 'proposed_decline_status',
                 'proposaldeclineddetails',
-                'permit'
+                'permit',
+                'reference',
+                'lodgement_number',
+                'lodgement_sequence'
                 )
         read_only_fields=('documents','requirements')
 
