@@ -211,12 +211,13 @@ class Campground(models.Model):
         '''
         open_ranges, closed_ranges = None, None
         # Get all booking ranges
+        range_qs = self.get_booking_ranges(period)
         try:
-            open_ranges = self.booking_ranges.filter(Q(status=0),Q(range_start__lte=period), Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
+            open_ranges = range_qs.filter(status=0).latest('updated_on')
         except CampgroundBookingRange.DoesNotExist:
             pass
         try:
-            closed_ranges = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
+            closed_ranges = range_qs.exclude(status=0).latest('updated_on')
         except CampgroundBookingRange.DoesNotExist:
             return True if open_ranges else False
 
@@ -230,17 +231,31 @@ class Campground(models.Model):
         closure_period = None
         period = datetime.now().date()
         if not self.active:
-            closure = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__isnull=True) |Q(range_end__gte=period)).order_by('updated_on')
+            closure = self.get_booking_ranges(period).exclude(status=0).order_by('updated_on')
             if closure:
                 closure_period = closure[0]
         return closure_period
+
+    def get_booking_ranges(self, start_date, end_date=None, overlap=True, endless=False):
+        if end_date is None:
+            end_date = start_date + timedelta(days=1)
+        params = [
+            Q(range_end__gt=start_date) | Q(range_end__isnull=True)
+        ]
+        if not endless:
+            params.append(Q(range_start__lt=end_date))
+        if overlap:
+            range_qs = self.booking_ranges.filter(*params)
+        else:
+            range_qs = self.booking_ranges.exclude(*params)
+        return range_qs
 
     def open(self, data):
         if self.active:
             raise ValidationError('This campground is already open.')
         b = CampgroundBookingRange(**data)
         try:
-            within = CampgroundBookingRange.objects.filter(Q(campground=b.campground),Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
+            within = self.get_booking_ranges(b.range_start, b.range_end).filter(status=0).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
                 within.save(skip_validation=True)
@@ -251,20 +266,12 @@ class Campground(models.Model):
             b.save()
 
     def close(self, data):
-        b = CampgroundBookingRange(**data)
-        try:
-            within = CampgroundBookingRange.objects.filter(Q(campground=b.campground),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
-            if within:
-                within.updated_on = timezone.now()
-                within.save(skip_validation=True)
-                if within.range_start != b.range_start or within.range_end != b.range_end:
-                    raise ValidationError('{} campground is already closed.'.format(within.campground.name))
-            else:
-                b.save()
-        except CampgroundBookingRange.DoesNotExist:
-            b.save()
-        except:
-            raise
+        closure = CampgroundBookingRange(**data)
+        within = self.get_booking_ranges(closure.range_start, closure.range_end, endless=(closure.range_end is None))
+        if within.exclude(status=0):
+            raise BookingRangeWithinException('{} campground has an existing closure during this date range'.format(self.name))
+        for opening in within.filter(status=0):
+            opening.save()
 
 
     def createCampsitePriceHistory(self,data):
@@ -499,16 +506,23 @@ class CampgroundBookingRange(BookingRange):
         original = None
 
         # Preventing ranges within other ranges
-        within = CampgroundBookingRange.objects.filter(Q(campground=self.campground),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
+        params = [
+            Q(campground=self.campground), ~Q(pk=self.pk),
+            Q(range_end__gt=self.range_start) | Q(range_end__isnull=True)
+        ]
+        if self.range_end:
+            params.append(Q(range_start__lt=self.range_end))
+
+        within = CampgroundBookingRange.objects.filter(*params)
         if within:
             raise BookingRangeWithinException('This Booking Range is within the range of another one')
         if self.pk:
             original = CampgroundBookingRange.objects.get(pk=self.pk)
             if not original.editable:
                 raise ValidationError('This Booking Range is not editable')
-            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
-                raise ValidationError('The start date can\'t be in the past')
-        super(CampgroundBookingRange,self).clean(*args, **kwargs)
+            #if self.range_start < datetime.now().date() and original.range_start != self.range_start:
+            #    raise ValidationError('The start date can\'t be in the past')
+        super(CampgroundBookingRange, self).clean(*args, **kwargs)
 
 
 class Campsite(models.Model):
@@ -570,11 +584,11 @@ class Campsite(models.Model):
             open_ranges, closed_ranges = None, None
             # Get all booking ranges
             try:
-                open_ranges = self.booking_ranges.filter(Q(status=0),Q(range_start__lte=period), Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
+                open_ranges = self.get_booking_ranges(period).filter(status=0).latest('updated_on')
             except CampsiteBookingRange.DoesNotExist:
                 pass
             try:
-                closed_ranges = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
+                closed_ranges = self.get_booking_ranges(period).exclude(status=0).latest('updated_on')
             except CampsiteBookingRange.DoesNotExist:
                 return True if open_ranges else False
 
@@ -589,11 +603,25 @@ class Campsite(models.Model):
             closure_period = None
             period = datetime.now().date()
             if not self.active:
-                closure = self.booking_ranges.get(Q(range_start__lte=period),~Q(status=0),Q(range_end__isnull=True) |Q(range_end__gte=period))
+                closure = self.get_booking_ranges(period).exclude(status=0).latest('updated_on')
                 closure_period = closure
             return closure_period
         else:
             return self.campground._get_current_closure()
+
+    def get_booking_ranges(self, start_date, end_date=None, overlap=True, endless=False):
+        if end_date is None:
+            end_date = start_date + timedelta(days=1)
+        params = [
+            Q(range_end__gt=start_date) | Q(range_end__isnull=True)
+        ]
+        if not endless:
+            params.append(Q(range_start__lt=end_date))
+        if overlap:
+            range_qs = self.booking_ranges.filter(*params)
+        else:
+            range_qs = self.booking_ranges.exclude(*params)
+        return range_qs
 
     def open(self, data):
         if not self.campground_open:
@@ -602,7 +630,7 @@ class Campsite(models.Model):
             raise ValidationError('This campsite is already open.')
         b = CampsiteBookingRange(**data)
         try:
-            within = CampsiteBookingRange.objects.filter(Q(campsite=b.campsite),Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
+            within = self.get_booking_ranges(b.range_start, b.range_end).filter(status=0).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
                 within.save(skip_validation=True)
@@ -614,7 +642,7 @@ class Campsite(models.Model):
             raise ValidationError('This campsite is already closed.')
         b = CampsiteBookingRange(**data)
         try:
-            within = CampsiteBookingRange.objects.filter(Q(campsite=b.campsite),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
+            within = self.get_booking_ranges(b.range_start, b.range_end).exclude(status=0).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
                 within.save(skip_validation=True)
@@ -668,16 +696,26 @@ class CampsiteBookingRange(BookingRange):
 
     def clean(self, *args, **kwargs):
         original = None
+
         # Preventing ranges within other ranges
-        within = CampsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
+        params = [
+            Q(campsite=self.campsite), ~Q(pk=self.pk),
+            Q(range_end__gt=self.range_start) | Q(range_end__isnull=True)
+        ]
+        if self.range_end:
+            params.append(Q(range_start__lt=self.range_end))
+
+        within = CampsiteBookingRange.objects.filter(*params)
         if within:
+            print([x for x in within])
             raise BookingRangeWithinException('This Booking Range is within the range of another one')
         if self.pk:
             original = CampsiteBookingRange.objects.get(pk=self.pk)
             if not original.editable:
                 raise ValidationError('This Booking Range is not editable')
-            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
-                raise ValidationError('The start date can\'t be in the past')
+            #if self.range_start < datetime.now().date() and original.range_start != self.range_start:
+            #    raise ValidationError('The start date can\'t be in the past')
+        super(CampsiteBookingRange, self).clean(*args, **kwargs)
 
     def __str__(self):
         return '{}: {} {} - {}'.format(self.campsite, self.status, self.range_start, self.range_end)
@@ -1417,10 +1455,11 @@ class CampgroundBookingRangeListener(object):
     """
     Event listener for CampgroundBookingRange
     """
-
+    
     @staticmethod
-    @receiver(pre_save, sender=CampgroundBookingRange)
+    #@receiver(pre_save, sender=CampgroundBookingRange)
     def _pre_save(sender, instance, **kwargs):
+        # extremely weird updated_on check, I gather to preserve changes to the field?
         if instance.pk:
             original_instance = CampgroundBookingRange.objects.get(pk=instance.pk)
             setattr(instance, "_original_instance", original_instance)
@@ -1430,55 +1469,77 @@ class CampgroundBookingRangeListener(object):
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
+            # for a brand new booking range
             try:
-                within = CampgroundBookingRange.objects.filter(~Q(id=instance.id),Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                # find any intersecting ranges for this campground
+                within = CampgroundBookingRange.objects.filter(
+                    ~Q(id=instance.id), Q(campground=instance.campground),
+                    Q(range_start__lt=instance.range_end),
+                    Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True)
+                )
+                # this bit I gather is meant to re-adjust existing ranges?
+                # except it only checks overlaps at the start and probably shouldn't be in a save hook
                 for w in within:
                     w.range_end = instance.range_start
                     w.save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
+        # 
         if instance.status == 0 and not instance.range_end:
             try:
-                another_open = CampgroundBookingRange.objects.filter(campground=instance.campground,range_start=instance.range_start+timedelta(days=1),status=0).latest('updated_on')
+                another_open = instance.campground.get_booking_ranges(instance.range_start).filter(status=0).latest('updated_on')
                 instance.range_end = instance.range_start
             except CampgroundBookingRange.DoesNotExist:
                 pass
 
+
     @staticmethod
-    @receiver(post_delete, sender=CampgroundBookingRange)
+    #@receiver(post_delete, sender=CampgroundBookingRange)
     def _post_delete(sender, instance, **kwargs):
         today = datetime.now().date()
+        # if closed and there's a finite range
         if instance.status != 0 and instance.range_end:
             try:
+                # find any open ranges which are after the one getting removed
                 linked_open = CampgroundBookingRange.objects.filter(range_start=instance.range_end + timedelta(days=1), status=0).order_by('updated_on')
+                # if the one getting removed starts after today
                 if instance.range_start >= today:
+                    # find the first matching open range and adjust the start date backwards
                     if linked_open:
                         linked_open = linked_open[0]
                         linked_open.range_start = instance.range_start
                     else:
                         linked_open = None
                 else:
+                    # find the first matching open range and set the start date to right now (to avoid setting dates in the past)
                     if linked_open:
                         linked_open = linked_open[0]
                         linked_open.range_start = today
                     else:
                         linked_open = None
+                
+                # force save
                 if linked_open:
                     linked_open.save(skip_validation=True)
             except CampgroundBookingRange.DoesNotExist:
                 pass
+        # if closed and there's an infinite range
         elif instance.status != 0 and not instance.range_end:
             try:
+                # if the range to delete is in the future
                 if instance.range_start >= today:
+                    # create a new infinite range starting from the start of the range
+
                     CampgroundBookingRange.objects.create(campground=instance.campground,range_start=instance.range_start,status=0)
                 else:
+                    # create a new infinite range starting from today
                     CampgroundBookingRange.objects.create(campsite=instance.campground,range_start=today,status=0)
             except:
                 pass
         cache.delete('campgrounds_dt')
 
     @staticmethod
-    @receiver(post_save, sender=CampgroundBookingRange)
+    #@receiver(post_save, sender=CampgroundBookingRange)
     def _post_save(sender, instance, **kwargs):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         if not original_instance:
@@ -1540,9 +1601,9 @@ class CampsiteBookingRangeListener(object):
     """
     Event listener for CampsiteBookingRange
     """
-
+    
     @staticmethod
-    @receiver(pre_save, sender=CampsiteBookingRange)
+    #@receiver(pre_save, sender=CampsiteBookingRange)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
             original_instance = CampsiteBookingRange.objects.get(pk=instance.pk)
@@ -1554,7 +1615,11 @@ class CampsiteBookingRangeListener(object):
             delattr(instance, "_original_instance")
         else:
             try:
-                within = CampsiteBookingRange.objects.get(Q(campsite=instance.campsite),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                within = CampsiteBookingRange.objects.get(
+                    Q(campsite=instance.campsite),
+                    Q(range_start__lt=instance.range_end),
+                    Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True)
+                )
                 within.range_end = instance.range_start
                 within.save(skip_validation=True)
             except CampsiteBookingRange.DoesNotExist:
@@ -1567,7 +1632,7 @@ class CampsiteBookingRangeListener(object):
                 pass
 
     @staticmethod
-    @receiver(post_delete, sender=CampsiteBookingRange)
+    #@receiver(post_delete, sender=CampsiteBookingRange)
     def _post_delete(sender, instance, **kwargs):
         today = datetime.now().date()
         if instance.status != 0 and instance.range_end:
@@ -1599,7 +1664,7 @@ class CampsiteBookingRangeListener(object):
                 pass
 
     @staticmethod
-    @receiver(post_save, sender=CampsiteBookingRange)
+    #@receiver(post_save, sender=CampsiteBookingRange)
     def _post_save(sender, instance, **kwargs):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         if not original_instance:
