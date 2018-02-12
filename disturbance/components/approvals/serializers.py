@@ -32,5 +32,6 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'suspension_details',
             'applicant',
             'extracted_fields',
-            'status'
+            'status',
+            'reference'
         )
