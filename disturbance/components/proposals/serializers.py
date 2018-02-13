@@ -38,6 +38,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
+    #can_officer_process = serializers.SerializerMethodField()
 
     class Meta:
         model = Proposal
@@ -66,7 +67,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'documents_url',
                 'reference',
                 'lodgement_number',
-                'lodgement_sequence'
+                'lodgement_sequence',
+                'can_officer_process'
                 )
         read_only_fields=('documents',)
     
@@ -84,6 +86,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
 
     def get_customer_status(self,obj):
         return obj.get_customer_status_display()
+
+    
 
 class DTProposalSerializer(BaseProposalSerializer):
     submitter = EmailUserSerializer()
@@ -133,7 +137,8 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'can_user_view',
                 'reference',
                 'lodgement_number',
-                'lodgement_sequence'
+                'lodgement_sequence',
+                'can_officer_process'
                
                 )
         read_only_fields=('documents','requirements')
@@ -219,7 +224,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'permit',
                 'reference',
                 'lodgement_number',
-                'lodgement_sequence'
+                'lodgement_sequence',
+                'can_officer_process'
                 )
         read_only_fields=('documents','requirements')
 

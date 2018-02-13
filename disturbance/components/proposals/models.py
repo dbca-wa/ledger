@@ -287,6 +287,8 @@ class Proposal(RevisionedMixin):
         """
         return self.customer_status in self.CUSTOMER_VIEWABLE_STATE
 
+
+
     @property
     def is_discardable(self):
         """
@@ -323,6 +325,17 @@ class Proposal(RevisionedMixin):
         else:
             group = self.__assessor_group()
         return group.members.all() if group else []
+
+    @property   
+    def can_officer_process(self):
+        """
+        :return: True if the application is in one of the processable status for officer role.
+        """
+        officer_view_state = ['draft','approved','declined','temp','discarded']
+        if self.processing_status in officer_view_state:
+            return False
+        else:
+            return True
 
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity

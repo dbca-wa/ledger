@@ -83,6 +83,7 @@
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
+import Vue from 'vue'
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 import {
@@ -110,6 +111,9 @@ export default {
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'proposal-datatable-'+vm._uid,
+            //Profile to check if user has officer role
+            profile: {},
+            is_officer:false,
             // Filters for Proposals
             filterProposalRegion: [],
             filterProposalActivity: 'All',
@@ -187,8 +191,14 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (!vm.is_external){
-                                links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                            if (!vm.is_external) {
+                                if(vm.is_officer && full.can_officer_process) {
+                                    links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;
+                                }
+                                else{
+                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                }
+
                             }
                             else{
                                 if (full.can_user_edit) {
@@ -313,7 +323,12 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                if(vm.is_officer && full.can_officer_process) {
+                                    links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;
+                                }
+                                else{
+                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                }
                             }
                             else{
                                 if (full.can_user_edit) {
@@ -422,6 +437,9 @@ export default {
         },
         is_referral: function(){
             return this.level == 'referral';
+        },
+        is_officer: function(){
+            return this.is_officer;
         }
     },
     methods:{
@@ -566,10 +584,26 @@ export default {
                     }
                 }
             );
-        }
+        },
+
+
+        fetchProfile: function(){
+            let vm = this;
+            Vue.http.get(api_endpoints.profile).then((response) => {
+                vm.profile = response.body
+                vm.is_officer = vm.profile.is_officer;
+                console.log(vm.is_officer)
+            },(error) => {
+                console.log(error);
+                
+            })
+        },
     },
+
+
     mounted: function(){
-        let vm = this;
+        this.fetchProfile();
+        let vm = this;        
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {
