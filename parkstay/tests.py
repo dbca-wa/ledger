@@ -40,6 +40,9 @@ class BookingRangeTestCase(TestCase):
         create_fixtures()
         self.client = Client()
 
+# NOTE: don't need these, change booking ranges to have allow overlapping, absence imply open
+# keep as an example for new tests
+"""
     def _range_overlap_check(self, model, target, kwargs):
         br1 = model.objects.create(range_start=datetime.date(2018, 1, 10), range_end=datetime.date(2018, 1, 15), **kwargs)
 
@@ -84,24 +87,6 @@ class BookingRangeTestCase(TestCase):
         cs = ps.Campsite.objects.get(name='Campsite 1a')
         cs.booking_ranges.all().delete()
         self._range_overlap_check(ps.CampsiteBookingRange, cs, {'campsite': cs})
+"""
 
-    def test_campground_open_close(self):
-        cg = ps.Campground.objects.get(name='Campground 1')
-        cg.booking_ranges.all().delete()
-
-        # create new baseline open range
-        ps.CampgroundBookingRange.objects.create(campground=cg, range_start=datetime.date(2018, 1, 1), range_end=None, status=0)
-        
-        # create closed range 1
-        cg.close({
-            'range_start': datetime.date(2018, 1, 10), 
-            'range_end': datetime.date(2018, 1, 15),            
-        })
-
-        # create infinite closed range 2
-        cg.close({
-            'range_start': datetime.date(2018, 1, 20)
-        })
-        
-        print(cg.booking_ranges.all())
         
