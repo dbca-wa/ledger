@@ -177,9 +177,9 @@ export default {
                     },
                     {data: "applicant"},
                     {
-                        data: "processing_status",
+                        data: "customer_status",
                         mRender:function(data,type,full){
-                            return vm.level == 'external' ? full.customer_status: data;
+                            return vm.level == 'internal' ? full.processing_status: data; //Fix the issue with External dashboard Status dropdown shoing internal statuses.
                         }
                     },
                     {
@@ -196,7 +196,7 @@ export default {
                                     links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;
                                 }
                                 else{
-                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                    links +=  `<a href='/internal/proposal/${full.id}'>View1</a><br/>`;
                                 }
 
                             }
@@ -206,7 +206,7 @@ export default {
                                     links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
                                 }
                                 else if (full.can_user_view) {
-                                    links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
+                                    links +=  `<a href='/external/proposal/${full.id}'>View2</a><br/>`;
                                 }
                             }
                             return links;
@@ -327,7 +327,7 @@ export default {
                                     links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;
                                 }
                                 else{
-                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                    links +=  `<a href='/internal/proposal/${full.id}'>View3</a><br/>`;
                                 }
                             }
                             else{
@@ -336,7 +336,7 @@ export default {
                                     links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
                                 }
                                 else if (full.can_user_view) {
-                                    links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
+                                    links +=  `<a href='/external/proposal/${full.id}'>View4</a><br/>`;
                                 }
                             }
                             return links;
