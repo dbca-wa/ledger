@@ -155,6 +155,9 @@ def create_confirmation(confirmation_buffer, booking):
         table_data.append([Paragraph('Vehicles', styles['BoldLeft']), vehicles])
     else:
         table_data.append([Paragraph('Vehicles', styles['BoldLeft']), Paragraph('No vehicles', styles['Left'])])
+        
+    if booking.campground.additional_info:        
+        table_data.append([Paragraph('Additional confirmation information', styles['BoldLeft']), Paragraph(booking.campground.additional_info, styles['Left'])])
 
     elements.append(Table(table_data, colWidths=(200, None), style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
 

@@ -89,6 +89,9 @@ module.exports = {
     opencloseCS: function(id){
         return process.env.PARKSTAY_URL + "/api/campsites/" + id + "/open_close.json"
     },
+    bulk_close_campsites: function () {
+        return process.env.PARKSTAY_URL + "/api/campsites/bulk_close.json"
+    },
     deleteCampsiteBookingRange: function (id) {
         return process.env.PARKSTAY_URL + "/api/campsite_booking_ranges/" + id + ".json"
     },
@@ -148,7 +151,7 @@ module.exports = {
     },
     booking_refunds:process.env.PARKSTAY_URL + "/api/reports/booking_refunds",
     //other
-    countries:"https://restcountries.eu/rest/v1/?fullText=true",
+    countries: process.env.PARKSTAY_URL + "/api/countries.json",
     users: process.env.PARKSTAY_URL + "/api/users.json",
     usersLookup: function (q) {
        return  encodeURI(process.env.PARKSTAY_URL + "/api/users.json?q="+q);

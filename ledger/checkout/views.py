@@ -438,6 +438,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         """
         Make submission
         """
+        logger.info('Order #%s: handling payment', order_number)
         # Using preauth here (two-stage model). You could use payment to
         # perform the preauth and capture in one step.  
         with transaction.atomic():

@@ -95,10 +95,12 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     ParkEntryRateSerializer,
                                     ReportSerializer,
                                     BookingSettlementReportSerializer,
+                                    CountrySerializer,
                                     UserSerializer,
                                     UserAddressSerializer,
                                     ContactSerializer as UserContactSerializer,
                                     PersonalSerializer,
+                                    PhoneSerializer,
                                     OracleSerializer,
                                     BookingHistorySerializer
                                     )
@@ -223,6 +225,34 @@ class CampsiteViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             raise serializers.ValidationError(str(e))
+
+    def close_campsites(self, closure_data, campsites):
+        for campsite in campsites:
+            closure_data['campsite'] = campsite
+            try:
+                serializer = CampsiteBookingRangeSerializer(data=closure_data, method='post')
+                serializer.is_valid(raise_exception=True)
+                instance = Campsite.objects.get(pk=campsite)
+                instance.close(dict(serializer.validated_data))
+            except Exception as e:
+                raise
+
+    @list_route(methods=['post'])
+    def bulk_close(self, request, format='json', pk=None):
+        with transaction.atomic():
+            try:
+                http_status = status.HTTP_200_OK
+                closure_data = request.data.copy()
+                campsites = closure_data.pop('campsites[]')
+                self.close_campsites(closure_data, campsites)
+                return Response('All selected campsites closed')
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e[0]))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e[0]))
+
 
     @detail_route(methods=['get'])
     def status_history(self, request, format='json', pk=None):
@@ -616,6 +646,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
+
     def close_campgrounds(self,closure_data,campgrounds):
         for campground in campgrounds:
             closure_data['campground'] = campground
@@ -901,12 +932,11 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
+class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campground.objects.all()
     serializer_class = CampgroundSerializer
-    permission_classes = []
 
-    def retrieve(self, request, pk=None, ratis_id=None , format=None):
+    def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
         """Fetch full campsite availability for a campground."""
         # convert GET parameters to objects
         ground = self.get_object()
@@ -962,7 +992,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # fetch availability map
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
-
+        
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,
@@ -978,7 +1008,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'maxAdults': 30,
             'maxChildren': 30,
             'sites': [],
-            'classes': {}
+            'classes': {},
         }
 
         # group results by campsite class
@@ -1010,7 +1040,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'name': c[2],
                     'id': None,
                     'type': c[1],
-                    'price': '${}'.format(sum(rate.values())),
+                    'price': '${}'.format(sum(rate.values())) if not show_all else False,
                     'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
                     'breakdown': OrderedDict(),
                     'gearType': {
@@ -1035,7 +1065,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                 # get campsite class key
                 key = s.campsite_class.pk
                 # if there's not a free run of slots
-                if not all([v[0] == 'open' for k, v in availability[s.pk].items()]):
+                if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
                     # clear the campsite from the campsite class map
                     if s.pk in class_sites_map[key]:
                         class_sites_map[key].remove(s.pk)
@@ -1103,7 +1133,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'id': v[0],
                     'type': ground.campground_type,
                     'class': v[1].pk,
-                    'price': '${}'.format(sum(v[2].values())),
+                    'price': '${}'.format(sum(v[2].values())) if not show_all else False,
                     'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)],
                     'gearType': {
                         'tent': v[3],
@@ -1120,7 +1150,7 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             # update results based on availability map
             for s in sites_qs:
                 # if there's not a free run of slots
-                if not all([v[0] == 'open' for k, v in availability[s.pk].items()]):
+                if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
                     # update the days that are non-open
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         bookings_map[s.name]['availability'][offset][0] = False
@@ -1135,8 +1165,16 @@ class AvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
             return Response(result)
 
-class AvailabilityRatisViewSet(AvailabilityViewSet):
+class AvailabilityViewSet(BaseAvailabilityViewSet):
+    permission_classes = []
+
+class AvailabilityRatisViewSet(BaseAvailabilityViewSet):
+    permission_classes = []
     lookup_field = 'ratis_id'
+
+class AvailabilityAdminViewSet(BaseAvailabilityViewSet):
+    def retrieve(self, request, *args, **kwargs):
+        return super(AvailabilityAdminViewSet, self).retrieve(request, *args, show_all=True, **kwargs)
 
 @csrf_exempt
 @require_http_methods(['POST'])
@@ -1585,7 +1623,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['start'] = start
 
             sql += ';'
-            print(sql)
+            #print(sql)
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");
@@ -1599,13 +1637,16 @@ class BookingViewSet(viewsets.ModelViewSet):
                 dict(zip(columns, row))
                 for row in cursor.fetchall()
             ]
+            bookings_qs = Booking.objects.filter(id__in=[b['id'] for b in data]).prefetch_related('campground', 'campsites', 'campsites__campsite', 'customer', 'regos', 'history', 'invoices', 'canceled_by')
+            booking_map = {b.id: b for b in bookings_qs}
             clean_data = []
             for bk in data:
                 cg = None
-                booking = Booking.objects.get(id=bk['id'])
+                booking = booking_map[bk['id']]
                 cg = booking.campground
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
+                bk['booking_type'] = booking.booking_type
                 bk['has_history'] = booking.has_history
                 bk['cost_total'] = booking.cost_total
                 bk['amount_paid'] = booking.amount_paid
@@ -1620,7 +1661,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                 bk['guests'] = booking.guests
                 bk['campsite_names'] = booking.campsite_name_list
-                bk['regos'] = [{r.type: r.rego} for r in BookingVehicleRego.objects.filter(booking = booking.id)]
+                bk['regos'] = [{r.type: r.rego} for r in booking.regos.all()]
                 bk['firstname'] = booking.details.get('first_name','')
                 bk['lastname'] = booking.details.get('last_name','')
                 if not booking.paid:
@@ -1636,9 +1677,10 @@ class BookingViewSet(viewsets.ModelViewSet):
                     if booking.is_canceled:
                         bk['campground_site_type'] = ""
                     else:
-                        bk['campground_site_type'] = booking.first_campsite.type if booking.first_campsite else ""
+                        first_campsite = booking.first_campsite
+                        bk['campground_site_type'] = first_campsite.type if first_campsite else ""
                         if booking.campground.site_type != 2:
-                            bk['campground_site_type'] = '{}{}'.format('{} - '.format(booking.first_campsite.name if booking.first_campsite else ""),'({})'.format(bk['campground_site_type'] if bk['campground_site_type'] else ""))
+                            bk['campground_site_type'] = '{}{}'.format('{} - '.format(first_campsite.name if first_campsite else ""),'({})'.format(bk['campground_site_type'] if bk['campground_site_type'] else ""))
                 else:
                     bk['campground_site_type'] = ""
                 if refund_status and canceled == 't':
@@ -1651,6 +1693,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                                 clean_data.append(bk)
                 else:
                     clean_data.append(bk)
+            
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
                 ('recordsFiltered',recordsFiltered),
@@ -2016,6 +2059,11 @@ class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
 
+class CountryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Country.objects.order_by('-display_order', 'printable_name')
+    serializer_class = CountrySerializer
+    permission_classes = [IsAuthenticated]
+
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()
     serializer_class = UsersSerializer
@@ -2032,7 +2080,7 @@ class UsersViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset,many=True)
         return Response(serializer.data)
 
-    @detail_route(methods=['POST',],permission_classes=[])
+    @detail_route(methods=['POST',])
     def update_personal(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -2051,7 +2099,7 @@ class UsersViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['POST',],permission_classes=[])
+    @detail_route(methods=['POST',])
     def update_contact(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -2070,7 +2118,7 @@ class UsersViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['POST',],permission_classes=[])
+    @detail_route(methods=['POST',])
     def update_address(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -2228,7 +2276,7 @@ class BookingReportView(views.APIView):
 
 class GetProfile(views.APIView):
     renderer_classes = [JSONRenderer,]
-    permission_classes = []
+    permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         # Check if the user has any address and set to residential address
         user = request.user
@@ -2238,9 +2286,85 @@ class GetProfile(views.APIView):
         serializer  = UserSerializer(request.user)
         return Response(serializer.data)
 
+
+class UpdateProfilePersonal(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            instance = request.user
+            serializer = PersonalSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+class UpdateProfileContact(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticated] 
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            instance = request.user
+            serializer = PhoneSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+class UpdateProfileAddress(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticated] 
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            instance = request.user
+            serializer = UserAddressSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            address, created = Address.objects.get_or_create(
+                line1 = serializer.validated_data.get('line1'),
+                locality = serializer.validated_data.get('locality'),
+                state = serializer.validated_data.get('state'),
+                country = serializer.validated_data.get('country'),
+                postcode = serializer.validated_data.get('postcode'),
+                user = instance
+            )
+            instance.residential_address = address
+            instance.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
 class OracleJob(views.APIView):
     renderer_classes = [JSONRenderer,]
-    #permission_classes = []
     def get(self, request, format=None):
         try:
             data = {

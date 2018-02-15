@@ -127,7 +127,7 @@
                             <div class="small-12 columns">
                                 <span class="searchTitle">{{ f.name }}</span>
                             </div>
-                            <div class="small-12 medium-12 large-12 columns" v-if="f.images">
+                            <div class="small-12 medium-12 large-12 columns" v-if="f.images && f.images[0] && f.images[0].image">
                                 <img class="thumbnail" v-bind:src="f.images[0].image"/>
                             </div>
                             <div class="small-12 medium-9 large-9 columns">

@@ -1,5 +1,6 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser, Address
+from ledger.address.models import Country
 from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 Rate,
@@ -282,7 +283,8 @@ class CampgroundSerializer(serializers.ModelSerializer):
             'images',
             'max_advance_booking',
             'oracle_code',
-            'campground_map'
+            'campground_map',
+            'additional_info'
         )
 
     def get_site_type(self, obj):
@@ -346,6 +348,7 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
         super(CampsiteStayHistorySerializer, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['reason'] = serializers.CharField(source='reason.text')
+
 class CampgroundStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
     range_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
@@ -677,6 +680,18 @@ class BookingHistorySerializer(serializers.ModelSerializer):
             'vehicles'
         )
 
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = (
+            'iso_3166_1_a2',
+            'printable_name',
+            'name',
+            'display_order'
+        )
+
+
 # User Serializers
 # --------------------------
 class UserAddressSerializer(serializers.ModelSerializer):
@@ -690,6 +705,13 @@ class UserAddressSerializer(serializers.ModelSerializer):
             'country',
             'postcode'
         ) 
+
+    def validate(self, obj):
+        print('UHHHH')
+        if not obj.get('state'):
+            raise serializers.ValidationError('State is required.')
+        return obj
+
 
 class UserSerializer(serializers.ModelSerializer):
     residential_address = UserAddressSerializer()
@@ -713,6 +735,21 @@ class PersonalSerializer(serializers.ModelSerializer):
             'last_name',
             'first_name',
         )
+
+class PhoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'phone_number',
+            'mobile_number',
+        )
+
+    def validate(self, obj):
+        if not obj.get('phone_number') and not obj.get('mobile_number'):
+            raise serializers.ValidationError('You must provide a mobile/phone number')
+        return obj
+
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
