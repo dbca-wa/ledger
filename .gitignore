@@ -57,6 +57,7 @@ coverage.xml
 # Django stuff:
 *.log
 staticfiles/
+staticfiles*
 
 # vim
 *.swp
@@ -87,3 +88,6 @@ media/
 #parkstay import ignores
 import/
 importo.py
+
+#local uwsgi.ini files
+uwsgi*.ini

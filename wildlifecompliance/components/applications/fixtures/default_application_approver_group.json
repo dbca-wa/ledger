@@ -1,0 +1,10 @@
+[
+    {
+        "model": "wildlifecompliance.applicationapprovergroup",
+        "fields":
+        {
+            "name":"Default Group",
+            "default": true
+        }
+    }
+]
