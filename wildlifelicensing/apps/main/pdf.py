@@ -2,7 +2,6 @@ import os
 from io import BytesIO
 from datetime import date
 
-from django.settings import EMAIL_FROM
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, \
@@ -13,6 +12,7 @@ from reportlab.lib.colors import HexColor
 
 from django.core.files import File
 from django.conf import settings
+from wildlifelicensing.settings import EMAIL_FROM
 
 from ledger.accounts.models import Document
 
