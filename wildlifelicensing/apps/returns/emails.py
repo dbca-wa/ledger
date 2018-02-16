@@ -53,7 +53,7 @@ def send_return_overdue_staff_email_notification(ret):
         'return': ret
     }
 
-    email.send(settings.WILDLIFELICENSING_EMAIL_CATCHALL, context=context)
+    email.send(settings.EMAIL_FROM, context=context)
 
 
 class ReturnAmendmentRequestedEmail(TemplateEmailBase):

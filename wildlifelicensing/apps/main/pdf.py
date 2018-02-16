@@ -2,6 +2,7 @@ import os
 from io import BytesIO
 from datetime import date
 
+from ledger.settings_base import EMAIL_FROM
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, \
@@ -24,7 +25,7 @@ COLOUR_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', '
 LICENCE_HEADER_IMAGE_WIDTH = 170
 LICENCE_HEADER_IMAGE_HEIGHT = 42
 
-DPAW_EMAIL = 'wildlifelicensing@dpaw.wa.gov.au'
+DPAW_EMAIL = EMAIL_FROM
 DPAW_URL = 'www.dpaw.wa.gov.au'
 DPAW_PHONE = '(08) 9219 9831'
 DPAW_FAX = '(08) 9423 8242'

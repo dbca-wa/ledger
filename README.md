@@ -24,7 +24,7 @@ required environment variables at run time. Example content:
     SECRET_KEY="ThisIsASecretKey"
     DEFAULT_HOST="https://website.domain/"
     EMAIL_HOST="emailhost"
-    EMAIL_FROM="noreply@email.address"
+    EMAIL_FROM="system@email.address"
     PARENT_HOST="website.domain"
     HOST_PORT=""
     ALLOWED_HOSTS=[u'website.domain']

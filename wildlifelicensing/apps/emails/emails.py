@@ -40,7 +40,7 @@ class TemplateEmailBase(object):
         """
         Send an email using EmailMultiAlternatives with text and html.
         :param to_addresses: a string or a list of addresses
-        :param from_address: if None the settings.DEFAULT_FROM_EMAIL is used
+        :param from_address: if None the settings.EMAIL_FROM is used
         :param context: a dictionary or a Context object used for rendering the templates.
         :param attachments: a list of (filepath, content, mimetype) triples
                (see https://docs.djangoproject.com/en/1.9/topics/email/)

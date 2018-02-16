@@ -340,7 +340,7 @@ def sendSummaryEmail(summary):
     email = EmailMessage(
         'BPAY Summary {}'.format(dt),
         'BPAY Summary File for {}'.format(dt),
-        settings.DEFAULT_FROM_EMAIL,
+        settings.EMAIL_FROM,
         to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
     )
     email.attach('summary.txt', summary, 'text/plain')
@@ -364,7 +364,7 @@ def sendBillerCodeEmail(summaries,monthly=False):
             email = EmailMessage(
                 subject,
                 content,
-                settings.DEFAULT_FROM_EMAIL,
+                settings.EMAIL_FROM,
                 to= recipients
             )
             email.attach('summary.txt', v, 'text/plain')

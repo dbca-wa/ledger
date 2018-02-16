@@ -39,7 +39,6 @@ CRON_CLASSES = [
     'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
 ]
 
-WILDLIFELICENSING_EMAIL_CATCHALL = env('WILDLIFELICENSING_EMAIL_CATCHALL', 'wildlifelicensing@dpaw.wa.gov.au')
 
 HERBIE_SPECIES_WFS_URL = env('HERBIE_SPECIES_WFS_URL',
                              'https://kmi.dpaw.wa.gov.au/geoserver/ows?service=wfs&version=1.1.0&'
@@ -52,3 +51,5 @@ WL_SENIOR_VOUCHER_CODE = env('WL_SENIOR_VOUCHER_CODE', 'WL_SENIOR_VOUCHER')
 DEFAULT_HOST = env('DEFAULT_HOST', "https://wildlifelicensing.dpaw.wa.gov.au")
 DATA_UPLOAD_MAX_NUMBER_FIELDS = env('DATA_UPLOAD_MAX_NUMBER_FIELDS', None)
 WL_PDF_URL=env('WL_PDF_URL','https://wildlifelicensing.dpaw.wa.gov.au')
+
+EMAIL_FROM = env('EMAIL_FROM','wildlifelicensing@dbca.wa.gov.au')

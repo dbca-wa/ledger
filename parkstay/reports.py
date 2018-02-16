@@ -36,7 +36,7 @@ def outstanding_bookings():
         email = EmailMessage(
             'Unpaid Bookings Summary as at {}'.format(dt),
             'Unpaid Bookings as at {}'.format(dt),
-            settings.DEFAULT_FROM_EMAIL,
+            settings.EMAIL_FROM,
             to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
         )
         email.attach('OustandingBookings_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
