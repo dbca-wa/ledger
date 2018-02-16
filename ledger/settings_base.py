@@ -118,6 +118,7 @@ ADMINS = ('asi@dpaw.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
+DEFAULT_FROM_EMAIL = EMAIL_FROM
 
 TEMPLATES = [
     {

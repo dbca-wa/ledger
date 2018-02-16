@@ -91,7 +91,7 @@ LOGGING['loggers']['booking_checkout'] = {
             'level': 'INFO'
         }
 
-EMAIL_FROM = env('EMAIL_FROM','parkstaybookings@dbca.wa.gov.au')
+EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
 EXPLORE_PARKS_URL = env('EXPLORE_PARKS_URL','https://parks-oim.dpaw.wa.gov.au')
 PARKSTAY_EXTERNAL_URL = env('PARKSTAY_EXTERNAL_URL','https://parkstay.dbca.wa.gov.au')
