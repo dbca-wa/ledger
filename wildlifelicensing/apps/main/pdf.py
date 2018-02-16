@@ -2,7 +2,7 @@ import os
 from io import BytesIO
 from datetime import date
 
-from ledger.settings_base import EMAIL_FROM
+from django.settings import EMAIL_FROM
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, \
