@@ -120,7 +120,6 @@ EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
 
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -292,7 +291,8 @@ BPOINT_TEST=env('BPOINT_TEST',True)
 # Custom Email Settings
 EMAIL_BACKEND = 'ledger.ledger_email.LedgerEmailBackend'
 PRODUCTION_EMAIL = env('PRODUCTION_EMAIL', False)
-#print PRODUCTION_EMAIL
+# Intercept and forward email recipient for non-production instances
+# Send to list of NON_PROD_EMAIL users instead
 EMAIL_INSTANCE = env('EMAIL_INSTANCE','PROD')
 NON_PROD_EMAIL = env('NON_PROD_EMAIL')
 if not PRODUCTION_EMAIL:
