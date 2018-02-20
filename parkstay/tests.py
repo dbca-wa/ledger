@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from django.conf import settings
 from django.test import TestCase, Client
 from django.core.exceptions import ValidationError
