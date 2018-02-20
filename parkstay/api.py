@@ -50,7 +50,6 @@ from parkstay.models import (Campground,
                                 CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 ClosureReason,
-                                OpenReason,
                                 PriceReason,
                                 MaximumStayReason,
                                 ParkEntryRate,
@@ -86,7 +85,6 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundImageSerializer,
                                     ExistingCampgroundImageSerializer,
                                     ClosureReasonSerializer,
-                                    OpenReasonSerializer,
                                     PriceReasonSerializer,
                                     MaximumStayReasonSerializer,
                                     BulkPricingSerializer,
@@ -193,37 +191,6 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['post'])
-    def open_close(self, request, format='json', pk=None):
-        try:
-            http_status = status.HTTP_200_OK
-            # parse and validate data
-            mutable = request.POST._mutable
-            request.POST._mutable = True
-            request.POST['campsite'] = self.get_object().id
-            request.POST._mutable = mutable
-            serializer = CampsiteBookingRangeSerializer(data=request.data, method="post")
-            serializer.is_valid(raise_exception=True)
-            if serializer.validated_data.get('status') == 0:
-                self.get_object().open(dict(serializer.validated_data))
-            else:
-                self.get_object().close(dict(serializer.validated_data))
-
-            # return object
-            ground = self.get_object()
-            res = CampsiteSerialiser(ground, context={'request':request})
-
-            return Response(res.data)
-        except serializers.ValidationError:
-            raise
-        except ValidationError as e:
-            if hasattr(e,'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
             raise serializers.ValidationError(str(e))
 
     def close_campsites(self, closure_data, campsites):
@@ -613,39 +580,6 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['post'])
-    def open_close(self, request, format='json', pk=None):
-        try:
-            http_status = status.HTTP_200_OK
-            # parse and validate data
-            mutable = request.POST._mutable
-            request.POST._mutable = True
-            request.POST['campground'] = self.get_object().id
-            request.POST._mutable = mutable
-            serializer = CampgroundBookingRangeSerializer(data=request.data, method="post")
-            serializer.is_valid(raise_exception=True)
-            if serializer.validated_data.get('status') == 0:
-                self.get_object().open(dict(serializer.validated_data))
-            else:
-                self.get_object().close(dict(serializer.validated_data))
-
-            # return object
-            ground = self.get_object()
-            res = CampgroundSerializer(ground, context={'request':request})
-            cache.delete('campgrounds_dt')
-            return Response(res.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e,'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e[0]))
 
     def close_campgrounds(self,closure_data,campgrounds):
         for campground in campgrounds:
@@ -2046,10 +1980,6 @@ class RateViewset(viewsets.ModelViewSet):
 class ClosureReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ClosureReason.objects.all()
     serializer_class = ClosureReasonSerializer
-
-class OpenReasonViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = OpenReason.objects.all()
-    serializer_class = OpenReasonSerializer
 
 class PriceReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PriceReason.objects.all()

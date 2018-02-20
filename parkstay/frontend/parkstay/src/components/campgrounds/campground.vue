@@ -95,7 +95,7 @@ export default {
     },
     computed: {
         closureHistoryURL: function() {
-            return api_endpoints.status_history(this.$route.params.id);
+            return api_endpoints.campground_status_history(this.$route.params.id);
         },
         priceHistoryURL: function() {
             return api_endpoints.campground_price_history(this.$route.params.id);
@@ -245,7 +245,7 @@ export default {
                         else {
                             var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
-                                column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" data-current_closure='"+ full.current_closure +"'>Open</a></td>";
+                                column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" data-current_closure='"+ full.current_closure +"' data-current_closure_id='"+full.current_closure_id+"'>Open</a></td>";
                             }
                         }
 
@@ -278,7 +278,7 @@ export default {
     methods: {
         deleteBookingRange: function(id) {
             var vm = this;
-            var url = api_endpoints.deleteBookingRange(id);
+            var url = api_endpoints.campground_booking_ranges_detail(id);
             $.ajax({
                 method: "DELETE",
                 url: url,
@@ -294,8 +294,8 @@ export default {
             let vm = this;
             var data = vm.$refs.openCampsite.formdata;
             $.ajax({
-                url: api_endpoints.opencloseCS(vm.$refs.openCampsite.id),
-                method: 'POST',
+                url: api_endpoints.campsite_booking_ranges_detail(vm.$refs.openCampsite.id),
+                method: 'PATCH',
                 xhrFields: { withCredentials:true },
                 data: data,
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
@@ -315,7 +315,7 @@ export default {
             let vm = this;
             var data = vm.$refs.closeCampsite.formdata;
             $.ajax({
-                url: api_endpoints.opencloseCS(vm.$refs.closeCampsite.id),
+                url: api_endpoints.campsite_booking_ranges(),
                 method: 'POST',
                 xhrFields: { withCredentials:true },
                 data: data,
@@ -397,19 +397,17 @@ export default {
             var id = $(this).attr('data-campsite');
             var status = $(this).attr('data-status');
             var current_closure = $(this).attr('data-current_closure') ? $(this).attr('data-current_closure') : '';
+            var current_closure_id = $(this).attr('data-current_closure_id') ? $(this).attr('data-current_closure_id') : '';
 
             if (status === 'open'){
                 vm.showOpenOpenCS();
                 // Update open modal attributes
-                vm.$refs.openCampsite.status = 0;
-                vm.$refs.openCampsite.id = id;
+                vm.$refs.openCampsite.id = current_closure_id;
                 vm.$refs.openCampsite.current_closure = current_closure;
             }else if (status === 'close'){
                 vm.showCloseCS();
                 // Update close modal attributes
-                vm.$refs.closeCampsite.status = 1;
-                vm.$refs.closeCampsite.id = id;
-                vm.$refs.closeCampsite.current_closure = current_closure;
+                vm.$refs.closeCampsite.formdata.campsite = id;
             }
         });
         helpers.namePopover($,vm.$refs.cg_campsites_dt.vmDataTable);

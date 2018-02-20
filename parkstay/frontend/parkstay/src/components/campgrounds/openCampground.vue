@@ -17,11 +17,11 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Open per: </label>
+                        <label for="open_cg_range_end">Reopen on: </label>
                     </div>
                     <div class="col-md-4">
-                        <div class='input-group date' id='open_cg_range_start'>
-                            <input name="open_start" v-model="formdata.range_start" type='text' class="form-control" />
+                        <div class='input-group date' id='open_cg_range_end'>
+                            <input name="open_start" v-model="formdata.range_end" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -29,7 +29,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="open" v-model="formdata.reason" ></reason>
+            <reason type="close" v-model="formdata.closure_reason" ></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -56,13 +56,11 @@ module.exports = {
     name: 'pkCgOpen',
     data: function() {
         return {
-            status: '',
             id:'',
             current_closure: '',
             formdata: {
-                range_start: '',
-                reason:'',
-                status:'0',
+                range_end: '',
+                closure_reason: '',
                 details: ''
             },
             picker: '',
@@ -80,7 +78,7 @@ module.exports = {
             return this.$parent.isOpenOpenCG;
         },
         requireDetails: function () {
-            return (this.formdata.reason === '1')? true: false;
+            return (this.formdata.closure_reason === '1');
         }
     },
     components: {
@@ -91,7 +89,6 @@ module.exports = {
     methods: {
         close: function() {
             this.$parent.isOpenOpenCG = false;
-            this.status = '';
         },
         addOpen: function() {
             if (this.form.valid()){
@@ -101,12 +98,11 @@ module.exports = {
         sendData: function() {
             let vm = this;
             var data = this.formdata;
-            data.range_start = this.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
-            data.status = 0;
+            data.range_end = this.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
             $.ajax({
-                url: api_endpoints.opencloseCG(vm.id),
-                method: 'POST',
-                xhrFields: { withCredentials:true },
+                url: api_endpoints.campground_booking_ranges_detail(vm.id),
+                method: 'PATCH',
+                xhrFields: { withCredentials: true },
                 data: data,
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 dataType: 'json',
@@ -130,13 +126,13 @@ module.exports = {
                     open_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.reason === 'other';
+                                return vm.requireDetails;
                             }
                         }
                     }
                 },
                 messages: {
-                    open_start: "Enter a start date",
+                    open_start: "Enter a reopening date",
                     open_reason: "Select an open reason from the options",
                     open_details: "Details required if Other reason is selected"
                 },
@@ -166,17 +162,16 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        bus.$on('openclose', function(data){
-            vm.status = data.status;
+        bus.$on('openCG', function(data){
             vm.id = data.id;
             vm.current_closure = data.closure;
         });
-        vm.picker = $('#open_cg_range_start');
+        vm.picker = $('#open_cg_range_end');
         vm.picker.datetimepicker({
             format: 'DD/MM/YYYY'
         });
         vm.picker.on('dp.change', function(e){
-            vm.formdata.range_start = vm.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            vm.formdata.range_end = vm.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
         vm.form = $('#openCGForm');
         vm.addFormValidations();
