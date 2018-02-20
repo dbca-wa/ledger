@@ -23,7 +23,6 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 Contact,
                                 CampgroundImage,
                                 ClosureReason,
-                                OpenReason,
                                 PriceReason,
                                 MaximumStayReason,
                                 CampgroundStayHistory,
@@ -73,8 +72,9 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
     range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
     range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
+    status_name = serializers.SerializerMethodField()
 
-    def get_status(self, obj):
+    def get_status_name(self, obj):
         return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
 
     def __init__(self, *args, **kwargs):
@@ -87,12 +87,8 @@ class BookingRangeSerializer(serializers.ModelSerializer):
         except:
             original = False;
         super(BookingRangeSerializer, self).__init__(*args, **kwargs)
-        if method == 'post':
-            self.fields['status'] = serializers.ChoiceField(choices=BookingRange.BOOKING_RANGE_CHOICES)
-        elif method == 'get':
-            if not original:
-                self.fields['status'] = serializers.SerializerMethodField()
-            else:
+        if method == 'get':
+            if original:
                 self.fields['range_start'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
                 self.fields['range_end'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'],required=False)
 
@@ -103,8 +99,8 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
         fields = (
             'id',
             'status',
+            'status_name',
             'closure_reason',
-            'open_reason',
             'range_start',
             'range_end',
             'reason',
@@ -114,9 +110,10 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
             'updated_on'
         )
         read_only_fields = ('reason',)
-        write_only_fields = (
-            'campground'
-        )
+        write_only_fields = ('campground',)
+
+    def __init__(self, *args, **kwargs):
+        super(CampgroundBookingRangeSerializer, self).__init__(*args, **kwargs)
 
 class CampsiteBookingRangeSerializer(BookingRangeSerializer):
 
@@ -125,19 +122,18 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
         fields = (
             'id',
             'status',
+            'status_name',
             'closure_reason',
-            'open_reason',
             'range_start',
             'range_end',
             'reason',
             'details',
             'editable',
-            'campsite'
+            'campsite',
+            'updated_on'
         )
         read_only_fields = ('reason',)
-        write_only_fields = (
-            'campsite'
-        )
+        write_only_fields = ('campsite',)
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
@@ -242,6 +238,7 @@ class CampgroundDatatableSerializer(serializers.ModelSerializer):
             'ratis_id',
             'active',
             'current_closure',
+            'current_closure_id',
             'campground_type'
         )
 
@@ -371,7 +368,7 @@ class CampsiteSerialiser(serializers.ModelSerializer):
     name = serializers.CharField(default='default',required=False)
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tent','campervan','caravan','min_people','max_people','description',)
+        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure', 'current_closure_id', 'can_add_rate','tent','campervan','caravan','min_people','max_people','description',)
 
     def __init__(self, *args, **kwargs):
         try:
@@ -577,11 +574,6 @@ class ParkEntryRateSerializer(serializers.ModelSerializer):
 class ClosureReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClosureReason
-        fields = ('id','text')
-
-class OpenReasonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OpenReason
         fields = ('id','text')
 
 class PriceReasonSerializer(serializers.ModelSerializer):
