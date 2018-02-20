@@ -45,12 +45,6 @@ export default {
         }
     },
     methods:{
-        fetchOpenReasons:function () {
-            let vm = this;
-            $.get(api_endpoints.openReasons(),function (data) {
-                vm.reasons = data;
-            });
-        },
         fetchClosureReasons:function () {
             let vm = this;
             $.get(api_endpoints.closureReasons(),function (data) {
@@ -76,9 +70,6 @@ export default {
             switch (vm.type.toLowerCase()) {
                 case 'close':
                     vm.fetchClosureReasons();
-                    break;
-                case 'open':
-                    vm.fetchOpenReasons();
                     break;
                 case 'stay':
                     vm.fetchMaxStayReasons();

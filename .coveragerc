@@ -1,6 +1,7 @@
 [report]
 omit =
     venv/*
+    venv2/*
     ledger/*/migrations/*
     ledger/payments/*/migrations/*
     wildlifelicensing/apps/*/migrations/*

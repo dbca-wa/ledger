@@ -8,7 +8,7 @@ from ledger.payments.models import Invoice
 
 from ledger.emails.emails import EmailBase
 
-default_campground_email = settings.CAMPGROUNDS_EMAIL
+default_campground_email = settings.EMAIL_FROM
 class TemplateEmailBase(EmailBase):
     subject = ''
     html_template = 'ps/email/base_email.html'

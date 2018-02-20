@@ -12,6 +12,7 @@ from reportlab.lib.colors import HexColor
 
 from django.core.files import File
 from django.conf import settings
+from wildlifelicensing.settings import EMAIL_FROM
 
 from ledger.accounts.models import Document
 
@@ -24,7 +25,7 @@ COLOUR_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', '
 LICENCE_HEADER_IMAGE_WIDTH = 170
 LICENCE_HEADER_IMAGE_HEIGHT = 42
 
-DPAW_EMAIL = 'wildlifelicensing@dpaw.wa.gov.au'
+DPAW_EMAIL = EMAIL_FROM
 DPAW_URL = 'www.dpaw.wa.gov.au'
 DPAW_PHONE = '(08) 9219 9831'
 DPAW_FAX = '(08) 9423 8242'
