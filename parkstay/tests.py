@@ -13,9 +13,9 @@ ADMIN_USER_EMAIL = 'admin@test.net'
 NEW_USER_EMAIL = 'new_user@test.net'
 
 def create_fixtures():
-    new_user = EmailUser.objects.create(email=NEW_USER_EMAIL, name=u'New user 🤦')
+    new_user = EmailUser.objects.create(email=NEW_USER_EMAIL, first_name=u'New', last_name=u'user 🤦')
     
-    admin_user = EmailUser.objects.create(email=ADMIN_USER_EMAIL, name=u'Admin user 🤦')
+    admin_user = EmailUser.objects.create(email=ADMIN_USER_EMAIL, first_name=u'Admin', last_name=u'user 🤦')
     admin_user.is_superuser = True
     admin_user.save()
     
