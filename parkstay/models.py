@@ -375,7 +375,6 @@ class BookingRange(models.Model):
 
     status = models.SmallIntegerField(choices=BOOKING_RANGE_CHOICES, default=0)
     closure_reason = models.ForeignKey('ClosureReason',null=True,blank=True)
-    open_reason = models.ForeignKey('OpenReason',null=True,blank=True)
     details = models.TextField(blank=True,null=True)
     range_start = models.DateField(blank=True, null=True)
     range_end = models.DateField(blank=True, null=True)
@@ -396,8 +395,6 @@ class BookingRange(models.Model):
 
     @property
     def reason(self):
-        if self.status == 0:
-            return self.open_reason.text
         return self.closure_reason.text
 
     # Methods
@@ -420,8 +417,6 @@ class BookingRange(models.Model):
             self.full_clean()
         if self.status == 1 and not self.closure_reason:
             self.closure_reason = ClosureReason.objects.get(pk=1)
-        elif self.status == 0 and not self.open_reason:
-            self.open_reason = OpenReason.objects.get(pk=1)
 
         super(BookingRange, self).save(*args, **kwargs)
 
@@ -1324,9 +1319,6 @@ class MaximumStayReason(Reason):
     pass
 
 class ClosureReason(Reason):
-    pass
-
-class OpenReason(Reason):
     pass
 
 class PriceReason(Reason):

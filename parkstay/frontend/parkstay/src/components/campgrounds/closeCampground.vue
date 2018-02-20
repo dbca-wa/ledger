@@ -86,8 +86,7 @@ module.exports = {
             return this.$parent.isOpenCloseCG;
         },
         requireDetails: function () {
-            let vm =this;
-            return (vm.formdata.closure_reason == 1)? true: false;
+            return (this.formdata.closure_reason === '1');
         },
     },
     components: {
@@ -142,7 +141,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.closure_reason === '1';
+                                return vm.requireDetails;
                             }
                         }
                     }

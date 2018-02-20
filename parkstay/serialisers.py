@@ -23,7 +23,6 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 Contact,
                                 CampgroundImage,
                                 ClosureReason,
-                                OpenReason,
                                 PriceReason,
                                 MaximumStayReason,
                                 CampgroundStayHistory,
@@ -102,7 +101,6 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
             'status',
             'status_name',
             'closure_reason',
-            'open_reason',
             'range_start',
             'range_end',
             'reason',
@@ -126,7 +124,6 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
             'status',
             'status_name',
             'closure_reason',
-            'open_reason',
             'range_start',
             'range_end',
             'reason',
@@ -577,11 +574,6 @@ class ParkEntryRateSerializer(serializers.ModelSerializer):
 class ClosureReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClosureReason
-        fields = ('id','text')
-
-class OpenReasonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OpenReason
         fields = ('id','text')
 
 class PriceReasonSerializer(serializers.ModelSerializer):

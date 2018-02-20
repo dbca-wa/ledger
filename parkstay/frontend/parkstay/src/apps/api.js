@@ -132,9 +132,6 @@ module.exports = {
     closureReasons:function () {
         return process.env.PARKSTAY_URL + "/api/closureReasons.json";
     },
-    openReasons:function () {
-        return process.env.PARKSTAY_URL + "/api/openReasons.json";
-    },
     priceReasons:function () {
         return process.env.PARKSTAY_URL + "/api/priceReasons.json";
     },

@@ -90,7 +90,7 @@ export default {
     },
     computed:{
         requireDetails:function () {
-            return (this.reason == '1')
+            return (this.reason === '1')
         },
         ...mapGetters([
           'campgrounds'
@@ -210,7 +210,7 @@ export default {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.reason === '1';
+                                return vm.requireDetails;
                             }
                         }
                     }

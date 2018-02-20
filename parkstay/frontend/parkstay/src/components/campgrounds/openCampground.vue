@@ -29,7 +29,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="open" v-model="formdata.open_reason" ></reason>
+            <reason type="close" v-model="formdata.closure_reason" ></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -60,7 +60,7 @@ module.exports = {
             current_closure: '',
             formdata: {
                 range_end: '',
-                open_reason: '',
+                closure_reason: '',
                 details: ''
             },
             picker: '',
@@ -78,7 +78,7 @@ module.exports = {
             return this.$parent.isOpenOpenCG;
         },
         requireDetails: function () {
-            return (this.formdata.open_reason === '1')? true: false;
+            return (this.formdata.closure_reason === '1');
         }
     },
     components: {
@@ -126,7 +126,7 @@ module.exports = {
                     open_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.reason === 'other';
+                                return vm.requireDetails;
                             }
                         }
                     }

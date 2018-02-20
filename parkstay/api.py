@@ -50,7 +50,6 @@ from parkstay.models import (Campground,
                                 CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 ClosureReason,
-                                OpenReason,
                                 PriceReason,
                                 MaximumStayReason,
                                 ParkEntryRate,
@@ -86,7 +85,6 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     CampgroundImageSerializer,
                                     ExistingCampgroundImageSerializer,
                                     ClosureReasonSerializer,
-                                    OpenReasonSerializer,
                                     PriceReasonSerializer,
                                     MaximumStayReasonSerializer,
                                     BulkPricingSerializer,
@@ -1982,10 +1980,6 @@ class RateViewset(viewsets.ModelViewSet):
 class ClosureReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ClosureReason.objects.all()
     serializer_class = ClosureReasonSerializer
-
-class OpenReasonViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = OpenReason.objects.all()
-    serializer_class = OpenReasonSerializer
 
 class PriceReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PriceReason.objects.all()

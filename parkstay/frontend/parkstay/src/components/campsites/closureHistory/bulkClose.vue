@@ -101,8 +101,7 @@ module.exports = {
             return vm.errors;
         },
         requireDetails: function () {
-            let vm =this;
-            return (vm.formdata.closure_reason == 1)? true: false;
+            return (this.formdata.closure_reason === '1');
         },
         isModalOpen: function () {
             return true;
@@ -154,7 +153,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.reason === '3';
+                                return vm.requireDetails;
                             }
                         }
                     }

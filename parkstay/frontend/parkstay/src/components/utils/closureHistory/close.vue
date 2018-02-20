@@ -96,7 +96,7 @@ module.exports = {
             return this.statusHistory.id ? this.statusHistory.id : '';
         },
         requireDetails: function() {
-            return this.statusHistory.closure_reason == '1';
+            return this.statusHistory.closure_reason === '1';
         },
     },
     components: {
@@ -138,7 +138,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.statusHistory.reason=== '1';
+                                return vm.requireDetails;
                             }
                         }
                     }
