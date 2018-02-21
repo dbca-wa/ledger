@@ -39,7 +39,6 @@ CRON_CLASSES = [
     'wildlifelicensing.apps.returns.cron.CheckOverdueReturnsCronJob',
 ]
 
-WILDLIFELICENSING_EMAIL_CATCHALL = env('WILDLIFELICENSING_EMAIL_CATCHALL', 'wildlifelicensing@dpaw.wa.gov.au')
 
 HERBIE_SPECIES_WFS_URL = env('HERBIE_SPECIES_WFS_URL',
                              'https://kmi.dpaw.wa.gov.au/geoserver/ows?service=wfs&version=1.1.0&'
@@ -50,5 +49,10 @@ WL_SENIOR_VOUCHER_CODE = env('WL_SENIOR_VOUCHER_CODE', 'WL_SENIOR_VOUCHER')
 
 # next setting is necessary to resolve absolute URL for the emails sent by the tasks running in cron.
 DEFAULT_HOST = env('DEFAULT_HOST', "https://wildlifelicensing.dpaw.wa.gov.au")
-DATA_UPLOAD_MAX_NUMBER_FIELDS = env('DATA_UPLOAD_MAX_NUMBER_FIELDS', None)
+#set data_upload_max params, otherwise use django default values
+DATA_UPLOAD_MAX_NUMBER_FIELDS = env('DATA_UPLOAD_MAX_NUMBER_FIELDS', 1000)
+DATA_UPLOAD_MAX_MEMORY_SIZE = env('DATA_UPLOAD_MAX_MEMORY_SIZE', 2621440) #2.5 MB
 WL_PDF_URL=env('WL_PDF_URL','https://wildlifelicensing.dpaw.wa.gov.au')
+
+EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
+DEFAULT_FROM_EMAIL = EMAIL_FROM

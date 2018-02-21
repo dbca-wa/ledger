@@ -867,7 +867,7 @@ class CheckoutCreateView(generics.CreateAPIView):
                 else:
                     basket = createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
 
-            redirect = HttpResponseRedirect(reverse('checkout:index')+'?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
+            redirect = HttpResponseRedirect(reverse('checkout:index')+u'?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
                                                                                                 self.get_redirect_value(serializer,'card_method'),
                                                                                                 self.get_redirect_value(serializer,'basket_owner'),
                                                                                                 self.get_redirect_value(serializer,'template'),

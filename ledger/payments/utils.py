@@ -232,7 +232,7 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
             email = EmailMessage(
                 'Oracle Interface for {} for transactions received on {}'.format(system_name,dt),
                 'Oracle Interface Summary File for {} for transactions received on {}'.format(system_name,dt),
-                settings.DEFAULT_FROM_EMAIL,
+                settings.EMAIL_FROM,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
             )
             email.attach('OracleInterface_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
@@ -242,7 +242,7 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
             subject = 'Oracle Interface Error for {} for transactions received on {}'.format(system_name,dt)
             email = EmailMessage(subject,
                 'There was an error in generating a summary report for the oracle interface parser for transactions processed on {}.Please refer to the following log output:\n\n\n{}'.format(today,error_string),
-                settings.DEFAULT_FROM_EMAIL,
+                settings.EMAIL_FROM,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
             )
 
