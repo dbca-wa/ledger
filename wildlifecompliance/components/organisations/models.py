@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.db import models, transaction
 from django.contrib.sites.models import Site
 from django.dispatch import receiver
-from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_delete,pre_save
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
@@ -22,8 +22,10 @@ class Organisation(models.Model):
     organisation = models.ForeignKey(ledger_organisation)
     # TODO: business logic related to delegate changes.
     delegates = models.ManyToManyField(EmailUser, blank=True, through='UserDelegation', related_name='wildlifecompliance_organisations')
-    pin_one = models.CharField(max_length=50,blank=True)
-    pin_two = models.CharField(max_length=50,blank=True)
+    admin_pin_one = models.CharField(max_length=50,blank=True)
+    admin_pin_two = models.CharField(max_length=50,blank=True)
+    user_pin_one = models.CharField(max_length=50,blank=True)
+    user_pin_two = models.CharField(max_length=50,blank=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -31,22 +33,71 @@ class Organisation(models.Model):
     def __str__(self):
         return str(self.organisation)
 
+
     def log_user_action(self, action, request):
         return OrganisationAction.log_action(self, action, request.user)
 
     def validate_pins(self,pin1,pin2,request):
-        val = self.pin_one == pin1 and self.pin_two == pin2
-        if val:
-            self.link_user(request.user,request)
+        val_admin = self.admin_pin_one == pin1 and self.admin_pin_two == pin2
+        val_user = self.user_pin_one == pin1 and self.user_pin_two == pin2
+        if val_admin and self.first_five_admin:
+
+            val= val_admin
+            admin_flag= True
+            role = 'company_admin' 
+        elif val_admin:
+            val= val_admin
+            admin_flag= True
+            role = 'company_user'
+        elif val_user:
+            val = val_user
+            admin_flag = False
+            role = 'company_user'
+        else: val = False
+
+        self.add_user_contact(request.user,request,admin_flag,role)
         return val
+
+
+    def add_user_contact(self,user,request,admin_flag,role):
+        with transaction.atomic():
+
+
+            OrganisationContact.objects.create(
+                organisation = self,
+                first_name = user.first_name,
+                last_name = user.last_name,
+                mobile_number = user.mobile_number,
+                phone_number = user.phone_number,
+                fax_number = user.fax_number,
+                email = user.email,
+                user_role = role,
+                user_status='pending',
+                is_admin = admin_flag
+            
+            )
+
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_CONTACT_ADDED.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
+
     
-    def link_user(self,user,request):
+    def link_user(self,user,request,admin_flag):
         with transaction.atomic():
             try:
                 UserDelegation.objects.get(organisation=self,user=user)
                 raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
             except UserDelegation.DoesNotExist:
                 delegate = UserDelegation.objects.create(organisation=self,user=user)
+            if self.first_five_admin:
+                is_admin = True
+                role = 'company_admin'
+            elif admin_flag:
+                role = 'company_admin'
+                is_admin = True
+            else :
+                role = 'company_user'
+                is_admin = False
+                
             # Create contact person
             OrganisationContact.objects.create(
                 organisation = self,
@@ -55,7 +106,10 @@ class Organisation(models.Model):
                 mobile_number = user.mobile_number,
                 phone_number = user.phone_number,
                 fax_number = user.fax_number,
-                email = user.email
+                email = user.email,
+                user_role = role,
+                user_status='pending',
+                is_admin = is_admin
             
             )
             # log linking
@@ -86,8 +140,10 @@ class Organisation(models.Model):
             send_organisation_unlink_email_notification(user,request.user,self,request)
 
     def generate_pins(self):
-        self.pin_one = self._generate_pin()
-        self.pin_two = self._generate_pin()
+        self.admin_pin_one = self._generate_pin()
+        self.admin_pin_two = self._generate_pin()
+        self.user_pin_one = self._generate_pin()
+        self.user_pin_two = self._generate_pin()
         self.save()
 
     def _generate_pin(self):
@@ -139,8 +195,31 @@ class Organisation(models.Model):
     def first_five(self):
         return ','.join([user.get_full_name() for user in self.delegates.all()[:5]])
 
+    @property
+    def first_five_admin(self):
+        return self.delegates.count() <5
+
+    @property
+    def can_contact_user_edit(self):
+        """
+        :return: True if the application is in one of the editable status.
+        """
+        org_contact= OrganisationContact.objects.get(organisation_id = self.id, first_name = request.user.first_name)
+
+        return org_contact.is_admin and org_contact.user_status == 'active' and org_contact.user_role =='company_admin' 
+
+
+
 @python_2_unicode_compatible
 class OrganisationContact(models.Model):
+    USER_STATUS_CHOICES = (('pending', 'Pending'),
+        ('active', 'Active'),
+        ('suspended', 'Suspended'))
+    USER_ROLE_CHOICES = (('company_admin', 'Company Admin'),
+        ('company_user', 'Company User')
+        )
+    user_status = models.CharField('Status', max_length=40, choices=USER_STATUS_CHOICES,default=USER_STATUS_CHOICES[0][0])
+    user_role = models.CharField('Role', max_length=40, choices=USER_ROLE_CHOICES,default='company_user')
     organisation = models.ForeignKey(Organisation, related_name='contacts')
     email = models.EmailField(blank=False)
     first_name = models.CharField(max_length=128, blank=False, verbose_name='Given name(s)')
@@ -151,6 +230,7 @@ class OrganisationContact(models.Model):
                                      verbose_name="mobile number", help_text='')
     fax_number = models.CharField(max_length=50, null=True, blank=True,
                                   verbose_name="fax number", help_text='')
+    is_admin = models.BooleanField(default= False)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -158,6 +238,47 @@ class OrganisationContact(models.Model):
 
     def __str__(self):
         return '{} {}'.format(self.last_name,self.first_name)
+
+    @property
+    def can_edit(self):
+        """
+        :return: True if the application is in one of the editable status.
+        """
+        return self.is_admin and self.user_status == 'active' and self.user_role =='company_admin' 
+
+
+    
+
+    def accept_user(self, user):
+        self.status = 'active'
+        self.save()
+        org = Organisation.objects.get(id =self.organisation_id)
+        delegate = UserDelegation.objects.create(user=user,organisation=org)
+        #log user acceptance
+        org.log_user_action(OrganisationAction.ACTION_ORGANISATION_CONTACT_ACCEPT.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+
+    # def decline(self, user):
+    #     with transaction.atomic():
+    #         self.status = 'suspended'
+    #         self.save()
+    #         OrganisationContactDeclinedDetails.objects.create(
+    #             officer = request.user,
+    #             # reason = reason,
+    #             request = self
+    #         )
+    #         self.log_user_action(OrganisationAction.ACTION_CONTACT_DECLINE.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+
+
+
+    # class OrganisationContactDeclinedDetails(models.Model):
+    #     request = models.ForeignKey(OrganisationContact)
+    #     officer = models.ForeignKey(EmailUser, null=False)
+    #     # reason = models.TextField(blank=True)
+
+    #     class Meta:
+    #         app_label = 'wildlifecompliance'
+    
+        
 
 class UserDelegation(models.Model):
     organisation = models.ForeignKey(Organisation)
@@ -178,6 +299,8 @@ class OrganisationAction(UserAction):
     ACTION_ORGANISATIONAL_DETAILS_SAVED_CHANGED = "Details saved with the following changes: \n{}"
     ACTION_ORGANISATIONAL_ADDRESS_DETAILS_SAVED_NOT_CHANGED = "Address Details saved without changes"
     ACTION_ORGANISATIONAL_ADDRESS_DETAILS_SAVED_CHANGED = "Addres Details saved with folowing changes: \n{}"
+    ACTION_ORGANISATION_CONTACT_ACCEPT = "Accepted contact {}"
+    ACTION_CONTACT_DECLINE = "Declined contact {}"
 
     @classmethod
     def log_action(cls, organisation, action, user):
@@ -238,13 +361,25 @@ class OrganisationRequest(models.Model):
             ledger_org = ledger_organisation.objects.create(name=self.name,abn=self.abn)
         # Create Organisation in wildlifecompliance
         org = Organisation.objects.create(organisation=ledger_org)
+        #org.generate_pins()
         # Link requester to organisation
         delegate = UserDelegation.objects.create(user=self.requester,organisation=org)
         # log who approved the request
         org.log_user_action(OrganisationAction.ACTION_REQUEST_APPROVED.format(self.id),request)
         # log who created the link
         org.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+        
+        if org.first_five_admin:
+            is_admin = True
+            role = 'company_admin'
+        elif admin_flag:
+            role = 'company_admin'
+            is_admin = True
+        else :
+            role = 'company_user'
+            is_admin = False
         # Create contact person
+
         OrganisationContact.objects.create(
             organisation = org,
             first_name = self.requester.first_name,
@@ -252,9 +387,13 @@ class OrganisationRequest(models.Model):
             mobile_number = self.requester.mobile_number,
             phone_number = self.requester.phone_number,
             fax_number = self.requester.fax_number,
-            email = self.requester.email
+            email = self.requester.email,
+            user_role = role,
+            user_status= 'active',
+            is_admin = is_admin
         
         )
+
         # send email to requester
         send_organisation_request_accept_email_notification(self,org,request)
 
@@ -343,3 +482,20 @@ class OrganisationRequestLogEntry(CommunicationsLogEntry):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+
+
+@receiver(pre_save, sender=Organisation)
+def _pre_save(sender, instance, **kwargs):
+#    raise ValueError('error here')
+    if instance.pk:
+        original_instance = Organisation.objects.get(pk=instance.pk)
+        setattr(instance, "_original_instance", original_instance)
+
+    elif hasattr(instance, "_original_instance"):
+        delattr(instance, "_original_instance")
+    else:
+        instance.admin_pin_one = instance._generate_pin()
+        instance.admin_pin_two = instance._generate_pin() 
+        instance.user_pin_one = instance._generate_pin()
+        instance.user_pin_two = instance._generate_pin() 

@@ -23,3 +23,20 @@ class OrganisationAccessGroupAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return True if models.OrganisationAccessGroup.objects.count() == 0 else False
+
+@admin.register(models.OrganisationContact)
+class OrganisationContactAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(models.UserDelegation)
+class UserDelegationAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.OrganisationAction)
+class UOrganisationActionAdmin(admin.ModelAdmin):
+    pass
+
+
+    
+

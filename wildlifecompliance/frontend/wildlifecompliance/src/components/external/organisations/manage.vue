@@ -15,7 +15,7 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Name</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="org.name">
+                                <input type="text" :disabled ='!org.edits' class="form-control" name="first_name" placeholder=""  v-model="org.name">
                             </div>
                           </div>
                           <div class="form-group">
@@ -50,36 +50,36 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Street</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="street" placeholder="" v-model="org.address.line1">
+                                <input type="text" class="form-control" name="street" placeholder=""  v-model="org.address.line1">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="org.address.locality">
+                                <input type="text" class="form-control" name="surburb" placeholder=""  v-model="org.address.locality">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">State</label>
                             <div class="col-sm-3">
-                                <input type="text" class="form-control" name="country" placeholder="" v-model="org.address.state">
+                                <input type="text" class="form-control" name="country" placeholder=""  v-model="org.address.state">
                             </div>
                             <label for="" class="col-sm-1 control-label">Postcode</label>
                             <div class="col-sm-2">
-                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="org.address.postcode">
+                                <input type="text" class="form-control" name="postcode" placeholder=""  v-model="org.address.postcode">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Country</label>
                             <div class="col-sm-4">
-                                <select class="form-control" name="country" v-model="org.address.country">
+                                <select class="form-control" name="country"  v-model="org.address.country">
                                     <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
                                 </select>
                             </div>
                           </div>
                           <div class="form-group">
                             <div class="col-sm-12">
-                                <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
+                                <button v-if="!updatingAddress"  class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
                                 <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                             </div>
                           </div>
@@ -88,9 +88,9 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div class="row" >
             <div class="col-sm-12">
-                <div class="panel panel-default">
+                <div class="panel panel-default" >
                   <div class="panel-heading">
                     <h3 class="panel-title">Contact Details <small> - View and update the organisation's contact details</small>
                         <a class="panelClicker" :href="'#'+cBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cBody">
@@ -120,42 +120,70 @@
                     </h3>
                   </div>
                   <div class="panel-body collapse" :id="oBody">
-                    <div class="row">
-                        <div class="col-sm-8">
-                            <div class="row">
-                                <div class="col-sm-12">
-                                    <h4>Persons linked to this organisation:</h4>
-                                </div>
-                                <div v-for="d in org.delegates">
-                                    <div class="col-sm-6">
-                                        <h4>{{d.name}}</h4>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <h4><a @click.prevent="unlinkUser(d)" href="#" :data-id="d.id"><i class="fa fa-chain-broken"></i>&nbsp;Unlink</a></h4>
-                                    </div>
-                                </div>
-                                <div class="col-sm-12 top-buffer-s">
-                                    <strong>Persons linked to the organisation are controlled by the organisation. The Department cannot manage this list of people.</strong>
-                                </div>
-                            </div> 
+
+                  <div class = "row">
+                       <div class="col-sm-12">
+                            <h6>Use the Company Administrator pin codes if you want the new user to be linked as company administrator. Use the company User pin codes if you want the new user to be linked as company user.</h6>
                         </div>
-                        <div class="col-sm-4">
-                          <form class="form-horizontal" action="index.html" method="post">
+
+                  </div>
+
+                    <div class ="row">
+                    <form class="form-horizontal" action="index.html" method="post">
+                     <div class="col-sm-6">
+                          
                               <div class="form-group">
-                                <label for="" class="col-sm-3 control-label">Pin 1:</label>
+                                <label for="" class="col-sm-6 control-label"> Company Administrator Pin Code 1:</label>
                                 <div class="col-sm-6">
                                     <label class="control-label">{{org.pins.one}}</label>
                                 </div>
                               </div>
                               <div class="form-group">
-                                <label for="" class="col-sm-3 control-label" >Pin 2:</label>
+                                <label for="" class="col-sm-6 control-label" >Company Administrator Pin Code 2:</label>
                                 <div class="col-sm-6">
                                     <label class="control-label">{{org.pins.two}}</label>
                                 </div>
                               </div>
-                            </form>
-                        </div>
+
                     </div>
+                    <div class="col-sm-6">
+
+                            <div class="form-group">
+                                <label for="" class="col-sm-6 control-label"> Company User Pin Code 1:</label>
+                                <div class="col-sm-6">
+                                    <label class="control-label">{{org.pins.three}}</label>
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label for="" class="col-sm-6 control-label" >Company User Pin Code 2:</label>
+                                <div class="col-sm-6">
+                                    <label class="control-label">{{org.pins.four}}</label>
+                                </div>
+                              </div>
+                           
+                      
+                    </div>
+                     </form>
+
+                    <div class="row">
+                        <div class="col-sm-8">
+                            <div class="row">
+                                <div class="col-sm-12 top-buffer-s">
+                                    <strong>Persons linked to the organisation are controlled by the organisation. The Department cannot manage this list of people.</strong>
+                                </div>
+                            </div> 
+                        </div>
+                       
+                    </div>
+
+                    <div>
+                            <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/>
+                    </div>
+
+                   
+                        
+                  
+
                   </div>
                 </div>
             </div>
@@ -182,11 +210,20 @@ export default {
             cBody: 'cBody'+vm._uid,
             oBody: 'oBody'+vm._uid,
             org: null,
+            contact_user: {
+                first_name: null,
+                last_name: null,
+                email: null,
+                mobile_number: null,
+                phone_number: null
+            },
+             
             loading: [],
             countries: [],
             updatingDetails: false,
             updatingAddress: false,
             updatingContact: false,
+            updatingAcceptUser: false,
             logsTable: null,
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             logsDtOptions:{
@@ -336,12 +373,9 @@ export default {
             commsTable : null,
 
 
-
-
-
             contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
             contacts_options:{
-                language: {
+                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
@@ -369,7 +403,44 @@ export default {
                     }
                   ],
                   processing: true
+                
+            },
+
+            contacts_headers_ref:["Name","Role","Email","Status","Action"],
+            contacts_options_ref:{
+               language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                ajax: {
+                    "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/contacts'),
+                    "dataSrc": ''
+                },
+                columns: [
+                    {
+                        mRender:function (data,type,full) {
+                            return full.first_name + " " + full.last_name;
+                        }
+                    },
+                    {data:'user_role'},
+                    {data:'email'},
+                    {data:'user_status'},
+                    {
+                        mRender:function (data,type,full) {
+                            let links = '';
+                            let name = full.first_name + ' ' + full.last_name;
+                            links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="accept_contact">Accept</a><br/>`;
+                            links +=  `<a data-email='${full.email}' data-name='${name}' data-id='${full.id}' class="decline_contact">Decline</a><br/>`;
+                            return links;
+                        }
+                    }
+                  ],
+                  processing: true
+                
             }
+         
+
+         
         }
     },
     components: {
@@ -391,6 +462,8 @@ export default {
                 vm.org.pins = vm.org.pins != null ? vm.org.pins : {};
             });
         });
+
+       
     },
     beforeRouteUpdate: function(to, from, next){
         let initialisers = [
@@ -427,6 +500,49 @@ export default {
                 },(error) => {
                 });
             });
+
+            vm.$refs.contacts_datatable_user.vmDataTable.on('click','.accept_contact',(e) => {
+                e.preventDefault();
+
+                let firstname = $(e.target).data('firstname');
+                let lastname = $(e.target).data('lastname');
+                let email = $(e.target).data('email');
+                let id = $(e.target).data('id');
+                let mobile = $(e.target).data('mobile');
+                let phone = $(e.target).data('phone');
+
+                vm.contact_user.first_name= firstname 
+                vm.contact_user.last_name= lastname
+                vm.contact_user.email= email 
+                vm.contact_user.mobile_number= mobile 
+                vm.contact_user.phone_number= phone 
+
+
+                swal({
+                    title: "Accept Contact",
+                    text: "Are you sure you want to accept "+ name + "("+ email + ") as a contact  ?",
+                    type: "error",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then(() => {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/accept_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
+                        swal(
+                            'Accept',
+                            'You have successfully accepted '+name+' from '+id+'.',
+                            'success'
+                            )
+                        }, (error) => {
+                            swal('Accept','There was an error accepting '+name+' from '+id+'.','error')
+                        });
+                },(error) => {
+                });
+            });
+
+
+
+
+
+
         },
         updateDetails: function() {
             let vm = this;
@@ -446,6 +562,7 @@ export default {
                 console.log(error);
                 vm.updatingDetails = false;
             });
+
         },
         addedContact: function() {
             let vm = this;
