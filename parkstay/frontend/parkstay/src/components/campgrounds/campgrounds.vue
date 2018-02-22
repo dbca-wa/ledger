@@ -142,13 +142,14 @@ module.exports = {
                         if (full.active) {
                             var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a>";
                         } else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>";
+                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\" data-current_closure_id=\"__Current_Closure_ID__\">Open</a>";
                         }
 
                         column += full.campground_type == '0' ? addBooking : "";
                         column += full.campground_type == '0' ? availability_admin:"";
                         column += "</td>";
                         column = column.replace(/__Current_Closure__/,full.current_closure);
+                        column = column.replace(/__Current_Closure_ID__/,full.current_closure_id);
                         return column.replace(/__ID__/g, id);
                     }
                 }, ],
@@ -276,15 +277,19 @@ module.exports = {
             var id = $(this).attr('data-campground');
             var status = $(this).attr('data-status');
             var current_closure = $(this).attr('data-current_closure') ? $(this).attr('data-current_closure') : '';
-            var data = {
-                'status': status,
-                'id': id,
-                'closure': current_closure
-            }
-            bus.$emit('openclose', data);
+            var current_closure_id = $(this).attr('data-current_closure_id') ? $(this).attr('data-current_closure_id') : '';
             if (status === 'open'){
+                var data = {
+                    'id': current_closure_id,
+                    'closure': current_closure
+                };
+                bus.$emit('openCG', data);
                 vm.showOpenOpenCG();
             }else if (status === 'close'){
+                var data = {
+                    'id': id,
+                };
+                bus.$emit('closeCG', data);
                 vm.showOpenCloseCG();
             }
         });
