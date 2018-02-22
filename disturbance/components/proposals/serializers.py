@@ -38,7 +38,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
-    #can_officer_process = serializers.SerializerMethodField()
+    allowed_assessors = EmailUserSerializer(many=True)
 
     class Meta:
         model = Proposal
@@ -68,7 +68,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'reference',
                 'lodgement_number',
                 'lodgement_sequence',
-                'can_officer_process'
+                'can_officer_process',
+                'allowed_assessors'
                 )
         read_only_fields=('documents',)
     
@@ -138,7 +139,8 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'reference',
                 'lodgement_number',
                 'lodgement_sequence',
-                'can_officer_process'
+                'can_officer_process',
+
                
                 )
         read_only_fields=('documents','requirements')

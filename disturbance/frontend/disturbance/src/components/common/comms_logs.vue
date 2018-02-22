@@ -125,10 +125,10 @@ export default {
                         title: 'Type',
                         data: 'type'
                     },
-                    {
+                    /*{
                         title: 'Reference',
                         data: 'reference'
-                    },
+                    },*/
                     {
                         title: 'To',
                         data: 'to',

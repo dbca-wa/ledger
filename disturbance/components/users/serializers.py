@@ -4,7 +4,7 @@ from disturbance.components.organisations.models import (
                                     Organisation,
                                 )
 from rest_framework import serializers
-from disturbance.helpers import is_officer, is_departmentUser
+
 
 class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
     personal_details = serializers.SerializerMethodField()
     address_details = serializers.SerializerMethodField()
     contact_details = serializers.SerializerMethodField()
-    is_officer = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -51,7 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
             'personal_details',
             'address_details',
             'contact_details',
-            'is_officer'
+            'full_name'
         )
     
     def get_personal_details(self,obj):
@@ -68,8 +68,10 @@ class UserSerializer(serializers.ModelSerializer):
         else:
             return False
 
-    def get_is_officer(self,obj):
-        return True if is_officer(obj) else False
+    def get_full_name(self, obj):
+        return obj.get_full_name()
+
+
 
 
 class PersonalSerializer(serializers.ModelSerializer):

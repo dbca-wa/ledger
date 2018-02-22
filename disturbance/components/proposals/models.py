@@ -329,7 +329,7 @@ class Proposal(RevisionedMixin):
     @property   
     def can_officer_process(self):
         """
-        :return: True if the application is in one of the processable status for officer role.
+        :return: True if the application is in one of the processable status for Assessor role.
         """
         officer_view_state = ['draft','approved','declined','temp','discarded']
         if self.processing_status in officer_view_state:

@@ -111,9 +111,8 @@ export default {
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'proposal-datatable-'+vm._uid,
-            //Profile to check if user has officer role
+            //Profile to check if user has access to process Proposal
             profile: {},
-            is_officer:false,
             // Filters for Proposals
             filterProposalRegion: [],
             filterProposalActivity: 'All',
@@ -191,14 +190,15 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (!vm.is_external) {
-                                if(vm.is_officer && full.can_officer_process) {
+                            if (!vm.is_external){
+                                if(vm.check_assessor(full) && full.can_officer_process){
+                                    
                                     links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;
-                                }
+                                
+                            }
                                 else{
-                                    links +=  `<a href='/internal/proposal/${full.id}'>View1</a><br/>`;
+                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
                                 }
-
                             }
                             else{
                                 if (full.can_user_edit) {
@@ -323,11 +323,13 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if(vm.is_officer && full.can_officer_process) {
-                                    links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;
-                                }
+                                if(vm.check_assessor(full) && full.can_officer_process){
+                                    
+                                        links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;
+                                
+                            }
                                 else{
-                                    links +=  `<a href='/internal/proposal/${full.id}'>View3</a><br/>`;
+                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
                                 }
                             }
                             else{
@@ -336,7 +338,7 @@ export default {
                                     links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
                                 }
                                 else if (full.can_user_view) {
-                                    links +=  `<a href='/external/proposal/${full.id}'>View4</a><br/>`;
+                                    links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
                                 }
                             }
                             return links;
@@ -438,9 +440,7 @@ export default {
         is_referral: function(){
             return this.level == 'referral';
         },
-        is_officer: function(){
-            return this.is_officer;
-        }
+        
     },
     methods:{
         discardProposal:function (proposal_id) {
@@ -591,12 +591,35 @@ export default {
             let vm = this;
             Vue.http.get(api_endpoints.profile).then((response) => {
                 vm.profile = response.body
-                vm.is_officer = vm.profile.is_officer;
-                console.log(vm.is_officer)
+                              
             },(error) => {
                 console.log(error);
                 
             })
+        },
+
+        check_assessor: function(proposal){
+            let vm = this;
+            if (proposal.assigned_officer)
+                {
+                    { if(proposal.assigned_officer== vm.profile.full_name)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            else{
+                 var assessor = proposal.allowed_assessors.filter(function(elem){
+                    return(elem.id=vm.profile.id)
+                });
+                
+                if (assessor.length > 0)
+                    return true;
+                else
+                    return false;
+              
+            }
+            
         },
     },
 
