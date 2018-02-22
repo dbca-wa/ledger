@@ -212,7 +212,8 @@ class Organisation(models.Model):
 
 @python_2_unicode_compatible
 class OrganisationContact(models.Model):
-    USER_STATUS_CHOICES = (('pending', 'Pending'),
+    USER_STATUS_CHOICES = (('draft', 'Draft'),
+        ('pending', 'Pending'),
         ('active', 'Active'),
         ('decline', 'Decline'),
         ('suspended', 'Suspended'))
@@ -353,6 +354,8 @@ class OrganisationLogEntry(CommunicationsLogEntry):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+
 
 class OrganisationRequest(models.Model):
     STATUS_CHOICES = (

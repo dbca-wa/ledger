@@ -406,6 +406,27 @@ class OrganisationContactViewSet(viewsets.ModelViewSet):
     serializer_class = OrganisationContactSerializer
     queryset = OrganisationContact.objects.all()
 
+
+
+    @detail_route(methods=['GET',])
+    def contacts_linked(self, request, *args, **kwargs):
+        try:
+            qs = self.get_queryset().filter(user_status != 'draft')
+            serializer = OrganisationContactSerializer(qs,many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+
+
     @detail_route(methods=['POST',])
     def accept_user(self, request, *args, **kwargs):
         try:
@@ -436,8 +457,6 @@ class OrganisationContactViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-
-
     @detail_route(methods=['GET',])
     def decline_user(self, request, *args, **kwargs):
         try:
@@ -455,6 +474,3 @@ class OrganisationContactViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-       
-
-

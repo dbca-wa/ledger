@@ -399,7 +399,10 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             let name = full.first_name + ' ' + full.last_name;
-                            links +=  `<a data-email='${full.email}' data-name='${name}' data-id='${full.id}' class="remove-contact">Remove</a><br/>`;
+                            if (full.user_status =='draft' ){
+                                links +=  `<a data-email='${full.email}' data-name='${name}' data-id='${full.id}' class="remove-contact">Remove</a><br/>`;
+                                
+                            }
                             return links;
                         }
                     }
@@ -415,7 +418,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/contacts'),
+                    "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/contacts_linked'),
                     "dataSrc": ''
                 },
                 columns: [
@@ -431,10 +434,11 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             let name = full.first_name + ' ' + full.last_name;
-                            if (full.user_status == 'pending'){
+                            if (full.user_status == 'pending' && vm.org.edits){
                                 links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="accept_contact">Accept</a><br/>`;
                                 links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="decline_contact">Decline</a><br/>`;
                             }
+
 
                             return links;
 
