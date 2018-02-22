@@ -131,22 +131,6 @@
                     <div class ="row">
                     <form class="form-horizontal" action="index.html" method="post">
                      <div class="col-sm-6">
-                          
-                              <div class="form-group">
-                                <label for="" class="col-sm-6 control-label"> Company Administrator Pin Code 1:</label>
-                                <div class="col-sm-6">
-                                    <label class="control-label">{{org.pins.one}}</label>
-                                </div>
-                              </div>
-                              <div class="form-group">
-                                <label for="" class="col-sm-6 control-label" >Company Administrator Pin Code 2:</label>
-                                <div class="col-sm-6">
-                                    <label class="control-label">{{org.pins.two}}</label>
-                                </div>
-                              </div>
-
-                    </div>
-                    <div class="col-sm-6">
 
                             <div class="form-group">
                                 <label for="" class="col-sm-6 control-label"> Company User Pin Code 1:</label>
@@ -163,6 +147,23 @@
                            
                       
                     </div>
+                     <div class="col-sm-6">
+                          
+                              <div class="form-group" :disabled ='!org.edits'>
+                                <label for="" class="col-sm-6 control-label"> Company Administrator Pin Code 1:</label>
+                                <div class="col-sm-6">
+                                    <label class="control-label">{{org.pins.one}}</label>
+                                </div>
+                              </div>
+                              <div class="form-group" :disabled ='!org.edits'>
+                                <label for="" class="col-sm-6 control-label" >Company Administrator Pin Code 2:</label>
+                                <div class="col-sm-6">
+                                    <label class="control-label">{{org.pins.two}}</label>
+                                </div>
+                              </div>
+
+                    </div>
+                   
                      </form>
 
                     <div class="row">
@@ -178,6 +179,7 @@
 
                     <div>
                             <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/>
+                            <!-- <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/> -->
                     </div>
 
                    
@@ -429,10 +431,16 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             let name = full.first_name + ' ' + full.last_name;
-                            links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="accept_contact">Accept</a><br/>`;
-                            links +=  `<a data-email='${full.email}' data-name='${name}' data-id='${full.id}' class="decline_contact">Decline</a><br/>`;
+                            if (full.user_status == 'pending'){
+                                links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="accept_contact">Accept</a><br/>`;
+                                links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="decline_contact">Decline</a><br/>`;
+                            }
+
                             return links;
+
                         }
+
+                    
                     }
                   ],
                   processing: true
@@ -519,20 +527,19 @@ export default {
 
 
                 swal({
-                    title: "Accept Contact",
-                    text: "Are you sure you want to accept "+ name + "("+ email + ") as a contact  ?",
-                    type: "error",
+                    title: "Contact Accept",
+                    text: "Are you sure you want to accept contact request "+ name + "("+ email + ") ?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then(() => {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/accept_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
                         swal(
-                            'Accept',
-                            'You have successfully accepted '+name+' from '+id+'.',
+                            'Contact Accept',
+                            'You have successfully accepted '+name+' ('+id+'.)',
                             'success'
                             )
                         }, (error) => {
-                            swal('Accept','There was an error accepting '+name+' from '+id+'.','error')
+                            swal('Contact Accept','There was an error accepting '+name+' ('+id+')','error')
                         });
                 },(error) => {
                 });
@@ -540,8 +547,42 @@ export default {
 
 
 
+            vm.$refs.contacts_datatable_user.vmDataTable.on('click','.decline_contact',(e) => {
+                e.preventDefault();
+
+                let firstname = $(e.target).data('firstname');
+                let lastname = $(e.target).data('lastname');
+                let email = $(e.target).data('email');
+                let id = $(e.target).data('id');
+                let mobile = $(e.target).data('mobile');
+                let phone = $(e.target).data('phone');
+
+                vm.contact_user.first_name= firstname 
+                vm.contact_user.last_name= lastname
+                vm.contact_user.email= email 
+                vm.contact_user.mobile_number= mobile 
+                vm.contact_user.phone_number= phone 
+                // console.log(vm.contact_user)
 
 
+                swal({
+                    title: "Contact Decline",
+                    text: "Are you sure you want to decline contact request "+ name + "("+ email + ") ?",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then(() => {
+                    vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/decline_user'),{emulateJSON:true}).then((response) => {
+                        swal(
+                            'Contact Decline',
+                            'You have successfully Declined '+name+' ('+id+'.)',
+                            'success'
+                            )
+                        }, (error) => {
+                            swal('Contact Decline','There was an error declining '+name+' ('+id+')','error')
+                        });
+                },(error) => {
+                });
+            });
 
         },
         updateDetails: function() {

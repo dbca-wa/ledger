@@ -214,6 +214,7 @@ class Organisation(models.Model):
 class OrganisationContact(models.Model):
     USER_STATUS_CHOICES = (('pending', 'Pending'),
         ('active', 'Active'),
+        ('decline', 'Decline'),
         ('suspended', 'Suspended'))
     USER_ROLE_CHOICES = (('company_admin', 'Company Admin'),
         ('company_user', 'Company User')
@@ -247,36 +248,62 @@ class OrganisationContact(models.Model):
         return self.is_admin and self.user_status == 'active' and self.user_role =='company_admin' 
 
 
-    
-
     def accept_user(self, user):
-        self.status = 'active'
+        self.user_status = 'active'
         self.save()
         org = Organisation.objects.get(id =self.organisation_id)
         delegate = UserDelegation.objects.create(user=user,organisation=org)
         #log user acceptance
-        org.log_user_action(OrganisationAction.ACTION_ORGANISATION_CONTACT_ACCEPT.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
-
-    # def decline(self, user):
-    #     with transaction.atomic():
-    #         self.status = 'suspended'
-    #         self.save()
-    #         OrganisationContactDeclinedDetails.objects.create(
-    #             officer = request.user,
-    #             # reason = reason,
-    #             request = self
-    #         )
-    #         self.log_user_action(OrganisationAction.ACTION_CONTACT_DECLINE.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+        self.log_user_action(OrganisationContactAction.ACTION_ORGANISATION_CONTACT_ACCEPT.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
 
 
+    def decline_user(self,request):
+        with transaction.atomic():
+            self.user_status = 'decline'
+            self.save()
+            OrganisationContactDeclinedDetails.objects.create(
+                officer = request.user,
+                request = self
+            )
+            self.log_user_action(OrganisationContactAction.ACTION_ORGANISATION_CONTACT_DECLINE,request)
 
-    # class OrganisationContactDeclinedDetails(models.Model):
-    #     request = models.ForeignKey(OrganisationContact)
-    #     officer = models.ForeignKey(EmailUser, null=False)
-    #     # reason = models.TextField(blank=True)
+    def log_user_action(self, action, request):
+        return OrganisationContactAction.log_action(self, action, request.user)
 
-    #     class Meta:
-    #         app_label = 'wildlifecompliance'
+
+
+
+
+class OrganisationContactAction(UserAction):
+    ACTION_ORGANISATION_CONTACT_ACCEPT = "Accept  request {}"
+    ACTION_ORGANISATION_CONTACT_DECLINE = "Decline Request {}"
+    
+    
+
+    @classmethod
+    def log_action(cls, request, action, user):
+        return cls.objects.create(
+            request=request,
+            who=user,
+            what=str(action)
+        )
+
+    request = models.ForeignKey(OrganisationContact,related_name='action_logs')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+
+
+
+
+class OrganisationContactDeclinedDetails(models.Model):
+    request = models.ForeignKey(OrganisationContact)
+    officer = models.ForeignKey(EmailUser, null=False)
+    # reason = models.TextField(blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
     
         
 
