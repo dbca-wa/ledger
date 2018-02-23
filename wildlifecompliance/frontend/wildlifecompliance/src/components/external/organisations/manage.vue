@@ -640,7 +640,8 @@ export default {
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then(() => {
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
+                    // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
                         swal(
                             'Unlink',
                             'You have successfully unlinked '+name+' ('+id+'.)',

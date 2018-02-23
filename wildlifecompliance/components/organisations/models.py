@@ -264,26 +264,27 @@ class OrganisationContact(models.Model):
                 officer = request.user,
                 request = self
             )
-            self.log_user_action(OrganisationContactAction.ACTION_ORGANISATION_CONTACT_DECLINE,request)
+            self.log_user_action(OrganisationContactAction.ACTION_ORGANISATION_CONTACT_DECLINE.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
 
 
 
 
-    def unlink_user(self,user):
-        with transaction.atomic():
-            try:
-                delegate = UserDelegation.objects.get(organisation=self.organisation_id,user=user)
-            except UserDelegation.DoesNotExist:
-                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+    # def unlink_user(self,user,request):
+    #     with transaction.atomic():
+    #         try:
+    #             delegate = UserDelegation.objects.get(organisation=self.organisation_id,user=user)
+    #         except UserDelegation.DoesNotExist:
+    #             raise ValidationError('This user is not a member of {}'.format(str(self.organisation_id)))
             
-            # delete delegate
-            delegate.delete()
-            self.user_status ='unlinked'
-            self.save()
-            # log linking
-            # self.log_user_action(OrganisationAction.ACTION_UNLINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
-            # send email
-            # send_organisation_unlink_email_notification(user,request.user,self,request)
+    #         # delete delegate
+    #         delegate.delete()
+    #         self.user_status ='unlinked'
+    #         self.save()
+    #         # org = Organisation.objects.get(id=self.organisation_id)
+    #         # log linking
+    #         # self.log_user_action(OrganisationContactAction.ACTION_UNLINK.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
+    #         # send email
+    #         send_organisation_unlink_email_notification(user,request.user,self,request)
 
     def log_user_action(self, action, request):
         return OrganisationContactAction.log_action(self, action, request.user)
@@ -295,7 +296,7 @@ class OrganisationContact(models.Model):
 class OrganisationContactAction(UserAction):
     ACTION_ORGANISATION_CONTACT_ACCEPT = "Accept  request {}"
     ACTION_ORGANISATION_CONTACT_DECLINE = "Decline Request {}"
-    
+    ACTION_UNLINK ="Unlinked the user{}"
     
 
     @classmethod

@@ -104,13 +104,20 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def unlink_user(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = OrganisationUnlinkUserSerializer(data=request.data)
+            serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            try:
-                instance.delegates.get(id=request.user.id)
-            except EmailUser.DoesNotExist:
-                raise serializers.ValidationError('You are not permitted to perform this operation since you are not a member of this organisation.')
-            instance.unlink_user(serializer.validated_data['user_obj'],request)
+            user_obj = EmailUser.objects.get(
+                first_name = serializer.validated_data['first_name'],
+                last_name = serializer.validated_data['last_name'],
+                mobile_number = serializer.validated_data['mobile_number'],
+                phone_number = serializer.validated_data['phone_number'],
+                email = serializer.validated_data['email']
+                )
+            # try:
+            #     instance.delegates.get(id=user_obj.id)
+            # except EmailUser.DoesNotExist:
+            #     raise serializers.ValidationError('You are not permitted to perform this operation since you are not a member of this organisation.')
+            instance.unlink_user(user_obj,request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data);
         except serializers.ValidationError:
@@ -476,27 +483,27 @@ class OrganisationContactViewSet(viewsets.ModelViewSet):
 
 
 
-    @detail_route(methods=['POST',])
-    def unlink_user(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = OrgUserAcceptSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            user_obj = EmailUser.objects.get(
-                first_name = serializer.validated_data['first_name'],
-                last_name = serializer.validated_data['last_name'],
-                mobile_number = serializer.validated_data['mobile_number'],
-                phone_number = serializer.validated_data['phone_number'],
-                email = serializer.validated_data['email']
-                )
-            instance.unlink_user(user_obj)
-            return Response(serializer.data);
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+    # @detail_route(methods=['POST',])
+    # def unlink_user(self, request, *args, **kwargs):
+    #     try:
+    #         instance = self.get_object()
+    #         serializer = OrgUserAcceptSerializer(data=request.data)
+    #         serializer.is_valid(raise_exception=True)
+    #         user_obj = EmailUser.objects.get(
+    #             first_name = serializer.validated_data['first_name'],
+    #             last_name = serializer.validated_data['last_name'],
+    #             mobile_number = serializer.validated_data['mobile_number'],
+    #             phone_number = serializer.validated_data['phone_number'],
+    #             email = serializer.validated_data['email']
+    #             )
+    #         instance.unlink_user(user_obj,request)
+    #         return Response(serializer.data);
+    #     except serializers.ValidationError:
+    #         print(traceback.print_exc())
+    #         raise
+    #     except ValidationError as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(repr(e.error_dict))
+    #     except Exception as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(str(e))
