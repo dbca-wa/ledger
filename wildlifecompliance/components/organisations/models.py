@@ -213,6 +213,7 @@ class OrganisationContact(models.Model):
         ('pending', 'Pending'),
         ('active', 'Active'),
         ('decline', 'Decline'),
+        ('unlinked', 'Unlinked'),
         ('suspended', 'Suspended'))
     USER_ROLE_CHOICES = (('company_admin', 'Company Admin'),
         ('company_user', 'Company User')
@@ -246,7 +247,7 @@ class OrganisationContact(models.Model):
         return self.is_admin and self.user_status == 'active' and self.user_role =='company_admin' 
 
 
-    def accept_user(self, user):
+    def accept_user(self, user,request):
         self.user_status = 'active'
         self.save()
         org = Organisation.objects.get(id =self.organisation_id)
@@ -264,6 +265,25 @@ class OrganisationContact(models.Model):
                 request = self
             )
             self.log_user_action(OrganisationContactAction.ACTION_ORGANISATION_CONTACT_DECLINE,request)
+
+
+
+
+    def unlink_user(self,user):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self.organisation_id,user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            
+            # delete delegate
+            delegate.delete()
+            self.user_status ='unlinked'
+            self.save()
+            # log linking
+            # self.log_user_action(OrganisationAction.ACTION_UNLINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            # send_organisation_unlink_email_notification(user,request.user,self,request)
 
     def log_user_action(self, action, request):
         return OrganisationContactAction.log_action(self, action, request.user)

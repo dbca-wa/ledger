@@ -171,13 +171,10 @@ class OrganisationUnlinkUserSerializer(serializers.Serializer):
         return obj
         
 
-class OrgUserAcceptSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EmailUser
-        fields = (
-            'first_name',
-            'last_name',
-            'email',
-            'mobile_number',
-            'phone_number'
-            )
+class OrgUserAcceptSerializer(serializers.Serializer):
+    
+    first_name = serializers.CharField()
+    last_name =serializers.CharField()
+    email= serializers.EmailField()
+    mobile_number = serializers.IntegerField()
+    phone_number = serializers.IntegerField()
