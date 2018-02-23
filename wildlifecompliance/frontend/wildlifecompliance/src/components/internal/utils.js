@@ -23,6 +23,16 @@ export default {
             });
         });
     },
+    fetchCustomers: function(id){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(api.customers).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
     fetchCountries: function (){
         return new Promise ((resolve,reject) => {
             Vue.http.get(api.countries).then((response) => {
