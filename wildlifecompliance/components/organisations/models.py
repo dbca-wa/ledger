@@ -40,20 +40,17 @@ class Organisation(models.Model):
     def validate_pins(self,pin1,pin2,request):
         val_admin = self.admin_pin_one == pin1 and self.admin_pin_two == pin2
         val_user = self.user_pin_one == pin1 and self.user_pin_two == pin2
-        if val_admin and self.first_five_admin:
-
+        if val_admin:
             val= val_admin
             admin_flag= True
             role = 'company_admin' 
-        elif val_admin:
-            val= val_admin
-            admin_flag= True
-            role = 'company_user'
         elif val_user:
             val = val_user
             admin_flag = False
             role = 'company_user'
-        else: val = False
+        else:
+            val = False
+            return val
 
         self.add_user_contact(request.user,request,admin_flag,role)
         return val

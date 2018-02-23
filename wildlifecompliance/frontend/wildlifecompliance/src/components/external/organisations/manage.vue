@@ -418,7 +418,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/contacts_linked'),
+                    "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/contacts'),
                     "dataSrc": ''
                 },
                 columns: [
@@ -434,12 +434,38 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             let name = full.first_name + ' ' + full.last_name;
-                            if (full.user_status == 'pending' && vm.org.edits){
-                                links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="accept_contact">Accept</a><br/>`;
-                                links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="decline_contact">Decline</a><br/>`;
-                            }
+                            if (!vm.org_edits){
 
 
+                                if(full.user_status == 'pending'){
+                                        links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="accept_contact">Accept</a><br/>`;
+                                        links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="decline_contact">Decline</a><br/>`;
+                                    }
+                                else{
+                                    if(full.user_status == 'suspended'){
+                                        links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="accept_contact">Reinstate</a><br/>`;
+                                    }
+                                    else{
+                                        if(full.user_status == 'active'){
+                                        
+                                            links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="accept_contact">Unlink</a><br/>`;
+                                            links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="decline_contact">Suspend</a><br/>`;
+                                            if(full.user_role == 'company_user'){
+                                            links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="decline_contact">Make Company Admin</a><br/>`;
+                                            }
+                                            else{
+                                                links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="decline_contact">Make Company User</a><br/>`;
+                                            }
+
+                                        }
+
+                                    }
+
+
+
+                                }
+
+                            }        
                             return links;
 
                         }
