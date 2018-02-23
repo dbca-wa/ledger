@@ -1,8 +1,9 @@
 Django<1.11.0
 git+https://github.com/dbca-wa/dpaw-utils.git@0.3a16#egg=dpaw-utils
 git+https://github.com/django-oscar/django-oscar.git@17a1f6b#egg=django-oscar
-social-auth-app-django==1.2.0
-social-auth-core==1.4.0
+social-auth-app-django==2.1.0
+#social-auth-core==1.7.0
+git+https://github.com/scottp-dpaw/social-core.git@email_fix#egg=social-auth-core
 coverage==4.3.1
 coveralls==1.1
 reportlab==3.3.0
