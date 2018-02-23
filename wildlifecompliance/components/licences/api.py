@@ -30,14 +30,14 @@ from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.components.licences.models import (
-    Licence
+    WildlifeLicence
 )
 from wildlifecompliance.components.licences.serializers import (
     LicenceSerializer
 )
 
 class LicenceViewSet(viewsets.ModelViewSet):
-    queryset = Licence.objects.all()
+    queryset = WildlifeLicence.objects.all()
     serializer_class = LicenceSerializer
 
     def list(self, request, *args, **kwargs):
