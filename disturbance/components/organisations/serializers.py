@@ -141,14 +141,21 @@ class OrganisationActionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class OrganisationRequestCommsSerializer(serializers.ModelSerializer):
+    documents = serializers.SerializerMethodField()
     class Meta:
         model = OrganisationRequestLogEntry
         fields = '__all__'
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
 
 class OrganisationCommsSerializer(serializers.ModelSerializer):
+    documents = serializers.SerializerMethodField()
     class Meta:
         model = OrganisationLogEntry
         fields = '__all__'
+        
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]    
 
 class OrganisationUnlinkUserSerializer(serializers.Serializer):
     user = serializers.IntegerField()

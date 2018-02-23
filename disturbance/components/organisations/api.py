@@ -155,6 +155,38 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def add_comms_log(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request.data['organisation'] = u'{}'.format(instance.id)
+                request.data['staff'] = u'{}'.format(request.user.id)
+                serializer = OrganisationCommsSerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+                # Save the files
+                for f in request.FILES:
+                    document = comms.documents.create()
+                    document.name = str(request.FILES[f])
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+                
+                return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    
+
     @list_route(methods=['POST',])
     def existance(self, request, *args, **kwargs):
         try:
@@ -357,6 +389,36 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             qs = instance.comms_logs.all()
             serializer = OrganisationRequestCommsSerializer(qs,many=True)
             return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def add_comms_log(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request.data['request'] = u'{}'.format(instance.id)
+                request.data['staff'] = u'{}'.format(request.user.id)
+                serializer = OrganisationRequestCommsSerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+                # Save the files
+                for f in request.FILES:
+                    document = comms.documents.create()
+                    document.name = str(request.FILES[f])
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+                
+                return Response(serializer.data) 
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

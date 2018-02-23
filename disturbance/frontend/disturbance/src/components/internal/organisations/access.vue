@@ -3,7 +3,7 @@
     <div class="row">
         <h3>Organisation Access Request {{ access.id }}</h3>
         <div class="col-md-3">
-            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
+            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -148,6 +148,7 @@ export default {
         // Filters
         logs_url: helpers.add_endpoint_json(api_endpoints.organisation_requests,vm.$route.params.access_id+'/action_log'),
         comms_url: helpers.add_endpoint_json(api_endpoints.organisation_requests,vm.$route.params.access_id+'/comms_log'),
+        comms_add_url: helpers.add_endpoint_json(api_endpoints.organisation_requests,vm.$route.params.access_id+'/add_comms_log'),
         actionDtOptions:{
             language: {
                 processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"

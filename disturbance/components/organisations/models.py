@@ -191,6 +191,19 @@ class OrganisationAction(UserAction):
 
     class Meta:
         app_label = 'disturbance'
+
+def update_organisation_comms_log_filename(instance, filename):
+    return 'organisations/{}/communications/{}/{}'.format(instance.log_entry.organisation.id,instance.id,filename)
+
+
+class OrganisationLogDocument(Document):
+    log_entry = models.ForeignKey('OrganisationLogEntry',related_name='documents')
+    _file = models.FileField(upload_to=update_organisation_comms_log_filename)
+
+    class Meta:
+        app_label = 'disturbance'
+
+
     
 class OrganisationLogEntry(CommunicationsLogEntry):
     organisation = models.ForeignKey(Organisation, related_name='comms_logs')
@@ -328,6 +341,17 @@ class OrganisationRequestDeclinedDetails(models.Model):
     request = models.ForeignKey(OrganisationRequest)
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
+
+    class Meta:
+        app_label = 'disturbance'
+
+def update_organisation_request_comms_log_filename(instance, filename):
+    return 'organisation_requests/{}/communications/{}/{}'.format(instance.log_entry.request.id,instance.id,filename)
+
+
+class OrganisationRequestLogDocument(Document):
+    log_entry = models.ForeignKey('OrganisationRequestLogEntry',related_name='documents')
+    _file = models.FileField(upload_to=update_organisation_request_comms_log_filename)
 
     class Meta:
         app_label = 'disturbance'
