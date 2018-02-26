@@ -39,6 +39,7 @@ export default {
         return new Promise ((resolve,reject) => {
             Vue.http.get(helpers.add_endpoint_json(api.organisations,id)).then((response) => {
                 resolve(response.body);
+                console.log(response.body)
             },
             (error) => {
                 reject(error);

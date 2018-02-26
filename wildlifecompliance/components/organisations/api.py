@@ -35,7 +35,7 @@ from wildlifecompliance.components.organisations.models import  (
                                     OrganisationRequestLogEntry,
                                 )
 
-from wildlifecompliance.components.organisations .serializers import (   
+from wildlifecompliance.components.organisations.serializers import (   
                                         OrganisationSerializer,
                                         OrganisationAddressSerializer,
                                         DetailsSerializer,
@@ -50,6 +50,7 @@ from wildlifecompliance.components.organisations .serializers import (
                                         OrganisationRequestCommsSerializer,
                                         OrganisationCommsSerializer,
                                         OrganisationUnlinkUserSerializer,
+                                        OrgUserAcceptSerializer,
                                     )
 from wildlifecompliance.components.applications.serializers import (
                                         DTApplicationSerializer,
@@ -62,6 +63,24 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET',])
     def contacts(self, request, *args, **kwargs):
         pass
+
+    @detail_route(methods=['GET',])
+    def contacts_linked(self, request, *args, **kwargs):
+        try:
+            qs = self.get_queryset()
+            serializer = OrganisationContactSerializer(qs,many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
 
     @detail_route(methods=['POST',])
     def validate_pins(self, request, *args, **kwargs):
@@ -85,13 +104,20 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def unlink_user(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = OrganisationUnlinkUserSerializer(data=request.data)
+            serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            try:
-                instance.delegates.get(id=request.user.id)
-            except EmailUser.DoesNotExist:
-                raise serializers.ValidationError('You are not permitted to perform this operation since you are not a member of this organisation.')
-            instance.unlink_user(serializer.validated_data['user_obj'],request)
+            user_obj = EmailUser.objects.get(
+                first_name = serializer.validated_data['first_name'],
+                last_name = serializer.validated_data['last_name'],
+                mobile_number = serializer.validated_data['mobile_number'],
+                phone_number = serializer.validated_data['phone_number'],
+                email = serializer.validated_data['email']
+                )
+            # try:
+            #     instance.delegates.get(id=user_obj.id)
+            # except EmailUser.DoesNotExist:
+            #     raise serializers.ValidationError('You are not permitted to perform this operation since you are not a member of this organisation.')
+            instance.unlink_user(user_obj,request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data);
         except serializers.ValidationError:
@@ -103,6 +129,42 @@ class OrganisationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+
+
+    @detail_route(methods=['POST',])
+    def make_admin_user(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = OrgUserAcceptSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user_obj = EmailUser.objects.get(
+                first_name = serializer.validated_data['first_name'],
+                last_name = serializer.validated_data['last_name'],
+                mobile_number = serializer.validated_data['mobile_number'],
+                phone_number = serializer.validated_data['phone_number'],
+                email = serializer.validated_data['email']
+                )
+            # try:
+            #     instance.delegates.get(id=user_obj.id)
+            # except EmailUser.DoesNotExist:
+            #     raise serializers.ValidationError('You are not permitted to perform this operation since you are not a member of this organisation.')
+            instance.make_admin_user(user_obj,request)
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+            
+
+
 
     @detail_route(methods=['GET',])
     def action_log(self, request, *args, **kwargs):
@@ -404,3 +466,80 @@ class OrganisationAccessGroupMembers(views.APIView):
 class OrganisationContactViewSet(viewsets.ModelViewSet):
     serializer_class = OrganisationContactSerializer
     queryset = OrganisationContact.objects.all()
+
+   
+    @detail_route(methods=['POST',])
+    def accept_user(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            
+            serializer = OrgUserAcceptSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user_obj = EmailUser.objects.get(
+                first_name = serializer.validated_data['first_name'],
+                last_name = serializer.validated_data['last_name'],
+                mobile_number = serializer.validated_data['mobile_number'],
+                phone_number = serializer.validated_data['phone_number'],
+                email = serializer.validated_data['email']
+            )
+            instance.accept_user(user_obj,request)
+            serializer= self.get_serializer(instance)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    @detail_route(methods=['GET',])
+    def decline_user(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            
+            instance.decline_user(request)
+            serializer = OrganisationContactSerializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+
+
+
+
+    # @detail_route(methods=['POST',])
+    # def unlink_user(self, request, *args, **kwargs):
+    #     try:
+    #         instance = self.get_object()
+    #         serializer = OrgUserAcceptSerializer(data=request.data)
+    #         serializer.is_valid(raise_exception=True)
+    #         user_obj = EmailUser.objects.get(
+    #             first_name = serializer.validated_data['first_name'],
+    #             last_name = serializer.validated_data['last_name'],
+    #             mobile_number = serializer.validated_data['mobile_number'],
+    #             phone_number = serializer.validated_data['phone_number'],
+    #             email = serializer.validated_data['email']
+    #             )
+    #         instance.unlink_user(user_obj,request)
+    #         return Response(serializer.data);
+    #     except serializers.ValidationError:
+    #         print(traceback.print_exc())
+    #         raise
+    #     except ValidationError as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(repr(e.error_dict))
+    #     except Exception as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(str(e))

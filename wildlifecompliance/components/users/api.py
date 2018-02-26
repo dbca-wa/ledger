@@ -54,6 +54,13 @@ class GetProfile(views.APIView):
         serializer  = UserSerializer(request.user)
         return Response(serializer.data)
 
+class GetUser(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    def get(self, request, format=None):
+        serializer  = PersonalSerializer(request.user)
+        return Response(serializer.data)
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()
     serializer_class = UserSerializer

@@ -172,11 +172,11 @@
                           <div class="form-group">
                             <label for="" class="col-sm-5 control-label">Do you manage licences on behalf of an organisation?</label>
                             <div class="col-sm-4">
-                                <label class="radio-inline">
-                                  <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
+                                 <label class="radio-inline">
+                                  <input :disabled="hasOrgs" type="radio" name="behalf_of_org" v-model="managesOrg" value="No" > No
                                 </label>
                                 <label class="radio-inline">
-                                  <input :disabled="hasOrgs" type="radio" name="behalf_of_org" v-model="managesOrg" value="No" > No
+                                  <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
                                 </label>
                             </div>
                           </div>

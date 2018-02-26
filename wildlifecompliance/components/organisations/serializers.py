@@ -10,7 +10,7 @@ from wildlifecompliance.components.organisations.models import (
                                 OrganisationLogEntry,
                                 ledger_organisation,
                             )
-from wildlifecompliance.components.organisations.utils import can_manage_org
+from wildlifecompliance.components.organisations.utils import can_manage_org, can_admin_org
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
 
@@ -53,6 +53,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
     address = OrganisationAddressSerializer(read_only=True) 
     pins = serializers.SerializerMethodField(read_only=True)
     delegates = DelegateSerializer(many=True,read_only=True)
+    edits = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Organisation
         fields = (
@@ -64,13 +65,20 @@ class OrganisationSerializer(serializers.ModelSerializer):
                     'phone_number',
                     'pins',
                     'delegates',
+                    'edits',
                 )
+
+    def get_edits(self,obj):
+        user =  self.context['request'].user
+        # Check if the request user is among the first five delegates in the organisation
+        return can_admin_org(obj,user)
+            
 
     def get_pins(self,obj):
         user =  self.context['request'].user
         # Check if the request user is among the first five delegates in the organisation
         if can_manage_org(obj,user):
-            return {'one': obj.pin_one, 'two': obj.pin_two}
+            return {'one': obj.admin_pin_one, 'two': obj.admin_pin_two, 'three':obj.user_pin_one,'four':obj.user_pin_two}
         else:
             return None
 
@@ -162,3 +170,11 @@ class OrganisationUnlinkUserSerializer(serializers.Serializer):
             raise serializers.ValidationError('The user you want to unlink does not exist.')
         return obj
         
+
+class OrgUserAcceptSerializer(serializers.Serializer):
+    
+    first_name = serializers.CharField()
+    last_name =serializers.CharField()
+    email= serializers.EmailField()
+    mobile_number = serializers.IntegerField()
+    phone_number = serializers.IntegerField()
