@@ -17,7 +17,8 @@ from wildlifecompliance.components.organisations.emails import (
                         send_organisation_unlink_email_notification,
                         send_organisation_contact_adminuser_email_notification,
                         send_organisation_contact_user_email_notification,
-                        send_organisation_contact_suspend_email_notification
+                        send_organisation_contact_suspend_email_notification,
+                        send_organisation_reinstate_email_notification
                     )
 
 @python_2_unicode_compatible
@@ -234,7 +235,7 @@ class Organisation(models.Model):
             # log linking
             self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_SUSPEND.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
-            send_organisation_unlink_email_notification(user,request.user,self,request)
+            send_organisation_reinstate_email_notification(user,request.user,self,request)
 
     def generate_pins(self):
         self.admin_pin_one = self._generate_pin()
