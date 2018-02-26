@@ -30,6 +30,29 @@ class OrganisationUnlinkNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/organisation_unlink_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_unlink_notification.txt'
 
+class OrganisationContactAdminUserNotificationEmail(TemplateEmailBase):
+    subject = 'You have been linked as Company Admin.'
+    html_template = 'wildlifecompliance/emails/organisation_contact_admin_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_contact_admin_notification.txt'
+
+
+
+
+def send_organisation_contact_adminuser_email_notification(linked_user,linked_by,organisation,request):
+    email = OrganisationContactAdminUserNotificationEmail()
+
+    context = {
+        'user': linked_user,
+        'linked_by': linked_by,
+        'organisation': organisation
+    }
+
+    msg = email.send(linked_user.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, linked_user, sender=sender)
+
+
+
 def send_organisation_link_email_notification(linked_user,linked_by,organisation,request):
     email = OrganisationLinkNotificationEmail()
 
