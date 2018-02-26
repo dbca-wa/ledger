@@ -3,6 +3,7 @@ import Search from '../search.vue'
 import OrgAccessTable from '../organisations/dashboard.vue'
 import OrgAccess from '../organisations/access.vue'
 import Organisation from '../organisations/manage.vue'
+import Customer from '../customers/manage.vue'
 import Application from '../applications/application.vue'
 import Referral from '../referrals/referral.vue'
 import LicenceDash from '../licences/dashboard.vue'
@@ -60,6 +61,23 @@ export default
                     path: ':org_id',
                     component: Organisation,
                     name:"internal-org-detail"
+                },
+ 
+            ]
+        },
+        {
+            path: 'customers',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: ':customer_id',
+                    component: Customer,
+                    name:"internal-customer-detail"
                 },
  
             ]

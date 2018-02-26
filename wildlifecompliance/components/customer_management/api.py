@@ -29,32 +29,20 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.licences.models import (
-    WildlifeLicence
-)
-from wildlifecompliance.components.licences.serializers import (
-    LicenceSerializer
+
+from wildlifecompliance.components.customer_management.serializers import (
+    CustomerSerializer
 )
 
-class LicenceViewSet(viewsets.ModelViewSet):
-    queryset = WildlifeLicence.objects.all()
-    serializer_class = LicenceSerializer
+class CustomerViewSet(viewsets.ModelViewSet):
+    queryset = EmailUser.objects.all()
+    serializer_class = CustomerSerializer
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset() 
         # Filter by org
-        org_id = request.GET.get('org_id',None)
-        if org_id:
-            queryset = queryset.filter(applicant_id=org_id)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @list_route(methods=['GET',])
-    def user_list(self, request, *args, **kwargs):
-        user_orgs = [org.id for org in request.user.wildlifecompliance_organisations.all()];
-        qs = []
-        #qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
-        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs)))
-        queryset = list(set(qs))
+        #org_id = request.GET.get('org_id',None)
+        #if org_id:
+        #    queryset = queryset.filter(applicant_id=org_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
