@@ -1,5 +1,5 @@
 [![Build
-status](https://travis-ci.org/parksandwildlife/ledger.svg?branch=master)](https://travis-ci.org/parksandwildlife/ledger/builds) [![Coverage Status](https://coveralls.io/repos/github/parksandwildlife/ledger/badge.svg?branch=master)](https://coveralls.io/github/parksandwildlife/ledger?branch=master)
+status](https://travis-ci.org/dbca-wa/ledger.svg?branch=master)](https://travis-ci.org/dbca-wa/ledger/builds) [![Coverage Status](https://coveralls.io/repos/github/dbca-wa/ledger/badge.svg?branch=master)](https://coveralls.io/github/dbca-wa/ledger?branch=master)
 # Ledger
 
 This project is the hub of the Department's online commerce activities.
@@ -24,7 +24,7 @@ required environment variables at run time. Example content:
     SECRET_KEY="ThisIsASecretKey"
     DEFAULT_HOST="https://website.domain/"
     EMAIL_HOST="emailhost"
-    EMAIL_FROM="noreply@email.address"
+    EMAIL_FROM="system@email.address"
     PARENT_HOST="website.domain"
     HOST_PORT=""
     ALLOWED_HOSTS=[u'website.domain']

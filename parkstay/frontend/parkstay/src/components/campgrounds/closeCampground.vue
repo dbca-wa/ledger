@@ -22,7 +22,7 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Closure end: </label>
+                        <label for="open_cg_range_start">Reopen on: </label>
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date' id='close_cg_range_end'>
@@ -62,12 +62,12 @@ module.exports = {
     data: function() {
         return {
             status: '',
-            id:'',
             formdata: {
+                campground: '',
                 range_start: '',
                 range_end: '',
-                closure_reason:'',
-                status:'1',
+                closure_reason: '',
+                status: '1',
                 details: ''
             },
             closeStartPicker: '',
@@ -86,8 +86,7 @@ module.exports = {
             return this.$parent.isOpenCloseCG;
         },
         requireDetails: function () {
-            let vm =this;
-            return (vm.formdata.closure_reason == 1)? true: false;
+            return (this.formdata.closure_reason === '1');
         },
     },
     components: {
@@ -99,10 +98,11 @@ module.exports = {
         close: function() {
             this.$parent.isOpenCloseCG = false;
             this.formdata = {
+                campground: '',
                 range_start: '',
                 range_end: '',
-                closure_reason:'',
-                status:'1',
+                closure_reason: '',
+                status: '1',
                 details: ''
             };
             this.$refs.reason.selected = "";
@@ -116,7 +116,7 @@ module.exports = {
             let vm = this;
             var data = this.formdata;
             $.ajax({
-                url: api_endpoints.opencloseCG(vm.id),
+                url: api_endpoints.campground_booking_ranges(),
                 method: 'POST',
                 xhrFields: { withCredentials:true },
                 data: data,
@@ -126,7 +126,7 @@ module.exports = {
                     vm.close();
                     bus.$emit('refreshCGTable');
                 },
-                error:function (data){
+                error: function (data) {
                     vm.errors = true;
                     vm.errorString = helpers.apiError(data);
                 }
@@ -141,7 +141,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.closure_reason === '1';
+                                return vm.requireDetails;
                             }
                         }
                     }
@@ -177,9 +177,8 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        bus.$on('openclose', function(data){
-            vm.status = data.status;
-            vm.id = data.id;
+        bus.$on('closeCG', function(data){
+            vm.formdata.campground = data.id;
         });
         vm.closeStartPicker = $('#close_cg_range_start');
         vm.closeEndPicker = $('#close_cg_range_end');

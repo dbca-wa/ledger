@@ -22,7 +22,7 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Closure end: </label>
+                        <label for="open_cg_range_start">Reopen on: </label>
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date' id='close_cg_range_end'>
@@ -61,11 +61,10 @@ module.exports = {
     name: 'pkCsClose',
     data: function() {
         return {
-            id:'',
-            current_closure: '',
             reason:'',
             formdata: {
-                status:1,
+                campsite: '',
+                status: 1,
                 range_start: '',
                 range_end: '',
                 closure_reason:'',
@@ -89,7 +88,7 @@ module.exports = {
         },
         requireDetails: function () {
             let vm =this;
-            return (vm.formdata.closure_reason == 1)? true: false;
+            return (vm.formdata.closure_reason === '1');
         },
     },
     components: {
@@ -129,7 +128,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.reason === '3';
+                                return vm.requireDetails;
                             }
                         }
                     }

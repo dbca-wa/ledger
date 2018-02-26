@@ -160,7 +160,7 @@ def send_assessment_done_email(assessment, request):
         'url': url
     }
     to_email = application.assigned_officer.email if application.assigned_officer else \
-        settings.WILDLIFELICENSING_EMAIL_CATCHALL
+        settings.EMAIL_FROM
     msg = email.send(to_email, context=context)
     _log_email(msg, application=application, sender=request.user)
 
@@ -324,7 +324,7 @@ def send_application_declined_email(declined_details, request):
         recipient_email = application.proxy_applicant.email
 
     msg = email.send(recipient_email, context=context)
-    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    sender = request.user if request else settings.EMAIL_FROM
     _log_email(msg, application=application, sender=sender)
     return recipient_email
 

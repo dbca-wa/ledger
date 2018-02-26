@@ -22,7 +22,7 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Closure end: </label>
+                        <label for="open_cg_range_start">Reopen on: </label>
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date' :id='close_cg_range_end'>
@@ -96,7 +96,7 @@ module.exports = {
             return this.statusHistory.id ? this.statusHistory.id : '';
         },
         requireDetails: function() {
-            return this.statusHistory.closure_reason == '1';
+            return this.statusHistory.closure_reason === '1';
         },
     },
     components: {
@@ -138,7 +138,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.statusHistory.reason=== '1';
+                                return vm.requireDetails;
                             }
                         }
                     }

@@ -1,8 +1,9 @@
 Django<1.11.0
-git+https://github.com/parksandwildlife/dpaw-utils.git@0.3a16#egg=dpaw-utils
+git+https://github.com/dbca-wa/dpaw-utils.git@0.3a16#egg=dpaw-utils
 git+https://github.com/django-oscar/django-oscar.git@17a1f6b#egg=django-oscar
-social-auth-app-django==1.2.0
-social-auth-core==1.4.0
+social-auth-app-django==2.1.0
+#social-auth-core==1.7.0
+git+https://github.com/scottp-dpaw/social-core.git@email_fix#egg=social-auth-core
 coverage==4.3.1
 coveralls==1.1
 reportlab==3.3.0
@@ -10,7 +11,7 @@ django_bootstrap3==7.1.0
 django-braces>=1.8.1
 django-datatables-view==1.13.0
 django-reversion==1.10.1
-git+https://github.com/scottp-dpaw/django-preserialize.git#egg=django-preserialize
+git+https://github.com/bruth/django-preserialize.git@11f9e82#egg=django-preserialize
 django-countries==3.4.1
 django-cron==0.5.0
 django-dynamic-fixture==1.9.1
