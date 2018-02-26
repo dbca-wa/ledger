@@ -40,6 +40,25 @@ class OrganisationContactUserNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/organisation_contact_user_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_contact_user_notification.txt'
 
+class OrganisationContactSuspendNotificationEmail(TemplateEmailBase):
+    subject = 'You have been suspended as Company User.'
+    html_template = 'wildlifecompliance/emails/organisation_contact_suspend_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_contact_suspend_notification.txt'
+
+
+def send_organisation_contact_suspend_email_notification(linked_user,linked_by,organisation,request):
+    email = OrganisationContactSuspendNotificationEmail()
+
+    context = {
+        'user': linked_user,
+        'linked_by': linked_by,
+        'organisation': organisation
+    }
+
+    msg = email.send(linked_user.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, linked_user, sender=sender)
+
 
 
 def send_organisation_contact_user_email_notification(linked_user,linked_by,organisation,request):
