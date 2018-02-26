@@ -5,11 +5,10 @@ from django.conf import settings
 from wildlifecompliance.components.organisations.models import Organisation,OrganisationContact
 from ledger.accounts.models import EmailUser
 
- class OrganisationListener(object):
+class OrganisationListener(object):
      """
      Event listener for Organisation 
      """
-
      @staticmethod
      @receiver(pre_save, sender=Organisation)
      def _pre_save(sender, instance, **kwargs):
