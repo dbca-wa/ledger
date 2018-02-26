@@ -443,7 +443,7 @@ export default {
                                     }
                                 else{
                                     if(full.user_status == 'suspended'){
-                                        links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="accept_contact">Reinstate</a><br/>`;
+                                        links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="reinstate_contact">Reinstate</a><br/>`;
                                     }
                                     else{
                                         if(full.user_status == 'active'){
@@ -734,7 +734,7 @@ export default {
 
 
 
-             vm.$refs.contacts_datatable_user.vmDataTable.on('click','.suspend_contact',(e) => {
+            vm.$refs.contacts_datatable_user.vmDataTable.on('click','.suspend_contact',(e) => {
                 e.preventDefault();
 
                 let firstname = $(e.target).data('firstname');
@@ -770,6 +770,46 @@ export default {
                 },(error) => {
                 });
             });
+
+
+
+             vm.$refs.contacts_datatable_user.vmDataTable.on('click','.reinstate_contact',(e) => {
+                e.preventDefault();
+
+                let firstname = $(e.target).data('firstname');
+                let lastname = $(e.target).data('lastname');
+                let email = $(e.target).data('email');
+                let id = $(e.target).data('id');
+                let mobile = $(e.target).data('mobile');
+                let phone = $(e.target).data('phone');
+
+                vm.contact_user.first_name= firstname 
+                vm.contact_user.last_name= lastname
+                vm.contact_user.email= email 
+                vm.contact_user.mobile_number= mobile 
+                vm.contact_user.phone_number= phone 
+
+
+                swal({
+                    title: "Reinstate User",
+                    text: "Are you sure you want to Reinstate  "+ name + "("+ email + ")  ?",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then(() => {
+                    // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/reinstate_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
+                        swal(
+                            'Reinstate User',
+                            'You have successfully reinstated '+name+' ('+id+') User',
+                            'success'
+                            )
+                        }, (error) => {
+                            swal('Reinstate User','There was an error reinstating '+name+' ('+id+') User','error')
+                        });
+                },(error) => {
+                });
+            });
+
 
 
 

@@ -193,6 +193,26 @@ class Organisation(models.Model):
             # send email
             send_organisation_unlink_email_notification(user,request.user,self,request)
 
+
+
+    def reinstate_user(self,user,request):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self,user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # delete contact person
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_status ='active'
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_SUSPEND.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_unlink_email_notification(user,request.user,self,request)
+
     def generate_pins(self):
         self.admin_pin_one = self._generate_pin()
         self.admin_pin_two = self._generate_pin()
@@ -407,6 +427,7 @@ class OrganisationAction(UserAction):
     ACTION_ORGANISATION_CONTACT_ACCEPT = "Accepted contact {}"
     ACTION_CONTACT_DECLINE = "Declined contact {}"
     ACTION_MAKE_CONTACT_SUSPEND = "Suspended contact {}"
+    ACTION_MAKE_CONTACT_REINSTATE = "REINSTATED contact {}"
 
     @classmethod
     def log_action(cls, organisation, action, user):
