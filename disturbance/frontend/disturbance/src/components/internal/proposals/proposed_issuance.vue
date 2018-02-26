@@ -66,7 +66,7 @@
             </div>
             <div slot="footer">
                 <button type="button" v-if="issuingApproval" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Issuing</button>
-                <button type="button" v-else class="btn btn-default" @click="ok">Issue</button>
+                <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
@@ -130,6 +130,7 @@ export default {
             let vm =this;
             if($(vm.form).valid()){
                 vm.sendData();
+                //vm.$router.push({ path: '/internal' });
             }
         },
         cancel:function () {
@@ -162,6 +163,8 @@ export default {
                         vm.issuingApproval = false;
                         vm.close();
                         vm.$emit('refreshFromResponse',response);
+                        vm.$router.push({ path: '/internal' }); //Navigate to dashboard page after Propose issue.
+
                     },(error)=>{
                         vm.errors = true;
                         vm.issuingApproval = false;

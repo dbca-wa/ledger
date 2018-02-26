@@ -206,7 +206,7 @@ export default {
                                     links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
                                 }
                                 else if (full.can_user_view) {
-                                    links +=  `<a href='/external/proposal/${full.id}'>View2</a><br/>`;
+                                    links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
                                 }
                             }
                             return links;

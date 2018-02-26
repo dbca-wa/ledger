@@ -10,7 +10,7 @@
                         <strong>Communications</strong><br/>
                         <div class="row">
                             <div class="col-sm-5">
-                                <a ref="showCommsBtn" class="actionBtn">Show</a>
+                                <a tabindex="2" ref="showCommsBtn" class="actionBtn">Show</a>
                             </div>
                             <template v-if="!disable_add_entry">
                                 <div class="col-sm-1">
@@ -238,7 +238,7 @@ export default {
                 title: 'Communications Log',
                 container: 'body',
                 placement: 'right',
-                trigger: "click",
+                trigger: "focus",
                 template: `<div class="popover ${popover_name}" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>`,
             }).on('inserted.bs.popover', function () {
                 table = $('#'+commsLogId).DataTable(datatable_options);
@@ -251,7 +251,7 @@ export default {
                         // the next line prevents from scrolling up to the top after clicking on the popover.
                         $($tablePopover).on('click', function (e) {
                             e.preventDefault();
-                            return true;
+                            return true;   
                         });
                     }
                 });
@@ -298,7 +298,7 @@ export default {
                 title: 'Action Log',
                 container: 'body',
                 placement: 'right',
-                trigger: "click",
+                trigger: "focus",
                 template: `<div class="popover ${popover_name}" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>`,
             }).on('inserted.bs.popover', function () {
                 table = $('#'+actionLogId).DataTable(datatable_options);
