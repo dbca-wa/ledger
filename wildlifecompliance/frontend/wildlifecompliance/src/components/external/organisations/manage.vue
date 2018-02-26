@@ -562,7 +562,7 @@ export default {
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then(() => {
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/accept_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/accept_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
                         swal(
                             'Contact Accept',
                             'You have successfully accepted '+name+' ('+id+'.)',

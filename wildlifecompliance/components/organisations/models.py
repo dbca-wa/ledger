@@ -77,6 +77,25 @@ class Organisation(models.Model):
             # log linking
             self.log_user_action(OrganisationAction.ACTION_CONTACT_ADDED.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
 
+    def accept_user(self, user,request):
+        with transaction.atomic():
+            try:
+                UserDelegation.objects.get(organisation=self,user=user)
+                raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
+            except UserDelegation.DoesNotExist:
+                delegate = UserDelegation.objects.create(organisation=self,user=user)
+
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_status ='active'
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+
+        #log linking
+        self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+
+
     
     def link_user(self,user,request,admin_flag):
         with transaction.atomic():
@@ -322,15 +341,6 @@ class OrganisationContact(models.Model):
         :return: True if the application is in one of the editable status.
         """
         return self.is_admin and self.user_status == 'active' and self.user_role =='company_admin' 
-
-
-    def accept_user(self, user,request):
-        self.user_status = 'active'
-        self.save()
-        org = Organisation.objects.get(id =self.organisation_id)
-        delegate = UserDelegation.objects.create(user=user,organisation=org)
-        #log user acceptance
-        self.log_user_action(OrganisationContactAction.ACTION_ORGANISATION_CONTACT_ACCEPT.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
 
 
     def decline_user(self,request):
