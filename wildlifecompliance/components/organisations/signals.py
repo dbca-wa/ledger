@@ -5,26 +5,26 @@ from django.conf import settings
 from wildlifecompliance.components.organisations.models import Organisation,OrganisationContact
 from ledger.accounts.models import EmailUser
 
-# class OrganisationListener(object):
-#     """
-#     Event listener for Organisation 
-#     """
+ class OrganisationListener(object):
+     """
+     Event listener for Organisation 
+     """
 
-#     @staticmethod
-#     @receiver(pre_save, sender=Organisation)
-#     def _pre_save(sender, instance, **kwargs):
-#         raise ValueError('error here')
-#         if instance.pk:
-#             original_instance = Organisation.objects.get(pk=instance.pk)
-#             setattr(instance, "_original_instance", original_instance)
+     @staticmethod
+     @receiver(pre_save, sender=Organisation)
+     def _pre_save(sender, instance, **kwargs):
+         raise ValueError('error here')
+         if instance.pk:
+             original_instance = Organisation.objects.get(pk=instance.pk)
+             setattr(instance, "_original_instance", original_instance)
 
-#         elif hasattr(instance, "_original_instance"):
-#             delattr(instance, "_original_instance")
-#         else:
-#             instance.admin_pin_one = instance._generate_pin()
-#             instance.admin_pin_two = instance._generate_pin() 
-#             instance.user_pin_one = instance._generate_pin()
-#             instance.user_pin_two = instance._generate_pin() 
+         elif hasattr(instance, "_original_instance"):
+             delattr(instance, "_original_instance")
+         else:
+             instance.admin_pin_one = instance._generate_pin()
+             instance.admin_pin_two = instance._generate_pin() 
+             instance.user_pin_one = instance._generate_pin()
+             instance.user_pin_two = instance._generate_pin() 
 
 class EmailUserUpdateContactListener(object):
     @staticmethod

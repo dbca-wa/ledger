@@ -122,17 +122,36 @@ class Organisation(models.Model):
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
             # delete contact person
             try:
-                OrganisationContact.objects.get(
-                    organisation = self,
-                    email = delegate.user.email
-                
-                ).delete()
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_status ='unlinked'
+                org_contact.save()
             except OrganisationContact.DoesNotExist:
                 pass
+
             # delete delegate
             delegate.delete()
             # log linking
             self.log_user_action(OrganisationAction.ACTION_UNLINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_unlink_email_notification(user,request.user,self,request)
+
+
+    def make_admin_user(self,user,request):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self,user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # delete contact person
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_status ='admin'
+                org_contact.is_admin = True
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_ADMIN.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
             send_organisation_unlink_email_notification(user,request.user,self,request)
 
@@ -340,6 +359,7 @@ class OrganisationAction(UserAction):
     ACTION_LINK = "Linked {}"
     ACTION_UNLINK = "Unlinked {}"
     ACTION_CONTACT_ADDED = "Added new contact {}"
+    ACTION_MAKE_CONTACT_ADMIN = "Made contact Admin {}"
     ACTION_CONTACT_REMOVED = "Removed contact {}"
     ACTION_ORGANISATIONAL_DETAILS_SAVED_NOT_CHANGED = "Details saved without changes"
     ACTION_ORGANISATIONAL_DETAILS_SAVED_CHANGED = "Details saved with the following changes: \n{}"
@@ -533,17 +553,3 @@ class OrganisationRequestLogEntry(CommunicationsLogEntry):
 
 
 
-@receiver(pre_save, sender=Organisation)
-def _pre_save(sender, instance, **kwargs):
-#    raise ValueError('error here')
-    if instance.pk:
-        original_instance = Organisation.objects.get(pk=instance.pk)
-        setattr(instance, "_original_instance", original_instance)
-
-    elif hasattr(instance, "_original_instance"):
-        delattr(instance, "_original_instance")
-    else:
-        instance.admin_pin_one = instance._generate_pin()
-        instance.admin_pin_two = instance._generate_pin() 
-        instance.user_pin_one = instance._generate_pin()
-        instance.user_pin_two = instance._generate_pin() 
