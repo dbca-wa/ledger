@@ -38,31 +38,31 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Keywords
-                        <a :href="'#'+kBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="kBody">
+                    <h3 class="panel-title">Search Customers
+                        <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
                     </h3>
                 </div>
-                <div class="panel-body collapse in" :id="kBody">
+                <div class="panel-body collapse in" :id="oBody">
                     <div class="row">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Search Reference Number
-                        <a :href="'#'+rBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="rBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                        </a>
-                    </h3>
-                </div>
-                <div class="panel-body collapse in" :id="rBody">
-                    <div class="row">
+                        <form name="searchCustomersForm">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label" for="Customer">Search Customer</label>
+                                    <select v-if="customers == null" class="form-control" name="customer" v-model="selected_customer">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                    <select v-else ref="searchCustomer" class="form-control" name="customer">
+                                        <option value="">Select Customer</option>
+                                        <option v-for="c in customers" :value="c.id">{{ c.first_name }} {{ c.last_name }} ({{ c.dob }})</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12 text-center">
+                                <router-link :disabled="selected_customer == ''" :to="{name:'internal-customer-detail',params:{'customer_id':parseInt(selected_customer)}}" class="btn btn-primary">View Details</router-link>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -90,6 +90,8 @@ export default {
       loading: [],
       selected_organisation:'',
       organisations: null,
+      selected_customer:'',
+      customers: null,
       application_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
       application_options:{
           language: {
@@ -160,13 +162,15 @@ export default {
         datatable,
     },
     beforeRouteEnter:function(to,from,next){
-        utils.fetchOrganisations().then((response)=>{
+        let initialisers = [
+            utils.fetchOrganisations(),
+            utils.fetchCustomers()
+        ]
+        Promise.all(initialisers).then(data => {
             next(vm => {
-                vm.organisations = response;
+                vm.organisations = data[0];
+                vm.customers = data[1];
             });
-        },
-        (error) =>{
-            console.log(error);
         });
     },
     computed: {
@@ -177,7 +181,7 @@ export default {
     methods: {
         addListeners: function(){
             let vm = this;
-            // Initialise select2 for region
+            // Initialise select2 for organisation
             $(vm.$refs.searchOrg).select2({
                 "theme": "bootstrap",
                 allowClear: true,
@@ -190,6 +194,20 @@ export default {
             on("select2:unselect",function (e) {
                 var selected = $(e.currentTarget);
                 vm.selected_organisation = selected.val();
+            });
+            // Initialise select2 for customer
+            $(vm.$refs.searchCustomer).select2({
+                "theme": "bootstrap",
+                allowClear: true,
+                placeholder:"Select Customer"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.selected_customer = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.selected_customer = selected.val();
             });
         }
     },

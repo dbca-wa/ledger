@@ -14,7 +14,7 @@ from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
-from ledger.licence.models import  Licence
+from ledger.licence.models import Licence
 from wildlifecompliance import exceptions
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
@@ -237,7 +237,7 @@ class Application(RevisionedMixin):
     review_status = models.CharField('Review Status', max_length=30, choices=REVIEW_STATUS_CHOICES,
                                      default=REVIEW_STATUS_CHOICES[0][0])
 
-    licence = models.ForeignKey('wildlifecompliance.Licence',null=True,blank=True)
+    licence = models.ForeignKey('wildlifecompliance.WildlifeLicence',null=True,blank=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     proposed_decline_status = models.BooleanField(default=False)
@@ -583,7 +583,7 @@ class Application(RevisionedMixin):
                 raise
 
     def final_licence(self,request,details):
-        from wildlifecompliance.components.licences.models import Licence
+        from wildlifecompliance.components.licences.models import WildlifeLicence
         with transaction.atomic():
             try:
                 if not self.can_assess(request.user):
@@ -610,7 +610,7 @@ class Application(RevisionedMixin):
                 if self.processing_status == 'approved':
                     # TODO if it is an ammendment application then check appropriately
                     checking_application = self
-                    licence,created = Licence.objects.update_or_create(
+                    licence,created = WildlifeLicence.objects.update_or_create(
                         current_application = checking_application,
                         defaults = {
                             'activity' : self.activity,

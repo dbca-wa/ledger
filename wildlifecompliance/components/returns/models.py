@@ -28,7 +28,7 @@ class Return(models.Model):
                                  )
 
     application = models.ForeignKey('wildlifecompliance.Application',related_name='returns')
-    licence = models.ForeignKey('wildlifecompliance.Licence',related_name='returns')
+    licence = models.ForeignKey('wildlifecompliance.WildlifeLicence',related_name='returns')
     due_date = models.DateField()
     processing_status = models.CharField(choices=PROCESSING_STATUS_CHOICES,max_length=20)
     assigned_to = models.ForeignKey(EmailUser,related_name='wildlifecompliance_return_assignments',null=True,blank=True)

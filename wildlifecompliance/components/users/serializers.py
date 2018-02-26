@@ -40,6 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
             'id',
             'last_name',
             'first_name',
+            'dob',
             'email',
             'residential_address',
             'phone_number',
