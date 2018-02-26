@@ -449,7 +449,7 @@ export default {
                                         if(full.user_status == 'active'){
                                         
                                             links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Unlink</a><br/>`;
-                                            links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="decline_contact">Suspend</a><br/>`;
+                                            links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="suspend_contact">Suspend</a><br/>`;
                                             if(full.user_role == 'company_user'){
                                             links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_admin_contact">Make Company Admin</a><br/>`;
                                             }
@@ -726,6 +726,46 @@ export default {
                             )
                         }, (error) => {
                             swal('Company Admin','There was an error making '+name+' ('+id+') Comapny User','error')
+                        });
+                },(error) => {
+                });
+            });
+
+
+
+
+             vm.$refs.contacts_datatable_user.vmDataTable.on('click','.suspend_contact',(e) => {
+                e.preventDefault();
+
+                let firstname = $(e.target).data('firstname');
+                let lastname = $(e.target).data('lastname');
+                let email = $(e.target).data('email');
+                let id = $(e.target).data('id');
+                let mobile = $(e.target).data('mobile');
+                let phone = $(e.target).data('phone');
+
+                vm.contact_user.first_name= firstname 
+                vm.contact_user.last_name= lastname
+                vm.contact_user.email= email 
+                vm.contact_user.mobile_number= mobile 
+                vm.contact_user.phone_number= phone 
+
+
+                swal({
+                    title: "Suspend User",
+                    text: "Are you sure you want to Suspend  "+ name + "("+ email + ")  ?",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then(() => {
+                    // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/suspend_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
+                        swal(
+                            'Company User',
+                            'You have successfully suspended '+name+' ('+id+') User',
+                            'success'
+                            )
+                        }, (error) => {
+                            swal('Suspend User','There was an error suspending '+name+' ('+id+') User','error')
                         });
                 },(error) => {
                 });

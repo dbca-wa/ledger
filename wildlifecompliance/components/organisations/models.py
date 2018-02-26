@@ -171,7 +171,25 @@ class Organisation(models.Model):
             except OrganisationContact.DoesNotExist:
                 pass
             # log linking
-            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_ADMIN.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_USER.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_unlink_email_notification(user,request.user,self,request)
+
+    def suspend_user(self,user,request):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self,user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # delete contact person
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_status ='suspended'
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_SUSPEND.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
             send_organisation_unlink_email_notification(user,request.user,self,request)
 
@@ -379,7 +397,8 @@ class OrganisationAction(UserAction):
     ACTION_LINK = "Linked {}"
     ACTION_UNLINK = "Unlinked {}"
     ACTION_CONTACT_ADDED = "Added new contact {}"
-    ACTION_MAKE_CONTACT_ADMIN = "Made contact Admin {}"
+    ACTION_MAKE_CONTACT_ADMIN = "Made contact Company Admin {}"
+    ACTION_MAKE_CONTACT_USER = "Made contact Company User {}"
     ACTION_CONTACT_REMOVED = "Removed contact {}"
     ACTION_ORGANISATIONAL_DETAILS_SAVED_NOT_CHANGED = "Details saved without changes"
     ACTION_ORGANISATIONAL_DETAILS_SAVED_CHANGED = "Details saved with the following changes: \n{}"
@@ -387,6 +406,7 @@ class OrganisationAction(UserAction):
     ACTION_ORGANISATIONAL_ADDRESS_DETAILS_SAVED_CHANGED = "Addres Details saved with folowing changes: \n{}"
     ACTION_ORGANISATION_CONTACT_ACCEPT = "Accepted contact {}"
     ACTION_CONTACT_DECLINE = "Declined contact {}"
+    ACTION_MAKE_CONTACT_SUSPEND = "Suspended contact {}"
 
     @classmethod
     def log_action(cls, organisation, action, user):

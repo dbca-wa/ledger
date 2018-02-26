@@ -9,10 +9,10 @@ class OrganisationListener(object):
      """
      Event listener for Organisation 
      """
+
      @staticmethod
      @receiver(pre_save, sender=Organisation)
      def _pre_save(sender, instance, **kwargs):
-         raise ValueError('error here')
          if instance.pk:
              original_instance = Organisation.objects.get(pk=instance.pk)
              setattr(instance, "_original_instance", original_instance)
