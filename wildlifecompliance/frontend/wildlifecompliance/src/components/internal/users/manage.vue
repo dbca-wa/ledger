@@ -41,6 +41,12 @@
                                             </div>
                                           </div>
                                           <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Date of Birth</label>
+                                            <div class="col-sm-6">
+                                                <input type="date" class="form-control" name="dob" placeholder="" v-model="user.dob">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
                                             <div class="col-sm-12">
                                                 <button v-if="!updatingDetails" class="pull-right btn btn-primary" @click.prevent="updateDetails()">Update</button>
                                                 <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
