@@ -56,7 +56,7 @@ export default
                 {
                     path: ':customer_id',
                     component: Customer,
-                    name:"internal-customers-detail"
+                    name:"internal-customer-detail"
                 },
             ]
         },
