@@ -1,27 +1,27 @@
 <template>
 <div class="container" id="internalDash">
-    <CustomerDashTable level="internal" :url="customers_url"/>
+    <UserDashTable level="internal" :url="users_url"/>
 </div>
 </template>
 <script>
-import CustomerDashTable from '@common-utils/customers_dashboard.vue'
+import UserDashTable from '@common-utils/users_dashboard.vue'
 import {
   api_endpoints,
   helpers
 }
 from '@/utils/hooks'
 export default {
-    name: 'InternalCustomerDashboard',
+    name: 'InternalUserDashboard',
     data() {
         let vm = this;
         return {
-            customers_url: api_endpoints.customers,
+            users_url: api_endpoints.users,
         }
     
     },
     watch: {},
     components: {
-        CustomerDashTable,
+        UserDashTable,
     },
     computed: {
     },

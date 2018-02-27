@@ -12,7 +12,6 @@ from wildlifecompliance.components.organisations import api as org_api
 from wildlifecompliance.components.applications import api as application_api
 from wildlifecompliance.components.licences import api as licence_api
 from wildlifecompliance.components.returns import api as return_api
-from wildlifecompliance.components.customer_management import api as customer_api
 
 from ledger.urls import urlpatterns as ledger_patterns
 
@@ -23,7 +22,6 @@ router.register(r'application',application_api.ApplicationViewSet)
 router.register(r'referrals',application_api.ReferralViewSet)
 router.register(r'licences',licence_api.LicenceViewSet)
 router.register(r'returns',return_api.ReturnViewSet)
-router.register(r'customers',customer_api.CustomerViewSet)
 router.register(r'application_conditions',application_api.ApplicationConditionViewSet)
 router.register(r'application_standard_conditions',application_api.ApplicationStandardConditionViewSet)
 router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)

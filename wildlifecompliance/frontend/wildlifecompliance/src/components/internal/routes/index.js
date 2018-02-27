@@ -3,8 +3,8 @@ import Search from '../search.vue'
 import OrgAccessTable from '../organisations/dashboard.vue'
 import OrgAccess from '../organisations/access.vue'
 import Organisation from '../organisations/manage.vue'
-import CustomerDashTable from '../customers/dashboard.vue'
-import Customer from '../customers/manage.vue'
+import UserDashTable from '../users/dashboard.vue'
+import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
 import Referral from '../referrals/referral.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
@@ -40,7 +40,7 @@ export default
             name:"internal-search"
         },
         {
-            path: 'customers',
+            path: 'users',
             component: {
                 render(c)
                 {
@@ -50,13 +50,13 @@ export default
             children: [
                 {
                     path: '/',
-                    component: CustomerDashTable,
-                    name:"internal-customers-dash"
+                    component: UserDashTable,
+                    name:"internal-users-dash"
                 },
                 {
-                    path: ':customer_id',
-                    component: Customer,
-                    name:"internal-customer-detail"
+                    path: ':user_id',
+                    component: User,
+                    name:"internal-user-detail"
                 },
             ]
         },

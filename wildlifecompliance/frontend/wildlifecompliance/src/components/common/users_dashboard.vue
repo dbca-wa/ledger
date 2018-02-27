@@ -1,4 +1,4 @@
-<template id="customer_dashboard">
+<template id="user_dashboard">
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
@@ -12,7 +12,7 @@
                 <div class="panel-body collapse in" :id="pBody">
                     <div class="row">
                         <div class="col-lg-12">
-                            <datatable ref="customer_datatable" :id="datatable_id" :dtOptions="customer_options" :dtHeaders="customer_headers"/>
+                            <datatable ref="user_datatable" :id="datatable_id" :dtOptions="user_options" :dtHeaders="user_headers"/>
                         </div>
                     </div>
                 </div>
@@ -27,7 +27,7 @@ import {
     helpers
 }from '@/utils/hooks'
 export default {
-    name: 'CustomerTableDash',
+    name: 'UserTableDash',
     props: {
         level:{
             type: String,
@@ -46,8 +46,8 @@ export default {
         let vm = this;
         return {
             pBody: 'pBody' + vm._uid,
-            datatable_id: 'customer-datatable-'+vm._uid,
-            // Filters for Customers 
+            datatable_id: 'user-datatable-'+vm._uid,
+            // Filters for Users 
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -56,8 +56,8 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            customer_headers:["Title","Given Name(s)","Last Name","Date of Birth","Email","Phone","Mobile","Fax","Character Check","Identification"],
-            customer_options:{
+            user_headers:["Title","Given Name(s)","Last Name","Date of Birth","Email","Phone","Mobile","Fax","Character Check","Identification"],
+            user_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
@@ -86,7 +86,7 @@ export default {
                 processing: true,
                 initComplete: function () {
                     // Fix the table rendering columns
-                    vm.$refs.customer_datatable.vmDataTable.columns.adjust().responsive.recalc();
+                    vm.$refs.user_datatable.vmDataTable.columns.adjust().responsive.recalc();
                 }
             }
         }

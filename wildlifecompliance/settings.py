@@ -13,7 +13,6 @@ INSTALLED_APPS += [
     'wildlifecompliance.components.licences',
     'wildlifecompliance.components.users',
     'wildlifecompliance.components.returns',
-    'wildlifecompliance.components.customer_management',
     'taggit',
     'rest_framework',
     'rest_framework_gis'

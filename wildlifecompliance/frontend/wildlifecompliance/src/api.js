@@ -11,7 +11,6 @@ module.exports = {
     application_type:"/api/application_type",
     applications:"/api/application.json",
     licences:"/api/licences.json",
-    customers:"/api/customers.json",
     referrals:"/api/referrals.json",
     returns:"/api/returns.json",
     application_standard_conditions:"/api/application_standard_conditions.json",

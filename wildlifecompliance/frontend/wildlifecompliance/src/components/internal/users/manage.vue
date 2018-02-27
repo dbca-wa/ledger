@@ -1,9 +1,9 @@
 <template>
-    <div class="container-fluid" id="internalCustomerInfo">
+    <div class="container-fluid" id="internalUserInfo">
     <div class="row">
     <div class="col-md-10 col-md-offset-1">
         <div class="row">
-            <h3>{{ customer.first_name }} {{ customer.surname  }} - {{ customer.dob }}</h3>
+            <h3>{{ user.first_name }} {{ user.last_name  }} - {{ user.dob }}</h3>
             <div class="col-md-3">
                 <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
             </div>
@@ -20,7 +20,7 @@
                             <div class="col-sm-12">
                                 <div class="panel panel-default">
                                   <div class="panel-heading">
-                                    <h3 class="panel-title">Customer Details
+                                    <h3 class="panel-title">Person Details
                                         <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
                                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                         </a>
@@ -31,13 +31,13 @@
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Given Name(s)</label>
                                             <div class="col-sm-6">
-                                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="customer.first_name">
+                                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="user.first_name">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Last Name</label>
                                             <div class="col-sm-6">
-                                                <input type="text" class="form-control" name="last_name" placeholder="" v-model="customer.last_name">
+                                                <input type="text" class="form-control" name="last_name" placeholder="" v-model="user.last_name">
                                             </div>
                                           </div>
                                           <div class="form-group">
@@ -66,29 +66,29 @@
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
                                             <div class="col-sm-6">
-                                                <input type="text" class="form-control" name="street" placeholder="" v-model="customer.address.line1">
+                                                <input type="text" class="form-control" name="street" placeholder="" v-model="user.address.line1">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                                             <div class="col-sm-6">
-                                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="customer.address.locality">
+                                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="user.address.locality">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">State</label>
                                             <div class="col-sm-2">
-                                                <input type="text" class="form-control" name="country" placeholder="" v-model="customer.address.state">
+                                                <input type="text" class="form-control" name="country" placeholder="" v-model="user.address.state">
                                             </div>
                                             <label for="" class="col-sm-2 control-label">Postcode</label>
                                             <div class="col-sm-2">
-                                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="customer.address.postcode">
+                                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="user.address.postcode">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label" >Country</label>
                                             <div class="col-sm-4">
-                                                <select class="form-control" name="country" v-model="customer.address.country">
+                                                <select class="form-control" name="country" v-model="user.address.country">
                                                     <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
                                                 </select>
                                             </div>
@@ -131,7 +131,7 @@ import CommsLogs from '@common-utils/comms_logs.vue'
 import utils from '../utils'
 import api from '../api'
 export default {
-    name: 'Customer',
+    name: 'User',
     data () {
         let vm = this;
         return {
@@ -139,7 +139,7 @@ export default {
             pdBody: 'pdBody'+vm._uid,
             dTab: 'dTab'+vm._uid,
             oTab: 'oTab'+vm._uid,
-            customer: {
+            user: {
                 address: {}
             },
             loading: [],
@@ -151,11 +151,11 @@ export default {
             logsTable: null,
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             activate_tables: false,
-            comms_url: helpers.add_endpoint_json(api_endpoints.customers,vm.$route.params.customer_id+'/comms_log'),
-            logs_url: helpers.add_endpoint_json(api_endpoints.customers,vm.$route.params.customer_id+'/action_log'),
-            applications_url: helpers.add_endpoint_json(api_endpoints.customers,vm.$route.params.customer_id+'/applications'),
-            licences_url: api_endpoints.licences+'?customer_id='+vm.$route.params.customer_id,
-            returns_url: api_endpoints.returns+'?customer_id='+vm.$route.params.customer_id,
+            comms_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/comms_log'),
+            logs_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/action_log'),
+            applications_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/applications'),
+            licences_url: api_endpoints.licences+'?user_id='+vm.$route.params.user_id,
+            returns_url: api_endpoints.returns+'?user_id='+vm.$route.params.user_id,
         }
     },
     components: {
@@ -173,24 +173,24 @@ export default {
     beforeRouteEnter: function(to, from, next){
         let initialisers = [
             utils.fetchCountries(),
-            utils.fetchCustomer(to.params.customer_id)
+            utils.fetchUser(to.params.user_id)
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
                 vm.countries = data[0];
-                vm.customer = data[1];
-                vm.customer.address = vm.customer.address != null ? vm.customer.address : {};
+                vm.user = data[1];
+                vm.user.address = vm.user.address != null ? vm.user.address : {};
             });
         });
     },
     beforeRouteUpdate: function(to, from, next){
         let initialisers = [
-            utils.fetchCustomer(to.params.customer_id)
+            utils.fetchUser(to.params.user_id)
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
-                vm.customer = data[0];
-                vm.customer.address = vm.customer.address != null ? vm.customer.address : {};
+                vm.user = data[0];
+                vm.user.address = vm.user.address != null ? vm.user.address : {};
             });
         });
     },
@@ -207,15 +207,15 @@ export default {
         updateDetails: function() {
             let vm = this;
             vm.updatingDetails = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.customers,(vm.customer.id+'/update_details')),JSON.stringify(vm.customer),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_details')),JSON.stringify(vm.user),{
                 emulateJSON:true
             }).then((response) => {
                 vm.updatingDetails = false;
-                vm.customer = response.body;
-                if (vm.customer.address == null){ vm.customer.address = {}; }
+                vm.user = response.body;
+                if (vm.user.address == null){ vm.user.address = {}; }
                 swal(
                     'Saved',
-                    'Customer details have been saved',
+                    'Person details have been saved',
                     'success'
                 )
             }, (error) => {
@@ -226,17 +226,17 @@ export default {
         updateAddress: function() {
             let vm = this;
             vm.updatingAddress = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.customers,(vm.customer.id+'/update_address')),JSON.stringify(vm.customer.address),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_address')),JSON.stringify(vm.user.address),{
                 emulateJSON:true
             }).then((response) => {
                 vm.updatingAddress = false;
-                vm.customer = response.body;
+                vm.user = response.body;
                 swal(
                     'Saved',
                     'Address details have been saved',
                     'success'
                 )
-                if (vm.customer.address == null){ vm.customer.address = {}; }
+                if (vm.user.address == null){ vm.user.address = {}; }
             }, (error) => {
                 console.log(error);
                 vm.updatingAddress = false;

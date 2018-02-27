@@ -33,9 +33,9 @@ export default {
             });
         });
     },
-    fetchCustomers: function(id){
+    fetchUsers: function(id){
         return new Promise ((resolve,reject) => {
-            Vue.http.get(api.customers).then((response) => {
+            Vue.http.get(api.users).then((response) => {
                 resolve(response.body);
             },
             (error) => {
@@ -43,9 +43,9 @@ export default {
             });
         });
     },
-    fetchCustomer: function(id){
+    fetchUser: function(id){
         return new Promise ((resolve,reject) => {
-            Vue.http.get(helpers.add_endpoint_json(api.customers,id)).then((response) => {
+            Vue.http.get(helpers.add_endpoint_json(api.users,id)).then((response) => {
                 resolve(response.body);
             },
             (error) => {

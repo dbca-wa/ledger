@@ -1,5 +1,5 @@
 module.exports = {
     organisations: '/api/organisations.json',
-    customers: '/api/customers.json',
+    users: '/api/users.json',
     countries: 'https://restcountries.eu/rest/v1/?fullText=true',
 }
