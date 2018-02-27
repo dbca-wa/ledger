@@ -49,14 +49,14 @@
                                     <select v-show="isLoading" class="form-control">
                                         <option value="">Loading...</option>
                                     </select>
-                                    <select @change="assignTo" :disabled="isFinalised" v-if="!isLoading" class="form-control" v-model="access.assigned_officer">
+                                    <select @change="assignTo" :disabled="isFinalised || !check_assessor()" v-if="!isLoading" class="form-control" v-model="access.assigned_officer">
                                         <option value="null">Unassigned</option>
                                         <option v-for="member in members" :value="member.id">{{member.name}}</option>
                                     </select>
-                                    <a v-if="!isFinalised" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
+                                    <a v-if="!isFinalised && check_assessor()" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised">
+                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && check_assessor()">
                                 <strong>Action</strong><br/>
                                 <button class="btn btn-primary" @click.prevent="acceptRequest()">Accept</button><br/>
                                 <button class="btn btn-primary top-buffer-s" @click.prevent="">Decline</button>
@@ -140,6 +140,7 @@ export default {
     let vm = this;
     return {
         loading: [],
+        profile:{},
         access: {
             requester: {}
         },
@@ -323,7 +324,7 @@ export default {
     },
     isFinalised: function(){
         return this.access.status == 'With Assesor' || this.access.status == 'Approved';
-    }
+    },
   },
   methods: {
     commaToNewline(s){
@@ -396,10 +397,34 @@ export default {
         });
 
     },
+    fetchProfile: function(){
+        let vm = this;
+        Vue.http.get(api_endpoints.profile).then((response) => {
+            vm.profile = response.body
+                              
+         },(error) => {
+            console.log(error);
+                
+        })
+        },
+
+    check_assessor: function(){
+        let vm = this;
+        
+        var assessor = vm.members.filter(function(elem){
+                    return(elem.name==vm.profile.full_name);
+                });
+                if (assessor.length > 0)
+                    return true;
+                else
+                    return false;
+     },
   },
   mounted: function () {
     let vm = this;
     this.fetchAccessGroupMembers();
+    this.fetchProfile();
+    
   }
 }
 </script>

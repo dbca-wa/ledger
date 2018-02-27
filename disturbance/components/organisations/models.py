@@ -309,7 +309,7 @@ class OrganisationAccessGroup(models.Model):
         all_members = []
         all_members.extend(self.members.all())
         member_ids = [m.id for m in self.members.all()]
-        all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
+        #all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
         return all_members
 
     class Meta:
@@ -321,6 +321,9 @@ class OrganisationRequestUserAction(UserAction):
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"
     # Assessors
+
+
+
     ACTION_CONCLUDE_REQUEST = "Conclude request {}"
 
     @classmethod
