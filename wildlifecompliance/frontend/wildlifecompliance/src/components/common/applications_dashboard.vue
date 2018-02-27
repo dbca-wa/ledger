@@ -129,7 +129,7 @@ export default {
             application_regions: [],
             application_submitters: [],
             application_status: [],
-            application_ex_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Action"],
+            application_ex_headers:["Number","Licence Category","Activity Type","Type","Submiter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
                 autoWidth: false,
                 language: {
@@ -253,7 +253,7 @@ export default {
                     });
                 }
             },
-            application_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Assigned Officer","Action"],
+            application_headers:["Number","Licence Category","Activity Type","Type","Submiter","Applicant","Status","Lodged on","Action"],
             application_options:{
                 autoWidth: false,
                 language: {

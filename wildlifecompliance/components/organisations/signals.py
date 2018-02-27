@@ -9,6 +9,7 @@ class OrganisationListener(object):
      """
      Event listener for Organisation 
      """
+
      @staticmethod
      @receiver(pre_save, sender=Organisation)
      def _pre_save(sender, instance, **kwargs):
