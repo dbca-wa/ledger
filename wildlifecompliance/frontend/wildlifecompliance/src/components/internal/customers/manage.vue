@@ -29,15 +29,15 @@
                                   <div class="panel-body collapse in" :id="pdBody">
                                       <form class="form-horizontal" name="personal_form" method="post">
                                           <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">Name</label>
+                                            <label for="" class="col-sm-3 control-label">Given Name(s)</label>
                                             <div class="col-sm-6">
                                                 <input type="text" class="form-control" name="first_name" placeholder="" v-model="customer.first_name">
                                             </div>
                                           </div>
                                           <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">Name</label>
+                                            <label for="" class="col-sm-3 control-label">Last Name</label>
                                             <div class="col-sm-6">
-                                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="customer.surname">
+                                                <input type="text" class="form-control" name="last_name" placeholder="" v-model="customer.last_name">
                                             </div>
                                           </div>
                                           <div class="form-group">
@@ -136,12 +136,7 @@ export default {
         let vm = this;
         return {
             adBody: 'adBody'+vm._uid,
-            aBody: 'aBody'+vm._uid,
             pdBody: 'pdBody'+vm._uid,
-            pBody: 'pBody'+vm._uid,
-            cdBody: 'cdBody'+vm._uid,
-            cBody: 'cBody'+vm._uid,
-            oBody: 'oBody'+vm._uid,
             dTab: 'dTab'+vm._uid,
             oTab: 'oTab'+vm._uid,
             customer: {
@@ -158,7 +153,6 @@ export default {
             activate_tables: false,
             comms_url: helpers.add_endpoint_json(api_endpoints.customers,vm.$route.params.customer_id+'/comms_log'),
             logs_url: helpers.add_endpoint_json(api_endpoints.customers,vm.$route.params.customer_id+'/action_log'),
-            contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
             applications_url: helpers.add_endpoint_json(api_endpoints.customers,vm.$route.params.customer_id+'/applications'),
             licences_url: api_endpoints.licences+'?customer_id='+vm.$route.params.customer_id,
             returns_url: api_endpoints.returns+'?customer_id='+vm.$route.params.customer_id,

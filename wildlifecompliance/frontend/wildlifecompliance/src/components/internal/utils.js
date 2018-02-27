@@ -23,9 +23,29 @@ export default {
             });
         });
     },
+    fetchOrganisation: function(id){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(helpers.add_endpoint_json(api.organisations,id)).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
     fetchCustomers: function(id){
         return new Promise ((resolve,reject) => {
             Vue.http.get(api.customers).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
+    fetchCustomer: function(id){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(helpers.add_endpoint_json(api.customers,id)).then((response) => {
                 resolve(response.body);
             },
             (error) => {
@@ -43,15 +63,5 @@ export default {
             });
         });
 
-    },
-    fetchOrganisation: function(id){
-        return new Promise ((resolve,reject) => {
-            Vue.http.get(helpers.add_endpoint_json(api.organisations,id)).then((response) => {
-                resolve(response.body);
-            },
-            (error) => {
-                reject(error);
-            });
-        });
     },
 }
