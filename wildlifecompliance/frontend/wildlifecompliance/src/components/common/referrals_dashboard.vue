@@ -109,7 +109,7 @@ export default {
             application_activityTitles : [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Action"],
+            application_headers:["Number","Licence Category","Activity Type","Type","Submiter","Applicant","Status","Lodged on","Action"],
             application_options:{
                 customApplicationSearch: true,
                 tableID: 'application-datatable-'+vm._uid,
