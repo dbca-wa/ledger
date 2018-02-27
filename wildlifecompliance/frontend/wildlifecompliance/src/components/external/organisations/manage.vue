@@ -178,7 +178,7 @@
                     </div>
 
                     <div>
-                            <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/>
+                            <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref" v-model="filterOrgContactStatus"/>
                             <!-- <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/> -->
                     </div>
 
@@ -461,20 +461,17 @@ export default {
 
                                     }
 
-
-
                                 }
 
                             }        
                             return links;
 
                         }
-
                     
                     }
                   ],
-                  processing: true
-                
+                  processing: true,
+                                  
             }
          
 
@@ -485,6 +482,7 @@ export default {
         datatable,
         AddContact
     },
+    
     computed: {
     },
     beforeRouteEnter: function(to, from, next){
@@ -501,8 +499,12 @@ export default {
             });
         });
 
+        
        
     },
+
+
+
     beforeRouteUpdate: function(to, from, next){
         let initialisers = [
             utils.fetchOrganisation(to.params.org_id)
@@ -518,6 +520,10 @@ export default {
     methods: {
         addContact: function(){
             this.$refs.add_contact.isModalOpen = true;
+        },
+        filterOrgContactStatus: function(){
+            
+            t
         },
         eventListeners: function(){
             let vm = this;
@@ -925,6 +931,8 @@ export default {
     },
     mounted: function(){
         this.personal_form = document.forms.personal_form;
+        vm.$refs.contacts_datatable_user.vmDataTable.columns(3).search('draft').draw();
+
     },
     updated: function(){
         let vm = this;
@@ -937,7 +945,8 @@ export default {
         this.$nextTick(() => {
             this.eventListeners();
         });
-    }
+    },
+    
 }
 </script>
 

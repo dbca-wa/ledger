@@ -136,39 +136,62 @@
                                     </h3>
                                   </div>
                                   <div class="panel-body collapse" :id="oBody">
+                                    <div class ="row">
+                                        <form class="form-horizontal" action="index.html" method="post">
+                                            <div class="col-sm-6">
+
+                                                <div class="form-group">
+                                                    <label for="" class="col-sm-6 control-label"> Company User Pin Code 1:</label>
+                                                    <div class="col-sm-6">
+                                                        <label class="control-label">{{org.pins.three}}</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="" class="col-sm-6 control-label" >Company User Pin Code 2:</label>
+                                                    <div class="col-sm-6">
+                                                        <label class="control-label">{{org.pins.four}}</label>
+                                                    </div>
+                                                </div>
+                                       
+                              
+                                             </div>
+                                             <div class="col-sm-6">
+                                  
+                                                <div class="form-group" :disabled ='!org.edits'>
+                                                    <label for="" class="col-sm-6 control-label"> Company Administrator Pin Code 1:</label>
+                                                    <div class="col-sm-6">
+                                                        <label class="control-label">{{org.pins.one}}</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group" :disabled ='!org.edits'>
+                                                    <label for="" class="col-sm-6 control-label" >Company Administrator Pin Code 2:</label>
+                                                    <div class="col-sm-6">
+                                                        <label class="control-label">{{org.pins.two}}</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+
                                     <div class="row">
                                         <div class="col-sm-8">
                                             <div class="row">
-                                                <div class="col-sm-12">
-                                                    <h4>Persons linked to this organisation:</h4>
-                                                </div>
-                                                <div v-for="d in org.delegates">
-                                                    <div class="col-sm-6">
-                                                        <h4>{{d.name}}</h4>
-                                                    </div>
-                                                </div>
                                                 <div class="col-sm-12 top-buffer-s">
                                                     <strong>Persons linked to the organisation are controlled by the organisation. The Department cannot manage this list of people.</strong>
                                                 </div>
                                             </div> 
                                         </div>
-                                        <div class="col-sm-4" v-if="org.pins">
-                                          <form class="form-horizontal" action="index.html" method="post">
-                                              <div class="form-group">
-                                                <label for="" class="col-sm-3 control-label">Pin 1</label>
-                                                <div class="col-sm-6">
-                                                    <label class="control-label">{{org.pins.one}}</label>
-                                                </div>
-                                              </div>
-                                              <div class="form-group">
-                                                <label for="" class="col-sm-3 control-label" >Pin 2</label>
-                                                <div class="col-sm-6">
-                                                    <label class="control-label">{{org.pins.two}}</label>
-                                                </div>
-                                              </div>
-                                            </form>
-                                        </div>
+                       
                                     </div>
+                                    <div>
+                                        <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref" v-model="filterOrgContactStatus"/>
+                                        <!-- <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/> -->
+                                    </div>
+
+
+
+
+                                    
                                   </div>
                                 </div>
                             </div>
@@ -229,6 +252,7 @@ export default {
             comms_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/comms_log'),
             logs_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/action_log'),
             contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
+            contacts_headers_ref:["Name","Role","Email","Status"],
             applications_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/applications'),
             licences_url: api_endpoints.licences+'?org_id='+vm.$route.params.org_id,
             returns_url: api_endpoints.returns+'?org_id='+vm.$route.params.org_id,
@@ -255,13 +279,53 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             let name = full.first_name + ' ' + full.last_name;
-                            links +=  `<a data-email='${full.email}' data-name='${name}' data-id='${full.id}' class="remove-contact">Remove</a><br/>`;
+                            if (full.user_status =='draft' ){
+                                links +=  `<a data-email='${full.email}' data-name='${name}' data-id='${full.id}' class="remove-contact">Remove</a><br/>`;
+                            }
                             return links;
                         }
                     }
                   ],
                   processing: true
+            },
+
+            contacts_options_ref:{
+               language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                ajax: {
+                    "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/contacts'),
+                    "dataSrc": ''
+                },
+                columns: [
+                    {
+                        mRender:function (data,type,full) {
+                            return full.first_name + " " + full.last_name;
+                        }
+                    },
+                    {data:'user_role'},
+                    {data:'email'},
+                    {data:'user_status'},
+                  ],
+                  processing: true,
+                  initComplete: function () {
+                    // Grab Regions from the data in the table
+                    this.$refs.contacts_datatable_user.vmDataTable.columns(3).search('draft').draw();
+                }
+                
             }
+
+
+
+
+
+
+
+
+
+
+
         }
     },
     components: {
