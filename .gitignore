@@ -93,4 +93,4 @@ importo.py
 uwsgi*.ini
 
 # wildlifecompliance build static files
-wildlifecompliance/static/wildlifecompliance_vue/static
+wildlifecompliance/static/wildlifecompliance_vue/static/

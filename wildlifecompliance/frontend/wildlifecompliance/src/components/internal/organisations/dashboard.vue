@@ -76,6 +76,9 @@ export default {
                         data:"status",
                     },
                     {
+                        data:"status",
+                    },
+                    {
                         data:"lodgement_date",
                         mRender:function(data,type,full){
                             return moment(data).format('DD/MM/YYYY')
@@ -127,7 +130,7 @@ export default {
                     });
                 }
             },
-            dtHeaders:["Request Number","Organisation","Applicant","Status","Lodged on","Assigned To","Action"],
+            dtHeaders:["Request Number","Organisation","Applicant","Role","Status","Lodged on","Assigned To","Action"],
         }
     },
     watch: {

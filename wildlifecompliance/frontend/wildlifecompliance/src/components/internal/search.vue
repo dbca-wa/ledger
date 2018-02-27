@@ -4,13 +4,47 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Organisations
-                        <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
+                    <h3 class="panel-title">Search People 
+                        <a :href="'#'+cBody" data-toggle="collapse"  data-parent="#peopleInfo" expanded="true" :aria-controls="cBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
                     </h3>
                 </div>
-                <div class="panel-body collapse in" :id="oBody">
+                <div class="panel-body collapse in" :id="cBody">
+                    <div class="row">
+                        <form name="searchCustomersForm">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label" for="Customer">Search People</label>
+                                    <select v-if="customers == null" class="form-control" name="customer" v-model="selected_customer">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                    <select v-else ref="searchCustomer" class="form-control" name="customer">
+                                        <option value="">Select Person</option>
+                                        <option v-for="c in customers" :value="c.id">{{ c.first_name }} {{ c.last_name }} ({{ c.dob }})</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12 text-center">
+                                <router-link :disabled="selected_customer == ''" :to="{name:'internal-customer-detail',params:{'customer_id':parseInt(selected_customer)}}" class="btn btn-primary">View Details</router-link>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Search Organisations
+                        <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#organisationInfo" expanded="false" :aria-controls="oBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body collapse" :id="oBody">
                     <div class="row">
                         <form name="searchOrganisationForm">
                             <div class="col-md-4">
@@ -38,29 +72,43 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Customers
-                        <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                    <h3 class="panel-title">Search Keywords 
+                        <a :href="'#'+kBody" data-toggle="collapse"  data-parent="#keywordInfo" expanded="false" :aria-controls="kBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
                     </h3>
                 </div>
-                <div class="panel-body collapse in" :id="oBody">
+                <div class="panel-body collapse" :id="kBody">
                     <div class="row">
-                        <form name="searchCustomersForm">
+                        <form name="searchKeywordForm">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label class="control-label" for="Customer">Search Customer</label>
-                                    <select v-if="customers == null" class="form-control" name="customer" v-model="selected_customer">
-                                        <option value="">Loading...</option>
-                                    </select>
-                                    <select v-else ref="searchCustomer" class="form-control" name="customer">
-                                        <option value="">Select Customer</option>
-                                        <option v-for="c in customers" :value="c.id">{{ c.first_name }} {{ c.last_name }} ({{ c.dob }})</option>
-                                    </select>
+                                    <label class="control-label" for="Keyword">Search Keyword</label>
                                 </div>
                             </div>
-                            <div class="col-md-12 text-center">
-                                <router-link :disabled="selected_customer == ''" :to="{name:'internal-customer-detail',params:{'customer_id':parseInt(selected_customer)}}" class="btn btn-primary">View Details</router-link>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Search Reference Number 
+                        <a :href="'#'+rBody" data-toggle="collapse"  data-parent="#referenceNumberInfo" expanded="false" :aria-controls="rBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body collapse" :id="rBody">
+                    <div class="row">
+                        <form name="searchReferenceNumberForm">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label" for="ReferenceNumber">Search Reference Number</label>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -86,76 +134,14 @@ export default {
     return {
       rBody: 'rBody' + vm._uid,
       oBody: 'oBody' + vm._uid,
+      cBody: 'cBody' + vm._uid,
       kBody: 'kBody' + vm._uid,
       loading: [],
       selected_organisation:'',
       organisations: null,
       selected_customer:'',
       customers: null,
-      application_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
-      application_options:{
-          language: {
-              processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-          },
-          responsive: true,
-          ajax: {
-              "url": api_endpoints.applications,
-              "dataSrc": ''
-          },
-          columns: [
-              {data: "id"},
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                          let region = (data[0].region)?data[0].region:'n/a';
-                          return `${region}`;
-                      }
-                     return ''
-                  }
-              },
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data[0].activity}`;
-                      }
-                     return ''
-                  }
-              },
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data[0].project_details[0].project_title}`;
-                      }
-                     return ''
-                  }
-              },
-              {
-                  data: "submitter",
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data.first_name} ${data.last_name}`;
-                      }
-                     return ''
-                  }
-              },
-              {data: "applicant"},
-              {data: "processing_status"},
-              {data: "lodgement_date"},
-              {
-                  mRender:function (data,type,full) {
-                        let links = '';
-                        links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
-                        return links;
-                  }
-              }
-          ],
-          processing: true
-      }
     }
-    
   },
     watch: {},
     components: {

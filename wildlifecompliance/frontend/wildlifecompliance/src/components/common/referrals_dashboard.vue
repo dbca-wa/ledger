@@ -13,18 +13,10 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Region</label>
-                                <select style="width:100%" class="form-control" multiple ref="filterRegion" >
-                                    <option v-for="r in application_regions" :value="r">{{r}}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="">Activity</label>
-                                <select class="form-control" v-model="filterApplicationActivity">
+                                <label for="">Licence Type</label>
+                                <select class="form-control" v-model="filterApplicationLicenceType">
                                     <option value="All">All</option>
-                                    <option v-for="a in application_activityTitles" :value="a">{{a}}</option>
+                                    <option v-for="lt in application_licence_types" :value="lt">{{lt}}</option>
                                 </select>
                             </div>
                         </div>
@@ -92,7 +84,7 @@ export default {
             datatable_id: 'application-datatable-'+vm._uid,
             // Filters for Applications
             filterApplicationRegion: [],
-            filterApplicationActivity: 'All',
+            filterApplicationLicenceType: 'All',
             filterApplicationStatus: 'All',
             filterApplicationLodgedFrom: '',
             filterApplicationLodgedTo: '',
@@ -106,7 +98,7 @@ export default {
                 allowInputToggle:true
             },
             application_status:[],
-            application_activityTitles : [],
+            application_licence_types: [],
             application_regions: [],
             application_submitters: [],
             application_headers:["Number","Licence Category","Activity Type","Type","Submiter","Applicant","Status","Lodged on","Action"],

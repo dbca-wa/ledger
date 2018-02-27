@@ -13,49 +13,20 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Region</label>
-                                <select class="form-control" v-model="filterApplicationRegion">
+                                <label for="">LicenceType</label>
+                                <select class="form-control" v-model="filterReturnLicenceType">
                                     <option value="All">All</option>
-                                    <option v-for="r in application_regions" :value="r">{{r}}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="">Activity</label>
-                                <select class="form-control" v-model="filterApplicationActivity">
-                                    <option value="All">All</option>
-                                    <option v-for="a in application_activityTitles" :value="a">{{a}}</option>
+                                    <option v-for="lt in return_licence_types" :value="lt">{{lt}}</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Status</label>
-                                <select class="form-control" v-model="filterApplicationStatus">
+                                <select class="form-control" v-model="filterReturnStatus">
                                     <option value="All">All</option>
                                     <option v-for="s in status" :value="s">{{s}}</option>
                                 </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <label for="">Expiry From</label>
-                            <div class="input-group date" ref="applicationDateFromPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterApplicationLodgedFrom">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="">Expiry To</label>
-                            <div class="input-group date" ref="applicationDateToPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterApplicationLodgedTo">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
                             </div>
                         </div>
                     </div>
@@ -129,7 +100,7 @@ export default {
             application_activityTitles : [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Region/District","Activity","Title","Licence","Holder","Status","Due Date","Assigned To","Action"],
+            application_headers:["Number","Licence Type","Licence Holder","Logged On","Due Date","Status","Licence","Action"],
             application_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -146,24 +117,27 @@ export default {
                             return `C${data}`;
                         }
                     },
-                    {data: "regions"},
-                    {data: "activity"},
-                    {data: "title"},
+                    {data: "licence_type"},
+                    {data: "holder"},
                     {
-                        data: "licence",
+                        data: "logged_on",
                         mRender:function (data,type,full) {
-                            return `A${data}`;
+                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
-                    {data: "holder"},
-                    {data: "processing_status"},
                     {
                         data: "due_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
-                    {data: "assigned_to"},
+                    {data: "status"},
+                    {
+                        data: "licence",
+                        mRender:function (data,type,full) {
+                            return `A${data}`;
+                        }
+                    },
                     {
                         mRender:function (data,type,full) {
                             let links = '';
