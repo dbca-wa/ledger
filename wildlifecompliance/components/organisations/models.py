@@ -15,6 +15,10 @@ from wildlifecompliance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
                         send_organisation_link_email_notification,
                         send_organisation_unlink_email_notification,
+                        send_organisation_contact_adminuser_email_notification,
+                        send_organisation_contact_user_email_notification,
+                        send_organisation_contact_suspend_email_notification,
+                        send_organisation_reinstate_email_notification
                     )
 
 @python_2_unicode_compatible
@@ -76,6 +80,26 @@ class Organisation(models.Model):
 
             # log linking
             self.log_user_action(OrganisationAction.ACTION_CONTACT_ADDED.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
+
+    def accept_user(self, user,request):
+        with transaction.atomic():
+            try:
+                UserDelegation.objects.get(organisation=self,user=user)
+                raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
+            except UserDelegation.DoesNotExist:
+                delegate = UserDelegation.objects.create(organisation=self,user=user)
+
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_status ='active'
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+
+        #log linking
+        self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+        send_organisation_link_email_notification(user,request.user,self,request)
+
 
     
     def link_user(self,user,request,admin_flag):
@@ -145,7 +169,7 @@ class Organisation(models.Model):
             # delete contact person
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
-                org_contact.user_status ='admin'
+                org_contact.user_role ='company_admin'
                 org_contact.is_admin = True
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
@@ -153,7 +177,65 @@ class Organisation(models.Model):
             # log linking
             self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_ADMIN.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
-            send_organisation_unlink_email_notification(user,request.user,self,request)
+            send_organisation_contact_adminuser_email_notification(user,request.user,self,request)
+
+
+    def make_user(self,user,request):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self,user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # delete contact person
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_role ='company_user'
+                org_contact.is_admin = False
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_USER.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_contact_user_email_notification(user,request.user,self,request)
+
+    def suspend_user(self,user,request):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self,user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # delete contact person
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_status ='suspended'
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_SUSPEND.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_contact_suspend_email_notification(user,request.user,self,request)
+
+
+
+    def reinstate_user(self,user,request):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self,user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # delete contact person
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_status ='active'
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_SUSPEND.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_reinstate_email_notification(user,request.user,self,request)
 
     def generate_pins(self):
         self.admin_pin_one = self._generate_pin()
@@ -266,15 +348,6 @@ class OrganisationContact(models.Model):
         return self.is_admin and self.user_status == 'active' and self.user_role =='company_admin' 
 
 
-    def accept_user(self, user,request):
-        self.user_status = 'active'
-        self.save()
-        org = Organisation.objects.get(id =self.organisation_id)
-        delegate = UserDelegation.objects.create(user=user,organisation=org)
-        #log user acceptance
-        self.log_user_action(OrganisationContactAction.ACTION_ORGANISATION_CONTACT_ACCEPT.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
-
-
     def decline_user(self,request):
         with transaction.atomic():
             self.user_status = 'decline'
@@ -359,7 +432,8 @@ class OrganisationAction(UserAction):
     ACTION_LINK = "Linked {}"
     ACTION_UNLINK = "Unlinked {}"
     ACTION_CONTACT_ADDED = "Added new contact {}"
-    ACTION_MAKE_CONTACT_ADMIN = "Made contact Admin {}"
+    ACTION_MAKE_CONTACT_ADMIN = "Made contact Company Admin {}"
+    ACTION_MAKE_CONTACT_USER = "Made contact Company User {}"
     ACTION_CONTACT_REMOVED = "Removed contact {}"
     ACTION_ORGANISATIONAL_DETAILS_SAVED_NOT_CHANGED = "Details saved without changes"
     ACTION_ORGANISATIONAL_DETAILS_SAVED_CHANGED = "Details saved with the following changes: \n{}"
@@ -367,6 +441,8 @@ class OrganisationAction(UserAction):
     ACTION_ORGANISATIONAL_ADDRESS_DETAILS_SAVED_CHANGED = "Addres Details saved with folowing changes: \n{}"
     ACTION_ORGANISATION_CONTACT_ACCEPT = "Accepted contact {}"
     ACTION_CONTACT_DECLINE = "Declined contact {}"
+    ACTION_MAKE_CONTACT_SUSPEND = "Suspended contact {}"
+    ACTION_MAKE_CONTACT_REINSTATE = "REINSTATED contact {}"
 
     @classmethod
     def log_action(cls, organisation, action, user):
