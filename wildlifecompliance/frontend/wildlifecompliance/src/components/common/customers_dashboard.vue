@@ -3,7 +3,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Customers <small v-if="is_external">View customer details</small>
+                    <h3 class="panel-title">People <small v-if="is_external">View people details</small>
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -67,7 +67,6 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
-                    {data: "id"},
                     {data: "title"},
                     {data: "first_name"},
                     {data: "last_name"},
@@ -78,18 +77,24 @@ export default {
                         }
                     },
                     {data: "email"},
-                    {data: "phone"},
-                    {data: "mobile"},
-                    {data: "fax"},
+                    {data: "phone_number"},
+                    {data: "mobile_number"},
+                    {data: "fax_number"},
                     {data: "character_flagged"},
-                    {data: "identification"},
+                    {data: "character_comments"},
                 ],
                 processing: true,
+                initComplete: function () {
+                    // Fix the table rendering columns
+                    vm.$refs.customer_datatable.vmDataTable.columns.adjust().responsive.recalc();
+                }
             }
         }
     },
     components:{
         datatable
+    },
+    watch:{
     },
     computed: {
         status: function(){
@@ -102,6 +107,8 @@ export default {
         is_referral: function(){
             return this.level == 'referral';
         }
+    },
+    methods: {
     },
     mounted: function(){
         let vm = this;

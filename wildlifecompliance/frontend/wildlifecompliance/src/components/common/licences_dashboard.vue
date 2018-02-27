@@ -13,49 +13,38 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Region</label>
-                                <select class="form-control" v-model="filterApplicationRegion">
+                                <label for="">Licence Type</label>
+                                <select class="form-control" v-model="filterLicenceType">
                                     <option value="All">All</option>
-                                    <option v-for="r in application_regions" :value="r">{{r}}</option>
+                                    <option v-for="l in licence_licenceTypes" :value="l">{{l}}</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Activity</label>
-                                <select class="form-control" v-model="filterApplicationActivity">
-                                    <option value="All">All</option>
-                                    <option v-for="a in application_activityTitles" :value="a">{{a}}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="">Status</label>
-                                <select class="form-control" v-model="filterApplicationStatus">
+                                <label for="">Licence Status</label>
+                                <select class="form-control" v-model="filterLicenceStatus">
                                     <option value="All">All</option>
                                     <option v-for="s in licence_status" :value="s">{{s}}</option>
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-3">
-                            <label for="">Expiry From</label>
-                            <div class="input-group date" ref="applicationDateFromPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterApplicationLodgedFrom">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
+                            <div class="form-group">
+                                <label for="">Category</label>
+                                <select class="form-control" v-model="filterCategory">
+                                    <option value="All">All</option>
+                                    <option v-for="c in licence_categories" :value="c">{{c}}</option>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <label for="">Expiry To</label>
-                            <div class="input-group date" ref="applicationDateToPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterApplicationLodgedTo">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
+                            <div class="form-group">
+                                <label for="">Category Status</label>
+                                <select class="form-control" v-model="filterCategoryStatus">
+                                    <option value="All">All</option>
+                                    <option v-for="cs in licence_categoryStatus" :value="cs">{{cs}}</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -96,13 +85,11 @@ export default {
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'application-datatable-'+vm._uid,
-            // Filters for Applications
-            filterApplicationRegion: 'All',
-            filterApplicationActivity: 'All',
-            filterApplicationStatus: 'All',
-            filterApplicationLodgedFrom: '',
-            filterApplicationLodgedTo: '',
-            filterApplicationSubmitter: 'All',
+            // Filters for Licences
+            filterLicenceType: 'All',
+            filterLicenceStatus: 'All',
+            filterCategory: 'All',
+            filterCategoryStatus: '',
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -115,7 +102,7 @@ export default {
             application_activityTitles : [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Licence","Action"],
+            application_headers:["Number","Licence Type","Licence Holder","Status","Issue Date","Licence","Action"],
             application_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -127,31 +114,11 @@ export default {
                 },
                 columns: [
                     {data: "id"},
-                    {
-                        data: "region",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn
-                    },
-                    {data: "activity"},
-                    {
-                        data: "title",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn
-                    },
-                    {data: "applicant"},
+                    {data: "licence_type"},
+                    {data: "licence_holder"},
                     {data: "status"},
                     {
-                        data: "start_date",
-                        mRender:function (data,type,full) {
-                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
-                    },
-                    {
-                        data: "expiry_date",
+                        data: "issue_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
