@@ -30,12 +30,12 @@ export default new Router({
             children: [
                 {
                     path: '/',
-                    component: ProfileDashTable,
+                    component: Profile,
                     name:"profiles-dash"
                 },
                 {
                     path: ':profile_id',
-                    component: UserProfile,
+                    component: Profile,
                     name:"profile-detail"
                 },
             ]
