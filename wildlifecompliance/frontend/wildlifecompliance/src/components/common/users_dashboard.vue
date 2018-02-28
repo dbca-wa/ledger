@@ -27,7 +27,7 @@ import {
     helpers
 }from '@/utils/hooks'
 export default {
-    name: 'UserTableDash',
+    name: 'UserDashTable',
     props: {
         level:{
             type: String,
@@ -56,7 +56,7 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            user_headers:["Title","Given Name(s)","Last Name","Date of Birth","Email","Phone","Mobile","Fax","Character Check","Identification"],
+            user_headers:["Title","Given Name(s)","Last Name","Date of Birth","Email","Phone","Mobile","Fax","Character Check","Character Comments"],
             user_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
