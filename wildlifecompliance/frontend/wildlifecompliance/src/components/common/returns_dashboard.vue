@@ -68,12 +68,15 @@ export default {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'application-datatable-'+vm._uid,
             // Filters for Applications
-            filterApplicationRegion: 'All',
-            filterApplicationActivity: 'All',
-            filterApplicationStatus: 'All',
-            filterApplicationLodgedFrom: '',
-            filterApplicationLodgedTo: '',
-            filterApplicationSubmitter: 'All',
+            filterReturnLicenceType: 'All',
+            filterReturnStatus: 'All',
+            
+            // filterApplicationRegion: 'All',
+            // filterApplicationActivity: 'All',
+            // filterApplicationStatus: 'All',
+            // filterApplicationLodgedFrom: '',
+            // filterApplicationLodgedTo: '',
+            // filterApplicationSubmitter: 'All',
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -190,33 +193,39 @@ export default {
         datatable
     },
     watch:{
-        filterApplicationActivity: function() {
-            let vm = this;
-            if (vm.filterApplicationActivity!= 'All') {
-                vm.$refs.application_datatable.vmDataTable.columns(2).search(vm.filterApplicationActivity).draw();
-            } else {
-                vm.$refs.application_datatable.vmDataTable.columns(2).search('').draw();
-            }
+        // filterApplicationActivity: function() {
+        //     let vm = this;
+        //     if (vm.filterApplicationActivity!= 'All') {
+        //         vm.$refs.application_datatable.vmDataTable.columns(2).search(vm.filterApplicationActivity).draw();
+        //     } else {
+        //         vm.$refs.application_datatable.vmDataTable.columns(2).search('').draw();
+        //     }
+        // },
+        // filterApplicationStatus: function() {
+        //     let vm = this;
+        //     if (vm.filterApplicationStatus!= 'All') {
+        //         vm.$refs.application_datatable.vmDataTable.columns(6).search(vm.filterApplicationStatus).draw();
+        //     } else {
+        //         vm.$refs.application_datatable.vmDataTable.columns(6).search('').draw();
+        //     }
+        // },
+        // filterApplicationRegion: function(){
+        //     this.$refs.application_datatable.vmDataTable.draw();
+        // },
+        // filterApplicationSubmitter: function(){
+        //     this.$refs.application_datatable.vmDataTable.draw();
+        // },
+        // filterApplicationLodgedFrom: function(){
+        //     this.$refs.application_datatable.vmDataTable.draw();
+        // },
+        // filterApplicationLodgedTo: function(){
+        //     this.$refs.application_datatable.vmDataTable.draw();
+        // }
+
+
+        filterReturnLicenceType: function(){
         },
-        filterApplicationStatus: function() {
-            let vm = this;
-            if (vm.filterApplicationStatus!= 'All') {
-                vm.$refs.application_datatable.vmDataTable.columns(6).search(vm.filterApplicationStatus).draw();
-            } else {
-                vm.$refs.application_datatable.vmDataTable.columns(6).search('').draw();
-            }
-        },
-        filterApplicationRegion: function(){
-            this.$refs.application_datatable.vmDataTable.draw();
-        },
-        filterApplicationSubmitter: function(){
-            this.$refs.application_datatable.vmDataTable.draw();
-        },
-        filterApplicationLodgedFrom: function(){
-            this.$refs.application_datatable.vmDataTable.draw();
-        },
-        filterApplicationLodgedTo: function(){
-            this.$refs.application_datatable.vmDataTable.draw();
+        filterReturnStatus: function(){
         }
     },
     computed: {
@@ -235,104 +244,104 @@ export default {
         addEventListeners: function(){
             let vm = this;
             // Initialise Application Date Filters
-            $(vm.$refs.applicationDateToPicker).datetimepicker(vm.datepickerOptions);
-            $(vm.$refs.applicationDateToPicker).on('dp.change', function(e){
-                if ($(vm.$refs.applicationDateToPicker).data('DateTimePicker').date()) {
-                    vm.filterApplicationLodgedTo =  e.date.format('DD/MM/YYYY');
-                }
-                else if ($(vm.$refs.applicationDateToPicker).data('date') === "") {
-                    vm.filterapplicationodgedTo = "";
-                }
-             });
-            $(vm.$refs.applicationDateFromPicker).datetimepicker(vm.datepickerOptions);
-            $(vm.$refs.applicationDateFromPicker).on('dp.change',function (e) {
-                if ($(vm.$refs.applicationDateFromPicker).data('DateTimePicker').date()) {
-                    vm.filterApplicationLodgedFrom = e.date.format('DD/MM/YYYY');
-                    $(vm.$refs.applicationDateToPicker).data("DateTimePicker").minDate(e.date);
-                }
-                else if ($(vm.$refs.applicationDateFromPicker).data('date') === "") {
-                    vm.filterApplicationLodgedFrom = "";
-                }
-            });
-            // End Application Date Filters
-            // External Discard listener
-            vm.$refs.application_datatable.vmDataTable.on('click', 'a[data-discard-application]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-discard-application');
-                vm.discardApplication(id);
-            });
+            // $(vm.$refs.applicationDateToPicker).datetimepicker(vm.datepickerOptions);
+            // $(vm.$refs.applicationDateToPicker).on('dp.change', function(e){
+            //     if ($(vm.$refs.applicationDateToPicker).data('DateTimePicker').date()) {
+            //         vm.filterApplicationLodgedTo =  e.date.format('DD/MM/YYYY');
+            //     }
+            //     else if ($(vm.$refs.applicationDateToPicker).data('date') === "") {
+            //         vm.filterapplicationodgedTo = "";
+            //     }
+            //  });
+            // $(vm.$refs.applicationDateFromPicker).datetimepicker(vm.datepickerOptions);
+            // $(vm.$refs.applicationDateFromPicker).on('dp.change',function (e) {
+            //     if ($(vm.$refs.applicationDateFromPicker).data('DateTimePicker').date()) {
+            //         vm.filterApplicationLodgedFrom = e.date.format('DD/MM/YYYY');
+            //         $(vm.$refs.applicationDateToPicker).data("DateTimePicker").minDate(e.date);
+            //     }
+            //     else if ($(vm.$refs.applicationDateFromPicker).data('date') === "") {
+            //         vm.filterApplicationLodgedFrom = "";
+            //     }
+            // });
+            // // End Application Date Filters
+            // // External Discard listener
+            // vm.$refs.application_datatable.vmDataTable.on('click', 'a[data-discard-application]', function(e) {
+            //     e.preventDefault();
+            //     var id = $(this).attr('data-discard-application');
+            //     vm.discardApplication(id);
+            // });
         },
         initialiseSearch:function(){
             this.regionSearch();
             this.dateSearch();
         },
         regionSearch:function(){
-            let vm = this;
-            vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
-                function(settings,data,dataIndex,original){
-                    let found = false;
-                    let filtered_regions = vm.filterApplicationRegion.split(',');
-                    if (filtered_regions == 'All'){ return true; } 
+            // let vm = this;
+            // vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
+            //     function(settings,data,dataIndex,original){
+            //         let found = false;
+            //         let filtered_regions = vm.filterApplicationRegion.split(',');
+            //         if (filtered_regions == 'All'){ return true; } 
 
-                    let regions = original.region != '' && original.region != null ? original.region.split(','): [];
+            //         let regions = original.region != '' && original.region != null ? original.region.split(','): [];
 
-                    $.each(regions,(i,r) => {
-                        if (filtered_regions.indexOf(r) != -1){
-                            found = true;
-                            return false;
-                        }
-                    });
-                    if  (found) { return true; }
+            //         $.each(regions,(i,r) => {
+            //             if (filtered_regions.indexOf(r) != -1){
+            //                 found = true;
+            //                 return false;
+            //             }
+            //         });
+            //         if  (found) { return true; }
 
-                    return false;
-                }
-            );
+            //         return false;
+            //     }
+            // );
         },
         submitterSearch:function(){
-            let vm = this;
-            vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
-                function(settings,data,dataIndex,original){
-                    let filtered_submitter = vm.filterApplicationSubmitter;
-                    if (filtered_submitter == 'All'){ return true; } 
-                    return filtered_submitter == original.submitter.email;
-                }
-            );
+            // let vm = this;
+            // vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
+            //     function(settings,data,dataIndex,original){
+            //         let filtered_submitter = vm.filterApplicationSubmitter;
+            //         if (filtered_submitter == 'All'){ return true; } 
+            //         return filtered_submitter == original.submitter.email;
+            //     }
+            // );
         },
         dateSearch:function(){
             let vm = this;
-            vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
-                function(settings,data,dataIndex,original){
-                    let from = vm.filterApplicationLodgedFrom;
-                    let to = vm.filterApplicationLodgedTo;
-                    let val = original.lodgement_date;
+            // vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
+            //     function(settings,data,dataIndex,original){
+            //         let from = vm.filterApplicationLodgedFrom;
+            //         let to = vm.filterApplicationLodgedTo;
+            //         let val = original.lodgement_date;
 
-                    if ( from == '' && to == ''){
-                        return true;
-                    }
-                    else if (from != '' && to != ''){
-                        return val != null && val != '' ? moment().range(moment(from,vm.dateFormat),moment(to,vm.dateFormat)).contains(moment(val)) :false;
-                    }
-                    else if(from == '' && to != ''){
-                        if (val != null && val != ''){
-                            return moment(to,vm.dateFormat).diff(moment(val)) >= 0 ? true : false;
-                        }
-                        else{
-                            return false;
-                        }
-                    }
-                    else if (to == '' && from != ''){
-                        if (val != null && val != ''){
-                            return moment(val).diff(moment(from,vm.dateFormat)) >= 0 ? true : false;
-                        }
-                        else{
-                            return false;
-                        }
-                    } 
-                    else{
-                        return false;
-                    }
-                }
-            );
+            //         if ( from == '' && to == ''){
+            //             return true;
+            //         }
+            //         else if (from != '' && to != ''){
+            //             return val != null && val != '' ? moment().range(moment(from,vm.dateFormat),moment(to,vm.dateFormat)).contains(moment(val)) :false;
+            //         }
+            //         else if(from == '' && to != ''){
+            //             if (val != null && val != ''){
+            //                 return moment(to,vm.dateFormat).diff(moment(val)) >= 0 ? true : false;
+            //             }
+            //             else{
+            //                 return false;
+            //             }
+            //         }
+            //         else if (to == '' && from != ''){
+            //             if (val != null && val != ''){
+            //                 return moment(val).diff(moment(from,vm.dateFormat)) >= 0 ? true : false;
+            //             }
+            //             else{
+            //                 return false;
+            //             }
+            //         } 
+            //         else{
+            //             return false;
+            //         }
+            //     }
+            // );
         }
     },
     mounted: function(){

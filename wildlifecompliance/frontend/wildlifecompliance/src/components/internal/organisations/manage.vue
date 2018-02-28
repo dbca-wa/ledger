@@ -308,21 +308,10 @@ export default {
                     {data:'email'},
                     {data:'user_status'},
                   ],
-                  processing: true,
-                  initComplete: function () {
-                    // Grab Regions from the data in the table
-                    this.$refs.contacts_datatable_user.vmDataTable.columns(3).search('draft').draw();
-                }
+                  processing: true
+                  
                 
             }
-
-
-
-
-
-
-
-
 
 
 
