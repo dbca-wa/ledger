@@ -80,6 +80,22 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET',])
+    def contacts_exclude(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.contacts.exclude(user_status ='draft')
+            serializer = OrganisationContactSerializer(qs,many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 
     @detail_route(methods=['POST',])
