@@ -129,62 +129,59 @@
                   </div>
 
                     <div class ="row">
-                    <form class="form-horizontal" action="index.html" method="post">
-                     <div class="col-sm-6">
+                                <form class="form-horizontal" action="index.html" method="post">
+                                                 <div class="col-sm-6">
 
-                            <div class="form-group">
-                                <label for="" class="col-sm-6 control-label"> Company User Pin Code 1:</label>
-                                <div class="col-sm-6">
-                                    <label class="control-label">{{org.pins.three}}</label>
-                                </div>
-                              </div>
-                              <div class="form-group">
-                                <label for="" class="col-sm-6 control-label" >Company User Pin Code 2:</label>
-                                <div class="col-sm-6">
-                                    <label class="control-label">{{org.pins.four}}</label>
-                                </div>
-                              </div>
-                           
-                      
-                    </div>
-                     <div class="col-sm-6">
-                          
-                              <div class="form-group" :disabled ='!org.edits'>
-                                <label for="" class="col-sm-6 control-label"> Company Administrator Pin Code 1:</label>
-                                <div class="col-sm-6">
-                                    <label class="control-label">{{org.pins.one}}</label>
-                                </div>
-                              </div>
-                              <div class="form-group" :disabled ='!org.edits'>
-                                <label for="" class="col-sm-6 control-label" >Company Administrator Pin Code 2:</label>
-                                <div class="col-sm-6">
-                                    <label class="control-label">{{org.pins.two}}</label>
-                                </div>
-                              </div>
+                                                        <div class="form-group">
+                                                            <label for="" class="col-sm-6 control-label"> Company User Pin Code 1:</label>
+                                                            <div class="col-sm-6">
+                                                                <label class="control-label">{{org.pins.three}}</label>
+                                                            </div>
+                                                          </div>
+                                                          <div class="form-group">
+                                                            <label for="" class="col-sm-6 control-label" >Company User Pin Code 2:</label>
+                                                            <div class="col-sm-6">
+                                                                <label class="control-label">{{org.pins.four}}</label>
+                                                            </div>
+                                                          </div>
+                                                       
+                                                  
+                                                </div>
+                                                 <div class="col-sm-6">
+                                                      
+                                                          <div class="form-group" :disabled ='!org.edits'>
+                                                            <label for="" class="col-sm-6 control-label"> Company Administrator Pin Code 1:</label>
+                                                            <div class="col-sm-6">
+                                                                <label class="control-label">{{org.pins.one}}</label>
+                                                            </div>
+                                                          </div>
+                                                          <div class="form-group" :disabled ='!org.edits'>
+                                                            <label for="" class="col-sm-6 control-label" >Company Administrator Pin Code 2:</label>
+                                                            <div class="col-sm-6">
+                                                                <label class="control-label">{{org.pins.two}}</label>
+                                                            </div>
+                                                          </div>
 
-                    </div>
-                   
-                     </form>
+                                                </div>
+                               
+                                 </form>
 
-                    <div class="row">
-                        <div class="col-sm-8">
-                            <div class="row">
-                                <div class="col-sm-12 top-buffer-s">
-                                    <strong>Persons linked to the organisation are controlled by the organisation. The Department cannot manage this list of people.</strong>
+                                <div class="row">
+                                    <div class="col-sm-8">
+                                        <div class="row">
+                                            <div class="col-sm-12 top-buffer-s">
+                                                <strong>Persons linked to the organisation are controlled by the organisation. The Department cannot manage this list of people.</strong>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                   
                                 </div>
-                            </div> 
-                        </div>
-                       
-                    </div>
 
-                    <div>
-                            <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref" v-model="filterOrgContactStatus"/>
-                            <!-- <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/> -->
-                    </div>
-
-                   
-                        
-                  
+                                <div>
+                                        <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref" v-model="filterOrgContactStatus"/>
+                                        <!-- <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/> -->
+                                </div>
+                              
 
                   </div>
                 </div>
@@ -211,6 +208,7 @@ export default {
             pBody: 'pBody'+vm._uid,
             cBody: 'cBody'+vm._uid,
             oBody: 'oBody'+vm._uid,
+            
             org: null,
             contact_user: {
                 first_name: null,

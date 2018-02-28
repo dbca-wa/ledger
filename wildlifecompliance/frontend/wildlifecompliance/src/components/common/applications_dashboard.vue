@@ -377,14 +377,14 @@ export default {
         datatable
     },
     watch:{
-        filterApplicationActivity: function() {
-            let vm = this;
-            if (vm.filterApplicationActivity!= 'All') {
-                vm.$refs.application_datatable.vmDataTable.columns(2).search(vm.filterApplicationActivity).draw();
-            } else {
-                vm.$refs.application_datatable.vmDataTable.columns(2).search('').draw();
-            }
-        },
+        // filterApplicationActivity: function() {
+        //     let vm = this;
+        //     if (vm.filterApplicationActivity!= 'All') {
+        //         vm.$refs.application_datatable.vmDataTable.columns(2).search(vm.filterApplicationActivity).draw();
+        //     } else {
+        //         vm.$refs.application_datatable.vmDataTable.columns(2).search('').draw();
+        //     }
+        // },
         filterApplicationStatus: function() {
             let vm = this;
             if (vm.filterApplicationStatus!= 'All') {
@@ -393,9 +393,9 @@ export default {
                 vm.$refs.application_datatable.vmDataTable.columns(6).search('').draw();
             }
         },
-        filterApplicationRegion: function(){
-            this.$refs.application_datatable.vmDataTable.draw();
-        },
+        // filterApplicationRegion: function(){
+        //     this.$refs.application_datatable.vmDataTable.draw();
+        // },
         filterApplicationSubmitter: function(){
             this.$refs.application_datatable.vmDataTable.draw();
         },
@@ -404,7 +404,11 @@ export default {
         },
         filterApplicationLodgedTo: function(){
             this.$refs.application_datatable.vmDataTable.draw();
-        }
+        },
+
+        filterApplicationLicenceType: function(){
+        },
+        
     },
     computed: {
         is_external: function(){
@@ -490,26 +494,26 @@ export default {
             this.dateSearch();
         },
         regionSearch:function(){
-            let vm = this;
-            vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
-                function(settings,data,dataIndex,original){
-                    let found = false;
-                    let filtered_regions = vm.filterApplicationRegion;
-                    if (filtered_regions.length == 0){ return true; } 
+            // let vm = this;
+            // vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
+            //     function(settings,data,dataIndex,original){
+            //         let found = false;
+            //         let filtered_regions = vm.filterApplicationRegion;
+            //         if (filtered_regions.length == 0){ return true; } 
 
-                    let regions = original.region != '' && original.region != null ? original.region.split(','): [];
+            //         let regions = original.region != '' && original.region != null ? original.region.split(','): [];
 
-                    $.each(regions,(i,r) => {
-                        if (filtered_regions.indexOf(r) != -1){
-                            found = true;
-                            return false;
-                        }
-                    });
-                    if  (found) { return true; }
+            //         $.each(regions,(i,r) => {
+            //             if (filtered_regions.indexOf(r) != -1){
+            //                 found = true;
+            //                 return false;
+            //             }
+            //         });
+            //         if  (found) { return true; }
 
-                    return false;
-                }
-            );
+            //         return false;
+            //     }
+            // );
         },
         submitterSearch:function(){
             let vm = this;
