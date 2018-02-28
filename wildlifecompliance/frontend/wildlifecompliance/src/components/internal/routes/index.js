@@ -3,7 +3,8 @@ import Search from '../search.vue'
 import OrgAccessTable from '../organisations/dashboard.vue'
 import OrgAccess from '../organisations/access.vue'
 import Organisation from '../organisations/manage.vue'
-import CustomerDashTable from '../customers/dashboard.vue'
+import UserDashTable from '../users/dashboard.vue'
+import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
 import Referral from '../referrals/referral.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
@@ -34,14 +35,30 @@ export default
             name:"internal-returns-dash"
         },
         {
-            path: 'customers',
-            component: CustomerDashTable,
-            name:"internal-customers-dash"
-        },
-        {
             path: 'search',
             component: Search,
             name:"internal-search"
+        },
+        {
+            path: 'users',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: '/',
+                    component: UserDashTable,
+                    name:"internal-users-dash"
+                },
+                {
+                    path: ':user_id',
+                    component: User,
+                    name:"internal-user-detail"
+                },
+            ]
         },
         {
             path: 'organisations',

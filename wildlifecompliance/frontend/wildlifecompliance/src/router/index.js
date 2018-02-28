@@ -19,6 +19,27 @@ export default new Router({
           name: 'account',
           component: Profile
         },
+        {
+            path: 'profiles',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: '/',
+                    component: Profile,
+                    name:"profiles-dash"
+                },
+                {
+                    path: ':profile_id',
+                    component: Profile,
+                    name:"profile-detail"
+                },
+            ]
+        },
         external_routes,
         internal_routes
     ]

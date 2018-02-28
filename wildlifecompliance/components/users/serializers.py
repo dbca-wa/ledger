@@ -37,6 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser
         fields = (
+            'title',
             'id',
             'last_name',
             'first_name',
@@ -45,6 +46,9 @@ class UserSerializer(serializers.ModelSerializer):
             'residential_address',
             'phone_number',
             'mobile_number',
+            'fax_number',
+            'character_flagged',
+            'character_comments',
             'wildlifecompliance_organisations',
             'personal_details',
             'address_details',
@@ -72,6 +76,7 @@ class PersonalSerializer(serializers.ModelSerializer):
             'id',
             'last_name',
             'first_name',
+            'dob',
         )
 
 class ContactSerializer(serializers.ModelSerializer):
