@@ -22,7 +22,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,Address,Profile
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
 from wildlifecompliance.components.organisations.models import  (   
@@ -60,6 +60,11 @@ class GetUser(views.APIView):
     def get(self, request, format=None):
         serializer  = PersonalSerializer(request.user)
         return Response(serializer.data)
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    queryset = Profile.objects.all()
+    serializer_class = UserProfileSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):

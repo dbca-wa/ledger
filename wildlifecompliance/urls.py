@@ -27,6 +27,7 @@ router.register(r'application_standard_conditions',application_api.ApplicationSt
 router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
 router.register(r'users',users_api.UserViewSet)
+router.register(r'profiles',users_api.ProfileViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
