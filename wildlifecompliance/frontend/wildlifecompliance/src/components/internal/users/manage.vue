@@ -72,29 +72,29 @@
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
                                             <div class="col-sm-6">
-                                                <input type="text" class="form-control" name="street" placeholder="" v-model="user.address.line1">
+                                                <input type="text" class="form-control" name="street" placeholder="" v-model="user.residential_address.line1">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                                             <div class="col-sm-6">
-                                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="user.address.locality">
+                                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="user.residential_address.locality">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">State</label>
                                             <div class="col-sm-2">
-                                                <input type="text" class="form-control" name="country" placeholder="" v-model="user.address.state">
+                                                <input type="text" class="form-control" name="country" placeholder="" v-model="user.residential_address.state">
                                             </div>
                                             <label for="" class="col-sm-2 control-label">Postcode</label>
                                             <div class="col-sm-2">
-                                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="user.address.postcode">
+                                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="user.residential_address.postcode">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label" >Country</label>
                                             <div class="col-sm-4">
-                                                <select class="form-control" name="country" v-model="user.address.country">
+                                                <select class="form-control" name="country" v-model="user.residential_address.country">
                                                     <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
                                                 </select>
                                             </div>
@@ -185,7 +185,7 @@ export default {
             next(vm => {
                 vm.countries = data[0];
                 vm.user = data[1];
-                vm.user.address = vm.user.address != null ? vm.user.address : {};
+                vm.user.residential_address = vm.user.residential_address != null ? vm.user.residential_address : {};
             });
         });
     },
@@ -196,7 +196,7 @@ export default {
         Promise.all(initialisers).then(data => {
             next(vm => {
                 vm.user = data[0];
-                vm.user.address = vm.user.address != null ? vm.user.address : {};
+                vm.user.residential_address = vm.user.residential_address != null ? vm.user.residential_address : {};
             });
         });
     },
@@ -213,12 +213,12 @@ export default {
         updateDetails: function() {
             let vm = this;
             vm.updatingDetails = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_details')),JSON.stringify(vm.user),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_personal')),JSON.stringify(vm.user),{
                 emulateJSON:true
             }).then((response) => {
                 vm.updatingDetails = false;
                 vm.user = response.body;
-                if (vm.user.address == null){ vm.user.address = {}; }
+                if (vm.user.residential_address == null){ vm.user.residential_address = {}; }
                 swal(
                     'Saved',
                     'Person details have been saved',
@@ -232,7 +232,7 @@ export default {
         updateAddress: function() {
             let vm = this;
             vm.updatingAddress = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_address')),JSON.stringify(vm.user.address),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_address')),JSON.stringify(vm.user.residential_address),{
                 emulateJSON:true
             }).then((response) => {
                 vm.updatingAddress = false;
@@ -242,7 +242,7 @@ export default {
                     'Address details have been saved',
                     'success'
                 )
-                if (vm.user.address == null){ vm.user.address = {}; }
+                if (vm.user.residential_address == null){ vm.user.residential_address = {}; }
             }, (error) => {
                 console.log(error);
                 vm.updatingAddress = false;

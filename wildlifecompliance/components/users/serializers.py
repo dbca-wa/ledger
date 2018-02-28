@@ -72,6 +72,7 @@ class PersonalSerializer(serializers.ModelSerializer):
             'id',
             'last_name',
             'first_name',
+            'dob',
         )
 
 class ContactSerializer(serializers.ModelSerializer):
