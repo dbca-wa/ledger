@@ -62,7 +62,19 @@ class OrganisationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['GET',])
     def contacts(self, request, *args, **kwargs):
-        pass
+        try:
+            instance = self.get_object()
+            serializer = OrganisationContactSerializer(instance.contacts.all(),many=True)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET',])
     def contacts_linked(self, request, *args, **kwargs):
@@ -366,22 +378,6 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
             serializer = self.get_serializer(org)
-            return Response(serializer.data);
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['GET',])
-    def contacts(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = OrganisationContactSerializer(instance.contacts.all(),many=True)
             return Response(serializer.data);
         except serializers.ValidationError:
             print(traceback.print_exc())
