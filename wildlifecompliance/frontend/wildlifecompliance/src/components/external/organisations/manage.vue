@@ -397,7 +397,7 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             let name = full.first_name + ' ' + full.last_name;
-                            if (full.user_status =='draft' ){
+                            if (full.user_status =='Draft' ){
                                 links +=  `<a data-email='${full.email}' data-name='${name}' data-id='${full.id}' class="remove-contact">Remove</a><br/>`;
                                 
                             }
@@ -605,7 +605,7 @@ export default {
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then(() => {
-                    vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/decline_user'),{emulateJSON:true}).then((response) => {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/decline_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
                         swal(
                             'Contact Decline',
                             'You have successfully Declined '+name+' ('+id+'.)',
