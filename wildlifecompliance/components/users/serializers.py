@@ -1,5 +1,5 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,Address,Profile
 from wildlifecompliance.components.organisations.models import (   
                                     Organisation,
                                 )
@@ -16,6 +16,18 @@ class UserAddressSerializer(serializers.ModelSerializer):
             'country',
             'postcode'
         ) 
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    postal_address = UserAddressSerializer()
+    class Meta:
+        model = Profile
+        fields = (
+            'id',
+            'name',
+            'email',
+            'institution',
+            'postal_address'
+        )
 
 class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')
@@ -37,13 +49,18 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser
         fields = (
+            'title',
             'id',
             'last_name',
             'first_name',
+            'dob',
             'email',
             'residential_address',
             'phone_number',
             'mobile_number',
+            'fax_number',
+            'character_flagged',
+            'character_comments',
             'wildlifecompliance_organisations',
             'personal_details',
             'address_details',
@@ -71,6 +88,7 @@ class PersonalSerializer(serializers.ModelSerializer):
             'id',
             'last_name',
             'first_name',
+            'dob',
         )
 
 class ContactSerializer(serializers.ModelSerializer):

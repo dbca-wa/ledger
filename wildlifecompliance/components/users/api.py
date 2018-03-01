@@ -22,7 +22,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,Address,Profile
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
 from wildlifecompliance.components.organisations.models import  (   
@@ -31,6 +31,7 @@ from wildlifecompliance.components.organisations.models import  (
 
 from wildlifecompliance.components.users.serializers import   (   
                                                 UserSerializer,
+                                                UserProfileSerializer,
                                                 UserAddressSerializer,
                                                 PersonalSerializer,
                                                 ContactSerializer,
@@ -54,9 +55,37 @@ class GetProfile(views.APIView):
         serializer  = UserSerializer(request.user)
         return Response(serializer.data)
 
+class GetUser(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    def get(self, request, format=None):
+        serializer  = PersonalSerializer(request.user)
+        return Response(serializer.data)
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    queryset = Profile.objects.all()
+    serializer_class = UserProfileSerializer
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()
     serializer_class = UserSerializer
+
+    @detail_route(methods=['GET',])
+    def profiles(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = UserProfileSerializer(instance.profiles.all(),many=True)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
     def update_personal(self, request, *args, **kwargs):

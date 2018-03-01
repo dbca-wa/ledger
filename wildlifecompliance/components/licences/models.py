@@ -13,7 +13,7 @@ from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
-from ledger.licence.models import  Licence
+from ledger.licence.models import Licence
 from wildlifecompliance import exceptions
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import Application
@@ -25,13 +25,13 @@ def update_licence_doc_filename(instance, filename):
     return 'licences/{}/documents/{}'.format(instance.id,filename)
 
 class LicenceDocument(Document):
-    licence = models.ForeignKey('Licence',related_name='documents')
+    licence = models.ForeignKey('WildlifeLicence',related_name='documents')
     _file = models.FileField(upload_to=update_licence_doc_filename)
 
     class Meta:
         app_label = 'wildlifecompliance'
 
-class Licence(models.Model):
+class WildlifeLicence(models.Model):
     STATUS_CHOICES = (
         ('current','Current'),
         ('expired','Expired'),
@@ -82,7 +82,7 @@ class Licence(models.Model):
         return LicenceUserAction.log_action(self, action, request.user)
 
 class LicenceLogEntry(CommunicationsLogEntry):
-    licence = models.ForeignKey(Licence, related_name='comms_logs')
+    licence = models.ForeignKey(WildlifeLicence, related_name='comms_logs')
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -109,9 +109,9 @@ class LicenceUserAction(UserAction):
             what=str(action)
         )
 
-    licence= models.ForeignKey(Licence, related_name='action_logs')
+    licence= models.ForeignKey(WildlifeLicence, related_name='action_logs')
 
-@receiver(pre_delete, sender=Licence)
+@receiver(pre_delete, sender=WildlifeLicence)
 def delete_documents(sender, instance, *args, **kwargs):
     for document in instance.documents.all():
         document.delete()

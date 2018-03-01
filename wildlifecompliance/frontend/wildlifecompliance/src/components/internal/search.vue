@@ -4,13 +4,47 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Organisations
-                        <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
+                    <h3 class="panel-title">Search People 
+                        <a :href="'#'+cBody" data-toggle="collapse"  data-parent="#peopleInfo" expanded="true" :aria-controls="cBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
                     </h3>
                 </div>
-                <div class="panel-body collapse in" :id="oBody">
+                <div class="panel-body collapse in" :id="cBody">
+                    <div class="row">
+                        <form name="searchUsersForm">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label" for="User">Search People</label>
+                                    <select v-if="users == null" class="form-control" name="user" v-model="selected_user">
+                                        <option value="">Loading...</option>
+                                    </select>
+                                    <select v-else ref="searchUser" class="form-control" name="user">
+                                        <option value="">Select Person</option>
+                                        <option v-for="u in users" :value="u.id">{{ u.first_name }} {{ u.last_name }} ({{ u.dob }})</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12 text-center">
+                                <router-link :disabled="selected_user == ''" :to="{name:'internal-user-detail',params:{'user_id':parseInt(selected_user)}}" class="btn btn-primary">View Details</router-link>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Search Organisations
+                        <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#organisationInfo" expanded="false" :aria-controls="oBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body collapse" :id="oBody">
                     <div class="row">
                         <form name="searchOrganisationForm">
                             <div class="col-md-4">
@@ -38,14 +72,21 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Keywords
-                        <a :href="'#'+kBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="kBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                    <h3 class="panel-title">Search Keywords 
+                        <a :href="'#'+kBody" data-toggle="collapse"  data-parent="#keywordInfo" expanded="false" :aria-controls="kBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
                     </h3>
                 </div>
-                <div class="panel-body collapse in" :id="kBody">
+                <div class="panel-body collapse" :id="kBody">
                     <div class="row">
+                        <form name="searchKeywordForm">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label" for="Keyword">Search Keyword</label>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -55,14 +96,21 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Reference Number
-                        <a :href="'#'+rBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="rBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                    <h3 class="panel-title">Search Reference Number 
+                        <a :href="'#'+rBody" data-toggle="collapse"  data-parent="#referenceNumberInfo" expanded="false" :aria-controls="rBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
                     </h3>
                 </div>
-                <div class="panel-body collapse in" :id="rBody">
+                <div class="panel-body collapse" :id="rBody">
                     <div class="row">
+                        <form name="searchReferenceNumberForm">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label" for="ReferenceNumber">Search Reference Number</label>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -86,87 +134,29 @@ export default {
     return {
       rBody: 'rBody' + vm._uid,
       oBody: 'oBody' + vm._uid,
+      cBody: 'cBody' + vm._uid,
       kBody: 'kBody' + vm._uid,
       loading: [],
       selected_organisation:'',
       organisations: null,
-      application_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
-      application_options:{
-          language: {
-              processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-          },
-          responsive: true,
-          ajax: {
-              "url": api_endpoints.applications,
-              "dataSrc": ''
-          },
-          columns: [
-              {data: "id"},
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                          let region = (data[0].region)?data[0].region:'n/a';
-                          return `${region}`;
-                      }
-                     return ''
-                  }
-              },
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data[0].activity}`;
-                      }
-                     return ''
-                  }
-              },
-              {
-                  data:'data',
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data[0].project_details[0].project_title}`;
-                      }
-                     return ''
-                  }
-              },
-              {
-                  data: "submitter",
-                  mRender:function (data,type,full) {
-                      if (data) {
-                           return `${data.first_name} ${data.last_name}`;
-                      }
-                     return ''
-                  }
-              },
-              {data: "applicant"},
-              {data: "processing_status"},
-              {data: "lodgement_date"},
-              {
-                  mRender:function (data,type,full) {
-                        let links = '';
-                        links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
-                        return links;
-                  }
-              }
-          ],
-          processing: true
-      }
+      selected_user:'',
+      users: null,
     }
-    
   },
     watch: {},
     components: {
         datatable,
     },
     beforeRouteEnter:function(to,from,next){
-        utils.fetchOrganisations().then((response)=>{
+        let initialisers = [
+            utils.fetchOrganisations(),
+            utils.fetchUsers()
+        ]
+        Promise.all(initialisers).then(data => {
             next(vm => {
-                vm.organisations = response;
+                vm.organisations = data[0];
+                vm.users = data[1];
             });
-        },
-        (error) =>{
-            console.log(error);
         });
     },
     computed: {
@@ -177,7 +167,7 @@ export default {
     methods: {
         addListeners: function(){
             let vm = this;
-            // Initialise select2 for region
+            // Initialise select2 for organisation
             $(vm.$refs.searchOrg).select2({
                 "theme": "bootstrap",
                 allowClear: true,
@@ -190,6 +180,20 @@ export default {
             on("select2:unselect",function (e) {
                 var selected = $(e.currentTarget);
                 vm.selected_organisation = selected.val();
+            });
+            // Initialise select2 for user 
+            $(vm.$refs.searchUser).select2({
+                "theme": "bootstrap",
+                allowClear: true,
+                placeholder:"Select User"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.selected_user = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.selected_user = selected.val();
             });
         }
     },

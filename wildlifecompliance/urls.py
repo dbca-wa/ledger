@@ -2,10 +2,11 @@ from django.conf import settings
 from django.conf.urls import url, include
 from django.conf.urls.static import static
 from rest_framework import routers
+
 from wildlifecompliance import views
 from wildlifecompliance.admin import wildlifecompliance_admin_site
-from wildlifecompliance.components.applications import views as application_views
 
+from wildlifecompliance.components.applications import views as application_views
 from wildlifecompliance.components.users import api as users_api
 from wildlifecompliance.components.organisations import api as org_api
 from wildlifecompliance.components.applications import api as application_api
@@ -26,6 +27,7 @@ router.register(r'application_standard_conditions',application_api.ApplicationSt
 router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
 router.register(r'users',users_api.UserViewSet)
+router.register(r'profiles',users_api.ProfileViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
@@ -46,6 +48,7 @@ urlpatterns = [
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
+    url(r'^profiles/$', views.ExternalView.as_view(), name='manage-profiles'),
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     url(r'^application/$', application_views.ApplicationView.as_view(), name='application'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),

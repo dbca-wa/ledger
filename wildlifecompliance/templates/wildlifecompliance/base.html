@@ -53,7 +53,9 @@
                                         {% if request.user.is_staff %}
                                         <li><a href="/internal/licences">Licences</a></li>
                                         <li><a href="/internal/returns">Returns</a></li>
-                                        <li><a href="/internal/organisations/access">Organisation Access</a></li>
+                                        <li><a href="/internal/tag_purchases">Tag Purchases</a></li>
+                                        <li><a href="/internal/advices">Advices to CEO</a></li>
+                                        <li><a href="/internal/organisations/access">Organisation Access Requests</a></li>
                                         <li><a href="/internal/search">Search</a></li>
                                         {% endif %}
                                     {% endblock %}
@@ -85,6 +87,7 @@
                                                     <li role="separator" class="divider"></li>
                                                 {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
+                                                <li><a href="{% url 'manage-profiles' %}">Manage Profiles</a></li>
                                                 {% for org in request.user.wildlifecompliance_organisations.all %}
                                                     <li><a href="/external/organisations/manage/{{org.id}}">Manage {{ org.organisation.name}}</a></li>
                                                 {% endfor %}

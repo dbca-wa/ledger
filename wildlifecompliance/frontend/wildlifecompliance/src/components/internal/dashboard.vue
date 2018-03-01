@@ -13,7 +13,7 @@ import {
 }
 from '@/utils/hooks'
 export default {
-    name: 'ExternalDashboard',
+    name: 'InternalDashboard',
     data() {
         let vm = this;
         return {
