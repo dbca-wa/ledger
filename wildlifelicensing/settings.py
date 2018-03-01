@@ -45,6 +45,8 @@ HERBIE_SPECIES_WFS_URL = env('HERBIE_SPECIES_WFS_URL',
                              'request=GetFeature&typeNames=public:herbie_hbvspecies_public&outputFormat=application/json')
 
 WL_PAYMENT_SYSTEM_ID = env('WL_PAYMENT_SYSTEM_ID', 'S369')
+if not VALID_SYSTEMS:
+    VALID_SYSTEMS = [WL_PAYMENT_SYSTEM_ID]
 WL_SENIOR_VOUCHER_CODE = env('WL_SENIOR_VOUCHER_CODE', 'WL_SENIOR_VOUCHER')
 
 # next setting is necessary to resolve absolute URL for the emails sent by the tasks running in cron.

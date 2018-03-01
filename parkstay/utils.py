@@ -776,7 +776,7 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
     }
     try:
         parameters = {
-            'system': 'S019',
+            'system': settings.PS_PAYMENT_SYSTEM_ID,
             'fallback_url': request.build_absolute_uri('/'),
             'return_url': request.build_absolute_uri(reverse('public_booking_success')),
             'forceRedirect': True,
