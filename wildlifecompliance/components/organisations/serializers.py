@@ -88,9 +88,20 @@ class DetailsSerializer(serializers.ModelSerializer):
         fields = ('id','name')
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
+    user_status= serializers.SerializerMethodField()
+    user_role= serializers.SerializerMethodField()
+    
     class Meta:
         model = OrganisationContact
         fields = '__all__'
+
+    def get_user_status(self,obj):
+        return obj.get_user_status_display()
+
+    def get_user_role(self,obj):
+        return obj.get_user_role_display()
+
+
 
 class OrgRequestRequesterSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()

@@ -18,7 +18,8 @@ from wildlifecompliance.components.organisations.emails import (
                         send_organisation_contact_adminuser_email_notification,
                         send_organisation_contact_user_email_notification,
                         send_organisation_contact_suspend_email_notification,
-                        send_organisation_reinstate_email_notification
+                        send_organisation_reinstate_email_notification,
+                        send_organisation_contact_decline_email_notification
                     )
 
 @python_2_unicode_compatible
@@ -100,6 +101,23 @@ class Organisation(models.Model):
         self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
         send_organisation_link_email_notification(user,request.user,self,request)
 
+    def decline_user(self, user,request):
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = user.email)
+                org_contact.user_status ='decline'
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            OrganisationContactDeclinedDetails.objects.create(
+                officer = request.user,
+                request = org_contact
+            )
+
+            #log linking
+            self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
+            send_organisation_contact_decline_email_notification(user,request.user,self,request)
+
+    
 
     
     def link_user(self,user,request,admin_flag):
@@ -348,7 +366,7 @@ class OrganisationContact(models.Model):
         return self.is_admin and self.user_status == 'active' and self.user_role =='company_admin' 
 
 
-    def decline_user(self,request):
+    def decline_user(self,user,request):
         with transaction.atomic():
             self.user_status = 'decline'
             self.save()
@@ -356,9 +374,8 @@ class OrganisationContact(models.Model):
                 officer = request.user,
                 request = self
             )
-            self.log_user_action(OrganisationContactAction.ACTION_ORGANISATION_CONTACT_DECLINE.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
-
-
+            self.log_user_action(OrganisationContactAction.ACTION_ORGANISATION_CONTACT_DECLINE.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
+            send_organisation_contact_decline_email_notification(user,request.user,self,request)
 
 
     # def unlink_user(self,user,request):

@@ -50,6 +50,11 @@ class OrganisationContactReinstateNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/organisation_contact_reinstate_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_contact_reinstate_notification.txt'
 
+class OrganisationContactDeclineNotificationEmail(TemplateEmailBase):
+    subject = 'Your organisation link request has been declined.'
+    html_template = 'wildlifecompliance/emails/organisation_contact_decline_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_contact_decline_notification.txt'
+
     
 
 def send_organisation_reinstate_email_notification(linked_user,linked_by,organisation,request):
@@ -78,6 +83,19 @@ def send_organisation_contact_suspend_email_notification(linked_user,linked_by,o
     msg = email.send(linked_user.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, linked_user, sender=sender)
+
+def send_organisation_contact_decline_email_notification(user_contact,deleted_by,organisation,request):
+    email = OrganisationContactDeclineNotificationEmail()
+
+    context = {
+        'user': user_contact,
+        'linked_by': deleted_by,
+        'organisation': organisation
+    }
+
+    msg = email.send(user_contact.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, user_contact, sender=sender)
 
 
 
