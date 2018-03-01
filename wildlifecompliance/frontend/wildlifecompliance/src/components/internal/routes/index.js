@@ -9,6 +9,7 @@ import Application from '../applications/application.vue'
 import Referral from '../referrals/referral.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
+import ProfileDashTable from '@/components/user/profile_dashboard.vue'
 export default
 {
     path: '/internal',

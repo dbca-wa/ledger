@@ -5,6 +5,7 @@ module.exports = {
     organisation_access_group_members: '/api/organisation_access_group_members',
     users: '/api/users.json',
     profile: '/api/profile',
+    profiles: '/api/profiles',
     department_users: '/api/department_users',
     //other
     countries: "https://restcountries.eu/rest/v1/?fullText=true",
