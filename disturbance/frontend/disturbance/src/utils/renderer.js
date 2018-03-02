@@ -202,8 +202,11 @@ module.exports = {
             var btns = $('input[name='+e.target.name+']');
             $.each(btns,function (i,input) {
                 $("#cons_"+e.target.name+'_'+input.value).addClass('hidden');
+                
             });
-            $("#cons_"+e.target.name+'_'+e.target.value).removeClass('hidden');
+            if(e.target.checked){
+                $("#cons_"+e.target.name+'_'+e.target.value).removeClass('hidden');
+            }
         }
 
     },

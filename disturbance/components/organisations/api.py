@@ -289,6 +289,22 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @list_route(methods=['GET',])
+    def user_list(self, request, *args, **kwargs):
+        try:
+            qs = self.get_queryset().filter(requester = request.user, status='with_assessor')
+            serializer = OrganisationRequestDTSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['GET',])
     def assign_request_user(self, request, *args, **kwargs):
         try:
