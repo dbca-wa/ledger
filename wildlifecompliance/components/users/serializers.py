@@ -2,7 +2,10 @@ from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from wildlifecompliance.components.organisations.models import (   
                                     Organisation,
+                                    OrganisationRequest,
+                                    OrganisationContact
                                 )
+from wildlifecompliance.components.organisations.utils import can_admin_org
 from rest_framework import serializers
 
 class UserAddressSerializer(serializers.ModelSerializer):
@@ -17,15 +20,26 @@ class UserAddressSerializer(serializers.ModelSerializer):
             'postcode'
         ) 
 
+class UserOrganisationContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganisationContact
+        fields=(
+            'user_status',
+            'user_role'
+            )
+
+
 class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')
     abn = serializers.CharField(source='organisation.abn')
+    # contacts = UserOrganisationContactSerializer(many=True)
     class Meta:
         model = Organisation
         fields = (
             'id',
             'name',
-            'abn'
+            'abn',
+            # 'contacts',
         )
 
 class UserSerializer(serializers.ModelSerializer):
@@ -34,6 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
     personal_details = serializers.SerializerMethodField()
     address_details = serializers.SerializerMethodField()
     contact_details = serializers.SerializerMethodField()
+
     class Meta:
         model = EmailUser
         fields = (

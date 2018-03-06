@@ -84,11 +84,11 @@ class Organisation(models.Model):
 
     def accept_user(self, user,request):
         with transaction.atomic():
-            try:
-                UserDelegation.objects.get(organisation=self,user=user)
-                raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
-            except UserDelegation.DoesNotExist:
-                delegate = UserDelegation.objects.create(organisation=self,user=user)
+            # try:
+            #     UserDelegation.objects.get(organisation=self,user=user)
+            #     raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
+            # except UserDelegation.DoesNotExist:
+            delegate = UserDelegation.objects.create(organisation=self,user=user)
 
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
@@ -98,8 +98,8 @@ class Organisation(models.Model):
                 pass
 
         #log linking
-        self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
-        send_organisation_link_email_notification(user,request.user,self,request)
+            self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            send_organisation_link_email_notification(user,request.user,self,request)
 
     def decline_user(self, user,request):
             try:
@@ -114,7 +114,7 @@ class Organisation(models.Model):
             )
 
             #log linking
-            self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
+            self.log_user_action(OrganisationAction.ACTION_CONTACT_DECLINED.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
             send_organisation_contact_decline_email_notification(user,request.user,self,request)
 
     
@@ -366,17 +366,6 @@ class OrganisationContact(models.Model):
         return self.is_admin and self.user_status == 'active' and self.user_role =='company_admin' 
 
 
-    def decline_user(self,user,request):
-        with transaction.atomic():
-            self.user_status = 'decline'
-            self.save()
-            OrganisationContactDeclinedDetails.objects.create(
-                officer = request.user,
-                request = self
-            )
-            self.log_user_action(OrganisationContactAction.ACTION_ORGANISATION_CONTACT_DECLINE.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
-            send_organisation_contact_decline_email_notification(user,request.user,self,request)
-
 
     # def unlink_user(self,user,request):
     #     with transaction.atomic():
@@ -449,6 +438,7 @@ class OrganisationAction(UserAction):
     ACTION_LINK = "Linked {}"
     ACTION_UNLINK = "Unlinked {}"
     ACTION_CONTACT_ADDED = "Added new contact {}"
+    ACTION_CONTACT_DECLINED = "Declined contact {}"
     ACTION_MAKE_CONTACT_ADMIN = "Made contact Company Admin {}"
     ACTION_MAKE_CONTACT_USER = "Made contact Company User {}"
     ACTION_CONTACT_REMOVED = "Removed contact {}"
@@ -509,7 +499,7 @@ class OrganisationRequest(models.Model):
         with transaction.atomic():
             self.status = 'approved'
             self.save()
-            self.log_user_action(OrganisationRequestUserAction.ACTION_CONCLUDE_REQUEST.format(self.id),request)
+            self.log_user_action(OrganisationRequestUserAction.ACTION_ACCEPT_REQUEST.format(self.id),request)
             # Continue with remaining logic
             self.__accept(request)
 
@@ -526,7 +516,7 @@ class OrganisationRequest(models.Model):
         # Link requester to organisation
         delegate = UserDelegation.objects.create(user=self.requester,organisation=org)
         # log who approved the request
-        org.log_user_action(OrganisationAction.ACTION_REQUEST_APPROVED.format(self.id),request)
+        # org.log_user_action(OrganisationAction.ACTION_REQUEST_APPROVED.format(self.id),request)
         # log who created the link
         org.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
         
@@ -606,6 +596,7 @@ class OrganisationRequestUserAction(UserAction):
     ACTION_LODGE_REQUEST = "Lodge request {}"
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
+    ACTION_ACCEPT_REQUEST = "Accept request"
     ACTION_DECLINE_REQUEST = "Decline request"
     # Assessors
     ACTION_CONCLUDE_REQUEST = "Conclude request {}"

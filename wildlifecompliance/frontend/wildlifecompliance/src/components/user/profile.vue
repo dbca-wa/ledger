@@ -198,6 +198,8 @@
                                 <a style="cursor:pointer;text-decoration:none;" @click.prevent="unlinkUser(org)"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
                               </div>
                           </div>
+
+
                           <div style="margin-top:15px;" v-if="addingCompany">
                               <h3> New Organisation</h3>
                               <div class="form-group">
@@ -276,6 +278,7 @@ export default {
                 wildlifecompliance_organisations:[],
                 residential_address : {}
             },
+            
             newOrg: {
                 'detailsChecked': false,
                 'exists': false
@@ -539,6 +542,17 @@ export default {
         },(error) => {
             console.log(error);
         })
+
+    //    Vue.http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'user_organisation_request_list')).then((response) => {
+    //     next(vm => {
+    //         access_request = true
+    //         vm.access = response.body
+
+    //     })
+    // },(error) => {
+    //     console.log(error);
+    // })
+
     },
     mounted: function(){
         this.fetchCountries();
