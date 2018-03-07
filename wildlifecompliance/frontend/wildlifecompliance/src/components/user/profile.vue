@@ -418,7 +418,7 @@ export default {
                 if (response.body.valid){
                     swal(
                         'Validate Pins',
-                        'The pins you entered have been validated and you have now been linked to this organisation.',
+                        'The pins you entered have been validated and your request will be processed by Organisation Administrator.',
                         'success'
                     )
                     vm.registeringOrg = false;
