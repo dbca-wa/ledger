@@ -95,7 +95,7 @@ export default {
                         data:"when",
                         orderable: false,
                         mRender:function(data,type,full){
-                            return moment(data).format(vm.dateFormat)
+                            return moment(data).format(vm.DATE_TIME_FORMAT)
                         }
                     },
                 ]

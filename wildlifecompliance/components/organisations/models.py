@@ -410,6 +410,7 @@ class OrganisationContactAction(UserAction):
 
     class Meta:
         app_label = 'wildlifecompliance'
+        ordering = ['-when']
 
 
 
@@ -464,6 +465,7 @@ class OrganisationAction(UserAction):
 
     class Meta:
         app_label = 'wildlifecompliance'
+        ordering = ['-when']
     
 class OrganisationLogEntry(CommunicationsLogEntry):
     organisation = models.ForeignKey(Organisation, related_name='comms_logs')
@@ -617,6 +619,7 @@ class OrganisationRequestUserAction(UserAction):
 
     class Meta:
         app_label = 'wildlifecompliance'
+        ordering = ['-when']
 
 
 class OrganisationRequestDeclinedDetails(models.Model):
@@ -638,6 +641,7 @@ class OrganisationRequestLogEntry(CommunicationsLogEntry):
 
     class Meta:
         app_label = 'wildlifecompliance'
+        ordering=['-created']
 
 
 
