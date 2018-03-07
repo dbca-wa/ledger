@@ -36,7 +36,7 @@ class UserAction(models.Model):
         app_label = 'disturbance'
 
 class CommunicationsLogEntry(models.Model):
-    TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'), ('main', 'Mail'), ('person', 'In Person')]
+    TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'), ('mail', 'Mail'), ('person', 'In Person')]
     DEFAULT_TYPE = TYPE_CHOICES[0][0]
 
     to = models.CharField(max_length=200, blank=True, verbose_name="To")

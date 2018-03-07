@@ -192,6 +192,21 @@
                                 <a style="cursor:pointer;text-decoration:none;" @click.prevent="unlinkUser(org)"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
                               </div>
                           </div>
+
+                          <div v-for="orgReq in orgRequest_list">
+                              <div class="form-group">
+                                <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                <div class="col-sm-3"> 
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                </div>
+                                <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                <div class="col-sm-3"> 
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
+                                </div>
+                                <lable>&nbsp;Pending for approval</lable>
+                              </div>
+                          </div>
+
                           <div style="margin-top:15px;" v-if="addingCompany">
                               <h3> New Organisation</h3>
                               <div class="form-group">
@@ -286,6 +301,7 @@ export default {
             updatingAddress: false,
             updatingContact: false,
             registeringOrg: false,
+            orgRequest_list: [],
         }
     },
     watch: {
@@ -400,6 +416,19 @@ export default {
                 console.log(error);
             });
         },
+
+        fetchOrgRequestList: function() { //Fetch all the Organisation requests submitted by user which are pending for approval.
+            let vm = this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'user_list')).then((response) => {
+                
+                vm.orgRequest_list=response.body; 
+            }, (error) => {
+                console.log(error);
+            });
+        },
+
+
+
         validatePins: function() {
             let vm = this;
             vm.validatingPins = true;
@@ -536,6 +565,7 @@ export default {
     },
     mounted: function(){
         this.fetchCountries();
+        this.fetchOrgRequestList();
         this.personal_form = document.forms.personal_form;
         $('.panelClicker[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];

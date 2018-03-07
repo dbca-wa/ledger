@@ -67,7 +67,7 @@ class Approval(models.Model):
 
     @property
     def reference(self):
-        return '{}'.format(self.id)
+        return 'A{}'.format(self.id)
 
     @property
     def is_issued(self):

@@ -1,4 +1,4 @@
-<template id="proposal_dashboard">
+a<template id="proposal_dashboard">
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">

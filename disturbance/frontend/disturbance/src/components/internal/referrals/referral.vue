@@ -1,7 +1,7 @@
 <template lang="html">
     <div v-if="proposal" class="container" id="internalReferral">
             <div class="row">
-        <h3>Proposal: {{ proposal.id }}</h3>
+        <h3>Proposal: {{ proposal.lodgement_number }}</h3>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
             <div class="row">

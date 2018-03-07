@@ -5,6 +5,7 @@ from disturbance.components.organisations.models import (
                                 )
 from rest_framework import serializers
 
+
 class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
@@ -34,6 +35,8 @@ class UserSerializer(serializers.ModelSerializer):
     personal_details = serializers.SerializerMethodField()
     address_details = serializers.SerializerMethodField()
     contact_details = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
+
     class Meta:
         model = EmailUser
         fields = (
@@ -47,7 +50,8 @@ class UserSerializer(serializers.ModelSerializer):
             'disturbance_organisations',
             'personal_details',
             'address_details',
-            'contact_details'
+            'contact_details',
+            'full_name'
         )
     
     def get_personal_details(self,obj):
@@ -63,6 +67,12 @@ class UserSerializer(serializers.ModelSerializer):
             return True
         else:
             return False
+
+    def get_full_name(self, obj):
+        return obj.get_full_name()
+
+
+
 
 class PersonalSerializer(serializers.ModelSerializer):
     class Meta:

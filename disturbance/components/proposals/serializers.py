@@ -38,6 +38,8 @@ class EmailUserSerializer(serializers.ModelSerializer):
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
+    allowed_assessors = EmailUserSerializer(many=True)
+
     class Meta:
         model = Proposal
         fields = (
@@ -62,13 +64,18 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'readonly',
                 'can_user_edit',
                 'can_user_view',
-                'documents_url'
+                'documents_url',
+                'reference',
+                'lodgement_number',
+                'lodgement_sequence',
+                'can_officer_process',
+                'allowed_assessors'
                 )
         read_only_fields=('documents',)
     
     def get_documents_url(self,obj):
         return '/media/proposals/{}/documents/'.format(obj.id)
-
+        
     def get_readonly(self,obj):
         return False
 
@@ -80,6 +87,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
 
     def get_customer_status(self,obj):
         return obj.get_customer_status_display()
+
+    
 
 class DTProposalSerializer(BaseProposalSerializer):
     submitter = EmailUserSerializer()
@@ -127,8 +136,16 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'readonly',
                 'can_user_edit',
                 'can_user_view',
+                'reference',
+                'lodgement_number',
+                'lodgement_sequence',
+                'can_officer_process',
+
+               
                 )
         read_only_fields=('documents','requirements')
+
+
 
 class ApplicantSerializer(serializers.ModelSerializer):
     from disturbance.components.organisations.serializers import OrganisationAddressSerializer
@@ -206,7 +223,11 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'proposed_issuance_approval',
                 'proposed_decline_status',
                 'proposaldeclineddetails',
-                'permit'
+                'permit',
+                'reference',
+                'lodgement_number',
+                'lodgement_sequence',
+                'can_officer_process'
                 )
         read_only_fields=('documents','requirements')
 
@@ -281,6 +302,7 @@ class DTReferralSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(source='proposal.get_processing_status_display')
     referral_status = serializers.CharField(source='get_processing_status_display')
     proposal_lodgement_date = serializers.CharField(source='proposal.lodgement_date')
+    proposal_lodgement_number = serializers.CharField(source='proposal.lodgement_number')
     submitter = serializers.SerializerMethodField()
     referral = EmailUserSerializer()
     class Meta:
@@ -298,7 +320,8 @@ class DTReferralSerializer(serializers.ModelSerializer):
             'proposal',
             'can_be_processed',
             'referral',
-            'proposal_lodgement_date'
+            'proposal_lodgement_date',
+            'proposal_lodgement_number'
         ) 
 
     def get_submitter(self,obj):

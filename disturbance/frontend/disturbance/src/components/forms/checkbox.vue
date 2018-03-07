@@ -5,7 +5,7 @@
                 <label>
                     <input :disabled="readonly" ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" />
                     {{ label }}
-                </label><i data-toggle="tooltip" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>
+                </label><i v-if="help_text" data-toggle="tooltip" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>
             </div>
         </div>
     </div>
@@ -13,7 +13,7 @@
 
 <script>
 export default {
-  props: ['name', 'label', 'value', 'help_text', 'conditions', "handleChange","reaodnly"],
+  props: ['name', 'label', 'value', 'help_text', 'conditions', "handleChange","readonly"],
   computed: {
     isChecked: function() {
       return (this.value == 'on');

@@ -5,7 +5,7 @@
         <div class="row">
             <h3>{{ org.name }} - {{org.abn}}</h3>
             <div class="col-md-3">
-                <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
+                <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             </div>
             <div class="col-md-1">
             </div>
@@ -228,6 +228,8 @@ export default {
             activate_tables: false,
             comms_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/comms_log'),
             logs_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/action_log'),
+            comms_add_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/add_comms_log'),
+
             contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
             proposals_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/proposals'),
             approvals_url: api_endpoints.approvals+'?org_id='+vm.$route.params.org_id,

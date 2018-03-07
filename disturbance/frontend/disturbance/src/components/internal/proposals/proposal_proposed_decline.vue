@@ -30,7 +30,7 @@
             </div>
             <div slot="footer">
                 <button type="button" v-if="decliningProposal" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Declining</button>
-                <button type="button" v-else class="btn btn-default" @click="ok">Decline</button>
+                <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
@@ -110,6 +110,7 @@ export default {
                         vm.decliningProposal = false;
                         vm.close();
                         vm.$emit('refreshFromResponse',response);
+                        vm.$router.push({ path: '/internal' }); //Navigate to dashboard after propose decline.
                     },(error)=>{
                         vm.errors = true;
                         vm.decliningProposal = false;
