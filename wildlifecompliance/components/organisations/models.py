@@ -19,7 +19,8 @@ from wildlifecompliance.components.organisations.emails import (
                         send_organisation_contact_user_email_notification,
                         send_organisation_contact_suspend_email_notification,
                         send_organisation_reinstate_email_notification,
-                        send_organisation_contact_decline_email_notification
+                        send_organisation_contact_decline_email_notification,
+                        send_organisation_request_decline_email_notification
                     )
 
 @python_2_unicode_compatible
@@ -495,6 +496,7 @@ class OrganisationRequest(models.Model):
     class Meta:
         app_label = 'wildlifecompliance'
 
+   
     def accept(self, request):
         with transaction.atomic():
             self.status = 'approved'
@@ -560,16 +562,18 @@ class OrganisationRequest(models.Model):
             self.save()
             self.log_user_action(OrganisationRequestUserAction.ACTION_UNASSIGN,request)
 
-    def decline(self, reason, request):
+    def decline(self, request):
         with transaction.atomic():
             self.status = 'declined'
             self.save()
             OrganisationRequestDeclinedDetails.objects.create(
                 officer = request.user,
-                reason = reason,
+                reason = 'decline',
                 request = self
             )
-            self.log_user_action(OrganisationRequestUserAction.ACTION_DECLINE_REQUEST,request)
+            self.log_user_action(OrganisationRequestUserAction.ACTION_DECLINE_REQUEST.format('{} {}({})'.format(request.user.first_name,request.user.last_name,request.user.email)),request)
+            send_organisation_request_decline_email_notification(self,request)
+
 
     def log_user_action(self, action, request):
         return OrganisationRequestUserAction.log_action(self, action, request.user)
@@ -596,8 +600,8 @@ class OrganisationRequestUserAction(UserAction):
     ACTION_LODGE_REQUEST = "Lodge request {}"
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
-    ACTION_ACCEPT_REQUEST = "Accept request"
-    ACTION_DECLINE_REQUEST = "Decline request"
+    ACTION_ACCEPT_REQUEST = "Accept request {}"
+    ACTION_DECLINE_REQUEST = "Decline request {}"
     # Assessors
     ACTION_CONCLUDE_REQUEST = "Conclude request {}"
 
