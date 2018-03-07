@@ -302,6 +302,7 @@ class DTReferralSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(source='proposal.get_processing_status_display')
     referral_status = serializers.CharField(source='get_processing_status_display')
     proposal_lodgement_date = serializers.CharField(source='proposal.lodgement_date')
+    proposal_lodgement_number = serializers.CharField(source='proposal.lodgement_number')
     submitter = serializers.SerializerMethodField()
     referral = EmailUserSerializer()
     class Meta:
@@ -319,7 +320,8 @@ class DTReferralSerializer(serializers.ModelSerializer):
             'proposal',
             'can_be_processed',
             'referral',
-            'proposal_lodgement_date'
+            'proposal_lodgement_date',
+            'proposal_lodgement_number'
         ) 
 
     def get_submitter(self,obj):

@@ -3,7 +3,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Proposals referred to me 
+                    <h3 class="panel-title">Proposals referred to me
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -125,7 +125,15 @@ export default {
                     {
                         data: "proposal",
                         mRender:function(data,type,full){
-                            return 'P'+data;
+                            let tick='';
+                            if (full.can_be_processed){
+                                tick = "<i class='fa fa-times-circle' style='color:red'></i>";
+                            }
+                            else
+                            {
+                                tick = "<i class='fa fa-check-circle' style='color:green'></i>";
+                            }
+                            return full.proposal_lodgement_number+tick;
                         }
                     },
                     {data: "region"},
