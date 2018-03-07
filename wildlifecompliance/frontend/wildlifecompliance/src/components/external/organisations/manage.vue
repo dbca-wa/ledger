@@ -652,7 +652,10 @@ export default {
                             'success'
                             )
                         }, (error) => {
-                            swal('Unlink','There was an error unlinking '+name+' ('+id+')','error')
+                            if (error.status ==500){
+                                swal('Unlink','Last Organisation Admin can not be unlinked','error');
+                            }
+                            
                         });
                 },(error) => {
                 });

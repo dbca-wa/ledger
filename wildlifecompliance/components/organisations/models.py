@@ -165,14 +165,25 @@ class Organisation(models.Model):
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
             # delete contact person
             try:
-                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
-                org_contact.user_status ='unlinked'
-                org_contact.save()
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)  
+                if org_contact.user_role == 'organisation_admin':
+                    if OrganisationContact.objects.filter(organisation = self,user_role = 'organisation_admin', user_status ='active').count() > 1 :    
+                        org_contact.user_status ='unlinked'
+                        org_contact.save()
+                        # delete delegate
+                        delegate.delete()
+                    else:
+                        raise ValidationError('This user is last Organisation Administrator.')
+                        
+                else:
+                    org_contact.user_status ='unlinked'
+                    org_contact.save()
+                    # delete delegate
+                    delegate.delete()
             except OrganisationContact.DoesNotExist:
                 pass
 
-            # delete delegate
-            delegate.delete()
+            
             # log linking
             self.log_user_action(OrganisationAction.ACTION_UNLINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email

@@ -15,12 +15,6 @@ class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/organisation_request_accept_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_accept_notification.txt'
 
-class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
-    subject = 'Your organisation request has been declined.'
-    html_template = 'wildlifecompliance/emails/organisation_request_decline_notification.html'
-    txt_template = 'wildlifecompliance/emails/organisation_request_decline_notification.txt'
-
-
 class OrganisationRequestDeclineNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation request has been declined.'
     html_template = 'wildlifecompliance/emails/organisation_request_decline_notification.html'
