@@ -40,7 +40,7 @@ from mooring.models import (MooringArea,
                                 MooringsiteStayHistory,
                                 MooringAreaStayHistory,
                                 PromoArea,
-                                Marina,
+                                MarinePark,
                                 Feature,
                                 Region,
                                 MooringsiteClass,
@@ -378,10 +378,12 @@ class MooringAreaStayHistoryViewSet(viewsets.ModelViewSet):
 
 
 class MooringAreaMapViewSet(viewsets.ReadOnlyModelViewSet):
+    print "LOADING " 
 #   queryset = MooringArea.objects.exclude(campground_type=3).annotate(Min('mooringsites__rates__rate__adult'))
     queryset = MooringArea.objects.exclude(campground_type=3)
     serializer_class = MooringAreaMapSerializer
     permission_classes = []
+    print queryset
 
 
 class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
@@ -412,10 +414,10 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         # if a date range is set, filter out campgrounds that are unavailable for the whole stretch
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
             sites = Mooringsite.objects.filter(**context)
-            ground_ids = utils.get_open_campgrounds(sites, scrubbed['arrival'], scrubbed['departure'])
+            ground_ids = utils.get_open_marinas(sites, scrubbed['arrival'], scrubbed['departure'])
 
         else: # show all of the campgrounds with campsites
-            ground_ids = set((x[0] for x in Mooringsite.objects.filter(**context).values_list('campground')))
+            ground_ids = set((x[0] for x in Mooringsite.objects.filter(**context).values_list('mooringarea')))
 
             # we need to be tricky here. for the default search (all, no timestamps),
             # we want to include all of the "campgrounds" that don't have any campsites in the model! (e.g. third party)
@@ -1299,7 +1301,7 @@ class PromoAreaViewSet(viewsets.ModelViewSet):
     serializer_class = PromoAreaSerializer
 
 class MarinaViewSet(viewsets.ModelViewSet):
-    queryset = Marina.objects.all()
+    queryset = MarinePark.objects.all()
     serializer_class = MarinaSerializer
 
     def list(self, request, *args, **kwargs):

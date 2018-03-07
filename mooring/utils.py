@@ -142,52 +142,51 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                         date=start_date+timedelta(days=i),
                         booking=booking
                     )
-
     # On success, return the temporary booking
     return booking
 
-
-def get_open_campgrounds(campsites_qs, start_date, end_date):
+def get_open_marinas(campsites_qs, start_date, end_date):
     """Fetch the set of campgrounds (from a set of campsites) with spaces open over a range of visit dates."""
     # short circuit: if start date is before today, return nothing
     today = date.today()
     if start_date < today:
         return set()
 
+    print campsites_qs
     # remove from the campsite list any entries with bookings
     campsites_qs = campsites_qs.exclude(
-        campsitebooking__date__range=(start_date, end_date-timedelta(days=1))
+        mooringsitebooking__date__range=(start_date, end_date-timedelta(days=1))
     # and also campgrounds where the book window is outside of the max advance range
     ).exclude(
         #campground__max_advance_booking__lte=(start_date-today).days - 1 
-        campground__max_advance_booking__lt=(start_date-today).days 
+        mooringarea__max_advance_booking__lt=(start_date-today).days 
     )
 
     # get closures at campsite and campground level
     cgbr_qs =    MooringAreaBookingRange.objects.filter(
-        Q(campground__in=[x[0] for x in campsites_qs.distinct('campground').values_list('campground')]),
+        #Q(mooringarea__in=[x[0] for x in campsites_qs.distinct('mooringarea').values_list('mooringarea')]),
         Q(status=1),
-        Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
+        #Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
     )
     cgbr = set([x[0] for x in cgbr_qs.values_list('campground')])
 
-    csbr_qs =    MooringsiteBookingRange.objects.filter(
-        Q(campsite__in=campsites_qs),
+    csbr_qs =    MooringAreaBookingRange.objects.filter(
+        #Q(campsite__in=campsites_qs),
         Q(status=1),
-        Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
+        #Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
     )
     csbr = set([x[0] for x in csbr_qs.values_list('campsite')])
 
     # generate a campground-to-campsite-list map with closures removed
-    campground_map = {}
+    mooring_map = {}
     for cs in campsites_qs:
         if (cs.pk in csbr) or (cs.campground.pk in cgbr):
             continue
-        if cs.campground.pk not in campground_map:
-            campground_map[cs.campground.pk] = []
-        campground_map[cs.campground.pk].append(cs.pk)
+        if cs.mooring.pk not in mooring_map:
+            mooring_map[cs.mooring.pk] = []
+        mooring_map[cs.mooring.pk].append(cs.pk)
 
-    return set(campground_map.keys())
+    return set(mooring_map.keys())
 
 
 def get_campsite_availability(campsites_qs, start_date, end_date):
@@ -208,11 +207,11 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
 
     # generate a campground-to-campsite-list map
-    campground_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.campground.pk == cg[0]] for cg in campsites_qs.distinct('campground').values_list('campground')}
+    mooring_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.campground.pk == cg[0]] for cg in campsites_qs.distinct('mooring').values_list('mooring')}
 
     # strike out whole campground closures
     cgbr_qs =    MooringAreaBookingRange.objects.filter(
-        Q(campground__in=campground_map.keys()),
+        Q(mooring__in=mooring_map.keys()),
         Q(status=1),
         Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
     )
@@ -222,7 +221,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         today = date.today()
         diff = (end-start).days + 1
         for i in range(diff):
-            for cs in campground_map[closure.campground.pk]:
+            for cs in mooring_map[closure.mooring.pk]:
                 #results[cs][start+timedelta(days=i)][0] = 'closed'
                 if start+timedelta(days=i) == today:
                     if not closure.campground._is_open(start+timedelta(days=i)):

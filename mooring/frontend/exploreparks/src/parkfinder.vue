@@ -955,7 +955,7 @@ export default {
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
         $.ajax({
-            url: vm.parkstayUrl+'/api/campground_map/?format=json',
+            url: vm.parkstayUrl+'/api/mooring_map/?format=json',
             dataType: 'json',
             success: function (response, stat, xhr) {
                 var features = vm.geojson.readFeatures(response);
@@ -970,7 +970,7 @@ export default {
         });
         
         this.groundsSource.loadSource = function (onSuccess) {
-            var urlBase = vm.parkstayUrl+'/api/campground_map_filter/?';
+            var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
             if ((vm.arrivalData.date) && (vm.departureData.date)) {

@@ -9,7 +9,7 @@ class MooringsiteClassAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     list_filter = ('name',)
 
-@admin.register(models.Marina)
+@admin.register(models.MarinePark)
 class MarinaAdmin(admin.ModelAdmin):
     list_display = ('name','district')
     ordering = ('name',)

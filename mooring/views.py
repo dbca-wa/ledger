@@ -18,7 +18,7 @@ from mooring.models import (MooringArea,
                                 Booking,
                                 BookingInvoice,
                                 PromoArea,
-                                Marina,
+                                MarinePark,
                                 Feature,
                                 Region,
                                 MooringsiteClass,
@@ -41,7 +41,6 @@ logger = logging.getLogger('booking_checkout')
 
 class MooringsiteBookingSelector(TemplateView):
     template_name = 'mooring/campsite_booking_selector.html'
-
 
 class MooringsiteAvailabilitySelector(TemplateView):
     template_name = 'mooring/campsite_booking_selector.html'

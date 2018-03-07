@@ -86,6 +86,7 @@ def update_campground_map_filename(instance, filename):
     return 'parkstay/campground_maps/{}/{}'.format(instance.id,filename)
 
 class Campground(models.Model):
+
     CAMPGROUND_TYPE_CHOICES = (
         (0, 'Bookable Online'),
         (1, 'Not Bookable Online'),
@@ -115,6 +116,7 @@ class Campground(models.Model):
     description = models.TextField(blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
+
     # Tags for communications methods available and access type
     tags = TaggableManager(blank=True)
     driving_directions = models.TextField(blank=True, null=True)

@@ -51,7 +51,7 @@ class Contact(models.Model):
         return "{}: {}".format(self.name, self.phone_number)
 
 
-class Marina(models.Model):
+class MarinePark(models.Model):
     name = models.CharField(max_length=255)
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
@@ -69,7 +69,7 @@ class Marina(models.Model):
     def save(self,*args,**kwargs):
         cache.delete('parks')
         self.full_clean()
-        super(Marina,self).save(*args,**kwargs)
+        super(MarinePark,self).save(*args,**kwargs)
 
     class Meta:
         unique_together = (('name',),)
@@ -82,8 +82,8 @@ class PromoArea(models.Model):
     def __str__(self):
         return self.name
 
-def update_campground_map_filename(instance, filename):
-    return 'mooring/campground_maps/{}/{}'.format(instance.id,filename)
+def update_mooring_map_filename(instance, filename):
+    return 'mooring/mooring_maps/{}/{}'.format(instance.id,filename)
 
 class MooringArea(models.Model):
     CAMPGROUND_TYPE_CHOICES = (
@@ -104,7 +104,7 @@ class MooringArea(models.Model):
     )
 
     name = models.CharField(max_length=255, null=True)
-    park = models.ForeignKey('Marina', on_delete=models.PROTECT, related_name='marina')
+    park = models.ForeignKey('MarinePark', on_delete=models.PROTECT, related_name='marina')
     ratis_id = models.IntegerField(default=-1)
     contact = models.ForeignKey('Contact', on_delete=models.PROTECT, blank=True, null=True)
     campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=3)
@@ -131,7 +131,7 @@ class MooringArea(models.Model):
     check_out = models.TimeField(default=time(10))
     max_advance_booking = models.IntegerField(default =180)
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
-    campground_map = models.FileField(upload_to=update_campground_map_filename,null=True,blank=True)
+    mooring_map = models.FileField(upload_to=update_mooring_map_filename,null=True,blank=True)
 
     def __str__(self):
         return self.name
@@ -500,8 +500,8 @@ class MooringAreaBookingRange(BookingRange):
 
         # Preventing ranges within other ranges
         within = MooringAreaBookingRange.objects.filter(Q(campground=self.campground),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
-        if within:
-            raise BookingRangeWithinException('This Booking Range is within the range of another one')
+        #if within:
+            #raise BookingRangeWithinException('This Booking Range is within the range of another one')
         if self.pk:
             original = MooringAreaBookingRange.objects.get(pk=self.pk)
             if not original.editable:
@@ -1075,7 +1075,7 @@ class Booking(models.Model):
         if not self.campground.oracle_code:
             raise ValidationError('Campground does not have an Oracle code.')
         if self.campground.park.entry_fee_required and not self.campground.park.oracle_code:
-            raise ValidationError('Marina does not have an Oracle code.')
+            raise ValidationError('MarinePark does not have an Oracle code.')
         super(Booking,self).clean(*args,**kwargs)
 
     def __str__(self):
@@ -1439,9 +1439,9 @@ class MooringAreaBookingRangeListener(object):
                 pass
         if instance.status == 0 and not instance.range_end:
             try:
-                another_open = CampgroundBookingRange.objects.filter(campground=instance.campground,range_start=instance.range_start+timedelta(days=1),status=0).latest('updated_on')
+                another_open = MooringAreaBookingRange.objects.filter(campground=instance.campground,range_start=instance.range_start+timedelta(days=1),status=0).latest('updated_on')
                 instance.range_end = instance.range_start
-            except CampgroundBookingRange.DoesNotExist:
+            except MooringAreaBookingRange.DoesNotExist:
                 pass
 
     @staticmethod
@@ -1450,7 +1450,7 @@ class MooringAreaBookingRangeListener(object):
         today = datetime.now().date()
         if instance.status != 0 and instance.range_end:
             try:
-                linked_open = CampgroundBookingRange.objects.filter(range_start=instance.range_end + timedelta(days=1), status=0).order_by('updated_on')
+                linked_open = MooringAreaBookingRange.objects.filter(range_start=instance.range_end + timedelta(days=1), status=0).order_by('updated_on')
                 if instance.range_start >= today:
                     if linked_open:
                         linked_open = linked_open[0]
@@ -1465,7 +1465,7 @@ class MooringAreaBookingRangeListener(object):
                         linked_open = None
                 if linked_open:
                     linked_open.save(skip_validation=True)
-            except CampgroundBookingRange.DoesNotExist:
+            except MooringAreaBookingRange.DoesNotExist:
                 pass
         elif instance.status != 0 and not instance.range_end:
             try:
@@ -1502,7 +1502,7 @@ class MarinaAreaListener(object):
     @receiver(pre_save, sender=MooringArea)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = MarinaArea.objects.filter(pk=instance.pk)
+            original_instance = Marina.objects.filter(pk=instance.pk)
             if original_instance.exists():
                 setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
@@ -1514,7 +1514,7 @@ class MarinaAreaListener(object):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         if not original_instance:
             # Create an opening booking range on creation of Campground
-             MarinaAreaBookingRange.objects.create(campground=instance,range_start=datetime.now().date(),status=0)
+             MooringAreaBookingRange.objects.create(campground=instance,range_start=datetime.now().date(),status=0)
         else:
             if original_instance.price_level != instance.price_level:
                 # Get all campsites

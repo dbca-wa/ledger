@@ -1,7 +1,7 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
-from mooring.models import (   MooringAreaPriceHistory,
+from mooring.models import (MooringAreaPriceHistory,
                                 MooringsiteClassPriceHistory,
                                 Rate,
                                 MooringsiteStayHistory,
@@ -13,7 +13,7 @@ from mooring.models import (   MooringAreaPriceHistory,
                                 MooringAreaBookingRange,
                                 Mooringsite,
                                 MooringArea,
-                                Marina,
+                                MarinePark,
                                 PromoArea,
                                 Feature,
                                 Region,
@@ -30,7 +30,7 @@ from mooring.models import (   MooringAreaPriceHistory,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
                                 BookingHistory,
-                            )
+                           )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
 
@@ -42,7 +42,6 @@ class DistrictSerializer(serializers.ModelSerializer):
 class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
             model = PromoArea
-
 
 class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     """Serializer used by the campground availability map."""
@@ -168,7 +167,7 @@ class MooringAreaMapDistrictSerializer(serializers.HyperlinkedModelSerializer):
 class MooringAreaMapMarinaSerializer(serializers.HyperlinkedModelSerializer):
     district = MooringAreaMapDistrictSerializer(read_only=True)
     class Meta:
-        model = Marina
+        model = MarinePark 
         fields = ('id','name', 'entry_fee_required', 'district')
 
 class MooringAreaMapFilterSerializer(serializers.HyperlinkedModelSerializer):
@@ -185,7 +184,8 @@ class MooringAreaMapSerializer(gis_serializers.GeoFeatureModelSerializer):
     features = MooringAreaMapFeatureSerializer(read_only=True, many=True)
     park = MooringAreaMapMarinaSerializer(read_only=True)
     images = MooringAreaMapImageSerializer(read_only=True, many=True)
-    price_hint = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True, source='campsites__rates__rate__adult__min')
+#    price_hint = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True, source='campsites__rates__rate__adult__min')
+#   price_hint = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
 
     class Meta:
         model = MooringArea
@@ -199,7 +199,7 @@ class MooringAreaMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'park',
             'info_url',
             'images',
-            'price_hint'
+ #           'price_hint'
         )
 
 class MooringAreaImageSerializer(serializers.ModelSerializer):
@@ -252,7 +252,7 @@ class MooringAreaDatatableSerializer(serializers.ModelSerializer):
 class MooringAreaSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
     images = MooringAreaImageSerializer(many=True,required=False)
-    campground_map = serializers.FileField(read_only=True,required=False,allow_empty_file=True)
+    mooring_map = serializers.FileField(read_only=True,required=False,allow_empty_file=True)
     class Meta:
         model = MooringArea
         fields = (
@@ -283,7 +283,7 @@ class MooringAreaSerializer(serializers.ModelSerializer):
             'images',
             'max_advance_booking',
             'oracle_code',
-            'campground_map',
+            'mooring_map',
             'additional_info'
         )
 
@@ -328,7 +328,7 @@ class MarinaSerializer(serializers.HyperlinkedModelSerializer):
     district = DistrictSerializer()
     campgrounds = MooringAreaSerializer(many=True)
     class Meta:
-        model = Marina
+        model = MarinePark 
         fields = ('id','district', 'url', 'name', 'entry_fee_required', 'campgrounds','entry_fee_required')
 
 class MooringsiteStayHistorySerializer(serializers.ModelSerializer):
@@ -711,7 +711,6 @@ class UserAddressSerializer(serializers.ModelSerializer):
         if not obj.get('state'):
             raise serializers.ValidationError('State is required.')
         return obj
-
 
 class UserSerializer(serializers.ModelSerializer):
     residential_address = UserAddressSerializer()

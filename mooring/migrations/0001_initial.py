@@ -225,7 +225,7 @@ class Migration(migrations.Migration):
                 ('check_out', models.TimeField(default=datetime.time(10, 0))),
                 ('max_advance_booking', models.IntegerField(default=180)),
                 ('oracle_code', models.CharField(blank=True, max_length=50, null=True)),
-                ('campground_map', models.FileField(blank=True, null=True, upload_to=mooring.models.update_campground_map_filename)),
+                ('campground_map', models.FileField(blank=True, null=True, upload_to=mooring.models.update_mooring_map_filename)),
                 ('contact', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='mooring.Contact')),
                 ('features', models.ManyToManyField(to='mooring.Feature')),
                 ('park', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='marina', to='mooring.Marina')),
