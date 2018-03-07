@@ -49,11 +49,11 @@ class Organisation(models.Model):
         if val_admin:
             val= val_admin
             admin_flag= True
-            role = 'company_admin' 
+            role = 'organisation_admin' 
         elif val_user:
             val = val_user
             admin_flag = False
-            role = 'company_user'
+            role = 'organisation_user'
         else:
             val = False
             return val
@@ -130,12 +130,12 @@ class Organisation(models.Model):
                 delegate = UserDelegation.objects.create(organisation=self,user=user)
             if self.first_five_admin:
                 is_admin = True
-                role = 'company_admin'
+                role = 'organisation_admin'
             elif admin_flag:
-                role = 'company_admin'
+                role = 'organisation_admin'
                 is_admin = True
             else :
-                role = 'company_user'
+                role = 'organisation_user'
                 is_admin = False
                 
             # Create contact person
@@ -188,7 +188,7 @@ class Organisation(models.Model):
             # delete contact person
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
-                org_contact.user_role ='company_admin'
+                org_contact.user_role ='organisation_admin'
                 org_contact.is_admin = True
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
@@ -208,7 +208,7 @@ class Organisation(models.Model):
             # delete contact person
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
-                org_contact.user_role ='company_user'
+                org_contact.user_role ='organisation_user'
                 org_contact.is_admin = False
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
@@ -323,7 +323,7 @@ class Organisation(models.Model):
         """
         org_contact= OrganisationContact.objects.get(organisation_id = self.id, first_name = request.user.first_name)
 
-        return org_contact.is_admin and org_contact.user_status == 'active' and org_contact.user_role =='company_admin' 
+        return org_contact.is_admin and org_contact.user_status == 'active' and org_contact.user_role =='organisation_admin' 
 
 
 
@@ -335,11 +335,11 @@ class OrganisationContact(models.Model):
         ('decline', 'Decline'),
         ('unlinked', 'Unlinked'),
         ('suspended', 'Suspended'))
-    USER_ROLE_CHOICES = (('company_admin', 'Company Admin'),
-        ('company_user', 'Company User')
+    USER_ROLE_CHOICES = (('organisation_admin', 'Organisation Admin'),
+        ('organisation_user', 'Organisation User')
         )
     user_status = models.CharField('Status', max_length=40, choices=USER_STATUS_CHOICES,default=USER_STATUS_CHOICES[0][0])
-    user_role = models.CharField('Role', max_length=40, choices=USER_ROLE_CHOICES,default='company_user')
+    user_role = models.CharField('Role', max_length=40, choices=USER_ROLE_CHOICES,default='organisation_user')
     organisation = models.ForeignKey(Organisation, related_name='contacts')
     email = models.EmailField(blank=False)
     first_name = models.CharField(max_length=128, blank=False, verbose_name='Given name(s)')
@@ -364,7 +364,7 @@ class OrganisationContact(models.Model):
         """
         :return: True if the application is in one of the editable status.
         """
-        return self.is_admin and self.user_status == 'active' and self.user_role =='company_admin' 
+        return self.is_admin and self.user_status == 'active' and self.user_role =='organisation_admin' 
 
 
 
@@ -440,8 +440,8 @@ class OrganisationAction(UserAction):
     ACTION_UNLINK = "Unlinked {}"
     ACTION_CONTACT_ADDED = "Added new contact {}"
     ACTION_CONTACT_DECLINED = "Declined contact {}"
-    ACTION_MAKE_CONTACT_ADMIN = "Made contact Company Admin {}"
-    ACTION_MAKE_CONTACT_USER = "Made contact Company User {}"
+    ACTION_MAKE_CONTACT_ADMIN = "Made contact Organisation Admin {}"
+    ACTION_MAKE_CONTACT_USER = "Made contact Organisation User {}"
     ACTION_CONTACT_REMOVED = "Removed contact {}"
     ACTION_ORGANISATIONAL_DETAILS_SAVED_NOT_CHANGED = "Details saved without changes"
     ACTION_ORGANISATIONAL_DETAILS_SAVED_CHANGED = "Details saved with the following changes: \n{}"
@@ -524,12 +524,12 @@ class OrganisationRequest(models.Model):
         
         if org.first_five_admin:
             is_admin = True
-            role = 'company_admin'
+            role = 'organisation_admin'
         elif admin_flag:
-            role = 'company_admin'
+            role = 'organisation_admin'
             is_admin = True
         else :
-            role = 'company_user'
+            role = 'organisation_user'
             is_admin = False
         # Create contact person
 
