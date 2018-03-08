@@ -746,6 +746,7 @@ class CheckoutSerializer(serializers.Serializer):
     basket_owner = serializers.IntegerField(required=False)
     template = serializers.CharField(required=False)
     fallback_url = serializers.URLField()
+    return_preload_url = serializers.URLField(required=False)
     return_url = serializers.URLField()
     associateInvoiceWithToken = serializers.BooleanField(default=False)
     forceRedirect = serializers.BooleanField(default=False)
@@ -864,11 +865,10 @@ class CheckoutCreateView(generics.CreateAPIView):
                     basket = createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
 
             fields = [
-                'card_method', 'basket_owner', 'template', 'fallback_url', 'return_url', 'associateInvoiceWithToken', 'forceRedirect', 'sendEmail', 'proxy',
+                'card_method', 'basket_owner', 'template', 'fallback_url', 'return_url', 'return_preload_url', 'associateInvoiceWithToken', 'forceRedirect', 'sendEmail', 'proxy',
                 'checkoutWithToken', 'bpay_format', 'icrn_format', 'invoice_text', 'check_url'
             ]
             url_args = {f: six.text_type(serializer.validated_data[f]).encode('utf8') for f in fields if f in serializer.validated_data and serializer.validated_data[f] is not None}
-
             redirect = HttpResponseRedirect(reverse('checkout:index')+'?'+six.moves.urllib.parse.urlencode(url_args))
             # inject the current basket into the redirect response cookies
             # or else, anonymous users will be directionless

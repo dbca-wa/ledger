@@ -1,3 +1,5 @@
+import requests
+
 from oscar.core.loading import get_class
 from ledger.payments.models import Invoice
 from django.http import HttpResponseRedirect
@@ -47,6 +49,7 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         from ledger.payments.utils import update_payments
         # Get the return url
         return_url = self.checkout_session.return_url()
+        return_preload_url = self.checkout_session.return_preload_url()
         force_redirect = self.checkout_session.force_redirect()
 
         # Update the payments in the order lines
@@ -60,6 +63,12 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         # Flush all session data
         self.checkout_session.flush()
 
+        # If preload is enabled, fire off an unmonitored request server-side
+        # FIXME: replace with basket one-time secret
+        if return_preload_url:
+            requests.get('{}?invoice={}'.format(return_preload_url, invoice.reference),
+                            cookies=self.request.COOKIES)
+
         # Save order and invoice id in session so thank-you page can load it
         self.request.session['checkout_order_id'] = order.id
         self.request.session['checkout_return_url'] = return_url
@@ -67,7 +76,8 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         if not force_redirect:
             response = HttpResponseRedirect(self.get_success_url())
         else:
-            response = HttpResponseRedirect('{}?invoice={}'.format(return_url, Invoice.objects.get(order_number=order.number).reference))
+            response = HttpResponseRedirect('{}?invoice={}'.format(return_url, invoice.reference))
 
         self.send_signal(self.request, response, order)
+
         return response

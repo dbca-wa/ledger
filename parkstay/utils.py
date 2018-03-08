@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, date
+import logging
 import traceback
 from decimal import *
 import json
@@ -15,6 +16,9 @@ from ledger.payments.utils import oracle_parser,update_payments
 from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange,CampgroundStayHistory, CampsiteRate, ParkEntryRate, BookingVehicleRego)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 from parkstay.emails import send_booking_invoice,send_booking_confirmation
+from parkstay.exceptions import BindBookingException
+
+logger = logging.getLogger('booking_checkout')
 
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
@@ -779,6 +783,7 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             'system': settings.PS_PAYMENT_SYSTEM_ID,
             'fallback_url': request.build_absolute_uri('/'),
             'return_url': request.build_absolute_uri(reverse('public_booking_success')),
+            'return_preload_url': request.build_absolute_uri(reverse('public_booking_success')),
             'forceRedirect': True,
             'proxy': True if internal else False,
             "products": lines,
@@ -877,6 +882,43 @@ def delete_session_booking(session):
     if 'ps_booking' in session:
         del session['ps_booking']
         session.modified = True
+
+
+def bind_booking(request, booking, invoice_ref):
+    if booking.booking_type == 3:
+        try:
+            inv = Invoice.objects.get(reference=invoice_ref)
+        except Invoice.DoesNotExist:
+            logger.error(u'{} tried making a booking with an incorrect invoice'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user'))
+            raise BindBookingException
+
+        if inv.system not in ['0019']:
+            logger.error(u'{} tried making a booking with an invoice from another system with reference number {}'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',inv.reference))
+            raise BindBookingException
+
+        try:
+            b = BookingInvoice.objects.get(invoice_reference=invoice_ref)
+            logger.error(u'{} tried making a booking with an already used invoice with reference number {}'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',inv.reference))
+            raise BindBookingException
+        except BookingInvoice.DoesNotExist:
+            logger.info(u'{} finished temporary booking {}, creating new BookingInvoice with reference {}'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',booking.id, invoice_ref))
+            # FIXME: replace with server side notify_url callback
+            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+
+            # set booking to be permanent fixture
+            booking.booking_type = 1  # internet booking
+            booking.expiry_time = None
+            booking.save()
+
+            delete_session_booking(request.session)
+            request.session['ps_last_booking'] = booking.id
+
+            # send out the invoice before the confirmation is sent
+            send_booking_invoice(booking)
+            # for fully paid bookings, fire off confirmation email
+            if booking.paid:
+                emails.send_booking_confirmation(booking,request) 
+
 
 def daterange(start_date, end_date):
     for n in range(int ((end_date - start_date).days)):

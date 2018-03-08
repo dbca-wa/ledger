@@ -19,6 +19,12 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def return_url(self):
         return self._get('ledger','return_url')
 
+    def return_preload_to(self, url):
+        self._set('ledger', 'return_preload_url', url)
+
+    def return_preload_url(self):
+        return self._get('ledger', 'return_preload_url')
+
     # Template Methods
     # ===========================
     def use_template(self, url):
