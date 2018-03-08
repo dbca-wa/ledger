@@ -178,8 +178,15 @@
                                 <label class="radio-inline">
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
                                 </label>
+                                 <label class="radio-inline">
+                                  <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Consultant"> Yes, as a consultant
+                                </label>
                             </div>
                           </div>
+
+                          
+
+
                           <div class="form-group" v-if="managesOrg=='Yes'">
                             <div class="col-sm-12">
                                 <button class="btn btn-primary pull-right" v-if="hasOrgs && !addingCompany" @click.prevent="addCompany()">Add Another Organisation</button>   
@@ -198,6 +205,43 @@
                                 <a style="cursor:pointer;text-decoration:none;" @click.prevent="unlinkUser(org)"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
                               </div>
                           </div>
+
+                          <div class="form-group" v-if="managesOrg=='Consultant'">
+                              <h3> New Organisation</h3>
+                              <div class="form-group">
+                                  <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                  <div class="col-sm-6">
+                                      <input type="text" class="form-control" name="organisation" v-model="newOrg.name" placeholder="">
+                                  </div>
+                              </div>
+                              <div class="form-group">
+                                  <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                  <div class="col-sm-6">
+                                      <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="">
+                                  </div>
+                              </div>
+                              <div class="form-group" >
+                                    <label class="col-sm-12" style="text-align:left;">
+                                      Please upload a letter on organisation letter head stating that you are a consultant for the origanisation.
+                                        <span class="btn btn-info btn-file">
+                                            Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                        </span>
+                                        <span  style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
+                                    </label> 
+                                    </br>
+                                    
+                                    <label for="" class="col-sm-10 control-label" style="text-align:left;">You will be notified by email once the Department has checked the organisation details.
+                                    </label>
+                                    
+                                    
+                                    <div class="col-sm-12">
+                                      <button  @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
+                                      <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
+                                    </div>
+                              </div>
+                           </div>
+
+
 
 
                           <div style="margin-top:15px;" v-if="addingCompany">
@@ -235,6 +279,11 @@
                                     <button v-else class="btn btn-primary pull-left"><i class="fa fa-spin fa-spinner"></i>&nbsp;Validating Pins</button>
                                   </div>
                               </div>
+
+
+                              
+
+
                               <div class="form-group" v-else-if="!newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;">
                                     This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this origanisation.</br>
@@ -290,23 +339,41 @@ export default {
             checkingDetails: false,
             addingCompany: false,
             managesOrg: 'No',
+            managesOrgConsultant: 'No',
             uploadedFile: null,
             updatingPersonal: false,
             updatingAddress: false,
             updatingContact: false,
             registeringOrg: false,
+            role:null
         }
     },
     watch: {
         managesOrg: function() {
+            if (this.managesOrg == 'Yes'){
+              this.role = 'employee'
+            } else if (this.managesOrg == 'Consultant'){
+              this.role ='consultant'
+            }else{this.role = null
+            }
+
             if (this.managesOrg  == 'Yes' && !this.hasOrgs && this.newOrg){
-                 this.addCompany()
+                this.addCompany()
+                console.log(this.managesOrg)
+                console.log(this.role)
+
             } else if (this.managesOrg == 'No' && this.newOrg){
                 this.resetNewOrg();
                 this.uploadedFile = null;
                 this.addingCompany = false;
+            } else {
+                this.addCompany()
+                this.addingCompany=false
+                console.log(this.managesOrg)
+                console.log(this.role)
             } 
-        }
+        },
+  
     },
     computed: {
         hasOrgs: function() {
@@ -452,6 +519,8 @@ export default {
             data.append('name', vm.newOrg.name)
             data.append('abn', vm.newOrg.abn)
             data.append('identification', vm.uploadedFile)
+            data.append('role',vm.role)
+            console.log(vm.role)
             vm.$http.post(api_endpoints.organisation_requests,data,{
                 emulateJSON:true
             }).then((response) => {

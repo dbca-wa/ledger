@@ -174,7 +174,7 @@ class Organisation(models.Model):
                         delegate.delete()
                     else:
                         raise ValidationError('This user is last Organisation Administrator.')
-                        
+
                 else:
                     org_contact.user_status ='unlinked'
                     org_contact.save()
@@ -347,7 +347,8 @@ class OrganisationContact(models.Model):
         ('unlinked', 'Unlinked'),
         ('suspended', 'Suspended'))
     USER_ROLE_CHOICES = (('organisation_admin', 'Organisation Admin'),
-        ('organisation_user', 'Organisation User')
+        ('organisation_user', 'Organisation User'),
+        ('consultant','Consultant')
         )
     user_status = models.CharField('Status', max_length=40, choices=USER_STATUS_CHOICES,default=USER_STATUS_CHOICES[0][0])
     user_role = models.CharField('Role', max_length=40, choices=USER_ROLE_CHOICES,default='organisation_user')
@@ -498,12 +499,17 @@ class OrganisationRequest(models.Model):
         ('approved','Approved'),
         ('declined','Declined')
     )
+    ROLE_CHOICES = (
+        ('employee','Employee'),
+        ('consultant','Consultant')
+        )
     name = models.CharField(max_length=128, unique=True)
     abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
     requester = models.ForeignKey(EmailUser)
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='org_request_assignee')
     identification = models.FileField(upload_to='organisation/requests/%Y/%m/%d', null=True, blank=True)
     status = models.CharField(max_length=100,choices=STATUS_CHOICES, default="with_assessor")
+    role = models.CharField(max_length=100,choices=ROLE_CHOICES, default="employee")
     lodgement_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -535,15 +541,10 @@ class OrganisationRequest(models.Model):
         # log who created the link
         org.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
         
-        if org.first_five_admin:
-            is_admin = True
-            role = 'organisation_admin'
-        elif admin_flag:
-            role = 'organisation_admin'
-            is_admin = True
+        if self.role == 'consultant' :
+            role = 'consultant'
         else :
-            role = 'organisation_user'
-            is_admin = False
+            role = 'organisation_admin'
         # Create contact person
 
         OrganisationContact.objects.create(
@@ -556,7 +557,7 @@ class OrganisationRequest(models.Model):
             email = self.requester.email,
             user_role = role,
             user_status= 'active',
-            is_admin = is_admin
+            is_admin = True
         
         )
 
