@@ -18,7 +18,7 @@ class UserAddressSerializer(serializers.ModelSerializer):
             'state',
             'country',
             'postcode'
-        ) 
+        )
 
 class UserOrganisationContactSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,7 +27,6 @@ class UserOrganisationContactSerializer(serializers.ModelSerializer):
             'user_status',
             'user_role'
             )
-
 
 class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')

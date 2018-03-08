@@ -205,6 +205,19 @@
                                 <a style="cursor:pointer;text-decoration:none;" @click.prevent="unlinkUser(org)"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
                               </div>
                           </div>
+                          <div v-for="orgReq in orgRequest_pending">
+                              <div class="form-group">
+                                <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                <div class="col-sm-3"> 
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                </div>
+                                <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                <div class="col-sm-3"> 
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
+                                </div>
+                                <label>Pending for Approval {{orgReq.id}}</label>
+                              </div>
+                          </div>
 
                           <div class="form-group" v-if="managesOrg=='Consultant'">
                               <h3> New Organisation</h3>
@@ -345,7 +358,8 @@ export default {
             updatingAddress: false,
             updatingContact: false,
             registeringOrg: false,
-            role:null
+            role:null,
+            orgRequest_pending:[]
         }
     },
     watch: {
@@ -560,6 +574,16 @@ export default {
                 vm.loading.splice('fetching countries',1);
             });
         },
+        fetchOrgRequestPending:function (){
+            let vm =this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response)=>{
+                vm.orgRequest_pending = response.body;
+                vm.loading.splice('fetching pending organisation requests ',1);
+            },(response)=>{
+                console.log(response);
+                vm.loading.splice('fetching pending organisation requests',1);
+            });
+        },
         unlinkUser: function(org){
             let vm = this;
             let org_name = org.name;
@@ -625,6 +649,7 @@ export default {
     },
     mounted: function(){
         this.fetchCountries();
+        this.fetchOrgRequestPending();
         this.personal_form = document.forms.personal_form;
         $('.panelClicker[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];
