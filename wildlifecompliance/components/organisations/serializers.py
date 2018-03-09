@@ -121,6 +121,7 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
     identification = serializers.FileField()
     requester = OrgRequestRequesterSerializer(read_only=True)
     status = serializers.SerializerMethodField()
+    # role = serializers.SerializerMethodField()
     class Meta:
         model = OrganisationRequest
         fields = '__all__'
@@ -128,6 +129,8 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
 
     def get_status(self,obj):
         return obj.get_status_display()
+    # def get_role(self,obj):
+    #     return obj.get_role_display()
 
 class OrganisationRequestDTSerializer(OrganisationRequestSerializer):
     assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')

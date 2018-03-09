@@ -178,8 +178,15 @@
                                 <label class="radio-inline">
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
                                 </label>
+                                 <label class="radio-inline">
+                                  <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Consultant"> Yes, as a consultant
+                                </label>
                             </div>
                           </div>
+
+                          
+
+
                           <div class="form-group" v-if="managesOrg=='Yes'">
                             <div class="col-sm-12">
                                 <button class="btn btn-primary pull-right" v-if="hasOrgs && !addingCompany" @click.prevent="addCompany()">Add Another Organisation</button>   
@@ -198,6 +205,58 @@
                                 <a style="cursor:pointer;text-decoration:none;" @click.prevent="unlinkUser(org)"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
                               </div>
                           </div>
+                          <div v-for="orgReq in orgRequest_pending">
+                              <div class="form-group">
+                                <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                <div class="col-sm-3"> 
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                </div>
+                                <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                <div class="col-sm-3"> 
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
+                                </div>
+                                <label>Pending for Approval {{orgReq.id}}</label>
+                              </div>
+                          </div>
+
+                          <div class="form-group" v-if="managesOrg=='Consultant'">
+                              <h3> New Organisation</h3>
+                              <div class="form-group">
+                                  <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                  <div class="col-sm-6">
+                                      <input type="text" class="form-control" name="organisation" v-model="newOrg.name" placeholder="">
+                                  </div>
+                              </div>
+                              <div class="form-group">
+                                  <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                  <div class="col-sm-6">
+                                      <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="">
+                                  </div>
+                              </div>
+                              <div class="form-group" >
+                                    <label class="col-sm-12" style="text-align:left;">
+                                      Please upload a letter on organisation letter head stating that you are a consultant for the origanisation.
+                                        <span class="btn btn-info btn-file">
+                                            Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                        </span>
+                                        <span  style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
+                                    </label> 
+                                    </br>
+                                    
+                                    <label for="" class="col-sm-10 control-label" style="text-align:left;">You will be notified by email once the Department has checked the organisation details.
+                                    </label>
+                                    
+                                    
+                                    <div class="col-sm-12">
+                                      <button  @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
+                                      <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
+                                    </div>
+                              </div>
+                           </div>
+
+
+
+
                           <div style="margin-top:15px;" v-if="addingCompany">
                               <h3> New Organisation</h3>
                               <div class="form-group">
@@ -233,6 +292,11 @@
                                     <button v-else class="btn btn-primary pull-left"><i class="fa fa-spin fa-spinner"></i>&nbsp;Validating Pins</button>
                                   </div>
                               </div>
+
+
+                              
+
+
                               <div class="form-group" v-else-if="!newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;">
                                     This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this origanisation.</br>
@@ -276,6 +340,7 @@ export default {
                 wildlifecompliance_organisations:[],
                 residential_address : {}
             },
+            
             newOrg: {
                 'detailsChecked': false,
                 'exists': false
@@ -287,23 +352,42 @@ export default {
             checkingDetails: false,
             addingCompany: false,
             managesOrg: 'No',
+            managesOrgConsultant: 'No',
             uploadedFile: null,
             updatingPersonal: false,
             updatingAddress: false,
             updatingContact: false,
             registeringOrg: false,
+            role:null,
+            orgRequest_pending:[]
         }
     },
     watch: {
         managesOrg: function() {
+            if (this.managesOrg == 'Yes'){
+              this.role = 'employee'
+            } else if (this.managesOrg == 'Consultant'){
+              this.role ='consultant'
+            }else{this.role = null
+            }
+
             if (this.managesOrg  == 'Yes' && !this.hasOrgs && this.newOrg){
-                 this.addCompany()
+                this.addCompany()
+                console.log(this.managesOrg)
+                console.log(this.role)
+
             } else if (this.managesOrg == 'No' && this.newOrg){
                 this.resetNewOrg();
                 this.uploadedFile = null;
                 this.addingCompany = false;
+            } else {
+                this.addCompany()
+                this.addingCompany=false
+                console.log(this.managesOrg)
+                console.log(this.role)
             } 
-        }
+        },
+  
     },
     computed: {
         hasOrgs: function() {
@@ -415,7 +499,7 @@ export default {
                 if (response.body.valid){
                     swal(
                         'Validate Pins',
-                        'The pins you entered have been validated and you have now been linked to this organisation.',
+                        'The pins you entered have been validated and your request will be processed by Organisation Administrator.',
                         'success'
                     )
                     vm.registeringOrg = false;
@@ -449,6 +533,8 @@ export default {
             data.append('name', vm.newOrg.name)
             data.append('abn', vm.newOrg.abn)
             data.append('identification', vm.uploadedFile)
+            data.append('role',vm.role)
+            console.log(vm.role)
             vm.$http.post(api_endpoints.organisation_requests,data,{
                 emulateJSON:true
             }).then((response) => {
@@ -486,6 +572,16 @@ export default {
             },(response)=>{
                 console.log(response);
                 vm.loading.splice('fetching countries',1);
+            });
+        },
+        fetchOrgRequestPending:function (){
+            let vm =this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response)=>{
+                vm.orgRequest_pending = response.body;
+                vm.loading.splice('fetching pending organisation requests ',1);
+            },(response)=>{
+                console.log(response);
+                vm.loading.splice('fetching pending organisation requests',1);
             });
         },
         unlinkUser: function(org){
@@ -539,9 +635,21 @@ export default {
         },(error) => {
             console.log(error);
         })
+
+    //    Vue.http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'user_organisation_request_list')).then((response) => {
+    //     next(vm => {
+    //         access_request = true
+    //         vm.access = response.body
+
+    //     })
+    // },(error) => {
+    //     console.log(error);
+    // })
+
     },
     mounted: function(){
         this.fetchCountries();
+        this.fetchOrgRequestPending();
         this.personal_form = document.forms.personal_form;
         $('.panelClicker[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];

@@ -141,13 +141,13 @@
                                             <div class="col-sm-6">
 
                                                 <div class="form-group">
-                                                    <label for="" class="col-sm-6 control-label"> Company User Pin Code 1:</label>
+                                                    <label for="" class="col-sm-6 control-label"> Organisation User Pin Code 1:</label>
                                                     <div class="col-sm-6">
                                                         <label class="control-label">{{org.pins.three}}</label>
                                                     </div>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label for="" class="col-sm-6 control-label" >Company User Pin Code 2:</label>
+                                                    <label for="" class="col-sm-6 control-label" >Organisation User Pin Code 2:</label>
                                                     <div class="col-sm-6">
                                                         <label class="control-label">{{org.pins.four}}</label>
                                                     </div>
@@ -158,13 +158,13 @@
                                              <div class="col-sm-6">
                                   
                                                 <div class="form-group" :disabled ='!org.edits'>
-                                                    <label for="" class="col-sm-6 control-label"> Company Administrator Pin Code 1:</label>
+                                                    <label for="" class="col-sm-6 control-label"> Organisation Administrator Pin Code 1:</label>
                                                     <div class="col-sm-6">
                                                         <label class="control-label">{{org.pins.one}}</label>
                                                     </div>
                                                 </div>
                                                 <div class="form-group" :disabled ='!org.edits'>
-                                                    <label for="" class="col-sm-6 control-label" >Company Administrator Pin Code 2:</label>
+                                                    <label for="" class="col-sm-6 control-label" >Organisation Administrator Pin Code 2:</label>
                                                     <div class="col-sm-6">
                                                         <label class="control-label">{{org.pins.two}}</label>
                                                     </div>

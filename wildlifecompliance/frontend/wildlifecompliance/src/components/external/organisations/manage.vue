@@ -123,7 +123,7 @@
 
                   <div class = "row">
                        <div class="col-sm-12">
-                            <h6>Use the Company Administrator pin codes if you want the new user to be linked as company administrator. Use the company User pin codes if you want the new user to be linked as company user.</h6>
+                            <h6>Use the Organisation Administrator pin codes if you want the new user to be linked as organisation administrator.<br> Use the Organisation User pin codes if you want the new user to be linked as organisation user.</h6>
                         </div>
 
                   </div>
@@ -133,13 +133,13 @@
                                                  <div class="col-sm-6">
 
                                                         <div class="form-group">
-                                                            <label for="" class="col-sm-6 control-label"> Company User Pin Code 1:</label>
+                                                            <label for="" class="col-sm-6 control-label"> Organistaion User Pin Code 1:</label>
                                                             <div class="col-sm-6">
                                                                 <label class="control-label">{{org.pins.three}}</label>
                                                             </div>
                                                           </div>
                                                           <div class="form-group">
-                                                            <label for="" class="col-sm-6 control-label" >Company User Pin Code 2:</label>
+                                                            <label for="" class="col-sm-6 control-label" >Organisation User Pin Code 2:</label>
                                                             <div class="col-sm-6">
                                                                 <label class="control-label">{{org.pins.four}}</label>
                                                             </div>
@@ -150,13 +150,13 @@
                                                  <div class="col-sm-6">
                                                       
                                                           <div class="form-group" :disabled ='!org.edits'>
-                                                            <label for="" class="col-sm-6 control-label"> Company Administrator Pin Code 1:</label>
+                                                                <label for="" class="col-sm-6 control-label"> Organisation Administrator Pin Code 1:</label>
                                                             <div class="col-sm-6">
                                                                 <label class="control-label">{{org.pins.one}}</label>
                                                             </div>
                                                           </div>
                                                           <div class="form-group" :disabled ='!org.edits'>
-                                                            <label for="" class="col-sm-6 control-label" >Company Administrator Pin Code 2:</label>
+                                                                <label for="" class="col-sm-6 control-label" >Organisation Administrator Pin Code 2:</label>
                                                             <div class="col-sm-6">
                                                                 <label class="control-label">{{org.pins.two}}</label>
                                                             </div>
@@ -448,11 +448,11 @@ export default {
                                         
                                             links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Unlink</a><br/>`;
                                             links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="suspend_contact">Suspend</a><br/>`;
-                                            if(full.user_role == 'company_user'){
-                                            links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_admin_contact">Make Company Admin</a><br/>`;
+                                            if(full.user_role == 'Organisation User'){
+                                            links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_admin_contact">Make Organisation Admin</a><br/>`;
                                             }
                                             else{
-                                                links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_user_contact">Make Company User</a><br/>`;
+                                                links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_user_contact">Make Organisation User</a><br/>`;
                                             }
 
                                         }
@@ -652,7 +652,10 @@ export default {
                             'success'
                             )
                         }, (error) => {
-                            swal('Unlink','There was an error unlinking '+name+' ('+id+')','error')
+                            if (error.status ==500){
+                                swal('Unlink','Last Organisation Admin can not be unlinked','error');
+                            }
+                            
                         });
                 },(error) => {
                 });
@@ -678,20 +681,20 @@ export default {
 
 
                 swal({
-                    title: "Company Admin",
-                    text: "Are you sure you want to make "+ name + "("+ email + ") Comapny Admin ?",
+                    title: "Organisation Admin",
+                    text: "Are you sure you want to make "+ name + "("+ email + ") Organisation Admin ?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then(() => {
                     // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
                         vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/make_admin_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
                         swal(
-                            'Company Admin',
-                            'You have successfully made '+name+' ('+id+') Admin',
+                            'Organisation Admin',
+                            'You have successfully made '+name+' ('+id+') Organisation Admin',
                             'success'
                             )
                         }, (error) => {
-                            swal('Company Admin','There was an error making '+name+' ('+id+') Admin','error')
+                            swal('Organisation Admin','There was an error making '+name+' ('+id+') Organisation Admin','error')
                         });
                 },(error) => {
                 });
@@ -716,20 +719,20 @@ export default {
 
 
                 swal({
-                    title: "Company User",
-                    text: "Are you sure you want to make "+ name + "("+ email + ") Comapny User ?",
+                    title: "Organisation User",
+                    text: "Are you sure you want to make "+ name + "("+ email + ") Organisation User ?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then(() => {
                     // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
                         vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/make_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
                         swal(
-                            'Company User',
-                            'You have successfully made '+name+' ('+id+') Company User',
+                            'Organisation User',
+                            'You have successfully made '+name+' ('+id+') Organisation User',
                             'success'
                             )
                         }, (error) => {
-                            swal('Company Admin','There was an error making '+name+' ('+id+') Comapny User','error')
+                            swal('Company Admin','There was an error making '+name+' ('+id+') Organisation User','error')
                         });
                 },(error) => {
                 });
@@ -764,7 +767,7 @@ export default {
                     // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
                         vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/suspend_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
                         swal(
-                            'Company User',
+                            'Suspend User',
                             'You have successfully suspended '+name+' ('+id+') User',
                             'success'
                             )
