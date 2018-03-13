@@ -1,9 +1,10 @@
 <template id="profile_dashboard">
+<div class="container" id="profiles">
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Profiles <small v-if="is_external">View profile details</small>
+                    <h3 class="panel-title">My Profiles <small v-if="is_external">View profile details</small>
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#profileInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -19,6 +20,7 @@
             </div>
         </div>
     </div>
+</div>
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
@@ -26,6 +28,7 @@ import {
     api_endpoints,
     helpers
 }from '@/utils/hooks'
+
 export default {
     name: 'ProfileDashTable',
     props: {
@@ -56,14 +59,14 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            profile_headers:["Profile Name","Email","Institution","Postal Address","Action"],
+            profile_headers:["Profile Name","Email","Institution","Postal Address","Actions"],
             profile_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
                 ajax: {
-                    "url": api_endpoints.profiles,
+                    "url": api_endpoints.my_profiles,
                     "dataSrc": ''
                 },
                 columns: [
@@ -113,8 +116,6 @@ export default {
             }, 100 );
         });
         this.$nextTick(() => {
-            vm.addEventListeners();
-            vm.initialiseSearch();
         });
     }
 }
