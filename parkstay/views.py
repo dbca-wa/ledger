@@ -291,12 +291,7 @@ class MakeBookingsView(TemplateView):
         
         logger.info(u'{} built booking {} and handing over to payment gateway'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',booking.id))
 
-        response = utils.checkout(request, booking, lines, invoice_text=reservation)
-        result =  HttpResponse(
-            content=response.content,
-            status=response.status_code,
-            content_type=response.headers['Content-Type'],
-        )
+        result = utils.checkout(request, booking, lines, invoice_text=reservation)
 
         # if we're anonymous add the basket cookie to the current session
         if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:

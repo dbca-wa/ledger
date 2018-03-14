@@ -4,13 +4,14 @@ import requests
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.urlresolvers import reverse, reverse_lazy
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, get_object_or_404
 from django.views.generic.base import RedirectView, View
 from django.utils.http import urlencode
 from django.conf import settings
-
 from django.utils import timezone
+
+from ledger.checkout.utils import create_basket_session, create_checkout_session
 
 from wildlifelicensing.apps.applications.models import Application
 
@@ -38,8 +39,19 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
         error_url = request.build_absolute_uri(reverse('wl_applications:preview'))
         success_url = request.build_absolute_uri(reverse('wl_applications:complete'))
 
-        parameters = {
-            'system': PAYMENT_SYSTEM_ID,
+        basket_params = {
+            'products': [
+                {'id': product.id if product is not None else None}
+            ],
+            'vouchers': []
+            'system': PAYMENT_SYSTEM_ID
+        }
+        # senior discount
+        if application.is_senior_offer_applicable:
+            basket_params['vouchers'].append({'code': SENIOR_VOUCHER_CODE})
+        basket, basket_hash = create_basket_session(request, basket_params)
+
+        checkout_params = {
             'basket_owner': user,
             'associateInvoiceWithToken': True,
             'checkoutWithToken': True,
@@ -48,29 +60,10 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
             'forceRedirect': True,
             'template': 'wl/payment_information.html',
             'proxy': is_officer(request.user),
-            "products": [
-                {"id": product.id if product is not None else None}
-            ],
-            "vouchers": []
         }
-        headers = {
-            'X-CSRFToken': request.COOKIES.get('csrftoken'),
-            'Referer': request.META.get('HTTP_REFERER'),
-        }
-        headers.update(JSON_REQUEST_HEADER_PARAMS)
+        create_checkout_session(request, checkout_params)
 
-        # senior discount
-        if application.is_senior_offer_applicable:
-            parameters['vouchers'].append({'code': SENIOR_VOUCHER_CODE})
-
-        url = request.build_absolute_uri(
-            reverse('payments:ledger-initial-checkout')
-        )
-
-        response = requests.post(url, headers=headers, cookies=request.COOKIES,
-                                 data=json.dumps(parameters))
-
-        return HttpResponse(response.content)
+        return HttpResponseRedirect(reverse('checkout:index'))
 
 
 class ManualPaymentView(LoginRequiredMixin, RedirectView):
