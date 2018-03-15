@@ -567,8 +567,10 @@ class ProfileListener(object):
                 address.oscar_address = oscar_address
                 address.save()
         # Clear out unused addresses
+        # EmailUser can have address that is not linked with profile, hence the exclude
         user = instance.user
-        user_addr = Address.objects.filter(user=user)
+        user_addr = Address.objects.filter(user=user) \
+            .exclude(id__in=(user.postal_address_id,user.residential_address_id,user.billing_address_id))
         for u in user_addr:
             if not u.profiles.all():
                 u.oscar_address.delete()

@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Hello from '@/components/Hello'
 import Profile from '@/components/user/profile.vue'
 import ProfileDashTable from '@/components/user/profile_dashboard.vue'
+import CreateProfile from '@/components/user/profile_create.vue'
 import UserProfile from '@/components/user/manage_profile.vue'
 import external_routes from '@/components/external/routes'
 import internal_routes from '@/components/internal/routes'
@@ -34,6 +35,11 @@ export default new Router({
                     path: '/',
                     component: ProfileDashTable,
                     name:"profiles-dash"
+                },
+                {
+                    path: 'create',
+                    component: CreateProfile,
+                    name:"profile-create"
                 },
                 {
                     path: ':profile_id',

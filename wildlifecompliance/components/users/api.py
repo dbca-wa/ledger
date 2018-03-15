@@ -76,6 +76,26 @@ class MyProfilesViewSet(viewsets.ModelViewSet):
         query_set = queryset.filter(user=self.request.user)
         return query_set
 
+    def post(self, request, *args, **kwargs):
+        try:
+            http_status = status.HTTP_200_OK
+            instance = self.get_object()
+            data = request.data
+            serializer = UserProfileSerializer(instance,data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = UserProfileSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()
