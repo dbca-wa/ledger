@@ -63,15 +63,19 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         # Flush all session data
         self.checkout_session.flush()
 
+        # Save order and invoice id in session so thank-you page can load it
+        self.request.session['checkout_order_id'] = order.id
+        self.request.session['checkout_invoice'] = invoice.reference
+        self.request.session['checkout_return_url'] = return_url
+        self.request.session.save()
+
         # If preload is enabled, fire off an unmonitored request server-side
         # FIXME: replace with basket one-time secret
         if return_preload_url:
             requests.get('{}?invoice={}'.format(return_preload_url, invoice.reference),
                             cookies=self.request.COOKIES)
-
-        # Save order and invoice id in session so thank-you page can load it
-        self.request.session['checkout_order_id'] = order.id
-        self.request.session['checkout_return_url'] = return_url
+            # bodge for race condition: if preload updates the session, we need to update it
+            self.request.session._session_cache = self.request.session.load()
 
         if not force_redirect:
             response = HttpResponseRedirect(self.get_success_url())
