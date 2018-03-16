@@ -16,6 +16,7 @@ var daterangepicker = require('bootstrap-daterangepicker');
 var formValidate = require('./components/utils/validator.js');
 var Moment = MomentRange.extendMoment(moment);
 var swal = require('sweetalert2');
+var htmlEscape = require('html-escape');
 import api_endpoints from './apps/api.js';
 import store from './apps/store';
 import helpers from './components/utils/helpers.js';
@@ -37,5 +38,6 @@ export {
     awesomplete,
     formValidate,
     swal,
+    htmlEscape,
     store
 }
