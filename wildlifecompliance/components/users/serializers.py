@@ -86,6 +86,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         print('serialiser create for profile')
+        print(validated_data)
         postal_address_data = validated_data.pop('postal_address')
         user = validated_data['user']
         new_postal_address, address_created = Address.objects.get_or_create(user=user,**postal_address_data)
