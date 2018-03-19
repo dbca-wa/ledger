@@ -151,7 +151,7 @@
                                   <div class="col-md-12">
                                       <div class="form-group">
                                         <label for="Email" class="required">Email</label>
-                                        <input type="text" name="email" class="form-control" v-model="booking.email" list="matched_emails" @change="autofillUser()" @keyup="fetchUsers()"  >
+                                        <input type="text" name="email" class="form-control" v-model="booking.email" list="matched_emails" @keyup="fetchUsers()"  >
                                         <datalist id="matched_emails">
                                             <option v-if="usersEmail" v-for="email in usersEmail" :value="email"></option>
                                         </datalist>
@@ -338,7 +338,7 @@
 </template>
 
 <script>
-import {$,awesomplete,Moment,api_endpoints,validate,formValidate,helpers} from "../../hooks.js";
+import {$,awesomplete,Moment,api_endpoints,validate,formValidate,helpers,debounce} from "../../hooks.js";
 import loader from '../utils/loader.vue';
 import modal from '../utils/bootstrap-modal.vue';
 import reason from '../utils/reasons.vue';
@@ -468,7 +468,7 @@ export default {
             },
             stayHistory:[],
             arrivalPicker: {},
-            departurePickere: {},
+            departurePicker: {},
             campsite_classes:[],
             selected_campsite_class:-1,
             booking_type:"campsite",
@@ -697,7 +697,7 @@ export default {
             vm.departurePicker = $(vm.bookingForm.departure).closest('.date');
             vm.arrivalPicker.datetimepicker({
                 format: 'DD/MM/YYYY',
-                minDate: new Date(),
+                minDate: Moment().startOf('day'),
                 maxDate: Moment().add(parseInt(vm.campground.max_advance_booking),'days')
             });
             vm.departurePicker.datetimepicker({
@@ -848,7 +848,7 @@ export default {
                 }
             }
         },
-        fetchUsers:function (event) {
+        fetchUsers:debounce(function (event) {
             let vm = this;
             vm.$http.get(api_endpoints.usersLookup(vm.booking.email)).then((response)=>{
                 vm.users = response.body;
@@ -856,8 +856,9 @@ export default {
                 $.each(vm.users,function (i,u) {
                     vm.usersEmail.push(u.email);
                 });
+                vm.autofillUser();
             });
-        },
+        }, 1000),
         fetchParkPrices:function (calcprices) {
             let vm = this;
             if (vm.booking.arrival) {
@@ -880,7 +881,7 @@ export default {
                 calcprices();
             }
         },
-        autofillUser:function (event) {
+        autofillUser: function (event) {
             let vm =this;
             $.each(vm.users,function (i, user) {
                 if (user.email == vm.booking.email) {
