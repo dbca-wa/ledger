@@ -5,9 +5,7 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">My Profiles <small v-if="is_external">View profile details</small>
-                        <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#profileInfo" expanded="true" :aria-controls="pBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                        </a>
+                        <a href="create" class="pull-right btn btn-primary" style="color:#fff">Create Profile</a>
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
@@ -115,16 +113,7 @@ export default {
     },
     methods: {
     },
-    mounted: function(){
-        let vm = this;
-        $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
-            var chev = $( this ).children()[ 0 ];
-            window.setTimeout( function () {
-                $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
-            }, 100 );
-        });
-        this.$nextTick(() => {
-        });
+    mounted: {
     }
 }
 </script>

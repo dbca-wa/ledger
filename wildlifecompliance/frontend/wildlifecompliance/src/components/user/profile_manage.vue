@@ -117,7 +117,7 @@ export default {
         updateProfile: function() {
             let vm = this;
             vm.updatingProfile = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.profiles,(vm.profile.id+'/update_profile')),JSON.stringify(vm.profile),{
+            vm.$http.put(api_endpoints.profiles + '/' + vm.profile.id + '/',JSON.stringify(vm.profile),{
                 emulateJSON:true
             }).then((response) => {
                 console.log(response);
