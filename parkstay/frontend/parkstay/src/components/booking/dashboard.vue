@@ -201,6 +201,9 @@ export default {
                                 var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
                                 return column.replace('__NAME__', data);
                             }
+                            if (data.length > 1) {
+                                var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div> Multiple</td>';
+                            }
                             return '';
                         },
                         orderable:false,

@@ -62,6 +62,13 @@ export default {
             $.get(api_endpoints.priceReasons(),function (data) {
                 vm.reasons = data;
             });
+        },
+        fetchDiscountReasons:function (){
+            let vm = this;
+            $.get(api_endpoints.discountReasons(),function (data){
+                vm.reasons = data;
+            });
+
         }
     },
     mounted:function(){
@@ -77,6 +84,8 @@ export default {
                 case 'price':
                     vm.fetchPriceReasons();
                     break;
+                case 'discount':
+                    vm.fetchDiscountReasons();
             }
         }
     }

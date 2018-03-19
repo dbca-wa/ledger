@@ -435,6 +435,36 @@ def get_campsite_current_rate(request,campsite_id,start_date,end_date):
                 })
     return res
 
+def get_campsites_current_rate(request, campsites, start_date, end_date):
+    res = []
+    if start_date and end_date:
+        start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
+        for single_date in daterange(start_date, end_date):
+            price_history = CampsiteRate.objects.filter(campsite__in = campsites,date_start__lte=single_date).order_by('-date_start')
+            campsite_prices = {}
+            for p in price_history:
+                if p.campsite_id not in campsite_prices:
+                    campsite_prices[p.campsite_id] = p
+                else:
+                    if p.date_start > campsite_prices[p.campsite_id].date_start:
+                        campsite_prices[p.campsite_id] = p
+            if campsite_prices:
+                winning_price = campsite_prices.popitem()[1]
+                for csid, p in campsite_prices.items():
+                    if p.rate.adult < winning_price.rate.adult:
+                        winning_price = p
+            
+                rate = RateSerializer(winning_price.rate, context={'request':request}).data
+                    
+                res.append({
+                    "date" : single_date.strftime("%Y-%m-%d") ,
+                    "rate" : rate,
+                    "campsites": campsites #.values_list('id', flat=True)
+                })
+                
+    return res
+
 def get_park_entry_rate(request,start_date):
     res = []
     if start_date:
@@ -524,6 +554,11 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
         return invoice_lines
     else:
         return total_price
+    # Create line items for Discount
+    if lines:
+        total_price = booking.override_price - booking.cost_total 
+        reason = booking.discount_reason
+        invoice_lines.append({'ledger_description':'{}'.format(reason), "Total": total_price, "oracle_code":booking.campground.oracle_code})
 
 def check_date_diff(old_booking,new_booking):
     if old_booking.arrival == new_booking.arrival and old_booking.departure == new_booking.departure:
@@ -809,7 +844,6 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         if internal or request.user.is_anonymous():
             parameters['basket_owner'] = booking.customer.id
 
-
         url = request.build_absolute_uri(
             reverse('payments:ledger-initial-checkout')
         )
@@ -849,6 +883,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
     try:
         booking = create_or_update_booking(request,booking_details,updating)
         with transaction.atomic():
+            #import pdb; pdb.set_trace()
             set_session_booking(request.session,booking)
             # Get line items
             booking_arrival = booking.arrival.strftime('%d-%m-%Y')
