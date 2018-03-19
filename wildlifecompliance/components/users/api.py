@@ -66,6 +66,25 @@ class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = UserProfileSerializer
 
+    @detail_route(methods=['POST',])
+    def update_profile(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = UserProfileSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 class MyProfilesViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()

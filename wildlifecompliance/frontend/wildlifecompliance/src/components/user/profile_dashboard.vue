@@ -78,7 +78,15 @@ export default {
                             return full.postal_address.line1 + " " + full.postal_address.line2 + " " + full.postal_address.line3 + " " + full.postal_address.locality + " " + full.postal_address.state + " " + full.postal_address.country + " " + full.postal_address.postcode;
                         }
                     },
-                    {data: "name"},
+                    {
+                        mRender:function (data,type,full) {
+                            let links = '';
+                            links +=  `<a href='${full.id}' class="editProfile">Edit</a><br/>`;
+                            links +=  `<a href='#' class="deleteProfile" data-id="${full.id}">Delete</a><br/>`;
+                            return links;
+                        },
+                        orderable: false
+                    },
                 ],
                 processing: true,
                 initComplete: function () {

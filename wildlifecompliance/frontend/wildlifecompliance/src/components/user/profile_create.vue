@@ -94,6 +94,7 @@
 import Vue from 'vue'
 import $ from 'jquery'
 import { api_endpoints, helpers } from '@/utils/hooks'
+import utils from '@/components/internal/utils'
 export default {
     name: 'CreateProfile',
     data () {
@@ -135,56 +136,18 @@ export default {
                 vm.creatingProfile = false;
             });
         },
-        fetchCountries:function (){
-            let vm = this;
-            vm.loading.push('fetching countries');
-            vm.$http.get(api_endpoints.countries).then((response)=>{
-                vm.countries = response.body;
-                vm.loading.splice('fetching countries',1);
-            },(response)=>{
-                console.log(response);
-                vm.loading.splice('fetching countries',1);
-            });
-        },
-        fetchCurrentUser:function (){
-            let vm = this;
-            vm.loading.push('fetching user');
-            vm.$http.get(api_endpoints.profile).then((response)=>{
-                vm.current_user = response.body;
-                vm.loading.splice('fetching user',1);
-            },(response)=>{
-                console.log(response);
-                vm.loading.splice('fetching user',1);
-            });
-        },
     },
-    mounted: function(){
-        this.fetchCountries();
-        this.fetchCurrentUser();
+    beforeRouteEnter: function(to, from, next){
+        let initialisers = [
+            utils.fetchCountries(),
+            utils.fetchCurrentUser(),
+        ]
+        Promise.all(initialisers).then(data => {
+            next(vm => {
+                vm.countries = data[0];
+                vm.current_user = data[1];
+            });
+        });
     }
 }
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-.btn-file {
-    position: relative;
-    overflow: hidden;
-}
-.btn-file input[type=file] {
-    position: absolute;
-    top: 0;
-    right: 0;
-    min-width: 100%;
-    min-height: 100%;
-    font-size: 100px;
-    text-align: right;
-    filter: alpha(opacity=0);
-    opacity: 0;
-    outline: none;
-    background: white;
-    cursor: inherit;
-    display: block;
-}
-</style>
-
