@@ -19,7 +19,7 @@ from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
 from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from disturbance.components.main.utils import get_department_user
-from disturbance.components.proposals.email import send_referral_email_notification
+from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
 
 
@@ -566,7 +566,7 @@ class Proposal(RevisionedMixin):
                 if self.processing_status != 'with_approver':
                     raise ValidationError('You cannot decline if it is not with approver')
 
-                ProposalDeclinedDetails.objects.update_or_create(
+                proposal_decline, success = ProposalDeclinedDetails.objects.update_or_create(
                     proposal = self,
                     defaults={'officer':request.user,'reason':details.get('reason'),'cc_email':details.get('cc_email',None)}
                 )
@@ -578,6 +578,7 @@ class Proposal(RevisionedMixin):
                 self.log_user_action(ProposalUserAction.ACTION_DECLINE.format(self.id),request)
                 # Log entry for organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_DECLINE.format(self.id),request)
+                send_proposal_decline_email_notification(self,request, proposal_decline)
             except:
                 raise
 
@@ -659,6 +660,8 @@ class Proposal(RevisionedMixin):
                         approval.generate_doc()
                         # send the doc and log in approval and org
                     self.approval = approval
+                #send Proposal approval email with attachment
+                send_proposal_approval_email_notification(self,request)
                 self.save()
         
             except:
@@ -738,6 +741,30 @@ class AmendmentRequest(ProposalRequest):
 
     class Meta:
         app_label = 'disturbance'
+
+    def generate_amendment(self,request):
+        with transaction.atomic():
+            try:
+                if not self.proposal.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized() 
+                if self.status == 'requested':
+                    proposal = self.proposal
+                    if proposal.processing_status != 'draft':
+                        proposal.processing_status = 'draft'
+                        proposal.customer_status = 'draft'
+                        proposal.save()
+                  
+                    # Create a log entry for the proposal
+                    proposal.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+                    # Create a log entry for the organisation
+                    proposal.applicant.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+                    
+                    # send email
+                    send_amendment_email_notification(self,request, proposal)
+                   
+                self.save() 
+            except:
+                raise
 
 class Assessment(ProposalRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'),

@@ -144,7 +144,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -321,7 +321,7 @@
         </div>
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
-        <AmmendmentRequest ref="ammendment_request" :proposal_id="proposal.id"></AmmendmentRequest>
+        <AmendmentRequest ref="amendment_request" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
         <ProposedApproval ref="proposed_approval" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"/>
     </div>
 </template>
@@ -329,7 +329,7 @@
 import Proposal from '../../form.vue'
 import Vue from 'vue'
 import ProposedDecline from './proposal_proposed_decline.vue'
-import AmmendmentRequest from './ammendment_request.vue'
+import AmendmentRequest from './amendment_request.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Requirements from './proposal_requirements.vue'
 import ProposedApproval from './proposed_issuance.vue'
@@ -411,7 +411,7 @@ export default {
         Proposal,
         datatable,
         ProposedDecline,
-        AmmendmentRequest,
+        AmendmentRequest,
         Requirements,
         ProposedApproval,
         ApprovalScreen,
@@ -493,16 +493,17 @@ export default {
             this.$refs.proposed_approval.isModalOpen = true;
         },
         declineProposal:function(){
-            this.$refs.proposed_decline.decline = helpers.copyObject(this.proposal.proposaldeclineddetails);
+            this.$refs.proposed_decline.decline = this.proposal.proposaldeclineddetails != null ? helpers.copyObject(this.proposal.proposaldeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
-        ammendmentRequest: function(){
+        amendmentRequest: function(){
             let values = '';
             $('.deficiency').each((i,d) => {
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
             }); 
-            this.$refs.ammendment_request.ammendment.details = values;
-            this.$refs.ammendment_request.isModalOpen = true;
+            this.$refs.amendment_request.amendment.text = values;
+            
+            this.$refs.amendment_request.isModalOpen = true;
         },
         save: function(e) {
           let vm = this;

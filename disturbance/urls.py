@@ -27,13 +27,17 @@ router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
 router.register(r'users',users_api.UserViewSet)
 
+router.register(r'amendment_request',proposal_api.AmendmentRequestViewSet)
+
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
     url(r'^api/department_users$', users_api.DepartmentUserList.as_view(), name='department-users-list'),
     url(r'^api/proposal_type$', proposal_api.GetProposalType.as_view(), name='get-proposal-type'),
     url(r'^api/empty_list$', proposal_api.GetEmptyList.as_view(), name='get-empty-list'),
     url(r'^api/organisation_access_group_members',org_api.OrganisationAccessGroupMembers.as_view(),name='organisation-access-group-members'),
-    url(r'^api/',include(router.urls))
+    url(r'^api/',include(router.urls)),
+    url(r'^api/amendment_request_reason_choices',proposal_api.AmendmentRequestReasonChoicesView.as_view(),name='amendment_request_reason_choices'),
+
 ]
 
 # URL Patterns
@@ -47,7 +51,12 @@ urlpatterns = [
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
+    #following url is used to include url path when sending Proposal amendment request to user.
     url(r'^proposal/$', proposal_views.ProposalView.as_view(), name='proposal'),
+    
+    #following url is defined so that to include url path when sending Proposal amendment request to user.
+    url(r'^external/proposal/(?P<proposal_pk>\d+)/$', views.ExternalProposalView.as_view(), name='external-proposal-detail'),
+
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
 ] + ledger_patterns
 
