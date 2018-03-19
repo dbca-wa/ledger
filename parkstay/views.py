@@ -323,9 +323,7 @@ class BookingSuccessView(TemplateView):
                 return redirect('public_make_booking')
             
         except Exception as e:
-            if 'ps_booking_internal' in request.COOKIES:
-                return redirect('home')
-            elif ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
+            if ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
                 booking = Booking.objects.get(id=request.session['ps_last_booking'])
             else:
                 return redirect('home')

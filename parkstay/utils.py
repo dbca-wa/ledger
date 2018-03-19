@@ -803,8 +803,6 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             reverse('payments:ledger-initial-checkout')
         )
         COOKIES = request.COOKIES
-        if 'ps_booking' in request.session:
-            COOKIES['ps_booking_internal'] = str(request.session['ps_booking'])
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=COOKIES,
                                  data=json.dumps(parameters))
         response.raise_for_status()
