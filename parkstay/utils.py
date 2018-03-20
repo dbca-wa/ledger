@@ -917,7 +917,7 @@ def bind_booking(request, booking, invoice_ref):
             send_booking_invoice(booking)
             # for fully paid bookings, fire off confirmation email
             if booking.paid:
-                emails.send_booking_confirmation(booking,request) 
+                send_booking_confirmation(booking, request)
 
 
 def daterange(start_date, end_date):
