@@ -654,7 +654,7 @@ def update_payments(invoice_reference):
                 for b in i.bpoint_transactions:
                     if b.payment_allocated < b.amount and b.action == 'payment':
                         if first_item.payment_details['card'].get(str(b.id)):
-                             first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated))
+                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated))
                         else:
                             first_item.payment_details['card'][str(b.id)] = str(b.amount - b.payment_allocated)
                 # Bpay
