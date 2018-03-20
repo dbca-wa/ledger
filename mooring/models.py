@@ -115,6 +115,7 @@ class MooringArea(models.Model):
     description = models.TextField(blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
+
     # Tags for communications methods available and access type
     tags = TaggableManager(blank=True)
     driving_directions = models.TextField(blank=True, null=True)
@@ -1502,7 +1503,7 @@ class MarinaAreaListener(object):
     @receiver(pre_save, sender=MooringArea)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = Marina.objects.filter(pk=instance.pk)
+            original_instance = MarinePark.objects.filter(pk=instance.pk)
             if original_instance.exists():
                 setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):

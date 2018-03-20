@@ -1,10 +1,11 @@
+<!DOCTYPE html>
 <template>
     <div v-cloak class="f6inject">
         <div class="row">
             <div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
                     <div class="small-12 columns">
-                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/></label>
+                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/>THIS IS A TEST</label>
                     </div>
                 </div><div class="row">
                     <div class="small-12 medium-12 large-4 columns">
@@ -55,27 +56,31 @@
                     <div class="small-12 medium-12 large-12 columns">
                         <label><input type="checkbox" v-model="bookableOnly"/> Show bookable campsites only</label>
                     </div>
-                </div><div class="row"><div class="small-12 columns">
+                </div>
+                <div class="row"><div class="small-12 columns">
                     <hr/>
-                </div></div><div class="row">
+                </div>
+                </div>
+                <div class="row">
                     <div class="small-12 medium-12 large-12 columns">
                         <label>Select equipment</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
                     </div>
+
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Tent</label>
+                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Jetty Penn</label>
                     </div>
+
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="campervan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RV10"></i> Campervan</label>
+                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Mooring</label>
                     </div>
-                    <div class="small-12 medium-12 large-5 columns">
-                        <label><input type="radio" name="gear_type" value="caravan" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC4"></i> Caravan / Camper trailer</label>
-                    </div>
-                </div><div class="row"><div class="small-12 columns">
+                </div>
+                <div class="row"><div class="small-12 columns">
                     <hr class="search"/>
-                </div></div><div class="row">
+                </div>
+                </div><div class="row">
                     <div class="small-12 medium-12 large-12 columns">
                         <label>Select features</label>
                     </div>
@@ -84,12 +89,16 @@
                             <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
                         </div>
                     </template>
+<!--
                     <template v-for="filt in extraFilterList">
                         <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
                             <label><input type="checkbox" class="show-for-sr" :value="'filt_'+ filt.key" v-model="filterParams[filt.key]" v-on:change="updateFilter()"/> <i class="symb" :class="filt.symb"></i> {{ filt.name }}</label>
                         </div>
                     </template>
-                </div><div class="row">
+-->
+</div>
+<!--
+                <div class="row">
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
                         <label><input type="checkbox" v-model="sitesOnline" v-on:change="updateFilter()"/><img v-bind:src="sitesOnlineIcon" width="24" height="24"/> Online bookings</label>
                     </div>
@@ -103,6 +112,7 @@
                         <button class="button expanded" v-on:click="toggleShowFilters"><span v-if="hideExtraFilters">Show more filters ▼</span><span v-else>Hide filters ▲</span></button>
                     </div>
                 </div>
+-->
             </div>
             <div class="small-12 medium-9 large-6 columns">
                 <div id="map"></div>
@@ -439,6 +449,7 @@ div.awesomplete > input {
 </style>
 
 <script>
+
 import Awesomplete from 'awesomplete';
 import ol from 'openlayers';
 //var ol = require('openlayers/dist/ol-debug');
@@ -446,7 +457,6 @@ import 'foundation-sites';
 import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
-
 
 export default {
     name: 'parkfinder',
@@ -460,22 +470,24 @@ export default {
                 ['cddp:dpaw_tenure', {}],
             ],
             filterList: [
-                {name: '2WD accessible', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
-                {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
-                {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']}
+//                {name: '2WD accessible', symb: 'RV2', key: 'twowheel', 'remoteKey': ['2WD/SUV ACCESS']},
+//                {name: 'Campfires allowed', symb: 'RF10', key: 'campfire', 'remoteKey': ['FIREPIT']},
+//                {name: 'Dogs allowed', symb: 'RG2', key: 'dogs', 'remoteKey': ['DOGS']}
             ],
             extraFilterList: [
-                {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
-                {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
-                {name: 'Dump station', symb: 'RF19', key: 'sullage', 'remoteKey': ['DUMP STATION']},
-                {name: 'Generators allowed', symb: 'RG15', key: 'generators', 'remoteKey': ['GENERATORS PERMITTED']},
-                {name: 'Mains water', symb: 'RF13', key: 'water', 'remoteKey': ['MAINS WATER']},
-                {name: 'Picnic tables', symb: 'RF6', key: 'picnic', 'remoteKey': ['PICNIC TABLE']},
-                //{name: 'Sheltered picnic tables', symb: 'RF7', key: 'picnicsheltered', 'remoteKey': ['TABLE - SHELTERED']},
-                {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
-                {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
-                //{name: 'Walk trail', symb: 'RW3', key: 'walktrail', 'remoteKey': ['WALK TRAIL']},
-                {name: 'Powered sites', symb: 'MAINS', key: 'walktrail', 'remoteKey': ['POWERED SITES']},
+                // {name: 'BBQ', symb: 'RF8G', key: 'bbq', 'remoteKey': ['BBQ']},
+                // {name: 'Dish washing', symb: 'RF17', key: 'dishwashing', 'remoteKey': ['DISHWASHING']},
+                // {name: 'Dump station', symb: 'RF19', key: 'sullage', 'remoteKey': ['DUMP STATION']},
+                // {name: 'Generators allowed', symb: 'RG15', key: 'generators', 'remoteKey': ['GENERATORS PERMITTED']},
+                // {name: 'Mains water', symb: 'RF13', key: 'water', 'remoteKey': ['MAINS WATER']},
+                // {name: 'Picnic tables', symb: 'RF6', key: 'picnic', 'remoteKey': ['PICNIC TABLE']},
+                // {name: 'Sheltered picnic tables', symb: 'RF7', key: 'picnicsheltered', 'remoteKey': ['TABLE - SHELTERED']},
+                // {name: 'Showers', symb: 'RF15', key: 'showers', 'remoteKey': ['SHOWER']},
+                // {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
+                // {name: 'Walk trail', symb: 'RW3', key: 'walktrail', 'remoteKey': ['WALK TRAIL']},
+                // {name: 'Powered sites', symb: 'MAINS', key: 'walktrail', 'remoteKey': ['POWERED SITES']},
+                {name: 'Jetty Penn', symb: 'MAINS', key: 'jettpenn', 'remoteKey': ['POWERED SITES']},
+                {name: 'Mooring', symb: 'MAINS', key: 'mooring', 'remoteKey': ['POWERED SITES']},
             ],
             hideExtraFilters: true,
             suggestions: {},
@@ -498,7 +510,8 @@ export default {
             sitesAltIcon: require('./assets/pin_alt.svg'),
             locationIcon: require('./assets/location.svg'),
             paginate: ['filterResults'],
-            selectedFeature: null
+            selectedFeature: null,
+            current_map_scale: 1950001,
         }
     },
     computed: {
@@ -626,10 +639,10 @@ export default {
                     },1000);
                 }*/
 
-
                 return;
             }
 
+            console.log('Load search');
             // no match, forward on to mapbox geocode query
             var center = ol.proj.toLonLat(vm.center);
             $.ajax({
@@ -735,8 +748,8 @@ export default {
             }
         },
         updateDates: function(ev) {
-            //console.log('BANG');
-            //console.log(ev);
+            // console.log('BANG');
+            // console.log(ev);
             // for the first time someone changes the dates, enable the
             // "Show bookable campsites only" flag
             if (this.dateSetFirstTime) {
@@ -748,6 +761,8 @@ export default {
         reload: debounce(function () {
             this.groundsSource.loadSource();
             this.refreshPopup();
+            console.log("RELOAD");
+            console.log(this);
         }, 250),
         updateFilter: function() {
             var vm = this;
@@ -760,9 +775,11 @@ export default {
                     });
                 }
             };
-            this.filterList.forEach(filterCb);
-            this.extraFilterList.forEach(filterCb);
 
+            // this.filterList.forEach(filterCb);
+            // this.extraFilterList.forEach(filterCb);
+
+            console.log("EXTRA");
             this.groundsFilter.clear();
             this.groundsData.forEach(function (el) {
                 // first pass filter against the list of IDs returned by search
@@ -807,13 +824,284 @@ export default {
                 }
             });
             this.updateViewport(true);
-        }
+        },
+        buildmarkers: function() {
+          console.log("we have markers");
+          console.log(this.current_map_scale);
+          var vm = this;
+          var scale = Math.floor(this.current_map_scale);
+          var map = this.olmap;
+
+//                map.getLayers().forEach(function (layer2) {
+//                       var layer = layer2.I;
+//                       console.log("W:"+layer.markerGroup);
+//                       if (layer != null) {
+//                       if (layer.hasOwnProperty("canDelete")) {
+//                         if (layer.canDelete == 'no') {
+//                         } else {
+//                             map.removeLayer(layer2);
+//                         }
+//                        } else {
+//                        map.removeLayer(layer2);
+//                        }
+//			}
+//
+//                });
+
+        console.log("SCALE");
+        console.log(scale);
+
+        if (scale >= 0 && scale <= 1000000) {
+              // scale = Math.round(scale / 1000) + "K";
+
+//              map.getLayers().forEach(function (layer2) {
+//                       var layer = layer2.I;
+//                       console.log("M:"+layer.markerGroup);
+ //                      if (layer != null) {
+//                           if (layer.hasOwnProperty("markerGroup")) {
+//                                if (layer.markerGroup == 'circle') { 
+//                                  map.removeLayer(layer2);
+//                                }
+//                           }
+//                        }
+//
+//              });
+
+
+              console.log('anchors scales:'+scale);
+                
+//              map.addLayer(this.buildMarker(115.026756, -32.001970));
+//              map.addLayer(this.buildMarker(115.749654,-31.998905));
+//              map.addLayer(this.buildMarker(115.749654,-32.000000));
+//              map.addLayer(this.buildMarker(115.749654,-32.010000));
+//              map.addLayer(this.buildMarker(115.749654,-32.020000));
+//              map.addLayer(this.buildMarker(115.749654,-32.080000));
+//              map.addLayer(this.buildMarker(115.749654,-32.090000));
+//              map.addLayer(this.buildMarker(115.749654,-32.100000));
+//              map.addLayer(this.buildMarker(115.749654,-32.110000));
+//              map.addLayer(this.buildMarker(115.749654,-32.120000));
+//              map.addLayer(this.buildMarker(115.749654,-32.130000));
+//              map.addLayer(this.buildMarker(115.749654,-32.140000));
+
+//	      map.addLayer(this.buildMarker(115.719654,-31.998905));
+//	      map.addLayer(this.buildMarker(115.719654,-32.000000));
+//	      map.addLayer(this.buildMarker(115.719654,-32.010000));
+//	      map.addLayer(this.buildMarker(115.719654,-32.020000));
+//	      map.addLayer(this.buildMarker(115.719654,-32.080000));
+//	      map.addLayer(this.buildMarker(115.719654,-32.090000));
+//	      map.addLayer(this.buildMarker(115.719654,-32.100000));
+//	      map.addLayer(this.buildMarker(115.719654,-32.110000));
+//	      map.addLayer(this.buildMarker(115.719654,-32.120000));
+//	      map.addLayer(this.buildMarker(115.719654,-32.130000));
+//	      map.addLayer(this.buildMarker(115.719654,-32.140000));
+
+        $.ajax({
+            url: vm.parkstayUrl+'/api/mooring_map/?format=json',
+            dataType: 'json',
+            async: false,
+	    success: function (response, stat, xhr) {
+
+              map.getLayers().forEach(function (layer2) {
+                        if (layer2 != null) { 
+                       var layer = layer2.I;
+                       console.log("M:"+layer.markerGroup);
+                       if (layer != null) {
+                           if (layer.hasOwnProperty("markerGroup")) {
+                                if (layer.markerGroup == 'circle') {
+                                  map.removeLayer(layer2);
+                                }
+                          }
+                       }
+			}
+
+              });
+
+
+                    for (var x in response) {
+                        var mooring = response[x];
+                        for (var m in mooring) {
+                             for (var b in response[x][m]) {
+				   if (b == 'geometry') {
+                                      map.addLayer(vm.buildMarker(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1]));
+                                   }
+		   	      }
+			}
+			//console.log(map);
+
+                    }
+            }
+        });
+
+      } else if (scale >= 1000001) {
+     console.log("marker group scales:"+scale);
+	      var center = map.getView().getCenter();
+              if (center) {
+                	console.log(center[0]);
+	                var latLon = ol.proj.transform([center[0],center[1]], 'EPSG:3857', 'EPSG:4326');
+        	        //          var latLon = ol.proj.transform([center[0],center[1]], 'EPSG:3857', 'EPSG:4326');
+                	console.log(latLon);
+	      }
+
+        $.ajax({
+            url: vm.parkstayUrl+'/api/marine_parks_map/?format=json',
+            dataType: 'json',
+            async: false,
+            success: function (response, stat, xhr) {
+                    //vectorSource.clear();
+                   console.log("MARINE PARK");
+
+                     map.getLayers().forEach(function (layer2) {
+                       if (layer2 != null) {
+                       var layer = layer2.I;
+                       console.log("M:"+layer.markerGroup);
+                       if (layer != null) {
+                           if (layer.hasOwnProperty("markerGroup")) {
+                                if (layer.markerGroup == 'anchor') {
+                                  map.removeLayer(layer2);
+                                }
+                           }
+                        }
+			}
+	              });
+
+                   for (var x in response) {
+                        var marinepark = response[x];
+			var longitude = marinepark['park_id__wkb_geometry']['longitude'];
+                        var latitude = marinepark['park_id__wkb_geometry']['latitude'];
+                        var total = marinepark['total'];
+                        map.addLayer(vm.buildMarkerGroup(parseFloat(longitude),parseFloat(latitude),total));
+
+                   }
+
+		                     map.getLayers().forEach(function (layer2) {
+                       if (layer2 != null) {
+                       var layer = layer2.I;
+                       console.log("M:"+layer.markerGroup);
+                       if (layer != null) {
+                           if (layer.hasOwnProperty("markerGroup")) {
+                                if (layer.markerGroup == 'anchor') {
+                                  map.removeLayer(layer2);
+                                }
+                           }
+                        }
+                        }
+                      });
+
+
+
+            }
+        });
+
+        console.log('anchors groups');
+      } else {
+		console.log('somehting else');
+	        scale = Math.round(scale);
+      }
+//        document.getElementById('scale').innerHTML = "Scale = 1 : " + scale;
+
+      },
+     buildMarker: function(lat,lon) {
+
+		var iconFeature = new ol.Feature({
+		  geometry: new ol.geom.Point(ol.proj.transform([lat, lon], 'EPSG:4326', 'EPSG:3857')),
+		  name: 'Null Island',
+		  population: 4000,
+		  rainfall: 500
+		});
+
+		var iconStyle = new ol.style.Style({
+		  image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+		    anchor: [0.5, 46],
+			//    anchor: [115.864627, -32.007385],
+		    anchorXUnits: 'fraction',
+		    anchorYUnits: 'pixels',
+		    opacity: 0.75,
+		    src: require('assets/map_pins/icon.png')
+	         }))
+	    });
+
+	    iconFeature.setStyle(iconStyle);
+	
+	    var vectorSource = new ol.source.Vector({
+	        features: [iconFeature]
+	    });
+
+	    var vectorLayer = new ol.layer.Vector({
+	       canDelete: "yes",
+               markerGroup: "anchor",
+	       source: vectorSource
+	    });
+
+
+	    return vectorLayer;
     },
-    mounted: function () {
+    buildMarkerGroup:function(lat,lon,text) {
+
+               console.log("Marker Group");
+               var iconFeature = new ol.Feature({
+                  geometry: new ol.geom.Point(ol.proj.transform([lat, lon], 'EPSG:4326', 'EPSG:3857')),
+                  name: '<div style="font-weight: bold;">iiiiNull Island</div>',
+                  population: 4000,
+                  rainfall: 500
+               });
+
+                var icon = require('assets/map_pins/geo_group_red.png');
+                if (text > 30) {
+                        icon = require('assets/map_pins/geo_group2.png');
+                } else if (text > 10) {
+                        icon = require('assets/map_pins/geo_group_orange.png');
+                } else {
+                        icon = require('assets/map_pins/geo_group_red.png');
+                }
+
+
+
+                var iconStyle = new ol.style.Style({
+                        image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+                          anchor: [0.5, 24],
+                          anchorXUnits: 'fraction',
+                          anchorYUnits: 'pixels',
+                          opacity: 15,
+                          src: icon
+                        })),
+
+                        text: new ol.style.Text({
+                          text: text.toString(),
+                          scale: 1.2,
+                          fill: new ol.style.Fill({
+                            color: '#000000'
+                          }),
+                        //          stroke: new ol.style.Stroke({
+                        //            color: '#FFFF99',
+                        //            width: 3.5
+                        //          })
+                        })
+               });
+
+               iconFeature.setStyle(iconStyle);
+
+               var vectorSource = new ol.source.Vector({
+                   features: [iconFeature]
+               });
+
+               var vectorLayer = new ol.layer.Vector({
+                   canDelete: "yes",
+                   markerGroup: "circle",
+                   source: vectorSource
+               });
+
+
+              return vectorLayer;
+      }
+    },
+    mounted: function() {
         var vm = this;
+        // console.log("MOUNTED");
+        // console.log(this);
+//        console.log(this.buildmarkers('3'));
         $(document).foundation();
         console.log('Loading map...');
-
+        console.log('Loading map 2');
         // enable arrival/departure date pickers
         var nowTemp = new Date();
         var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
@@ -925,6 +1213,7 @@ export default {
         });
 
         this.streets = new ol.layer.Tile({
+            canDelete: "no",
             source: new ol.source.WMTS({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
@@ -936,6 +1225,7 @@ export default {
         });
 
         this.tenure = new ol.layer.Tile({
+            canDelete: "no",
             opacity: 0.6,
             source: new ol.source.WMTS({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
@@ -954,16 +1244,16 @@ export default {
         this.groundsData = new ol.Collection();
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
-        $.ajax({
-            url: vm.parkstayUrl+'/api/mooring_map/?format=json',
-            dataType: 'json',
-            success: function (response, stat, xhr) {
-                var features = vm.geojson.readFeatures(response);
-                vm.groundsData.clear();
-                vm.groundsData.extend(features);
-                vm.groundsSource.loadSource();
-            }
-        });
+//        $.ajax({
+//            url: vm.parkstayUrl+'/api/mooring_map/?format=json',
+//            dataType: 'json',
+//            success: function (response, stat, xhr) {
+//                var features = vm.geojson.readFeatures(response);
+ //           //    vm.groundsData.clear();
+//            //   vm.groundsData.extend(features);
+//           //     vm.groundsSource.loadSource();
+//            }
+//        });
 
         this.groundsSource = new ol.source.Vector({
             features: vm.groundsFilter   
@@ -973,6 +1263,7 @@ export default {
             var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
+
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
                 isCustom = true;
                 var arrival = vm.arrivalDateString;
@@ -989,6 +1280,7 @@ export default {
                 params.num_infants = vm.numInfants;
                 params.gear_type = vm.gearType;
             }
+
             $.ajax({
                 url: urlBase+$.param(params),
                 success: function (response, stat, xhr) {
@@ -1108,7 +1400,33 @@ export default {
             var coords = vm.geolocation.getPosition();
             vm.posFeature.setGeometry(coords ? new ol.geom.Point(coords) : null);
         });
-    
+        // JASON ADDED
+        var map = this.olmap;
+
+        this.olmap.getView().on('change:resolution', function(evt) {
+               // console.log(evt);
+               console.log("resolution");
+               //console.log("MAP");
+               // console.log(map);
+               // console.log("OL MAP");
+               // console.log(this.olmap);   
+                var resolution = evt.target.get('resolution');
+                var units = map.getView().getProjection().getUnits();
+                var dpi = 25.4 / 0.28;
+                var mpu = ol.proj.METERS_PER_UNIT[units];
+ 
+                var scale_res = resolution * mpu * 39.37 * dpi;
+                // console.log("New Scale");
+                // console.log(scale);
+                //console.log(vm);
+                vm.current_map_scale = scale_res;
+                setTimeout(function(){ if (scale_res == vm.current_map_scale) { vm.buildmarkers(); }  }, 600);
+//                vm.buildmarkers();
+        //   gs_map.reloadMarkers(map);
+        });
+
+
+ 
         // sad loop to change the pointer when mousing over a vector layer
         this.olmap.on('pointermove', function(ev) {
             if (ev.dragging) {

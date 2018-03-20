@@ -25,6 +25,7 @@ from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
 from ledger.address.models import Country
 from ledger.payments.models import Invoice
+from django.db.models import Count
 from mooring import utils
 from mooring.helpers import can_view_campground
 from datetime import datetime,timedelta, date
@@ -62,6 +63,7 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     ContactSerializer,
                                     DistrictSerializer,
                                     MooringAreaMapSerializer,
+                                    MarineParkMapSerializer,
                                     MooringAreaMapFilterSerializer,
                                     MooringAreaSerializer,
                                     MooringAreaDatatableSerializer,
@@ -378,12 +380,17 @@ class MooringAreaStayHistoryViewSet(viewsets.ModelViewSet):
 
 
 class MooringAreaMapViewSet(viewsets.ReadOnlyModelViewSet):
-    print "LOADING " 
 #   queryset = MooringArea.objects.exclude(campground_type=3).annotate(Min('mooringsites__rates__rate__adult'))
     queryset = MooringArea.objects.exclude(campground_type=3)
     serializer_class = MooringAreaMapSerializer
     permission_classes = []
-    print queryset
+#    print queryset
+
+class MarineParksMapViewSet(viewsets.ReadOnlyModelViewSet):
+    #queryset = District.objects.all()
+    queryset = MooringArea.objects.values('park_id__name','park_id__wkb_geometry').annotate(total=Count('park'))
+    serializer_class = MarineParkMapSerializer 
+    permission_classes = []
 
 
 class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
@@ -402,7 +409,7 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             "num_infant" : request.GET.get('num_infant', 0),
             "gear_type": request.GET.get('gear_type', 'all')
         }
-
+       
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         scrubbed = serializer.validated_data
@@ -461,7 +468,7 @@ def search_suggest(request, *args, **kwargs):
     entries = []
     for x in MooringArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'MooringArea', 'id': x[0], 'name': x[1]}))
-    for x in Marina.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
+    for x in MarinePark.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Marina', 'id': x[0], 'name': x[1]}))
     for x in PromoArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1]}))

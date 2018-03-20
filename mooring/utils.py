@@ -13,7 +13,7 @@ from django.utils import timezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego)
-from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer,RateSerializer,MooringsiteRateReadonlySerializer
+from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
 
@@ -152,7 +152,7 @@ def get_open_marinas(campsites_qs, start_date, end_date):
     if start_date < today:
         return set()
 
-    print campsites_qs
+#   print campsites_qs
     # remove from the campsite list any entries with bookings
     campsites_qs = campsites_qs.exclude(
         mooringsitebooking__date__range=(start_date, end_date-timedelta(days=1))
@@ -163,14 +163,16 @@ def get_open_marinas(campsites_qs, start_date, end_date):
     )
 
     # get closures at campsite and campground level
-    cgbr_qs =    MooringAreaBookingRange.objects.filter(
-        #Q(mooringarea__in=[x[0] for x in campsites_qs.distinct('mooringarea').values_list('mooringarea')]),
+    cgbr_qs = MooringAreaBookingRange.objects.filter(
+        Q(campground__in=[x[0] for x in campsites_qs.distinct('mooringarea').values_list('mooringarea')]),
         Q(status=1),
-        #Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
+        Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
     )
+#    cgbr = set([x[0] for x in cgbr_qs.values_list('campground')])
     cgbr = set([x[0] for x in cgbr_qs.values_list('campground')])
 
-    csbr_qs =    MooringAreaBookingRange.objects.filter(
+
+    csbr_qs = MooringsiteBookingRange.objects.filter(
         #Q(campsite__in=campsites_qs),
         Q(status=1),
         #Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
@@ -180,11 +182,11 @@ def get_open_marinas(campsites_qs, start_date, end_date):
     # generate a campground-to-campsite-list map with closures removed
     mooring_map = {}
     for cs in campsites_qs:
-        if (cs.pk in csbr) or (cs.campground.pk in cgbr):
+        if (cs.pk in csbr) or (cs.mooringarea.pk in cgbr):
             continue
-        if cs.mooring.pk not in mooring_map:
-            mooring_map[cs.mooring.pk] = []
-        mooring_map[cs.mooring.pk].append(cs.pk)
+        if cs.mooringarea.pk not in mooring_map:
+            mooring_map[cs.mooringarea.pk] = []
+        mooring_map[cs.mooringarea.pk].append(cs.pk)
 
     return set(mooring_map.keys())
 

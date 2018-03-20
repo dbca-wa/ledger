@@ -33,6 +33,8 @@ from mooring.models import (MooringAreaPriceHistory,
                            )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
+from drf_extra_fields.geo_fields import PointField
+
 
 class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
@@ -200,6 +202,25 @@ class MooringAreaMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'info_url',
             'images',
  #           'price_hint'
+        )
+
+
+class MarineParkMapSerializer(serializers.Serializer):
+ #   name = MooringAreaMapDistrictSerializer(read_only=True, many=True)
+ #   abbreviation = MooringAreaMapDistrictSerializer(read_only=True)
+#    region =MooringAreaMapDistrictSerializer(read_only=True, many=True)
+#    ratis_id =MooringAreaMapDistrictSerializer(read_only=True, many=True)
+    total = serializers.IntegerField()
+    park_id__name =  serializers.CharField()
+    park_id__wkb_geometry = PointField()
+
+    class Meta:
+#        model = MooringArea 
+#        geo_field = 'park_id__wkb_geometry'
+        fields = (
+            'park_id__name',
+            'total',
+            'park_id__wkb_geometry',
         )
 
 class MooringAreaImageSerializer(serializers.ModelSerializer):
@@ -707,7 +728,6 @@ class UserAddressSerializer(serializers.ModelSerializer):
         ) 
 
     def validate(self, obj):
-        print('UHHHH')
         if not obj.get('state'):
             raise serializers.ValidationError('State is required.')
         return obj

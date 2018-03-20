@@ -11,6 +11,7 @@ from ledger.urls import urlpatterns as ledger_patterns
 router = routers.DefaultRouter()
 router.register(r'mooring_map', api.MooringAreaMapViewSet)
 router.register(r'mooring_map_filter', api.MooringAreaMapFilterViewSet)
+router.register(r'marine_parks_map', api.MarineParksMapViewSet)
 router.register(r'availability', api.AvailabilityViewSet, 'availability')
 router.register(r'availability_admin', api.AvailabilityAdminViewSet)
 router.register(r'availability_ratis', api.AvailabilityRatisViewSet, 'availability_ratis')
