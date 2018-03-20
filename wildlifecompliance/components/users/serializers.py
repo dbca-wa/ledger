@@ -1,5 +1,5 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address,Profile
+from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity
 from wildlifecompliance.components.organisations.models import (   
                                     Organisation,
                                     OrganisationRequest,
@@ -7,6 +7,8 @@ from wildlifecompliance.components.organisations.models import (
                                 )
 from wildlifecompliance.components.organisations.utils import can_admin_org
 from rest_framework import serializers
+from django.core.exceptions import ValidationError
+
 
 class UserOrganisationContactSerializer(serializers.ModelSerializer):
     class Meta:
@@ -85,34 +87,36 @@ class UserProfileSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
-        print('serialiser create for profile')
-        print(validated_data)
+        profile = Profile()
+        profile.user = validated_data['user']
+        profile.name = validated_data['name']
+        profile.email = validated_data['email']
+        profile.institution = validated_data.get('institution','')
         postal_address_data = validated_data.pop('postal_address')
-        user = validated_data['user']
-        new_postal_address, address_created = Address.objects.get_or_create(user=user,**postal_address_data)
-        print(new_postal_address, new_postal_address.id)
-        profile = Profile.objects.create(postal_address=new_postal_address,**validated_data)
+        if profile.email:
+            if EmailIdentity.objects.filter(email=profile.email).exclude(user=profile.user).exists():
+                #Email already used by other user in email identity.
+                raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
+        new_postal_address, address_created = Address.objects.get_or_create(user=profile.user,**postal_address_data)
+        profile.postal_address = new_postal_address
+        setattr(profile, "auth_identity", True)
+        profile.save()
         return profile
 
 
     def update(self, instance, validated_data):
-        print('serialiser update for profile')
-        print(validated_data)
-        
         instance.name = validated_data.get('name', instance.name)
         instance.email = validated_data.get('email', instance.email)
         instance.institution = validated_data.get('institution', instance.institution)
-        print('test')
         postal_address_data = validated_data.pop('postal_address')
-        print('address details')
-        print(postal_address_data)
+        if instance.email:
+            if EmailIdentity.objects.filter(email=instance.email).exclude(user=instance.user).exists():
+                #Email already used by other user in email identity.
+                raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
         postal_address, address_created = Address.objects.get_or_create(user=instance.user,**postal_address_data)
-        #postal_address, address_created = 'no','yes'
-        print(address_created)
-        print(postal_address)
         instance.postal_address = postal_address
+        setattr(instance, "auth_identity", True)
         instance.save()
-
         return instance
 
 

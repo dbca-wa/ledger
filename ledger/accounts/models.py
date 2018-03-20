@@ -513,10 +513,8 @@ class ProfileListener(object):
     @staticmethod
     @receiver(post_save, sender=Profile)
     def _post_save(sender, instance, **kwargs):
-        print('------------- post save profile ------------')
         if not hasattr(instance, "auth_identity"):
             # not triggered by user.
-            print('not triggered by user')
             return
 
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
@@ -571,7 +569,6 @@ class ProfileListener(object):
         # Clear out unused addresses
         # EmailUser can have address that is not linked with profile, hence the exclude
         user = instance.user
-        print('\n----------- CLEAR UNUSED ADDRESSES -----------\n')
         user_addr = Address.objects.filter(user=user)
         for u in user_addr:
             if not u.profiles.all() \
