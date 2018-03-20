@@ -9,7 +9,7 @@
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <label v-if="processing_status == 'With Approver'" class="control-label"  for="Name">Details</label>
+                                        <label v-if=check_status() class="control-label"  for="Name">Details</label>
                                         <label v-else class="control-label"  for="Name">Provide Reason for the proposed decline </label>
                                         <textarea style="width: 70%;"class="form-control" name="reason" v-model="decline.reason"></textarea>
                                     </div>
@@ -18,7 +18,7 @@
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <label v-if="processing_status == 'With Approver'" class="control-label"  for="Name">CC email</label>
+                                        <label v-if=check_status() class="control-label"  for="Name">CC email</label>
                                         <label v-else class="control-label"  for="Name">Proposed CC email</label>
                                         <input type="text" style="width: 70%;"class="form-control" name="cc_email" v-model="decline.cc_email"/>
                                     </div>
@@ -97,6 +97,15 @@ export default {
             this.errors = false;
             $('.has-error').removeClass('has-error');
             this.validation_form.resetForm();
+        },
+
+        check_status: function (){
+            let vm= this;
+            if (vm.processing_status == 'With Approver')
+                return true;
+            else
+                return false;
+
         },
         sendData:function(){
             let vm = this;

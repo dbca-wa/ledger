@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 from disturbance.helpers import is_officer, is_departmentUser
 from disturbance.forms import *
-from disturbance.components.proposals.models import Referral
+from disturbance.components.proposals.models import Referral, Proposal
 from disturbance.components.proposals.mixins import ReferralOwnerMixin
 
 
@@ -38,6 +38,12 @@ class ExternalView(LoginRequiredMixin, TemplateView):
 class ReferralView(ReferralOwnerMixin, DetailView):
     model = Referral
     template_name = 'disturbance/dash/index.html'
+
+class ExternalProposalView(DetailView):        
+    model = Proposal
+    template_name = 'disturbance/dash/index.html'
+
+
 
 
 class DisturbanceRoutingView(TemplateView):

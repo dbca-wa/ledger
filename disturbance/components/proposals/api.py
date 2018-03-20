@@ -37,7 +37,9 @@ from disturbance.components.proposals.models import (
     ProposalDocument,
     Referral,
     ProposalRequirement,
-    ProposalStandardRequirement
+    ProposalStandardRequirement,
+    AmendmentRequest,
+
 )
 from disturbance.components.proposals.serializers import (
     SendReferralSerializer,
@@ -55,6 +57,7 @@ from disturbance.components.proposals.serializers import (
     ProposalStandardRequirementSerializer,
     ProposedApprovalSerializer,
     PropedDeclineSerializer,
+    AmendmentRequestSerializer,
     
 )
 
@@ -629,3 +632,43 @@ class ProposalStandardRequirementViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(text__icontains=search)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+class AmendmentRequestViewSet(viewsets.ModelViewSet):
+    queryset = AmendmentRequest.objects.all()
+    serializer_class = AmendmentRequestSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data= request.data)
+            serializer.is_valid(raise_exception = True)
+            instance = serializer.save()
+            instance.generate_amendment(request)
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    
+
+class AmendmentRequestReasonChoicesView(views.APIView):
+    
+    renderer_classes = [JSONRenderer,]
+    def get(self,request, format=None):
+        choices_list = []
+        choices = AmendmentRequest.objects.first().REASON_CHOICES
+        if choices:
+            for c in choices:
+                choices_list.append({'key': c[0],'value': c[1]})
+       
+        return Response(choices_list)

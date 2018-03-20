@@ -8,7 +8,8 @@ from disturbance.components.proposals.models import (
                                     Referral,
                                     ProposalRequirement,
                                     ProposalStandardRequirement,
-                                    ProposalDeclinedDetails
+                                    ProposalDeclinedDetails,
+                                    AmendmentRequest
                                 )
 from disturbance.components.organisations.models import (
                                 Organisation
@@ -348,3 +349,11 @@ class ProposedApprovalSerializer(serializers.Serializer):
 class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False)
+
+class AmendmentRequestSerializer(serializers.ModelSerializer):
+    
+
+    class Meta:
+        model = AmendmentRequest
+        fields = '__all__'
+            
