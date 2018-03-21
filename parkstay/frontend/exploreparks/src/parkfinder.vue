@@ -541,7 +541,11 @@ export default {
         numPeople: {
             cache: false,
             get: function() {
-                var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
+                // annoying wrapper to deal with vue.js' weak number casting
+                var count = (this.numAdults ? this.numAdults : 0) + 
+                            (this.numConcessions ? this.numConcessions : 0) + 
+                            (this.numChildren ? this.numChildren : 0) + 
+                            (this.numInfants ? this.numInfants : 0);
                 if (count === 1) {
                     return `${count} person ▼`;
                 } else {

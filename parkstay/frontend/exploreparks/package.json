@@ -19,7 +19,7 @@
     "jqueryui": "^1.11.1",
     "moment": "^2.21.0",
     "openlayers": "^4.6.4",
-    "vue": "^2.5.13",
+    "vue": "^2.3.3",
     "vue-paginate": "^3.5.1"
   },
   "devDependencies": {
