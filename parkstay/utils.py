@@ -576,9 +576,20 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
             u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
             booking_arrival, booking_departure, booking.campground.name)
     # Proceed to generate invoice
-    checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
-    internal_create_booking_invoice(booking, checkout_response.url.split('invoice=', 1)[1])
 
+    checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
+
+    # FIXME: replace with session check
+    invoice = None
+    if 'invoice=' in checkout_response.url:
+        invoice = checkout_response.url.split('invoice=', 1)[1]
+    else:
+        for h in reversed(checkout_response.history):
+            if 'invoice=' in h.url:
+                invoice = h.url.split('invoice=', 1)[1]
+                break
+    
+    internal_create_booking_invoice(booking, invoice)
 
     # Get the new invoice
     new_invoice = booking.invoices.first()
@@ -850,7 +861,18 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             # Change the type of booking
             booking.booking_type = 0
             booking.save()
-            internal_create_booking_invoice(booking, checkout_response.url.split('invoice=', 1)[1])
+
+            # FIXME: replace with session check
+            invoice = None
+            if 'invoice=' in checkout_response.url:
+                invoice = checkout_response.url.split('invoice=', 1)[1]
+            else:
+                for h in reversed(checkout_response.history):
+                    if 'invoice=' in h.url:
+                        invoice = h.url.split('invoice=', 1)[1]
+                        break
+
+            internal_create_booking_invoice(booking, invoice)
             delete_session_booking(request.session)
             send_booking_invoice(booking)
             return booking
