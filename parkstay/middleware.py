@@ -10,7 +10,7 @@ CHECKOUT_PATH = re.compile('^/ledger/checkout/checkout')
 
 class BookingTimerMiddleware(object):
     def process_request(self, request):
-        #print((request.session.items(), request.COOKIES))
+        #print((request.path, request.session.items(), request.COOKIES))
 
         if 'ps_booking' in request.session:
             try:
@@ -33,6 +33,9 @@ class BookingTimerMiddleware(object):
                 booking.save()
 
         # force a redirect if in the checkout
-        if ('ps_booking' not in request.session) and CHECKOUT_PATH.match(request.path):
-            return HttpResponseRedirect(reverse('public_make_booking'))
+        if ('ps_booking_internal' not in request.COOKIES) and CHECKOUT_PATH.match(request.path):
+            if ('ps_booking' not in request.session) and CHECKOUT_PATH.match(request.path):
+                return HttpResponseRedirect(reverse('public_make_booking'))
+            else:
+                return
         return

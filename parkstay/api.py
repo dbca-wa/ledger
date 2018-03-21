@@ -1696,7 +1696,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise
         except ValidationError as e:
-            raise serializers.ValidationError(repr(e.error_dict))
+            raise serializers.ValidationError(str(e))
         except Exception as e:
             utils.delete_session_booking(request.session)
             if userCreated:

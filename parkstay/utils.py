@@ -577,7 +577,7 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
             booking_arrival, booking_departure, booking.campground.name)
     # Proceed to generate invoice
     checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
-    internal_create_booking_invoice(booking, checkout_response)
+    internal_create_booking_invoice(booking, checkout_response.url.split('invoice=', 1)[1])
 
 
     # Get the new invoice
@@ -785,7 +785,6 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             'system': settings.PS_PAYMENT_SYSTEM_ID,
             'fallback_url': request.build_absolute_uri('/'),
             'return_url': request.build_absolute_uri(reverse('public_booking_success')),
-            'return_preload_url': request.build_absolute_uri(reverse('public_booking_success')),
             'forceRedirect': True,
             'proxy': True if internal else False,
             "products": lines,
@@ -795,6 +794,7 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         }
         if not internal:
             parameters["check_url"] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
+            parameters["return_preload_url"] = request.build_absolute_uri(reverse('public_booking_success'))
         if internal or request.user.is_anonymous():
             parameters['basket_owner'] = booking.customer.id
 
@@ -803,6 +803,8 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             reverse('payments:ledger-initial-checkout')
         )
         COOKIES = request.COOKIES
+        if internal and 'ps_booking' in request.session:
+            COOKIES['ps_booking_internal'] = str(request.session['ps_booking'])
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=COOKIES,
                                  data=json.dumps(parameters))
         response.raise_for_status()
@@ -821,11 +823,7 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         e.args = (http_error_msg,)
         raise
 
-def internal_create_booking_invoice(booking, checkout_response):
-    if not checkout_response.history:
-        raise Exception('There was a problem retrieving the invoice for this booking')
-    last_redirect = checkout_response.history[-2]
-    reference = last_redirect.url.split('=')[1]
+def internal_create_booking_invoice(booking, reference):
     try:
         Invoice.objects.get(reference=reference)
     except Invoice.DoesNotExist:
@@ -852,7 +850,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             # Change the type of booking
             booking.booking_type = 0
             booking.save()
-            internal_create_booking_invoice(booking, checkout_response)
+            internal_create_booking_invoice(booking, checkout_response.url.split('invoice=', 1)[1])
             delete_session_booking(request.session)
             send_booking_invoice(booking)
             return booking
