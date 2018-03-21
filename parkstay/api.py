@@ -1189,7 +1189,7 @@ def create_booking(request, *args, **kwargs):
     try:
         if campsite:
             booking = utils.create_booking_by_site(
-                campsite, start_date, end_date,
+                Campsite.objects.filter(campsite_id=campsite.id), start_date, end_date,
                 num_adult, num_concession,
                 num_child, num_infant
             )
@@ -1692,7 +1692,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                     raise serializers.ValidationError("Country you have entered does not exist")
 
             booking_details = {
-                'campsite_id': request.data['campsite'],
+                'campsites': Campsite.objects.filter(id__in=request.data['campsites']),
                 'start_date' : start_date,
                 'end_date' : end_date,
                 'num_adult' : guests['adult'],

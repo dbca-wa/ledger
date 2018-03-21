@@ -93,14 +93,8 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     return booking
 
 
-def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,cost_total=0,customer=None,updating_booking=False):
-    """Create a new temporary booking in the system for a specific campsite."""
-    # get campsite
-    sites_qs = Campsite.objects.filter(pk=campsite_id)
-    campsite = sites_qs.first()
-
-    # TODO: date range check business logic
-    # TODO: number of people check? this is modifiable later, don't bother
+def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, cost_total=0, customer=None, updating_booking=False, override_checks=False):
+    """Create a new temporary booking in the system for a set of specific campsites."""
 
     # the CampsiteBooking table runs the risk of a race condition,
     # wrap all this behaviour up in a transaction
@@ -110,18 +104,22 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
         for site_id, dates in availability.items():
             if updating_booking:
                 if not all([v[0] in ['open','tooearly'] for k, v in dates.items()]):
-                    raise ValidationError('Campsite unavailable for specified time period.')
+                    raise ValidationError('Campsite(s) unavailable for specified time period.')
             else:
                 if not all([v[0] == 'open' for k, v in dates.items()]):
-                    raise ValidationError('Campsite unavailable for specified time period.')
+                    raise ValidationError('Campsite(s) unavailable for specified time period.')
 
-        # Prevent booking if max people passed
-        total_people = num_adult + num_concession + num_child + num_infant
-        if total_people > campsite.max_people:
-            raise ValidationError('Maximum number of people exceeded for the selected campsite')
-        # Prevent booking if less than min people 
-        if total_people < campsite.min_people:
-            raise ValidationError('Number of people is less than the minimum allowed for the selected campsite')
+        if not override_checks:
+            # Prevent booking if max people passed
+            total_people = num_adult + num_concession + num_child + num_infant
+            min_people = sum([cs.min_people for cs in sites_qs])
+            max_people = sum([cs.max_people for cs in sites_qs])
+
+            if total_people > max_people:
+                raise ValidationError('Maximum number of people exceeded for the selected campsite(s)')
+            # Prevent booking if less than min people 
+            if total_people < min_people:
+                raise ValidationError('Number of people is less than the minimum allowed for the selected campsite(s)')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
@@ -136,16 +134,17 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                         },
                         cost_total= Decimal(cost_total),
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
-                        campground=campsite.campground,
+                        campground=sites_qs[0].campground,
                         customer = customer
                     )
-        for i in range((end_date-start_date).days):
-            cb =    CampsiteBooking.objects.create(
-                        campsite=campsite,
-                        booking_type=3,
-                        date=start_date+timedelta(days=i),
-                        booking=booking
-                    )
+        for cs in sites_qs:
+            for i in range((end_date-start_date).days):
+                cb =    CampsiteBooking.objects.create(
+                            campsite=cs,
+                            booking_type=3,
+                            date=start_date+timedelta(days=i),
+                            booking=booking
+                        )
 
     # On success, return the temporary booking
     return booking
@@ -477,6 +476,7 @@ def get_park_entry_rate(request,start_date):
 
 
 def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
+    import pdb; pdb.set_trace()
     total_price = Decimal(0)
     rate_list = {}
     invoice_lines = []
@@ -788,10 +788,10 @@ def update_booking(request,old_booking,booking_details):
             print(traceback.print_exc())
             raise
 
-def create_or_update_booking(request,booking_details,updating=False):
+def create_or_update_booking(request,booking_details,updating=False,override_checks=False):
     booking = None
     if not updating:
-        booking = create_booking_by_site(campsite_id= booking_details['campsite_id'],
+        booking = create_booking_by_site(booking_details['campsites'],
             start_date = booking_details['start_date'],
             end_date=booking_details['end_date'],
             num_adult=booking_details['num_adult'],
@@ -799,7 +799,9 @@ def create_or_update_booking(request,booking_details,updating=False):
             num_child=booking_details['num_child'],
             num_infant=booking_details['num_infant'],
             cost_total=booking_details['cost_total'],
-            customer=booking_details['customer'])
+            customer=booking_details['customer'],
+            override_checks=override_checks
+        )
         
         booking.details['first_name'] = booking_details['first_name']
         booking.details['last_name'] = booking_details['last_name']
@@ -881,7 +883,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
     json_booking = request.data
     booking = None
     try:
-        booking = create_or_update_booking(request,booking_details,updating)
+        booking = create_or_update_booking(request, booking_details, updating, override_checks=internal)
         with transaction.atomic():
             #import pdb; pdb.set_trace()
             set_session_booking(request.session,booking)
