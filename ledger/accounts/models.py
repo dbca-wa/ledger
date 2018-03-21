@@ -573,11 +573,8 @@ class ProfileListener(object):
         for u in user_addr:
             if not u.profiles.all() \
                 and not u in (user.postal_address, user.residential_address, user.billing_address):
-                print('deleting')
-                print(u.oscar_address,u.oscar_address.id)
                 u.oscar_address.delete()
                 u.delete()
-                print('\n')
 
 class EmailIdentityListener(object):
     """

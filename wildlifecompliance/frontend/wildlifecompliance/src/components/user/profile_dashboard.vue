@@ -80,7 +80,7 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             links +=  `<a href='${full.id}' class="editProfile">Edit</a><br/>`;
-                            links +=  `<a href='#' class="deleteProfile" data-id="${full.id}">Delete</a><br/>`;
+                            links +=  `<a data-id='${full.id}' class="delete_profile">Delete</a><br/>`;
                             return links;
                         },
                         orderable: false
@@ -112,6 +112,52 @@ export default {
         }
     },
     methods: {
+        deleteProfile: function(profile){
+            let vm = this;
+            vm.$http.delete(api_endpoints.profiles + "/" + profile.id + '/'
+            ).then((response) => {
+                swal(
+                    'Delete Profile',
+                    'Your profile has been successfully deleted\n' + profile.name + '(' + profile.email + ')',
+                    'success'
+                )
+                vm.$refs.profile_datatable.vmDataTable.ajax.reload();
+            }, (error) => {
+                console.log(error);
+                swal(
+                    'Delete Profile',
+                    'There was an error deleting the profile\n' + profile.name + '(' + profile.email + ')',
+                    'error'
+                )
+            });
+        },
+        eventListeners: function(){
+            let vm = this;
+            console.log('test');
+            vm.$refs.profile_datatable.vmDataTable.on('click','.delete_profile',(e) => {
+                e.preventDefault();
+                let name = $(e.target).data('id');
+                let email = $(e.target).data('id');
+                let id = $(e.target).data('id');
+                swal({
+                    title: "Delete Profile",
+                    text: 'Are you sure you want to delete this profile?\n' + name + '(' + email + ')?',
+                    type: "error",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then(() => {
+                    vm.deleteProfile(id);
+                },(error) => {
+                });
+            });
+        }
+    },
+    updated: function(){
+        console.log('updated');
+        let vm = this;
+        this.$nextTick(() => {
+            this.eventListeners();
+        });
     },
     mounted: {
     }
