@@ -49,7 +49,7 @@
                             </div>
                           </div>
                           <div class="form-group">
-                            <label for="" class="col-sm-3 control-label" >Suburb/Town</label>
+                            <label for="" class="col-sm-3 control-label" >Suburb/Town (Locality)</label>
                             <div class="col-sm-6">
                                 <input type="text" class="form-control" name="locality" placeholder="" v-model="profile.postal_address.locality">
                             </div>
@@ -120,13 +120,31 @@ export default {
             vm.$http.put(api_endpoints.profiles + '/' + vm.profile.id + '/',JSON.stringify(vm.profile),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
                 vm.updatingProfile = false;
                 vm.profile = response.body;
                 if (vm.profile.postal_address == null){ vm.profile.postal_address = {}; }
+                swal(
+                    'Update Profile',
+                    'Your profile has been successfully updated',
+                    'success'
+                )
             }, (error) => {
-                console.log(error);
                 vm.updatingProfile = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    if (key === 'postal_address'){
+                        for (var pkey in error.body[key]) {
+                            error_msg += pkey + ': ' + error.body[key][pkey] + '<br/>';
+                        }
+                    } else {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                }
+                swal({
+                    title: 'Update Profile',
+                    html: 'There was an error updating the profile <br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
     },

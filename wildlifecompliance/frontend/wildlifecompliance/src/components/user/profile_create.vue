@@ -49,7 +49,7 @@
                             </div>
                           </div>
                           <div class="form-group">
-                            <label for="" class="col-sm-3 control-label" >Suburb/Town</label>
+                            <label for="" class="col-sm-3 control-label" >Suburb/Town (Locality)</label>
                             <div class="col-sm-6">
                                 <input type="text" class="form-control" name="locality" placeholder="" v-model="profile.postal_address.locality">
                             </div>
@@ -120,20 +120,37 @@ export default {
         createProfile: function() {
             let vm = this;
             vm.creatingProfile = true;
-            console.log(vm.profile);
             vm.profile.user = vm.current_user.id;
             vm.profile.auth_identity = true;
-            console.log(vm.profile);
             vm.$http.post(api_endpoints.my_profiles + '/',JSON.stringify(vm.profile),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
                 vm.creatingProfile = false;
                 vm.profile = response.body;
                 if (vm.profile.postal_address == null){ vm.profile.postal_address = {}; }
+                swal({
+                    title: 'Create Profile',
+                    html: 'Your profile has been successfully created<br/><br/>' + vm.profile.name + '<br/>' + vm.profile.email,
+                    type: 'success',
+                    onClose: vm.$router.push('/profiles') 
+                })
             }, (error) => {
-                console.log(error);
                 vm.creatingProfile = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    if (key === 'postal_address'){
+                        for (var pkey in error.body[key]) {
+                            error_msg += pkey + ': ' + error.body[key][pkey] + '<br/>';
+                        }
+                    } else {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                }
+                swal({
+                    title: 'Create Profile',
+                    html: 'There was an error creating the profile<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
     },
