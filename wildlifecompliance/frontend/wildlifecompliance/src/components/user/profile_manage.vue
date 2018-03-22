@@ -125,7 +125,7 @@ export default {
                 if (vm.profile.postal_address == null){ vm.profile.postal_address = {}; }
                 swal(
                     'Update Profile',
-                    'Your profile has been successfully updated',
+                    'Your profile has been successfully updated.',
                     'success'
                 )
             }, (error) => {
@@ -142,7 +142,7 @@ export default {
                 }
                 swal({
                     title: 'Update Profile',
-                    html: 'There was an error updating the profile <br/>' + error_msg,
+                    html: 'There was an error updating the profile.<br/>' + error_msg,
                     type: 'error'
                 })
             });

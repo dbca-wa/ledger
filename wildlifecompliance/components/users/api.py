@@ -100,6 +100,25 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()
     serializer_class = UserSerializer
 
+    def get_queryset(self):
+        """
+        Optionally restrict the query if the following parameters are in the URL:
+		- first_name
+		- last_name
+		- dob 
+        """
+        queryset = EmailUser.objects.all()
+        first_name = self.request.query_params.get('first_name', None)
+        last_name = self.request.query_params.get('last_name', None)
+        dob = self.request.query_params.get('dob', None)
+        if first_name is not None:
+            queryset = queryset.filter(first_name__iexact=first_name)
+        if last_name is not None:
+            queryset = queryset.filter(last_name__iexact=last_name)
+        if dob is not None:
+            queryset = queryset.filter(dob=dob)
+        return queryset
+
     @detail_route(methods=['GET',])
     def profiles(self, request, *args, **kwargs):
         try:
@@ -122,6 +141,23 @@ class UserViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = PersonalSerializer(instance,data=request.data)
             serializer.is_valid(raise_exception=True)
+            ''' warn about other users with same name and dob
+            print('warn about other users')
+            try:
+                validated_data = serializer.validated_data
+                print(validated_data)
+                user_id = request.user.id 
+                print(user_id)
+                first_name = validated_data['first_name']
+                last_name = validated_data['last_name']
+                dob = validated_data['dob']
+                #count = EmailUser.objects.filter(first_name=first_name,last_name=last_name,dob=dob).exclude(id=user_id).count()
+                count = EmailUser.objects.filter(first_name=first_name,last_name=last_name,dob=dob).count()
+                if count > 0:
+                    raise ValueError('A user with this name and email address already exists.')
+                print(count)
+            except:
+                raise ValueError('A user with this name and email address already exists.')'''
             instance = serializer.save()
             serializer = UserSerializer(instance)
             return Response(serializer.data);

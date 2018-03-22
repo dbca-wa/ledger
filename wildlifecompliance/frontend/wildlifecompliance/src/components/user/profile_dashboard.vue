@@ -9,6 +9,7 @@
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
+                    <div>Profiles let you link multiple email addresses with your account, allowing you to log in with any linked email address.</div><br/>
                     <div class="row">
                         <div class="col-lg-12">
                             <datatable ref="profile_datatable" :id="datatable_id" :dtOptions="profile_options" :dtHeaders="profile_headers"/>
@@ -118,7 +119,7 @@ export default {
             ).then((response) => {
                 swal(
                     'Delete Profile',
-                    'Your profile, ' + name + ' (' + email + ') has been successfully deleted',
+                    'Your profile, ' + name + ' (' + email + ') has been successfully deleted.',
                     'success'
                 )
                 vm.$refs.profile_datatable.vmDataTable.ajax.reload();
@@ -126,7 +127,7 @@ export default {
                 console.log(error);
                 swal(
                     'Delete Profile',
-                    'There was an error deleting the profile, ' + name + ' (' + email + ')',
+                    'There was an error deleting the profile, ' + name + ' (' + email + ').',
                     'error'
                 )
             });

@@ -441,9 +441,27 @@ export default {
                 vm.updatingPersonal = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                swal({
+                    title: 'Update Personal Details',
+                    html: 'Your personal details has been successfully updated.',
+                    type: 'success',
+                })
             }, (error) => {
                 console.log(error);
                 vm.updatingPersonal = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    if (key === 'dob') {
+                        error_msg += 'dob: Please enter a valid date.<br/>';
+                    } else {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                }
+                swal({
+                    title: 'Update Personal Details',
+                    html: 'There was an error updating your personal details.<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
         updateContact: function() {
@@ -456,9 +474,23 @@ export default {
                 vm.updatingContact = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                swal({
+                    title: 'Update Contact Details',
+                    html: 'Your contact details has been successfully updated.',
+                    type: 'success',
+                })
             }, (error) => {
                 console.log(error);
                 vm.updatingContact = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal({
+                    title: 'Update Contact Details',
+                    html: 'There was an error updating your contact details.<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
         updateAddress: function() {
@@ -471,9 +503,23 @@ export default {
                 vm.updatingAddress = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                swal({
+                    title: 'Update Address Details',
+                    html: 'Your address details has been successfully updated.',
+                    type: 'success',
+                })
             }, (error) => {
                 console.log(error);
                 vm.updatingAddress = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal({
+                    title: 'Update Address Details',
+                    html: 'There was an error updating your address details.<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
         checkOrganisation: function() {

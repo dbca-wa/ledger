@@ -130,7 +130,7 @@ export default {
                 if (vm.profile.postal_address == null){ vm.profile.postal_address = {}; }
                 swal({
                     title: 'Create Profile',
-                    html: 'Your profile has been successfully created<br/><br/>' + vm.profile.name + '<br/>' + vm.profile.email,
+                    html: 'Your profile has been successfully created.<br/><br/>' + vm.profile.name + '<br/>' + vm.profile.email,
                     type: 'success',
                     onClose: vm.$router.push('/profiles') 
                 })
@@ -148,7 +148,7 @@ export default {
                 }
                 swal({
                     title: 'Create Profile',
-                    html: 'There was an error creating the profile<br/>' + error_msg,
+                    html: 'There was an error creating the profile.<br/>' + error_msg,
                     type: 'error'
                 })
             });
