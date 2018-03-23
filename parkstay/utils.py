@@ -476,7 +476,6 @@ def get_park_entry_rate(request,start_date):
 
 
 def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
-    import pdb; pdb.set_trace()
     total_price = Decimal(0)
     rate_list = {}
     invoice_lines = []
@@ -704,8 +703,8 @@ def update_booking(request,old_booking,booking_details):
             # Add history
             new_history = old_booking._generate_history(user=request.user)
 
-            if request.data.get('entryFees').get('regos'):
-                new_regos = request.data['entryFees'].pop('regos')
+            if 'regos' in booking_details:
+                new_regos = booking_details['regos']
                 sent_regos = [r['rego'] for r in new_regos]
                 regos_serializers = []
                 update_regos_serializers = []
@@ -810,10 +809,10 @@ def create_or_update_booking(request,booking_details,updating=False,override_che
         booking.details['postcode'] = booking_details['postcode']
 
         # Add booking regos
-        if request.data.get('parkEntry').get('regos'):
-            regos = request.data['parkEntry'].pop('regos')
+        if 'regos' in booking_details:
+            regos = booking_details['regos']
             for r in regos:
-                r[u'booking'] = booking.id
+                r['booking'] = booking.id
             regos_serializers = [BookingRegoSerializer(data=r) for r in regos]
             for r in regos_serializers:
                 r.is_valid(raise_exception=True)

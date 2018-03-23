@@ -283,7 +283,7 @@
                                 <div class="col-lg-12">
                                     <div class="form-group">
                                         <div class="checkbox">
-                                            <label for="Override price"><input type="checkbox" v-model="checked"/>Override price charged</label>
+                                            <label><input type="checkbox" v-model="checked"/>Override price charged</label>
                                         </div>
                                         <div class="input-group" v-if="checked">
                                         <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
@@ -295,7 +295,7 @@
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="form-group" v-if="checked">
-                                        <reason type="discount" v-model="booking.discount_reason" ref="reason" ></reason>
+                                        <reason type="discount" v-model="booking.override_reason" ref="reason" ></reason>
                                     </div>
                                 </div>
                             </div>
@@ -375,7 +375,7 @@ export default {
                 vehicle:"",
                 price:"0",
                 override_price:"0",
-                discount_reason:"",
+                override_reason:"",
                 parkEntry:{
                     vehicles:0,
                 },
@@ -526,7 +526,7 @@ export default {
             if (vm.booking.arrival) {
                 $.each(vm.stayHistory,function (i,his) {
                     var range = Moment.range(Moment(his.range_start,"DD/MM/YYYY"),Moment(his.range_end,"DD/MM/YYYY"));
-                    var arrival = Moment(vm.booking.arrival,"YYYY/MM/DD");
+                    var arrival = Moment(vm.booking.arrival,"YYYY-MM-DD");
                     if (range.contains(arrival)) {
                         vm.departurePicker.data("DateTimePicker").maxDate(arrival.clone().add(his.max_days,'days'));
                         vm.departurePicker.data("DateTimePicker").date(null);
@@ -570,7 +570,6 @@ export default {
                     var arrival = Moment(vm.booking.arrival, "YYYY-MM-DD");
                     var departure = Moment(vm.booking.departure, "YYYY-MM-DD");
                     var nights = departure.diff(arrival,'days');
-                    vm.loading.push('updating prices');
                     vm.$http.post(
                         api_endpoints.campsites_current_price(),
                         {
@@ -583,10 +582,8 @@ export default {
                         vm.priceHistory = null;
                         vm.priceHistory = response.body;
                         vm.generateBookingPrice();
-                        vm.loading.splice('updating prices',1);
                     },(error)=>{
                         console.log(error);
-                        vm.loading.splice('updating prices',1);
                     });
                 }else{
                     vm.$http.post(
@@ -601,10 +598,8 @@ export default {
                         vm.priceHistory = null;
                         vm.priceHistory = response.body;
                         vm.generateBookingPrice();
-                        vm.loading.splice('updating prices',1);
                     },(error)=>{
                         console.log(error);
-                        vm.loading.splice('updating prices',1);
                     });
                 }
             }
@@ -624,7 +619,11 @@ export default {
             let vm = this;
             if(vm.selected_arrival && vm.selected_departure){
                 vm.loading.push('fetching campsites');
-                vm.$http.get(api_endpoints.available_campsites(vm.booking.campground,vm.booking.arrival,vm.booking.departure)).then((response)=>{
+                vm.$http.get(api_endpoints.available_campsites(
+                    vm.booking.campground,
+                    Moment(vm.booking.arrival, "YYYY-MM-DD").format("YYYY/MM/DD"),
+                    Moment(vm.booking.departure, "YYYY-MM-DD").format("YYYY/MM/DD")
+                )).then((response)=>{
                     vm.booking.campsites = response.body;
                     if (vm.booking.campsites.length >0) {
                         vm.selected_campsite =vm.booking.campsites[0].id;
@@ -709,7 +708,7 @@ export default {
                 useCurrent: false,
             });
             vm.arrivalPicker.on('dp.change', function(e){
-                vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+                vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
                 vm.selected_arrival = vm.booking.arrival;
                 vm.selected_departure = "";
                 vm.booking.departure = "";
@@ -722,7 +721,7 @@ export default {
             });
             vm.departurePicker.on('dp.change', function(e){
                 if (vm.departurePicker.data('DateTimePicker').date()) {
-                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('YYYY-MM-DD');
                     vm.selected_departure= vm.booking.departure;
                 }else{
                     vm.booking.departure = null;
@@ -866,8 +865,7 @@ export default {
         fetchParkPrices:function (calcprices) {
             let vm = this;
             if (vm.booking.arrival) {
-                var arrival = Moment(vm.booking.arrival, "YYYY-MM-DD").format("YYYY-MM-DD");
-                vm.$http.get(api_endpoints.park_current_price(vm.park.id,arrival)).then((response)=>{
+                vm.$http.get(api_endpoints.park_current_price(vm.park.id, vm.booking.arrival)).then((response)=>{
                     var resp = response.body;
                     if (resp.constructor != Array) {
                         vm.parkPrices = response.body;
@@ -946,7 +944,7 @@ export default {
                         total:vm.booking.price
                     },
                     override_price:vm.booking.override_price,
-                    discount_reason:vm.booking.discount_reason,
+                    override_reason:vm.booking.override_reason,
                     customer:{
                         email:vm.booking.email,
                         first_name:vm.booking.firstname,
@@ -954,7 +952,8 @@ export default {
                         phone:vm.booking.phone,
                         country:vm.booking.country,
                         postcode:vm.booking.postcode,
-                    }
+                    },
+                    regos: vm.booking.entryFees.regos
                 }
                 vm.$store.dispatch("updateAlert",{
                     visible:false,
@@ -991,13 +990,11 @@ export default {
         },
         validateParkEntry:function () {
             let vm = this;
-            var isValid = true;
-            if (vm.booking.parkEntry.vehicles > 0) {
-                if (vm.booking.parkEntry.vehicles > vm.booking.parkEntry.regos) {
-                    isValid = false;
-                }
-            }
-            return isValid;
+            var validRegos = vm.parkEntryVehicles.reduce(function (acc, el) {
+                return acc + (el.rego ? 1 : 0);
+            }, 0);
+
+            return (validRegos == vm.parkEntryVehicles.length);
         },
         addFormValidations: function() {
             $(this.bookingForm).validate({

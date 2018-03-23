@@ -1667,11 +1667,15 @@ class BookingViewSet(viewsets.ModelViewSet):
         try:
             if 'ps_booking' in request.session:
                 del request.session['ps_booking']
-            start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
-            end_date = datetime.strptime(request.data['departure'],'%Y/%m/%d').date()
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            start_date = serializer.validated_data['arrival']
+            end_date = serializer.validated_data['departure']
             guests = request.data['guests']
             costs = request.data['costs']
-            override_price = request.data.get('override_price', None)
+            regos = request.data['regos']
+            override_price = serializer.validated_data.get('override_price', None)
+            override_reason = serializer.validated_data.get('override_reason', None)
             try:
                 emailUser = request.data['customer']
                 customer = EmailUser.objects.get(email = emailUser['email'])
@@ -1701,16 +1705,18 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_infant' : guests['infant'],
                 'cost_total' : costs['total'],
                 'override_price' : override_price,
+                'override_reason' : override_reason,
                 'customer' : customer,
                 'first_name': emailUser['first_name'],
                 'last_name': emailUser['last_name'],
                 'country': emailUser['country'],
                 'postcode': emailUser['postcode'],
                 'phone': emailUser['phone'],
+                'regos': regos
             }
 
             data = utils.internal_booking(request,booking_details)
-            serializer = BookingSerializer(data)
+            serializer = self.get_serializer(data)
             return Response(serializer.data)
         except serializers.ValidationError:
             utils.delete_session_booking(request.session)
