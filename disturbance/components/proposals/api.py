@@ -169,6 +169,26 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET',])
+    def amendment_request(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.amendment_requests
+            qs = qs.filter(status = 'requested')
+            serializer = AmendmentRequestSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
         user_orgs = [org.id for org in request.user.disturbance_organisations.all()];
@@ -666,7 +686,7 @@ class AmendmentRequestReasonChoicesView(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self,request, format=None):
         choices_list = []
-        choices = AmendmentRequest.objects.first().REASON_CHOICES
+        choices = AmendmentRequest.REASON_CHOICES
         if choices:
             for c in choices:
                 choices_list.append({'key': c[0],'value': c[1]})

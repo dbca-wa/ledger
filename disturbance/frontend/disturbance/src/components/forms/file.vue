@@ -2,8 +2,12 @@
     <div>
         <div class="form-group">
             <label>{{label}}</label>
-            <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" style="color:blue" :title="help_text">&nbsp;</i>
-            <i data-toggle="tooltip" v-if="help_text_assessor && assessorMode" data-placement="right" class="fa fa-question-circle" style="color:green" :title="help_text_assessor">&nbsp;</i>
+            <template v-if="help_text">
+                <HelpText :help_text="help_text" />
+            </template>
+            <template v-if="help_text_assessor && assessorMode">
+                <HelpText :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
+            </template> 
             <template v-if="assessorMode">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
@@ -29,6 +33,7 @@
 
 <script>
 import Comment from './comment.vue'
+import HelpText from './help_text.vue'
 export default {
     props:{
         name:String,
@@ -56,7 +61,7 @@ export default {
         readonly:Boolean,
         docsUrl: String
     },
-    components: {Comment},
+    components: {Comment, HelpText},
     data:function(){
         return {
             repeat:1,

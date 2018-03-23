@@ -2,8 +2,17 @@
     <div>
         <div class="form-group">
             <label>{{ label }}</label>
-            <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" style="color:blue" :title="help_text">&nbsp;</i>
-            <i data-toggle="tooltip" v-if="help_text_assessor && assessorMode" data-placement="right" class="fa fa-question-circle" style="color:green" :title="help_text_assessor">&nbsp;</i>
+            
+            <template v-if="help_text">
+                
+                <HelpText :help_text="help_text" />
+            </template>
+            <template v-if="help_text_assessor && assessorMode">
+                
+                <HelpText  :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
+            </template> 
+
+
             <template v-if="assessorMode">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
@@ -26,6 +35,7 @@
 import moment from 'moment'
 import datetimepicker from 'datetimepicker'
 import Comment from './comment.vue'
+import HelpText from './help_text.vue'
 export default {
     props: ['name', 'label', 'readonly', 'help_text', 'help_text_assessor', 'assessorMode', 'value', 'conditions', "handleChange","comment_value","assessor_readonly"],
     data(){
@@ -33,7 +43,7 @@ export default {
             showingComment: false
         }
     },
-    components: {Comment},
+    components: {Comment, HelpText},
     computed: {
         isChecked: function() {
         //TODO return value from database
