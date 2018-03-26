@@ -5,13 +5,17 @@ from wildlifecompliance.components.applications import forms
 from reversion.admin import VersionAdmin
 # Register your models here.
 
-@admin.register(models.ApplicationType)
-class ApplicationTypeAdmin(admin.ModelAdmin):
-    exclude=("site",) 
+# @admin.register(models.ApplicationType)
+# class ApplicationTypeAdmin(admin.ModelAdmin):
+#     exclude=("site",) 
 
 class ApplicationDocumentInline(admin.TabularInline):
     model = models.ApplicationDocument
     extra = 0
+
+@admin.register(models.ApplicationType)
+class ApplicationTypeAdmin(admin.ModelAdmin):
+    pass
 
 @admin.register(models.Application)
 class ApplicationAdmin(VersionAdmin):

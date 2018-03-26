@@ -429,6 +429,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             data = {
                 'schema': ApplicationType.objects.first().schema,
                 'submitter': request.user.id,
+                'licence_category':request.data.get('licence_category'),
+                'licence_activity_type':request.data.get('selected_activity_type'),
                 'applicant': request.data.get('behalf_of')
             }
             serializer = SaveApplicationSerializer(data=data)

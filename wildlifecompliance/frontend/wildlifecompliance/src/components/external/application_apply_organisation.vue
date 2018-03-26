@@ -96,21 +96,7 @@ export default {
         console.log('from apply organisation',vm.behalf_of);
         console.log('From organisation submit',vm.behalf_of)
     },
-    createApplication:function () {
-        let vm = this;
-        vm.$http.post('/api/application.json',{
-            behalf_of: vm.behalf_of
-        }).then(res => {
-              vm.application = res.body;
-              vm.$router.push({
-                  name:"draft_application",
-                  params:{application_id:vm.application.id}
-              });
-          },
-          err => {
-            console.log(err);
-          });
-    },
+    
     fetchOrgContact:function (){
             let vm =this;
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response)=>{

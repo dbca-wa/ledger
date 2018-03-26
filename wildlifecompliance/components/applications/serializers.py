@@ -98,6 +98,8 @@ class ApplicationSerializer(BaseApplicationSerializer):
     def get_readonly(self,obj):
         return obj.can_user_view 
 
+
+
 class SaveApplicationSerializer(BaseApplicationSerializer):
     assessor_data = serializers.JSONField(required=False)
 
@@ -127,6 +129,8 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
                 'readonly',
                 'can_user_edit',
                 'can_user_view',
+                'licence_category',
+                'licence_activity_type'
                 )
         read_only_fields=('documents','conditions')
 
