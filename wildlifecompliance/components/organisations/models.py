@@ -378,6 +378,14 @@ class OrganisationContact(models.Model):
         """
         return self.is_admin and self.user_status == 'active' and self.user_role =='organisation_admin' 
 
+    @property
+    def check_consultant(self):
+        """
+        :return: True if the application is in one of the editable status.
+        """
+        return self.user_status == 'active' and self.user_role =='consultant' 
+        
+
 
 
     # def unlink_user(self,user,request):

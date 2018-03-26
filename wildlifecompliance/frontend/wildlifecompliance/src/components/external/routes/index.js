@@ -1,6 +1,8 @@
 import ExternalDashboard from '../dashboard.vue'
 import Application from '../application.vue'
 import ApplicationApply from '../application_apply.vue'
+import ApplicationApplyOrganisation from '../application_apply_organisation.vue'
+import ApplicationApplyLicence from '../application_apply_licence.vue'
 import ApplicationSubmit from '../application_submit.vue'
 import Organisation from '../organisations/manage.vue'
 export default
@@ -37,6 +39,16 @@ export default
                     path: '/',
                     component: ApplicationApply,
                     name:"apply_application"
+                },
+                {
+                    path: 'org_select',
+                    component: ApplicationApplyOrganisation,
+                    name:"apply_application_organisation"
+                },
+                {
+                    path: 'licence_select',
+                    component: ApplicationApplyLicence,
+                    name:"apply_application_licence"
                 },
                 {
                     path: 'submit',

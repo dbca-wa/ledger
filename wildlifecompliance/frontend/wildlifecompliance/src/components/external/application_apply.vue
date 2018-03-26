@@ -4,60 +4,35 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Apply on behalf of
+                        <h3 class="panel-title">New Application
                             <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                             </a>
                         </h3>
                     </div>
                     <div class="panel-body collapse in" :id="pBody">
-                        <form class="form-horizontal" name="personal_form" method="post">
-                            <div class="col-sm-12">
-                                <div class="form-group">
-                                    <div v-for="org in profile.wildlifecompliance_organisations" class="radio">
-                                        <label>
-                                          <input type="radio" name="behalf_of_org" v-model="behalf_of"  :value="org.id"> On behalf of {{org.name}}
-                                        </label>
-                                    </div>
-                                    <div class="radio">
-                                        <label class="radio-inline">
-                                          <input type="radio" name="behalf_of_org" v-model="behalf_of"  value="other" > On behalf of an organisation (as an authorised agent)
-                                        </label>
-                                    </div>
-                                </div>
+                        <form class="form-horizontal" name="orgForm" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-5 control-label">Do you want to</label>
+                            <div class="col-sm-4">
+                                 <label class="radio-inline">
+                                  <input :disabled="hasOrgs" type="radio" name="select_licence" v-model="licence_select" value="New_licence" > apply for a new licence?
+                                </label>
+                                <label class="radio-inline">
+                                  <input type="radio" name="select_licence" v-model="licence_select" value="New_activity"> apply for a new licensed activity on your licence?
+                                </label>
+                                 <label class="radio-inline">
+                                  <input type="radio" name="select_licence" v-model="licence_select" value="Amend_activity"> amend one or more licensed activities on your licence?
+                                </label>
+                                <label class="radio-inline">
+                                  <input type="radio" name="select_licence" v-model="licence_select" value="Renew_activity"> renew one or more licensed activities on your licence?
+                                </label>
                             </div>
-                            <div v-if="behalf_of == 'other'" class="col-sm-12">
-                                <div class="row">
-                                    <div class="form-group col-sm-5">
-                                        <label for="" class="control-label">Organisation</label>
-                                        <input type="text" class="form-control" name="first_name" placeholder="" v-model="agent.organisation">
-                                    </div>
-                                    <div class="form-group col-sm-1"></div>
-                                    <div class="form-group col-sm-5">
-                                        <label for="" class="control-label" >ABN / ACN</label>
-                                        <input type="text" class="form-control" name="last_name" placeholder="" v-model="agent.abn">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="form-group col-sm-5">
-                                        <label for="" class="control-label" >Organisation contact given name(s)</label>
-                                        <input type="text" class="form-control" name="last_name" placeholder="" v-model="agent.given_names">
-                                    </div>
-                                    <div class="form-group col-sm-1"></div>
-                                    <div class="form-group col-sm-5">
-                                        <label for="" class="control-label" >Orgnisation contact surname</label>
-                                        <input type="text" class="form-control" name="last_name" placeholder="" v-model="agent.surname">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="form-group col-sm-5">
-                                        <label for="" class="control-label" >Organisation contact email address</label>
-                                        <input type="text" class="form-control" name="last_name" placeholder="" v-model="agent.email">
-                                    </div>
-                                </div>
-                            </div>
+                          </div>
+
+                            
                             <div class="col-sm-12">
-                                <button :disabled="behalf_of == 'other' || behalf_of == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                                <button  @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
                             </div>
                         </form>
                     </div>
@@ -84,6 +59,7 @@ export default {
         profile: {
             wildlifecompliance_organisations: []
         },
+        licence_select:null,
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
@@ -106,16 +82,11 @@ export default {
   methods: {
     submit: function() {
         let vm = this;
-        swal({
-            title: "Create Application",
-            text: "Are you sure you want to create a application on behalf of "+vm.org+" ?",
-            type: "question",
-            showCancelButton: true,
-            confirmButtonText: 'Accept'
-        }).then(() => {
-            vm.createApplication();
-        },(error) => {
-        });
+         vm.$router.push({
+                      name:"apply_application_organisation",
+                      params:{licence_select:vm.licence_select}
+                  });
+         console.log(vm.licence_select);
     },
     createApplication:function () {
         let vm = this;
@@ -123,10 +94,7 @@ export default {
             behalf_of: vm.behalf_of
         }).then(res => {
               vm.application = res.body;
-              vm.$router.push({
-                  name:"draft_application",
-                  params:{application_id:vm.application.id}
-              });
+              
           },
           err => {
             console.log(err);
