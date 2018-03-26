@@ -31,7 +31,14 @@ class LicenceDocument(Document):
     class Meta:
         app_label = 'wildlifecompliance'
 
+class WildlifeLicenceActivity(models.Model):
+    name = models.CharField(max_length = 100)
 
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return self.name
 
 # class WildlifeLicenceDescriptor(models.Model):
 #     name = models.CharField(max_length = 100)
@@ -47,6 +54,7 @@ class WildlifeLicenceActivityType(models.Model):
     #     )
     # licence_activity_status = models.CharField(max_length=40, choices=LICENCE_ACTIVITY_STATUS_CHOICES,default=LICENCE_ACTIVITY_STATUS_CHOICES[0][0])
     name = models.CharField(max_length = 100)
+    activity = models.ManyToManyField(WildlifeLicenceActivity, blank= True,through='DefaultActivity',related_name='wildlifecompliance_activity')
     # category= models.ManyToManyField(WildlifeLicenceCategory)
     # descriptor = models.ForeignKey(WildlifeLicenceDescriptor)
     # default_condition = models.ManyToManyField(Condition, through='DefaultCondition',blank= True)
@@ -93,6 +101,16 @@ class DefaultActivityType(models.Model):
     #     return self.category
     
 
+class DefaultActivity(models.Model):
+    activity = models.ForeignKey(WildlifeLicenceActivity)
+    activity_type = models.ForeignKey(WildlifeLicenceActivityType)
+
+    class Meta:
+        unique_together = (('activity_type','activity'))
+        app_label = 'wildlifecompliance'
+
+    # def __str__(self):
+    #     return self.category
 
 
 class WildlifeLicence(models.Model):

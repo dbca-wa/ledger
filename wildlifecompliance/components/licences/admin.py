@@ -14,3 +14,11 @@ class WildlifeLicenceActivityTypeAdmin(admin.ModelAdmin):
 @admin.register(models.DefaultActivityType)
 class DefaultActivityTypeAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(models.WildlifeLicenceActivity)
+class WildlifeLicenceActivitydmin(admin.ModelAdmin):
+    pass
+
+@admin.register(models.DefaultActivity)
+class DefaultActivityAdmin(admin.ModelAdmin):
+    pass
