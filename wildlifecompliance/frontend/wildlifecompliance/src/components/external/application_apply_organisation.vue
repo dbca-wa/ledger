@@ -15,7 +15,9 @@
                             <div class="col-sm-12">
                                 <div class="form-group">
                                     <div class="radio">
+                                        <label>
                                         <input type="radio"  name="behalf_of_org" v-model="behalf_of"  value="other"> On behalf of yourself
+                                        </label>
                                     </div>
                                     <div v-for="org in profile.wildlifecompliance_organisations" class="radio">
                                         <label v-if ="!org.is_consultant">

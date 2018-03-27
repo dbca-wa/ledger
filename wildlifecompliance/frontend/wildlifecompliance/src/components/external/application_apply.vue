@@ -12,10 +12,12 @@
                     </div>
                     <div class="panel-body collapse in" :id="pBody">
                         <form class="form-horizontal" name="orgForm" method="post">
+
                           <div class="form-group">
                             <label for="" class="col-sm-5 control-label">Do you want to</label>
                             <div class="col-sm-4">
-                                 <label class="radio-inline">
+                                
+                                <label class="radio-inline">
                                   <input :disabled="hasOrgs" type="radio" name="select_licence" v-model="licence_select" value="New_licence" > apply for a new licence?
                                 </label>
                                 <label class="radio-inline">

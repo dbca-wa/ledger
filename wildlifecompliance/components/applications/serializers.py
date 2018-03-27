@@ -13,6 +13,7 @@ from wildlifecompliance.components.applications.models import (
 from wildlifecompliance.components.organisations.models import (
                                 Organisation
                             )
+from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer 
 from rest_framework import serializers
 
@@ -34,6 +35,8 @@ class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
+
+ 
 
 class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
@@ -98,10 +101,15 @@ class ApplicationSerializer(BaseApplicationSerializer):
     def get_readonly(self,obj):
         return obj.can_user_view 
 
+class ActivityTypeserializer(serializers.ModelSerializer):
+    class Meta:
+        model= WildlifeLicenceActivityType
+        fields=('id')
 
 
 class SaveApplicationSerializer(BaseApplicationSerializer):
     assessor_data = serializers.JSONField(required=False)
+    licence_activity_type=ActivityTypeserializer(many=True,read_only =True)
 
     class Meta:
         model = Application

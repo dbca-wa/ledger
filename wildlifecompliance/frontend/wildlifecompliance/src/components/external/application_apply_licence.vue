@@ -26,22 +26,27 @@
                                         <div class="col-sm-9" >  
                                             <input type="radio"  name="licence_category" v-model="licence_category"  :value="category.id" @change="handleChange($event,index)"> {{category.name}}
                                             <div class="row">
-
-                                                <div v-if="true" class="col-8 col-sm-6">
+                                                <div class="hidden">
+                                                <p>hello</p>
+                                                </div>
+                                                <div v-if="radio_selected[index]" class="col-sm-4">
                                                     <div v-for="type in category.activity_type" class="checkbox">
                                                         <!-- <div class="col-sm-8" style="background-color: lightcyan;"> -->
-                                                        <input type="checkbox" name ="activity_type" :value="type.id" v-model="selected_activity_type"> {{type.name}}
+                                                        <input type="checkbox" name ="activity_type" :value="type.id" v-model="selected_activity_type"> {{type.name}}{{index}}
                                                         
                                                         <div v-for="activity in type.activity" class="checkbox">
                                                             
-                                                            <div class ="col-4 col-sm-6">
-                                                                <input type="checkbox">{{activity.name}}
+                                                            <div class ="col-sm-6">
+                                                                <input type="checkbox" v-model="selected_activity">{{activity.name}}
                                                             </div>
 
                                                         </div>
                                                         
                                                     </div>
                                                 </div> 
+                                                <div v-else class="hidden">
+                                                    
+                                                </div>
                                             </div>
                                         </div>
                                     </div> 
@@ -77,7 +82,9 @@ export default {
         "application": null,
         agent: {},
         licence_category: null ,
+        radio_selected : [],
         selected_activity_type: [],
+        selected_activity:[],
         activity_type_showing : [],
         organisations:null,
         licence_categories : {
@@ -127,17 +134,32 @@ export default {
     },
 
     handleChange: function(e,index){
-        console.log(index)
-        // this.activity_type_showing[category] = true
-        this.
-        console.log(this.activity_type_showing[index])
+        // console.log(index)
+        let vm=this
+        // $(e.target).licence_category
+        // let len1=vm.radio_selected.length
+        // // this.activity_type_showing[category] = true
+        // // vm.radio_selected[index] = !vm.radio_selected[index]
+        // vm.radio_selected.forEach(function(item,index){
+        //     console.log("before item" +index+item);
+        //     item=  false;
+        //     console.log("after item" +index+item);
+        //     // console.log(index);
+            
+        // })
+        
+        vm.radio_selected[index] = !vm.radio_selected[index]
+        // console.log("set new value"+index+vm.radio_selected[index])
+        // // console.log(len1)
 
     },
     createApplication:function () {
         let vm = this;
+        let select_type = JSON.stringify(vm.selected_activity_type)
+        console.log("from areate application",select_type)
         vm.$http.post('/api/application.json',{
             behalf_of: vm.behalf_of,
-            licence_activity_type:vm.selected_activity_type,
+            licence_activity_type:JSON.stringify(vm.selected_activity_type),
             licence_category:vm.licence_category
         }).then(res => {
               vm.application = res.body;
