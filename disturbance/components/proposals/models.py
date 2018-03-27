@@ -398,7 +398,7 @@ class Proposal(RevisionedMixin):
             return False
 
     def has_assessor_mode(self,user):
-        status_without_assessor = ['with_approver','approved','declined']
+        status_without_assessor = ['with_approver','approved','declined','draft']
         if self.processing_status in status_without_assessor: 
             return False
         else:
@@ -683,6 +683,7 @@ class Proposal(RevisionedMixin):
         from disturbance.components.compliances.models import Compliance
         today = timezone.now().date()
         timedelta = datetime.timedelta
+       
         for req in self.requirements.all():
             if req.recurrence and req.due_date > today:
                 current_date = req.due_date

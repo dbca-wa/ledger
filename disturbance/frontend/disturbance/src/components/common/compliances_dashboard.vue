@@ -168,15 +168,15 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                links +=  `<a href='/internal/proposal/${full.proposal}'>View</a><br/>`;
                             }
                             else{
                                 if (full.can_user_edit) {
-                                    links +=  `<a href='/external/proposal/${full.id}'>Continue</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
+                                    links +=  `<a href='/external/proposal/${full.proposal}'>Continue</a><br/>`;
+                                    links +=  `<a href='#${full.id}' data-discard-proposal='${full.proposal}'>Discard</a><br/>`;
                                 }
                                 else if (full.can_user_view) {
-                                    links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
+                                    links +=  `<a href='/external/proposal/${full.proposal}'>View</a><br/>`;
                                 }
                             }
                             return links;
