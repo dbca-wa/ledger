@@ -29,6 +29,7 @@ router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
 router.register(r'users',users_api.UserViewSet)
 router.register(r'profiles',users_api.ProfileViewSet)
 router.register(r'my_profiles',users_api.MyProfilesViewSet)
+router.register(r'emailidentities',users_api.EmailIdentityViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),

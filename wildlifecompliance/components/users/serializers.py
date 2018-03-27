@@ -96,7 +96,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if profile.email:
             if EmailIdentity.objects.filter(email=profile.email).exclude(user=profile.user).exists():
                 #Email already used by other user in email identity.
-                raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
+                raise ValidationError("This email address is already associated with an existing account or profile.")
         new_postal_address, address_created = Address.objects.get_or_create(user=profile.user,**postal_address_data)
         profile.postal_address = new_postal_address
         setattr(profile, "auth_identity", True)
@@ -112,7 +112,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if instance.email:
             if EmailIdentity.objects.filter(email=instance.email).exclude(user=instance.user).exists():
                 #Email already used by other user in email identity.
-                raise ValidationError("This email address is already associated with an existing account or profile; if this email address belongs to you, please contact the system administrator to request for the email address to be added to your account.")
+                raise ValidationError("This email address is already associated with an existing account or profile.")
         postal_address, address_created = Address.objects.get_or_create(user=instance.user,**postal_address_data)
         instance.postal_address = postal_address
         setattr(instance, "auth_identity", True)
@@ -161,5 +161,15 @@ class UserSerializer(serializers.ModelSerializer):
             return True
         else:
             return False
+
+
+class EmailIdentitySerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = EmailIdentity 
+        fields = (
+			'user',
+			'email'
+        )
 
 

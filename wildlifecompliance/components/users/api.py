@@ -22,7 +22,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser,Address,Profile
+from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
 from wildlifecompliance.components.organisations.models import  (   
@@ -35,6 +35,7 @@ from wildlifecompliance.components.users.serializers import   (
                                                 UserAddressSerializer,
                                                 PersonalSerializer,
                                                 ContactSerializer,
+												EmailIdentitySerializer
                                             )
 from wildlifecompliance.components.main.utils import retrieve_department_users
 
@@ -205,3 +206,22 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class EmailIdentityViewSet(viewsets.ModelViewSet):
+    queryset = EmailIdentity.objects.all()
+    serializer_class = EmailIdentitySerializer
+
+    def get_queryset(self):
+        """
+        Optionally restrict the query if the following parameters are in the URL:
+		- email
+        """
+        queryset = EmailIdentity.objects.all()
+        email = self.request.query_params.get('email', None)
+        exclude_user = self.request.query_params.get('exclude_user', None)
+        if email is not None:
+            queryset = queryset.filter(email__iexact=email)
+        if exclude_user is not None:
+			queryset = queryset.exclude(user=exclude_user)
+        return queryset

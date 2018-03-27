@@ -100,6 +100,7 @@ export default {
         let vm = this;
         return {
             adBody: 'adBody'+vm._uid,
+            current_user:{},
             profile: {
                 postal_address: {}
             },
@@ -117,46 +118,69 @@ export default {
         updateProfile: function() {
             let vm = this;
             vm.updatingProfile = true;
-            vm.$http.put(api_endpoints.profiles + '/' + vm.profile.id + '/',JSON.stringify(vm.profile),{
-                emulateJSON:true
-            }).then((response) => {
-                vm.updatingProfile = false;
-                vm.profile = response.body;
-                if (vm.profile.postal_address == null){ vm.profile.postal_address = {}; }
-                swal(
-                    'Update Profile',
-                    'Your profile has been successfully updated.',
-                    'success'
-                )
-            }, (error) => {
-                vm.updatingProfile = false;
-                let error_msg = '<br/>';
-                for (var key in error.body) {
-                    if (key === 'postal_address'){
-                        for (var pkey in error.body[key]) {
-                            error_msg += pkey + ': ' + error.body[key][pkey] + '<br/>';
-                        }
-                    } else {
-                        error_msg += key + ': ' + error.body[key] + '<br/>';
-                    }
-                }
-                swal({
-                    title: 'Update Profile',
-                    html: 'There was an error updating the profile.<br/>' + error_msg,
-                    type: 'error'
-                })
-            });
+			let params = '?email=' + vm.profile.email + '&exclude_user=' + vm.current_user.id;
+			vm.$http.get(helpers.add_endpoint_join(api_endpoints.users,params),JSON.stringify(vm.profile),{
+					emulateJSON:true
+				}).then((response) => {
+					if (response.body.length > 0) {
+						vm.updatingProfile = false;
+						swal({
+							title: 'Update Profile',
+							html: 'This email address is already associated with an existing account or profile.',
+							type: 'error'
+						})
+						return;
+					}
+					vm.$http.put(api_endpoints.profiles + '/' + vm.profile.id + '/',JSON.stringify(vm.profile),{
+						emulateJSON:true
+					}).then((response) => {
+						vm.updatingProfile = false;
+						vm.profile = response.body;
+						if (vm.profile.postal_address == null){ vm.profile.postal_address = {}; }
+						swal(
+							'Update Profile',
+							'Your profile has been successfully updated.',
+							'success'
+						)
+					}, (error) => {
+						vm.updatingProfile = false;
+						let error_msg = '<br/>';
+						for (var key in error.body) {
+							if (key === 'postal_address'){
+								for (var pkey in error.body[key]) {
+									error_msg += pkey + ': ' + error.body[key][pkey] + '<br/>';
+								}
+							} else {
+								error_msg += key + ': ' + error.body[key] + '<br/>';
+							}
+						}
+						swal({
+							title: 'Update Profile',
+							html: 'There was an error updating the profile.<br/>' + error_msg,
+							type: 'error'
+						})
+					});
+				}, (error) => {
+					vm.updatingProfile = false;
+					swal({
+						title: 'Update Profile',
+						html: 'There was an error updating the profile.',
+						type: 'error'
+					})
+				});
         },
     },
     beforeRouteEnter: function(to, from, next){
         let initialisers = [
             utils.fetchCountries(),
-            utils.fetchProfile(to.params.profile_id)
+            utils.fetchProfile(to.params.profile_id),
+            utils.fetchCurrentUser()
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
                 vm.countries = data[0];
                 vm.profile = data[1];
+                vm.current_user = data[2];
             });
         });
     },

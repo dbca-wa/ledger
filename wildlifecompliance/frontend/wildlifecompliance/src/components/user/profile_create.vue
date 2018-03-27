@@ -101,8 +101,7 @@ export default {
         let vm = this;
         return {
             pBody: 'pBody'+vm._uid,
-            current_user:{
-            },
+            current_user:{},
             profile: {
                 postal_address: {}
             },
@@ -122,36 +121,58 @@ export default {
             vm.creatingProfile = true;
             vm.profile.user = vm.current_user.id;
             vm.profile.auth_identity = true;
-            vm.$http.post(api_endpoints.my_profiles + '/',JSON.stringify(vm.profile),{
-                emulateJSON:true
-            }).then((response) => {
-                vm.creatingProfile = false;
-                vm.profile = response.body;
-                if (vm.profile.postal_address == null){ vm.profile.postal_address = {}; }
-                swal({
-                    title: 'Create Profile',
-                    html: 'Your profile has been successfully created.<br/><br/>' + vm.profile.name + '<br/>' + vm.profile.email,
-                    type: 'success',
-                    onClose: vm.$router.push('/profiles') 
-                })
-            }, (error) => {
-                vm.creatingProfile = false;
-                let error_msg = '<br/>';
-                for (var key in error.body) {
-                    if (key === 'postal_address'){
-                        for (var pkey in error.body[key]) {
-                            error_msg += pkey + ': ' + error.body[key][pkey] + '<br/>';
-                        }
-                    } else {
-                        error_msg += key + ': ' + error.body[key] + '<br/>';
-                    }
-                }
-                swal({
-                    title: 'Create Profile',
-                    html: 'There was an error creating the profile.<br/>' + error_msg,
-                    type: 'error'
-                })
-            });
+			let params = '?email=' + vm.profile.email + '&exclude_user=' + vm.current_user.id;
+			vm.$http.get(helpers.add_endpoint_join(api_endpoints.users,params),JSON.stringify(vm.profile),{
+					emulateJSON:true
+				}).then((response) => {
+					console.log(response);
+					if (response.body.length > 0) {
+						vm.creatingProfile = false;
+						swal({
+							title: 'Create Profile',
+							html: 'This email address is already associated with an existing account or profile.',
+							type: 'error'
+						})
+						return;
+					}
+					vm.$http.post(api_endpoints.my_profiles + '/',JSON.stringify(vm.profile),{
+						emulateJSON:true
+					}).then((response) => {
+						vm.creatingProfile = false;
+						vm.profile = response.body;
+						if (vm.profile.postal_address == null){ vm.profile.postal_address = {}; }
+						swal({
+							title: 'Create Profile',
+							html: 'Your profile has been successfully created.<br/><br/>' + vm.profile.name + '<br/>' + vm.profile.email,
+							type: 'success',
+							onClose: vm.$router.push('/profiles')
+						})
+					}, (error) => {
+						vm.creatingProfile = false;
+						let error_msg = '<br/>';
+						for (var key in error.body) {
+							if (key === 'postal_address'){
+								for (var pkey in error.body[key]) {
+									error_msg += pkey + ': ' + error.body[key][pkey] + '<br/>';
+								}
+							} else {
+								error_msg += key + ': ' + error.body[key] + '<br/>';
+							}
+						}
+						swal({
+							title: 'Create Profile',
+							html: 'There was an error creating the profile.<br/>' + error_msg,
+							type: 'error'
+						})
+					});
+				}, (error) => {
+					vm.creatingProfile = false;
+					swal({
+						title: 'Create Profile',
+						html: 'There was an error creating the profile.',
+						type: 'error'
+					})
+				});
         },
     },
     beforeRouteEnter: function(to, from, next){
