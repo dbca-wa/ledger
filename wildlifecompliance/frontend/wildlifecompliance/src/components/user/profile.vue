@@ -248,7 +248,7 @@
                                     
                                     
                                     <div class="col-sm-12">
-                                      <button  @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
+                                      <button v-if="!registeringOrg" @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
                                       <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
                                     </div>
                               </div>

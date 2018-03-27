@@ -182,7 +182,7 @@
                                         <!-- <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/> -->
                                 </div>
                               
-
+					</div>
                   </div>
                 </div>
             </div>
