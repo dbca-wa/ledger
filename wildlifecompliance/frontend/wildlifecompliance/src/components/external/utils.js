@@ -35,6 +35,26 @@ export default {
         });
 
     },
+    fetchOrganisations: function(id){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(api.organisations).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
+    fetchLicenceCategories: function(){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(api.licences_category).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
     fetchOrganisation: function(id){
         return new Promise ((resolve,reject) => {
             Vue.http.get(helpers.add_endpoint_json(api.organisations,id)).then((response) => {

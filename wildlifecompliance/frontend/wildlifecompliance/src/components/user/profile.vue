@@ -716,6 +716,8 @@ export default {
         unlinkUser: function(org){
             let vm = this;
             let org_name = org.name;
+            
+
             swal({
                 title: "Unlink From Organisation",
                 text: "Are you sure you want to be unlinked from "+org.name+" ?",
@@ -723,7 +725,7 @@ export default {
                 showCancelButton: true,
                 confirmButtonText: 'Accept'
             }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),{'user':vm.profile.id},{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),JSON.stringify(vm.profile),{
                     emulateJSON:true
                 }).then((response) => {
                     Vue.http.get(api_endpoints.profile).then((response) => {

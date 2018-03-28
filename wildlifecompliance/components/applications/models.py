@@ -16,11 +16,14 @@ from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import Licence
 from wildlifecompliance import exceptions
+
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
 from wildlifecompliance.components.applications.email import send_referral_email_notification
 from wildlifecompliance.ordered_model import OrderedModel
+
+
 
 
 def update_application_doc_filename(instance, filename):
@@ -246,6 +249,10 @@ class Application(RevisionedMixin):
     region = models.CharField(max_length=255,null=True,blank=True)
     title = models.CharField(max_length=255,null=True,blank=True)
     tenure = models.CharField(max_length=255,null=True,blank=True)
+
+    licence_category = models.ForeignKey('wildlifecompliance.WildlifeLicenceCategory',blank=True,null=True)
+    licence_activity_type= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',blank=True,null=True)
+    licence_activity= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivity',blank=True,null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'

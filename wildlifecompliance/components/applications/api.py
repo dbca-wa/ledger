@@ -426,11 +426,17 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
+            
+            app_data = request.data.copy()
+            print(app_data)
             data = {
                 'schema': ApplicationType.objects.first().schema,
                 'submitter': request.user.id,
+                'licence_category':request.data.get('licence_category'),
+                'licence_activity_type':app_data.pop('licence_activity_type'),
                 'applicant': request.data.get('behalf_of')
             }
+            print(data)
             serializer = SaveApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
