@@ -5,6 +5,7 @@ module.exports = {
     organisation_access_group_members: '/api/organisation_access_group_members',
     users: '/api/users.json',
     profile: '/api/profile',
+    emailidentities: '/api/emailidentities',
     profiles: '/api/profiles',
     my_profiles: '/api/my_profiles',
     department_users: '/api/department_users',
