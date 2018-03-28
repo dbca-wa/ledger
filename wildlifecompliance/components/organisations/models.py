@@ -336,6 +336,18 @@ class Organisation(models.Model):
 
         return org_contact.is_admin and org_contact.user_status == 'active' and org_contact.user_role =='organisation_admin' 
 
+    @property
+    def can_user_edit(self,email):
+        """
+        :return: True if the application is in one of the editable status.
+        """
+        org_contact= OrganisationContact.objects.get(organisation_id = self.id, email=email)
+
+        return org_contact.is_admin and org_contact.user_status == 'active' and org_contact.user_role =='organisation_admin' 
+
+
+
+
 
 
 @python_2_unicode_compatible
@@ -377,6 +389,14 @@ class OrganisationContact(models.Model):
         :return: True if the application is in one of the editable status.
         """
         return self.is_admin and self.user_status == 'active' and self.user_role =='organisation_admin' 
+
+    @property
+    def check_consultant(self):
+        """
+        :return: True if the application is in one of the editable status.
+        """
+        return self.user_status == 'active' and self.user_role =='consultant' 
+        
 
 
 

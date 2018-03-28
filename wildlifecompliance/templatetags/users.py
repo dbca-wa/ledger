@@ -15,3 +15,4 @@ def is_customer(user):
 @register.filter(name='is_officer')
 def is_officer(user):
     return helpers.is_officer(user)
+
