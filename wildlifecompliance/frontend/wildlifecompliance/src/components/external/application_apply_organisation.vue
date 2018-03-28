@@ -23,13 +23,11 @@
                                         <label v-if ="!org.is_consultant">
                                           <input type="radio"  name="behalf_of_org" v-model="behalf_of"  :value="org.id"> On behalf of {{org.name}}
                                         </label>
-                                    </div>
-                                    <div v-for="auth_org in profile.wildlifecompliance_organisations" class="radio">
-                                        <label v-if ="auth_org.is_consultant">
-                                          <input  type="radio"  name="behalf_of_org" v-model="behalf_of"  :value="auth_org.id" > On behalf of {{auth_org.name}} (as a Consultant)
+                                        <label v-if ="org.is_consultant">
+                                          <input  type="radio"  name="behalf_of_org" v-model="behalf_of"  :value="org.id" > On behalf of {{org.name}} (as a Consultant)
                                         </label>
-
                                     </div>
+                                    
                                 </div>
                             </div>
                            

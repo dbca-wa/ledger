@@ -33,6 +33,7 @@ class LicenceDocument(Document):
 
 class WildlifeLicenceActivity(models.Model):
     name = models.CharField(max_length = 100)
+    
     # application_schema = JSONField(blank=True, null=True)
 
     class Meta:

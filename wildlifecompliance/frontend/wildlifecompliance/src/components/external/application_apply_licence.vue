@@ -26,12 +26,10 @@
                                         <div class="col-sm-9" >  
                                             <input type="radio"  name="licence_category" v-model="licence_category"  :value="category.id" @change="handleChange($event,index)"> {{category.name}}
                                             <div class="row">
-                                                <div class="hidden">
-                                                <p>hello</p>
-                                                </div>
-                                                <div v-if="radio_selected[index]" class="col-sm-4">
+                                                
+                                                <div  v-if="radio_selected[index]" class="col-sm-4">
                                                     <div v-for="type in category.activity_type" class="checkbox">
-                                                        <!-- <div class="col-sm-8" style="background-color: lightcyan;"> -->
+                                                        
                                                         <input type="checkbox" name ="activity_type" :value="type.id" v-model="selected_activity_type"> {{type.name}}{{index}}
                                                         
                                                         <div v-for="activity in type.activity" class="checkbox">
@@ -44,7 +42,7 @@
                                                         
                                                     </div>
                                                 </div> 
-                                                <div v-else class="hidden">
+                                                <div v-else="!radio_selected[index]" class="col-sm-4">
                                                     
                                                 </div>
                                             </div>
@@ -123,7 +121,7 @@ export default {
 
         swal({
             title: "Create Application",
-            text: "Are you sure you want to create a application on behalf of "+vm.org+" ?",
+            text: "Are you sure you want to create a application ",
             type: "question",
             showCancelButton: true,
             confirmButtonText: 'Accept'
@@ -134,23 +132,10 @@ export default {
     },
 
     handleChange: function(e,index){
-        // console.log(index)
         let vm=this
-        // $(e.target).licence_category
-        // let len1=vm.radio_selected.length
-        // // this.activity_type_showing[category] = true
-        // // vm.radio_selected[index] = !vm.radio_selected[index]
-        // vm.radio_selected.forEach(function(item,index){
-        //     console.log("before item" +index+item);
-        //     item=  false;
-        //     console.log("after item" +index+item);
-        //     // console.log(index);
-            
-        // })
+        
         
         vm.radio_selected[index] = !vm.radio_selected[index]
-        // console.log("set new value"+index+vm.radio_selected[index])
-        // // console.log(len1)
 
     },
     createApplication:function () {
@@ -159,7 +144,8 @@ export default {
         console.log("from areate application",select_type)
         vm.$http.post('/api/application.json',{
             behalf_of: vm.behalf_of,
-            licence_activity_type:JSON.stringify(vm.selected_activity_type),
+            licence_activity_type:vm.selected_activity_type,
+            licence_activity:vm.selected_activity,
             licence_category:vm.licence_category
         }).then(res => {
               vm.application = res.body;
