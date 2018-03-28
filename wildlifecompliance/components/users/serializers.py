@@ -181,7 +181,7 @@ class UserSerializer(serializers.ModelSerializer):
         super(UserSerializer, self).__init__(*args, **kwargs)
         request = self.context.get('request')
         print(self.fields['email'])
-        self.fields['wildlifecompliance_organisations'] = UserOrganisationSerializer(many=True,context={'request':self.context['request']})
+        self.fields['wildlifecompliance_organisations'] = UserOrganisationSerializer(many=True,context={'request':request})
    
 
 class PersonalSerializer(serializers.ModelSerializer):
