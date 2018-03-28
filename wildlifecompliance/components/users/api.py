@@ -22,7 +22,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser,Address,Profile
+from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
 from wildlifecompliance.components.organisations.models import  (   
@@ -35,6 +35,7 @@ from wildlifecompliance.components.users.serializers import   (
                                                 UserAddressSerializer,
                                                 PersonalSerializer,
                                                 ContactSerializer,
+												EmailIdentitySerializer
                                             )
 from wildlifecompliance.components.main.utils import retrieve_department_users
 
@@ -52,7 +53,7 @@ class DepartmentUserList(views.APIView):
 class GetProfile(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self, request, format=None):
-        serializer  = UserSerializer(request.user)
+        serializer  = UserSerializer(request.user,context={'request':request})
         return Response(serializer.data)
 
 class GetUser(views.APIView):
@@ -66,10 +67,63 @@ class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = UserProfileSerializer
 
+    @detail_route(methods=['POST',])
+    def update_profile(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = UserProfileSerializer(instance,data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+class MyProfilesViewSet(viewsets.ModelViewSet):
+    queryset = Profile.objects.all()
+    serializer_class = UserProfileSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        query_set = queryset.filter(user=self.request.user)
+        return query_set
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()
     serializer_class = UserSerializer
+
+    def get_queryset(self):
+        """
+        Optionally restrict the query if the following parameters are in the URL:
+		- first_name
+		- last_name
+		- dob
+		- email 
+        """
+        queryset = EmailUser.objects.all()
+        first_name = self.request.query_params.get('first_name', None)
+        last_name = self.request.query_params.get('last_name', None)
+        dob = self.request.query_params.get('dob', None)
+        email = self.request.query_params.get('email', None)
+        print(dob)
+        if first_name is not None:
+            queryset = queryset.filter(first_name__iexact=first_name)
+        if last_name is not None:
+            queryset = queryset.filter(last_name__iexact=last_name)
+        if email is not None:
+            queryset = queryset.filter(email__iexact=email)
+        if dob is not None and dob is not u'':
+            queryset = queryset.filter(dob=dob)
+        return queryset
 
     @detail_route(methods=['GET',])
     def profiles(self, request, *args, **kwargs):
@@ -152,3 +206,22 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class EmailIdentityViewSet(viewsets.ModelViewSet):
+    queryset = EmailIdentity.objects.all()
+    serializer_class = EmailIdentitySerializer
+
+    def get_queryset(self):
+        """
+        Optionally restrict the query if the following parameters are in the URL:
+		- email
+        """
+        queryset = EmailIdentity.objects.all()
+        email = self.request.query_params.get('email', None)
+        exclude_user = self.request.query_params.get('exclude_user', None)
+        if email is not None:
+            queryset = queryset.filter(email__iexact=email)
+        if exclude_user is not None:
+			queryset = queryset.exclude(user=exclude_user)
+        return queryset

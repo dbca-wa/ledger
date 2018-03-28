@@ -30,6 +30,11 @@
                         <h3>
                             Access to Wildlife Compliance
                         </h3>
+                        <p><strong>
+                            If you already have a Biodiversity, Conservation and Attractions customer account under another email address,
+                            please sign in with that account.</br>
+                            Once logged in, you can add additional email addresses as profiles to your account.
+                        </strong></p>
                         {% bootstrap_messages %}
                         <form method="post" action="{% url "social:complete" backend="email" %}">
                             {% csrf_token %}

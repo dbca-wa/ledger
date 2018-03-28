@@ -10,7 +10,7 @@ from wildlifecompliance.components.organisations.models import (
                                 OrganisationLogEntry,
                                 ledger_organisation,
                             )
-from wildlifecompliance.components.organisations.utils import can_manage_org, can_admin_org
+from wildlifecompliance.components.organisations.utils import can_manage_org, can_admin_org,is_consultant
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
 
@@ -54,6 +54,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
     pins = serializers.SerializerMethodField(read_only=True)
     delegates = DelegateSerializer(many=True,read_only=True)
     edits = serializers.SerializerMethodField(read_only=True)
+    is_consultant = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Organisation
         fields = (
@@ -66,7 +67,15 @@ class OrganisationSerializer(serializers.ModelSerializer):
                     'pins',
                     'delegates',
                     'edits',
+                    'is_consultant'
                 )
+
+    def get_is_consultant(self,obj):
+        user =  self.context['request'].user
+        # Check if the request user is among the first five delegates in the organisation
+        return is_consultant(obj,user)
+        
+
 
     def get_edits(self,obj):
         user =  self.context['request'].user
@@ -121,6 +130,7 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
     identification = serializers.FileField()
     requester = OrgRequestRequesterSerializer(read_only=True)
     status = serializers.SerializerMethodField()
+    # role = serializers.SerializerMethodField()
     class Meta:
         model = OrganisationRequest
         fields = '__all__'
@@ -128,6 +138,8 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
 
     def get_status(self,obj):
         return obj.get_status_display()
+    # def get_role(self,obj):
+    #     return obj.get_role_display()
 
 class OrganisationRequestDTSerializer(OrganisationRequestSerializer):
     assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')

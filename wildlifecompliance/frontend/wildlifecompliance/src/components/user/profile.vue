@@ -178,8 +178,15 @@
                                 <label class="radio-inline">
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
                                 </label>
+                                 <label class="radio-inline">
+                                  <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Consultant"> Yes, as a consultant
+                                </label>
                             </div>
                           </div>
+
+                          
+
+
                           <div class="form-group" v-if="managesOrg=='Yes'">
                             <div class="col-sm-12">
                                 <button class="btn btn-primary pull-right" v-if="hasOrgs && !addingCompany" @click.prevent="addCompany()">Add Another Organisation</button>   
@@ -198,6 +205,58 @@
                                 <a style="cursor:pointer;text-decoration:none;" @click.prevent="unlinkUser(org)"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
                               </div>
                           </div>
+                          <div v-for="orgReq in orgRequest_pending">
+                              <div class="form-group">
+                                <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                <div class="col-sm-3"> 
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                </div>
+                                <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                <div class="col-sm-3"> 
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
+                                </div>
+                                <label>Pending for Approval {{orgReq.id}}</label>
+                              </div>
+                          </div>
+
+                          <div class="form-group" v-if="managesOrg=='Consultant'">
+                              <h3> New Organisation</h3>
+                              <div class="form-group">
+                                  <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                  <div class="col-sm-6">
+                                      <input type="text" class="form-control" name="organisation" v-model="newOrg.name" placeholder="">
+                                  </div>
+                              </div>
+                              <div class="form-group">
+                                  <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                  <div class="col-sm-6">
+                                      <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="">
+                                  </div>
+                              </div>
+                              <div class="form-group" >
+                                    <label class="col-sm-12" style="text-align:left;">
+                                      Please upload a letter on organisation letter head stating that you are a consultant for the origanisation.
+                                        <span class="btn btn-info btn-file">
+                                            Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                        </span>
+                                        <span  style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
+                                    </label> 
+                                    </br>
+                                    
+                                    <label for="" class="col-sm-10 control-label" style="text-align:left;">You will be notified by email once the Department has checked the organisation details.
+                                    </label>
+                                    
+                                    
+                                    <div class="col-sm-12">
+                                      <button v-if="!registeringOrg" @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
+                                      <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
+                                    </div>
+                              </div>
+                           </div>
+
+
+
+
                           <div style="margin-top:15px;" v-if="addingCompany">
                               <h3> New Organisation</h3>
                               <div class="form-group">
@@ -233,6 +292,11 @@
                                     <button v-else class="btn btn-primary pull-left"><i class="fa fa-spin fa-spinner"></i>&nbsp;Validating Pins</button>
                                   </div>
                               </div>
+
+
+                              
+
+
                               <div class="form-group" v-else-if="!newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;">
                                     This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this origanisation.</br>
@@ -276,6 +340,7 @@ export default {
                 wildlifecompliance_organisations:[],
                 residential_address : {}
             },
+            
             newOrg: {
                 'detailsChecked': false,
                 'exists': false
@@ -287,23 +352,43 @@ export default {
             checkingDetails: false,
             addingCompany: false,
             managesOrg: 'No',
+            managesOrgConsultant: 'No',
             uploadedFile: null,
             updatingPersonal: false,
+            deleteEmailUserLogout: null,
             updatingAddress: false,
             updatingContact: false,
             registeringOrg: false,
+            role:null,
+            orgRequest_pending:[]
         }
     },
     watch: {
         managesOrg: function() {
+            if (this.managesOrg == 'Yes'){
+              this.role = 'employee'
+            } else if (this.managesOrg == 'Consultant'){
+              this.role ='consultant'
+            }else{this.role = null
+            }
+
             if (this.managesOrg  == 'Yes' && !this.hasOrgs && this.newOrg){
-                 this.addCompany()
+                this.addCompany()
+                console.log(this.managesOrg)
+                console.log(this.role)
+
             } else if (this.managesOrg == 'No' && this.newOrg){
                 this.resetNewOrg();
                 this.uploadedFile = null;
                 this.addingCompany = false;
+            } else {
+                this.addCompany()
+                this.addingCompany=false
+                console.log(this.managesOrg)
+                console.log(this.role)
             } 
-        }
+        },
+  
     },
     computed: {
         hasOrgs: function() {
@@ -350,16 +435,116 @@ export default {
         updatePersonal: function() {
             let vm = this;
             vm.updatingPersonal = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
-                emulateJSON:true
-            }).then((response) => {
-                console.log(response);
-                vm.updatingPersonal = false;
-                vm.profile = response.body;
-                if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+            if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+            let params = '?';
+            params += '&first_name=' + vm.profile.first_name;
+            params += '&last_name=' + vm.profile.last_name;
+            params += '&dob=' + vm.profile.dob;
+            if (vm.profile.first_name === '' || vm.profile.last_name === '' || vm.profile.dob === ''){
+                let error_msg = 'Please ensure all fields are filled in.';
+                swal({
+                    title: 'Update Personal Details',
+                    html: 'There was an error updating your personal details.<br/>' + error_msg,
+                    type: 'error'
+                }).then(() => {
+                    vm.updatingPersonal = false;
+                });
+                return;
+            }
+            vm.$http.get(helpers.add_endpoint_join(api_endpoints.users,params),JSON.stringify(vm.profile),{
+                    emulateJSON:true
+                }).then((response) => {
+                    if (response.body.length > 1) {
+                        swal({
+                            title: "Update Personal Details",
+                            html: 'If you already have a Parks and Wildlife customer account under another email address, please ' +
+                                '<strong>log out and sign in again with that account</strong> and ' +
+                                'instead add <strong>' + vm.profile.email + '</strong> as a new Profile.<br/><br/>If this is a new account, please proceed to update ' +
+                                'your details.',
+                            type: "question",
+                            allowOutsideClick: false,
+                            confirmButtonText: 'Okay',
+                            showCancelButton: true,
+                            cancelButtonText: 'Logout',
+                            cancelButtonClass: 'btn btn-danger'
+                        }).then((result) => {
+                            if (result.value) {
+                                console.log('inside true');
+                                vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
+                                    emulateJSON:true
+                                }).then((response) => {
+                                    swal({
+                                        title: 'Update Personal Details',
+                                        html: 'Your personal details has been successfully updated.',
+                                        type: 'success',
+                                    }).then(() => {
+                                        vm.updatingPersonal = false;
+                                    });
+                                }, (error) => {
+                                    vm.updatingPersonal = false;
+                                    let error_msg = '<br/>';
+                                    for (var key in error.body) {
+                                        if (key === 'dob') {
+                                            error_msg += 'dob: Please enter a valid date.<br/>';
+                                        } else {
+                                            error_msg += key + ': ' + error.body[key] + '<br/>';
+                                        }
+                                    }
+                                    swal({
+                                        title: 'Update Personal Details',
+                                        html: 'There was an error updating your personal details.<br/>' + error_msg,
+                                        type: 'error'
+                                    })
+                                });
+                            } else if (result.dismiss === swal.DismissReason.cancel) {
+                                console.log('cancelled');
+                                vm.updatingPersonal = false;
+                                return;
+                            }
+                        }, (error) => {
+                            vm.updatingPersonal = false;
+                            console.log('error final');
+                            swal({
+                                title: 'Update Personal Details',
+                                html: 'There was an error updating your personal details.',
+                                type: 'error'
+                            })
+                        });
+                    } else {
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
+                                title: 'Update Personal Details',
+                                html: 'Your personal details has been successfully updated.',
+                                type: 'success',
+                            }).then(() => {
+                                vm.updatingPersonal = false;
+                            });
+                        }, (error) => {
+                            vm.updatingPersonal = false;
+                            let error_msg = '<br/>';
+                            for (var key in error.body) {
+                                if (key === 'dob') {
+                                    error_msg += 'dob: Please enter a valid date.<br/>';
+                                } else {
+                                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                                }
+                            }
+                            swal({
+                                title: 'Update Personal Details',
+                                html: 'There was an error updating your personal details.<br/>' + error_msg,
+                                type: 'error'
+                            })
+                        });
+                    }
             }, (error) => {
-                console.log(error);
                 vm.updatingPersonal = false;
+                swal({
+                    title: 'Update Personal Details',
+                    html: 'There was an error updating your personal details.',
+                    type: 'error'
+                })
             });
         },
         updateContact: function() {
@@ -372,9 +557,23 @@ export default {
                 vm.updatingContact = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                swal({
+                    title: 'Update Contact Details',
+                    html: 'Your contact details has been successfully updated.',
+                    type: 'success',
+                })
             }, (error) => {
                 console.log(error);
                 vm.updatingContact = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal({
+                    title: 'Update Contact Details',
+                    html: 'There was an error updating your contact details.<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
         updateAddress: function() {
@@ -387,9 +586,23 @@ export default {
                 vm.updatingAddress = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                swal({
+                    title: 'Update Address Details',
+                    html: 'Your address details has been successfully updated.',
+                    type: 'success',
+                })
             }, (error) => {
                 console.log(error);
                 vm.updatingAddress = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal({
+                    title: 'Update Address Details',
+                    html: 'There was an error updating your address details.<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
         checkOrganisation: function() {
@@ -415,7 +628,7 @@ export default {
                 if (response.body.valid){
                     swal(
                         'Validate Pins',
-                        'The pins you entered have been validated and you have now been linked to this organisation.',
+                        'The pins you entered have been validated and your request will be processed by Organisation Administrator.',
                         'success'
                     )
                     vm.registeringOrg = false;
@@ -449,6 +662,8 @@ export default {
             data.append('name', vm.newOrg.name)
             data.append('abn', vm.newOrg.abn)
             data.append('identification', vm.uploadedFile)
+            data.append('role',vm.role)
+            console.log(vm.role)
             vm.$http.post(api_endpoints.organisation_requests,data,{
                 emulateJSON:true
             }).then((response) => {
@@ -488,9 +703,21 @@ export default {
                 vm.loading.splice('fetching countries',1);
             });
         },
+        fetchOrgRequestPending:function (){
+            let vm =this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response)=>{
+                vm.orgRequest_pending = response.body;
+                vm.loading.splice('fetching pending organisation requests ',1);
+            },(response)=>{
+                console.log(response);
+                vm.loading.splice('fetching pending organisation requests',1);
+            });
+        },
         unlinkUser: function(org){
             let vm = this;
             let org_name = org.name;
+            
+
             swal({
                 title: "Unlink From Organisation",
                 text: "Are you sure you want to be unlinked from "+org.name+" ?",
@@ -498,7 +725,7 @@ export default {
                 showCancelButton: true,
                 confirmButtonText: 'Accept'
             }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),{'user':vm.profile.id},{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),JSON.stringify(vm.profile),{
                     emulateJSON:true
                 }).then((response) => {
                     Vue.http.get(api_endpoints.profile).then((response) => {
@@ -522,10 +749,11 @@ export default {
                 });
             },(error) => {
             }); 
-        }
+        },
     },
     beforeRouteEnter: function(to,from,next){
         Vue.http.get(api_endpoints.profile).then((response) => {
+            console.log(response);
             if (response.body.address_details && response.body.personal_details && response.body.contact_details && to.name == 'first-time'){
                 window.location.href='/';
             }
@@ -542,6 +770,7 @@ export default {
     },
     mounted: function(){
         this.fetchCountries();
+        this.fetchOrgRequestPending();
         this.personal_form = document.forms.personal_form;
         $('.panelClicker[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];

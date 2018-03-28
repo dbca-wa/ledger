@@ -3,7 +3,8 @@ import Router from 'vue-router'
 import Hello from '@/components/Hello'
 import Profile from '@/components/user/profile.vue'
 import ProfileDashTable from '@/components/user/profile_dashboard.vue'
-import UserProfile from '@/components/user/manage_profile.vue'
+import CreateProfile from '@/components/user/profile_create.vue'
+import EditProfile from '@/components/user/profile_manage.vue'
 import external_routes from '@/components/external/routes'
 import internal_routes from '@/components/internal/routes'
 Vue.use(Router)
@@ -22,25 +23,30 @@ export default new Router({
           component: Profile
         },
         {
-            path: '/profiles',
-            component: {
-                render(c)
-                {
-                    return c('router-view')
-                }
-            },
-            children: [
-                {
-                    path: '/',
-                    component: ProfileDashTable,
-                    name:"profiles-dash"
-                },
-                {
-                    path: ':profile_id',
-                    component: UserProfile,
-                    name:"profile-detail"
-                },
-            ]
+          path: '/profiles',
+          component: {
+              render(c)
+              {
+                  return c('router-view')
+              }
+          },
+          children: [
+              {
+                  path: '/',
+                  component: ProfileDashTable,
+                  name:"profiles-dash"
+              },
+              {
+                  path: 'create',
+                  component: CreateProfile,
+                  name:"profile-create"
+              },
+              {
+                  path: ':profile_id',
+                  component: EditProfile,
+                  name:"profile-detail"
+              },
+          ]
         },
         external_routes,
         internal_routes

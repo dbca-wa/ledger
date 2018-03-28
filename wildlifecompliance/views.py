@@ -79,3 +79,5 @@ def first_time(request):
     #return render(request, 'wildlifecompliance/user_profile.html', context)
     return render(request, 'wildlifecompliance/dash/index.html', context)
 
+
+

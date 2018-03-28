@@ -13,7 +13,7 @@ from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
-from ledger.licence.models import Licence
+from ledger.licence.models import Licence,LicenceType
 from wildlifecompliance import exceptions
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import Application
@@ -30,6 +30,90 @@ class LicenceDocument(Document):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+class WildlifeLicenceActivity(models.Model):
+    name = models.CharField(max_length = 100)
+    
+    # application_schema = JSONField(blank=True, null=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return self.name
+
+# class WildlifeLicenceDescriptor(models.Model):
+#     name = models.CharField(max_length = 100)
+
+
+class WildlifeLicenceActivityType(models.Model):
+    # LICENCE_ACTIVITY_STATUS_CHOICES = (
+    #     ('current','Current'),
+    #     ('expired','Expired'),
+    #     ('cancelled','Cancelled'),
+    #     ('surrendered','Surrendered'),
+    #     ('suspended','Suspended')
+    #     )
+    # licence_activity_status = models.CharField(max_length=40, choices=LICENCE_ACTIVITY_STATUS_CHOICES,default=LICENCE_ACTIVITY_STATUS_CHOICES[0][0])
+    name = models.CharField(max_length = 100)
+    activity = models.ManyToManyField(WildlifeLicenceActivity, blank= True,through='DefaultActivity',related_name='wildlifecompliance_activity')
+    # category= models.ManyToManyField(WildlifeLicenceCategory)
+    # descriptor = models.ForeignKey(WildlifeLicenceDescriptor)
+    # default_condition = models.ManyToManyField(Condition, through='DefaultCondition',blank= True)
+    # default_period = models.PositiveIntegerField('Default Licence Period (days)', blank = True, null = True)
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return self.name
+
+    
+
+# class DefaultCondition(models.Model):
+#     condition = models.ForeignKey(Condition)
+#     wildlife_licence_activity = models.ForeignKey(WildlifeLicenceActivity)
+#     order = models.IntegerField()
+
+
+# #LicenceType
+class WildlifeLicenceCategory(LicenceType):
+    LICENCE_CATEGORY_STATUS_CHOICES = (
+        ('current','Current'),
+        ('expired','Expired'),
+        ('cancelled','Cancelled'),
+        ('surrendered','Surrendered'),
+        ('suspended','Suspended')
+        )
+    licence_category_status = models.CharField(max_length=40, choices=LICENCE_CATEGORY_STATUS_CHOICES,default=LICENCE_CATEGORY_STATUS_CHOICES[0][0])
+    # name = models.CharField(max_length = 100)
+    activity_type = models.ManyToManyField(WildlifeLicenceActivityType, blank= True,through='DefaultActivityType',related_name='wildlifecompliance_activitytypes')
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+
+class DefaultActivityType(models.Model):
+    category = models.ForeignKey(WildlifeLicenceCategory)
+    activity_type = models.ForeignKey(WildlifeLicenceActivityType)
+
+    class Meta:
+        unique_together = (('category','activity_type'))
+        app_label = 'wildlifecompliance'
+
+    # def __str__(self):
+    #     return self.category
+    
+
+class DefaultActivity(models.Model):
+    activity = models.ForeignKey(WildlifeLicenceActivity)
+    activity_type = models.ForeignKey(WildlifeLicenceActivityType)
+
+    class Meta:
+        unique_together = (('activity_type','activity'))
+        app_label = 'wildlifecompliance'
+
+    # def __str__(self):
+    #     return self.category
+
 
 class WildlifeLicence(models.Model):
     STATUS_CHOICES = (
@@ -58,6 +142,11 @@ class WildlifeLicence(models.Model):
     suspension_details = JSONField(blank=True,null=True)
     applicant = models.ForeignKey(Organisation,on_delete=models.PROTECT, related_name='wildlifecompliance_licences')
     extracted_fields = JSONField(blank=True, null=True)
+
+    # licence_category = models.ForeignKey(WildlifeLicenceCategory)
+    # licence_activity = models.ForeignKey(WildlifeLicenceActivity)
+    # licence_descriptor = models.ForeignKey(WildlifeLicenceDescriptor)
+
 
     class Meta:
         app_label = 'wildlifecompliance'

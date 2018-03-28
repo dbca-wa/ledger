@@ -6,6 +6,7 @@ module.exports = {
     users: '/api/users.json',
     profile: '/api/profile',
     profiles: '/api/profiles',
+    my_profiles: '/api/my_profiles',
     department_users: '/api/department_users',
     //other
     countries: "https://restcountries.eu/rest/v1/?fullText=true",

@@ -36,3 +36,5 @@ new Vue( {
     App
   }
 } )
+
+Vue.config.devtools = true
