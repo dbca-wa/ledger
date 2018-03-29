@@ -82,6 +82,8 @@ class IndexView(CoreIndexView):
             except ValidationError as e:
                 raise e
             self.checkout_session.set_last_check(details.get('check_url'))
+        else:
+            self.checkout_session.set_last_check('')
         return True
 
     def __validate_send_email(self, details):
