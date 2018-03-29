@@ -80,7 +80,7 @@
                                         <thead>
                                             <tr>
                                                 <th class="site">Campsite</th>
-                                                <th class="numBook">Number of sites to book</th>
+                                                <th class="numBook">Sites to book</th>
                                             </tr>
                                         </thead>
                                             <tbody><template v-for="campsite in booking.campsites">
@@ -100,7 +100,7 @@
                         <div class="col-lg-12">
                             <div id="campsite-class-booking" v-if="(campground.site_type == 1) || (campground.site_type == 2)">
                                 <div class="row">
-                                    <div v-show="campsite_classes.length < 1" class="col-lg-12 text-center">
+                                    <div v-show="booking.campsite_classes.length < 1" class="col-lg-12 text-center">
                                         <h2>No Campsites Available For The Provided Dates</h2>
                                     </div>
                                 </div>
@@ -109,7 +109,7 @@
                     </div>  
                     <div class="row"> 
                         <div class="col-sm-12">
-                            <div v-show="campsite_classes.length > 1">
+                            <div v-show="booking.campsite_classes.length > 1">
                                 <div class="column table-scroll">
                                     <table class="hover table table-striped table-bordered dt-responsive nowrap"  cellspacing="0" width="100%" name="campsite-type" v-model="selected_campsite_class">
                                         <thead>
@@ -119,12 +119,12 @@
                                                  <th class="numBook">Number of sites to book</th>
                                             </tr>
                                         </thead>
-                                        <tbody><template v-for="c in campsite_classes">
+                                        <tbody><template v-for="c in booking.campsite_classes">
                                             <tr>
                                                 <td class="site"> {{c.name}} <span v-if="c.class"> - {{ classes[c.class] }}</span></td>
                                                 <td class="book"> {{ c.campsites.length }} available </td>
                                                 <td class="numBook">
-                                                    <input type="number" name="campsite-type" class="form-control" v-model="c.selected_campsite_class">
+                                                    <input type="number" name="campsite-type" class="form-control" v-model="c.selected_campsite_class" @change="updatePrices()">
                                                 </td>
                                             </tr></template>
                                         </tbody>
@@ -366,6 +366,7 @@ export default {
                 },
                 campground:"",
                 campsites: [],
+                campsite_classes:[],
                 email:"",
                 firstname:"",
                 surname:"",
@@ -468,7 +469,6 @@ export default {
             stayHistory:[],
             arrivalPicker: {},
             departurePicker: {},
-            campsite_classes:[],
             selected_campsite_class:-1,
             booking_type:"campsite",
             booking_types:{
@@ -494,11 +494,21 @@ export default {
         },
         selected_campsites: function () {
             let vm = this;
-            return vm.booking.campsites.filter(function (el) {
-                return el.is_selected;
-            }).map(function (el) {
-                return el.id
-            });
+            if (vm.booking_type == vm.booking_types.CAMPSITE) {
+                return vm.booking.campsites.filter(function (el) {
+                    return el.is_selected;
+                }).map(function (el) {
+                    return el.id
+                });
+            }else{
+                var results = [];
+                vm.booking.campsite_classes.forEach(function (el) {
+                    for (var i=0; i<el.selected_campsite_class; i++) {
+                        results.push(el.campsites[i]);
+                    }
+                });
+                return results;
+            }
         }
     },
     filters: {
@@ -519,7 +529,7 @@ export default {
         },
         selected_campsite_class:function () {
             let vm =this;
-            vm.selected_campsite =vm.campsite_classes[vm.selected_campsite_class].campsites[0];
+            vm.selected_campsite =vm.booking.campsite_classes[vm.selected_campsite_class].campsites[0];
         },
         selected_arrival:function () {
             let vm = this;
@@ -639,10 +649,14 @@ export default {
             let vm = this;
             if(vm.selected_arrival && vm.selected_departure){
                 vm.loading.push('fetching campsite classes');
-                vm.$http.get(api_endpoints. available_campsite_classes(vm.booking.campground,vm.booking.arrival,vm.booking.departure)).then((response)=>{
-                    vm.campsite_classes = response.body;
-                    if (vm.campsite_classes.length >0) {
-                        vm.selected_campsite =vm.campsite_classes[0].campsites[0];
+                vm.$http.get(api_endpoints. available_campsite_classes(
+                    vm.booking.campground,
+                    Moment(vm.booking.arrival, "YYYY-MM-DD").format("YYYY/MM/DD"),
+                    Moment(vm.booking.departure, "YYYY-MM-DD").format("YYYY/MM/DD")
+                    )).then((response)=>{
+                    vm.booking.campsite_classes = response.body;
+                    if (vm.booking.campsite_classes.length >0) {
+                        vm.selected_campsite =vm.booking.campsite_classes[0].campsites[0];
                         vm.selected_campsite_class = 0;
                     }
                     vm.loading.splice('fetching campsite classes',1);
@@ -793,21 +807,13 @@ export default {
         },
         generateBookingPrice:function () {
             let vm =this;
-            vm.booking.price = 0;
-            var campsite_count = vm.booking.campsites.reduce(function (acc, el) {
-                if (el.is_selected) {
-                    return acc + 1;
-                }
-                return acc;
-            }, 0)
-            console.log('campsite count is')
-            console.log(campsite_count)
+            vm.booking.price = 0;          
             if (vm.park.entry_fee_required){
                 vm.fetchParkPrices(function(){
                     $.each(vm.priceHistory,function (i,price) {
                         for (var guest in vm.booking.guests) {
                             if (vm.booking.guests.hasOwnProperty(guest)) {
-                                vm.booking.price += vm.booking.guests[guest] * price.rate[guest] * campsite_count;
+                                vm.booking.price += vm.booking.guests[guest] * price.rate[guest];
                             }
                         }
                     });
@@ -818,7 +824,7 @@ export default {
                 $.each(vm.priceHistory,function (i,price) {
                     for (var guest in vm.booking.guests) {
                         if (vm.booking.guests.hasOwnProperty(guest)) {
-                            vm.booking.price += vm.booking.guests[guest] * price.rate[guest] * campsite_count;
+                            vm.booking.price += vm.booking.guests[guest] * price.rate[guest];
                         }
                     }
                 });
