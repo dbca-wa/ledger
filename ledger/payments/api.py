@@ -869,6 +869,11 @@ class CheckoutCreateView(generics.CreateAPIView):
                 'checkoutWithToken', 'bpay_format', 'icrn_format', 'invoice_text', 'check_url'
             ]
             url_args = {f: six.text_type(serializer.validated_data[f]).encode('utf8') for f in fields if f in serializer.validated_data and serializer.validated_data[f] is not None}
+            # bodges for nullable fields
+            for f in ['basket_owner', 'check_url', 'return_preload_url']:
+                if f not in url_args:
+                    url_args[f] = ''
+
             redirect = HttpResponseRedirect(reverse('checkout:index')+'?'+six.moves.urllib.parse.urlencode(url_args))
             # inject the current basket into the redirect response cookies
             # or else, anonymous users will be directionless
