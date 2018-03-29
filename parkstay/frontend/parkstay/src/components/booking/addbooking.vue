@@ -571,7 +571,6 @@ export default {
         },
         updatePrices:function () {
             let vm = this;
-            vm.booking.campsite = vm.selected_campsite;
             vm.booking.price = 0;
             console.log(vm.selected_campsites)
             var campsite_ids = vm.selected_campsites;
@@ -582,22 +581,6 @@ export default {
                     var nights = departure.diff(arrival,'days');
                     vm.$http.post(
                         api_endpoints.campsites_current_price(),
-                        {
-                            campsites: campsite_ids,
-                            arrival: arrival.format("YYYY-MM-DD"),
-                            departure: departure.format("YYYY-MM-DD")
-                        },
-                        {headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}}
-                    ).then((response)=>{
-                        vm.priceHistory = null;
-                        vm.priceHistory = response.body;
-                        vm.generateBookingPrice();
-                    },(error)=>{
-                        console.log(error);
-                    });
-                }else{
-                    vm.$http.post(
-                        api_endpoints.campsites_current_price(), 
                         {
                             campsites: campsite_ids,
                             arrival: arrival.format("YYYY-MM-DD"),
