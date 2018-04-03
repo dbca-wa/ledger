@@ -666,7 +666,7 @@ class AmendmentRequestReasonChoicesView(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self,request, format=None):
         choices_list = []
-        choices = AmendmentRequest.objects.first().REASON_CHOICES
+        choices = AmendmentRequest.REASON_CHOICES
         if choices:
             for c in choices:
                 choices_list.append({'key': c[0],'value': c[1]})
