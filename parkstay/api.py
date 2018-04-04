@@ -1704,7 +1704,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_child' : guests['child'],
                 'num_infant' : guests['infant'],
                 'cost_total' : costs['total'],
-                'override_price' : override_price,
+                'override_price' : str(override_price),
                 'override_reason' : override_reason,
                 'customer' : customer,
                 'first_name': emailUser['first_name'],
@@ -1714,7 +1714,6 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'phone': emailUser['phone'],
                 'regos': regos
             }
-
             data = utils.internal_booking(request,booking_details)
             serializer = self.get_serializer(data)
             return Response(serializer.data)
