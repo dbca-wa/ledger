@@ -24,18 +24,19 @@
                                 <div v-for="(category,index) in licence_categories" class="radio">
                                     <div class ="row">
                                         <div class="col-sm-9" >  
-                                            <input type="radio"  name="licence_category" v-model="licence_category"  :value="category.id" @change="handleChange($event,index)"> {{category.name}}
+                                            <input type="radio"  :id="category.id" name="licence_category" v-model="licence_category"  :value="category.id" @change="handleChange($event,index)"> {{category.name}}{{catego}}
+                                             
                                             <div class="row">
                                                 
-                                                <div  v-if="radio_selected[index]" class="col-sm-4">
-                                                    <div v-for="type in category.activity_type" class="checkbox">
+                                                <div  v-if="category.checked" class="col-sm-9">
+                                                    <div v-for="(type,index1) in category.activity_type" :id="type.id" class="checkbox">
                                                         
-                                                        <input type="checkbox" name ="activity_type" :value="type.id" v-model="selected_activity_type"> {{type.name}}{{index}}
+                                                        <input type="checkbox" name ="activity_type" :value="type.name" :id = "type.id" v-model="selected_activity_type"> {{type.name}}
                                                         
                                                         <div v-for="activity in type.activity" class="checkbox">
                                                             
                                                             <div class ="col-sm-6">
-                                                                <input type="checkbox" v-model="selected_activity">{{activity.name}}
+                                                                <input type="checkbox" :value="activity.name" :id="activity.id" v-model="selected_activity">{{activity.name}}
                                                             </div>
 
                                                         </div>
@@ -134,8 +135,16 @@ export default {
     handleChange: function(e,index){
         let vm=this
         
-        
-        vm.radio_selected[index] = !vm.radio_selected[index]
+        console.log(vm.$refs)
+        for(var i=0,_len=this.licence_categories.length;i<_len;i++){
+            if(i===index){
+                this.licence_categories[i].checked = true;
+            }else{
+                this.licence_categories[i].checked=false;
+            }
+
+        }
+        // vm.radio_selected[index] = !vm.radio_selected[index]
 
     },
     createApplication:function () {
