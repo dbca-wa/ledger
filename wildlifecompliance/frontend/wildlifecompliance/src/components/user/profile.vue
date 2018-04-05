@@ -360,7 +360,8 @@ export default {
             updatingContact: false,
             registeringOrg: false,
             role:null,
-            orgRequest_pending:[]
+            orgRequest_pending:[],
+            new_user: false
         }
     },
     watch: {
@@ -451,66 +452,22 @@ export default {
                 });
                 return;
             }
-            vm.$http.get(helpers.add_endpoint_join(api_endpoints.users,params),JSON.stringify(vm.profile),{
-                    emulateJSON:true
-                }).then((response) => {
-                    if (response.body.length > 1) {
-                        swal({
-                            title: "Update Personal Details",
-                            html: 'If you already have a Parks and Wildlife customer account under another email address, please ' +
-                                '<strong>log out and sign in again with that account</strong> and ' +
-                                'instead add <strong>' + vm.profile.email + '</strong> as a new Profile.<br/><br/>If this is a new account, please proceed to update ' +
-                                'your details.',
-                            type: "question",
-                            allowOutsideClick: false,
-                            confirmButtonText: 'Okay',
-                            showCancelButton: true,
-                            cancelButtonText: 'Logout',
-                            cancelButtonClass: 'btn btn-danger'
-                        }).then((result) => {
-                            if (result.value) {
-                                console.log('inside true');
-                                vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
-                                    emulateJSON:true
-                                }).then((response) => {
-                                    swal({
-                                        title: 'Update Personal Details',
-                                        html: 'Your personal details has been successfully updated.',
-                                        type: 'success',
-                                    }).then(() => {
-                                        vm.updatingPersonal = false;
-                                    });
-                                }, (error) => {
-                                    vm.updatingPersonal = false;
-                                    let error_msg = '<br/>';
-                                    for (var key in error.body) {
-                                        if (key === 'dob') {
-                                            error_msg += 'dob: Please enter a valid date.<br/>';
-                                        } else {
-                                            error_msg += key + ': ' + error.body[key] + '<br/>';
-                                        }
-                                    }
-                                    swal({
-                                        title: 'Update Personal Details',
-                                        html: 'There was an error updating your personal details.<br/>' + error_msg,
-                                        type: 'error'
-                                    })
-                                });
-                            } else if (result.dismiss === swal.DismissReason.cancel) {
-                                console.log('cancelled');
-                                vm.updatingPersonal = false;
-                                return;
-                            }
-                        }, (error) => {
-                            vm.updatingPersonal = false;
-                            console.log('error final');
-                            swal({
-                                title: 'Update Personal Details',
-                                html: 'There was an error updating your personal details.',
-                                type: 'error'
-                            })
-                        });
-                    } else {
+            if (vm.new_user) {
+                swal({
+                    title: "Update Personal Details",
+                    html: 'If you already have a Parks and Wildlife customer account under another email address, please ' +
+                        '<strong>log out and sign in again with that account</strong> and ' +
+                        'instead add <strong>' + vm.profile.email + '</strong> as a new Profile.<br/><br/>If this is a new account, please proceed to update ' +
+                        'your details.',
+                    type: "question",
+                    allowOutsideClick: false,
+                    confirmButtonText: 'Okay',
+                    showCancelButton: true,
+                    cancelButtonText: 'Logout',
+                    cancelButtonClass: 'btn btn-danger'
+                }).then((result) => {
+                    if (result.value) {
+                        console.log('inside true');
                         vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
                             emulateJSON:true
                         }).then((response) => {
@@ -537,15 +494,48 @@ export default {
                                 type: 'error'
                             })
                         });
+                    } else if (result.dismiss === swal.DismissReason.cancel) {
+                        console.log('new user wants to logout and delete');
+                        vm.updatingPersonal = false;
+                        return;
                     }
-            }, (error) => {
-                vm.updatingPersonal = false;
-                swal({
-                    title: 'Update Personal Details',
-                    html: 'There was an error updating your personal details.',
-                    type: 'error'
-                })
-            });
+                }, (error) => {
+                    vm.updatingPersonal = false;
+                    console.log('error final');
+                    swal({
+                        title: 'Update Personal Details',
+                        html: 'There was an error updating your personal details.',
+                        type: 'error'
+                    })
+                });
+            } else {
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
+                    emulateJSON:true
+                }).then((response) => {
+                    swal({
+                        title: 'Update Personal Details',
+                        html: 'Your personal details has been successfully updated.',
+                        type: 'success',
+                    }).then(() => {
+                        vm.updatingPersonal = false;
+                    });
+                }, (error) => {
+                    vm.updatingPersonal = false;
+                    let error_msg = '<br/>';
+                    for (var key in error.body) {
+                        if (key === 'dob') {
+                            error_msg += 'dob: Please enter a valid date.<br/>';
+                        } else {
+                            error_msg += key + ': ' + error.body[key] + '<br/>';
+                        }
+                    }
+                    swal({
+                        title: 'Update Personal Details',
+                        html: 'There was an error updating your personal details.<br/>' + error_msg,
+                        type: 'error'
+                    })
+                });
+            }
         },
         updateContact: function() {
             let vm = this;
@@ -777,7 +767,13 @@ export default {
             window.setTimeout(function () {
                 $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
             },100);
-        }); 
+        });
+        if($('#new_user')){
+            console.log($('#new_user'));
+            this.new_user = true;
+            console.log('new user:')
+            console.log(this.new_user)
+        }
     }
 }
 </script>
