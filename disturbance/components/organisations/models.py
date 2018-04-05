@@ -34,6 +34,10 @@ class Organisation(models.Model):
     def log_user_action(self, action, request):
         return OrganisationAction.log_action(self, action, request.user)
 
+    def log_request_user_action(self, action, request):
+        org_request = OrganisationRequest.objects.get(name=self.organisation.name)
+        return org_request.log_user_action(action, request)
+
     def validate_pins(self,pin1,pin2,request):
         val = self.pin_one == pin1 and self.pin_two == pin2
         if val:
@@ -82,6 +86,8 @@ class Organisation(models.Model):
             delegate.delete()
             # log linking
             self.log_user_action(OrganisationAction.ACTION_UNLINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # log organisation linking (eg ../internal/organisations/access/2)
+            self.log_request_user_action(OrganisationRequestUserAction.ACTION_UNLINK_USER.format('{}'.format(user.get_full_name())),request)
             # send email
             send_organisation_unlink_email_notification(user,request.user,self,request)
 
@@ -203,7 +209,6 @@ class OrganisationLogDocument(Document):
     class Meta:
         app_label = 'disturbance'
 
-
     
 class OrganisationLogEntry(CommunicationsLogEntry):
     organisation = models.ForeignKey(Organisation, related_name='comms_logs')
@@ -216,6 +221,7 @@ class OrganisationLogEntry(CommunicationsLogEntry):
 
     class Meta:
         app_label = 'disturbance'
+
 
 class OrganisationRequest(models.Model):
     STATUS_CHOICES = (
@@ -322,9 +328,8 @@ class OrganisationRequestUserAction(UserAction):
     ACTION_DECLINE_REQUEST = "Decline request"
     # Assessors
 
-
-
     ACTION_CONCLUDE_REQUEST = "Conclude request {}"
+    ACTION_UNLINK_USER = "User {} has been unlinked"
 
     @classmethod
     def log_action(cls, request, action, user):

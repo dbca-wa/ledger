@@ -36,10 +36,10 @@ export default {
             input.dispatchEvent(e);
 
             // Hack to override dispatchEvent - event not being dispatched in Firefox
-            var elements = $('#cons_' + input.name + '_yes');
-            if(elements.length > 0 && elements[0].classList.contains("hidden") && input.value == 'yes') {
-                elements[0].classList.remove("hidden");
-            }
+//            var elements = $('#cons_' + input.name + '_yes');
+//            if(elements.length > 0 && elements[0].classList.contains("hidden") && input.value == 'yes') {
+//                elements[0].classList.remove("hidden");
+//            }
         }
     }
 }
