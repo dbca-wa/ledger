@@ -31,12 +31,12 @@
                                                 <div  v-if="category.checked" class="col-sm-9">
                                                     <div v-for="(type,index1) in category.activity_type" :id="type.id" class="checkbox">
                                                         
-                                                        <input type="checkbox" name ="activity_type" :value="type.name" :id = "type.id" v-model="selected_activity_type"> {{type.name}}
+                                                        <input type="checkbox" name ="activity_type" :value="type.id" :id = "type.id" v-model="selected_activity_type"> {{type.name}}
                                                         
                                                         <div v-for="activity in type.activity" class="checkbox">
                                                             
                                                             <div class ="col-sm-6">
-                                                                <input type="checkbox" :value="activity.name" :id="activity.id" v-model="selected_activity">{{activity.name}}
+                                                                <input type="checkbox" :value="activity.id" :id="activity.id" v-model="selected_activity">{{activity.name}}
                                                             </div>
 
                                                         </div>
