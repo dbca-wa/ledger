@@ -180,6 +180,7 @@ class UserSerializer(serializers.ModelSerializer):
     def __init__(self,*args,**kwargs):
         super(UserSerializer, self).__init__(*args, **kwargs)
         request = self.context.get('request')
+        print(request)
         print(self.fields['email'])
         self.fields['wildlifecompliance_organisations'] = UserOrganisationSerializer(many=True,context={'request':request})
    

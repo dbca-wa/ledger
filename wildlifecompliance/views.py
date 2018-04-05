@@ -52,8 +52,10 @@ class WildlifeComplianceRoutingView(TemplateView):
         return super(WildlifeComplianceRoutingView, self).get(*args, **kwargs)
 
 @login_required(login_url='wc_home')
-def first_time(request): 
+def first_time(request):
     context = {}
+    context['is_new'] = True
+    print(context)
     if request.method == 'POST':
         form = FirstTimeForm(request.POST)
         redirect_url = form.data['redirect_url']
