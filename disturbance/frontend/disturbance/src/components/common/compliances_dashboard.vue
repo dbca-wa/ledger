@@ -156,7 +156,12 @@ export default {
                         }
                     },
                     {data: "holder"},
-                    {data: "processing_status"},
+                    {data: "processing_status",
+                        mRender:function(data,type,full){
+                            return vm.level == 'external' ? full.customer_status: data;
+                        }
+
+                    },
                     {
                         data: "due_date",
                         mRender:function (data,type,full) {
@@ -168,15 +173,21 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                links +=  `<a href='/internal/proposal/${full.proposal}'>View</a><br/>`;
+                                if (full.can_user_view) {
+                                    links +=  `<a href='/external/compliance/${full.id}'>Process</a><br/>`;
+                                    
+                                }
+                                else {
+                                    links +=  `<a href='/external/compliance/${full.id}'>View</a><br/>`;
+                                }
                             }
                             else{
-                                if (full.can_user_edit) {
-                                    links +=  `<a href='/external/proposal/${full.proposal}'>Continue</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-discard-proposal='${full.proposal}'>Discard</a><br/>`;
+                                if (full.can_user_view) {
+                                    links +=  `<a href='/external/compliance/${full.id}'>View</a><br/>`;
+                                    
                                 }
-                                else if (full.can_user_view) {
-                                    links +=  `<a href='/external/proposal/${full.proposal}'>View</a><br/>`;
+                                else {
+                                    links +=  `<a href='/external/compliance/${full.id}'>Submit</a><br/>`;
                                 }
                             }
                             return links;

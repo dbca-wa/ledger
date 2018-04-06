@@ -703,7 +703,8 @@ class Proposal(RevisionedMixin):
                         proposal=self,
                         due_date=current_date,
                         processing_status='future',
-                        approval=approval
+                        approval=approval,
+                        requirement=req.requirement,
                     )
                     #TODO add logging for compliance
 

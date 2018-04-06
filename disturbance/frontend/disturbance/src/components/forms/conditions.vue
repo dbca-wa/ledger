@@ -1,7 +1,7 @@
 <script>
     export default {
         props:["conditions","renderer","name","data","readonly"],
-        updated(){
+        mounted(){
 
         },
         render(h) {
