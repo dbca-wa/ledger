@@ -33,6 +33,16 @@ export default {
             });
         });
     },
+    fetchProfile: function(id){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(helpers.add_endpoint_json(api.profiles,id)).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
     fetchUsers: function(id){
         return new Promise ((resolve,reject) => {
             Vue.http.get(api.users).then((response) => {
@@ -46,6 +56,16 @@ export default {
     fetchUser: function(id){
         return new Promise ((resolve,reject) => {
             Vue.http.get(helpers.add_endpoint_json(api.users,id)).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
+    fetchCurrentUser: function (){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(api.profile).then((response) => {
                 resolve(response.body);
             },
             (error) => {

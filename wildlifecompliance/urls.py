@@ -28,6 +28,9 @@ router.register(r'application_standard_conditions',application_api.ApplicationSt
 router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
 router.register(r'users',users_api.UserViewSet)
+router.register(r'profiles',users_api.ProfileViewSet)
+router.register(r'my_profiles',users_api.MyProfilesViewSet)
+router.register(r'emailidentities',users_api.EmailIdentityViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
@@ -48,7 +51,7 @@ urlpatterns = [
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
-    url(r'^profiles/$', views.ExternalView.as_view(), name='manage-profiles'),
+    url(r'^profiles/', views.ExternalView.as_view(), name='manage-profiles'),
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     url(r'^application/$', application_views.ApplicationView.as_view(), name='application'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),

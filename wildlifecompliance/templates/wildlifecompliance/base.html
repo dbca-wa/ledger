@@ -73,6 +73,9 @@
                                                 {% else %}
                                                     {{ request.user.email }}
                                                 {% endif %}
+                                                {% if request.session.is_new %}
+                                                    <span id="new_user">(New User)</span>
+                                                {% endif %}
                                             </strong>
                                             </a>
                                         </li>

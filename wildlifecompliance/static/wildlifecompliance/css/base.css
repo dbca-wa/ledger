@@ -72,3 +72,7 @@
 .popover {
     max-width: 100%;
 }
+
+.swal2-popup {
+    font-size: 1.5rem !important;
+}

@@ -248,7 +248,7 @@
                                     
                                     
                                     <div class="col-sm-12">
-                                      <button  @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
+                                      <button v-if="!registeringOrg" @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
                                       <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
                                     </div>
                               </div>
@@ -355,11 +355,13 @@ export default {
             managesOrgConsultant: 'No',
             uploadedFile: null,
             updatingPersonal: false,
+            deleteEmailUserLogout: null,
             updatingAddress: false,
             updatingContact: false,
             registeringOrg: false,
             role:null,
-            orgRequest_pending:[]
+            orgRequest_pending:[],
+            new_user: false
         }
     },
     watch: {
@@ -434,17 +436,106 @@ export default {
         updatePersonal: function() {
             let vm = this;
             vm.updatingPersonal = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
-                emulateJSON:true
-            }).then((response) => {
-                console.log(response);
-                vm.updatingPersonal = false;
-                vm.profile = response.body;
-                if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
-            }, (error) => {
-                console.log(error);
-                vm.updatingPersonal = false;
-            });
+            if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+            let params = '?';
+            params += '&first_name=' + vm.profile.first_name;
+            params += '&last_name=' + vm.profile.last_name;
+            params += '&dob=' + vm.profile.dob;
+            if (vm.profile.first_name === '' || vm.profile.last_name === '' || vm.profile.dob === ''){
+                let error_msg = 'Please ensure all fields are filled in.';
+                swal({
+                    title: 'Update Personal Details',
+                    html: 'There was an error updating your personal details.<br/>' + error_msg,
+                    type: 'error'
+                }).then(() => {
+                    vm.updatingPersonal = false;
+                });
+                return;
+            }
+            if (vm.new_user) {
+                swal({
+                    title: "Update Personal Details",
+                    html: 'If you already have a Parks and Wildlife customer account under another email address, please ' +
+                        '<strong>log out and sign in again with that account</strong> and ' +
+                        'instead add <strong>' + vm.profile.email + '</strong> as a new Profile.<br/><br/>If this is a new account, please proceed to update ' +
+                        'your details.',
+                    type: "question",
+                    allowOutsideClick: false,
+                    confirmButtonText: 'Okay',
+                    showCancelButton: true,
+                    cancelButtonText: 'Logout',
+                    cancelButtonClass: 'btn btn-danger'
+                }).then((result) => {
+                    if (result.value) {
+                        console.log('inside true');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
+                                title: 'Update Personal Details',
+                                html: 'Your personal details has been successfully updated.',
+                                type: 'success',
+                            }).then(() => {
+                                vm.updatingPersonal = false;
+                            });
+                        }, (error) => {
+                            vm.updatingPersonal = false;
+                            let error_msg = '<br/>';
+                            for (var key in error.body) {
+                                if (key === 'dob') {
+                                    error_msg += 'dob: Please enter a valid date.<br/>';
+                                } else {
+                                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                                }
+                            }
+                            swal({
+                                title: 'Update Personal Details',
+                                html: 'There was an error updating your personal details.<br/>' + error_msg,
+                                type: 'error'
+                            })
+                        });
+                    } else if (result.dismiss === swal.DismissReason.cancel) {
+                        console.log('new user wants to logout and delete');
+                        vm.updatingPersonal = false;
+                        return;
+                    }
+                }, (error) => {
+                    vm.updatingPersonal = false;
+                    console.log('error final');
+                    swal({
+                        title: 'Update Personal Details',
+                        html: 'There was an error updating your personal details.',
+                        type: 'error'
+                    })
+                });
+            } else {
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
+                    emulateJSON:true
+                }).then((response) => {
+                    swal({
+                        title: 'Update Personal Details',
+                        html: 'Your personal details has been successfully updated.',
+                        type: 'success',
+                    }).then(() => {
+                        vm.updatingPersonal = false;
+                    });
+                }, (error) => {
+                    vm.updatingPersonal = false;
+                    let error_msg = '<br/>';
+                    for (var key in error.body) {
+                        if (key === 'dob') {
+                            error_msg += 'dob: Please enter a valid date.<br/>';
+                        } else {
+                            error_msg += key + ': ' + error.body[key] + '<br/>';
+                        }
+                    }
+                    swal({
+                        title: 'Update Personal Details',
+                        html: 'There was an error updating your personal details.<br/>' + error_msg,
+                        type: 'error'
+                    })
+                });
+            }
         },
         updateContact: function() {
             let vm = this;
@@ -456,9 +547,23 @@ export default {
                 vm.updatingContact = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                swal({
+                    title: 'Update Contact Details',
+                    html: 'Your contact details has been successfully updated.',
+                    type: 'success',
+                })
             }, (error) => {
                 console.log(error);
                 vm.updatingContact = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal({
+                    title: 'Update Contact Details',
+                    html: 'There was an error updating your contact details.<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
         updateAddress: function() {
@@ -471,9 +576,23 @@ export default {
                 vm.updatingAddress = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                swal({
+                    title: 'Update Address Details',
+                    html: 'Your address details has been successfully updated.',
+                    type: 'success',
+                })
             }, (error) => {
                 console.log(error);
                 vm.updatingAddress = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal({
+                    title: 'Update Address Details',
+                    html: 'There was an error updating your address details.<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
         checkOrganisation: function() {
@@ -620,10 +739,11 @@ export default {
                 });
             },(error) => {
             }); 
-        }
+        },
     },
     beforeRouteEnter: function(to,from,next){
         Vue.http.get(api_endpoints.profile).then((response) => {
+            console.log(response);
             if (response.body.address_details && response.body.personal_details && response.body.contact_details && to.name == 'first-time'){
                 window.location.href='/';
             }
@@ -637,17 +757,6 @@ export default {
         },(error) => {
             console.log(error);
         })
-
-    //    Vue.http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'user_organisation_request_list')).then((response) => {
-    //     next(vm => {
-    //         access_request = true
-    //         vm.access = response.body
-
-    //     })
-    // },(error) => {
-    //     console.log(error);
-    // })
-
     },
     mounted: function(){
         this.fetchCountries();
@@ -658,7 +767,13 @@ export default {
             window.setTimeout(function () {
                 $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
             },100);
-        }); 
+        });
+        if($('#new_user')){
+            console.log($('#new_user'));
+            this.new_user = true;
+            console.log('new user:')
+            console.log(this.new_user)
+        }
     }
 }
 </script>

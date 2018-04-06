@@ -83,6 +83,9 @@ module.exports = {
         } );
     } );
   },
+  add_endpoint_join: function ( string, addition ) {
+    return string + '/' + addition;
+  },
   add_endpoint_json: function ( string, addition ) {
     var res = string.split( ".json" )
     return res[ 0 ] + '/' + addition + '.json';
