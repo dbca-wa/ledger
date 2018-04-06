@@ -95,7 +95,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def contacts_exclude(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            qs = instance.contacts.exclude(user_status ='draft')
+            qs = instance.contacts.exclude(user_status='draft')
             serializer = OrganisationContactSerializer(qs,many=True)
             return Response(serializer.data)
         except serializers.ValidationError:

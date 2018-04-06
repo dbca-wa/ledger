@@ -29,7 +29,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data
+from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_schema
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.applications.models import (
     ApplicationType,
@@ -428,15 +428,19 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
             
             app_data = request.data.copy()
-            print(app_data)
+            # print(app_data)
+            activities=app_data.pop('licence_activity')
+            print(activities)
+            activity_schema=get_activity_schema(activities)
             data = {
-                'schema': ApplicationType.objects.first().schema,
+                'schema':activity_schema,
                 'submitter': request.user.id,
                 'licence_category':request.data.get('licence_category'),
                 'licence_activity_type':app_data.pop('licence_activity_type'),
                 'applicant': request.data.get('behalf_of')
             }
-            print(data)
+
+            # print(licence_activity_type)
             serializer = SaveApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()

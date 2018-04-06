@@ -4,6 +4,7 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from wildlifecompliance.components.applications.models import ApplicationDocument
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
+
 import traceback
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
@@ -341,3 +342,13 @@ def save_assessor_data(instance,request,viewset):
             # End Save Documents
         except:
             raise
+
+def get_activity_schema(activities):
+    from wildlifecompliance.components.licences.models import WildlifeLicenceActivity
+    schema_activity=[]
+    for acivity in activities:
+        licence_activity = WildlifeLicenceActivity.objects.get(id=acivity)
+        schema_activity= schema_activity+licence_activity.schema
+
+    return schema_activity
+
