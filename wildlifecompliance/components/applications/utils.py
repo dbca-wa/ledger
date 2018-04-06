@@ -347,7 +347,7 @@ def get_activity_schema(activities):
     from wildlifecompliance.components.licences.models import WildlifeLicenceActivity
     schema_activity=[]
     for acivity in activities:
-        licence_acivity = WildlifeLicenceActivity.objects.get(id=acivity)
+        licence_activity = WildlifeLicenceActivity.objects.get(id=acivity)
         schema_activity= schema_activity+licence_activity.schema
 
     return schema_activity

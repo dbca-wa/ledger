@@ -428,8 +428,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
             
             app_data = request.data.copy()
-            print(app_data)
+            # print(app_data)
             activities=app_data.pop('licence_activity')
+            print(activities)
             activity_schema=get_activity_schema(activities)
             data = {
                 'schema':activity_schema,
@@ -439,7 +440,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 'applicant': request.data.get('behalf_of')
             }
 
-            print(data)
+            # print(licence_activity_type)
             serializer = SaveApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()

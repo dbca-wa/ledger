@@ -80,6 +80,10 @@ export default {
         behalf_of : this.$route.params.org_select,
         "application": null,
         agent: {},
+        activity_type :{
+            id:null,
+            activity:[]
+        },
         licence_category: null ,
         radio_selected : [],
         selected_activity_type: [],
@@ -97,13 +101,13 @@ export default {
   },
   components: {
   },
-  // watch:{
-  //   licence_category: function(){
-  //       this.activity_type_showing = true;
+  watch:{
+    selected_activity_type: function(){
+        this.activity_type.id = this.selected_activity_type;
 
-  //   }
+    }
 
-  // },
+  },
   computed: {
     // isLoading: function() {
     //   return this.loading.length > 0
