@@ -33,6 +33,7 @@
                 {% include 'wildlifecompliance/header.html' %}
             {% endblock %}
         </header>
+        {% if not request.session.is_new %}
         {% block menu %}
             <div class="container-fluid">
                 <div class="row">
@@ -73,9 +74,6 @@
                                                 {% else %}
                                                     {{ request.user.email }}
                                                 {% endif %}
-                                                {% if request.session.is_new %}
-                                                    <span id="new_user">(New User)</span>
-                                                {% endif %}
                                             </strong>
                                             </a>
                                         </li>
@@ -112,9 +110,9 @@
                         </div>
                     </nav>
                 </div>
-
             </div>
         {% endblock %}
+        {% endif %}
         {% block breadcrumbs %}
         {% endblock %}
         {% block messages %}

@@ -56,11 +56,17 @@ class GetProfile(views.APIView):
         serializer  = UserSerializer(request.user,context={'request':request})
         return Response(serializer.data)
 
+
 class GetUser(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self, request, format=None):
         serializer  = PersonalSerializer(request.user)
         return Response(serializer.data)
+
+
+class GetIsNewUser(views.APIView):
+    def get(self, request, format=None):
+        return HttpResponse(request.session['is_new'])
 
 
 class ProfileViewSet(viewsets.ModelViewSet):

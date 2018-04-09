@@ -456,9 +456,7 @@ export default {
                 });
                 return;
             }
-            console.log('vm new user');
-            console.log(vm.new_user);
-            if (vm.new_user == true) {
+            if (vm.new_user == 'True') {
                 swal({
                     title: "Update Personal Details",
                     html: 'If you already have a Parks and Wildlife customer account under another email address, please ' +
@@ -780,12 +778,9 @@ export default {
                 $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
             },100);
         });
-        if($('#new_user')){
-            console.log($('#new_user'));
-            this.new_user = true;
-            console.log('new user:')
-            console.log(this.new_user)
-        }
+        Vue.http.get(api_endpoints.is_new_user).then((response) => {
+            this.new_user = response.body;
+        })
     }
 }
 </script>
