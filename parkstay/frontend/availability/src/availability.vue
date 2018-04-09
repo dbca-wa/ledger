@@ -38,7 +38,7 @@
                 <h1>Book a campsite at {{ name }}</h1>
             </div>
         </div>
-        <div v-if="ongoing_booking"class="row">
+        <div v-if="ongoing_booking" class="row">
             <div class="columns small-12 medium-12 large-12">
                 <div class="clearfix">
                     <a type="button" :href="parkstayUrl+'/booking'" class="button float-right warning continueBooking">
@@ -84,7 +84,7 @@
                     <input id="date-departure" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
-            <div class="small-6 medium-6 large-3 columns">
+            <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns">
                 <label>
                     Guests 
                     <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
@@ -124,7 +124,7 @@
                     </div>
                 </div>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div v-if="!useAdminApi" class="columns small-6 medium-6 large-3">
                 <label>Equipment
                     <select name="gear_type" v-model="gearType" @change="update()">
                         <option value="tent" v-if="gearTotals.tent">Tent</option>
@@ -132,7 +132,7 @@
                         <option value="caravan" v-if="gearTotals.caravan">Caravan / Camper trailer</option>
                     </select>
                 </label>
-            </div>
+            </div>           
         </div>
         <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
             <table class="hover">
@@ -143,7 +143,7 @@
                         <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
                     </tr>
                 </thead>
-                <tbody><template v-for="site in sites" v-if="site.gearType[gearType]">
+                <tbody><template v-for="site in sites" v-if="useAdminApi || site.gearType[gearType]">
                     <tr>
                         <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
@@ -303,6 +303,7 @@ export default {
             arrivalDate: moment.utc(getQueryParam('arrival', moment.utc(now).format('YYYY/MM/DD')), 'YYYY/MM/DD'),
             departureDate:  moment.utc(getQueryParam('departure', moment.utc(now).add(5, 'days').format('YYYY/MM/DD')), 'YYYY/MM/DD'),
             parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
+            useAdminApi: global.useAdminApi || false,
             // order of preference:
             // - GET parameter 'site_id'
             // - global JS var 'parkstayGroundId'
@@ -436,26 +437,22 @@ export default {
             var vm = this;
 
             debounce(function() {
+                var params = {
+                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                        departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                        num_adult: vm.numAdults,
+                        num_child: vm.numChildren,
+                        num_concession: vm.numConcessions,
+                        num_infant: vm.numInfants
+                    };
+
                 if (parseInt(vm.parkstayGroundRatisId) > 0){
-                    var url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param({
-                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                        departure: moment(vm.departureDate).format('YYYY/MM/DD'),
-                        num_adult: vm.numAdults,
-                        num_child: vm.numChildren,
-                        num_concession: vm.numConcessions,
-                        num_infant: vm.numInfants
-                    });
-                }
-                else{
+                    var url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param(params);
+                } else if (vm.useAdminApi) {
+                    var url = vm.parkstayUrl + '/api/availability_admin/'+ vm.parkstayGroundId +'/?'+$.param(params);
+                } else{
                     vm.updateURL();
-                    var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param({
-                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                        departure: moment(vm.departureDate).format('YYYY/MM/DD'),
-                        num_adult: vm.numAdults,
-                        num_child: vm.numChildren,
-                        num_concession: vm.numConcessions,
-                        num_infant: vm.numInfants
-                    });
+                    var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
                 }
                 console.log('AJAX '+url);
                 $.ajax({

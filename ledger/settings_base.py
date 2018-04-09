@@ -85,6 +85,8 @@ SOCIAL_AUTH_STORAGE = 'social_django.models.DjangoStorage'
 SOCIAL_AUTH_EMAIL_FORM_URL = '/ledger/'
 SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'ledger.accounts.mail.send_validation'
 SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/ledger/validation-sent/'
+SOCIAL_AUTH_EMAIL_VALIDATION_ALLOW_REUSE = True
+SOCIAL_AUTH_EMAIL_VALIDATION_EXPIRED_THRESHOLD = env('EMAIL_VALIDATION_EXPIRY', 86400)
 SOCIAL_AUTH_PASSWORDLESS = True
 SOCIAL_AUTH_SESSION_EXPIRATION = env('SESSION_EXPIRATION', False)
 SOCIAL_AUTH_MAX_SESSION_LENGTH = env('MAX_SESSION_LENGTH', 1209600)     # two weeks
@@ -119,7 +121,6 @@ EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
-
 
 TEMPLATES = [
     {
@@ -260,6 +261,10 @@ LOGGING = {
 #        'oscar.checkout': {
 #            'handlers': ['file'],
 #            'level': 'INFO'
+#        },
+#        'bpoint_dpaw': {
+#            'handlers': ['file'],
+#            'level': 'INFO'
 #        }
     }
 }
@@ -269,6 +274,8 @@ DDF_FILL_NULLABLE_FIELDS = False
 
 # Ledger settings
 CMS_URL=env('CMS_URL',None)
+VALID_SYSTEMS=env('VALID_SYSTEMS', '')
+VALID_SYSTEMS=VALID_SYSTEMS.split(',') if VALID_SYSTEMS else []
 LEDGER_USER=env('LEDGER_USER',None)
 LEDGER_PASS=env('LEDGER_PASS')
 NOTIFICATION_EMAIL=env('NOTIFICATION_EMAIL')
@@ -288,7 +295,8 @@ BPOINT_TEST=env('BPOINT_TEST',True)
 # Custom Email Settings
 EMAIL_BACKEND = 'ledger.ledger_email.LedgerEmailBackend'
 PRODUCTION_EMAIL = env('PRODUCTION_EMAIL', False)
-#print PRODUCTION_EMAIL
+# Intercept and forward email recipient for non-production instances
+# Send to list of NON_PROD_EMAIL users instead
 EMAIL_INSTANCE = env('EMAIL_INSTANCE','PROD')
 NON_PROD_EMAIL = env('NON_PROD_EMAIL')
 if not PRODUCTION_EMAIL:

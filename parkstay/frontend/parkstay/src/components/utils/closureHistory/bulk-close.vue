@@ -35,7 +35,7 @@
                     <div class="row">
                         <div class="form-group">
                             <div class="col-md-4">
-                                <label for="open_cg_range_start">Closure end: </label>
+                                <label for="open_cg_range_start">Reopen on: </label>
                             </div>
                             <div class="col-md-8">
                                 <div class='input-group date' :id='close_cg_range_end'>
@@ -90,7 +90,7 @@ export default {
     },
     computed:{
         requireDetails:function () {
-            return (this.reason == '1')
+            return (this.reason === '1')
         },
         ...mapGetters([
           'campgrounds'
@@ -167,7 +167,7 @@ export default {
                     range_start: vm.range_start,
                     range_end: vm.range_end,
                     campgrounds: vm.selected_campgrounds,
-                    reason: vm.reason,
+                    closure_reason: vm.reason,
                     status:'1'
                 }
                 if (vm.reason == '1') {
@@ -210,7 +210,7 @@ export default {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.reason === '1';
+                                return vm.requireDetails;
                             }
                         }
                     }

@@ -2,6 +2,7 @@
 .env
 venv/
 venv2/
+node_modules/
 cronjobs
 
 # Byte-compiled / optimized / DLL files

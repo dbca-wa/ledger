@@ -138,7 +138,7 @@ export default {
     },
     computed: {
         closureHistoryURL: function() {
-            return api_endpoints.campsites_status_history(this.$route.params.campsite_id);
+            return api_endpoints.campsite_status_history(this.$route.params.campsite_id);
         },
         stayHistoryURL: function() {
             return api_endpoints.campsites_stay_history;

@@ -1,16 +1,29 @@
-<template id="pkCsClose">
-<bootstrapModal title="(Temporarily) close campsite" :large=true @ok="addClosure()">
+<template id="bulkCloseCampsites">
+<bootstrapModal title="(Temporarily) bulk close campsites" :large=true @ok="addClosure()">
 
     <div class="modal-body">
         <form id="closeCGForm" class="form-horizontal">
             <div class="row">
-			    <alert :show.sync="showError" type="danger">{{errorString}}</alert>
+                <alert :show.sync="showError" type="danger">{{errorString}}</alert>
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Closure start: </label>
+                        <label for="bcs-campsites">Campsites affected:</label>
                     </div>
                     <div class="col-md-4">
-                        <div class='input-group date' id='close_cg_range_start'>
+                        <select class="form-control" id="bcs-campsites" name="campsites" placeholder="" multiple v-model="formdata.campsites">
+                            <option v-for="c in campsites" v-bind:value="c.id">{{ c.name }} - {{ c.type }}</option>
+                        </select>
+
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+			    <div class="form-group">
+                    <div class="col-md-2">
+                        <label for="close_bcs_range_start">Closure start: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <div class='input-group date' id='close_bcs_range_start'>
                             <input  name="closure_start" v-model="formdata.range_start" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
@@ -22,10 +35,10 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Reopen on: </label>
+                        <label for="close_bcs_range_end">Reopen on: </label>
                     </div>
                     <div class="col-md-4">
-                        <div class='input-group date' id='close_cg_range_end'>
+                        <div class='input-group date' id='close_bcs_range_end'>
                             <input name="closure_end" v-model="formdata.range_end" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
@@ -38,10 +51,10 @@
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_details">Details: </label>
+                        <label for="close_bcs_details">Details: </label>
                     </div>
                     <div class="col-md-5">
-                        <textarea name="closure_details" v-model="formdata.details" class="form-control" id="close_cg_details"></textarea>
+                        <textarea name="closure_details" v-model="formdata.details" class="form-control" id="close_bcs_details"></textarea>
                     </div>
                 </div>
             </div>
@@ -51,31 +64,35 @@
 </bootstrapModal>
 </template>
 
+
+
 <script>
 import bootstrapModal from '../../utils/bootstrap-modal.vue'
 import reason from '../../utils/reasons.vue'
 import {bus} from '../../utils/eventBus.js'
-import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
+import { $, datetimepicker, api_endpoints, validate, helpers } from '../../../hooks'
 import alert from '../../utils/alert.vue'
 module.exports = {
-    name: 'pkCsClose',
+    name: 'bulkCloseCampsites',
+    props: ['campsites', 'show'],
     data: function() {
         return {
+            id:'',
+            current_closure: '',
             reason:'',
             formdata: {
-                campsite: '',
-                status: 1,
+                status:1,
                 range_start: '',
                 range_end: '',
                 closure_reason:'',
-                details: ''
+                details: '',
+                campsites: [],
             },
             closeStartPicker: '',
             closeEndPicker: '',
             errors: false,
             errorString: '',
-            form: '',
-            isOpen: false
+            form: ''
         }
     },
     computed: {
@@ -83,13 +100,12 @@ module.exports = {
             var vm = this;
             return vm.errors;
         },
-        isModalOpen: function() {
-            return this.isOpen;
-        },
         requireDetails: function () {
-            let vm =this;
-            return (vm.formdata.closure_reason === '1');
+            return (this.formdata.closure_reason === '1');
         },
+        isModalOpen: function () {
+            return true;
+        }
     },
     components: {
         bootstrapModal,
@@ -103,21 +119,30 @@ module.exports = {
         }
     },
     methods: {
-        close: function() {
-            this.isOpen = false;
-            this.formdata = {
-                status:1,
-                range_start: '',
-                range_end: '',
-                closure_reason:'',
-                details: ''
-            };
-            this.$refs.reason.selected = "";
-        },
         addClosure: function() {
             if (this.form.valid()){
-                this.$emit('closeCampsite');
+                this.$emit('bulkCloseCampsites');
             }
+        },
+        close: function() {
+            this.$emit('close');
+        },
+        initSelectTwo:function () {
+            let vm = this;
+            setTimeout(function () {
+                $('#bcs-campsites').select2({
+                    theme: 'bootstrap',
+                    allowClear: true,
+                    placeholder: "Select campsites",
+                    tags:false,
+                }).
+                on("select2:select",function (e) {
+                    vm.formdata.campsites = $(e.currentTarget).val();
+                }).
+                on("select2:unselect",function (e) {
+                    vm.formdata.campsites = $(e.currentTarget).val();
+                });
+            },100)
         },
         addFormValidations: function() {
             let vm = this;
@@ -164,8 +189,8 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        vm.closeStartPicker = $('#close_cg_range_start');
-        vm.closeEndPicker = $('#close_cg_range_end');
+        vm.closeStartPicker = $('#close_bcs_range_start');
+        vm.closeEndPicker = $('#close_bcs_range_end');
         vm.closeStartPicker.datetimepicker({
             format: 'DD/MM/YYYY',
             minDate: new Date()
@@ -183,6 +208,7 @@ module.exports = {
         });
         vm.form = $('#closeCGForm');
         vm.addFormValidations();
+        vm.initSelectTwo();
     }
 };
 </script>

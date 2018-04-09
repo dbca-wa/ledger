@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal,select2} from "../../hooks.js"
+import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal,htmlEscape,select2} from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import changebooking from "./changebooking.vue"
@@ -201,6 +201,9 @@ export default {
                                 var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
                                 return column.replace('__NAME__', data);
                             }
+                            if (data.length > 1) {
+                                var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div> Multiple</td>';
+                            }
                             return '';
                         },
                         orderable:false,
@@ -257,12 +260,12 @@ export default {
                                 column += record_payment;
                             }
                             if (full.editable){
-                                var change_booking = "<a href='edit/"+full.id+"' class='text-primary' data-change = '"+booking+"' > Change</a><br/>";
-                                var cancel_booking = "<a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>";
+                                var change_booking = "<a href='edit/"+full.id+"' class='text-primary' data-change = '"+htmlEscape(booking)+"' > Change</a><br/>";
+                                var cancel_booking = "<a href='#' class='text-primary' data-cancel='"+htmlEscape(booking)+"' > Cancel</a><br/>";
                                 column += cancel_booking;
                                 column += change_booking;
                             }
-                            full.has_history ? column += "<a href='edit/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
+                            full.has_history ? column += "<a href='edit/"+full.id+"' class='text-primary' data-history = '"+htmlEscape(booking)+"' > View History</a><br/>" : '';
                             $.each(full.active_invoices,(i,v) =>{
                                 invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });

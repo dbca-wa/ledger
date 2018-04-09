@@ -12,12 +12,12 @@ class LedgerEmailBackend(EmailBackend):
             return False
         encoding = email_message.encoding or settings.DEFAULT_CHARSET
         from_email = sanitize_address(email_message.from_email, encoding)
-        message = email_message.message()
         if not settings.PRODUCTION_EMAIL:
             recipients = settings.NON_PROD_EMAIL.split(',')
-            message['Subject'] = '{} {}'.format(message.get('Subject'),settings.EMAIL_INSTANCE)
+            email_message.subject = '{} {}'.format(email_message.subject, settings.EMAIL_INSTANCE)
         else:
             recipients = [sanitize_address(addr, encoding) for addr in email_message.recipients()]
+        message = email_message.message()
         
         try:
             self.connection.sendmail(from_email, recipients, message.as_bytes(linesep='\r\n'))
