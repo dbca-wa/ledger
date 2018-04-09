@@ -65,6 +65,7 @@ class Gateway(object):
             Handle the transaction and pass it
             back to the BPOINT API
         '''
+        logger.info('Submitting BPOINT transaction for order {} ({}, {}, ${})'.format(order_num, reference, action, amount))
         txn = self._transaction(order_num,reference,action,amount,card_details,biller_code,_type,sub_type)
         if orig_txn_num:
             txn.original_txn_number = orig_txn_num

@@ -18,7 +18,6 @@
 import datatable from './datatable.vue'
 import confirmbox from './confirmbox.vue'
 import Close from './closureHistory/close.vue'
-import Open from './closureHistory/open.vue'
 import {bus} from './eventBus.js'
 import {
     $,
@@ -105,7 +104,7 @@ export default {
                     data: 'range_end',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return Moment(data).add(1, 'day').format('DD/MM/YYYY');
+                            return Moment(data).format('DD/MM/YYYY');
                         }
                         else {
                             return '';
@@ -142,7 +141,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            ch_headers: ['Closure Start', 'Reopen', 'Closure Reason', 'Details', 'Action'],
+            ch_headers: ['Closure Start', 'Reopen On', 'Closure Reason', 'Details', 'Action'],
         }
     },
     methods: {
@@ -162,9 +161,9 @@ export default {
         },
         getAddURL: function() {
             if (this.closeCampground){
-                return api_endpoints.opencloseCG(this.object_id);
-            }else{
-                return api_endpoints.opencloseCS(this.object_id);
+                return api_endpoints.campground_booking_ranges();
+            } else {
+                return api_endpoints.campsite_booking_ranges();
             }
         },
         closureURL: function(id) {
@@ -198,7 +197,13 @@ export default {
         },
         sendData: function(url,method) {
             let vm = this;
-            var data = vm.$refs.closeModal.statusHistory;
+            var data = $.extend({}, vm.$refs.closeModal.statusHistory);
+            if (this.closeCampground) {
+                data.campground = vm.object_id;
+            } else {
+                data.campsite = vm.object_id;
+            }
+
             $.ajax({
                 url: url,
                 method: method,

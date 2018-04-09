@@ -10,6 +10,8 @@ CHECKOUT_PATH = re.compile('^/ledger/checkout/checkout')
 
 class BookingTimerMiddleware(object):
     def process_request(self, request):
+        #print((request.path, request.session.items(), request.COOKIES))
+
         if 'ps_booking' in request.session:
             try:
                 booking = Booking.objects.get(pk=request.session['ps_booking'])
@@ -36,6 +38,4 @@ class BookingTimerMiddleware(object):
                 return HttpResponseRedirect(reverse('public_make_booking'))
             else:
                 return
-            return HttpResponseRedirect(reverse('public_make_booking'))
-
         return

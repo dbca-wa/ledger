@@ -1,8 +1,5 @@
 
 module.exports = {
-    status_history:function(id){
-        return process.env.PARKSTAY_URL + "/api/campgrounds/" + id + "/status_history.json?closures=True";
-    },
     regions:process.env.PARKSTAY_URL + "/api/regions.json",
     parks:process.env.PARKSTAY_URL + "/api/parks.json",
     districts:process.env.PARKSTAY_URL + "/api/districts.json",
@@ -27,6 +24,9 @@ module.exports = {
     bulk_close:process.env.PARKSTAY_URL + "/api/campgrounds/bulk_close.json",
     campground:function (id) {
         return process.env.PARKSTAY_URL + "/api/campgrounds/"+id+".json";
+    },
+    campground_status_history: function(id){
+        return process.env.PARKSTAY_URL + "/api/campgrounds/" + id + "/status_history.json?closures=True";
     },
     campground_price_history: function(id){
         return process.env.PARKSTAY_URL + "/api/campgrounds/"+ id +"/price_history.json";
@@ -53,10 +53,10 @@ module.exports = {
     campgroundCampsites: function(id){
         return process.env.PARKSTAY_URL + "/api/campgrounds/" + id + "/campsites.json"
     },
-    opencloseCG: function(id){
-        return process.env.PARKSTAY_URL + "/api/campgrounds/" + id + "/open_close.json"
+    campground_booking_ranges: function () {
+        return process.env.PARKSTAY_URL + "/api/campground_booking_ranges.json"
     },
-    deleteBookingRange: function (id) {
+    campground_booking_ranges_detail: function (id) {
         return process.env.PARKSTAY_URL + "/api/campground_booking_ranges/" + id + ".json"
     },
     campground_status_history_detail: function(id){
@@ -77,7 +77,10 @@ module.exports = {
     campsite_current_price:function (id,start,end) {
        return process.env.PARKSTAY_URL + "/api/campsites/"+ id +"/current_price.json?arrival="+start+"&departure="+end;
     },
-    campsites_status_history:function(id){
+    campsites_current_price:function () {
+        return process.env.PARKSTAY_URL + "/api/campsites/current_price_list.json";
+     },
+    campsite_status_history:function(id){
         return process.env.PARKSTAY_URL + "/api/campsites/" + id + "/status_history.json?closures=True"
     },
     campsite:function (id) {
@@ -86,10 +89,13 @@ module.exports = {
     campsiteStayHistory: function(id){
         return process.env.PARKSTAY_URL + "/api/campsites/" + id + "/stay_history.json"
     },
-    opencloseCS: function(id){
-        return process.env.PARKSTAY_URL + "/api/campsites/" + id + "/open_close.json"
+    bulk_close_campsites: function () {
+        return process.env.PARKSTAY_URL + "/api/campsites/bulk_close.json"
     },
-    deleteCampsiteBookingRange: function (id) {
+    campsite_booking_ranges: function () {
+        return process.env.PARKSTAY_URL + "/api/campsite_booking_ranges.json"
+    },
+    campsite_booking_ranges_detail: function (id) {
         return process.env.PARKSTAY_URL + "/api/campsite_booking_ranges/" + id + ".json"
     },
     campsite_status_history_detail: function(id){
@@ -129,14 +135,14 @@ module.exports = {
     closureReasons:function () {
         return process.env.PARKSTAY_URL + "/api/closureReasons.json";
     },
-    openReasons:function () {
-        return process.env.PARKSTAY_URL + "/api/openReasons.json";
-    },
     priceReasons:function () {
         return process.env.PARKSTAY_URL + "/api/priceReasons.json";
     },
     maxStayReasons:function () {
         return process.env.PARKSTAY_URL + "/api/maxStayReasons.json";
+    },
+    discountReasons:function (){
+        return process.env.PARKSTAY_URL + "/api/discountReasons.json";
     },
     bulkPricing: function(){
         return process.env.PARKSTAY_URL + "/api/bulkPricing";
@@ -148,7 +154,7 @@ module.exports = {
     },
     booking_refunds:process.env.PARKSTAY_URL + "/api/reports/booking_refunds",
     //other
-    countries:"https://restcountries.eu/rest/v1/?fullText=true",
+    countries: process.env.PARKSTAY_URL + "/api/countries.json",
     users: process.env.PARKSTAY_URL + "/api/users.json",
     usersLookup: function (q) {
        return  encodeURI(process.env.PARKSTAY_URL + "/api/users.json?q="+q);

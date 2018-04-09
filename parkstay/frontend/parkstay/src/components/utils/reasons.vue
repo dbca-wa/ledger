@@ -45,12 +45,6 @@ export default {
         }
     },
     methods:{
-        fetchOpenReasons:function () {
-            let vm = this;
-            $.get(api_endpoints.openReasons(),function (data) {
-                vm.reasons = data;
-            });
-        },
         fetchClosureReasons:function () {
             let vm = this;
             $.get(api_endpoints.closureReasons(),function (data) {
@@ -68,6 +62,13 @@ export default {
             $.get(api_endpoints.priceReasons(),function (data) {
                 vm.reasons = data;
             });
+        },
+        fetchDiscountReasons:function (){
+            let vm = this;
+            $.get(api_endpoints.discountReasons(),function (data){
+                vm.reasons = data;
+            });
+
         }
     },
     mounted:function(){
@@ -77,15 +78,14 @@ export default {
                 case 'close':
                     vm.fetchClosureReasons();
                     break;
-                case 'open':
-                    vm.fetchOpenReasons();
-                    break;
                 case 'stay':
                     vm.fetchMaxStayReasons();
                     break;
                 case 'price':
                     vm.fetchPriceReasons();
                     break;
+                case 'discount':
+                    vm.fetchDiscountReasons();
             }
         }
     }

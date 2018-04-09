@@ -197,7 +197,7 @@ class Address(BaseAddress):
     class Meta:
         verbose_name_plural = 'addresses'
         unique_together = ('user','hash')
-        
+
 
 @python_2_unicode_compatible
 class EmailIdentity(models.Model):

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, date
+import logging
 import traceback
 from decimal import *
 import json
@@ -15,6 +16,9 @@ from ledger.payments.utils import oracle_parser,update_payments
 from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange,CampgroundStayHistory, CampsiteRate, ParkEntryRate, BookingVehicleRego)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 from parkstay.emails import send_booking_invoice,send_booking_confirmation
+from parkstay.exceptions import BindBookingException
+
+logger = logging.getLogger('booking_checkout')
 
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
@@ -89,14 +93,8 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     return booking
 
 
-def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,cost_total=0,customer=None,updating_booking=False):
-    """Create a new temporary booking in the system for a specific campsite."""
-    # get campsite
-    sites_qs = Campsite.objects.filter(pk=campsite_id)
-    campsite = sites_qs.first()
-
-    # TODO: date range check business logic
-    # TODO: number of people check? this is modifiable later, don't bother
+def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, cost_total=0, customer=None, updating_booking=False, override_checks=False):
+    """Create a new temporary booking in the system for a set of specific campsites."""
 
     # the CampsiteBooking table runs the risk of a race condition,
     # wrap all this behaviour up in a transaction
@@ -106,18 +104,22 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
         for site_id, dates in availability.items():
             if updating_booking:
                 if not all([v[0] in ['open','tooearly'] for k, v in dates.items()]):
-                    raise ValidationError('Campsite unavailable for specified time period.')
+                    raise ValidationError('Campsite(s) unavailable for specified time period.')
             else:
                 if not all([v[0] == 'open' for k, v in dates.items()]):
-                    raise ValidationError('Campsite unavailable for specified time period.')
+                    raise ValidationError('Campsite(s) unavailable for specified time period.')
 
-        # Prevent booking if max people passed
-        total_people = num_adult + num_concession + num_child + num_infant
-        if total_people > campsite.max_people:
-            raise ValidationError('Maximum number of people exceeded for the selected campsite')
-        # Prevent booking if less than min people 
-        if total_people < campsite.min_people:
-            raise ValidationError('Number of people is less than the minimum allowed for the selected campsite')
+        if not override_checks:
+            # Prevent booking if max people passed
+            total_people = num_adult + num_concession + num_child + num_infant
+            min_people = sum([cs.min_people for cs in sites_qs])
+            max_people = sum([cs.max_people for cs in sites_qs])
+
+            if total_people > max_people:
+                raise ValidationError('Maximum number of people exceeded for the selected campsite(s)')
+            # Prevent booking if less than min people 
+            if total_people < min_people:
+                raise ValidationError('Number of people is less than the minimum allowed for the selected campsite(s)')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
         booking =   Booking.objects.create(
@@ -132,16 +134,17 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                         },
                         cost_total= Decimal(cost_total),
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
-                        campground=campsite.campground,
+                        campground=sites_qs[0].campground,
                         customer = customer
                     )
-        for i in range((end_date-start_date).days):
-            cb =    CampsiteBooking.objects.create(
-                        campsite=campsite,
-                        booking_type=3,
-                        date=start_date+timedelta(days=i),
-                        booking=booking
-                    )
+        for cs in sites_qs:
+            for i in range((end_date-start_date).days):
+                cb =    CampsiteBooking.objects.create(
+                            campsite=cs,
+                            booking_type=3,
+                            date=start_date+timedelta(days=i),
+                            booking=booking
+                        )
 
     # On success, return the temporary booking
     return booking
@@ -220,7 +223,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         start = max(start_date, closure.range_start)
         end = min(end_date, closure.range_end) if closure.range_end else end_date
         today = date.today()
-        diff = (end-start).days + 1
+        diff = (end-start).days
         for i in range(diff):
             for cs in campground_map[closure.campground.pk]:
                 #results[cs][start+timedelta(days=i)][0] = 'closed'
@@ -242,7 +245,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         start = max(start_date, closure.range_start)
         end = min(end_date, closure.range_end) if closure.range_end else end_date
         today = date.today()
-        diff = (end-start).days + 1
+        diff = (end-start).days
         for i in range(diff):
             #results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
             if start+timedelta(days=i) == today:
@@ -431,6 +434,36 @@ def get_campsite_current_rate(request,campsite_id,start_date,end_date):
                 })
     return res
 
+def get_campsites_current_rate(request, campsites, start_date, end_date):
+    res = []
+    if start_date and end_date:
+        start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
+        for single_date in daterange(start_date, end_date):
+            price_history = CampsiteRate.objects.filter(campsite__in = campsites,date_start__lte=single_date).order_by('-date_start')
+            campsite_prices = {}
+            for p in price_history:
+                if p.campsite_id not in campsite_prices:
+                    campsite_prices[p.campsite_id] = p
+                else:
+                    if p.date_start > campsite_prices[p.campsite_id].date_start:
+                        campsite_prices[p.campsite_id] = p
+            if campsite_prices:
+                winning_price = campsite_prices.popitem()[1]
+                for csid, p in campsite_prices.items():
+                    if p.rate.adult < winning_price.rate.adult:
+                        winning_price = p
+            
+                rate = RateSerializer(winning_price.rate, context={'request':request}).data
+                    
+                res.append({
+                    "date" : single_date.strftime("%Y-%m-%d") ,
+                    "rate" : rate,
+                    "campsites": campsites #.values_list('id', flat=True)
+                })
+                
+    return res
+
 def get_park_entry_rate(request,start_date):
     res = []
     if start_date:
@@ -516,10 +549,15 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                 else:
                     price =  Decimal(park_entry_rate[k]) * v.count()
                     total_price += price
+    # Create line items overrude_price               
     if lines:
-        return invoice_lines
-    else:
+        total_price = booking.override_price - booking.cost_total 
+        reason = booking.override_reason
+        invoice_lines.append({'ledger_description':'{}'.format(reason), "Total": total_price, "oracle_code":booking.campground.oracle_code})
         return total_price
+    
+    if lines:
+        return invoice_lines      
 
 def check_date_diff(old_booking,new_booking):
     if old_booking.arrival == new_booking.arrival and old_booking.departure == new_booking.departure:
@@ -568,11 +606,24 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     lines = price_or_lineitems(request,booking,booking.campsite_id_list)
     booking_arrival = booking.arrival.strftime('%d-%m-%Y')
     booking_departure = booking.departure.strftime('%d-%m-%Y')
-    reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.campground.name)
+    reservation = u'Reservation for {} from {} to {} at {}'.format(
+            u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
+            booking_arrival, booking_departure, booking.campground.name)
     # Proceed to generate invoice
-    checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
-    internal_create_booking_invoice(booking, checkout_response)
 
+    checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
+
+    # FIXME: replace with session check
+    invoice = None
+    if 'invoice=' in checkout_response.url:
+        invoice = checkout_response.url.split('invoice=', 1)[1]
+    else:
+        for h in reversed(checkout_response.history):
+            if 'invoice=' in h.url:
+                invoice = h.url.split('invoice=', 1)[1]
+                break
+    
+    internal_create_booking_invoice(booking, invoice)
 
     # Get the new invoice
     new_invoice = booking.invoices.first()
@@ -652,8 +703,8 @@ def update_booking(request,old_booking,booking_details):
             # Add history
             new_history = old_booking._generate_history(user=request.user)
 
-            if request.data.get('entryFees').get('regos'):
-                new_regos = request.data['entryFees'].pop('regos')
+            if 'regos' in booking_details:
+                new_regos = booking_details['regos']
                 sent_regos = [r['rego'] for r in new_regos]
                 regos_serializers = []
                 update_regos_serializers = []
@@ -736,10 +787,10 @@ def update_booking(request,old_booking,booking_details):
             print(traceback.print_exc())
             raise
 
-def create_or_update_booking(request,booking_details,updating=False):
+def create_or_update_booking(request,booking_details,updating=False,override_checks=False):
     booking = None
     if not updating:
-        booking = create_booking_by_site(campsite_id= booking_details['campsite_id'],
+        booking = create_booking_by_site(booking_details['campsites'],
             start_date = booking_details['start_date'],
             end_date=booking_details['end_date'],
             num_adult=booking_details['num_adult'],
@@ -747,7 +798,9 @@ def create_or_update_booking(request,booking_details,updating=False):
             num_child=booking_details['num_child'],
             num_infant=booking_details['num_infant'],
             cost_total=booking_details['cost_total'],
-            customer=booking_details['customer'])
+            customer=booking_details['customer'],
+            override_checks=override_checks
+        )
         
         booking.details['first_name'] = booking_details['first_name']
         booking.details['last_name'] = booking_details['last_name']
@@ -756,10 +809,10 @@ def create_or_update_booking(request,booking_details,updating=False):
         booking.details['postcode'] = booking_details['postcode']
 
         # Add booking regos
-        if request.data.get('parkEntry').get('regos'):
-            regos = request.data['parkEntry'].pop('regos')
+        if 'regos' in booking_details:
+            regos = booking_details['regos']
             for r in regos:
-                r[u'booking'] = booking.id
+                r['booking'] = booking.id
             regos_serializers = [BookingRegoSerializer(data=r) for r in regos]
             for r in regos_serializers:
                 r.is_valid(raise_exception=True)
@@ -776,7 +829,7 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
     }
     try:
         parameters = {
-            'system': 'S019',
+            'system': settings.PS_PAYMENT_SYSTEM_ID,
             'fallback_url': request.build_absolute_uri('/'),
             'return_url': request.build_absolute_uri(reverse('public_booking_success')),
             'forceRedirect': True,
@@ -788,15 +841,15 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         }
         if not internal:
             parameters["check_url"] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
+            parameters["return_preload_url"] = request.build_absolute_uri(reverse('public_booking_success'))
         if internal or request.user.is_anonymous():
             parameters['basket_owner'] = booking.customer.id
-
 
         url = request.build_absolute_uri(
             reverse('payments:ledger-initial-checkout')
         )
         COOKIES = request.COOKIES
-        if 'ps_booking' in request.session:
+        if internal and 'ps_booking' in request.session:
             COOKIES['ps_booking_internal'] = str(request.session['ps_booking'])
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=COOKIES,
                                  data=json.dumps(parameters))
@@ -816,11 +869,7 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         e.args = (http_error_msg,)
         raise
 
-def internal_create_booking_invoice(booking, checkout_response):
-    if not checkout_response.history:
-        raise Exception('There was a problem retrieving the invoice for this booking')
-    last_redirect = checkout_response.history[-2]
-    reference = last_redirect.url.split('=')[1]
+def internal_create_booking_invoice(booking, reference):
     try:
         Invoice.objects.get(reference=reference)
     except Invoice.DoesNotExist:
@@ -833,8 +882,9 @@ def internal_booking(request,booking_details,internal=True,updating=False):
     json_booking = request.data
     booking = None
     try:
-        booking = create_or_update_booking(request,booking_details,updating)
+        booking = create_or_update_booking(request, booking_details, updating, override_checks=internal)
         with transaction.atomic():
+            #import pdb; pdb.set_trace()
             set_session_booking(request.session,booking)
             # Get line items
             booking_arrival = booking.arrival.strftime('%d-%m-%Y')
@@ -847,7 +897,18 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             # Change the type of booking
             booking.booking_type = 0
             booking.save()
-            internal_create_booking_invoice(booking, checkout_response)
+
+            # FIXME: replace with session check
+            invoice = None
+            if 'invoice=' in checkout_response.url:
+                invoice = checkout_response.url.split('invoice=', 1)[1]
+            else:
+                for h in reversed(checkout_response.history):
+                    if 'invoice=' in h.url:
+                        invoice = h.url.split('invoice=', 1)[1]
+                        break
+
+            internal_create_booking_invoice(booking, invoice)
             delete_session_booking(request.session)
             send_booking_invoice(booking)
             return booking
@@ -877,6 +938,43 @@ def delete_session_booking(session):
     if 'ps_booking' in session:
         del session['ps_booking']
         session.modified = True
+
+
+def bind_booking(request, booking, invoice_ref):
+    if booking.booking_type == 3:
+        try:
+            inv = Invoice.objects.get(reference=invoice_ref)
+        except Invoice.DoesNotExist:
+            logger.error(u'{} tried making a booking with an incorrect invoice'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user'))
+            raise BindBookingException
+
+        if inv.system not in ['0019']:
+            logger.error(u'{} tried making a booking with an invoice from another system with reference number {}'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',inv.reference))
+            raise BindBookingException
+
+        try:
+            b = BookingInvoice.objects.get(invoice_reference=invoice_ref)
+            logger.error(u'{} tried making a booking with an already used invoice with reference number {}'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',inv.reference))
+            raise BindBookingException
+        except BookingInvoice.DoesNotExist:
+            logger.info(u'{} finished temporary booking {}, creating new BookingInvoice with reference {}'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',booking.id, invoice_ref))
+            # FIXME: replace with server side notify_url callback
+            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+
+            # set booking to be permanent fixture
+            booking.booking_type = 1  # internet booking
+            booking.expiry_time = None
+            booking.save()
+
+            delete_session_booking(request.session)
+            request.session['ps_last_booking'] = booking.id
+
+            # send out the invoice before the confirmation is sent
+            send_booking_invoice(booking)
+            # for fully paid bookings, fire off confirmation email
+            if booking.paid:
+                send_booking_confirmation(booking, request)
+
 
 def daterange(start_date, end_date):
     for n in range(int ((end_date - start_date).days)):

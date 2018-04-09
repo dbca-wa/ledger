@@ -58,7 +58,7 @@ def login_retry(request):
 
 def login_expired(request):
     messages.error(request,
-                   "This sign-in link has already been used, or has expired. "
+                   "This sign-in link has expired. "
                    "Please log in again to generate a new sign-in link.")
     return bounce(request)
 

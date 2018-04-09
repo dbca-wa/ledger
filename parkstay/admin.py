@@ -113,10 +113,6 @@ class PriceReason(ReasonAdmin):
 class ClosureReason(ReasonAdmin):
     pass
 
-@admin.register(models.OpenReason)
-class OpenReason(ReasonAdmin):
-    pass
-
 @admin.register(models.OutstandingBookingRecipient)
 class OutstandingBookingRecipient(admin.ModelAdmin):
     pass
@@ -125,3 +121,4 @@ admin.site.register(models.Rate)
 admin.site.register(models.Region)
 admin.site.register(models.District)
 admin.site.register(models.PromoArea)
+admin.site.register(models.DiscountReason)
