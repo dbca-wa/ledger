@@ -211,6 +211,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             instance = org.organisation
             serializer = DetailsSerializer(instance,data=request.data)
             serializer.is_valid(raise_exception=True)
+            org.update_organisation(request)
             instance = serializer.save()
             serializer = self.get_serializer(org)
             return Response(serializer.data);
@@ -228,6 +229,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def contacts(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            instance.update_contacts(request)
             serializer = OrganisationContactSerializer(instance.contacts.all(),many=True)
             return Response(serializer.data);
         except serializers.ValidationError:
@@ -256,6 +258,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
                 organisation = instance
             )
             instance.postal_address = address
+            org.update_address(request)
             instance.save()
             serializer = self.get_serializer(org)
             return Response(serializer.data);

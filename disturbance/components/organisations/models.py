@@ -34,10 +34,6 @@ class Organisation(models.Model):
     def log_user_action(self, action, request):
         return OrganisationAction.log_action(self, action, request.user)
 
-    def log_request_user_action(self, action, request):
-        org_request = OrganisationRequest.objects.get(name=self.organisation.name)
-        return org_request.log_user_action(action, request)
-
     def validate_pins(self,pin1,pin2,request):
         val = self.pin_one == pin1 and self.pin_two == pin2
         if val:
@@ -86,10 +82,21 @@ class Organisation(models.Model):
             delegate.delete()
             # log linking
             self.log_user_action(OrganisationAction.ACTION_UNLINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
-            # log organisation linking (eg ../internal/organisations/access/2)
-            self.log_request_user_action(OrganisationRequestUserAction.ACTION_UNLINK_USER.format('{}'.format(user.get_full_name())),request)
             # send email
             send_organisation_unlink_email_notification(user,request.user,self,request)
+
+    def update_organisation(self, request):
+        # log organisation details updated (eg ../internal/organisations/access/2) - incorrect - this is for OrganisationRequesti not Organisation
+        # should be ../internal/organisations/1
+        with transaction.atomic():
+            self.log_user_action(OrganisationAction.ACTION_UPDATE_ORGANISATION, request)
+
+    def update_address(self, request):
+        self.log_user_action(OrganisationAction.ACTION_UPDATE_ADDRESS, request)
+
+    def update_contacts(self, request):
+        contact = self.contact.last()
+        self.log_user_action(OrganisationAction.ACTION_UPDATE_CONTACTS.format('{} {}({})'.format(contact.first_name, contact.last_name, contact.email)), request)
 
     def generate_pins(self):
         self.pin_one = self._generate_pin()
@@ -184,6 +191,10 @@ class OrganisationAction(UserAction):
     ACTION_ORGANISATIONAL_DETAILS_SAVED_CHANGED = "Details saved with the following changes: \n{}"
     ACTION_ORGANISATIONAL_ADDRESS_DETAILS_SAVED_NOT_CHANGED = "Address Details saved without changes"
     ACTION_ORGANISATIONAL_ADDRESS_DETAILS_SAVED_CHANGED = "Addres Details saved with folowing changes: \n{}"
+
+    ACTION_UPDATE_ORGANISATION = "Updated organisation name"
+    ACTION_UPDATE_ADDRESS = "Updated address"
+    ACTION_UPDATE_CONTACTS = "Updated contacts"
 
     @classmethod
     def log_action(cls, organisation, action, user):
@@ -329,7 +340,6 @@ class OrganisationRequestUserAction(UserAction):
     # Assessors
 
     ACTION_CONCLUDE_REQUEST = "Conclude request {}"
-    ACTION_UNLINK_USER = "User {} has been unlinked"
 
     @classmethod
     def log_action(cls, request, action, user):
