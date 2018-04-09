@@ -15,7 +15,7 @@ from disturbance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
                         send_organisation_link_email_notification,
                         send_organisation_unlink_email_notification,
-                    )
+            )
 
 @python_2_unicode_compatible
 class Organisation(models.Model):
