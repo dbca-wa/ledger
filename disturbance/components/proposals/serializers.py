@@ -351,9 +351,11 @@ class PropedDeclineSerializer(serializers.Serializer):
     cc_email = serializers.CharField(required=False)
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
-    
+    reason = serializers.SerializerMethodField()
 
     class Meta:
         model = AmendmentRequest
         fields = '__all__'
-            
+    
+    def get_reason (self,obj):
+        return obj.get_reason_display()
