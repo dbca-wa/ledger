@@ -114,7 +114,7 @@ export default {
                     }).then((response)=>{
                         //vm.$parent.loading.splice('processing contact',1);
                         swal(
-                             'Saved',
+                             'Sent',
                              'An email has been sent to applicant with the request to amend this Proposal',
                              'success'
                         );
@@ -128,6 +128,7 @@ export default {
                         },(error)=>{
                             console.log(error);
                         });
+                        vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
                      
                     },(error)=>{
                         console.log(error);

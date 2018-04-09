@@ -337,6 +337,11 @@ class Proposal(RevisionedMixin):
         else:
             return True
 
+    @property        
+    def amendment_requests(self):
+        qs =AmendmentRequest.objects.filter(proposal = self)
+        return qs
+
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
         if self.region and self.activity:
@@ -393,7 +398,7 @@ class Proposal(RevisionedMixin):
             return False
 
     def has_assessor_mode(self,user):
-        status_without_assessor = ['with_approver','approved','declined']
+        status_without_assessor = ['with_approver','approved','declined','draft']
         if self.processing_status in status_without_assessor: 
             return False
         else:
@@ -423,6 +428,13 @@ class Proposal(RevisionedMixin):
                 self.customer_status = 'with_assessor'
                 self.submitter = request.user
                 self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                if (self.amendment_requests):
+                    qs = self.amendment_requests.filter(status = "requested")
+                    if (qs):
+                        for q in qs:    
+                            q.status = 'amended'
+                            q.save()
+                        
                 self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
@@ -671,6 +683,7 @@ class Proposal(RevisionedMixin):
         from disturbance.components.compliances.models import Compliance
         today = timezone.now().date()
         timedelta = datetime.timedelta
+       
         for req in self.requirements.all():
             if req.recurrence and req.due_date > today:
                 current_date = req.due_date
@@ -690,7 +703,8 @@ class Proposal(RevisionedMixin):
                         proposal=self,
                         due_date=current_date,
                         processing_status='future',
-                        approval=approval
+                        approval=approval,
+                        requirement=req.requirement,
                     )
                     #TODO add logging for compliance
 
@@ -813,7 +827,7 @@ class ProposalRequirement(OrderedModel):
     #order = models.IntegerField(default=1)
 
     class Meta:
-        app_label = 'disturbance'
+        app_label = 'disturbance' 
 
 
     @property

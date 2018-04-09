@@ -5,15 +5,19 @@
                 <label>
                     <input :disabled="readonly" ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" />
                     {{ label }}
-                </label><i v-if="help_text" data-toggle="tooltip" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>
+                <template v-if="help_text">
+                  <HelpText :help_text="help_text" />
+                </template>
             </div>
         </div>
     </div>
 </template>
 
 <script>
+import HelpText from './help_text.vue'
 export default {
   props: ['name', 'label', 'value', 'help_text', 'conditions', "handleChange","readonly"],
+  components: {HelpText},
   computed: {
     isChecked: function() {
       return (this.value == 'on');

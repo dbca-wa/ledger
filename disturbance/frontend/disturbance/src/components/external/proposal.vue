@@ -1,6 +1,32 @@
 <template lang="html">
     <div class="container" >
         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
+          <div v-if="!proposal_readonly">
+            <div v-if="hasAmendmentRequest" class="row" style="color:red;">
+                <div class="col-lg-12 pull-right">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+
+                        <h3 class="panel-title" style="color:red;">An amendment has been requested for this Proposal
+                          <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
+                                <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                            </a>
+                        </h3>
+                      </div>
+                      <div class="panel-body collapse in" :id="pBody">
+                        <div v-for="a in amendment_request">
+                      
+                          <p>Reason: {{a.reason}}</p>
+                          <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>
+                        
+                      </div>
+                    </div>
+
+
+                  </div>
+                </div>
+              </div>
+           </div>
             <Proposal v-if="proposal" :proposal="proposal">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
@@ -23,7 +49,7 @@
 </template>
 <script>
 import Proposal from '../form.vue'
-import Vue from 'vue'
+import Vue from 'vue' 
 import {
   api_endpoints,
   helpers
@@ -35,6 +61,11 @@ export default {
       "proposal": null,
       "loading": [],
       form: null,
+      amendment_request: [],
+      proposal_readonly: true,
+      hasAmendmentRequest: false,
+      newText: "",
+      pBody: 'pBody',
     }
   },
   components: {
@@ -49,7 +80,10 @@ export default {
     },
     proposal_form_url: function() {
       return (this.proposal) ? `/api/proposal/${this.proposal.id}/draft.json` : '';
-    }
+    },
+  
+   
+    
   },
   methods: {
     save: function(e) {
@@ -60,11 +94,33 @@ export default {
             'Saved',
             'Your proposal has been saved',
             'success'
-          )
+          );
+         
+              
       },err=>{
 
       });
     },
+
+    setdata: function(readonly){
+      this.proposal_readonly = readonly;
+    },
+
+    setAmendmentData: function(amendment_request){
+      this.amendment_request = amendment_request;
+      
+      if (amendment_request.length > 0)
+        this.hasAmendmentRequest = true;
+        
+    },
+
+    splitText: function(aText){
+      let newText = '';
+      newText = aText.split("\n");
+      return newText;
+
+    },
+
     submit: function(){
         let vm = this;
         
@@ -93,22 +149,38 @@ export default {
         });
     }
   },
+
+  
+
   mounted: function() {
     let vm = this;
     vm.form = document.forms.new_proposal;
+    
   },
   beforeRouteEnter: function(to, from, next) {
     if (to.params.proposal_id) {
+      let vm = this;
       Vue.http.get(`/api/proposal/${to.params.proposal_id}.json`).then(res => {
           next(vm => {
             vm.loading.push('fetching proposal')
             vm.proposal = res.body;
             vm.loading.splice('fetching proposal', 1);
-          });
-        },
+            vm.setdata(vm.proposal.readonly);
+          
+            
+            Vue.http.get(helpers.add_endpoint_json(api_endpoints.proposals,to.params.proposal_id+'/amendment_request')).then((res) => {
+                     
+                      vm.setAmendmentData(res.body);
+                  
+                },
+              err => {
+                        console.log(err);
+                  });
+              });
+          },
         err => {
           console.log(err);
-        });
+        });    
     }
     else {
       Vue.http.post('/api/proposal.json').then(res => {

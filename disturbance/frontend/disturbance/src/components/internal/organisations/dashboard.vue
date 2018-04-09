@@ -1,5 +1,19 @@
 <template>
 <div class="container" id="internalOrgAccessDash">
+<div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+
+                <div class="panel-heading">
+                    <h3 class="panel-title">Organisation Access Requests
+                        <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
+                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                        </a>
+                    </h3>
+                </div>
+
+
+<div class="panel-body collapse in" :id="pBody">
     <div class="row">
         <div class="col-md-3">
             <div class="form-group">
@@ -31,6 +45,12 @@
     </div>
     <datatable ref="org_access_table" id="org-access-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders"></datatable>
 </div>
+</div>
+</div>
+</div>
+
+
+</div>
 </template>
 <script>
 import $ from 'jquery'
@@ -46,6 +66,7 @@ export default {
     let vm = this;
     return {
         // Filters
+        pBody: 'pBody' + vm._uid,
         filterOrganisation: 'All',
         filterApplicant : 'All',
         filterStatus: 'All',
