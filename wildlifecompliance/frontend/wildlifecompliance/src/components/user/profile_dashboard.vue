@@ -150,7 +150,6 @@ export default {
                     if(result.value) {
                         vm.deleteProfile(id,name,email);
                     } else if (result.dismiss === swal.DismissReason.cancel) {
-                        console.log('profile delete cancelled');
                         return;
                     }
 
