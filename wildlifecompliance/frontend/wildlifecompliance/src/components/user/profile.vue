@@ -444,7 +444,7 @@ export default {
             params += '&first_name=' + vm.profile.first_name;
             params += '&last_name=' + vm.profile.last_name;
             params += '&dob=' + vm.profile.dob;
-            if (vm.profile.first_name === '' || vm.profile.last_name === '' || (vm.profile.dob === null || vm.profile.dob === '')){
+            if (vm.profile.first_name == '' || vm.profile.last_name == '' || (vm.profile.dob == null || vm.profile.dob == '')){
                 let error_msg = 'Please ensure all fields are filled in.';
                 swal({
                     title: 'Update Personal Details',
@@ -452,10 +452,13 @@ export default {
                     type: 'error'
                 }).then(() => {
                     vm.updatingPersonal = false;
+                    vm.profile.personal_details = false;
                 });
                 return;
             }
-            if (vm.new_user) {
+            console.log('vm new user');
+            console.log(vm.new_user);
+            if (vm.new_user == true) {
                 swal({
                     title: "Update Personal Details",
                     html: 'If you already have a Parks and Wildlife customer account under another email address, please ' +
@@ -481,9 +484,11 @@ export default {
                                 type: 'success',
                             }).then(() => {
                                 vm.updatingPersonal = false;
+                                vm.profile.personal_details = true;
                             });
                         }, (error) => {
                             vm.updatingPersonal = false;
+                            vm.profile.personal_details = false;
                             let error_msg = '<br/>';
                             for (var key in error.body) {
                                 if (key === 'dob') {
@@ -505,6 +510,7 @@ export default {
                     }
                 }, (error) => {
                     vm.updatingPersonal = false;
+                    vm.profile.personal_details = false;
                     console.log('error final');
                     swal({
                         title: 'Update Personal Details',
@@ -522,9 +528,11 @@ export default {
                         type: 'success',
                     }).then(() => {
                         vm.updatingPersonal = false;
+                        vm.profile.personal_details = true;
                     });
                 }, (error) => {
                     vm.updatingPersonal = false;
+                    vm.profile.personal_details = false;
                     let error_msg = '<br/>';
                     for (var key in error.body) {
                         if (key === 'dob') {
