@@ -33,13 +33,18 @@ export default {
             var input = this.$refs.radioB;
             var e = document.createEvent('HTMLEvents');
             e.initEvent('change', true, true);
-            input.dispatchEvent(e);
-
-            // Hack to override dispatchEvent - event not being dispatched in Firefox
-//            var elements = $('#cons_' + input.name + '_yes');
-//            if(elements.length > 0 && elements[0].classList.contains("hidden") && input.value == 'yes') {
-//                elements[0].classList.remove("hidden");
-//            }
+            var disabledStatus = input.disabled;
+            try {
+                /* Firefox will not fire events for disabled widgets, so (temporarily) enabling them */
+                if(disabledStatus) {
+                    input.disabled = false;
+                }
+                input.dispatchEvent(e);
+            } finally {
+                if(disabledStatus) {
+                    input.disabled = true;
+                }
+            }
         }
     }
 }
