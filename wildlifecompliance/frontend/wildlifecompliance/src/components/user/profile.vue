@@ -45,7 +45,7 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Date of Birth</label>
                             <div class="col-sm-6">
-                                <input type="date" class="form-control" name="dob" placeholder="" v-model="profile.dob">
+                                <input type="date" class="form-control" name="dob" placeholder="" max="2100-12-31" v-model="profile.dob">
                             </div>
                           </div>
                           <div class="form-group">
@@ -337,6 +337,9 @@ export default {
             cBody: 'cBody'+vm._uid,
             oBody: 'oBody'+vm._uid,
             profile: {
+                first_name: '',
+                last_name: '',
+                dob: '',
                 wildlifecompliance_organisations:[],
                 residential_address : {}
             },
@@ -441,7 +444,7 @@ export default {
             params += '&first_name=' + vm.profile.first_name;
             params += '&last_name=' + vm.profile.last_name;
             params += '&dob=' + vm.profile.dob;
-            if (vm.profile.first_name === '' || vm.profile.last_name === '' || vm.profile.dob === ''){
+            if (vm.profile.first_name === '' || vm.profile.last_name === '' || (vm.profile.dob === null || vm.profile.dob === '')){
                 let error_msg = 'Please ensure all fields are filled in.';
                 swal({
                     title: 'Update Personal Details',
@@ -461,6 +464,7 @@ export default {
                         'your details.',
                     type: "question",
                     allowOutsideClick: false,
+                    allowEscapeKey: false,
                     confirmButtonText: 'Okay',
                     showCancelButton: true,
                     cancelButtonText: 'Logout',
