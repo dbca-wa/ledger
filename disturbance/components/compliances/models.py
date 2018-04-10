@@ -19,6 +19,8 @@ from ledger.licence.models import  Licence
 from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
 from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
+from disturbance.components.compliances.email import (
+                        send_compliance_accept_email_notification)
 
 class Compliance(models.Model):
 
@@ -44,6 +46,7 @@ class Compliance(models.Model):
     assigned_to = models.ForeignKey(EmailUser,related_name='disturbance_compliance_assignments',null=True,blank=True)
     requirement = models.TextField(null=True,blank=True)
     lodgement_date = models.DateField(blank=True, null=True)
+    submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_compliances')
 
     class Meta:
         app_label = 'disturbance'
@@ -69,6 +72,10 @@ class Compliance(models.Model):
         return 'C{}'.format(self.id)
 
     @property
+    def allowed_assessors(self):
+        return self.proposal.allowed_assessors
+
+    @property
     def can_user_view(self):
         """
         :return: True if the application is in one of the editable status.
@@ -81,6 +88,7 @@ class Compliance(models.Model):
                 if self.processing_status == 'future' or 'due':
                     self.processing_status = 'with_assessor'
                     self.customer_status = 'with_assessor'
+                    self.submitter = request.user
 
                     if request.FILES:
                         for f in request.FILES:
@@ -92,6 +100,29 @@ class Compliance(models.Model):
                 self.save() 
             except:
                 raise
+
+    def assign_to(self, user,request):
+        with transaction.atomic():
+            self.assigned_to = user
+            self.save()
+            self.log_user_action(ComplianceUserAction.ACTION_ASSIGN_TO.format(user.get_full_name()),request)
+
+    def unassign(self,request):
+        with transaction.atomic():
+            self.assigned_to = None 
+            self.save()
+            self.log_user_action(ComplianceUserAction.ACTION_UNASSIGN,request)
+
+    def accept(self, request):
+        with transaction.atomic():
+            self.processing_status = 'approved'
+            self.customer_status = 'approved'
+            self.save()
+            self.log_user_action(ComplianceUserAction.ACTION_CONCLUDE_REQUEST.format(self.id),request)
+            send_compliance_accept_email_notification(self,request)
+
+    def log_user_action(self, action, request):
+        return ComplianceUserAction.log_action(self, action, request.user)
 
 
 def update_proposal_complaince_filename(instance, filename):
@@ -105,3 +136,51 @@ class ComplianceDocument(Document):
 
     class Meta:
         app_label = 'disturbance'
+
+class ComplianceUserAction(UserAction):
+    ACTION_SUBMIT_REQUEST = "Submit compliance {}"
+    ACTION_ASSIGN_TO = "Assign to {}"
+    ACTION_UNASSIGN = "Unassign"
+    ACTION_DECLINE_REQUEST = "Decline request"
+    # Assessors
+
+
+
+    ACTION_CONCLUDE_REQUEST = "Conclude request {}"
+
+    @classmethod
+    def log_action(cls, compliance, action, user):
+        return cls.objects.create(
+            compliance=compliance,
+            who=user,
+            what=str(action)
+        )
+
+    compliance = models.ForeignKey(Compliance,related_name='action_logs')
+
+    class Meta:
+        app_label = 'disturbance'
+
+class ComplianceLogEntry(CommunicationsLogEntry):
+    compliance = models.ForeignKey(Compliance, related_name='comms_logs')
+
+    def save(self, **kwargs):
+        # save the request id if the reference not provided
+        if not self.reference:
+            self.reference = self.compliance.id
+        super(ComplianceLogEntry, self).save(**kwargs)
+
+    class Meta:
+        app_label = 'disturbance'
+
+def update_compliance_comms_log_filename(instance, filename):
+    return 'proposals/{}/compliance/{}/communications/{}/{}'.format(instance.log_entry.compliance.proposal.id,instance.log_entry.compliance.id,instance.id,filename)
+
+
+class ComplianceLogDocument(Document):
+    log_entry = models.ForeignKey('ComplianceLogEntry',related_name='documents')
+    _file = models.FileField(upload_to=update_compliance_comms_log_filename)
+
+    class Meta:
+        app_label = 'disturbance'
+

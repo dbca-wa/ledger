@@ -35,7 +35,10 @@ from disturbance.components.compliances.models import (
 )
 from disturbance.components.compliances.serializers import (
     ComplianceSerializer,
-    SaveComplianceSerializer
+    SaveComplianceSerializer,
+    ComplianceActionSerializer,
+    ComplianceCommsSerializer
+
 )
 
 
@@ -85,6 +88,146 @@ class ComplianceViewSet(viewsets.ModelViewSet):
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents'''
+                return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def assign_request_user(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.assign_to(request.user,request)
+            serializer = ComplianceSerializer(instance)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def assign_to(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            user_id = request.data.get('user_id',None)
+            user = None
+            if not user_id:
+                raise serializers.ValiationError('A user id is required')
+            try:
+                user = EmailUser.objects.get(id=user_id)
+            except EmailUser.DoesNotExist:
+                raise serializers.ValidationError('A user with the id passed in does not exist')
+            instance.assign_to(user,request)
+            serializer = ComplianceSerializer(instance)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def unassign(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.unassign(request)
+            serializer = (instance)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def accept(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.accept(request)
+            serializer = ComplianceSerializer(instance)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def action_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.action_logs.all()
+            serializer = ComplianceActionSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def comms_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.comms_logs.all()
+            serializer = ComplianceCommsSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def add_comms_log(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request.data['compliance'] = u'{}'.format(instance.id)
+                request.data['staff'] = u'{}'.format(request.user.id)
+                serializer = ComplianceCommsSerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+                # Save the files
+                for f in request.FILES:
+                    document = comms.documents.create()
+                    document.name = str(request.FILES[f])
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+                
                 return Response(serializer.data) 
         except serializers.ValidationError:
             print(traceback.print_exc())
