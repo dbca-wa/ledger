@@ -75,6 +75,7 @@ class UserProfileCompleted(views.APIView):
             return HttpResponseNotAllowed(['POST'])
 
         request.session['is_new'] = False
+        request.session['new_to_wildlifecompliance'] = False
         return HttpResponse('OK')
 
 

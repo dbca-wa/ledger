@@ -6,12 +6,12 @@
                     <div class="row">
                         <div class="col-sm-12">
                             <p>
-                                We have detected that this is the first time you have logged into the system.Please take a moment to provide us with your details
-                                (personal details, address details, contact details, and weather you are managing licences for an organisation).
+                                We have detected that this may be the first time you have logged into the system.Please take a moment to provide us with your details
+                                (personal details, address details, contact details, and whether you are managing licences for an organisation).
                                 Once completed, click Continue to start using the system.
                             </p>
-                            <a v-if="completedProfile" href="/" class="btn btn-primary pull-right">Continue</a>
-                            <a v-else-if="!completedProfile" disabled="disabled" class="btn btn-primary pull-right">Continue</a>
+                            <button v-if="completedProfile" @click.prevent="user_profile_completed()" class="btn btn-primary pull-right">Continue</a>
+                            <button v-else-if="!completedProfile" disabled="disabled" class="btn btn-primary pull-right">Continue</a>
                         </div>
                     </div>
                 </div>
@@ -752,6 +752,14 @@ export default {
                 });
             },(error) => {
             }); 
+        },
+        user_profile_completed: function(){
+            Vue.http.get(api_endpoints.user_profile_completed).then((response) => {
+                console.log(response);
+                window.location.href='/';
+            },(error) => {
+                console.log(error);
+            })
         },
     },
     beforeRouteEnter: function(to,from,next){

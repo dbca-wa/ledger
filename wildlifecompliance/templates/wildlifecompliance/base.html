@@ -38,6 +38,8 @@
                 <div class="row">
                     {% if request.session.is_new %}
                         <nav class="navbar navbar-default hidden">
+                    {% elif request.session.new_to_wildlifecompliance %}
+                        <nav class="navbar navbar-default hidden">
                     {% else %}
                         <nav class="navbar navbar-default">
                     {% endif %}
@@ -49,7 +51,7 @@
                                     <span class="icon-bar"></span>
                                     <span class="icon-bar"></span>
                                 </button>
-                                <a class="navbar-brand" href="{% url 'ds_home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Home</div></a>
+                                <a class="navbar-brand" href="{% url 'wc_home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Home</div></a>
                             </div>
                             <div id="navbar" class="navbar-collapse collapse">
                                 <ul class="nav navbar-nav">

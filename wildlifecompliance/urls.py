@@ -47,7 +47,7 @@ api_patterns = [
 urlpatterns = [
     url(r'^admin/', wildlifecompliance_admin_site.urls),
     url(r'', include(api_patterns)),
-    url(r'^$', views.WildlifeComplianceRoutingView.as_view(), name='ds_home'),
+    url(r'^$', views.WildlifeComplianceRoutingView.as_view(), name='wc_home'),
     url(r'^internal/', views.InternalView.as_view(), name='internal'),
     url(r'^internal/application/(?P<application_pk>\d+)/referral/(?P<referral_pk>\d+)/$', views.ReferralView.as_view(), name='internal-referral-detail'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),
