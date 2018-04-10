@@ -596,6 +596,7 @@ export default {
             }, (error) => {
                 console.log(error);
                 vm.updatingAddress = false;
+                vm.profile.address_details = false;
                 let error_msg = '<br/>';
                 for (var key in error.body) {
                     error_msg += key + ': ' + error.body[key] + '<br/>';

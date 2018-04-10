@@ -64,9 +64,18 @@ class GetUser(views.APIView):
         return Response(serializer.data)
 
 
-class GetIsNewUser(views.APIView):
+class IsNewUser(views.APIView):
     def get(self, request, format=None):
         return HttpResponse(request.session['is_new'])
+
+
+class UserProfileCompleted(views.APIView):
+    def get(self, request, format=None):
+        if not request.is_ajax() or not request.method == 'POST':
+            return HttpResponseNotAllowed(['POST'])
+
+        request.session['is_new'] = False
+        return HttpResponse('OK')
 
 
 class ProfileViewSet(viewsets.ModelViewSet):

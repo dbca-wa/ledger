@@ -34,7 +34,8 @@ router.register(r'emailidentities',users_api.EmailIdentityViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
-    url(r'^api/is_new_user$', users_api.GetIsNewUser.as_view(), name='get-is-new-user'),
+    url(r'^api/is_new_user$', users_api.IsNewUser.as_view(), name='is-new-user'),
+    url(r'^api/user_profile_completed$', users_api.UserProfileCompleted.as_view(), name='get-user-profile-completed'),
     url(r'^api/department_users$', users_api.DepartmentUserList.as_view(), name='department-users-list'),
     url(r'^api/application_type$', application_api.GetApplicationType.as_view(), name='get-application-type'),
     url(r'^api/empty_list$', application_api.GetEmptyList.as_view(), name='get-empty-list'),
