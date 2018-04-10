@@ -10,8 +10,8 @@
                                 (personal details, address details, contact details, and whether you are managing licences for an organisation).
                                 Once completed, click Continue to start using the system.
                             </p>
-                            <button v-if="completedProfile" @click.prevent="user_profile_completed()" class="btn btn-primary pull-right">Continue</a>
-                            <button v-else-if="!completedProfile" disabled="disabled" class="btn btn-primary pull-right">Continue</a>
+                            <button v-if="completedProfile" @click.prevent="user_profile_completed()" class="btn btn-primary pull-right">Continue</button>
+                            <button v-else disabled class="btn btn-primary pull-right">Complete profile to continue</button>
                         </div>
                     </div>
                 </div>
@@ -754,7 +754,8 @@ export default {
             }); 
         },
         user_profile_completed: function(){
-            Vue.http.get(api_endpoints.user_profile_completed).then((response) => {
+            let vm = this;
+            vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
                 console.log(response);
                 window.location.href='/';
             },(error) => {

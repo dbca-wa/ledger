@@ -71,9 +71,6 @@ class IsNewUser(views.APIView):
 
 class UserProfileCompleted(views.APIView):
     def get(self, request, format=None):
-        if not request.is_ajax() or not request.method == 'POST':
-            return HttpResponseNotAllowed(['POST'])
-
         request.session['is_new'] = False
         request.session['new_to_wildlifecompliance'] = False
         return HttpResponse('OK')
