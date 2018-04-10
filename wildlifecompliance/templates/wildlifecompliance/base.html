@@ -33,11 +33,14 @@
                 {% include 'wildlifecompliance/header.html' %}
             {% endblock %}
         </header>
-        {% if not request.session.is_new %}
         {% block menu %}
             <div class="container-fluid">
                 <div class="row">
-                    <nav class="navbar navbar-default">
+                    {% if request.session.is_new %}
+                        <nav class="navbar navbar-default hidden">
+                    {% else %}
+                        <nav class="navbar navbar-default">
+                    {% endif %}
                         <div class="container">
                             <div class="navbar-header">
                                 <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -112,7 +115,6 @@
                 </div>
             </div>
         {% endblock %}
-        {% endif %}
         {% block breadcrumbs %}
         {% endblock %}
         {% block messages %}

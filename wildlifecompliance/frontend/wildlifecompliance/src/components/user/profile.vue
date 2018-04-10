@@ -10,7 +10,8 @@
                                 (personal details, address details, contact details, and weather you are managing licences for an organisation).
                                 Once completed, click Continue to start using the system.
                             </p>
-                            <a :disabled="!completedProfile" href="/" class="btn btn-primary pull-right">Continue</a>
+                            <a v-if="completedProfile" href="/" class="btn btn-primary pull-right">Continue</a>
+                            <a v-else-if="!completedProfile" disabled="disabled" class="btn btn-primary pull-right">Continue</a>
                         </div>
                     </div>
                 </div>
@@ -565,6 +566,7 @@ export default {
             }, (error) => {
                 console.log(error);
                 vm.updatingContact = false;
+                vm.profile.contact_details = false;
                 let error_msg = '<br/>';
                 for (var key in error.body) {
                     error_msg += key + ': ' + error.body[key] + '<br/>';
