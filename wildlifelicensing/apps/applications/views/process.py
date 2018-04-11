@@ -86,7 +86,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
             'form_structure': application.licence_type.application_schema,
             'officers': officers,
             'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application),
-                                            posthook=format_amendment_request),
+                                            posthook=format_amendment_request,exclude=['application','applicationrequest_ptr']),
             'assessor_groups': ass_groups,
             'assessments': serialize(Assessment.objects.filter(application=application),
                                      posthook=format_assessment),
