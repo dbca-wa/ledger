@@ -1632,10 +1632,11 @@ class BookingViewSet(viewsets.ModelViewSet):
                     if booking.is_canceled:
                         bk['campground_site_type'] = ""
                     else:
-                        first_campsite = booking.first_campsite
-                        bk['campground_site_type'] = first_campsite.type if first_campsite else ""
-                        if booking.campground.site_type != 2:
-                            bk['campground_site_type'] = '{}{}'.format('{} - '.format(first_campsite.name if first_campsite else ""),'({})'.format(bk['campground_site_type'] if bk['campground_site_type'] else ""))
+                        first_campsite_list = booking.first_campsite_list    
+                        campground_site_type = ""               
+                        for item in first_campsite_list:
+                            campground_site_type += ' {}{}'.format('{} - '.format(item.name if item else ""),'({})'.format(item.type if item.type else "")) 
+                        bk['campground_site_type'] = campground_site_type
                 else:
                     bk['campground_site_type'] = ""
                 if refund_status and canceled == 't':
