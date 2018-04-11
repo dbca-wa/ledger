@@ -1676,6 +1676,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             regos = request.data['regos']
             override_price = serializer.validated_data.get('override_price', None)
             override_reason = serializer.validated_data.get('override_reason', None)
+            overridden_by = None if (override_price is None) else request.user
             try:
                 emailUser = request.data['customer']
                 customer = EmailUser.objects.get(email = emailUser['email'])
@@ -1704,8 +1705,9 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_child' : guests['child'],
                 'num_infant' : guests['infant'],
                 'cost_total' : costs['total'],
-                'override_price' : str(override_price),
+                'override_price' : override_price,
                 'override_reason' : override_reason,
+                'overridden_by': overridden_by,
                 'customer' : customer,
                 'first_name': emailUser['first_name'],
                 'last_name': emailUser['last_name'],
