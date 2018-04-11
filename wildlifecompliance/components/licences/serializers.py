@@ -54,7 +54,8 @@ class DefaultActivityTypeSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
-            'activity'
+            'activity',
+            'short_name'
         ) 
 
 class LicenceCategorySerializer(serializers.ModelSerializer):

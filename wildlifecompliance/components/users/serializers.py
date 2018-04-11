@@ -164,13 +164,15 @@ class UserSerializer(serializers.ModelSerializer):
 
 
     def get_personal_details(self,obj):
-        return True if obj.last_name  and obj.first_name else False
+        return True if obj.last_name  and obj.first_name  and obj.dob else False
 
     def get_address_details(self,obj):
         return True if obj.residential_address else False
 
     def get_contact_details(self,obj):
         if obj.mobile_number and obj.email:
+            return True
+        elif obj.phone_number and obj.email:
             return True
         elif obj.mobile_number and obj.phone_number:
             return True
@@ -180,6 +182,7 @@ class UserSerializer(serializers.ModelSerializer):
     def __init__(self,*args,**kwargs):
         super(UserSerializer, self).__init__(*args, **kwargs)
         request = self.context.get('request')
+        print(request)
         print(self.fields['email'])
         self.fields['wildlifecompliance_organisations'] = UserOrganisationSerializer(many=True,context={'request':request})
    

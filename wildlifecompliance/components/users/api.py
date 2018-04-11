@@ -56,11 +56,24 @@ class GetProfile(views.APIView):
         serializer  = UserSerializer(request.user,context={'request':request})
         return Response(serializer.data)
 
+
 class GetUser(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self, request, format=None):
         serializer  = PersonalSerializer(request.user)
         return Response(serializer.data)
+
+
+class IsNewUser(views.APIView):
+    def get(self, request, format=None):
+        return HttpResponse(request.session['is_new'])
+
+
+class UserProfileCompleted(views.APIView):
+    def get(self, request, format=None):
+        request.session['is_new'] = False
+        request.session['new_to_wildlifecompliance'] = False
+        return HttpResponse('OK')
 
 
 class ProfileViewSet(viewsets.ModelViewSet):

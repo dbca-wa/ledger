@@ -144,11 +144,17 @@ export default {
                     text: 'Are you sure you want to delete this profile, ' + name + ' (' + email + ')?',
                     type: "error",
                     showCancelButton: true,
-                    confirmButtonText: 'Accept',
+                    confirmButtonText: 'Delete',
                     focusCancel: true
-                }).then(() => {
-                    vm.deleteProfile(id,name,email);
+                }).then((result) => {
+                    if(result.value) {
+                        vm.deleteProfile(id,name,email);
+                    } else if (result.dismiss === swal.DismissReason.cancel) {
+                        return;
+                    }
+
                 },(error) => {
+                    console.log(error);
                 });
             });
         }
