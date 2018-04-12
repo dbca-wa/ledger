@@ -47,8 +47,7 @@ class DepartmentUserList(views.APIView):
             retrieve_department_users()
             data = cache.get('department_users')
         return Response(data)
-        
-        serializer  = UserSerializer(request.user)
+
 
 class GetProfile(views.APIView):
     renderer_classes = [JSONRenderer,]
@@ -88,7 +87,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
             serializer = UserSerializer(instance)
-            return Response(serializer.data);
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -127,7 +126,6 @@ class UserViewSet(viewsets.ModelViewSet):
         last_name = self.request.query_params.get('last_name', None)
         dob = self.request.query_params.get('dob', None)
         email = self.request.query_params.get('email', None)
-        print(dob)
         if first_name is not None:
             queryset = queryset.filter(first_name__iexact=first_name)
         if last_name is not None:
@@ -143,7 +141,7 @@ class UserViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             serializer = UserProfileSerializer(instance.profiles.all(),many=True)
-            return Response(serializer.data);
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -162,7 +160,7 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
             serializer = UserSerializer(instance)
-            return Response(serializer.data);
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -181,7 +179,7 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
             serializer = UserSerializer(instance)
-            return Response(serializer.data);
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -209,7 +207,7 @@ class UserViewSet(viewsets.ModelViewSet):
             instance.residential_address = address
             instance.save()
             serializer = UserSerializer(instance)
-            return Response(serializer.data);
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -236,5 +234,5 @@ class EmailIdentityViewSet(viewsets.ModelViewSet):
         if email is not None:
             queryset = queryset.filter(email__iexact=email)
         if exclude_user is not None:
-			queryset = queryset.exclude(user=exclude_user)
+            queryset = queryset.exclude(user=exclude_user)
         return queryset
