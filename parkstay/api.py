@@ -1619,6 +1619,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['regos'] = [{r.type: r.rego} for r in booking.regos.all()]
                 bk['firstname'] = booking.details.get('first_name','')
                 bk['lastname'] = booking.details.get('last_name','')
+                if  booking.override_reason:                        
+                    bk['override_reason'] = booking.override_reason.text
                 if not booking.paid:
                     bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
                 if booking.customer:

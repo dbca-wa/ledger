@@ -504,6 +504,7 @@ export default {
                 fields.splice(9,0,'Amount Due')
                 fields.splice(10,0,'Amount Paid')
                 fields.splice(22,0,'Booking Type')
+                fields.splice(23,0,'Override Reason')
                 var booking_types = {
                     0: 'Reception booking',
                     1: 'Internet booking',
@@ -608,6 +609,9 @@ export default {
                                 } else {
                                     bk[field] = booking.booking_type;
                                 }
+                            break;
+                            case 23:
+                                bk[field] = booking.override_reason;
                             break;                   
                         }
                     });
