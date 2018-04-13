@@ -20,7 +20,8 @@ from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
 from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from disturbance.components.compliances.email import (
-                        send_compliance_accept_email_notification)
+                        send_compliance_accept_email_notification,
+                        send_amendment_email_notification)
 
 class Compliance(models.Model):
 
@@ -82,6 +83,11 @@ class Compliance(models.Model):
         """
         return self.customer_status == 'with_assessor' or self.customer_status == 'approved'
 
+    @property        
+    def amendment_requests(self):
+        qs =ComplianceAmendmentRequest.objects.filter(compliance = self)
+        return qs
+
     def submit(self,request):
         with transaction.atomic():
             try:               
@@ -96,6 +102,12 @@ class Compliance(models.Model):
                             document.name = str(request.FILES[f])
                             document._file = request.FILES[f]
                             document.save()
+                    if (self.amendment_requests):
+                        qs = self.amendment_requests.filter(status = "requested")
+                        if (qs):
+                            for q in qs:    
+                                q.status = 'amended'
+                                q.save()
                 self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()   
                 self.save() 
             except:
@@ -142,6 +154,7 @@ class ComplianceUserAction(UserAction):
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"
+    ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
     # Assessors
 
 
@@ -183,4 +196,38 @@ class ComplianceLogDocument(Document):
 
     class Meta:
         app_label = 'disturbance'
+
+class CompRequest(models.Model):
+    compliance = models.ForeignKey(Compliance)
+    subject = models.CharField(max_length=200, blank=True)
+    text = models.TextField(blank=True)
+    officer = models.ForeignKey(EmailUser, null=True)
+
+    class Meta:
+        app_label = 'disturbance'
+
+class ComplianceAmendmentRequest(CompRequest):
+    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+    REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
+                      ('missing_information', 'There was missing information'),
+                      ('other', 'Other'))
+    status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
+    reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
+
+    class Meta:
+        app_label = 'disturbance'
+
+    def generate_amendment(self,request):
+        with transaction.atomic():
+          if self.status == 'requested':
+            compliance = self.compliance
+            if compliance.processing_status != 'due':
+                compliance.processing_status = 'due'
+                compliance.customer_status = 'due'
+                compliance.save()
+            # Create a log entry for the proposal
+            compliance.log_user_action(ComplianceUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+            # Create a log entry for the organisation
+            compliance.proposal.applicant.log_user_action(ComplianceUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+            send_amendment_email_notification(self,request, compliance)
 

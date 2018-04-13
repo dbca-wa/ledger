@@ -1,7 +1,30 @@
 <template>
 <div class="container" id="externalCompliance">
     <div class="row">
-        <h3><strong>Compliance with Requirement: {{ compliance.reference }}</strong></h3>
+        <div v-if="!isFinalised">
+            <div v-if="hasAmendmentRequest" class="row" style="color:red;">
+                <div class="col-lg-12 pull-right">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+
+                        <h3 class="panel-title" style="color:red;">An amendment has been requested for this Compliance with Requirements
+                          <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
+                                <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                            </a>
+                        </h3>
+                      </div>
+                      <div class="panel-body collapse in" :id="oBody">
+                        <div v-for="a in amendment_request">                      
+                          <p>Reason: {{a.reason}}</p>
+                          <p>Details: {{a.text}}</p>                        
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+           </div>
+
+        <h3><strong>Compliance with Requirements: {{ compliance.reference }}</strong></h3>
       
         
         <div class="col-md-12">
@@ -124,8 +147,11 @@ export default {
         loading: [],        
         compliance: {},
         original_compliance: {},
+        amendment_request: [],
+        hasAmendmentRequest: false,
         isFinalised: false,
         pdBody: 'pdBody'+vm._uid,
+        oBody: 'oBody'+vm._uid,
         hasDocuments: false,
         validation_form: null,
         files: [
@@ -249,6 +275,14 @@ export default {
             });
        },
 
+    setAmendmentData: function(amendment_request){
+      this.amendment_request = amendment_request;
+      
+      if (amendment_request.length > 0)
+        this.hasAmendmentRequest = true;
+        
+    },
+
     sendData:function(){
             let vm = this;
             vm.errors = false;
@@ -301,6 +335,14 @@ export default {
           
             if ( vm.compliance.customer_status == "Under Review" || vm.compliance.customer_status == "Approved" ) { vm.isFinalised = true }
             if (vm.compliance && vm.compliance.documents){ vm.hasDocuments = true}
+
+            Vue.http.get(helpers.add_endpoint_json(api_endpoints.compliances,to.params.compliance_id+'/amendment_request')).then((res) => {                     
+                      vm.setAmendmentData(res.body);                  
+                },
+              err => {
+                        console.log(err);
+                  });
+
         })
     },(error) => {
         console.log(error);

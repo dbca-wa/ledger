@@ -31,13 +31,16 @@ from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from disturbance.components.compliances.models import (
-   Compliance 
+   Compliance,
+   ComplianceAmendmentRequest
 )
 from disturbance.components.compliances.serializers import (
     ComplianceSerializer,
     SaveComplianceSerializer,
     ComplianceActionSerializer,
-    ComplianceCommsSerializer
+    ComplianceCommsSerializer,
+    ComplianceAmendmentRequestSerializer,
+
 
 )
 
@@ -176,6 +179,24 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET',])
+    def amendment_request(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.amendment_requests
+            qs = qs.filter(status = 'requested')
+            serializer = ComplianceAmendmentRequestSerializer(qs,many=True)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
     def action_log(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -238,3 +259,43 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class ComplianceAmendmentRequestViewSet(viewsets.ModelViewSet):
+    queryset = ComplianceAmendmentRequest.objects.all()
+    serializer_class = ComplianceAmendmentRequestSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data= request.data)
+            serializer.is_valid(raise_exception = True)
+            instance = serializer.save()
+            instance.generate_amendment(request)
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    
+
+class ComplianceAmendmentReasonChoicesView(views.APIView):
+    
+    renderer_classes = [JSONRenderer,]
+    def get(self,request, format=None):
+        choices_list = []
+        choices = ComplianceAmendmentRequest.REASON_CHOICES
+        if choices:
+            for c in choices:
+                choices_list.append({'key': c[0],'value': c[1]})       
+        return Response(choices_list)

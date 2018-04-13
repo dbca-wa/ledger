@@ -15,6 +15,28 @@ class ComplianceAcceptNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/compliance_accept_notification.html'
     txt_template = 'disturbance/emails/compliance_accept_notification.txt'
 
+class ComplianceAmendmentRequestSendNotificationEmail(TemplateEmailBase):
+    subject = 'An amendment to your Compliance with requirements is required.'
+    html_template = 'disturbance/emails/send_amendment_notification.html'
+    txt_template = 'disturbance/emails/send_amendment_notification.txt'
+
+def send_amendment_email_notification(amendment_request, request, compliance):
+    email = ComplianceAmendmentRequestSendNotificationEmail()
+    reason = amendment_request.get_reason_display()
+    url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
+    context = {
+        'compliance': compliance,
+        'reason': reason,
+        'amendment_request_text': amendment_request.text,
+        'url': url
+    }
+
+    msg = email.send(compliance.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_compliance_email(msg, compliance, sender=sender)
+    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
+
+
 def send_compliance_accept_email_notification(compliance,request):
     email = ComplianceAcceptNotificationEmail()
 

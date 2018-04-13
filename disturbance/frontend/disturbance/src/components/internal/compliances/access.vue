@@ -59,7 +59,7 @@
                             <div class="col-sm-12 top-buffer-s" v-if="!canViewonly && check_assessor()">
                                 <strong>Action</strong><br/>
                                 <button class="btn btn-primary" @click.prevent="acceptCompliance()">Accept</button><br/>
-                                <button class="btn btn-primary top-buffer-s" @click.prevent="">Decline</button>
+                                <button class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button>
                             </div>
                         </div>
                     </div>
@@ -105,6 +105,7 @@
             </div>
         </div>
     </div>
+    <ComplianceAmendmentRequest ref="amendment_request" :compliance_id="compliance.id"></ComplianceAmendmentRequest>
 </div>
 </template>
 <script>
@@ -112,6 +113,7 @@ import $ from 'jquery'
 import Vue from 'vue'
 import datatable from '@vue-utils/datatable.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
+import ComplianceAmendmentRequest from './compliance_amendment_request.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
   api_endpoints,
@@ -155,7 +157,8 @@ export default {
   },
   components: {
     datatable,
-    CommsLogs
+    CommsLogs,
+    ComplianceAmendmentRequest,
   },
   computed: {
     isLoading: function () {
@@ -222,6 +225,10 @@ export default {
 
         });
 
+    },
+    amendmentRequest: function(){   
+            this.$refs.amendment_request.amendment.compliance = this.compliance.id;                     
+            this.$refs.amendment_request.isModalOpen = true;
     },
     fetchProfile: function(){
         let vm = this;
