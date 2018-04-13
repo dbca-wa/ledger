@@ -679,14 +679,14 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
-    def generate_compliances(self,approval):
+    '''def generate_compliances(self,approval):
         from disturbance.components.compliances.models import Compliance
         today = timezone.now().date()
         timedelta = datetime.timedelta
        
         for req in self.requirements.all():
             if req.recurrence and req.due_date > today:
-                current_date = req.due_date
+                current_date = req.due_date                
                 for x in range(req.recurrence_schedule):
                     #Weekly
                     if req.recurrence_pattern == 1:
@@ -698,15 +698,48 @@ class Proposal(RevisionedMixin):
                     #Yearly
                     elif req.recurrence_pattern == 3:
                         current_date += timedelta(days=365)
-                    # Create the compliance
+                # Create the compliance
+                if current_date < approval.expiry_date:    
                     Compliance.objects.create(
                         proposal=self,
                         due_date=current_date,
                         processing_status='future',
+                        customer_status='future',
                         approval=approval,
                         requirement=req.requirement,
                     )
-                    #TODO add logging for compliance
+                    #TODO add logging for compliance'''
+
+    def generate_compliances(self,approval):
+        from disturbance.components.compliances.models import Compliance
+        today = timezone.now().date()
+        timedelta = datetime.timedelta
+       
+        for req in self.requirements.all():
+            if req.recurrence and req.due_date > today:
+                current_date = req.due_date
+                while current_date < approval.expiry_date:
+                    for x in range(req.recurrence_schedule):
+                    #Weekly
+                        if req.recurrence_pattern == 1:
+                            current_date += timedelta(weeks=1)
+                    #Monthly
+                        elif req.recurrence_pattern == 2:
+                            current_date += timedelta(weeks=4)
+                            pass
+                    #Yearly
+                        elif req.recurrence_pattern == 3:
+                            current_date += timedelta(days=365)
+                    # Create the compliance
+                    if current_date <= approval.expiry_date:
+                        Compliance.objects.create(
+                            proposal=self,
+                            due_date=current_date,
+                            processing_status='future',
+                            approval=approval,
+                            requirement=req.requirement,
+                        )
+
 
 class ProposalLogDocument(Document):
     log_entry = models.ForeignKey('ProposalLogEntry',related_name='documents')
