@@ -116,7 +116,7 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                responsive: true,
+                responsive: false,
                 serverSide:true,
                 processing:true,
                 searchDelay: 800,
@@ -195,13 +195,34 @@ export default {
                     {
                         data:"campground_site_type",
                         mRender:function (data,type,full) {
-                            if (data){
+                            var test = '';
+                            if (data.length==1){
+                                //var max_length = 15;
+                                //var name = (test.length > max_length) ? test.substring(0,max_length-1)+'...' : data;
+                                var name = data[0].type;
+                                var column = '<td>'+ name +'</td>';
+                                return column;
+                            } else if (data.length>1){
+                                var results = {};
+                                for (var i=0; i<data.length; i++) {
+                                    if (results[data[i].type] == undefined) {
+                                        results[data[i].type] = 0;
+                                    }
+                                    results[data[i].type] += 1;
+                                }
+                                var resultList = [];
+                                for (var index in results) {
+                                    resultList.push(`${results[index]}x ${index}`);
+                                }
+                                var resultString = resultList.join(', ');
+
                                 var max_length = 15;
-                                var name = (data.length > max_length) ? 'Multiple' : data;
-                                var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
-                                return column.replace('__NAME__', data);
-                            }                            
-                            return '';
+                                var name = 'Multiple';
+                                var column = '<td><span style="padding: 0;" class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</span></td>';
+                                return column.replace('__NAME__', resultString);
+                            } 
+                            
+                            return '<td></td>';
                         },
                         orderable:false,
                         searchable:false
@@ -656,8 +677,7 @@ export default {
         vm.fetchCampgrounds();
         vm.fetchRegions();
         vm.addEventListeners();
-        // Set the from date to todays date as default
-        vm.filterDateFrom = Moment().format('DD/MM/YYYY')
+        
     }
 
 }
