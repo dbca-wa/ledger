@@ -1635,9 +1635,12 @@ class BookingViewSet(viewsets.ModelViewSet):
                         bk['campground_site_type'] = ""
                     else:
                         first_campsite_list = booking.first_campsite_list    
-                        campground_site_type = ""               
+                        campground_site_type = []              
                         for item in first_campsite_list:
-                            campground_site_type += ' {}{}'.format('{} - '.format(item.name if item else ""),'({})'.format(item.type if item.type else "")) 
+                            campground_site_type.append ({
+                                "name": '{}'.format(item.name if item else ""),
+                                "type": '{}'.format(item.type if item.type else "")
+                                })
                         bk['campground_site_type'] = campground_site_type
                 else:
                     bk['campground_site_type'] = ""
