@@ -952,7 +952,7 @@ class Booking(models.Model):
 
     @property
     def first_campsite_list(self):
-        cbs = self.campsites.all()
+        cbs = self.campsites.distinct('campsite')
         first_campsite_list = []
         for item in cbs:
             first_campsite_list.append(item.campsite)
