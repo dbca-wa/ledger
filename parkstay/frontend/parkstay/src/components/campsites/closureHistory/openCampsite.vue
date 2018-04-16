@@ -17,11 +17,11 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label for="open_cg_range_start">Open per: </label>
+                        <label for="open_cg_range_end">Reopen on: </label>
                     </div>
                     <div class="col-md-4">
-                        <div class='input-group date' id='open_cg_range_start'>
-                            <input name="open_start" v-model="formdata.range_start" type='text' class="form-control" />
+                        <div class='input-group date' id='open_cg_range_end'>
+                            <input name="open_start" v-model="formdata.range_end" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -29,7 +29,7 @@
                     </div>
                 </div>
             </div>
-            <reason type="open" v-model="reason"></reason>
+            <reason type="close" v-model="formdata.closure_reason"></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
@@ -57,12 +57,10 @@ module.exports = {
     data: function() {
         return {
             id:'',
-            reason:'',
             current_closure: '',
             formdata: {
-                status: 0,
-                range_start: '',
-                reason:'',
+                range_end: '',
+                closure_reason:'',
                 details: ''
             },
             picker: '',
@@ -70,11 +68,6 @@ module.exports = {
             errorString: '',
             form: '',
             isOpen: false
-        }
-    },
-    watch:{
-        reason:function () {
-            this.formdata.reason = this.reason;
         }
     },
     computed: {
@@ -86,7 +79,7 @@ module.exports = {
             return this.isOpen;
         },
         requireDetails: function () {
-            return (this.formdata.reason === '1')? true: false;
+            return (this.formdata.closure_reason === '1');
         }
     },
     components: {
@@ -97,7 +90,7 @@ module.exports = {
     methods: {
         close: function() {
             this.isOpen = false;
-            this.formdata.reason = ''
+            this.formdata.closure_reason = ''
         },
         addOpen: function() {
             if (this.form.valid()){
@@ -113,13 +106,13 @@ module.exports = {
                     open_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.reason === 'other';
+                                return vm.requireDetails;
                             }
                         }
                     }
                 },
                 messages: {
-                    open_start: "Enter a start date",
+                    open_start: "Enter a reopening date",
                     open_reason: "Select an open reason from the options",
                     open_details: "Details required if Other reason is selected"
                 },
@@ -149,12 +142,12 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
-        vm.picker = $('#open_cg_range_start');
+        vm.picker = $('#open_cg_range_end');
         vm.picker.datetimepicker({
             format: 'DD/MM/YYYY'
         });
         vm.picker.on('dp.change', function(e){
-            vm.formdata.range_start = vm.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            vm.formdata.range_end = vm.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
         vm.form = $('#openCGForm');
         vm.addFormValidations();

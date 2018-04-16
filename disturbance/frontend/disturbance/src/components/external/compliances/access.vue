@@ -25,6 +25,7 @@
            </div>
 
         <h3><strong>Compliance with Requirements: {{ compliance.reference }}</strong></h3>
+
       
         
         <div class="col-md-12">
@@ -152,6 +153,8 @@ export default {
         isFinalised: false,
         pdBody: 'pdBody'+vm._uid,
         oBody: 'oBody'+vm._uid,
+        isFinalised: false,
+        pdBody: 'pdBody'+vm._uid,
         hasDocuments: false,
         validation_form: null,
         files: [
@@ -275,6 +278,7 @@ export default {
             });
        },
 
+
     setAmendmentData: function(amendment_request){
       this.amendment_request = amendment_request;
       
@@ -282,6 +286,7 @@ export default {
         this.hasAmendmentRequest = true;
         
     },
+
 
     sendData:function(){
             let vm = this;
@@ -342,6 +347,7 @@ export default {
               err => {
                         console.log(err);
                   });
+
 
         })
     },(error) => {

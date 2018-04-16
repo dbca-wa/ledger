@@ -73,7 +73,7 @@
                             <label for="" class="col-sm-3 control-label" >Country</label>
                             <div class="col-sm-4">
                                 <select class="form-control" name="country" v-model="profile.residential_address.country">
-                                    <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
+                                    <option v-for="c in countries" :value="c.iso_3166_1_a2">{{ c.printable_name }}</option>
                                 </select>
                             </div>
                           </div>

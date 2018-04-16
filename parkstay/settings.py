@@ -91,7 +91,11 @@ LOGGING['loggers']['booking_checkout'] = {
             'level': 'INFO'
         }
 
-CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','parkstaybookings@dbca.wa.gov.au')
+EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
+DEFAULT_FROM_EMAIL = EMAIL_FROM
+PS_PAYMENT_SYSTEM_ID = env('PS_PAYMENT_SYSTEM_ID', 'S019')
+if not VALID_SYSTEMS:
+    VALID_SYSTEMS = [PS_PAYMENT_SYSTEM_ID]
 EXPLORE_PARKS_URL = env('EXPLORE_PARKS_URL','https://parks-oim.dpaw.wa.gov.au')
 PARKSTAY_EXTERNAL_URL = env('PARKSTAY_EXTERNAL_URL','https://parkstay.dbca.wa.gov.au')
 DEV_STATIC = env('DEV_STATIC',False)

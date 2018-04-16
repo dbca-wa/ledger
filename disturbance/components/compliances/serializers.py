@@ -22,6 +22,7 @@ class ComplianceSerializer(serializers.ModelSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
     allowed_assessors = EmailUserSerializer(many=True)
 
+
     class Meta:
         model = Compliance
         fields = (
@@ -44,6 +45,9 @@ class ComplianceSerializer(serializers.ModelSerializer):
             'lodgement_date',
             'submitter',
             'allowed_assessors'
+
+            'lodgement_date'
+
         )
 
     def get_documents(self,obj):
@@ -55,9 +59,8 @@ class SaveComplianceSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'title',
-            'text',
-            
-          
+            'text',        
+         
         )
 
 class ComplianceActionSerializer(serializers.ModelSerializer):
@@ -83,3 +86,4 @@ class ComplianceAmendmentRequestSerializer(serializers.ModelSerializer):
     
     def get_reason (self,obj):
         return obj.get_reason_display()
+

@@ -1,5 +1,6 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser, Address
+from ledger.address.models import Country
 from parkstay.models import (   CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
                                 Rate,
@@ -22,9 +23,9 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 Contact,
                                 CampgroundImage,
                                 ClosureReason,
-                                OpenReason,
                                 PriceReason,
                                 MaximumStayReason,
+                                DiscountReason,
                                 CampgroundStayHistory,
                                 ParkEntryRate,
                                 BookingVehicleRego,
@@ -72,8 +73,9 @@ class BookingRangeSerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
     range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
     range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
+    status_name = serializers.SerializerMethodField()
 
-    def get_status(self, obj):
+    def get_status_name(self, obj):
         return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
 
     def __init__(self, *args, **kwargs):
@@ -86,12 +88,8 @@ class BookingRangeSerializer(serializers.ModelSerializer):
         except:
             original = False;
         super(BookingRangeSerializer, self).__init__(*args, **kwargs)
-        if method == 'post':
-            self.fields['status'] = serializers.ChoiceField(choices=BookingRange.BOOKING_RANGE_CHOICES)
-        elif method == 'get':
-            if not original:
-                self.fields['status'] = serializers.SerializerMethodField()
-            else:
+        if method == 'get':
+            if original:
                 self.fields['range_start'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
                 self.fields['range_end'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'],required=False)
 
@@ -102,8 +100,8 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
         fields = (
             'id',
             'status',
+            'status_name',
             'closure_reason',
-            'open_reason',
             'range_start',
             'range_end',
             'reason',
@@ -113,9 +111,10 @@ class CampgroundBookingRangeSerializer(BookingRangeSerializer):
             'updated_on'
         )
         read_only_fields = ('reason',)
-        write_only_fields = (
-            'campground'
-        )
+        write_only_fields = ('campground',)
+
+    def __init__(self, *args, **kwargs):
+        super(CampgroundBookingRangeSerializer, self).__init__(*args, **kwargs)
 
 class CampsiteBookingRangeSerializer(BookingRangeSerializer):
 
@@ -124,19 +123,18 @@ class CampsiteBookingRangeSerializer(BookingRangeSerializer):
         fields = (
             'id',
             'status',
+            'status_name',
             'closure_reason',
-            'open_reason',
             'range_start',
             'range_end',
             'reason',
             'details',
             'editable',
-            'campsite'
+            'campsite',
+            'updated_on'
         )
         read_only_fields = ('reason',)
-        write_only_fields = (
-            'campsite'
-        )
+        write_only_fields = ('campsite',)
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
@@ -241,6 +239,7 @@ class CampgroundDatatableSerializer(serializers.ModelSerializer):
             'ratis_id',
             'active',
             'current_closure',
+            'current_closure_id',
             'campground_type'
         )
 
@@ -282,7 +281,8 @@ class CampgroundSerializer(serializers.ModelSerializer):
             'images',
             'max_advance_booking',
             'oracle_code',
-            'campground_map'
+            'campground_map',
+            'additional_info'
         )
 
     def get_site_type(self, obj):
@@ -346,6 +346,7 @@ class CampsiteStayHistorySerializer(serializers.ModelSerializer):
         super(CampsiteStayHistorySerializer, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['reason'] = serializers.CharField(source='reason.text')
+
 class CampgroundStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
     range_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
@@ -368,7 +369,7 @@ class CampsiteSerialiser(serializers.ModelSerializer):
     name = serializers.CharField(default='default',required=False)
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tent','campervan','caravan','min_people','max_people','description',)
+        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure', 'current_closure_id', 'can_add_rate','tent','campervan','caravan','min_people','max_people','description',)
 
     def __init__(self, *args, **kwargs):
         try:
@@ -443,8 +444,8 @@ class BookingSerializer(serializers.ModelSerializer):
     regos = BookingRegoSerializer(many=True,read_only=True)
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
-        read_only_fields = ('vehicle_payment_status','refund_status')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','override_price','override_reason','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
+        read_only_fields = ('vehicle_payment_status','refund_status','campground_name','campground_region','campground_site_type')
 
 
     def get_invoices(self,obj):
@@ -576,11 +577,6 @@ class ClosureReasonSerializer(serializers.ModelSerializer):
         model = ClosureReason
         fields = ('id','text')
 
-class OpenReasonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OpenReason
-        fields = ('id','text')
-
 class PriceReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = PriceReason
@@ -590,6 +586,11 @@ class MaximumStayReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaximumStayReason
         fields = ('id','text')
+
+class DiscountReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DiscountReason
+        fields = ('id', 'text')
 
 class AccountsAddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -677,6 +678,18 @@ class BookingHistorySerializer(serializers.ModelSerializer):
             'vehicles'
         )
 
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = (
+            'iso_3166_1_a2',
+            'printable_name',
+            'name',
+            'display_order'
+        )
+
+
 # User Serializers
 # --------------------------
 class UserAddressSerializer(serializers.ModelSerializer):
@@ -690,6 +703,13 @@ class UserAddressSerializer(serializers.ModelSerializer):
             'country',
             'postcode'
         ) 
+
+    def validate(self, obj):
+        print('UHHHH')
+        if not obj.get('state'):
+            raise serializers.ValidationError('State is required.')
+        return obj
+
 
 class UserSerializer(serializers.ModelSerializer):
     residential_address = UserAddressSerializer()
@@ -713,6 +733,21 @@ class PersonalSerializer(serializers.ModelSerializer):
             'last_name',
             'first_name',
         )
+
+class PhoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'phone_number',
+            'mobile_number',
+        )
+
+    def validate(self, obj):
+        if not obj.get('phone_number') and not obj.get('mobile_number'):
+            raise serializers.ValidationError('You must provide a mobile/phone number')
+        return obj
+
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:

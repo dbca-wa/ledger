@@ -2,6 +2,7 @@
 .env
 venv/
 venv2/
+node_modules/
 cronjobs
 
 # Byte-compiled / optimized / DLL files
@@ -90,3 +91,11 @@ importo.py
 
 *.djcache
 uwsgi.ini
+<<<<<<< HEAD
+=======
+
+disturbance/static/disturbance_vue/static/css/app.css
+disturbance/static/disturbance_vue/static/js/app.js
+disturbance/static/disturbance_vue/static/js/manifest.js
+disturbance/static/disturbance_vue/static/js/vendor.js
+>>>>>>> upstream/disturbance_v3

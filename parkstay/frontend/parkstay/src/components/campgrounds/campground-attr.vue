@@ -144,7 +144,7 @@
 										<div class="col-md-12">
 											<div class="form-group">
 												<label class="control-label" >Additional confirmation information</label>
-												<div id="additional_info" class="form-control"></div>
+												<textarea id="additional_info" class="form-control" v-model="campground.additional_info"/>
 											</div>
 										</div>
 									</div>
@@ -306,7 +306,7 @@ export default {
         },
 		validateForm:function () {
 			let vm = this;
-			var isValid = vm.validateEditor();
+			var isValid = vm.validateEditor($('#editor'));
             return  vm.form.valid() && isValid;
 		},
         create: function() {
@@ -319,16 +319,15 @@ export default {
 				this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
 			}
         },
-        validateEditor: function(){
+        validateEditor: function(el){
             let vm = this;
-            var el = $('#editor');
 			if (el.parents('.form-group').hasClass('has-error')) {
-				$(el).tooltip("destroy");
-				$(el).attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+				el.tooltip("destroy");
+				el.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
 			}
             if (vm.editor.getText().trim().length == 0){
                 // add or update tooltips
-                $(el).tooltip({
+                el.tooltip({
                         trigger: "focus"
                     })
                     .attr("data-original-title", 'Description is required')
@@ -512,19 +511,10 @@ export default {
         });
         vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
         vm.editor.on('text-change', function(delta, oldDelta, source) {
-
             var text = $('#editor >.ql-editor').html();
             vm.campground.description = text;
-			vm.validateEditor();
+			vm.validateEditor($('#editor'));
         });
-
-        vm.editor=new Editor('#additional_info',{
-            modules:{
-                toolbar:true
-            },
-            theme: 'snow'
-        });
-        vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.additional_info, 'api');
         
         vm.form = $('#attForm');
         vm.addFormValidations();
@@ -536,8 +526,12 @@ export default {
     },
     updated: function() {
         let vm = this;
+        var changed = false;
         if (vm.campground.description != null && vm.editor_updated == false) {
             vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
+            changed = true;
+        }
+        if (changed) {
             vm.editor_updated = true;
         }
     }

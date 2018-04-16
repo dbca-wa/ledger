@@ -36,7 +36,7 @@ def outstanding_bookings():
         email = EmailMessage(
             'Unpaid Bookings Summary as at {}'.format(dt),
             'Unpaid Bookings as at {}'.format(dt),
-            settings.DEFAULT_FROM_EMAIL,
+            settings.EMAIL_FROM,
             to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
         )
         email.attach('OustandingBookings_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
@@ -184,10 +184,12 @@ def bookings_report(_date):
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
 
+        types = dict(Booking.BOOKING_TYPE_CHOICES)
+
         for b in bookings:
             b_name = u'{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
             created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-            writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name.encode('utf-8'),b.active_invoice.amount if b.active_invoice else '',b.active_invoice.reference if b.active_invoice else '',b.booking_type])
+            writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name.encode('utf-8'),b.active_invoice.amount if b.active_invoice else '',b.active_invoice.reference if b.active_invoice else '', types[b.booking_type] if b.booking_type in types else b.booking_type])
 
         #for b in history_bookings:
         #    b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))

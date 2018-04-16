@@ -15,7 +15,7 @@ from disturbance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
                         send_organisation_link_email_notification,
                         send_organisation_unlink_email_notification,
-                    )
+            )
 
 @python_2_unicode_compatible
 class Organisation(models.Model):
@@ -84,6 +84,19 @@ class Organisation(models.Model):
             self.log_user_action(OrganisationAction.ACTION_UNLINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
             send_organisation_unlink_email_notification(user,request.user,self,request)
+
+    def update_organisation(self, request):
+        # log organisation details updated (eg ../internal/organisations/access/2) - incorrect - this is for OrganisationRequesti not Organisation
+        # should be ../internal/organisations/1
+        with transaction.atomic():
+            self.log_user_action(OrganisationAction.ACTION_UPDATE_ORGANISATION, request)
+
+    def update_address(self, request):
+        self.log_user_action(OrganisationAction.ACTION_UPDATE_ADDRESS, request)
+
+    def update_contacts(self, request):
+        contact = self.contact.last()
+        self.log_user_action(OrganisationAction.ACTION_UPDATE_CONTACTS.format('{} {}({})'.format(contact.first_name, contact.last_name, contact.email)), request)
 
     def generate_pins(self):
         self.pin_one = self._generate_pin()
@@ -179,6 +192,10 @@ class OrganisationAction(UserAction):
     ACTION_ORGANISATIONAL_ADDRESS_DETAILS_SAVED_NOT_CHANGED = "Address Details saved without changes"
     ACTION_ORGANISATIONAL_ADDRESS_DETAILS_SAVED_CHANGED = "Addres Details saved with folowing changes: \n{}"
 
+    ACTION_UPDATE_ORGANISATION = "Updated organisation name"
+    ACTION_UPDATE_ADDRESS = "Updated address"
+    ACTION_UPDATE_CONTACTS = "Updated contacts"
+
     @classmethod
     def log_action(cls, organisation, action, user):
         return cls.objects.create(
@@ -203,7 +220,6 @@ class OrganisationLogDocument(Document):
     class Meta:
         app_label = 'disturbance'
 
-
     
 class OrganisationLogEntry(CommunicationsLogEntry):
     organisation = models.ForeignKey(Organisation, related_name='comms_logs')
@@ -216,6 +232,7 @@ class OrganisationLogEntry(CommunicationsLogEntry):
 
     class Meta:
         app_label = 'disturbance'
+
 
 class OrganisationRequest(models.Model):
     STATUS_CHOICES = (
@@ -321,8 +338,6 @@ class OrganisationRequestUserAction(UserAction):
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"
     # Assessors
-
-
 
     ACTION_CONCLUDE_REQUEST = "Conclude request {}"
 

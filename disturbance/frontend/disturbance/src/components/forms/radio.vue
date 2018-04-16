@@ -33,7 +33,18 @@ export default {
             var input = this.$refs.radioB;
             var e = document.createEvent('HTMLEvents');
             e.initEvent('change', true, true);
-            input.dispatchEvent(e);
+            var disabledStatus = input.disabled;
+            try {
+                /* Firefox will not fire events for disabled widgets, so (temporarily) enabling them */
+                if(disabledStatus) {
+                    input.disabled = false;
+                }
+                input.dispatchEvent(e);
+            } finally {
+                if(disabledStatus) {
+                    input.disabled = true;
+                }
+            }
         }
     }
 }

@@ -12,6 +12,7 @@ router = routers.DefaultRouter()
 router.register(r'campground_map', api.CampgroundMapViewSet)
 router.register(r'campground_map_filter', api.CampgroundMapFilterViewSet)
 router.register(r'availability', api.AvailabilityViewSet, 'availability')
+router.register(r'availability_admin', api.AvailabilityAdminViewSet)
 router.register(r'availability_ratis', api.AvailabilityRatisViewSet, 'availability_ratis')
 router.register(r'campgrounds', api.CampgroundViewSet)
 router.register(r'campsites', api.CampsiteViewSet)
@@ -31,14 +32,18 @@ router.register(r'campsites_stay_history',api.CampsiteStayHistoryViewSet)
 router.register(r'campground_stay_history',api.CampgroundStayHistoryViewSet)
 router.register(r'rates',api.RateViewset)
 router.register(r'closureReasons',api.ClosureReasonViewSet)
-router.register(r'openReasons',api.OpenReasonViewSet)
 router.register(r'priceReasons',api.PriceReasonViewSet)
 router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
 router.register(r'users',api.UsersViewSet)
 router.register(r'contacts',api.ContactViewSet)
+router.register(r'countries', api.CountryViewSet)
+router.register(r'discountReasons',api.DiscountReasonViewset)
 
 api_patterns = [
     url(r'^api/profile$',api.GetProfile.as_view(), name='get-profile'),
+    url(r'^api/profile/update_personal$',api.UpdateProfilePersonal.as_view(), name='update-profile-personal'),
+    url(r'^api/profile/update_contact$',api.UpdateProfileContact.as_view(), name='update-profile-contact'),
+    url(r'^api/profile/update_address$',api.UpdateProfileAddress.as_view(), name='update-profile-address'),
     url(r'^api/oracle_job$',api.OracleJob.as_view(), name='get-oracle'),
     url(r'^api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),
     url(r'^api/search_suggest', api.search_suggest, name='search_suggest'),
@@ -54,10 +59,11 @@ api_patterns = [
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'', include(api_patterns)),
-    url(r'^account/', views.AccountView.as_view(), name='account'),
+    url(r'^account/', views.ProfileView.as_view(), name='account'),
     url(r'^$', views.ParkstayRoutingView.as_view(), name='ps_home'),
     url(r'^campsites/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^availability/$', views.CampsiteAvailabilitySelector.as_view(), name='campsite_availaiblity_selector'),
+    url(r'^availability_admin/$', views.AvailabilityAdmin.as_view(), name='availability_admin'),
     #url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.CampgroundFeed(), name='campground_calendar'),
     url(r'^dashboard/campgrounds$', views.DashboardView.as_view(), name='dash-campgrounds'),
     url(r'^dashboard/campsite-types$', views.DashboardView.as_view(), name='dash-campsite-types'),

@@ -49,6 +49,7 @@ class Compliance(models.Model):
     lodgement_date = models.DateField(blank=True, null=True)
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_compliances')
 
+
     class Meta:
         app_label = 'disturbance'
 
@@ -83,10 +84,12 @@ class Compliance(models.Model):
         """
         return self.customer_status == 'with_assessor' or self.customer_status == 'approved'
 
+
     @property        
     def amendment_requests(self):
         qs =ComplianceAmendmentRequest.objects.filter(compliance = self)
         return qs
+
 
     def submit(self,request):
         with transaction.atomic():
@@ -112,6 +115,7 @@ class Compliance(models.Model):
                 self.save() 
             except:
                 raise
+
 
     def assign_to(self, user,request):
         with transaction.atomic():
@@ -231,3 +235,16 @@ class ComplianceAmendmentRequest(CompRequest):
             compliance.proposal.applicant.log_user_action(ComplianceUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
             send_amendment_email_notification(self,request, compliance)
 
+
+def update_proposal_complaince_filename(instance, filename):
+    return 'proposals/{}/compliance/{}/{}'.format(instance.compliance.proposal.id,instance.compliance.id,filename)
+
+
+
+class ComplianceDocument(Document):
+    compliance = models.ForeignKey('Compliance',related_name='documents')
+    _file = models.FileField(upload_to=update_proposal_complaince_filename)
+
+
+    class Meta:
+        app_label = 'disturbance'

@@ -11,6 +11,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django import forms
 from parkstay.forms import LoginForm, MakeBookingsForm, AnonymousMakeBookingsForm, VehicleInfoFormset
+from parkstay.exceptions import BindBookingException
 from parkstay.models import (Campground,
                                 CampsiteBooking,
                                 Campsite,
@@ -27,7 +28,6 @@ from parkstay.models import (Campground,
                                 CampsiteRate,
                                 ParkEntryRate
                                 )
-from parkstay import emails
 from ledger.accounts.models import EmailUser, Address
 from ledger.payments.models import Invoice
 from django_ical.views import ICalFeed
@@ -56,6 +56,8 @@ class CampsiteAvailabilitySelector(TemplateView):
                 context['ground_id'] = cg.first().id
         return render(request, self.template_name, context)
 
+class AvailabilityAdmin(TemplateView):
+    template_name = 'ps/availability_admin.html'
 
 class CampgroundFeed(ICalFeed):
     timezone = 'UTC+8'
@@ -290,6 +292,7 @@ class MakeBookingsView(TemplateView):
                 booking.campground.name
         )
         
+        logger.info(u'{} built booking {} and handing over to payment gateway'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',booking.id))
 
         response = utils.checkout(request, booking, lines, invoice_text=reservation)
         result =  HttpResponse(
@@ -314,44 +317,13 @@ class BookingSuccessView(TemplateView):
             booking = utils.get_session_booking(request.session)
             invoice_ref = request.GET.get('invoice')
             
-            if booking.booking_type == 3:
-                try:
-                    inv = Invoice.objects.get(reference=invoice_ref)
-                except Invoice.DoesNotExist:
-                    logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
-                    return redirect('public_make_booking')
-
-                if inv.system not in ['0019']:
-                    logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
-                    return redirect('public_make_booking')
-
-                try:
-                    b = BookingInvoice.objects.get(invoice_reference=invoice_ref)
-                    logger.error('{} tried making a booking with an already used invoice with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
-                    return redirect('public_make_booking')
-                except BookingInvoice.DoesNotExist:
-
-                    # FIXME: replace with server side notify_url callback
-                    book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-
-                    # set booking to be permanent fixture
-                    booking.booking_type = 1  # internet booking
-                    booking.expiry_time = None
-                    booking.save()
-
-                    utils.delete_session_booking(request.session)
-                    request.session['ps_last_booking'] = booking.id
-
-                    # send out the invoice before the confirmation is sent
-                    emails.send_booking_invoice(booking)
-                    # for fully paid bookings, fire off confirmation email
-                    if booking.paid:
-                        emails.send_booking_confirmation(booking,request) 
-
+            try:
+                utils.bind_booking(request, booking, invoice_ref)
+            except BindBookingException:
+                return redirect('public_make_booking')
+            
         except Exception as e:
-            if 'ps_booking_internal' in request.COOKIES:
-                return redirect('home')
-            elif ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
+            if ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
                 booking = Booking.objects.get(id=request.session['ps_last_booking'])
             else:
                 return redirect('home')
@@ -391,5 +363,5 @@ class ParkstayRoutingView(TemplateView):
 class MapView(TemplateView):
     template_name = 'ps/map.html'
 
-class AccountView(LoginRequiredMixin,TemplateView):
-    template_name = 'ps/dash/dash_tables_campgrounds.html'
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'ps/profile.html'

@@ -60,7 +60,9 @@ def validSystem(system_id):
     ''' Check if the system is in the itsystems register.
     :return: Boolean
     '''
-    if settings.CMS_URL:
+    if settings.VALID_SYSTEMS:
+        return system_id in settings.VALID_SYSTEMS
+    elif settings.CMS_URL:
         # TODO: prefetch whole systems register list, store in django cache, use that instead of doing a GET request every time
         res = requests.get('{}?system_id={}'.format(settings.CMS_URL,system_id), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
         try:
@@ -72,7 +74,7 @@ def validSystem(system_id):
         except:
             raise
     else:
-        logger.warn('CMS_URL not set, ledger.payments.utils.validSystem will always return true')
+        logger.warn('VALID_SYSTEMS or CMS_URL not set, ledger.payments.utils.validSystem will always return true')
         return True
 
 def calculate_excl_gst(amount):
@@ -232,7 +234,7 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
             email = EmailMessage(
                 'Oracle Interface for {} for transactions received on {}'.format(system_name,dt),
                 'Oracle Interface Summary File for {} for transactions received on {}'.format(system_name,dt),
-                settings.DEFAULT_FROM_EMAIL,
+                settings.EMAIL_FROM,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
             )
             email.attach('OracleInterface_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
@@ -242,7 +244,7 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
             subject = 'Oracle Interface Error for {} for transactions received on {}'.format(system_name,dt)
             email = EmailMessage(subject,
                 'There was an error in generating a summary report for the oracle interface parser for transactions processed on {}.Please refer to the following log output:\n\n\n{}'.format(today,error_string),
-                settings.DEFAULT_FROM_EMAIL,
+                settings.EMAIL_FROM,
                 to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
             )
 
@@ -652,7 +654,7 @@ def update_payments(invoice_reference):
                 for b in i.bpoint_transactions:
                     if b.payment_allocated < b.amount and b.action == 'payment':
                         if first_item.payment_details['card'].get(str(b.id)):
-                             first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated))
+                            first_item.payment_details['card'][str(b.id)] = str(D(first_item.payment_details['card'][str(b.id)]) + (b.amount - b.payment_allocated))
                         else:
                             first_item.payment_details['card'][str(b.id)] = str(b.amount - b.payment_allocated)
                 # Bpay

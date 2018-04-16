@@ -165,22 +165,38 @@ class Proposal(RevisionedMixin):
     # List of statuses from above that allow a customer to view an application (read-only)
     CUSTOMER_VIEWABLE_STATE = ['with_assessor', 'under_review', 'id_required', 'returns_required', 'approved', 'declined']
 
-    PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), 
-                                 ('draft', 'Draft'), 
-                                 ('with_assessor', 'With Assessor'),
-                                 ('with_referral', 'With Referral'),
-                                 ('with_assessor_requirements', 'With Assessor (Requirements)'),
-                                 ('with_approver', 'With Approver'),
-                                 ('renewal', 'Renewal'),
-                                 ('licence_amendment', 'Licence Amendment'), 
-                                 ('awaiting_applicant_response', 'Awaiting Applicant Response'),
-                                 ('awaiting_assessor_response', 'Awaiting Assessor Response'),
-                                 ('awaiting_responses', 'Awaiting Responses'),
-                                 ('ready_for_conditions', 'Ready for Conditions'),
-                                 ('ready_to_issue', 'Ready to Issue'),
-                                 ('approved', 'Approved'),
-                                 ('declined', 'Declined'),
-                                 ('discarded', 'Discarded'),
+    PROCESSING_STATUS_TEMP = 'temp'
+    PROCESSING_STATUS_DRAFT = 'draft'
+    PROCESSING_STATUS_WITH_ASSESSOR = 'with_assessor'
+    PROCESSING_STATUS_WITH_REFERRAL = 'with_referral'
+    PROCESSING_STATUS_WITH_ASSESSOR_REQUIREMENTS = 'with_assessor_requirements'
+    PROCESSING_STATUS_WITH_APPROVER = 'with_approver'
+    PROCESSING_STATUS_RENEWAL = 'renewal'
+    PROCESSING_STATUS_LICENCE_AMENDMENT = 'licence_amendment'
+    PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE = 'awaiting_applicant_response'
+    PROCESSING_STATUS_AWAITING_ASSESSOR_RESPONSE = 'awaiting_assessor_response'
+    PROCESSING_STATUS_AWAITING_RESPONSES = 'awaiting_responses'
+    PROCESSING_STATUS_READY_FOR_CONDITIONS = 'ready_for_conditions'
+    PROCESSING_STATUS_READY_TO_ISSUE = 'ready_to_issue'
+    PROCESSING_STATUS_APPROVED = 'approved'
+    PROCESSING_STATUS_DECLINED = 'declined'
+    PROCESSING_STATUS_DISCARDED = 'discarded'
+    PROCESSING_STATUS_CHOICES = ((PROCESSING_STATUS_TEMP, 'Temporary'), 
+                                 (PROCESSING_STATUS_DRAFT, 'Draft'), 
+                                 (PROCESSING_STATUS_WITH_ASSESSOR, 'With Assessor'),
+                                 (PROCESSING_STATUS_WITH_REFERRAL, 'With Referral'),
+                                 (PROCESSING_STATUS_WITH_ASSESSOR_REQUIREMENTS, 'With Assessor (Requirements)'),
+                                 (PROCESSING_STATUS_WITH_APPROVER, 'With Approver'),
+                                 (PROCESSING_STATUS_RENEWAL, 'Renewal'),
+                                 (PROCESSING_STATUS_LICENCE_AMENDMENT, 'Licence Amendment'), 
+                                 (PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE, 'Awaiting Applicant Response'),
+                                 (PROCESSING_STATUS_AWAITING_ASSESSOR_RESPONSE, 'Awaiting Assessor Response'),
+                                 (PROCESSING_STATUS_AWAITING_RESPONSES, 'Awaiting Responses'),
+                                 (PROCESSING_STATUS_READY_FOR_CONDITIONS, 'Ready for Conditions'),
+                                 (PROCESSING_STATUS_READY_TO_ISSUE, 'Ready to Issue'),
+                                 (PROCESSING_STATUS_APPROVED, 'Approved'),
+                                 (PROCESSING_STATUS_DECLINED, 'Declined'),
+                                 (PROCESSING_STATUS_DISCARDED, 'Discarded'),
                                  )
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
@@ -546,6 +562,12 @@ class Proposal(RevisionedMixin):
             if self.processing_status != status:
                 self.processing_status = status
                 self.save()
+
+                # Create a log entry for the proposal
+                if self.processing_status == self.PROCESSING_STATUS_WITH_ASSESSOR:
+                    self.log_user_action(ProposalUserAction.ACTION_BACK_TO_PROCESSING.format(self.id),request)
+                elif self.processing_status == self.PROCESSING_STATUS_WITH_ASSESSOR_REQUIREMENTS:
+                    self.log_user_action(ProposalUserAction.ACTION_ENTER_REQUIREMENTS.format(self.id),request)
         else:
             raise ValidationError('The provided status cannot be found.')
 
@@ -899,6 +921,8 @@ class ProposalUserAction(UserAction):
     ACTION_SEND_REFERRAL_TO = "Send referral {} for proposal {} to {}"
     ACTION_RESEND_REFERRAL_TO = "Resend referral {} for proposal {} to {}"
     ACTION_REMIND_REFERRAL = "Send reminder for referral {} for proposal {} to {}"
+    ACTION_ENTER_REQUIREMENTS = "Enter Requirements for proposal {}"
+    ACTION_BACK_TO_PROCESSING = "Back to processing for proposal {}"
     RECALL_REFERRAL = "Referral {} for proposal {} has been recalled"
     CONCLUDE_REFERRAL = "Referral {} for proposal {} has been concluded by {}"
     

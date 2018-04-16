@@ -57,6 +57,7 @@ class IndexView(CoreIndexView):
         self.__validate_system(self.request.basket.system)
         # validate return url
         self.__validate_url(details.get('return_url'),'return')
+        self.__validate_url(details.get('return_preload_url'),'return_preload')
         # validate bpay if present
         self.__validate_bpay(details.get('bpay_details'))
         # validate basket owner if present
@@ -81,6 +82,8 @@ class IndexView(CoreIndexView):
             except ValidationError as e:
                 raise e
             self.checkout_session.set_last_check(details.get('check_url'))
+        else:
+            self.checkout_session.set_last_check('')
         return True
 
     def __validate_send_email(self, details):
@@ -151,8 +154,13 @@ class IndexView(CoreIndexView):
             messages.error(self.request,msg)
             raise self.FallbackMissing()
         # Check if the url works
-        checkURL(url)
-        self.checkout_session.return_to(url)
+        if _type == 'return':
+            checkURL(url)
+            self.checkout_session.return_to(url)
+        elif _type == 'fallback':
+            checkURL(url)
+        elif _type == 'return_preload':
+            self.checkout_session.return_preload_to(url)
 
     def __validate_card_method(self, method):
         ''' Validate if the card method is payment or preauth
@@ -212,6 +220,7 @@ class IndexView(CoreIndexView):
                 'template': request.GET.get('template',None),
                 'fallback_url': request.GET.get('fallback_url',None),
                 'return_url': request.GET.get('return_url',None),
+                'return_preload_url': request.GET.get('return_preload_url', None),
                 'associateInvoiceWithToken': request.GET.get('associateInvoiceWithToken',False),
                 'forceRedirect': request.GET.get('forceRedirect',False),
                 'sendEmail': request.GET.get('sendEmail',False),
@@ -438,6 +447,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         """
         Make submission
         """
+        logger.info('Order #%s: handling payment', order_number)
         # Using preauth here (two-stage model). You could use payment to
         # perform the preauth and capture in one step.  
         with transaction.atomic():
