@@ -358,6 +358,60 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         else:
             return -1
 
+def query_emailuser_by_args(**kwargs):
+    print('query_emailuser_by_args in ledger/accounts/models.py')
+    ORDER_COLUMN_CHOICES = [
+        'title',
+        'first_name',
+        'last_name',
+        'dob',
+        'email',
+        'phone_number',
+        'mobile_number',
+        'fax_number',
+        'character_flagged',
+        'character_comments'
+    ]
+    print('query_emailuser_by_args in ledger/accounts/models.py1')
+
+    draw = int(kwargs.get('draw', None)[0])
+    length = int(kwargs.get('length', None)[0])
+    start = int(kwargs.get('start', None)[0])
+    search_value = kwargs.get('search[value]', None)[0]
+    order_column = kwargs.get('order[0][column]', None)[0]
+    print(order_column)
+    order = kwargs.get('order[0][dir]', None)[0]
+    print('query_emailuser_by_args in ledger/accounts/models.py2')
+    order_column = ORDER_COLUMN_CHOICES[int(order_column)]
+    print(order_column)
+    # django orm '-' -> desc
+    if order == 'desc':
+        order_column = '-' + order_column
+
+    queryset = EmailUser.objects.all()
+    print('query_emailuser_by_args in ledger/accounts/models.py3')
+    total = queryset.count()
+    print('query_emailuser_by_args in ledger/accounts/models.py total')
+    print(total)
+
+    if search_value:
+        queryset = queryset.filter(Q(first_name__icontains=search_value) |
+                                        Q(last_name__icontains=search_value) |
+                                        Q(email__icontains=search_value) |
+                                        Q(phone_number__icontains=search_value) |
+                                        Q(mobile_number__icontains=search_value) |
+                                        Q(fax_number__icontains=search_value))
+
+    count = queryset.count()
+    queryset = queryset.order_by(order_column)[start:start + length]
+
+    return {
+        'items': queryset,
+        'count': count,
+        'total': total,
+        'draw': draw
+    }
+
 
 class EmailUserListener(object):
     """

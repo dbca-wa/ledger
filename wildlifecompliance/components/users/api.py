@@ -22,7 +22,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity
+from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity,query_emailuser_by_args
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
 from wildlifecompliance.components.organisations.models import  (   
@@ -135,6 +135,23 @@ class UserViewSet(viewsets.ModelViewSet):
         if dob is not None and dob is not u'':
             queryset = queryset.filter(dob=dob)
         return queryset
+
+
+    def list(self, request, **kwargs):
+        try:
+            print('api.py list in userviewset')
+            users = query_emailuser_by_args(**request.query_params)
+            serializer = UserSerializer(users['items'], many=True)
+            result = dict()
+            result['data'] = serializer.data
+            result['draw'] = users['draw']
+            result['recordsTotal'] = users['total']
+            result['recordsFiltered'] = users['count']
+            return Response(result, status=status.HTTP_200_OK, template_name=None, content_type=None)
+
+        except Exception as e:
+            return Response(e, status=status.HTTP_404_NOT_FOUND, template_name=None, content_type=None)
+
 
     @detail_route(methods=['GET',])
     def profiles(self, request, *args, **kwargs):
