@@ -53,7 +53,7 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            user_headers:["Title","Given Name(s)","Last Name","Date of Birth","Email","Phone","Mobile","Fax","Character Check","Character Comments"],
+            user_headers:["","Title","Given Name(s)","Last Name","Date of Birth","Email","Phone","Mobile","Fax","Character Check","Character Comments"],
             user_options:{
                 serverSide: true,
                 language: {
@@ -65,6 +65,7 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
+                    {data: "id"},
                     {data: "title"},
                     {data: "first_name"},
                     {data: "last_name"},

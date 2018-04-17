@@ -139,12 +139,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def list(self, request, **kwargs):
         try:
-            print('api.py list in userviewset')
             users = query_emailuser_by_args(**request.query_params)
             serializer = UserSerializer(users['items'], many=True)
             result = dict()
             result['data'] = serializer.data
-            result['draw'] = users['draw']
+            result['draw'] = int(users['draw'])
             result['recordsTotal'] = users['total']
             result['recordsFiltered'] = users['count']
             return Response(result, status=status.HTTP_200_OK, template_name=None, content_type=None)
