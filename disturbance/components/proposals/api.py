@@ -312,6 +312,31 @@ class ProposalViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
+    def reissue_approval(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            status = request.data.get('status')
+            if not status:
+                raise serializers.ValidationError('Status is required')
+            else:
+                if not status in ['with_approver']:
+                    raise serializers.ValidationError('The status provided is not allowed')
+            instance.reissue_approval(request,status)
+            serializer = InternalProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
     def proposed_approval(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
