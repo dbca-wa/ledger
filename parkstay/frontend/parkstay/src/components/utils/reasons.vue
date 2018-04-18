@@ -9,7 +9,6 @@
                     <option value="">Loading...</option>
                 </select>
                 <select v-else name="open_reason" :value="value" @change="$emit('input', $event.target.value)" class="form-control">
-                    <option value=""></option>
                     <option v-for="reason in reasons" :value="reason.id">{{reason.text}}</option>
                 </select>
             </div>
@@ -62,6 +61,13 @@ export default {
             $.get(api_endpoints.priceReasons(),function (data) {
                 vm.reasons = data;
             });
+        },
+        fetchDiscountReasons:function (){
+            let vm = this;
+            $.get(api_endpoints.discountReasons(),function (data){
+                vm.reasons = data;
+            });
+
         }
     },
     mounted:function(){
@@ -77,6 +83,8 @@ export default {
                 case 'price':
                     vm.fetchPriceReasons();
                     break;
+                case 'discount':
+                    vm.fetchDiscountReasons();
             }
         }
     }

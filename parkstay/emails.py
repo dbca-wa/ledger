@@ -95,7 +95,7 @@ def send_booking_confirmation(booking,request):
 
 def send_booking_cancelation(booking,request):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Canceled:your booking REF {} at {},{}.'.format(booking.confirmation_number,booking.campground.name,booking.campground.park.name)
+    email_obj.subject = 'Cancelled: your booking {} at {}'.format(booking.confirmation_number,booking.campground.name)
     email_obj.html_template = 'ps/email/cancel.html'
     email_obj.txt_template = 'ps/email/cancel.txt'
 

@@ -117,7 +117,14 @@ class ClosureReason(ReasonAdmin):
 class OutstandingBookingRecipient(admin.ModelAdmin):
     pass
 
+@admin.register(models.PromoArea)
+class PromoAreaAdmin(admin.GeoModelAdmin):
+    list_display = ('name', 'wkb_geometry')
+    ordering = ('name',)
+    search_fields = ('name',)
+    openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
+
 admin.site.register(models.Rate)
 admin.site.register(models.Region)
 admin.site.register(models.District)
-admin.site.register(models.PromoArea)
+admin.site.register(models.DiscountReason)
