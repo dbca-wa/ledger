@@ -138,18 +138,32 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
     def list(self, request, **kwargs):
-        try:
-            users = query_emailuser_by_args(**request.query_params)
-            serializer = UserSerializer(users['items'], many=True)
-            result = dict()
-            result['data'] = serializer.data
-            result['draw'] = int(users['draw'])
-            result['recordsTotal'] = users['total']
-            result['recordsFiltered'] = users['count']
-            return Response(result, status=status.HTTP_200_OK, template_name=None, content_type=None)
+        if request.query_params:
+            try:
+                users = query_emailuser_by_args(**request.query_params)
+                serializer = UserSerializer(users['items'], many=True)
+                result = dict()
+                result['data'] = serializer.data
+                result['draw'] = int(users['draw'])
+                result['recordsTotal'] = users['total']
+                result['recordsFiltered'] = users['count']
+                return Response(result)
+            except Exception as e:
+                return Response(e)
+        else:
+            try:
+                queryset = self.filter_queryset(self.get_queryset())
 
-        except Exception as e:
-            return Response(e, status=status.HTTP_404_NOT_FOUND, template_name=None, content_type=None)
+                page = self.paginate_queryset(queryset)
+                if page is not None:
+                    serializer = self.get_serializer(page, many=True)
+                    return self.get_paginated_response(serializer.data)
+
+                serializer = self.get_serializer(queryset, many=True)
+                return Response(serializer.data)
+
+            except Exception as e:
+                return Response(e)
 
 
     @detail_route(methods=['GET',])

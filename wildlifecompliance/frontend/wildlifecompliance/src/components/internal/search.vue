@@ -12,23 +12,11 @@
                 </div>
                 <div class="panel-body collapse in" :id="cBody">
                     <div class="row">
-                        <form name="searchUsersForm">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label class="control-label" for="User">Search People</label>
-                                    <select v-if="users == null" class="form-control" name="user" v-model="selected_user">
-                                        <option value="">Loading...</option>
-                                    </select>
-                                    <select v-else ref="searchUser" class="form-control" name="user">
-                                        <option value="">Select Person</option>
-                                        <option v-for="u in users" :value="u.id">{{ u.first_name }} {{ u.last_name }} ({{ u.dob }})</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-12 text-center">
-                                <router-link :disabled="selected_user == ''" :to="{name:'internal-user-detail',params:{'user_id':parseInt(selected_user)}}" class="btn btn-primary">View Details</router-link>
-                            </div>
-                        </form>
+                        <div class="col-md-4">
+                            <label class="control-label">
+                                <a href="/internal/users">Click here to search for people</a>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -139,8 +127,6 @@ export default {
       loading: [],
       selected_organisation:'',
       organisations: null,
-      selected_user:'',
-      users: null,
     }
   },
     watch: {},
@@ -150,12 +136,10 @@ export default {
     beforeRouteEnter:function(to,from,next){
         let initialisers = [
             utils.fetchOrganisations(),
-            utils.fetchUsers()
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
                 vm.organisations = data[0];
-                vm.users = data[1];
             });
         });
     },
@@ -180,20 +164,6 @@ export default {
             on("select2:unselect",function (e) {
                 var selected = $(e.currentTarget);
                 vm.selected_organisation = selected.val();
-            });
-            // Initialise select2 for user 
-            $(vm.$refs.searchUser).select2({
-                "theme": "bootstrap",
-                allowClear: true,
-                placeholder:"Select User"
-            }).
-            on("select2:select",function (e) {
-                var selected = $(e.currentTarget);
-                vm.selected_user = selected.val();
-            }).
-            on("select2:unselect",function (e) {
-                var selected = $(e.currentTarget);
-                vm.selected_user = selected.val();
             });
         }
     },
