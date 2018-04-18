@@ -9,6 +9,7 @@ from django.db import models, IntegrityError
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
+from django.db.models import Q
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.core.exceptions import ValidationError
 
@@ -33,6 +34,10 @@ class EmailUserManager(BaseUserManager):
         if not email:
             raise ValueError('Email must be set')
         email = self.normalize_email(email)
+        if (EmailUser.objects.filter(email__iexact=email.lower()) or
+            Profile.objects.filter(email__iexact=email.lower()) or
+            EmailIdentity.objects.filter(email__iexact=email.lower())):
+            raise ValueError('This email is already in use')
         user = self.model(
             email=email, is_staff=is_staff, is_superuser=is_superuser)
         user.extra_data = extra_fields
@@ -353,6 +358,52 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
         else:
             return -1
+
+def query_emailuser_by_args(**kwargs):
+    ORDER_COLUMN_CHOICES = [
+        'title',
+        'first_name',
+        'last_name',
+        'dob',
+        'email',
+        'phone_number',
+        'mobile_number',
+        'fax_number',
+        'character_flagged',
+        'character_comments'
+    ]
+
+    draw = int(kwargs.get('draw', None)[0])
+    length = int(kwargs.get('length', None)[0])
+    start = int(kwargs.get('start', None)[0])
+    search_value = kwargs.get('search[value]', None)[0]
+    order_column = kwargs.get('order[0][column]', None)[0]
+    order = kwargs.get('order[0][dir]', None)[0]
+    order_column = ORDER_COLUMN_CHOICES[int(order_column)]
+    # django orm '-' -> desc
+    if order == 'desc':
+        order_column = '-' + order_column
+
+    queryset = EmailUser.objects.all()
+    total = queryset.count()
+
+    if search_value:
+        queryset = queryset.filter(Q(first_name__icontains=search_value) |
+                                        Q(last_name__icontains=search_value) |
+                                        Q(email__icontains=search_value) |
+                                        Q(phone_number__icontains=search_value) |
+                                        Q(mobile_number__icontains=search_value) |
+                                        Q(fax_number__icontains=search_value))
+
+    count = queryset.count()
+    queryset = queryset.order_by(order_column)[start:start + length]
+
+    return {
+        'items': queryset,
+        'count': count,
+        'total': total,
+        'draw': draw
+    }
 
 
 class EmailUserListener(object):
