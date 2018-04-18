@@ -31,6 +31,7 @@ from oscar.apps.order.models import Order
 from oscar.apps.voucher.models import Voucher
 from oscar.apps.payment import forms
 import traceback
+import six
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
@@ -745,6 +746,7 @@ class CheckoutSerializer(serializers.Serializer):
     basket_owner = serializers.IntegerField(required=False)
     template = serializers.CharField(required=False)
     fallback_url = serializers.URLField()
+    return_preload_url = serializers.URLField(required=False)
     return_url = serializers.URLField()
     associateInvoiceWithToken = serializers.BooleanField(default=False)
     forceRedirect = serializers.BooleanField(default=False)
@@ -836,11 +838,6 @@ class CheckoutCreateView(generics.CreateAPIView):
     authentication_classes = [SessionAuthentication]
     permission_classes = []
 
-    def get_redirect_value(self,serializer,value):
-        if serializer.validated_data.get(value) is not None:
-            return '{}={}'.format(value,serializer.validated_data[value])
-        return ''
-
     def create(self, request):
         try:
             http_status = status.HTTP_200_OK
@@ -867,21 +864,17 @@ class CheckoutCreateView(generics.CreateAPIView):
                 else:
                     basket = createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
 
-            redirect = HttpResponseRedirect(reverse('checkout:index')+u'?{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}&{}'.format(
-                                                                                                self.get_redirect_value(serializer,'card_method'),
-                                                                                                self.get_redirect_value(serializer,'basket_owner'),
-                                                                                                self.get_redirect_value(serializer,'template'),
-                                                                                                self.get_redirect_value(serializer,'fallback_url'),
-                                                                                                self.get_redirect_value(serializer,'return_url'),
-                                                                                                self.get_redirect_value(serializer,'associateInvoiceWithToken'),
-                                                                                                self.get_redirect_value(serializer,'forceRedirect'),
-                                                                                                self.get_redirect_value(serializer,'sendEmail'),
-                                                                                                self.get_redirect_value(serializer,'proxy'),
-                                                                                                self.get_redirect_value(serializer,'checkoutWithToken'),
-                                                                                                self.get_redirect_value(serializer,'bpay_format'),
-                                                                                                self.get_redirect_value(serializer,'icrn_format'),
-                                                                                                self.get_redirect_value(serializer,'invoice_text'),
-                                                                                                self.get_redirect_value(serializer,'check_url')))
+            fields = [
+                'card_method', 'basket_owner', 'template', 'fallback_url', 'return_url', 'return_preload_url', 'associateInvoiceWithToken', 'forceRedirect', 'sendEmail', 'proxy',
+                'checkoutWithToken', 'bpay_format', 'icrn_format', 'invoice_text', 'check_url'
+            ]
+            url_args = {f: six.text_type(serializer.validated_data[f]).encode('utf8') for f in fields if f in serializer.validated_data and serializer.validated_data[f] is not None}
+            # bodges for nullable fields
+            for f in ['basket_owner', 'check_url', 'return_preload_url']:
+                if f not in url_args:
+                    url_args[f] = ''
+
+            redirect = HttpResponseRedirect(reverse('checkout:index')+'?'+six.moves.urllib.parse.urlencode(url_args))
             # inject the current basket into the redirect response cookies
             # or else, anonymous users will be directionless
             redirect.set_cookie(

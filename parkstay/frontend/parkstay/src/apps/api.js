@@ -77,6 +77,9 @@ module.exports = {
     campsite_current_price:function (id,start,end) {
        return process.env.PARKSTAY_URL + "/api/campsites/"+ id +"/current_price.json?arrival="+start+"&departure="+end;
     },
+    campsites_current_price:function () {
+        return process.env.PARKSTAY_URL + "/api/campsites/current_price_list.json";
+     },
     campsite_status_history:function(id){
         return process.env.PARKSTAY_URL + "/api/campsites/" + id + "/status_history.json?closures=True"
     },
@@ -137,6 +140,9 @@ module.exports = {
     },
     maxStayReasons:function () {
         return process.env.PARKSTAY_URL + "/api/maxStayReasons.json";
+    },
+    discountReasons:function (){
+        return process.env.PARKSTAY_URL + "/api/discountReasons.json";
     },
     bulkPricing: function(){
         return process.env.PARKSTAY_URL + "/api/bulkPricing";
