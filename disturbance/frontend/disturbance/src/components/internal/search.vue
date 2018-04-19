@@ -90,7 +90,7 @@ export default {
       loading: [],
       selected_organisation:'',
       organisations: null,
-      proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Logded on","Action"],
+      proposal_headers:["Number","Region","Activity","Title","Submitter","Proponent","Status","Logded on","Action"],
       proposal_options:{
           language: {
               processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"

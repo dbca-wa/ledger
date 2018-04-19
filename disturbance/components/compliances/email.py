@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 
 from disturbance.components.emails.emails import TemplateEmailBase
+from ledger.accounts.models import EmailUser
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,12 @@ class ComplianceAmendmentRequestSendNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/send_amendment_notification.html'
     txt_template = 'disturbance/emails/send_amendment_notification.txt'
 
+class ComplianceReminderNotificationEmail(TemplateEmailBase):
+    subject = 'Your Compliance with requirements has passed the due date.'
+    html_template = 'disturbance/emails/send_reminder_notification.html'
+    txt_template = 'disturbance/emails/send_reminder_notification.txt'
+
+
 def send_amendment_email_notification(amendment_request, request, compliance):
     email = ComplianceAmendmentRequestSendNotificationEmail()
     reason = amendment_request.get_reason_display()
@@ -32,9 +39,30 @@ def send_amendment_email_notification(amendment_request, request, compliance):
     }
 
     msg = email.send(compliance.submitter.email, context=context)
-    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL  
     _log_compliance_email(msg, compliance, sender=sender)
     _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
+
+
+#send reminder emails if Compliance has not been lodged by due date. Used in Cron job so cannot use 'request' parameter
+def send_reminder_email_notification(compliance):
+    email = ComplianceReminderNotificationEmail()
+    #url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
+    url=settings.BASE_URL
+    url+=reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id})
+    context = {
+        'compliance': compliance,
+        'url': url
+    }
+
+    msg = email.send(compliance.submitter.email, context=context)
+    sender = settings.DEFAULT_FROM_EMAIL
+    try:
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    except:
+        sender_user = EmailUser.objects.create(email=sender, password='')
+    _log_compliance_email(msg, compliance, sender=sender_user)
+    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender_user)
 
 
 def send_compliance_accept_email_notification(compliance,request):
