@@ -1,9 +1,15 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from disturbance.components.compliances.models import (
-    Compliance 
+    Compliance, ComplianceUserAction, ComplianceLogEntry, ComplianceAmendmentRequest
 )
 from rest_framework import serializers
+
+
+class EmailUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUser
+        fields = ('id','email','first_name','last_name','title','organisation')
 
 class ComplianceSerializer(serializers.ModelSerializer):
     regions = serializers.CharField(source='proposal.region')
@@ -13,6 +19,9 @@ class ComplianceSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(source='get_processing_status_display')
     customer_status = serializers.CharField(source='get_customer_status_display')
     documents = serializers.SerializerMethodField()
+    submitter = serializers.CharField(source='submitter.get_full_name')
+    allowed_assessors = EmailUserSerializer(many=True)
+
 
     class Meta:
         model = Compliance
@@ -33,7 +42,12 @@ class ComplianceSerializer(serializers.ModelSerializer):
             'requirement',
             'can_user_view',
             'reference',
+            'lodgement_date',
+            'submitter',
+            'allowed_assessors'
+
             'lodgement_date'
+
         )
 
     def get_documents(self,obj):
@@ -45,7 +59,31 @@ class SaveComplianceSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'title',
-            'text',
-            
-          
+            'text',        
+         
         )
+
+class ComplianceActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+    class Meta:
+        model = ComplianceUserAction 
+        fields = '__all__'
+
+class ComplianceCommsSerializer(serializers.ModelSerializer):
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = ComplianceLogEntry
+        fields = '__all__'
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
+
+class ComplianceAmendmentRequestSerializer(serializers.ModelSerializer):
+    reason = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ComplianceAmendmentRequest
+        fields = '__all__'
+    
+    def get_reason (self,obj):
+        return obj.get_reason_display()
+
