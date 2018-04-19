@@ -76,7 +76,7 @@
         render(h) {
             let vm =this;
             //Renderer.sections = [];
-            Renderer.store_status_data(vm.proposal.readonly,vm.proposal.assessor_data,vm.proposal.comment_data,vm.proposal.current_assessor,vm.proposal.assessor_mode,vm.proposal.can_user_edit,vm.proposal.documents_url);
+            Renderer.store_status_data(vm.proposal.readonly,vm.proposal.assessor_data,vm.proposal.comment_data,vm.proposal.current_assessor,vm.proposal.assessor_mode,vm.proposal.can_user_edit,vm.proposal.documents_url, vm.proposal.id);
             if (vm.withSectionsSelector){
                 return (
                     <div>

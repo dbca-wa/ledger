@@ -95,8 +95,11 @@ class Organisation(models.Model):
         self.log_user_action(OrganisationAction.ACTION_UPDATE_ADDRESS, request)
 
     def update_contacts(self, request):
-        contact = self.contact.last()
-        self.log_user_action(OrganisationAction.ACTION_UPDATE_CONTACTS.format('{} {}({})'.format(contact.first_name, contact.last_name, contact.email)), request)
+        try:
+            contact = self.contact.last()
+            self.log_user_action(OrganisationAction.ACTION_UPDATE_CONTACTS.format('{} {}({})'.format(contact.first_name, contact.last_name, contact.email)), request)
+        except:
+            pass
 
     def generate_pins(self):
         self.pin_one = self._generate_pin()

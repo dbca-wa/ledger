@@ -5,6 +5,7 @@ from ledger.accounts.models import EmailUser, Document
 from disturbance.components.proposals.models import ProposalDocument
 from disturbance.components.proposals.serializers import SaveProposalSerializer
 import traceback
+import os
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
     data = {} 
@@ -282,8 +283,7 @@ def save_proponent_data(instance,request,viewset):
     with transaction.atomic():
         try:
             lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
-            extracted_fields,special_fields = create_data_from_form(
-                instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
+            extracted_fields,special_fields = create_data_from_form(instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
             instance.data = extracted_fields
             data = {
                 'region': special_fields.get('isRegionColumnForDashboard',None),

@@ -1,6 +1,7 @@
 <template lang="html">
     <div>
         <div class="form-group">
+
             <label>{{label}}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
@@ -18,7 +19,8 @@
             <div v-if="files">
                 <div v-for="v in files">
                     <p>
-                        File: <a :href="docsUrl+v" target="_blank">{{v}}</a>
+                        File: <a :href="docsUrl+v" target="_blank">{{v}}</a> &nbsp;
+                        <a @click="removeImage(v)" class="fa fa-trash-o" title="Remove file" :filename="v" style="color:red"></a>
                     </p>
                     <input :name="name+'-existing'" type="hidden" :value="value"/>
                 </div>
@@ -26,6 +28,7 @@
             <div v-if="!readonly" v-for="n in repeat">
                 <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange"/><br/>
             </div>
+
         </div>
         <Comment :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
     </div>
@@ -36,6 +39,7 @@ import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 export default {
     props:{
+        proposal_id: null,
         name:String,
         label:String,
         comment_value: String,
@@ -69,11 +73,21 @@ export default {
             showingComment: false
         }
     },
+
+    //computed: {
+    //    csrf_token: function() {
+    //        return helpers.getCookie('csrftoken')
+    //    }
+    //},
+
     methods:{
         toggleComment(){
             this.showingComment = ! this.showingComment;
         },
         handleChange:function (e) {
+            if (e.target.files.length > 0) {
+                this.upload_file(e)
+            }
             if (this.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
@@ -89,7 +103,26 @@ export default {
                     }
                 }
             }
+        },
+        upload_file: function(e) {
+            let vm = this;
+            var filename = e.target.files[0].name;
+            $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
+            this.files = [e.target.files[0].name];
+        },
+        removeImage: function (filename) {
+            let vm = this;
+            //var filename = e.target.getAttribute('filename');
+            if (filename) {
+                vm.files.pop(filename);
+                $('input[name='+vm.name+']').val(null);
+
+                this.$nextTick(() => {
+                    $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
+                });
+            }
         }
+
     },
     mounted:function () {
         let vm = this;

@@ -432,6 +432,72 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
         raise serializers.ValidationError(str(e))
 
+#    @detail_route(methods=['post'])
+#    @renderer_classes((JSONRenderer,))
+#    def save_section(self, request, *args, **kwargs):
+#        try:
+#            instance = self.get_object()
+#            save_proponent_data(instance,request,self)
+#            return redirect(reverse('external'))
+#        except serializers.ValidationError:
+#            print(traceback.print_exc())
+#            raise
+#        except ValidationError as e:
+#            raise serializers.ValidationError(repr(e.error_dict))
+#        except Exception as e:
+#            print(traceback.print_exc())
+#        raise serializers.ValidationError(str(e))
+#
+#
+#    @detail_route(methods=['post'])
+#    def _save_section(self, request, *args, **kwargs):
+#        import ipdb; ipdb.set_trace()
+#        try:
+#            instance = self.get_object()
+#            
+#            if request.data.has_key('upload_file'):
+#                parent_section = request.data.get('upload_file')['parent_section']
+#                section = request.data.get('upload_file')['section']
+#                filename = request.data.get('upload_file')['filename']
+#                if isinstance(instance.data, list) and instance.data[0].has_key(parent_section): #  parent_section in instance.data[0]['proposalSummarySection'][0]:
+#                    if isinstance(instance.data[0].get(parent_section), list):
+#                        instance.data[0][parent_section][0][section] = filename
+#                    else:
+#                        instance.data[0][parent_section] = [{section: filename}]
+#                else:
+#                    if isinstance(instance.data, list):
+#                        instance.data.append( {parent_section: [{section: filename}]} )
+#                    else:
+#                        # instance.data == None
+#                        instance.data = [ {parent_section: [{section: filename}]} ]
+#                instance.save()
+#                return redirect(reverse('external'))
+#                
+#        
+#            elif request.data.has_key('delete_file'):
+#                # TODO currently assumes only one file in instance.data section
+#                parent_section = request.data.get('upload_file')['parent_section']
+#                section = request.data.get('delete_file')['section']
+#                filename = request.data.get('delete_file')['filename']
+#                #if section in instance.data[0]['proposalSummarySection'][0]:
+#                #    instance.data[0]['proposalSummarySection'][0][section] = ''
+#                if section in instance.data[0][parent_section][0]:
+#                    instance.data[0][parent_section][0][section] = ''
+#                    instance.save()
+#                    return redirect(reverse('external'))
+#
+#
+#            return redirect(reverse('external'))
+#        except serializers.ValidationError:
+#            print(traceback.print_exc())
+#            raise
+#        except ValidationError as e:
+#            raise serializers.ValidationError(repr(e.error_dict))
+#        except Exception as e:
+#            print(traceback.print_exc())
+#        raise serializers.ValidationError(str(e))
+
+
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
     def assessor_save(self, request, *args, **kwargs):
