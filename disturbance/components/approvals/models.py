@@ -70,6 +70,14 @@ class Approval(models.Model):
         return 'A{}'.format(self.id)
 
     @property
+    def can_reissue(self):
+        return self.status == 'current' or self.status == 'suspended'
+
+    @property
+    def allowed_assessors(self):
+        return self.current_proposal.allowed_assessors
+
+    @property
     def is_issued(self):
         return self.licence_number is not None and len(self.licence_number) > 0
 

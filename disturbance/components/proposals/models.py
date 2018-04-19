@@ -554,7 +554,7 @@ class Proposal(RevisionedMixin):
                 raise
 
     def move_to_status(self,request,status):
-        if not self.can_assess(request.user):
+        if not self.can_assess(request.user):            
             raise exceptions.ProposalNotAuthorized()
         if status in ['with_assessor','with_assessor_requirements','with_approver']:
             if self.processing_status == 'with_referral' or self.can_user_edit:
@@ -570,6 +570,20 @@ class Proposal(RevisionedMixin):
                     self.log_user_action(ProposalUserAction.ACTION_ENTER_REQUIREMENTS.format(self.id),request)
         else:
             raise ValidationError('The provided status cannot be found.')
+
+
+    def reissue_approval(self,request,status):     
+        if not self.processing_status=='approved' :
+            raise ValidationError('You cannot change the current status at this time')
+        elif self.approval and self.approval.can_reissue:
+            if self.__approver_group() in request.user.proposalapprovergroup_set.all():
+                self.processing_status = status
+                self.save()
+                # Create a log entry for the proposal
+                self.log_user_action(ProposalUserAction.ACTION_REISSUE_APPROVAL.format(self.id),request)               
+        else:
+            raise ValidationError('Cannot reissue Approval')
+
 
     def proposed_decline(self,request,details):
         with transaction.atomic():
@@ -689,10 +703,15 @@ class Proposal(RevisionedMixin):
                         # send the doc and log in approval and org
                     else:
                         # Log update
-                        approval.replaced_by = request.user
+                        #approval.replaced_by = request.user
+                        approval.replaced_by = self.approval
                         # Generate the document
                         approval.generate_doc()
                         # send the doc and log in approval and org
+                        # Log proposal action
+                        self.log_user_action(ProposalUserAction.ACTION_UPDATE_APPROVAL_.format(self.id),request)
+                        # Log entry for organisation
+                        self.applicant.log_user_action(ProposalUserAction.ACTION_UPDATE_APPROVAL_.format(self.id),request)
                     self.approval = approval
                 #send Proposal approval email with attachment
                 send_proposal_approval_email_notification(self,request)
@@ -911,6 +930,7 @@ class ProposalUserAction(UserAction):
     ACTION_ENTER_CONDITIONS = "Enter requirement"
     ACTION_CREATE_CONDITION_ = "Create requirement {}"
     ACTION_ISSUE_APPROVAL_ = "Issue Approval for proposal {}"
+    ACTION_UPDATE_APPROVAL_ = "Update Approval for proposal {}"
     ACTION_DISCARD_PROPOSAL = "Discard proposal {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
@@ -925,6 +945,7 @@ class ProposalUserAction(UserAction):
     ACTION_BACK_TO_PROCESSING = "Back to processing for proposal {}"
     RECALL_REFERRAL = "Referral {} for proposal {} has been recalled"
     CONCLUDE_REFERRAL = "Referral {} for proposal {} has been concluded by {}"
+    ACTION_REISSUE_APPROVAL = "Reissue approval for proposal {}"
     
 
     class Meta:
