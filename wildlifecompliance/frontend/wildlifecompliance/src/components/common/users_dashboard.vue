@@ -53,7 +53,7 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            user_headers:["Title","Given Name(s)","Last Name","Date of Birth","Email","Phone","Mobile","Fax","Character Check","Character Comments"],
+            user_headers:["Title","Given Name(s)","Last Name","Date of Birth","Email","Phone","Mobile","Fax","Character Flagged","Character Comments","Action"],
             user_options:{
                 serverSide: true,
                 searchDelay: 1000,
@@ -80,6 +80,13 @@ export default {
                     {data: "fax_number"},
                     {data: "character_flagged"},
                     {data: "character_comments"},
+                    {
+                        data:"id",
+                        mRender:function(data, type, full){
+                            var column = "<a href='/internal/users/\__ID__\'> Edit </a>";
+                            return column.replace(/__ID__/g, data);
+                        }
+                    },
                 ],
                 processing: true,
                 initComplete: function () {
