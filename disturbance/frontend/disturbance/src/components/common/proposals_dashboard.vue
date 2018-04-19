@@ -132,7 +132,7 @@ export default {
             proposal_regions: [],
             proposal_submitters: [],
             proposal_status: [],
-            proposal_ex_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Action"],
+            proposal_ex_headers:["Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"],
             proposal_ex_options:{
                 autoWidth: false,
                 language: {
@@ -263,7 +263,7 @@ export default {
                     });
                 }
             },
-            proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Assigned Officer","Action"],
+            proposal_headers:["Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action"],
             proposal_options:{
                 autoWidth: false,
                 language: {

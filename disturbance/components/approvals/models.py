@@ -16,8 +16,9 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
-from disturbance.components.proposals.models import Proposal
+from disturbance.components.proposals.models import Proposal, ProposalUserAction
 from disturbance.components.main.models import CommunicationsLogEntry, UserAction, Document
+from disturbance.components.approvals.email import send_approval_expire_email_notification
 #from disturbance.components.approvals.email import send_referral_email_notification
 
 
@@ -87,7 +88,22 @@ class Approval(models.Model):
         self.save()
 
     def log_user_action(self, action, request):
-        return ApprovalUserAction.log_action(self, action, request.user)
+       return ApprovalUserAction.log_action(self, action, request.user)
+
+
+    def expire_approval(self,user):
+        with transaction.atomic():
+            try:
+                today = timezone.now().date()               
+                if self.status == 'current' and self.expiry_date < today:
+                    self.status = 'expired'
+                    self.save()
+                    send_approval_expire_email_notification(self)
+                    proposal = self.current_proposal
+                    ApprovalUserAction.log_action(self,ApprovalUserAction.ACTION_EXPIRE_APPROVAL.format(self.id),user)  
+                    ProposalUserAction.log_action(proposal,ProposalUserAction.ACTION_LODGE_APPLICATION.format(proposal.id),user)  
+            except:
+                raise
 
 class ApprovalLogEntry(CommunicationsLogEntry):
     approval = models.ForeignKey(Approval, related_name='comms_logs')
@@ -104,6 +120,8 @@ class ApprovalLogEntry(CommunicationsLogEntry):
 class ApprovalUserAction(UserAction):
     ACTION_CREATE_APPROVAL = "Create approval {}"
     ACTION_UPDATE_APPROVAL = "Create approval {}"
+    ACTION_EXPIRE_APPROVAL = "Expire approval {}"
+
     
     class Meta:
         app_label = 'disturbance'

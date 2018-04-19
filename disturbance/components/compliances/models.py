@@ -21,7 +21,8 @@ from disturbance.components.organisations.models import Organisation
 from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from disturbance.components.compliances.email import (
                         send_compliance_accept_email_notification,
-                        send_amendment_email_notification)
+                        send_amendment_email_notification,
+                        send_reminder_email_notification)
 
 class Compliance(models.Model):
 
@@ -137,6 +138,19 @@ class Compliance(models.Model):
             self.log_user_action(ComplianceUserAction.ACTION_CONCLUDE_REQUEST.format(self.id),request)
             send_compliance_accept_email_notification(self,request)
 
+
+    def send_reminder(self,user):
+        with transaction.atomic():
+            today = timezone.now().date()
+            try:
+                if self.processing_status =='due':
+                    if self.due_date < today and self.lodgement_date==None:
+                        send_reminder_email_notification(self)
+                        ComplianceUserAction.log_action(self,ComplianceUserAction.ACTION_CONCLUDE_REQUEST.format(self.id),user)
+            except:
+                raise
+                        
+
     def log_user_action(self, action, request):
         return ComplianceUserAction.log_action(self, action, request.user)
 
@@ -159,6 +173,7 @@ class ComplianceUserAction(UserAction):
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
+    ACTION_REMINDER_SENT = "Reminder sent for compliance {}"
     # Assessors
 
 

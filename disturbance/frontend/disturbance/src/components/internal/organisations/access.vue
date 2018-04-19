@@ -22,7 +22,7 @@
                             <div class="col-sm-12 top-buffer-s">
                                 <table class="table small-table">
                                     <tr>
-                                        <th>Lodgment</th>
+                                        <th>Lodgement</th>
                                         <th>Date</th>
                                         <th>Action</th>
                                     </tr>

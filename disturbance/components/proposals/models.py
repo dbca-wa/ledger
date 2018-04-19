@@ -931,6 +931,7 @@ class ProposalUserAction(UserAction):
     ACTION_CREATE_CONDITION_ = "Create requirement {}"
     ACTION_ISSUE_APPROVAL_ = "Issue Approval for proposal {}"
     ACTION_UPDATE_APPROVAL_ = "Update Approval for proposal {}"
+    ACTION_EXPIRED_APPROVAL_ = "Expire Approval for proposal {}"
     ACTION_DISCARD_PROPOSAL = "Discard proposal {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
