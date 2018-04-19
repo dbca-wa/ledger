@@ -109,7 +109,7 @@ export default {
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region","Activity","Title","Submiter","Proponent","Status","Lodged on","Action"],
+            proposal_headers:["Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"],
             proposal_options:{
                 customProposalSearch: true,
                 tableID: 'proposal-datatable-'+vm._uid,

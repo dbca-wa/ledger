@@ -68,3 +68,5 @@ DEP_FAX = env('DEP_FAX','(08) 9423 8242')
 DEP_POSTAL = env('DEP_POSTAL','Locked Bag 104, Bentley Delivery Centre, Western Australia 6983')
 DEP_NAME = env('DEP_NAME','Department of Biodiversity,Conservation and Attractions')
 SITE_URL = env('SITE_URL','https://via-uat.dpaw.wa.gov.au')
+
+BASE_URL=env('BASE_URL')
