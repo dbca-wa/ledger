@@ -7,9 +7,7 @@
             <div class="col-md-3">
                 <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
             </div>
-            <div class="col-md-1">
-            </div>
-            <div class="col-md-8">
+            <div class="col-md-9">
                 <ul class="nav nav-tabs">
                     <li class="active"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
                     <li><a data-toggle="tab" :href="'#'+oTab">Other</a></li>
@@ -20,7 +18,7 @@
                             <div class="col-sm-12">
                                 <div class="panel panel-default">
                                   <div class="panel-heading">
-                                    <h3 class="panel-title">Person Details
+                                    <h3 class="panel-title">Personal Details
                                         <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
                                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                         </a>
@@ -110,6 +108,47 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                    <h3 class="panel-title">Contact Details <small></small>
+                                        <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                        </a>
+                                    </h3>
+                                  </div>
+                                  <div class="panel-body collapse" :id="cdBody">
+                                      <form class="form-horizontal" action="index.html" method="post">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                                            <div class="col-sm-6">
+                                                <input type="text" class="form-control" name="phone" placeholder="" v-model="user.phone_number">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Mobile</label>
+                                            <div class="col-sm-6">
+                                                <input type="text" class="form-control" name="mobile" placeholder="" v-model="user.mobile_number">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Email</label>
+                                            <div class="col-sm-6">
+                                                <input type="email" class="form-control" name="email" placeholder="" v-model="user.email">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <div class="col-sm-12">
+                                                <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="updateContact()">Update</button>
+                                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                                            </div>
+                                          </div>
+                                       </form>
+                                  </div>
+                                </div>
+                            </div>
+                        </div>
                     </div> 
                     <div :id="oTab" class="tab-pane fade">
                         <ApplicationDashTable ref="applications_table" level='internal' :url='applications_url'/>
@@ -143,6 +182,7 @@ export default {
         return {
             adBody: 'adBody'+vm._uid,
             pdBody: 'pdBody'+vm._uid,
+            cdBody: 'cdBody'+vm._uid,
             dTab: 'dTab'+vm._uid,
             oTab: 'oTab'+vm._uid,
             user: {
