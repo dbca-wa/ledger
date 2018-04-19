@@ -36,6 +36,9 @@
                         <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                         <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+
+                        <!-- hidden 'save_and_continue_btn' used to allow File (file.vue component) to trigger save -->
+                        <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                   </div>
                 </div>
                 <div v-else class="row" style="margin-bottom:20px;">
@@ -69,7 +72,7 @@ export default {
     }
   },
   components: {
-    Proposal
+      Proposal
   },
   computed: {
     isLoading: function() {
@@ -101,6 +104,12 @@ export default {
 
       });
     },
+    save_wo_confirm: function(e) {
+      let vm = this;
+      let formData = new FormData(vm.form);
+      vm.$http.post(vm.proposal_form_url,formData);
+    },
+
 
     setdata: function(readonly){
       this.proposal_readonly = readonly;
@@ -150,12 +159,9 @@ export default {
     }
   },
 
-  
-
   mounted: function() {
     let vm = this;
     vm.form = document.forms.new_proposal;
-    
   },
   beforeRouteEnter: function(to, from, next) {
     if (to.params.proposal_id) {
