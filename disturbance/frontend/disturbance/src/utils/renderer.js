@@ -22,6 +22,7 @@ module.exports = {
         var assessorData = this.status_data.assessorData;
         var commentData = this.status_data.commentData;
         var assessorInfo = this.status_data.assessorInfo;
+        var proposalId = this.status_data.proposalId;
         var assessorMode = false; 
         var assessorCanAssess = false; 
         var assessorLevel = '';
@@ -166,7 +167,7 @@ module.exports = {
                 break;
             case 'file':
                 _elements.push(
-                    <File name={c.name} label={c.label} value={val} comment_value={comment_val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} docsUrl={this.status_data.docs_url} readonly={readonly} assessor_readonly={assessor_visibility}/>
+                    <File name={c.name} label={c.label} value={val} comment_value={comment_val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} docsUrl={this.status_data.docs_url} readonly={readonly} assessor_readonly={assessor_visibility} proposal_id={proposalId}/>
                 )
                 break;
             case 'date':
@@ -184,6 +185,7 @@ module.exports = {
         }
         return _elements;
     },
+
     handleRadioChange(e){
         var conditions = $(e.target).data('conditions');
         if (conditions && conditions !== undefined) {
@@ -300,7 +302,7 @@ module.exports = {
         return boxes;
     },
     status_data : {},
-    store_status_data(readonly,assessorData,commentData,assessorEmail,assessorMode,can_user_edit,docs_url){
+    store_status_data(readonly,assessorData,commentData,assessorEmail,assessorMode,can_user_edit,docs_url, proposalId){
         this.status_data = {
             'readonly': readonly,
             'assessorData': assessorData,
@@ -308,7 +310,8 @@ module.exports = {
             'assessorInfo': assessorEmail,
             'assessorStatus': assessorMode,
             'can_user_edit': can_user_edit,
-            'docs_url': docs_url
+            'docs_url': docs_url,
+            'proposalId': proposalId
         }
     },
     getVisibility(h,c,readonly,assessor_mode,assessor_can_assess){
