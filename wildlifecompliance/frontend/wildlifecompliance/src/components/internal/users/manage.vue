@@ -61,11 +61,11 @@
                                   <div class="panel-heading">
                                     <h3 class="panel-title">Address Details
                                         <a class="panelClicker" :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
-                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                         </a>
                                     </h3>
                                   </div>
-                                  <div v-if="loading.length == 0" class="panel-body collapse" :id="adBody">
+                                  <div v-if="loading.length == 0" class="panel-body collapse in" :id="adBody">
                                       <form class="form-horizontal" action="index.html" method="post">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
@@ -114,11 +114,11 @@
                                   <div class="panel-heading">
                                     <h3 class="panel-title">Contact Details <small></small>
                                         <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
-                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                         </a>
                                     </h3>
                                   </div>
-                                  <div class="panel-body collapse" :id="cdBody">
+                                  <div class="panel-body collapse in" :id="cdBody">
                                       <form class="form-horizontal" action="index.html" method="post">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Phone (work)</label>
@@ -145,6 +145,47 @@
                                             </div>
                                           </div>
                                        </form>
+                                  </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                    <h3 class="panel-title">Organisations <small></small>
+                                        <a class="panelClicker" :href="'#'+odBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="odBody">
+                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                        </a>
+                                    </h3>
+                                  </div>
+                                  <div class="panel-body collapse in" :id="odBody">
+                                      <div v-for="org in user.wildlifecompliance_organisations">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                            <div class="col-sm-3">
+                                                <input type="text" disabled class="form-control" name="organisation" v-model="org.name" placeholder="">
+                                            </div>
+                                            <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                            <div class="col-sm-3">
+                                                <input type="text" disabled class="form-control" name="organisation" v-model="org.abn" placeholder="">
+                                            </div>
+                                            <a style="cursor:pointer;text-decoration:none;" @click.prevent="unlinkUser(org)"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
+                                          </div>
+                                      </div>
+                                      <div v-for="orgReq in orgRequest_pending">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                            <div class="col-sm-3">
+                                                <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                            </div>
+                                            <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                            <div class="col-sm-3">
+                                                <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
+                                            </div>
+                                            <label>Pending for Approval (#{{orgReq.id}})</label>
+                                          </div>
+                                      </div>
                                   </div>
                                 </div>
                             </div>
@@ -183,10 +224,12 @@ export default {
             adBody: 'adBody'+vm._uid,
             pdBody: 'pdBody'+vm._uid,
             cdBody: 'cdBody'+vm._uid,
+            odBody: 'odBody'+vm._uid,
             dTab: 'dTab'+vm._uid,
             oTab: 'oTab'+vm._uid,
             user: {
-                address: {}
+                address: {},
+                wildlifecompliance_organisations: []
             },
             loading: [],
             countries: [],
@@ -202,6 +245,7 @@ export default {
             applications_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/applications'),
             licences_url: api_endpoints.licences+'?user_id='+vm.$route.params.user_id,
             returns_url: api_endpoints.returns+'?user_id='+vm.$route.params.user_id,
+            orgRequest_pending: [],
         }
     },
     components: {
@@ -219,13 +263,15 @@ export default {
     beforeRouteEnter: function(to, from, next){
         let initialisers = [
             utils.fetchCountries(),
-            utils.fetchUser(to.params.user_id)
+            utils.fetchUser(to.params.user_id),
+            utils.fetchOrgRequestPending(to.params.user_id)
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
                 vm.countries = data[0];
                 vm.user = data[1];
                 vm.user.residential_address = vm.user.residential_address != null ? vm.user.residential_address : {};
+                vm.orgRequest_pending = data[2];
             });
         });
     },

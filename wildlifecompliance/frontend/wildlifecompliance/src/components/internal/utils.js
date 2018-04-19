@@ -33,6 +33,18 @@ export default {
             });
         });
     },
+    fetchOrgRequestPending:function (id){
+        return new Promise ((resolve,reject) => {
+            console.log('fetchOrgRequestPending in internal/utils.js');
+            console.log(helpers.add_endpoint_join(api.users,id + '/pending_org_requests'));
+            Vue.http.get(helpers.add_endpoint_join(api.users,id + '/pending_org_requests')).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
     fetchProfile: function(id){
         return new Promise ((resolve,reject) => {
             Vue.http.get(helpers.add_endpoint_json(api.profiles,id)).then((response) => {
