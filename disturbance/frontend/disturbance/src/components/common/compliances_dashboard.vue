@@ -32,7 +32,7 @@ a<template id="proposal_dashboard">
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Status</label>
-                                <select class="form-control" v-model="filterProposalStatus">
+                                <select class="form-control" v-model="filterComplianceStatus">
                                     <option value="All">All</option>
                                     <option v-for="s in status" :value="s">{{s}}</option>
                                 </select>
@@ -41,18 +41,18 @@ a<template id="proposal_dashboard">
                     </div>
                     <div class="row">
                         <div class="col-md-3">
-                            <label for="">Expiry From</label>
-                            <div class="input-group date" ref="proposalDateFromPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedFrom">
+                            <label for="">Due date From</label>
+                            <div class="input-group date" ref="complianceDateFromPicker">
+                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterComplianceDueFrom">
                                 <span class="input-group-addon">
                                     <span class="glyphicon glyphicon-calendar"></span>
                                 </span>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <label for="">Expiry To</label>
-                            <div class="input-group date" ref="proposalDateToPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedTo">
+                            <label for="">Due date To</label>
+                            <div class="input-group date" ref="complianceDateToPicker">
+                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterComplianceDueTo">
                                 <span class="input-group-addon">
                                     <span class="glyphicon glyphicon-calendar"></span>
                                 </span>
@@ -99,9 +99,9 @@ export default {
             // Filters for Proposals
             filterProposalRegion: 'All',
             filterProposalActivity: 'All',
-            filterProposalStatus: 'All',
-            filterProposalLodgedFrom: '',
-            filterProposalLodgedTo: '',
+            filterComplianceStatus: 'All',
+            filterComplianceDueFrom: '',
+            filterComplianceDueTo: '',
             filterProposalSubmitter: 'All',
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
@@ -112,19 +112,17 @@ export default {
                 allowInputToggle:true
             },
             external_status:[
-                'Temporary',
-                'Draft',
-                'Submitted',
-                'Approved',
-                'Declined'
+                'Due',
+                'Future',
+                'Under Review',
+                'Approved'                
             ],
             internal_status:[
-                'Temporary',
-                'Draft',
+                'Due',
+                'Future',
                 'With Assessor',
-                'With Referral',
-                'Issued',
-                'Declined'
+                'Approved',
+                
             ],
             proposal_activityTitles : [],
             proposal_regions: [],
@@ -174,11 +172,11 @@ export default {
                             let links = '';
                             if (!vm.is_external){
                                 if (full.can_user_view) {
-                                    links +=  `<a href='/external/compliance/${full.id}'>Process</a><br/>`;
+                                    links +=  `<a href='/internal/compliance/${full.id}'>Process</a><br/>`;
                                     
                                 }
                                 else {
-                                    links +=  `<a href='/external/compliance/${full.id}'>View</a><br/>`;
+                                    links +=  `<a href='/internal/compliance/${full.id}'>View</a><br/>`;
                                 }
                             }
                             else{
@@ -219,6 +217,16 @@ export default {
                         })
                         vm.proposal_activityTitles = activityTitles;
                     });
+
+                    // Grab Status from the data in the table
+                    var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(6);
+                    statusColumn.data().unique().sort().each( function ( d, j ) {
+                        let statusTitles = [];
+                        $.each(d,(index,a) => {
+                            a != null && statusTitles.indexOf(a) < 0 ? statusTitles.push(a): '';
+                        })
+                        vm.status = statusTitles;
+                    });
                 }
             }
         }
@@ -235,10 +243,10 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
             }
         },
-        filterProposalStatus: function() {
+        filterComplianceStatus: function() {
             let vm = this;
-            if (vm.filterProposalStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search(vm.filterProposalStatus).draw();
+            if (vm.filterComplianceStatus!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(6).search(vm.filterComplianceStatus).draw();
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
             }
@@ -249,54 +257,62 @@ export default {
         filterProposalSubmitter: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
         },
-        filterProposalLodgedFrom: function(){
+        filterComplianceDueFrom: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
         },
-        filterProposalLodgedTo: function(){
+        filterComplianceDueTo: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
         }
     },
     computed: {
-        status: function(){
-            //return this.is_external ? this.external_status : this.internal_status;
-            return [];
-        },
+       /* status: function(){
+            return this.is_external ? this.external_status : this.internal_status;
+            //return [];
+        }, */
         is_external: function(){
             return this.level == 'external';
         },
-        is_referral: function(){
-            return this.level == 'referral';
-        }
+        
     },
     methods:{
         addEventListeners: function(){
             let vm = this;
             // Initialise Proposal Date Filters
-            $(vm.$refs.proposalDateToPicker).datetimepicker(vm.datepickerOptions);
-            $(vm.$refs.proposalDateToPicker).on('dp.change', function(e){
-                if ($(vm.$refs.proposalDateToPicker).data('DateTimePicker').date()) {
-                    vm.filterProposalLodgedTo =  e.date.format('DD/MM/YYYY');
+            $(vm.$refs.complianceDateToPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.complianceDateToPicker).on('dp.change', function(e){
+                if ($(vm.$refs.complianceDateToPicker).data('DateTimePicker').date()) {
+                    vm.filterComplianceDueTo =  e.date.format('DD/MM/YYYY');
                 }
-                else if ($(vm.$refs.proposalDateToPicker).data('date') === "") {
+                else if ($(vm.$refs.complianceDateToPicker).data('date') === "") {
                     vm.filterProposaLodgedTo = "";
                 }
              });
-            $(vm.$refs.proposalDateFromPicker).datetimepicker(vm.datepickerOptions);
-            $(vm.$refs.proposalDateFromPicker).on('dp.change',function (e) {
-                if ($(vm.$refs.proposalDateFromPicker).data('DateTimePicker').date()) {
-                    vm.filterProposalLodgedFrom = e.date.format('DD/MM/YYYY');
-                    $(vm.$refs.proposalDateToPicker).data("DateTimePicker").minDate(e.date);
+            $(vm.$refs.complianceDateFromPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.complianceDateFromPicker).on('dp.change',function (e) {
+                if ($(vm.$refs.complianceDateFromPicker).data('DateTimePicker').date()) {
+                    vm.filterComplianceDueFrom = e.date.format('DD/MM/YYYY');
+                    $(vm.$refs.complianceDateToPicker).data("DateTimePicker").minDate(e.date);
                 }
-                else if ($(vm.$refs.proposalDateFromPicker).data('date') === "") {
-                    vm.filterProposalLodgedFrom = "";
+                else if ($(vm.$refs.complianceDateFromPicker).data('date') === "") {
+                    vm.filterComplianceDueFrom = "";
                 }
             });
-            // End Proposal Date Filters
-            // External Discard listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-discard-proposal]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-discard-proposal');
-                vm.discardProposal(id);
+            // End Proposal Date Filters          
+            
+
+            // Initialise select2 for region
+            $(vm.$refs.filterRegion).select2({
+                "theme": "bootstrap",
+                allowClear: true,
+                placeholder:"Select Region"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterProposalRegion = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterProposalRegion = selected.val();
             });
         },
         initialiseSearch:function(){
@@ -311,7 +327,7 @@ export default {
                     let filtered_regions = vm.filterProposalRegion.split(',');
                     if (filtered_regions == 'All'){ return true; } 
 
-                    let regions = original.region != '' && original.region != null ? original.region.split(','): [];
+                    let regions = original.regions != '' && original.regions != null ? original.regions.split(','): [];
 
                     $.each(regions,(i,r) => {
                         if (filtered_regions.indexOf(r) != -1){
@@ -339,9 +355,9 @@ export default {
             let vm = this;
             vm.$refs.proposal_datatable.table.dataTableExt.afnFiltering.push(
                 function(settings,data,dataIndex,original){
-                    let from = vm.filterProposalLodgedFrom;
-                    let to = vm.filterProposalLodgedTo;
-                    let val = original.lodgement_date;
+                    let from = vm.filterComplianceDueFrom;
+                    let to = vm.filterComplianceDueTo;
+                    let val = original.due_date;
 
                     if ( from == '' && to == ''){
                         return true;

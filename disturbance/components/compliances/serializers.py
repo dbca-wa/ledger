@@ -21,6 +21,7 @@ class ComplianceSerializer(serializers.ModelSerializer):
     documents = serializers.SerializerMethodField()
     submitter = serializers.CharField(source='submitter.get_full_name')
     allowed_assessors = EmailUserSerializer(many=True)
+    assigned_to = serializers.CharField(source='assigned_to.get_full_name')
 
 
     class Meta:
@@ -44,8 +45,7 @@ class ComplianceSerializer(serializers.ModelSerializer):
             'reference',
             'lodgement_date',
             'submitter',
-            'allowed_assessors'
-
+            'allowed_assessors',
             'lodgement_date'
 
         )

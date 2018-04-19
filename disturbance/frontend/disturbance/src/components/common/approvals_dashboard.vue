@@ -71,6 +71,7 @@
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
+import Vue from 'vue'
 import {
     api_endpoints,
     helpers
@@ -96,6 +97,8 @@ export default {
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'proposal-datatable-'+vm._uid,
+            //Profile to check if user has access to process Proposal
+            profile: {},
             // Filters for Proposals
             filterProposalRegion: 'All',
             filterProposalActivity: 'All',
@@ -172,7 +175,15 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                links +=  `<a href='/internal/proposal/${full.current_proposal}'>View</a><br/>`;
+                                if(vm.check_assessor(full) && full.can_reissue){
+                                    
+                                    links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
+                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+
+                            }
+                                else{
+                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                }
                             }
                             else{
                                 if (full.can_user_edit) {
@@ -297,10 +308,10 @@ export default {
             });
             // End Proposal Date Filters
             // External Discard listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-discard-proposal]', function(e) {
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reissue-approval]', function(e) {
                 e.preventDefault();
-                var id = $(this).attr('data-discard-proposal');
-                vm.discardProposal(id);
+                var id = $(this).attr('data-reissue-approval');
+                vm.reissueApproval(id);
             });
         },
         initialiseSearch:function(){
@@ -374,9 +385,69 @@ export default {
                     }
                 }
             );
-        }
+        },
+
+        fetchProfile: function(){
+            let vm = this;
+            Vue.http.get(api_endpoints.profile).then((response) => {
+                vm.profile = response.body
+                              
+            },(error) => {
+                console.log(error);
+                
+            })
+        },
+
+        check_assessor: function(proposal){
+            let vm = this;         
+            
+            var assessor = proposal.allowed_assessors.filter(function(elem){
+                    return(elem.id=vm.profile.id)
+                });
+                
+            if (assessor.length > 0)
+                return true;
+            else
+                return false;       
+        },
+
+        reissueApproval:function (proposal_id) {
+            let vm = this;
+            let status= 'with_approver'
+            let data = {'status': status}
+            swal({
+                title: "Reissue Approval",
+                text: "Are you sure you want to reissue this approval?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: 'Reissue approval',
+                //confirmButtonColor:'#d9534f'
+            }).then(() => {
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/reissue_approval')),JSON.stringify(data),{
+                emulateJSON:true,
+                })
+                .then((response) => {
+                    swal(
+                        'Reissue',
+                        'Your approval has been reissued',
+                        'success'
+                    )
+                    vm.$router.push({
+                    name:"internal-proposal",
+                    params:{proposal_id:proposal_id}
+                    });
+                }, (error) => {
+                    console.log(error);
+                });
+            },(error) => {
+
+            });
+        },
+
+
     },
     mounted: function(){
+        this.fetchProfile();
         let vm = this;
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
