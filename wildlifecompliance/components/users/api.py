@@ -155,7 +155,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response(e)
         else:
             try:
-                return super(UserViewSet, self).list(self, request, **kwargs)
+                return super(UserViewSet, self).list(request, **kwargs)
 
             except Exception as e:
                 return Response(e)
