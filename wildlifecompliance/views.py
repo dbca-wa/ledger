@@ -54,8 +54,6 @@ class WildlifeComplianceRoutingView(TemplateView):
 @login_required(login_url='wc_home')
 def first_time(request):
     context = {}
-    context['is_new'] = True
-    print(context)
     if request.method == 'POST':
         form = FirstTimeForm(request.POST)
         redirect_url = form.data['redirect_url']
@@ -78,7 +76,6 @@ def first_time(request):
         context['redirect_url'] = '/'
     context['dev'] = settings.DEV_STATIC
     context['dev_url'] = settings.DEV_STATIC_URL
-    #return render(request, 'wildlifecompliance/user_profile.html', context)
     return render(request, 'wildlifecompliance/dash/index.html', context)
 
 

@@ -34,6 +34,8 @@ router.register(r'emailidentities',users_api.EmailIdentityViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
+    url(r'^api/is_new_user$', users_api.IsNewUser.as_view(), name='is-new-user'),
+    url(r'^api/user_profile_completed$', users_api.UserProfileCompleted.as_view(), name='get-user-profile-completed'),
     url(r'^api/department_users$', users_api.DepartmentUserList.as_view(), name='department-users-list'),
     url(r'^api/application_type$', application_api.GetApplicationType.as_view(), name='get-application-type'),
     url(r'^api/empty_list$', application_api.GetEmptyList.as_view(), name='get-empty-list'),
@@ -45,7 +47,7 @@ api_patterns = [
 urlpatterns = [
     url(r'^admin/', wildlifecompliance_admin_site.urls),
     url(r'', include(api_patterns)),
-    url(r'^$', views.WildlifeComplianceRoutingView.as_view(), name='ds_home'),
+    url(r'^$', views.WildlifeComplianceRoutingView.as_view(), name='wc_home'),
     url(r'^internal/', views.InternalView.as_view(), name='internal'),
     url(r'^internal/application/(?P<application_pk>\d+)/referral/(?P<referral_pk>\d+)/$', views.ReferralView.as_view(), name='internal-referral-detail'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),

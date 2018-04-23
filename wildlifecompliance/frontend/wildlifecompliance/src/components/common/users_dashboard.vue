@@ -4,9 +4,6 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">People <small v-if="is_external">View people details</small>
-                        <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                        </a>
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
@@ -56,15 +53,16 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            user_headers:["Title","Given Name(s)","Last Name","Date of Birth","Email","Phone","Mobile","Fax","Character Check","Character Comments"],
+            user_headers:["Title","Given Name(s)","Last Name","Date of Birth","Email","Phone","Mobile","Fax","Character Flagged","Character Comments","Action"],
             user_options:{
+                serverSide: true,
+                searchDelay: 1000,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
                 },
                 columns: [
                     {data: "title"},
@@ -82,6 +80,13 @@ export default {
                     {data: "fax_number"},
                     {data: "character_flagged"},
                     {data: "character_comments"},
+                    {
+                        data:"id",
+                        mRender:function(data, type, full){
+                            var column = "<a href='/internal/users/\__ID__\'> Edit </a>";
+                            return column.replace(/__ID__/g, data);
+                        }
+                    },
                 ],
                 processing: true,
                 initComplete: function () {
@@ -111,17 +116,6 @@ export default {
     methods: {
     },
     mounted: function(){
-        let vm = this;
-        $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
-            var chev = $( this ).children()[ 0 ];
-            window.setTimeout( function () {
-                $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
-            }, 100 );
-        });
-        this.$nextTick(() => {
-            vm.addEventListeners();
-            vm.initialiseSearch();
-        });
     }
 }
 </script>

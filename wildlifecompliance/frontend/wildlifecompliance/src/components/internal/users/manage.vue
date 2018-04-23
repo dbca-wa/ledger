@@ -3,13 +3,11 @@
     <div class="row">
     <div class="col-md-10 col-md-offset-1">
         <div class="row">
-            <h3>{{ user.first_name }} {{ user.last_name  }} - {{ user.dob }}</h3>
+            <h3>{{ user.first_name }} {{ user.last_name  }} - {{ user.dob }} ({{ user.email }})</h3>
             <div class="col-md-3">
                 <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
             </div>
-            <div class="col-md-1">
-            </div>
-            <div class="col-md-8">
+            <div class="col-md-9">
                 <ul class="nav nav-tabs">
                     <li class="active"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
                     <li><a data-toggle="tab" :href="'#'+oTab">Other</a></li>
@@ -20,7 +18,7 @@
                             <div class="col-sm-12">
                                 <div class="panel panel-default">
                                   <div class="panel-heading">
-                                    <h3 class="panel-title">Person Details
+                                    <h3 class="panel-title">Personal Details
                                         <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
                                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                         </a>
@@ -48,7 +46,7 @@
                                           </div>
                                           <div class="form-group">
                                             <div class="col-sm-12">
-                                                <button v-if="!updatingDetails" class="pull-right btn btn-primary" @click.prevent="updateDetails()">Update</button>
+                                                <button v-if="!updatingPersonal" class="pull-right btn btn-primary" @click.prevent="updatePersonal()">Update</button>
                                                 <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                             </div>
                                           </div>
@@ -63,11 +61,11 @@
                                   <div class="panel-heading">
                                     <h3 class="panel-title">Address Details
                                         <a class="panelClicker" :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
-                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                         </a>
                                     </h3>
                                   </div>
-                                  <div v-if="loading.length == 0" class="panel-body collapse" :id="adBody">
+                                  <div v-if="loading.length == 0" class="panel-body collapse in" :id="adBody">
                                       <form class="form-horizontal" action="index.html" method="post">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
@@ -110,6 +108,88 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                    <h3 class="panel-title">Contact Details <small></small>
+                                        <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
+                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                        </a>
+                                    </h3>
+                                  </div>
+                                  <div class="panel-body collapse in" :id="cdBody">
+                                      <form class="form-horizontal" action="index.html" method="post">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                                            <div class="col-sm-6">
+                                                <input type="text" class="form-control" name="phone" placeholder="" v-model="user.phone_number">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Mobile</label>
+                                            <div class="col-sm-6">
+                                                <input type="text" class="form-control" name="mobile" placeholder="" v-model="user.mobile_number">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Email</label>
+                                            <div class="col-sm-6">
+                                                <input type="email" class="form-control" disabled="disabled" name="email" placeholder="" v-model="user.email">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <div class="col-sm-12">
+                                                <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="updateContact()">Update</button>
+                                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                                            </div>
+                                          </div>
+                                       </form>
+                                  </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                    <h3 class="panel-title">Organisations <small></small>
+                                        <a class="panelClicker" :href="'#'+odBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="odBody">
+                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                        </a>
+                                    </h3>
+                                  </div>
+                                  <div class="panel-body collapse in" :id="odBody">
+                                      <div v-for="org in user.wildlifecompliance_organisations">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                            <div class="col-sm-3">
+                                                <input type="text" disabled class="form-control" name="organisation" v-model="org.name" placeholder="">
+                                            </div>
+                                            <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                            <div class="col-sm-3">
+                                                <input type="text" disabled class="form-control" name="organisation" v-model="org.abn" placeholder="">
+                                            </div>
+                                            <a style="cursor:pointer;text-decoration:none;" @click.prevent="unlinkUser(org)"><i class="fa fa-chain-broken fa-2x" ></i>&nbsp;Unlink</a>
+                                          </div>
+                                      </div>
+                                      <div v-for="orgReq in orgRequest_pending">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                            <div class="col-sm-3">
+                                                <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                            </div>
+                                            <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                            <div class="col-sm-3">
+                                                <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
+                                            </div>
+                                            <label>Pending for Approval (#{{orgReq.id}})</label>
+                                          </div>
+                                      </div>
+                                  </div>
+                                </div>
+                            </div>
+                        </div>
                     </div> 
                     <div :id="oTab" class="tab-pane fade">
                         <ApplicationDashTable ref="applications_table" level='internal' :url='applications_url'/>
@@ -143,14 +223,17 @@ export default {
         return {
             adBody: 'adBody'+vm._uid,
             pdBody: 'pdBody'+vm._uid,
+            cdBody: 'cdBody'+vm._uid,
+            odBody: 'odBody'+vm._uid,
             dTab: 'dTab'+vm._uid,
             oTab: 'oTab'+vm._uid,
             user: {
-                address: {}
+                address: {},
+                wildlifecompliance_organisations: []
             },
             loading: [],
             countries: [],
-            updatingDetails: false,
+            updatingPersonal: false,
             updatingAddress: false,
             updatingContact: false,
             empty_list: '/api/empty_list',
@@ -162,6 +245,7 @@ export default {
             applications_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/applications'),
             licences_url: api_endpoints.licences+'?user_id='+vm.$route.params.user_id,
             returns_url: api_endpoints.returns+'?user_id='+vm.$route.params.user_id,
+            orgRequest_pending: [],
         }
     },
     components: {
@@ -179,13 +263,15 @@ export default {
     beforeRouteEnter: function(to, from, next){
         let initialisers = [
             utils.fetchCountries(),
-            utils.fetchUser(to.params.user_id)
+            utils.fetchUser(to.params.user_id),
+            utils.fetchOrgRequestPending(to.params.user_id)
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
                 vm.countries = data[0];
                 vm.user = data[1];
                 vm.user.residential_address = vm.user.residential_address != null ? vm.user.residential_address : {};
+                vm.orgRequest_pending = data[2];
             });
         });
     },
@@ -210,23 +296,77 @@ export default {
                 vm.$refs.returns_table.$refs.application_datatable.vmDataTable.columns.adjust().responsive.recalc();
             });
         },
-        updateDetails: function() {
+        updatePersonal: function() {
             let vm = this;
-            vm.updatingDetails = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_personal')),JSON.stringify(vm.user),{
+            vm.updatingPersonal = true;
+            if (vm.user.residential_address == null){ vm.user.residential_address = {}; }
+            let params = '?';
+            params += '&first_name=' + vm.user.first_name;
+            params += '&last_name=' + vm.user.last_name;
+            params += '&dob=' + vm.user.dob;
+            if (vm.user.first_name == '' || vm.user.last_name == '' || (vm.user.dob == null || vm.user.dob == '')){
+                let error_msg = 'Please ensure all fields are filled in.';
+                swal({
+                    title: 'Update Personal Details',
+                    html: 'There was an error updating the user personal details.<br/>' + error_msg,
+                    type: 'error'
+                }).then(() => {
+                    vm.updatingPersonal = false;
+                });
+                return;
+            }
+			vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_personal')),JSON.stringify(vm.user),{
+				emulateJSON:true
+			}).then((response) => {
+				swal({
+					title: 'Update Personal Details',
+					html: 'User personal details has been successfully updated.',
+					type: 'success',
+				}).then(() => {
+					vm.updatingPersonal = false;
+				});
+			}, (error) => {
+				vm.updatingPersonal = false;
+				let error_msg = '<br/>';
+				for (var key in error.body) {
+					if (key === 'dob') {
+						error_msg += 'dob: Please enter a valid date.<br/>';
+					} else {
+						error_msg += key + ': ' + error.body[key] + '<br/>';
+					}
+				}
+				swal({
+					title: 'Update Personal Details',
+					html: 'There was an error updating the user personal details.<br/>' + error_msg,
+					type: 'error'
+				})
+			});
+        },
+        updateContact: function() {
+            let vm = this;
+            vm.updatingContact = true;
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_contact')),JSON.stringify(vm.user),{
                 emulateJSON:true
             }).then((response) => {
-                vm.updatingDetails = false;
+                vm.updatingContact = false;
                 vm.user = response.body;
                 if (vm.user.residential_address == null){ vm.user.residential_address = {}; }
-                swal(
-                    'Saved',
-                    'Person details have been saved',
-                    'success'
-                )
+                swal({
+                    title: 'Update Contact Details',
+                    html: 'User contact details has been successfully updated.',
+                    type: 'success',
+                })
             }, (error) => {
-                console.log(error);
-                vm.updatingDetails = false;
+                vm.updatingContact = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal({
+                    title: 'Update Contact Details',
+                    html: 'There was an error updating the user contact details.<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
         updateAddress: function() {
@@ -237,17 +377,26 @@ export default {
             }).then((response) => {
                 vm.updatingAddress = false;
                 vm.user = response.body;
-                swal(
-                    'Saved',
-                    'Address details have been saved',
-                    'success'
-                )
                 if (vm.user.residential_address == null){ vm.user.residential_address = {}; }
+                swal({
+                    title: 'Update Address Details',
+                    html: 'User address details has been successfully updated.',
+                    type: 'success',
+                })
             }, (error) => {
-                console.log(error);
                 vm.updatingAddress = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal({
+                    title: 'Update Address Details',
+                    html: 'There was an error updating the user address details.<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
+
     },
     mounted: function(){
         let vm = this;

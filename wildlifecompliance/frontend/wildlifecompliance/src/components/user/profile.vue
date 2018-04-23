@@ -6,11 +6,12 @@
                     <div class="row">
                         <div class="col-sm-12">
                             <p>
-                                We have detected that this is the first time you have logged into the system.Please take a moment to provide us with your details
-                                (personal details, address details, contact details, and weather you are managing licences for an organisation).
+                                We have detected that this may be the first time you have logged into the system.Please take a moment to provide us with your details
+                                (personal details, address details, contact details, and whether you are managing licences for an organisation).
                                 Once completed, click Continue to start using the system.
                             </p>
-                            <a :disabled="!completedProfile" href="/" class="btn btn-primary pull-right">Continue</a>
+                            <button v-if="completedProfile" @click.prevent="userProfileCompleted()" class="btn btn-primary pull-right">Continue</button>
+                            <button v-else disabled class="btn btn-primary pull-right">Complete profile to continue</button>
                         </div>
                     </div>
                 </div>
@@ -45,7 +46,7 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Date of Birth</label>
                             <div class="col-sm-6">
-                                <input type="date" class="form-control" name="dob" placeholder="" v-model="profile.dob">
+                                <input type="date" class="form-control" name="dob" placeholder="" max="2100-12-31" v-model="profile.dob">
                             </div>
                           </div>
                           <div class="form-group">
@@ -161,7 +162,7 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <h3 class="panel-title">Organisation <small>Link to the Organisations you are an employee of and for which you are managing licences</small>
+                    <h3 class="panel-title">Organisations <small>Link to the Organisations you are an employee of and for which you are managing licences</small>
                         <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
@@ -337,6 +338,9 @@ export default {
             cBody: 'cBody'+vm._uid,
             oBody: 'oBody'+vm._uid,
             profile: {
+                first_name: '',
+                last_name: '',
+                dob: '',
                 wildlifecompliance_organisations:[],
                 residential_address : {}
             },
@@ -355,7 +359,6 @@ export default {
             managesOrgConsultant: 'No',
             uploadedFile: null,
             updatingPersonal: false,
-            deleteEmailUserLogout: null,
             updatingAddress: false,
             updatingContact: false,
             registeringOrg: false,
@@ -375,8 +378,6 @@ export default {
 
             if (this.managesOrg  == 'Yes' && !this.hasOrgs && this.newOrg){
                 this.addCompany()
-                console.log(this.managesOrg)
-                console.log(this.role)
 
             } else if (this.managesOrg == 'No' && this.newOrg){
                 this.resetNewOrg();
@@ -385,9 +386,7 @@ export default {
             } else {
                 this.addCompany()
                 this.addingCompany=false
-                console.log(this.managesOrg)
-                console.log(this.role)
-            } 
+            }
         },
   
     },
@@ -433,6 +432,13 @@ export default {
                 'exists': false
             };
         },
+        deleteUserLogout: function() {
+            let vm = this;
+            vm.$http.delete(helpers.add_endpoint_json(api_endpoints.users,vm.profile.id)).then((response) => {
+                window.location.href='/ledger/logout';
+            },(error) => {
+            })
+        },
         updatePersonal: function() {
             let vm = this;
             vm.updatingPersonal = true;
@@ -441,7 +447,7 @@ export default {
             params += '&first_name=' + vm.profile.first_name;
             params += '&last_name=' + vm.profile.last_name;
             params += '&dob=' + vm.profile.dob;
-            if (vm.profile.first_name === '' || vm.profile.last_name === '' || vm.profile.dob === ''){
+            if (vm.profile.first_name == '' || vm.profile.last_name == '' || (vm.profile.dob == null || vm.profile.dob == '')){
                 let error_msg = 'Please ensure all fields are filled in.';
                 swal({
                     title: 'Update Personal Details',
@@ -449,10 +455,11 @@ export default {
                     type: 'error'
                 }).then(() => {
                     vm.updatingPersonal = false;
+                    vm.profile.personal_details = false;
                 });
                 return;
             }
-            if (vm.new_user) {
+            if (vm.new_user == 'True') {
                 swal({
                     title: "Update Personal Details",
                     html: 'If you already have a Parks and Wildlife customer account under another email address, please ' +
@@ -461,13 +468,13 @@ export default {
                         'your details.',
                     type: "question",
                     allowOutsideClick: false,
+                    allowEscapeKey: false,
                     confirmButtonText: 'Okay',
                     showCancelButton: true,
                     cancelButtonText: 'Logout',
                     cancelButtonClass: 'btn btn-danger'
                 }).then((result) => {
                     if (result.value) {
-                        console.log('inside true');
                         vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
                             emulateJSON:true
                         }).then((response) => {
@@ -477,9 +484,11 @@ export default {
                                 type: 'success',
                             }).then(() => {
                                 vm.updatingPersonal = false;
+                                vm.profile.personal_details = true;
                             });
                         }, (error) => {
                             vm.updatingPersonal = false;
+                            vm.profile.personal_details = false;
                             let error_msg = '<br/>';
                             for (var key in error.body) {
                                 if (key === 'dob') {
@@ -495,13 +504,13 @@ export default {
                             })
                         });
                     } else if (result.dismiss === swal.DismissReason.cancel) {
-                        console.log('new user wants to logout and delete');
                         vm.updatingPersonal = false;
+                        vm.deleteUserLogout();
                         return;
                     }
                 }, (error) => {
                     vm.updatingPersonal = false;
-                    console.log('error final');
+                    vm.profile.personal_details = false;
                     swal({
                         title: 'Update Personal Details',
                         html: 'There was an error updating your personal details.',
@@ -518,9 +527,11 @@ export default {
                         type: 'success',
                     }).then(() => {
                         vm.updatingPersonal = false;
+                        vm.profile.personal_details = true;
                     });
                 }, (error) => {
                     vm.updatingPersonal = false;
+                    vm.profile.personal_details = false;
                     let error_msg = '<br/>';
                     for (var key in error.body) {
                         if (key === 'dob') {
@@ -543,7 +554,6 @@ export default {
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_contact')),JSON.stringify(vm.profile),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
                 vm.updatingContact = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
@@ -553,8 +563,8 @@ export default {
                     type: 'success',
                 })
             }, (error) => {
-                console.log(error);
                 vm.updatingContact = false;
+                vm.profile.contact_details = false;
                 let error_msg = '<br/>';
                 for (var key in error.body) {
                     error_msg += key + ': ' + error.body[key] + '<br/>';
@@ -572,7 +582,6 @@ export default {
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_address')),JSON.stringify(vm.profile.residential_address),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
                 vm.updatingAddress = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
@@ -582,8 +591,8 @@ export default {
                     type: 'success',
                 })
             }, (error) => {
-                console.log(error);
                 vm.updatingAddress = false;
+                vm.profile.address_details = false;
                 let error_msg = '<br/>';
                 for (var key in error.body) {
                     error_msg += key + ': ' + error.body[key] + '<br/>';
@@ -600,13 +609,11 @@ export default {
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,'existance'),JSON.stringify(this.newOrg),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
                 this.newOrg.exists = response.body.exists;
                 this.newOrg.detailsChecked = true;
                 this.newOrg.id = response.body.id;
                 if (response.body.first_five){this.newOrg.first_five = response.body.first_five }
             }, (error) => {
-                console.log(error);
             });
         },
         validatePins: function() {
@@ -630,7 +637,6 @@ export default {
                         if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
                         if ( vm.profile.wildlifecompliance_organisations && vm.profile.wildlifecompliance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
                     },(error) => {
-                        console.log(error);
                     })
                 }else {
                     swal(
@@ -642,7 +648,6 @@ export default {
                 vm.validatingPins = false;
             }, (error) => {
                 vm.validatingPins = false;
-                console.log(error);
             });
         },
         orgRequest: function() {
@@ -653,7 +658,6 @@ export default {
             data.append('abn', vm.newOrg.abn)
             data.append('identification', vm.uploadedFile)
             data.append('role',vm.role)
-            console.log(vm.role)
             vm.$http.post(api_endpoints.organisation_requests,data,{
                 emulateJSON:true
             }).then((response) => {
@@ -668,17 +672,14 @@ export default {
                 )
             }, (error) => {
                 vm.registeringOrg = false;
-                console.log(error);
             });
 
         },
         toggleSection: function (e) {
             let el = e.target;
             let chev = null;
-            console.log(el);
             $(el).on('click', function (event) {
                 chev = $(this);
-                console.log(chev);
                 $(chev).toggleClass('glyphicon-chevron-down glyphicon-chevron-up');
             })
         },
@@ -689,7 +690,6 @@ export default {
                 vm.countries = response.body;
                 vm.loading.splice('fetching countries',1);
             },(response)=>{
-                console.log(response);
                 vm.loading.splice('fetching countries',1);
             });
         },
@@ -699,7 +699,6 @@ export default {
                 vm.orgRequest_pending = response.body;
                 vm.loading.splice('fetching pending organisation requests ',1);
             },(response)=>{
-                console.log(response);
                 vm.loading.splice('fetching pending organisation requests',1);
             });
         },
@@ -723,7 +722,6 @@ export default {
                         if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
                         if ( vm.profile.wildlifecompliance_organisations && vm.profile.wildlifecompliance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
                     },(error) => {
-                        console.log(error);
                     })
                     swal(
                         'Unlink',
@@ -740,10 +738,16 @@ export default {
             },(error) => {
             }); 
         },
+        userProfileCompleted: function(){
+            let vm = this;
+            vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
+                window.location.href='/';
+            },(error) => {
+            })
+        },
     },
     beforeRouteEnter: function(to,from,next){
         Vue.http.get(api_endpoints.profile).then((response) => {
-            console.log(response);
             if (response.body.address_details && response.body.personal_details && response.body.contact_details && to.name == 'first-time'){
                 window.location.href='/';
             }
@@ -755,7 +759,6 @@ export default {
                 });
             }
         },(error) => {
-            console.log(error);
         })
     },
     mounted: function(){
@@ -768,12 +771,9 @@ export default {
                 $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
             },100);
         });
-        if($('#new_user')){
-            console.log($('#new_user'));
-            this.new_user = true;
-            console.log('new user:')
-            console.log(this.new_user)
-        }
+        Vue.http.get(api_endpoints.is_new_user).then((response) => {
+            this.new_user = response.body;
+        })
     }
 }
 </script>

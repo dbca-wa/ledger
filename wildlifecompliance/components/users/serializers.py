@@ -22,6 +22,7 @@ class UserOrganisationContactSerializer(serializers.ModelSerializer):
 
 
 class UserOrganisationSerializer(serializers.ModelSerializer):
+    # Serializer for an Organisation linked with a User
     name = serializers.CharField(source='organisation.name')
     abn = serializers.CharField(source='organisation.abn')
     email = serializers.SerializerMethodField()
@@ -40,19 +41,15 @@ class UserOrganisationSerializer(serializers.ModelSerializer):
         )
 
     def get_is_admin(self,obj):
-        user =  self.context['request'].user
-        # Check if the request user is among the first five delegates in the organisation
+        user = EmailUser.objects.get(id=self.context.get('user_id'))
         return can_admin_org(obj,user)
 
     def get_is_consultant(self,obj):
-        user =  self.context['request'].user
-        # Check if the request user is among the first five delegates in the organisation
+        user = EmailUser.objects.get(id=self.context.get('user_id'))
         return is_consultant(obj,user)
 
     def get_email(self,obj):
-        request = self.context.get('request')
-        email = request.user.email
-        # email = request.user.email
+        email = EmailUser.objects.get(id=self.context.get('user_id')).email
         return email
 
 
@@ -135,11 +132,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # wildlifecompliance_organisations = UserOrganisationSerializer(many=True)
     residential_address = UserAddressSerializer()
     personal_details = serializers.SerializerMethodField()
     address_details = serializers.SerializerMethodField()
     contact_details = serializers.SerializerMethodField()
+    wildlifecompliance_organisations = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -162,9 +159,8 @@ class UserSerializer(serializers.ModelSerializer):
             'contact_details'
         )
 
-
     def get_personal_details(self,obj):
-        return True if obj.last_name  and obj.first_name else False
+        return True if obj.last_name  and obj.first_name  and obj.dob else False
 
     def get_address_details(self,obj):
         return True if obj.residential_address else False
@@ -172,18 +168,18 @@ class UserSerializer(serializers.ModelSerializer):
     def get_contact_details(self,obj):
         if obj.mobile_number and obj.email:
             return True
+        elif obj.phone_number and obj.email:
+            return True
         elif obj.mobile_number and obj.phone_number:
             return True
         else:
             return False
 
-    def __init__(self,*args,**kwargs):
-        super(UserSerializer, self).__init__(*args, **kwargs)
-        request = self.context.get('request')
-        print(request)
-        print(self.fields['email'])
-        self.fields['wildlifecompliance_organisations'] = UserOrganisationSerializer(many=True,context={'request':request})
-   
+    def get_wildlifecompliance_organisations(self,obj):
+        wildlifecompliance_organisations = obj.wildlifecompliance_organisations
+        serialized_orgs = UserOrganisationSerializer(wildlifecompliance_organisations, many=True,context={'user_id':obj.id}).data
+        return serialized_orgs
+
 
 class PersonalSerializer(serializers.ModelSerializer):
     class Meta:

@@ -66,17 +66,8 @@ def user_by_email(backend, details, *args, **kwargs):
             user = EmailIdentity.objects.get(email__iexact=details['email']).user
         except EmailIdentity.DoesNotExist:
             user = None
-        print("---- user_by_email ----")
-        print(user)
         return {'user': user}
 
 
 def user_is_new_session(backend, details, strategy, is_new, *args, **kwargs):
-    print backend
-    print("---- printing keys ----")
-    for key, value in kwargs.iteritems():
-        print "%s = %s" % (key, value)
-    print backend.strategy.request_data()
     backend.strategy.session_set('is_new',is_new)
-    print('---- session ----')
-    print backend.strategy.session_get('is_new')

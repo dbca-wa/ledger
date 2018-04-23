@@ -121,7 +121,7 @@ export default {
             vm.creatingProfile = true;
             vm.profile.user = vm.current_user.id;
             vm.profile.auth_identity = true;
-            let params = '?email=' + vm.profile.email + '&exclude_user=' + vm.current_user.id;
+            let params = '?email=' + encodeURIComponent(vm.profile.email) + '&exclude_user=' + vm.current_user.id;
             vm.$http.get(helpers.add_endpoint_join(api_endpoints.emailidentities,params),JSON.stringify(vm.profile),{
                     emulateJSON:true
                 }).then((response) => {
