@@ -57,8 +57,19 @@
                                 </div>
                             </div>
                             <div class="col-sm-12">
-                                <button :disabled="behalf_of == 'other' || behalf_of == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                                <div class="form-group">
+                                    <select v-model="selected">
+                                        <option v-for="option in options" :value="option.value">
+                                            {{ option.text }}
+                                        </option>
+                                    </select>
+                                    <label for="" class="control-label" >Select Proposal Type</label>
+                                </div>
                             </div>
+
+                            <div class="col-sm-12">
+                                <button :disabled="behalf_of == 'other' || behalf_of == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                             </div>
                         </form>
                     </div>
                 </div>
@@ -87,6 +98,13 @@ export default {
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
+
+        selected: 'A',
+        options: [
+            { text: 'Select proposal type', value: '', selected:'true', disabled:'disabled' },
+            { text: 'Disturbance', value: 'Disturbance' },
+            { text: 'Apiary', value: 'Apiary' }
+        ]
     }
   },
   components: {

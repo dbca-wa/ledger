@@ -1,6 +1,6 @@
 <template lang="html">
     <div v-if="proposal" class="container" id="internalProposal">
-            <div class="row">
+      <div class="row">
         <h3>Proposal: {{ proposal.lodgement_number }}</h3>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
@@ -304,14 +304,6 @@
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
                                 <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
-                                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-                                    <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
-                                    <input type='hidden' name="proposal_id" :value="1" />
-                                    <div v-if="hasAssessorMode" class="row" style="margin-bottom:20px;">
-                                      <div class="col-lg-12 pull-right">
-                                        <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
-                                      </div>
-                                    </div>
                                 </Proposal>
                             </form>
                         </div>
