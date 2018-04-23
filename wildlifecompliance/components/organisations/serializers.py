@@ -199,5 +199,5 @@ class OrgUserAcceptSerializer(serializers.Serializer):
     first_name = serializers.CharField()
     last_name =serializers.CharField()
     email= serializers.EmailField()
-    mobile_number = serializers.IntegerField()
-    phone_number = serializers.IntegerField()
+    mobile_number = serializers.IntegerField(allow_null=True)
+    phone_number = serializers.IntegerField(allow_null=True)
