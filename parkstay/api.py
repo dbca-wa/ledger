@@ -1189,7 +1189,7 @@ def create_booking(request, *args, **kwargs):
     try:
         if campsite:
             booking = utils.create_booking_by_site(
-                Campsite.objects.filter(campsite_id=campsite.id), start_date, end_date,
+                Campsite.objects.filter(id=campsite), start_date, end_date,
                 num_adult, num_concession,
                 num_child, num_infant
             )

@@ -36,6 +36,21 @@ def create_fixtures():
     cs2b = ps.Campsite.objects.create(name='Campsite 2b', campground=c2)
 
 
+class ClientBookingTestCase(TestCase):
+    client = Client()
+    booking_url = reverse('public_make_booking')
+    success_url = reverse('success')
+
+    def setUp(self):
+        create_fixtures()
+
+    def test_booking_external_anonymous(self):
+        response = self.client.post(self.booking_url, {
+            
+        })
+        
+
+
 class BookingRangeTestCase(TestCase):
     def setUp(self):
         #import pdb; pdb.set_trace()
