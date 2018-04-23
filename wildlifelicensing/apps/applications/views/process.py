@@ -372,7 +372,7 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
 
         assessment.save()
 
-        return JsonResponse({'assessment': serialize(assessment, posthook=format_assessment),
+        return JsonResponse({'assessment': serialize(assessment, posthook=format_assessment,exclude=['application','applicationrequest_ptr']),
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 

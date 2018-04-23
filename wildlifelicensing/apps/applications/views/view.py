@@ -114,7 +114,7 @@ class ViewReadonlyAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         assessment = get_object_or_404(Assessment, pk=self.args[1])
 
-        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment)
+        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment,exclude=['application','applicationrequest_ptr'])
 
         kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
                                                 exclude(id=assessment.id).order_by('id'), posthook=format_assessment,exclude=['application','applicationrequest_ptr'])
