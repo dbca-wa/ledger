@@ -22,6 +22,11 @@ class ApprovalCancelNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/approval_cancel_notification.html'
     txt_template = 'disturbance/emails/approval_cancel_notification.txt'
 
+class ApprovalSuspendNotificationEmail(TemplateEmailBase):
+    subject = 'Your Approval has been suspend.'
+    html_template = 'disturbance/emails/approval_suspend_notification.html'
+    txt_template = 'disturbance/emails/approval_suspend_notification.txt'
+
 def send_approval_expire_email_notification(approval):
     email = ApprovalExpireNotificationEmail()
     proposal = approval.current_proposal
@@ -52,6 +57,23 @@ def send_approval_cancel_email_notification(approval, request):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL    
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
+
+def send_approval_suspend_email_notification(approval, request):
+    email = ApprovalSuspendNotificationEmail()
+    proposal = approval.current_proposal
+
+    context = {
+        'approval': approval,
+        'details': approval.suspension_details['details'],
+        'from_date': approval.suspension_details['from_date'],
+        'to_date': approval.suspension_details['to_date']        
+    }    
+    msg = email.send(proposal.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL    
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
 
 
 def _log_proposal_email(email_message, proposal, sender=None):

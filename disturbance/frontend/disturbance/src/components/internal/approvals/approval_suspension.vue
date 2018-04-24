@@ -10,11 +10,28 @@
                                 <div class="row">
                                     <div class="col-sm-3">
                                         
-                                        <label class="control-label pull-left"  for="Name">Cancellation Date</label>
+                                        <label class="control-label pull-left"  for="Name">From Date</label>
                                     </div>
                                     <div class="col-sm-9">
-                                        <div class="input-group date" ref="cancellation_date" style="width: 70%;">
-                                            <input type="text" class="form-control" name="cancellation_date" placeholder="DD/MM/YYYY" v-model="approval.cancellation_date">
+                                        <div class="input-group date" ref="from_date" style="width: 70%;">
+                                            <input type="text" class="form-control" name="from_date" placeholder="DD/MM/YYYY" v-model="approval.from_date">
+                                            <span class="input-group-addon">
+                                                <span class="glyphicon glyphicon-calendar"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        
+                                        <label class="control-label pull-left"  for="Name">To Date</label>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <div class="input-group date" ref="to_date" style="width: 70%;">
+                                            <input type="text" class="form-control" name="to_date" placeholder="DD/MM/YYYY" v-model="approval.to_date">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
@@ -27,10 +44,10 @@
                                 <div class="row">
                                     <div class="col-sm-3">
                                         
-                                        <label class="control-label pull-left"  for="Name">Cancellation Details</label>
+                                        <label class="control-label pull-left"  for="Name">Suspension Details</label>
                                     </div>
                                     <div class="col-sm-9">
-                                        <textarea name="cancellation_details" class="form-control" style="width:70%;" v-model="approval.cancellation_details"></textarea>
+                                        <textarea name="suspension_details" class="form-control" style="width:70%;" v-model="approval.suspension_details"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -54,7 +71,7 @@ import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
 import {helpers,api_endpoints} from "@/utils/hooks.js"
 export default {
-    name:'Cancel-Approval',
+    name:'Suspend-Approval',
     components:{
         modal,
         alert
@@ -94,7 +111,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            return 'Cancel Approval';
+            return 'Suspend Approval';
         }
     },
     methods:{
@@ -129,14 +146,14 @@ export default {
             let approval = JSON.parse(JSON.stringify(vm.approval));
             vm.issuingApproval = true;
             
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,vm.approval_id+'/approval_cancellation'),JSON.stringify(approval),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,vm.approval_id+'/approval_suspension'),JSON.stringify(approval),{
                         emulateJSON:true,
                     }).then((response)=>{
                         vm.issuingApproval = false;
                         vm.close();
                         swal(
-                             'Cancelled',
-                             'An email has been sent to applicant about cancellation of this approval',
+                             'Suspend',
+                             'An email has been sent to applicant about suspension of this approval',
                              'success'
                         );
                         vm.$emit('refreshFromResponse',response);
@@ -154,8 +171,8 @@ export default {
             let vm = this;
             vm.validation_form = $(vm.form).validate({
                 rules: {
-                    cancellation_date:"required",                    
-                    cancellation_details:"required",
+                    to_date:"required",                    
+                    suspension_details:"required",
                 },
                 messages: {
                 },
@@ -183,13 +200,23 @@ export default {
             let vm = this;
             // Initialise Date Picker
             
-            $(vm.$refs.cancellation_date).datetimepicker(vm.datepickerOptions);
-            $(vm.$refs.cancellation_date).on('dp.change', function(e){
-                if ($(vm.$refs.cancellation_date).data('DateTimePicker').date()) {
-                    vm.approval.cancellation_date =  e.date.format('DD/MM/YYYY');
+            $(vm.$refs.from_date).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.from_date).on('dp.change', function(e){
+                if ($(vm.$refs.from_date).data('DateTimePicker').date()) {
+                    vm.approval.from_date =  e.date.format('DD/MM/YYYY');
                 }
-                else if ($(vm.$refs.cancellation_date).data('date') === "") {
-                    vm.approval.cancellation_date = "";
+                else if ($(vm.$refs.from_date).data('date') === "") {
+                    vm.approval.from_date = "";
+                }
+             });
+
+            $(vm.$refs.to_date).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.to_date).on('dp.change', function(e){
+                if ($(vm.$refs.to_date).data('DateTimePicker').date()) {
+                    vm.approval.to_date =  e.date.format('DD/MM/YYYY');
+                }
+                else if ($(vm.$refs.to_date).data('date') === "") {
+                    vm.approval.to_date = "";
                 }
              });
        }

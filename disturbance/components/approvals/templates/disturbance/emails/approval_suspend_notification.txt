@@ -1,0 +1,16 @@
+{%  extends 'disturbance/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Approval has been expired:
+
+    Approval : {{ approval.reference}}
+
+    Suspension Details : {{details}}
+
+    Cancellation Date : {{ approval.cancellation_date}}
+
+    From Date : {{from_date}}
+
+    To Date : {{to_date}}
+
+{%  endblock %}
