@@ -58,17 +58,47 @@
                             </div>
                             <div class="col-sm-12">
                                 <div class="form-group">
-                                    <select v-model="selected">
-                                        <option v-for="option in options" :value="option.value">
-                                            {{ option.text }}
+                                    <select v-model="selected_application_type">
+                                        <option v-for="application_type in application_types" :value="application_type.value">
+                                            {{ application_type.text }}
                                         </option>
                                     </select>
                                     <label for="" class="control-label" >Select Proposal Type</label>
                                 </div>
                             </div>
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <select v-model="selected_region">
+                                        <option v-for="region in regions" :value="region.value">
+                                            {{ region.text }}
+                                        </option>
+                                    </select>
+                                    <label for="" class="control-label" >Select region</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <select v-model="selected_activity">
+                                        <option v-for="activity in activities" :value="activity.value">
+                                            {{ activity.text }}
+                                        </option>
+                                    </select>
+                                    <label for="" class="control-label" >Select activity</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <select v-model="selected_tenure">
+                                        <option v-for="tenure in tenures" :value="tenure.value">
+                                            {{ tenure.text }}
+                                        </option>
+                                    </select>
+                                    <label for="" class="control-label" >Select tenure</label>
+                                </div>
+                            </div>
 
                             <div class="col-sm-12">
-                                <button :disabled="behalf_of == 'other' || behalf_of == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                                <button :disabled="isDisabled()" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
                              </div>
                         </form>
                     </div>
@@ -99,12 +129,37 @@ export default {
         form: null,
         pBody: 'pBody' + vm._uid,
 
-        selected: 'A',
-        options: [
-            { text: 'Select proposal type', value: '', selected:'true', disabled:'disabled' },
+        selected_application_type: '',
+        selected_region: '',
+        selected_activity: '',
+        selected_tenure: '',
+        application_types: [
+            { text: '', value: '', selected:'true', disabled:'disabled' },
             { text: 'Disturbance', value: 'Disturbance' },
             { text: 'Apiary', value: 'Apiary' }
+        ],
+        regions: [
+            { text: '', value: ''},
+            { text: 'Kimberley (Region)', value: 'Kimberley (Region)' },
+            { text: 'East Kimberley (District)', value: 'East Kimberley (District)' },
+            { text: 'West Kimberley (District)', value: 'West Kimberley (District)' },
+            { text: 'Pilbara (Region)', value: 'Pilbara (Region)' }
+        ],
+        activities: [
+            { text: '', value: ''},
+            { text: 'Public Utilities', value: 'PublicUtilities' },
+            { text: 'Native Forest Silviculture and Timber Harvesting', value: 'NativeForestSilvicultureAndTimberHarvesting' },
+            { text: 'Plantations', value: 'Plantations' },
+            { text: 'Other Wood', value: 'OtherWood' }
+        ],
+        tenures: [
+            { text: '', value: ''},
+            { text: 'National park', value: 'National park' },
+            { text: 'Nature reserve (class a19)', value: 'Nature reserve (class a19)' },
+            { text: 'Conservation park', value: 'Conservation park' },
+            { text: 'CALM Act section 5(1)g and 5(1)h reserve (class A20)', value: 'CALM Act section 5(1)g and 5(1)h reserve (class A20)' }
         ]
+
     }
   },
   components: {
@@ -124,31 +179,71 @@ export default {
   methods: {
     submit: function() {
         let vm = this;
+			
         swal({
-            title: "Create Proposal",
-            text: "Are you sure you want to create a proposal on behalf of "+vm.org+" ?",
+            title: "Create " + vm.selected_application_type,
+            text: "Are you sure you want to create " + this.alertText() + " proposal on behalf of "+vm.org+" ?",
             type: "question",
             showCancelButton: true,
             confirmButtonText: 'Accept'
         }).then(() => {
-            vm.createProposal();
+         	vm.createProposal();
         },(error) => {
         });
     },
+    alertText: function() {
+        let vm = this;
+		if (vm.selected_application_type == 'Disturbance') {
+        	return "a disturbance";
+		} else if (vm.selected_application_type == 'Apiary') {
+        	return "an apiary";
+		}
+	},
     createProposal:function () {
         let vm = this;
-        vm.$http.post('/api/proposal.json',{
-            behalf_of: vm.behalf_of
-        }).then(res => {
-              vm.proposal = res.body;
-              vm.$router.push({
-                  name:"draft_proposal",
-                  params:{proposal_id:vm.proposal.id}
-              });
-          },
-          err => {
-            console.log(err);
-          });
+		vm.$http.post('/api/proposal.json',{
+			behalf_of: vm.behalf_of,
+			application_name: vm.selected_application_type,
+			region: vm.selected_region,
+			activity: vm.selected_activity,
+			tenure: vm.selected_tenure
+		}).then(res => {
+		    vm.proposal = res.body;
+			vm.$router.push({
+			    name:"draft_proposal",
+				params:{proposal_id:vm.proposal.id}
+			});
+		},
+		err => {
+			console.log(err);
+		});
+    },
+	/*
+    createApiary:function () {
+        let vm = this;
+		vm.$http.post('/api/apiary.json',{
+            behalf_of: vm.behalf_of,
+            region: vm.region,
+            activity: vm.activity,
+            tenure: vm.tenure
+		}).then(res => {
+			vm.apiary = res.body;
+			vm.$router.push({
+			    name:"draft_apiary",
+				params:{apiary_id:vm.apiary.id}
+			});
+		},
+		err => {
+			console.log(err);
+		});
+    },
+	*/
+    isDisabled: function() {
+        let vm = this;
+        if (vm.behalf_of == '' || vm.selected_application_type == '' || vm.selected_region == '' || vm.selected_activity == '' || vm.selected_tenure == ''){
+			return true;
+        }
+		return false;
     }
   },
   mounted: function() {
