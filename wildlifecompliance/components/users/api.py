@@ -37,6 +37,9 @@ from wildlifecompliance.components.users.serializers import   (
                                                 ContactSerializer,
 												EmailIdentitySerializer
                                             )
+from wildlifecompliance.components.organisations.serializers import (
+                                                OrganisationRequestDTSerializer,
+                                            )
 from wildlifecompliance.components.main.utils import retrieve_department_users
 
 class DepartmentUserList(views.APIView):
@@ -152,15 +155,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response(e)
         else:
             try:
-                queryset = self.filter_queryset(self.get_queryset())
-
-                page = self.paginate_queryset(queryset)
-                if page is not None:
-                    serializer = self.get_serializer(page, many=True)
-                    return self.get_paginated_response(serializer.data)
-
-                serializer = self.get_serializer(queryset, many=True)
-                return Response(serializer.data)
+                return super(UserViewSet, self).list(request, **kwargs)
 
             except Exception as e:
                 return Response(e)
@@ -237,6 +232,22 @@ class UserViewSet(viewsets.ModelViewSet):
             instance.residential_address = address
             instance.save()
             serializer = UserSerializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def pending_org_requests(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = OrganisationRequestDTSerializer(instance.organisationrequest_set.filter(status='with_assessor'), many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

@@ -27,7 +27,7 @@ def can_admin_org(organisation,user):
     from wildlifecompliance.components.organisations.models import Organisation, OrganisationAccessGroup,UserDelegation,OrganisationContact
     from ledger.accounts.models import EmailUser
     try:
-        org_contact=OrganisationContact.objects.get(organisation_id=organisation,first_name=user.first_name, last_name= user.last_name)
+        org_contact=OrganisationContact.objects.get(organisation_id=organisation,email=user.email)
         # if org_contact.can_edit
 
         return org_contact.can_edit
