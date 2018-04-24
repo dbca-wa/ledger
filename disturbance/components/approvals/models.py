@@ -18,7 +18,7 @@ from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
 from disturbance.components.proposals.models import Proposal, ProposalUserAction
 from disturbance.components.main.models import CommunicationsLogEntry, UserAction, Document
-from disturbance.components.approvals.email import send_approval_expire_email_notification
+from disturbance.components.approvals.email import send_approval_expire_email_notification, send_approval_cancel_email_notification
 #from disturbance.components.approvals.email import send_referral_email_notification
 
 
@@ -59,6 +59,8 @@ class Approval(models.Model):
     suspension_details = JSONField(blank=True,null=True)
     applicant = models.ForeignKey(Organisation,on_delete=models.PROTECT, related_name='disturbance_approvals')
     extracted_fields = JSONField(blank=True, null=True)
+    cancellation_details = models.TextField(blank=True)
+    cancellation_date = models.DateField(blank=True, null=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -105,6 +107,25 @@ class Approval(models.Model):
             except:
                 raise
 
+    def approval_cancellation(self,request,details):
+        with transaction.atomic():
+            try:
+                if not request.user in self.allowed_assessors:
+                    raise ValidationError('You do not have access to cancel this approval')
+                if not self.can_reissue:
+                    raise ValidationError('You cannot cancel approval if it is not current or suspended')
+                self.cancellation_date = details.get('cancellation_date').strftime('%Y-%m-%d')
+                self.cancellation_details = details.get('cancellation_details')               
+                self.status = 'cancelled'
+                self.save()
+                send_approval_cancel_email_notification(self, request)
+                # Log proposal action
+                self.log_user_action(ApprovalUserAction.ACTION_CANCEL_APPROVAL.format(self.id),request)
+                # Log entry for organisation
+                self.current_proposal.log_user_action(ProposalUserAction.ACTION_CANCEL_APPROVAL.format(self.current_proposal.id),request)
+            except:
+                raise
+
 class ApprovalLogEntry(CommunicationsLogEntry):
     approval = models.ForeignKey(Approval, related_name='comms_logs')
 
@@ -121,6 +142,7 @@ class ApprovalUserAction(UserAction):
     ACTION_CREATE_APPROVAL = "Create approval {}"
     ACTION_UPDATE_APPROVAL = "Create approval {}"
     ACTION_EXPIRE_APPROVAL = "Expire approval {}"
+    ACTION_CANCEL_APPROVAL = "Cancel approval {}"
 
     
     class Meta:

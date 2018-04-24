@@ -16,6 +16,12 @@ class ApprovalExpireNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/approval_expire_notification.html'
     txt_template = 'disturbance/emails/approval_expire_notification.txt'
 
+
+class ApprovalCancelNotificationEmail(TemplateEmailBase):
+    subject = 'Your Approval has been cancelled.'
+    html_template = 'disturbance/emails/approval_cancel_notification.html'
+    txt_template = 'disturbance/emails/approval_cancel_notification.txt'
+
 def send_approval_expire_email_notification(approval):
     email = ApprovalExpireNotificationEmail()
     proposal = approval.current_proposal
@@ -33,6 +39,19 @@ def send_approval_expire_email_notification(approval):
         sender_user = EmailUser.objects.get(email__icontains=sender)
     _log_proposal_email(msg, proposal, sender=sender_user)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
+
+def send_approval_cancel_email_notification(approval, request):
+    email = ApprovalCancelNotificationEmail()
+    proposal = approval.current_proposal
+
+    context = {
+        'approval': approval,
+        
+    }    
+    msg = email.send(proposal.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL    
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
 
 
 def _log_proposal_email(email_message, proposal, sender=None):

@@ -67,11 +67,15 @@
                 </div>
             </div>
         </div>
+        <ApprovalCancellation ref="approval_cancellation"  @refreshFromResponse="refreshFromResponse"></ApprovalCancellation>
+
+
     </div>
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
 import Vue from 'vue'
+import ApprovalCancellation from '../internal/approvals/approval_cancellation.vue'
 import {
     api_endpoints,
     helpers
@@ -178,6 +182,7 @@ export default {
                                 if(vm.check_assessor(full) && full.can_reissue){
                                     
                                     links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
+                                    links +=  `<a href='#${full.id}' data-cancel-approval='${full.id}'>Cancel</a><br/>`;
                                     links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
 
                             }
@@ -239,7 +244,8 @@ export default {
         }
     },
     components:{
-        datatable
+        datatable,
+        ApprovalCancellation
     },
     watch:{
         filterProposalActivity: function() {
@@ -307,11 +313,18 @@ export default {
                 }
             });
             // End Proposal Date Filters
-            // External Discard listener
+            // Internal Reissue listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reissue-approval]', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-reissue-approval');
                 vm.reissueApproval(id);
+            });
+
+            //Internal Cancel listener
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-cancel-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-cancel-approval');
+                vm.cancelApproval(id);
             });
         },
         initialiseSearch:function(){
@@ -356,7 +369,7 @@ export default {
                 function(settings,data,dataIndex,original){
                     let from = vm.filterProposalLodgedFrom;
                     let to = vm.filterProposalLodgedTo;
-                    let val = original.lodgement_date;
+                    let val = original.expiry_date;
 
                     if ( from == '' && to == ''){
                         return true;
@@ -442,6 +455,16 @@ export default {
             },(error) => {
 
             });
+        },
+
+        cancelApproval: function(approval_id){
+           
+            this.$refs.approval_cancellation.approval_id = approval_id;
+            this.$refs.approval_cancellation.isModalOpen = true;
+        },
+
+        refreshFromResponse: function(){
+            this.$refs.proposal_datatable.vmDataTable.ajax.reload();
         },
 
 

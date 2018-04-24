@@ -947,6 +947,7 @@ class ProposalUserAction(UserAction):
     RECALL_REFERRAL = "Referral {} for proposal {} has been recalled"
     CONCLUDE_REFERRAL = "Referral {} for proposal {} has been concluded by {}"
     ACTION_REISSUE_APPROVAL = "Reissue approval for proposal {}"
+    ACTION_CANCEL_APPROVAL = "Cancel approval for proposal {}"
     
 
     class Meta:
