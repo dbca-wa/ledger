@@ -68,6 +68,7 @@
             </div>
         </div>
         <ApprovalCancellation ref="approval_cancellation"  @refreshFromResponse="refreshFromResponse"></ApprovalCancellation>
+        <ApprovalSuspension ref="approval_suspension"  @refreshFromResponse="refreshFromResponse"></ApprovalSuspension>
 
 
     </div>
@@ -76,6 +77,7 @@
 import datatable from '@/utils/vue/datatable.vue'
 import Vue from 'vue'
 import ApprovalCancellation from '../internal/approvals/approval_cancellation.vue'
+import ApprovalSuspension from '../internal/approvals/approval_suspension.vue'
 import {
     api_endpoints,
     helpers
@@ -184,8 +186,15 @@ export default {
                                     links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
                                     links +=  `<a href='#${full.id}' data-cancel-approval='${full.id}'>Cancel</a><br/>`;
                                     links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                    if(full.status== 'Suspended')
+                                    {
+                                        links +=  `<a href='#${full.id}' data-reinstate-approval='${full.id}'>Reinstate</a><br/>`;
+                                    }
+                                    else{
+                                        links +=  `<a href='#${full.id}' data-suspend-approval='${full.id}'>Suspend</a><br/>`;
+                                    }
 
-                            }
+                                }
                                 else{
                                     links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
                                 }
@@ -245,7 +254,8 @@ export default {
     },
     components:{
         datatable,
-        ApprovalCancellation
+        ApprovalCancellation,
+        ApprovalSuspension
     },
     watch:{
         filterProposalActivity: function() {
@@ -325,6 +335,13 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-cancel-approval');
                 vm.cancelApproval(id);
+            });
+
+            //Internal Cancel listener
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-suspend-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-suspend-approval');
+                vm.suspendApproval(id);
             });
         },
         initialiseSearch:function(){
@@ -461,6 +478,12 @@ export default {
            
             this.$refs.approval_cancellation.approval_id = approval_id;
             this.$refs.approval_cancellation.isModalOpen = true;
+        },
+
+        suspendApproval: function(approval_id){
+           
+            this.$refs.approval_suspension.approval_id = approval_id;
+            this.$refs.approval_suspension.isModalOpen = true;
         },
 
         refreshFromResponse: function(){

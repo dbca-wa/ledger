@@ -53,3 +53,9 @@ class ApprovalCancellationSerializer(serializers.Serializer):
     cancellation_date = serializers.DateField(input_formats=['%d/%m/%Y'])    
     cancellation_details = serializers.CharField()
     
+class ApprovalSuspensionSerializer(serializers.Serializer):
+    from_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    to_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    suspension_details = serializers.CharField()
+    
+    

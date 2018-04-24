@@ -18,7 +18,11 @@ from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
 from disturbance.components.proposals.models import Proposal, ProposalUserAction
 from disturbance.components.main.models import CommunicationsLogEntry, UserAction, Document
-from disturbance.components.approvals.email import send_approval_expire_email_notification, send_approval_cancel_email_notification
+from disturbance.components.approvals.email import (
+    send_approval_expire_email_notification, 
+    send_approval_cancel_email_notification,
+    send_approval_suspend_email_notification
+)
 #from disturbance.components.approvals.email import send_referral_email_notification
 
 
@@ -119,6 +123,28 @@ class Approval(models.Model):
                 self.status = 'cancelled'
                 self.save()
                 send_approval_cancel_email_notification(self, request)
+                # Log proposal action
+                self.log_user_action(ApprovalUserAction.ACTION_CANCEL_APPROVAL.format(self.id),request)
+                # Log entry for organisation
+                self.current_proposal.log_user_action(ProposalUserAction.ACTION_CANCEL_APPROVAL.format(self.current_proposal.id),request)
+            except:
+                raise
+
+    def approval_suspension(self,request,details):
+        with transaction.atomic():
+            try:
+                if not request.user in self.allowed_assessors:
+                    raise ValidationError('You do not have access to cancel this approval')
+                if not self.can_reissue:
+                    raise ValidationError('You cannot cancel approval if it is not current or suspended')
+                self.suspension_details = {
+                    'from_date' : details.get('from_date').strftime('%d/%m/%Y'),
+                    'to_date' : details.get('to_date').strftime('%d/%m/%Y'),
+                    'details': details.get('suspension_details'),
+                }             
+                self.status = 'suspended'
+                self.save()
+                send_approval_suspend_email_notification(self, request)
                 # Log proposal action
                 self.log_user_action(ApprovalUserAction.ACTION_CANCEL_APPROVAL.format(self.id),request)
                 # Log entry for organisation
