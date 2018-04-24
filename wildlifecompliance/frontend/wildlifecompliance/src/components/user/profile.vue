@@ -713,28 +713,30 @@ export default {
                 type: "question",
                 showCancelButton: true,
                 confirmButtonText: 'Accept'
-            }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),JSON.stringify(vm.profile),{
-                    emulateJSON:true
-                }).then((response) => {
-                    Vue.http.get(api_endpoints.profile).then((response) => {
-                        vm.profile = response.body
-                        if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
-                        if ( vm.profile.wildlifecompliance_organisations && vm.profile.wildlifecompliance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
-                    },(error) => {
-                    })
-                    swal(
-                        'Unlink',
-                        'You have been successfully unlinked from '+org_name+'.',
-                        'success'
-                    )
-                }, (error) => {
-                    swal(
-                        'Unlink',
-                        'There was an error unlinking you from '+org_name+'.',
-                        'error'
-                    )
-                });
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),JSON.stringify(vm.profile),{
+                        emulateJSON:true
+                    }).then((response) => {
+                        Vue.http.get(api_endpoints.profile).then((response) => {
+                            vm.profile = response.body
+                            if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                            if ( vm.profile.wildlifecompliance_organisations && vm.profile.wildlifecompliance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+                        },(error) => {
+                        })
+                        swal(
+                            'Unlink',
+                            'You have been successfully unlinked from '+org_name+'.',
+                            'success'
+                        )
+                    }, (error) => {
+                        swal(
+                            'Unlink',
+                            'There was an error unlinking you from '+org_name+'.',
+                            'error'
+                        )
+                    });
+                }
             },(error) => {
             }); 
         },
