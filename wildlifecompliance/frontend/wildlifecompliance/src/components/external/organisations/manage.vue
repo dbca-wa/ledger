@@ -167,7 +167,7 @@
                                  </form>
 
                                 <div class="row">
-                                    <div class="col-sm-8">
+                                    <div class="col-sm-12">
                                         <div class="row">
                                             <div class="col-sm-12 top-buffer-s">
                                                 <strong>Persons linked to the organisation are controlled by the organisation. The Department cannot manage this list of people.</strong>
@@ -179,7 +179,6 @@
 
                                 <div>
                                         <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref" v-model="filterOrgContactStatus"/>
-                                        <!-- <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/> -->
                                 </div>
                               
 					</div>
@@ -525,6 +524,9 @@ export default {
         },
         eventListeners: function(){
             let vm = this;
+            console.log('debug eventlisteners');
+            console.log(vm.$refs);
+            console.log(vm.$refs.contacts_datatable.vmDataTable);
             vm.$refs.contacts_datatable.vmDataTable.on('click','.remove-contact',(e) => {
                 e.preventDefault();
 
@@ -537,8 +539,10 @@ export default {
                     type: "error",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
-                }).then(() => {
-                    vm.deleteContact(id);
+                }).then((result) => {
+                    if (result.value){
+                        vm.deleteContact(id);
+                    }
                 },(error) => {
                 });
             });
@@ -565,16 +569,24 @@ export default {
                     text: "Are you sure you want to accept contact request "+ name + "("+ email + ") ?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
-                }).then(() => {
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/accept_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        swal(
-                            'Contact Accept',
-                            'You have successfully accepted '+name+' ('+id+'.)',
-                            'success'
-                            )
+                }).then((result) => {
+                    if (result.value){
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/accept_user'),JSON.stringify(vm.contact_user),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
+                                title: 'Contact Accept',
+                                text: 'You have successfully accepted '+name+' ('+id+'.)',
+                                type: 'success',
+                                confirmButtonText: 'Okay'
+                            }).then(() => {
+                                vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
                         }, (error) => {
                             swal('Contact Accept','There was an error accepting '+name+' ('+id+')','error')
                         });
+                    }
                 },(error) => {
                 });
             });
@@ -604,16 +616,24 @@ export default {
                     text: "Are you sure you want to decline contact request "+ name + "("+ email + ") ?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
-                }).then(() => {
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/decline_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        swal(
-                            'Contact Decline',
-                            'You have successfully Declined '+name+' ('+id+'.)',
-                            'success'
-                            )
+                }).then((result) => {
+                    if (result.value){
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/decline_user'),JSON.stringify(vm.contact_user),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
+                                title: 'Contact Decline',
+                                text: 'You have successfully Declined '+name+' ('+id+'.)',
+                                type: 'success',
+                                confirmButtonText: 'Okay'
+                            }).then(() => {
+                                vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
                         }, (error) => {
                             swal('Contact Decline','There was an error declining '+name+' ('+id+')','error')
                         });
+                    }
                 },(error) => {
                 });
             });
@@ -643,20 +663,26 @@ export default {
                     text: "Are you sure you want to unlink "+ name + "("+ email + ") ?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
-                }).then(() => {
-                    // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        swal(
-                            'Unlink',
-                            'You have successfully unlinked '+name+' ('+id+'.)',
-                            'success'
-                            )
+                }).then((result) => {
+                    if (result.value){
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/unlink_user'),JSON.stringify(vm.contact_user),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
+                                title: 'Unlink',
+                                text: 'You have successfully unlinked '+name+' ('+id+'.)',
+                                type: 'success',
+                                confirmButtonText: 'Okay'
+                            }).then(() => {
+                                    vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
                         }, (error) => {
                             if (error.status ==500){
                                 swal('Unlink','Last Organisation Admin can not be unlinked','error');
                             }
-                            
                         });
+                    }
                 },(error) => {
                 });
             });
@@ -685,17 +711,24 @@ export default {
                     text: "Are you sure you want to make "+ name + "("+ email + ") Organisation Admin ?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
-                }).then(() => {
-                    // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/make_admin_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        swal(
-                            'Organisation Admin',
-                            'You have successfully made '+name+' ('+id+') Organisation Admin',
-                            'success'
-                            )
+                }).then((result) => {
+                    if (result.value) {
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/make_admin_user'),JSON.stringify(vm.contact_user),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
+                                title: 'Organisation Admin',
+                                text: 'You have successfully made '+name+' ('+id+') Organisation Admin',
+                                type: 'success',
+                                confirmButtonText: 'Okay'
+                            }).then(() => {
+                                vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
                         }, (error) => {
                             swal('Organisation Admin','There was an error making '+name+' ('+id+') Organisation Admin','error')
                         });
+                    }
                 },(error) => {
                 });
             });
@@ -723,17 +756,24 @@ export default {
                     text: "Are you sure you want to make "+ name + "("+ email + ") Organisation User ?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
-                }).then(() => {
-                    // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/make_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        swal(
-                            'Organisation User',
-                            'You have successfully made '+name+' ('+id+') Organisation User',
-                            'success'
-                            )
+                }).then((result) => {
+                    if (result.value) {
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/make_user'),JSON.stringify(vm.contact_user),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
+                                title: 'Organisation User',
+                                text: 'You have successfully made '+name+' ('+id+') Organisation User',
+                                type: 'success',
+                                confirmButtonText: 'Okay'
+                            }).then(() => {
+                                vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
                         }, (error) => {
                             swal('Company Admin','There was an error making '+name+' ('+id+') Organisation User','error')
                         });
+                    }
                 },(error) => {
                 });
             });
@@ -763,17 +803,24 @@ export default {
                     text: "Are you sure you want to Suspend  "+ name + "("+ email + ")  ?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
-                }).then(() => {
-                    // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/suspend_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        swal(
-                            'Suspend User',
-                            'You have successfully suspended '+name+' ('+id+') User',
-                            'success'
-                            )
+                }).then((result) => {
+                    if (result.value) {
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/suspend_user'),JSON.stringify(vm.contact_user),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
+                                title: 'Suspend User',
+                                text: 'You have successfully suspended '+name+' ('+id+') User',
+                                type: 'success',
+                                confirmButtonText: 'Okay'
+                            }).then(() => {
+                                vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
                         }, (error) => {
                             swal('Suspend User','There was an error suspending '+name+' ('+id+') User','error')
                         });
+                    }
                 },(error) => {
                 });
             });
@@ -802,17 +849,24 @@ export default {
                     text: "Are you sure you want to Reinstate  "+ name + "("+ email + ")  ?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
-                }).then(() => {
-                    // vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_contacts,id+'/unlink_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/reinstate_user'),JSON.stringify(vm.contact_user),{emulateJSON:true}).then((response) => {
-                        swal(
-                            'Reinstate User',
-                            'You have successfully reinstated '+name+' ('+id+') User',
-                            'success'
-                            )
+                }).then((result) => {
+                    if (result.value) {
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/reinstate_user'),JSON.stringify(vm.contact_user),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
+                                title: 'Reinstate User',
+                                text: 'You have successfully reinstated '+name+' ('+id+') User',
+                                type: 'success',
+                                confirmButtonText: 'Okay'
+                            }).then(() => {
+                                vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
                         }, (error) => {
                             swal('Reinstate User','There was an error reinstating '+name+' ('+id+') User','error')
                         });
+                    }
                 },(error) => {
                 });
             });
@@ -908,32 +962,36 @@ export default {
                 type: "question",
                 showCancelButton: true,
                 confirmButtonText: 'Accept'
-            }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),{'user':person.id},{
-                    emulateJSON:true
-                }).then((response) => {
-                    vm.org = response.body;
-                    if (vm.org.address == null){ vm.org.address = {}; }
-                    swal(
-                        'Unlink',
-                        'You have successfully unlinked '+person.name+' from '+org_name+'.',
-                        'success'
-                    )
-                }, (error) => {
-                    swal(
-                        'Unlink',
-                        'There was an error unlinking '+person.name+' from '+org_name+'.',
-                        'error'
-                    )
-                });
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),{'user':person.id},{
+                        emulateJSON:true
+                    }).then((response) => {
+                        vm.org = response.body;
+                        if (vm.org.address == null){ vm.org.address = {}; }
+                        swal({
+                            title: 'Unlink',
+                            text: 'You have successfully unlinked '+person.name+' from '+org_name+'.',
+                            type: 'success',
+                            confirmButtonText: 'Okay'
+                        }).then(() => {
+                            vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
+                        },(error) => {
+                        });
+                    }, (error) => {
+                        swal(
+                            'Unlink',
+                            'There was an error unlinking '+person.name+' from '+org_name+'.',
+                            'error'
+                        )
+                    });
+                }
             },(error) => {
             }); 
         }
     },
     mounted: function(){
         this.personal_form = document.forms.personal_form;
-        vm.$refs.contacts_datatable_user.vmDataTable.columns(3).search('draft').draw();
-
     },
     updated: function(){
         let vm = this;
