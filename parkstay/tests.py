@@ -10,7 +10,10 @@ from ledger.accounts.models import EmailUser
 from parkstay import utils, models as ps
 from parkstay.exceptions import BookingRangeWithinException
 
+import unittest.mock as mock
 import datetime
+from decimal import Decimal as D
+
 
 ADMIN_USER_EMAIL = 'admin@test.net'
 NEW_USER_EMAIL = 'new_user@test.net'
@@ -18,11 +21,10 @@ ANONYMOUS_USER_EMAIL = 'anonymous@test.net'
 
 def create_fixtures():
     new_user = EmailUser.objects.create(email=NEW_USER_EMAIL, first_name=u'New', last_name=u'user 🤦')
-    
+
     admin_user = EmailUser.objects.create(email=ADMIN_USER_EMAIL, first_name=u'Admin', last_name=u'user 🤦')
     admin_user.is_superuser = True
     admin_user.save()
-    
 
     ar = ps.Region.objects.create(name='Region')
     ad = ps.District.objects.create(name='District', region=ar)
@@ -31,20 +33,26 @@ def create_fixtures():
     c2 = ps.Campground.objects.create(name='Campground 2', park=ap)
     cg = ps.CampgroundGroup.objects.create(name='All campgrounds')
     cg.campgrounds.add(c1, c2)
-    
+
     cs1a = ps.Campsite.objects.create(name='Campsite 1a', campground=c1)
     cs1b = ps.Campsite.objects.create(name='Campsite 1b', campground=c1)
     cs2a = ps.Campsite.objects.create(name='Campsite 2a', campground=c2)
     cs2b = ps.Campsite.objects.create(name='Campsite 2b', campground=c2)
 
+    prso = ps.PriceReason.objects.create(text='Other', editable=False)
+    prsd = ps.PriceReason.objects.create(text='Default fees', editable=True)
+    pr = ps.ParkEntryRate.objects.create(period_start=datetime.date.today(), vehicle=D('3.00'), motorbike=D('2.00'), concession=D('1.00'), reason=prsd)
+
 
 class ClientBookingTestCase(TestCase):
-    client = Client()
     create_booking_url = reverse('create_booking')
     booking_url = reverse('public_make_booking')
     success_url = reverse('public_booking_success')
+    checkout_url = reverse('checkout:index')
+    payment_details_url = reverse('checkout:payment-details')
 
     def setUp(self):
+        self.client = Client(SERVER_NAME='parkstaytests.lan.fyi')
         create_fixtures()
 
     def test_booking_external_anonymous(self):
@@ -64,6 +72,33 @@ class ClientBookingTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'success')
 
+        # submit details, promote to a legitimate booking
+        response = self.client.post(self.booking_url, {
+            'email': ANONYMOUS_USER_EMAIL,
+            'confirm_email': ANONYMOUS_USER_EMAIL,
+            'num_adult': 1,
+            'num_child': 2,
+            'num_concession': 3,
+            'num_infant': 4,
+            'first_name': u'Anonymous',
+            'last_name': u'user 🤦',
+            'phone': 1234,
+            'postcode': 1234,
+            'country': 'AU',
+            'form-0-entry_fee': 'on',
+            'form-0-vehicle_rego': 'REGO1',
+            'form-0-vehicle_type': 0,
+            'form-1-entry_fee': 'off',
+            'form-1-vehicle_rego': 'REGO2',
+            'form-1-vehicle_type': 1,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 8,
+            'form-MIN_NUM_FORMS': 0,
+            'form-TOTAL_FORMS': 2,
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[-1][1], self.payment_details_url)
 
 
 class BookingRangeTestCase(TestCase):

@@ -2,6 +2,7 @@ from ledger.accounts.models import EmailUser
 from ledger.catalogue.models import Product
 from ledger.payments.helpers import is_valid_system
 from oscar.apps.voucher.models import Voucher
+from oscar.apps.shipping.methods import NoShippingRequired
 from rest_framework import serializers
 from django.template.loader import get_template
 from django.template import TemplateDoesNotExist
@@ -55,7 +56,9 @@ class BasketSerializer(serializers.Serializer):
 
 
 class CheckoutSerializer(serializers.Serializer):
+    system = serializers.CharField(max_length=4, min_length=4)
     card_method = serializers.ChoiceField(choices=['preauth', 'payment'], default='payment')
+    shipping_method = serializers.CharField(default=NoShippingRequired().code)
     basket_owner = serializers.IntegerField(required=False, default=None)
     template = serializers.CharField(required=False, default=None)
     fallback_url = serializers.URLField()
@@ -76,6 +79,16 @@ class CheckoutSerializer(serializers.Serializer):
         if data['proxy'] and not data['basket_owner']:
             raise serializers.ValidationError('A proxy payment requires the basket_owner to be set.')
         return data
+
+    def validate_system(self, value):
+        if not value:
+            raise serializers.ValidationError('No system ID provided')
+        elif not len(value) == 4:
+            raise serializers.ValidationError('The system ID should be 4 characters long')
+        if not is_valid_system(value):
+            raise serializers.ValidationError('The system ID is not valid')
+
+        return value
 
     def validate_template(self, value):
         if value is not None:

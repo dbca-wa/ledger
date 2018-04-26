@@ -58,8 +58,10 @@ def create_checkout_session(request, parameters):
     # ]
 
     session_data = CheckoutSessionData(request) 
-    
+
+    session_data.use_system(serializer.validated_data['system'])
     session_data.charge_by(serializer.validated_data['card_method'])
+    session_data.use_shipping_method(serializer.validated_data['shipping_method'])
     session_data.owned_by(serializer.validated_data['basket_owner'])
     # FIXME: replace internal user ID with email address once lookup/alias issues sorted
     email = None

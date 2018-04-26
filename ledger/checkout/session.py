@@ -1,7 +1,9 @@
-from oscar.apps.checkout.session import CheckoutSessionMixin as CoreCheckoutSessionMixin
 from oscar.apps.checkout import exceptions
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+from oscar.core.loading import get_class
+
+CoreCheckoutSessionMixin = get_class('checkout.session', 'CheckoutSessionMixin')
 
 class CheckoutSessionMixin(CoreCheckoutSessionMixin):
 

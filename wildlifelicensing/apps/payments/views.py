@@ -52,6 +52,7 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
         basket, basket_hash = create_basket_session(request, basket_params)
 
         checkout_params = {
+            'system': PAYMENT_SYSTEM_ID,
             'basket_owner': user,
             'associateInvoiceWithToken': True,
             'checkoutWithToken': True,

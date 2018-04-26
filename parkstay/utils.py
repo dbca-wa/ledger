@@ -470,7 +470,7 @@ def get_campsites_current_rate(request, campsites, start_date, end_date):
     return res
 
 def get_park_entry_rate(request,start_date):
-    res = []
+    res = {}
     if start_date:
         start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
         price_history = ParkEntryRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
@@ -850,6 +850,7 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
     basket, basket_hash = create_basket_session(request, basket_params)
 
     checkout_params = {
+        'system': settings.PS_PAYMENT_SYSTEM_ID,
         'fallback_url': request.build_absolute_uri('/'),
         'return_url': request.build_absolute_uri(reverse('public_booking_success')),
         'return_preload_url': request.build_absolute_uri(reverse('public_booking_success')),
