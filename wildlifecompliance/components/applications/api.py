@@ -435,7 +435,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             data = {
                 'schema':activity_schema,
                 'submitter': request.user.id,
-                'licence_category':request.data.get('licence_category'),
+                # 'licence_category':request.data.get('licence_category'),
                 'licence_activity_type':app_data.pop('licence_activity_type'),
                 'applicant': request.data.get('behalf_of')
             }

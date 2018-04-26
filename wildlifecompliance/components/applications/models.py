@@ -250,7 +250,7 @@ class Application(RevisionedMixin):
     title = models.CharField(max_length=255,null=True,blank=True)
     tenure = models.CharField(max_length=255,null=True,blank=True)
 
-    licence_category = models.ForeignKey('wildlifecompliance.WildlifeLicenceCategory',blank=True,null=True)
+    # licence_class = models.ForeignKey('wildlifecompliance.WildlifeLicenceClass',blank=True,null=True)
     licence_activity_type= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',blank=True,null=True)
     licence_activity= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivity',blank=True,null=True)
 

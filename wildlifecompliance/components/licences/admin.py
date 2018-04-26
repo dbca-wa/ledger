@@ -3,8 +3,8 @@ from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.licences import models
 # Register your models here.
 
-@admin.register(models.WildlifeLicenceCategory)
-class WildlifeLicenceCategoryAdmin(admin.ModelAdmin):
+@admin.register(models.WildlifeLicenceClass)
+class WildlifeLicenceClassAdmin(admin.ModelAdmin):
     pass
 
 @admin.register(models.WildlifeLicenceActivityType)

@@ -2,7 +2,7 @@ from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.licences.models import (
-    Licence,WildlifeLicenceCategory,WildlifeLicenceActivityType,WildlifeLicenceActivity
+    Licence,WildlifeLicenceClass,WildlifeLicenceActivityType,WildlifeLicenceActivity
 )
 from wildlifecompliance.components.organisations.models import (
                                 Organisation
@@ -58,17 +58,17 @@ class DefaultActivityTypeSerializer(serializers.ModelSerializer):
             'short_name'
         ) 
 
-class LicenceCategorySerializer(serializers.ModelSerializer):
-    category_status = serializers.SerializerMethodField()
+class LicenceClassSerializer(serializers.ModelSerializer):
+    class_status = serializers.SerializerMethodField()
     activity_type = DefaultActivityTypeSerializer(many=True,read_only=True)
     class Meta:
-        model = WildlifeLicenceCategory
+        model = WildlifeLicenceClass
         fields = (
             'id',
             'name',
-            'category_status',
+            'class_status',
             'activity_type'
             
         )
-    def get_category_status(self,obj):
-        return obj.get_licence_category_status_display()
+    def get_class_status(self,obj):
+        return obj.get_licence_class_status_display()

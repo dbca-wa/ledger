@@ -137,7 +137,7 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
                 'readonly',
                 'can_user_edit',
                 'can_user_view',
-                'licence_category',
+                # 'licence_category',
                 'licence_activity_type'
                 )
         read_only_fields=('documents','conditions')
