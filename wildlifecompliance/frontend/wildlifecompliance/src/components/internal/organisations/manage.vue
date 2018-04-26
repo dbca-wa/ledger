@@ -374,8 +374,10 @@ export default {
                     type: "error",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
-                }).then(() => {
-                    vm.deleteContact(id);
+                }).then((result) => {
+                    if (result.value) {
+                        vm.deleteContact(id);
+                    }
                 },(error) => {
                 });
             });

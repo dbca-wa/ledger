@@ -428,20 +428,21 @@ export default {
                 showCancelButton: true,
                 confirmButtonText: 'Discard Application',
                 confirmButtonColor:'#d9534f'
-            }).then(() => {
-                vm.$http.delete(api_endpoints.discard_application(application_id))
-                .then((response) => {
-                    swal(
-                        'Discarded',
-                        'Your application has been discarded',
-                        'success'
-                    )
-                    vm.$refs.application_datatable.vmDataTable.ajax.reload();
-                }, (error) => {
-                    console.log(error);
-                });
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.delete(api_endpoints.discard_application(application_id))
+                    .then((response) => {
+                        swal(
+                            'Discarded',
+                            'Your application has been discarded',
+                            'success'
+                        )
+                        vm.$refs.application_datatable.vmDataTable.ajax.reload();
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
             },(error) => {
-
             });
         },
         addEventListeners: function(){

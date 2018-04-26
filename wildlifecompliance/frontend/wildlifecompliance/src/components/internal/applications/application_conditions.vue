@@ -151,13 +151,15 @@ export default {
                 showCancelButton: true,
                 confirmButtonText: 'Remove Condition',
                 confirmButtonColor:'#d9534f'
-            }).then(() => {
-                vm.$http.delete(helpers.add_endpoint_json(api_endpoints.application_conditions,_id))
-                .then((response) => {
-                    vm.$refs.conditions_datatable.vmDataTable.ajax.reload();
-                }, (error) => {
-                    console.log(error);
-                });
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.delete(helpers.add_endpoint_json(api_endpoints.application_conditions,_id))
+                    .then((response) => {
+                        vm.$refs.conditions_datatable.vmDataTable.ajax.reload();
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
             },(error) => {
             });
         },

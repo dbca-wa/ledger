@@ -130,8 +130,10 @@ export default {
             type: "question",
             showCancelButton: true,
             confirmButtonText: 'Accept'
-        }).then(() => {
-            vm.createApplication();
+        }).then((result) => {
+            if (result.value) {
+                vm.createApplication();
+            }
         },(error) => {
         });
     },
