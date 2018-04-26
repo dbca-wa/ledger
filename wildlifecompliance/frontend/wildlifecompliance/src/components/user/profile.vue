@@ -277,8 +277,8 @@
                               </div>
                               <div class="form-group" v-if="newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;margin-bottom:20px;">
-                                    This organisation has already been  registered with the system.Please enter the two pin codes:</br>
-                                    These pin codes can be retrieved from ({{newOrg.first_five}})
+                                    This organisation has already been registered with the system. Please enter the two pin codes below.</br>
+                                    These pin codes can be retrieved from one of the following people:</br> {{newOrg.first_five}}
                                   </label>
                                   <label for="" class="col-sm-2 control-label" >Pin 1</label>
                                   <div class="col-sm-2">

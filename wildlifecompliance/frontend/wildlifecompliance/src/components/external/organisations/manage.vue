@@ -523,7 +523,7 @@ export default {
                 let id = $(e.target).data('id');
                 swal({
                     title: "Delete Contact",
-                    text: "Are you sure you want to remove "+ name + "("+ email + ") as a contact  ?",
+                    text: "Are you sure you want to remove "+ name + " (" + email + ") as a contact?",
                     type: "error",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
@@ -540,6 +540,7 @@ export default {
 
                 let firstname = $(e.target).data('firstname');
                 let lastname = $(e.target).data('lastname');
+                let name = firstname + ' ' + lastname;
                 let email = $(e.target).data('email');
                 let id = $(e.target).data('id');
                 let mobile = $(e.target).data('mobile');
@@ -554,7 +555,7 @@ export default {
 
                 swal({
                     title: "Contact Accept",
-                    text: "Are you sure you want to accept contact request "+ name + "("+ email + ") ?",
+                    text: "Are you sure you want to accept contact request " + name + " (" + email + ")?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
@@ -564,7 +565,7 @@ export default {
                         }).then((response) => {
                             swal({
                                 title: 'Contact Accept',
-                                text: 'You have successfully accepted '+name+' ('+id+'.)',
+                                text: 'You have successfully accepted ' + name + '.',
                                 type: 'success',
                                 confirmButtonText: 'Okay'
                             }).then(() => {
@@ -572,7 +573,7 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Contact Accept','There was an error accepting '+name+' ('+id+')','error')
+                            swal('Contact Accept','There was an error accepting ' + name + '.','error')
                         });
                     }
                 },(error) => {
@@ -585,6 +586,7 @@ export default {
 
                 let firstname = $(e.target).data('firstname');
                 let lastname = $(e.target).data('lastname');
+                let name = firstname + ' ' + lastname;
                 let email = $(e.target).data('email');
                 let id = $(e.target).data('id');
                 let mobile = $(e.target).data('mobile');
@@ -599,7 +601,7 @@ export default {
 
                 swal({
                     title: "Contact Accept (Previously Declined)",
-                    text: "Are you sure you want to accept the previously declined contact request "+ name + "("+ email + ") ?",
+                    text: "Are you sure you want to accept the previously declined contact request for " + name + " (" + email + ")?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
@@ -609,7 +611,7 @@ export default {
                         }).then((response) => {
                             swal({
                                 title: 'Contact Accept (Previously Declined)',
-                                text: 'You have successfully accepted '+name+' ('+id+'.)',
+                                text: 'You have successfully accepted ' + name + '.',
                                 type: 'success',
                                 confirmButtonText: 'Okay'
                             }).then(() => {
@@ -617,7 +619,7 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Contact Accept (Previously Declined)','There was an error accepting '+name+' ('+id+')','error')
+                            swal('Contact Accept (Previously Declined)','There was an error accepting ' + name + '.','error')
                         });
                     }
                 },(error) => {
@@ -631,6 +633,7 @@ export default {
 
                 let firstname = $(e.target).data('firstname');
                 let lastname = $(e.target).data('lastname');
+                let name = firstname + ' ' + lastname;
                 let email = $(e.target).data('email');
                 let id = $(e.target).data('id');
                 let mobile = $(e.target).data('mobile');
@@ -646,7 +649,7 @@ export default {
 
                 swal({
                     title: "Contact Decline",
-                    text: "Are you sure you want to decline contact request "+ name + "("+ email + ") ?",
+                    text: "Are you sure you want to decline the contact request for " + name + " (" + email + ")?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
@@ -656,7 +659,7 @@ export default {
                         }).then((response) => {
                             swal({
                                 title: 'Contact Decline',
-                                text: 'You have successfully Declined '+name+' ('+id+'.)',
+                                text: 'You have successfully declined ' + name + '.',
                                 type: 'success',
                                 confirmButtonText: 'Okay'
                             }).then(() => {
@@ -664,7 +667,7 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Contact Decline','There was an error declining '+name+' ('+id+')','error')
+                            swal('Contact Decline','There was an error declining ' + name + '.','error')
                         });
                     }
                 },(error) => {
@@ -679,6 +682,7 @@ export default {
 
                 let firstname = $(e.target).data('firstname');
                 let lastname = $(e.target).data('lastname');
+                let name = firstname + ' ' + lastname;
                 let email = $(e.target).data('email');
                 let id = $(e.target).data('id');
                 let mobile = $(e.target).data('mobile');
@@ -693,7 +697,7 @@ export default {
 
                 swal({
                     title: "Unlink",
-                    text: "Are you sure you want to unlink "+ name + "("+ email + ") ?",
+                    text: "Are you sure you want to unlink " + name + " (" + email + ")?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
@@ -703,7 +707,7 @@ export default {
                         }).then((response) => {
                             swal({
                                 title: 'Unlink',
-                                text: 'You have successfully unlinked '+name+' ('+id+'.)',
+                                text: 'You have successfully unlinked ' + name + '.',
                                 type: 'success',
                                 confirmButtonText: 'Okay'
                             }).then(() => {
@@ -712,7 +716,7 @@ export default {
                             });
                         }, (error) => {
                             if (error.status ==500){
-                                swal('Unlink','Last Organisation Admin can not be unlinked','error');
+                                swal('Unlink','Last Organisation Admin can not be unlinked.','error');
                             }
                         });
                     }
@@ -726,6 +730,7 @@ export default {
 
                 let firstname = $(e.target).data('firstname');
                 let lastname = $(e.target).data('lastname');
+                let name = firstname + ' ' + lastname;
                 let email = $(e.target).data('email');
                 let id = $(e.target).data('id');
                 let mobile = $(e.target).data('mobile');
@@ -740,7 +745,7 @@ export default {
 
                 swal({
                     title: "Organisation Admin",
-                    text: "Are you sure you want to make "+ name + "("+ email + ") Organisation Admin ?",
+                    text: "Are you sure you want to make " + name + " (" + email + ") an Organisation Admin?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
@@ -750,7 +755,7 @@ export default {
                         }).then((response) => {
                             swal({
                                 title: 'Organisation Admin',
-                                text: 'You have successfully made '+name+' ('+id+') Organisation Admin',
+                                text: 'You have successfully made ' + name + ' an Organisation Admin.',
                                 type: 'success',
                                 confirmButtonText: 'Okay'
                             }).then(() => {
@@ -758,7 +763,7 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Organisation Admin','There was an error making '+name+' ('+id+') Organisation Admin','error')
+                            swal('Organisation Admin','There was an error making ' + name + ' an Organisation Admin.','error')
                         });
                     }
                 },(error) => {
@@ -771,6 +776,7 @@ export default {
 
                 let firstname = $(e.target).data('firstname');
                 let lastname = $(e.target).data('lastname');
+                let name = firstname + ' ' + lastname;
                 let email = $(e.target).data('email');
                 let id = $(e.target).data('id');
                 let mobile = $(e.target).data('mobile');
@@ -785,7 +791,7 @@ export default {
 
                 swal({
                     title: "Organisation User",
-                    text: "Are you sure you want to make "+ name + "("+ email + ") Organisation User ?",
+                    text: "Are you sure you want to make " + name + " (" + email + ") an Organisation User?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
@@ -795,7 +801,7 @@ export default {
                         }).then((response) => {
                             swal({
                                 title: 'Organisation User',
-                                text: 'You have successfully made '+name+' ('+id+') Organisation User',
+                                text: 'You have successfully made ' + name + ' an Organisation User.',
                                 type: 'success',
                                 confirmButtonText: 'Okay'
                             }).then(() => {
@@ -803,7 +809,7 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Company Admin','There was an error making '+name+' ('+id+') Organisation User','error')
+                            swal('Company Admin','There was an error making ' + name + ' an Organisation User.','error')
                         });
                     }
                 },(error) => {
@@ -818,6 +824,7 @@ export default {
 
                 let firstname = $(e.target).data('firstname');
                 let lastname = $(e.target).data('lastname');
+                let name = firstname + ' ' + lastname;
                 let email = $(e.target).data('email');
                 let id = $(e.target).data('id');
                 let mobile = $(e.target).data('mobile');
@@ -832,7 +839,7 @@ export default {
 
                 swal({
                     title: "Suspend User",
-                    text: "Are you sure you want to Suspend  "+ name + "("+ email + ")  ?",
+                    text: "Are you sure you want to Suspend  " + name + " (" + email + ")?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
@@ -842,7 +849,7 @@ export default {
                         }).then((response) => {
                             swal({
                                 title: 'Suspend User',
-                                text: 'You have successfully suspended '+name+' ('+id+') User',
+                                text: 'You have successfully suspended ' + name + ' as a User.',
                                 type: 'success',
                                 confirmButtonText: 'Okay'
                             }).then(() => {
@@ -850,7 +857,7 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Suspend User','There was an error suspending '+name+' ('+id+') User','error')
+                            swal('Suspend User','There was an error suspending ' + name + ' as a User.','error')
                         });
                     }
                 },(error) => {
@@ -864,6 +871,7 @@ export default {
 
                 let firstname = $(e.target).data('firstname');
                 let lastname = $(e.target).data('lastname');
+                let name = firstname + ' ' + lastname;
                 let email = $(e.target).data('email');
                 let id = $(e.target).data('id');
                 let mobile = $(e.target).data('mobile');
@@ -878,7 +886,7 @@ export default {
 
                 swal({
                     title: "Reinstate User",
-                    text: "Are you sure you want to Reinstate  "+ name + "("+ email + ")  ?",
+                    text: "Are you sure you want to Reinstate  " + name + " (" + email + ")?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
@@ -888,7 +896,7 @@ export default {
                         }).then((response) => {
                             swal({
                                 title: 'Reinstate User',
-                                text: 'You have successfully reinstated '+name+' ('+id+') User',
+                                text: 'You have successfully reinstated ' + name + '.',
                                 type: 'success',
                                 confirmButtonText: 'Okay'
                             }).then(() => {
@@ -896,7 +904,7 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Reinstate User','There was an error reinstating '+name+' ('+id+') User','error')
+                            swal('Reinstate User','There was an error reinstating ' + name + '.','error')
                         });
                     }
                 },(error) => {
@@ -909,6 +917,7 @@ export default {
 
                 let firstname = $(e.target).data('firstname');
                 let lastname = $(e.target).data('lastname');
+                let name = firstname + ' ' + lastname;
                 let email = $(e.target).data('email');
                 let id = $(e.target).data('id');
                 let mobile = $(e.target).data('mobile');
@@ -923,7 +932,7 @@ export default {
 
                 swal({
                     title: "Relink User",
-                    text: "Are you sure you want to Relink  "+ name + "("+ email + ")  ?",
+                    text: "Are you sure you want to Relink  " + name + " (" + email + ")?",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
@@ -933,7 +942,7 @@ export default {
                         }).then((response) => {
                             swal({
                                 title: 'Relink User',
-                                text: 'You have successfully relinked '+name+' ('+id+') User',
+                                text: 'You have successfully relinked ' + name + '.',
                                 type: 'success',
                                 confirmButtonText: 'Okay'
                             }).then(() => {
@@ -941,7 +950,7 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Relink User','There was an error relink '+name+' ('+id+') User','error')
+                            swal('Relink User','There was an error relink ' + name + '.','error')
                         });
                     }
                 },(error) => {
@@ -960,7 +969,7 @@ export default {
                 if (vm.org.address == null){ vm.org.address = {}; }
                 swal(
                     'Saved',
-                    'Organisation details have been saved',
+                    'Organisation details have been saved.',
                     'success'
                 )
             }, (error) => {
@@ -986,7 +995,7 @@ export default {
             }).then((response) => {
                 swal(
                     'Contact Deleted', 
-                    'The contact was successfully deleted',
+                    'The contact was successfully deleted.',
                     'success'
                 )
                 vm.$refs.contacts_datatable.vmDataTable.ajax.reload();
@@ -994,7 +1003,7 @@ export default {
                 console.log(error);
                 swal(
                     'Contact Deleted', 
-                    'The contact could not be deleted because of the following error '+error,
+                    'The contact could not be deleted because of the following error: ' + error,
                     'error'
                 )
             });
@@ -1009,7 +1018,7 @@ export default {
                 vm.org = response.body;
                 swal(
                     'Saved',
-                    'Address details have been saved',
+                    'Address details have been saved.',
                     'success'
                 )
                 if (vm.org.address == null){ vm.org.address = {}; }
@@ -1025,7 +1034,7 @@ export default {
             let person = helpers.copyObject(d);
             swal({
                 title: "Unlink From Organisation",
-                text: "Are you sure you want to unlink "+person.name+" "+person.id+" from "+org.name+" ?",
+                text: "Are you sure you want to unlink " + person.name + " from " + org.name + "?",
                 type: "question",
                 showCancelButton: true,
                 confirmButtonText: 'Accept'
@@ -1038,7 +1047,7 @@ export default {
                         if (vm.org.address == null){ vm.org.address = {}; }
                         swal({
                             title: 'Unlink',
-                            text: 'You have successfully unlinked '+person.name+' from '+org_name+'.',
+                            text: 'You have successfully unlinked ' + person.name + ' from ' + org_name + '.',
                             type: 'success',
                             confirmButtonText: 'Okay'
                         }).then(() => {
@@ -1048,7 +1057,7 @@ export default {
                     }, (error) => {
                         swal(
                             'Unlink',
-                            'There was an error unlinking '+person.name+' from '+org_name+'.',
+                            'There was an error unlinking ' + person.name + ' from ' + org_name + '.',
                             'error'
                         )
                     });
