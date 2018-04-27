@@ -1,13 +1,11 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Approval has been expired:
+    Your Approval has been suspended:
 
     Approval : {{ approval.reference}}
 
-    Suspension Details : {{details}}
-
-    Cancellation Date : {{ approval.cancellation_date}}
+    Suspension Details : {{details}}    
 
     From Date : {{from_date}}
 

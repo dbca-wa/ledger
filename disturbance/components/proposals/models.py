@@ -948,7 +948,10 @@ class ProposalUserAction(UserAction):
     CONCLUDE_REFERRAL = "Referral {} for proposal {} has been concluded by {}"
     ACTION_REISSUE_APPROVAL = "Reissue approval for proposal {}"
     ACTION_CANCEL_APPROVAL = "Cancel approval for proposal {}"
-    
+    ACTION_SUSPEND_APPROVAL = "Suspend approval for proposal {}"
+    ACTION_REINSTATE_APPROVAL = "Reinstate approval for proposal {}"
+    ACTION_SURRENDER_APPROVAL = "Surrender approval for proposal {}"
+
 
     class Meta:
         app_label = 'disturbance'
