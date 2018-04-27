@@ -1,7 +1,7 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Approval has been expired:
+    Your Approval has been cancelled:
 
     Approval : {{ approval.reference}}
 

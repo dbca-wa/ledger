@@ -69,6 +69,7 @@
         </div>
         <ApprovalCancellation ref="approval_cancellation"  @refreshFromResponse="refreshFromResponse"></ApprovalCancellation>
         <ApprovalSuspension ref="approval_suspension"  @refreshFromResponse="refreshFromResponse"></ApprovalSuspension>
+        <ApprovalSurrender ref="approval_surrender"  @refreshFromResponse="refreshFromResponse"></ApprovalSurrender>
 
 
     </div>
@@ -78,6 +79,7 @@ import datatable from '@/utils/vue/datatable.vue'
 import Vue from 'vue'
 import ApprovalCancellation from '../internal/approvals/approval_cancellation.vue'
 import ApprovalSuspension from '../internal/approvals/approval_suspension.vue'
+import ApprovalSurrender from '../internal/approvals/approval_surrender.vue'
 import {
     api_endpoints,
     helpers
@@ -186,6 +188,7 @@ export default {
                                     links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
                                     links +=  `<a href='#${full.id}' data-cancel-approval='${full.id}'>Cancel</a><br/>`;
                                     links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                    links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
                                     if(full.status== 'Suspended')
                                     {
                                         links +=  `<a href='#${full.id}' data-reinstate-approval='${full.id}'>Reinstate</a><br/>`;
@@ -200,11 +203,11 @@ export default {
                                 }
                             }
                             else{
-                                if (full.can_user_edit) {
-                                    links +=  `<a href='/external/proposal/${full.id}'>Continue</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-discard-proposal='${full.current_proposal}'>Discard</a><br/>`;
+                                if (full.can_reissue) {
+                                    links +=  `<a href='/external/proposal/${full.current_proposal}'>View</a><br/>`;
+                                    links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
                                 }
-                                else if (full.can_user_view) {
+                                else {
                                     links +=  `<a href='/external/proposal/${full.current_proposal}'>View</a><br/>`;
                                 }
                             }
@@ -255,7 +258,8 @@ export default {
     components:{
         datatable,
         ApprovalCancellation,
-        ApprovalSuspension
+        ApprovalSuspension,
+        ApprovalSurrender
     },
     watch:{
         filterProposalActivity: function() {
@@ -343,6 +347,21 @@ export default {
                 var id = $(this).attr('data-suspend-approval');
                 vm.suspendApproval(id);
             });
+
+            // Internal Reissue listener
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reinstate-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-reinstate-approval');
+                vm.reinstateApproval(id);
+            });
+
+            //Internal Cancel listener
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-surrender-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-surrender-approval');
+                vm.surrenderApproval(id);
+            });
+
         },
         initialiseSearch:function(){
             this.regionSearch();
@@ -474,6 +493,37 @@ export default {
             });
         },
 
+        reinstateApproval:function (approval_id) {
+            let vm = this;
+            let status= 'with_approver'
+            //let data = {'status': status}
+            swal({
+                title: "Reinstate Approval",
+                text: "Are you sure you want to reinstate this approval?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: 'Reinstate approval',
+                //confirmButtonColor:'#d9534f'
+            }).then(() => {
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,(approval_id+'/approval_reinstate')),{
+                
+                })
+                .then((response) => {
+                    swal(
+                        'Reinstate',
+                        'Your approval has been reinstate',
+                        'success'
+                    )
+                    vm.$refs.proposal_datatable.vmDataTable.ajax.reload();
+                    
+                }, (error) => {
+                    console.log(error);
+                });
+            },(error) => {
+
+            });
+        },
+
         cancelApproval: function(approval_id){
            
             this.$refs.approval_cancellation.approval_id = approval_id;
@@ -484,6 +534,12 @@ export default {
            
             this.$refs.approval_suspension.approval_id = approval_id;
             this.$refs.approval_suspension.isModalOpen = true;
+        },
+
+        surrenderApproval: function(approval_id){
+           
+            this.$refs.approval_surrender.approval_id = approval_id;
+            this.$refs.approval_surrender.isModalOpen = true;
         },
 
         refreshFromResponse: function(){
