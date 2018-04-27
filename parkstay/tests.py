@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 
 from django.conf import settings
-from django.test import TestCase, Client
+from django.test import TransactionTestCase, TestCase, Client
 from django.core.exceptions import ValidationError
 from django.shortcuts import reverse
 
@@ -44,7 +44,7 @@ def create_fixtures():
     pr = ps.ParkEntryRate.objects.create(period_start=datetime.date.today(), vehicle=D('3.00'), motorbike=D('2.00'), concession=D('1.00'), reason=prsd)
 
 
-class ClientBookingTestCase(TestCase):
+class ClientBookingTestCase(TransactionTestCase):
     create_booking_url = reverse('create_booking')
     booking_url = reverse('public_make_booking')
     success_url = reverse('public_booking_success')
@@ -56,7 +56,8 @@ class ClientBookingTestCase(TestCase):
         self.client = Client(SERVER_NAME='parkstaytests.lan.fyi')
         create_fixtures()
 
-    def test_booking_external_anonymous(self):
+    @mock.patch('ledger.checkout.views.PaymentDetailsView.handle_last_check')
+    def test_booking_external_anonymous(self, handle_last_check):
         base_date = datetime.date.today()
         ext_date = lambda x: base_date+datetime.timedelta(days=x)
 
@@ -119,7 +120,11 @@ class ClientBookingTestCase(TestCase):
         # submit the order
         response = self.client.post(self.preview_url, {
             'action': 'place_order'
-        })
+        }, follow=True)
+
+        booking = ps.Booking.objects.order_by('-created').first()
+        self.assertIsNotNone(booking)
+        self.assertEqual(booking.booking_type, 1)
 
 
 class BookingRangeTestCase(TestCase):
