@@ -287,12 +287,7 @@ class MakeBookingsView(TemplateView):
         booking.save()
 
         # generate invoice
-        reservation = u"Reservation for {} from {} to {} at {}".format(
-               u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
-                booking.arrival.strftime('%d-%m-%Y'),
-                booking.departure.strftime('%d-%m-%Y'),
-                booking.campground.name
-        )
+        reservation = u"Reservation for {} confirmation {}".format(u'{} {}'.format(booking.customer.first_name, booking.customer.last_name), booking.id)
         
         logger.info(u'{} built booking {} and handing over to payment gateway'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',booking.id))
 

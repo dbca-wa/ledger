@@ -219,13 +219,11 @@ export default {
           {
             data: "campground_site_type",
             mRender: function(data, type, full) {
-              var test = "";
               if (data.length == 1) {
-                //var max_length = 15;
-                //var name = (test.length > max_length) ? test.substring(0,max_length-1)+'...' : data;
-                var name = data[0].type;
-                var column = "<td>" + name + "</td>";
-                return column;
+                var max_length = 15;
+                var name = (data[0].type.length > max_length) ? data[0].type.substring(0,max_length-1)+'...' : data[0].type;
+                var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
+                return column.replace('__NAME__', data[0].type);
               } else if (data.length > 1) {
                 var results = {};
                 for (var i = 0; i < data.length; i++) {

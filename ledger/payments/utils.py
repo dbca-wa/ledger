@@ -6,6 +6,7 @@ import csv
 from six.moves import StringIO
 from wsgiref.util import FileWrapper
 from decimal import Decimal as D
+from decimal import ROUND_HALF_DOWN
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -78,8 +79,8 @@ def validSystem(system_id):
         return True
 
 def calculate_excl_gst(amount):
-    percentage = D(100 - settings.LEDGER_GST)/ D(100.0)
-    return percentage * D(amount)
+    result = D(100.0)/ D(100 + settings.LEDGER_GST) * D(amount)
+    return result.quantize(D('0.01'), ROUND_HALF_DOWN)
 
 def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
     ''' Create a basket so that a user can check it out.

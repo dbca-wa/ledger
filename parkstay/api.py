@@ -1748,9 +1748,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             start_date = datetime.strptime(request.data['arrival'],'%d/%m/%Y').date()
             end_date = datetime.strptime(request.data['departure'],'%d/%m/%Y').date()
             guests = request.data['guests']
-
             booking_details = {
-                'campsites':request.data['campsites'],
+                'campsites': request.data['campsites'],
                 'start_date' : start_date,
                 'campground' : request.data['campground'],
                 'end_date' : end_date,

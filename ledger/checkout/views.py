@@ -50,6 +50,7 @@ class IndexView(CoreIndexView):
         # validate there is a fallback url
         self.__validate_url(details.get('fallback_url'),'fallback')
         # validate card method to be used
+        self.__validate_pay_by(details.get('pay_by'))
         self.__validate_card_method(details.get('card_method'))
         # validate template if its present
         self.__validate_template(details.get('template'))
@@ -162,6 +163,9 @@ class IndexView(CoreIndexView):
         elif _type == 'return_preload':
             self.checkout_session.return_preload_to(url)
 
+    def __validate_pay_by(self, method):
+        self.checkout_session.pay_by(method)
+
     def __validate_card_method(self, method):
         ''' Validate if the card method is payment or preauth
         '''
@@ -225,6 +229,7 @@ class IndexView(CoreIndexView):
                 'forceRedirect': request.GET.get('forceRedirect',False),
                 'sendEmail': request.GET.get('sendEmail',False),
                 'proxy': request.GET.get('proxy',False),
+                'pay_by': request.GET.get('pay_by', None),
                 'bpay_details': {
                     'bpay_format': request.GET.get('bpay_method','crn'),
                     'icrn_format': request.GET.get('icrn_format','ICRNAMT'),
