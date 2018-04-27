@@ -44,5 +44,21 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'status',
             'reference',
             'can_reissue',
-            'allowed_assessors'
+            'allowed_assessors',
+            'cancellation_date',
+            'cancellation_details'
         )
+
+class ApprovalCancellationSerializer(serializers.Serializer):
+    cancellation_date = serializers.DateField(input_formats=['%d/%m/%Y'])    
+    cancellation_details = serializers.CharField()
+    
+class ApprovalSuspensionSerializer(serializers.Serializer):
+    from_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    to_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    suspension_details = serializers.CharField()
+    
+class ApprovalSurrenderSerializer(serializers.Serializer):
+    surrender_date = serializers.DateField(input_formats=['%d/%m/%Y'])    
+    surrender_details = serializers.CharField()
+    
