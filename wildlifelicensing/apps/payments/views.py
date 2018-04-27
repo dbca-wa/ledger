@@ -43,7 +43,7 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
             'products': [
                 {'id': product.id if product is not None else None}
             ],
-            'vouchers': []
+            'vouchers': [],
             'system': PAYMENT_SYSTEM_ID
         }
         # senior discount
