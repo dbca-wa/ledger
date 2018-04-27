@@ -50,6 +50,7 @@ class ClientBookingTestCase(TestCase):
     success_url = reverse('public_booking_success')
     checkout_url = reverse('checkout:index')
     payment_details_url = reverse('checkout:payment-details')
+    preview_url = reverse('checkout:preview')
 
     def setUp(self):
         self.client = Client(SERVER_NAME='parkstaytests.lan.fyi')
@@ -98,7 +99,27 @@ class ClientBookingTestCase(TestCase):
         }, follow=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.redirect_chain[-1][1], self.payment_details_url)
+        self.assertEqual(response.redirect_chain[-1][0], self.payment_details_url)
+
+        # check that attempts to immediately jump to preview get knocked back
+        response = self.client.get(self.preview_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[-1][0], self.payment_details_url)
+
+        # attempt a BPAY payment
+        response = self.client.post(self.preview_url, {
+            'payment_method': 'bpay'
+        })
+        self.assertEqual(response.status_code, 200)
+
+        # check that preview page works
+        response = self.client.get(self.preview_url)
+        self.assertEqual(response.status_code, 200)
+
+        # submit the order
+        response = self.client.post(self.preview_url, {
+            'action': 'place_order'
+        })
 
 
 class BookingRangeTestCase(TestCase):
