@@ -36,11 +36,7 @@
         {% block menu %}
             <div class="container-fluid">
                 <div class="row">
-                    <div>is_new:{{request.session.is_new}}<br>
-                    new wildlife :{{request.session.new_to_wildlifecompliance}}<br>
-                    authenticated :{{request.user.is_authenticated}}<br>
-                    is_staff: {{request.user.is_staff}}<br>
-                    </div>
+                    
                     {% if request.session.is_new %}
                         <nav class="navbar navbar-default hidden">
                     {% elif request.session.new_to_wildlifecompliance %}
