@@ -35,6 +35,8 @@ RedirectRequired, UnableToTakePayment, PaymentError \
                                          'UnableToTakePayment',
                                          'PaymentError'])
 UnableToPlaceOrder = get_class('order.exceptions', 'UnableToPlaceOrder')
+CheckoutSessionData = get_class(
+    'checkout.utils', 'CheckoutSessionData')
 
 # Standard logger for checkout events
 logger = logging.getLogger('oscar.checkout')
@@ -509,3 +511,10 @@ class ThankYouView(CoreThankYouView):
                 #del self.request.session['checkout_return_url']
 
         return order
+
+
+def place_order_submission(request):
+    pdv = PaymentDetailsView(request=request, checkout_session=CheckoutSessionData(request))
+    result = pdv.handle_place_order_submission(request)
+
+    return result

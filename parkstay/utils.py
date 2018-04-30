@@ -15,6 +15,7 @@ from django.utils import timezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session
+from ledger.checkout.views import place_order_submission
 from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange,CampgroundStayHistory, CampsiteRate, ParkEntryRate, BookingVehicleRego)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 from parkstay.emails import send_booking_invoice,send_booking_confirmation
@@ -864,16 +865,19 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         checkout_params['basket_owner'] = booking.customer.id
     create_checkout_session(request, checkout_params)
 
-    redirect = HttpResponseRedirect(reverse('checkout:index'))
-    # inject the current basket into the redirect response cookies
-    # or else, anonymous users will be directionless
-    redirect.set_cookie(
-        settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
-        max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
-        secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
-    )
+    if internal:
+        response = place_order_submission(request)
+    else:
+        response = HttpResponseRedirect(reverse('checkout:index'))
+        # inject the current basket into the redirect response cookies
+        # or else, anonymous users will be directionless
+        response.set_cookie(
+            settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
+            max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
+            secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
+        )
     
-    return redirect
+    return response
 
 
 def internal_create_booking_invoice(booking, reference):
@@ -891,7 +895,6 @@ def internal_booking(request,booking_details,internal=True,updating=False):
     try:
         booking = create_or_update_booking(request, booking_details, updating, override_checks=internal)
         with transaction.atomic():
-            #import pdb; pdb.set_trace()
             set_session_booking(request.session,booking)
             # Get line items
             booking_arrival = booking.arrival.strftime('%d-%m-%Y')

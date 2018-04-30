@@ -18,6 +18,14 @@ from decimal import Decimal as D
 ADMIN_USER_EMAIL = 'admin@test.net'
 NEW_USER_EMAIL = 'new_user@test.net'
 ANONYMOUS_USER_EMAIL = 'anonymous@test.net'
+ANONYMOUS_USER = {
+    'email': 'anonymous@test.net',
+    'first_name': u'Anonymous',
+    'last_name': u'user 🤦',
+    'phone': 1234,
+    'postcode': 1234,
+    'country': 'AU',
+}
 
 def create_fixtures():
     new_user = EmailUser.objects.create(email=NEW_USER_EMAIL, first_name=u'New', last_name=u'user 🤦')
@@ -29,15 +37,22 @@ def create_fixtures():
     ar = ps.Region.objects.create(name='Region')
     ad = ps.District.objects.create(name='District', region=ar)
     ap = ps.Park.objects.create(name='Park', district=ad,entry_fee_required=True, oracle_code='pk1')
-    c1 = ps.Campground.objects.create(name='Campground 1', park=ap, oracle_code='cg1')
-    c2 = ps.Campground.objects.create(name='Campground 2', park=ap)
+
+
+    c1 = ps.Campground.objects.create(name='Campground 1', park=ap, oracle_code='cg1', site_type=0, campground_type=0)
+    c2 = ps.Campground.objects.create(name='Campground 2', park=ap, oracle_code='cg2', site_type=1, campground_type=0)
     cg = ps.CampgroundGroup.objects.create(name='All campgrounds')
     cg.campgrounds.add(c1, c2)
 
-    cs1a = ps.Campsite.objects.create(name='Campsite 1a', campground=c1)
-    cs1b = ps.Campsite.objects.create(name='Campsite 1b', campground=c1)
-    cs2a = ps.Campsite.objects.create(name='Campsite 2a', campground=c2)
-    cs2b = ps.Campsite.objects.create(name='Campsite 2b', campground=c2)
+    csc1 = ps.CampsiteClass.objects.create(campground=c1, name='Class 1')
+    csc2a = ps.CampsiteClass.objects.create(campground=c1, name='Class 2a')
+    csc2b = ps.CampsiteClass.objects.create(campground=c1, name='Class 2b')
+
+    cs1a = ps.Campsite.objects.create(name='Campsite 1a', campground=c1, campsite_class=csc1)
+    cs1b = ps.Campsite.objects.create(name='Campsite 1b', campground=c1, campsite_class=csc1)
+    cs2a = ps.Campsite.objects.create(name='Campsite 2a', campground=c2, campsite_class=csc2a)
+    cs2b = ps.Campsite.objects.create(name='Campsite 2b', campground=c2, campsite_class=csc2a)
+    cs2c = ps.Campsite.objects.create(name='Campsite 2c', campground=c2, campsite_class=csc2b)
 
     prso = ps.PriceReason.objects.create(text='Other', editable=False)
     prsd = ps.PriceReason.objects.create(text='Default fees', editable=True)
@@ -55,6 +70,7 @@ class ClientBookingTestCase(TransactionTestCase):
     def setUp(self):
         self.client = Client(SERVER_NAME='parkstaytests.lan.fyi')
         create_fixtures()
+
 
     @mock.patch('ledger.checkout.views.PaymentDetailsView.handle_last_check')
     def test_booking_external_anonymous(self, handle_last_check):
@@ -75,18 +91,11 @@ class ClientBookingTestCase(TransactionTestCase):
         self.assertEqual(response.json()['status'], 'success')
 
         # submit details, promote to a legitimate booking
-        response = self.client.post(self.booking_url, {
-            'email': ANONYMOUS_USER_EMAIL,
-            'confirm_email': ANONYMOUS_USER_EMAIL,
+        submission = {
             'num_adult': 1,
             'num_child': 2,
             'num_concession': 3,
             'num_infant': 4,
-            'first_name': u'Anonymous',
-            'last_name': u'user 🤦',
-            'phone': 1234,
-            'postcode': 1234,
-            'country': 'AU',
             'form-0-entry_fee': 'on',
             'form-0-vehicle_rego': 'REGO1',
             'form-0-vehicle_type': 0,
@@ -97,7 +106,10 @@ class ClientBookingTestCase(TransactionTestCase):
             'form-MAX_NUM_FORMS': 8,
             'form-MIN_NUM_FORMS': 0,
             'form-TOTAL_FORMS': 2,
-        }, follow=True)
+        }
+        submission.update(ANONYMOUS_USER)
+        submission['confirm_email'] = submission['email']
+        response = self.client.post(self.booking_url, submission, follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.redirect_chain[-1][0], self.payment_details_url)
@@ -125,6 +137,30 @@ class ClientBookingTestCase(TransactionTestCase):
         booking = ps.Booking.objects.order_by('-created').first()
         self.assertIsNotNone(booking)
         self.assertEqual(booking.booking_type, 1)
+
+
+    @mock.patch('ledger.checkout.views.PaymentDetailsView.handle_last_check')
+    def test_booking_internal_class(self, handle_last_check):
+        base_date = datetime.date.today()
+        ext_date = lambda x: base_date+datetime.timedelta(days=x)
+
+        data = {
+            'arrival': ext_date(1).strftime('%Y-%m-%d'),
+            'departure': ext_date(10).strftime('%Y-%m-%d'),
+            'guests': {
+                'adult': 1,
+                'concession': 2,
+                'child': 3,
+                'infant': 4,
+            },
+            'campsites': list(ps.Campsite.objects.filter(campground__name='Campground 1').values_list('id')),
+            'customer': ANONYMOUS_USER,
+            'regos': [
+                {'type': 'vehicle', 'rego': 'REGO1', 'entry_fee': True},
+                {'type': 'motorbike', 'rego': 'REGO2', 'entry_fee': False},
+            ]
+        }
+
 
 
 class BookingRangeTestCase(TestCase):

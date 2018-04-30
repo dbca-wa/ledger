@@ -12,6 +12,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from ledger.checkout.utils import create_basket_session, create_checkout_session
+from ledger.checkout.views import place_order_submission
 
 from wildlifelicensing.apps.applications.models import Application
 
@@ -64,7 +65,11 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
         }
         create_checkout_session(request, checkout_params)
 
-        return HttpResponseRedirect(reverse('checkout:index'))
+        if checkout_params['proxy']:
+            response = place_order_submission(request)
+        else:
+            response = HttpResponseRedirect(reverse('checkout:index'))
+        return response
 
 
 class ManualPaymentView(LoginRequiredMixin, RedirectView):
