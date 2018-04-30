@@ -73,8 +73,14 @@ class IsNewUser(views.APIView):
 
 class UserProfileCompleted(views.APIView):
     def get(self, request, format=None):
+        # print('before')
+        # print(request.session['is_new']) 
+        # print(request.session['new_to_wildlifecompliance']) 
         request.session['is_new'] = False
         request.session['new_to_wildlifecompliance'] = False
+        # print('after')
+        # print(request.session['is_new']) 
+        # print(request.session['new_to_wildlifecompliance']) 
         return HttpResponse('OK')
 
 

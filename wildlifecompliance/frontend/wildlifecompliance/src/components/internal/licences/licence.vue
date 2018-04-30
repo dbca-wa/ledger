@@ -382,14 +382,16 @@ export default {
             type: "question",
             showCancelButton: true,
             confirmButtonText: 'Accept'
-        }).then(() => {
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.licence.id+'/accept')))
-            .then((response) => {
-                console.log(response);
-                vm.licence = response.body;
-            }, (error) => {
-                console.log(error);
-            });
+        }).then((result) => {
+            if (result.value) {
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.licence.id+'/accept')))
+                .then((response) => {
+                    console.log(response);
+                    vm.licence = response.body;
+                }, (error) => {
+                    console.log(error);
+                });
+            }
         },(error) => {
 
         });

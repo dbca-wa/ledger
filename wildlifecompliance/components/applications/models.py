@@ -211,6 +211,7 @@ class Application(RevisionedMixin):
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
+    licence_type_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
     proposed_issuance_licence = JSONField(blank=True, null=True)
     #hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
@@ -250,9 +251,9 @@ class Application(RevisionedMixin):
     title = models.CharField(max_length=255,null=True,blank=True)
     tenure = models.CharField(max_length=255,null=True,blank=True)
 
-    licence_category = models.ForeignKey('wildlifecompliance.WildlifeLicenceCategory',blank=True,null=True)
-    licence_activity_type= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',blank=True,null=True)
-    licence_activity= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivity',blank=True,null=True)
+    # licence_class = models.ForeignKey('wildlifecompliance.WildlifeLicenceClass',blank=True,null=True)
+    # licence_activity_type= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',blank=True,null=True)
+    # licence_activity= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivity',blank=True,null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'

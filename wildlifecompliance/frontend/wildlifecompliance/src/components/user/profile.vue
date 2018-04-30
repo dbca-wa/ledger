@@ -220,8 +220,8 @@
                               </div>
                           </div>
 
-                          <div class="form-group" v-if="managesOrg=='Consultant'">
-                              <h3> New Organisation</h3>
+                          <div v-if="managesOrg=='Consultant'">
+                              <h3>New Organisation (as consultant)</h3>
                               <div class="form-group">
                                   <label for="" class="col-sm-2 control-label" >Organisation</label>
                                   <div class="col-sm-6">
@@ -241,13 +241,13 @@
                                             Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                         </span>
                                         <span  style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
-                                    </label> 
+                                    </label>
                                     </br>
-                                    
+
                                     <label for="" class="col-sm-10 control-label" style="text-align:left;">You will be notified by email once the Department has checked the organisation details.
                                     </label>
-                                    
-                                    
+
+
                                     <div class="col-sm-12">
                                       <button v-if="!registeringOrg" @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
                                       <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
@@ -259,7 +259,7 @@
 
 
                           <div style="margin-top:15px;" v-if="addingCompany">
-                              <h3> New Organisation</h3>
+                              <h3>New Organisation</h3>
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
                                 <div class="col-sm-6">
@@ -277,8 +277,8 @@
                               </div>
                               <div class="form-group" v-if="newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;margin-bottom:20px;">
-                                    This organisation has already been  registered with the system.Please enter the two pin codes:</br>
-                                    These pin codes can be retrieved from ({{newOrg.first_five}})
+                                    This organisation has already been registered with the system. Please enter the two pin codes below.</br>
+                                    These pin codes can be retrieved from one of the following people:</br> {{newOrg.first_five}}
                                   </label>
                                   <label for="" class="col-sm-2 control-label" >Pin 1</label>
                                   <div class="col-sm-2">
@@ -293,14 +293,9 @@
                                     <button v-else class="btn btn-primary pull-left"><i class="fa fa-spin fa-spinner"></i>&nbsp;Validating Pins</button>
                                   </div>
                               </div>
-
-
-                              
-
-
                               <div class="form-group" v-else-if="!newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;">
-                                    This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this origanisation.</br>
+                                    This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this organisation.</br>
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-info btn-file pull-left">
