@@ -24,22 +24,23 @@
                                 <div v-for="(category,index) in licence_categories" class="radio">
                                     <div class ="row">
                                         <div class="col-sm-9" >  
-                                            <input type="radio"  :id="category.id" name="licence_category" v-model="licence_category"  :value="category.id" @change="handleChange($event,index)"> {{category.name}}{{catego}}
+                                            <input type="radio"  :id="category.id" name="licence_category" v-model="licence_category.id"  :value="category.id" @change="handleChange($event,index)"> {{category.name}} {{category.checked}}
                                              
                                             <div class="row">
+
                                                 
-                                                <div  v-if="category.checked" class="col-sm-9">
-                                                    <div v-for="(type,index1) in category.activity_type" :id="type.id" class="checkbox">
+                                                <div  v-if="category.checked" class="col-sm-9"> 
+
+                                                    <div v-for="(type,index1) in category.activity_type" class="checkbox">
+                                                        <input type="checkbox" ref="selected_activity_type" name ="activity_type" :value="type.id" :id = "type.id" v-model="category.activity_type[index1].selected" @click="handleCheckboxChange(index,index1)"> {{type.name}} 
                                                         
-                                                        <input type="checkbox" name ="activity_type" :value="type.id" :id = "type.id" v-model="selected_activity_type"> {{type.name}}
-                                                        
-                                                        <div v-for="activity in type.activity" class="checkbox">
+                                                        <!-- <div v-for="activity in type.activity" class="checkbox">
                                                             
                                                             <div class ="col-sm-6">
                                                                 <input type="checkbox" :value="activity.id" :id="activity.id" v-model="selected_activity">{{activity.name}}
                                                             </div>
 
-                                                        </div>
+                                                        </div> -->
                                                         
                                                     </div>
                                                 </div> 
@@ -84,7 +85,7 @@ export default {
             id:null,
             activity:[]
         },
-        licence_category: null ,
+        
         radio_selected : [],
         selected_activity_type: [],
         selected_activity:[],
@@ -92,7 +93,12 @@ export default {
         organisations:null,
         licence_categories : {
             checked:false,
-            activity_type:[]
+            activity_type:[
+             { id:null,
+                selected:false,
+                activity:[]
+             }
+            ]
         },
         "loading": [],
         form: null,
@@ -141,7 +147,7 @@ export default {
     handleChange: function(e,index){
         let vm=this
         
-        console.log(vm.$refs)
+        console.log("inside handle change")
         for(var i=0,_len=this.licence_categories.length;i<_len;i++){
             if(i===index){
                 this.licence_categories[i].checked = true;
@@ -152,6 +158,15 @@ export default {
         }
         // vm.radio_selected[index] = !vm.radio_selected[index]
 
+    },
+    handleCheckboxChange:function(index,index1){
+        let vm = this
+        console.log("licence category",vm.licence_category)
+        var input = $(vm.$refs.selected_activity_type)[0];
+        // vm.licence_categories.activity_type[index1].id=input.id;
+
+        console.log("Input ",input.selected)
+        // vm.licence_categories[index].activity_type[index1].id = 
     },
     createApplication:function () {
         let vm = this;

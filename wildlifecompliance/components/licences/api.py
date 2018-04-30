@@ -31,11 +31,11 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.components.licences.models import (
     WildlifeLicence,
-    WildlifeLicenceCategory
+    WildlifeLicenceClass
 )
 from wildlifecompliance.components.licences.serializers import (
     LicenceSerializer,
-    LicenceCategorySerializer
+    LicenceClassSerializer
 )
 
 class LicenceViewSet(viewsets.ModelViewSet):
@@ -61,6 +61,6 @@ class LicenceViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-class LicenceCategoryViewSet(viewsets.ModelViewSet):
-    queryset = WildlifeLicenceCategory.objects.all()
-    serializer_class = LicenceCategorySerializer
+class LicenceClassViewSet(viewsets.ModelViewSet):
+    queryset = WildlifeLicenceClass.objects.all()
+    serializer_class = LicenceClassSerializer
