@@ -122,6 +122,10 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
                 raise ValidationError('Number of people is less than the minimum allowed for the selected campsite(s)')
 
         # Create a new temporary booking with an expiry timestamp (default 20mins)
+        updated_cost_total = cost_total
+        if override_price is not None:
+            updated_cost_total = cost_total - override_price
+        
         booking =   Booking.objects.create(
                         booking_type=3,
                         arrival=start_date,
@@ -132,7 +136,7 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
                             'num_child': num_child,
                             'num_infant': num_infant
                         },
-                        cost_total= Decimal(cost_total),
+                        cost_total = updated_cost_total,
                         override_price = Decimal(override_price) if (override_price is not None) else None,
                         override_reason = override_reason,
                         overridden_by = overridden_by,
@@ -564,11 +568,11 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
             invoice_lines.append({
                 'ledger_description': '{}'.format(reason.text),
                 'quantity': 1,
-                'price_incl_tax': str(booking.override_price - booking.cost_total),
+                'price_incl_tax': str(total_price - booking.override_price),
                 'oracle_code': booking.campground.oracle_code
             })
             total_price = booking.override_price
-    
+            
     if lines:
         return invoice_lines
     else:
