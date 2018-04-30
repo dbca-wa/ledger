@@ -15,7 +15,8 @@ INSTALLED_APPS += [
     'disturbance.components.compliances',
     'taggit',
     'rest_framework',
-    'rest_framework_gis'
+    'rest_framework_gis',
+    #'reset_migrations',
 ]
 
 SITE_ID = 1
