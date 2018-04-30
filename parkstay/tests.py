@@ -10,7 +10,7 @@ from ledger.accounts.models import EmailUser
 from parkstay import utils, models as ps
 from parkstay.exceptions import BookingRangeWithinException
 
-import unittest.mock as mock
+import mock
 import datetime
 from decimal import Decimal as D
 
@@ -44,9 +44,9 @@ def create_fixtures():
     cg = ps.CampgroundGroup.objects.create(name='All campgrounds')
     cg.campgrounds.add(c1, c2)
 
-    csc1 = ps.CampsiteClass.objects.create(campground=c1, name='Class 1')
-    csc2a = ps.CampsiteClass.objects.create(campground=c1, name='Class 2a')
-    csc2b = ps.CampsiteClass.objects.create(campground=c1, name='Class 2b')
+    csc1 = ps.CampsiteClass.objects.create(name='Class 1')
+    csc2a = ps.CampsiteClass.objects.create(name='Class 2a')
+    csc2b = ps.CampsiteClass.objects.create(name='Class 2b')
 
     cs1a = ps.Campsite.objects.create(name='Campsite 1a', campground=c1, campsite_class=csc1)
     cs1b = ps.Campsite.objects.create(name='Campsite 1b', campground=c1, campsite_class=csc1)
@@ -221,10 +221,11 @@ class BookingRangeTestCase(TestCase):
     def test_utils_availability(self):
         cg1 = ps.Campground.objects.get(name='Campground 1')
         cg2 = ps.Campground.objects.get(name='Campground 2')
-        cs1a= ps.Campsite.objects.get(name='Campsite 1a')
-        cs1b= ps.Campsite.objects.get(name='Campsite 1b')
-        cs2a= ps.Campsite.objects.get(name='Campsite 2a')
-        cs2b= ps.Campsite.objects.get(name='Campsite 2b')
+        cs1a = ps.Campsite.objects.get(name='Campsite 1a')
+        cs1b = ps.Campsite.objects.get(name='Campsite 1b')
+        cs2a = ps.Campsite.objects.get(name='Campsite 2a')
+        cs2b = ps.Campsite.objects.get(name='Campsite 2b')
+        cs2c = ps.Campsite.objects.get(name='Campsite 2c')
 
         base_date = datetime.date.today()
         ext_date = lambda x: base_date+datetime.timedelta(days=x)
@@ -241,8 +242,14 @@ class BookingRangeTestCase(TestCase):
             range_end=None,
             status=1
         )
-        cb3 = ps.CampsiteBookingRange.objects.create(
+        cb3b = ps.CampsiteBookingRange.objects.create(
             campsite=cs2b,
+            range_start=ext_date(14),
+            range_end=ext_date(20),
+            status=1
+        )
+        cb3c = ps.CampsiteBookingRange.objects.create(
+            campsite=cs2c,
             range_start=ext_date(14),
             range_end=ext_date(20),
             status=1
