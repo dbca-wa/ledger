@@ -34,7 +34,8 @@ def send_booking_invoice(booking):
     invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
 
     campground_email = booking.campground.email if booking.campground.email else default_campground_email
-    email_obj.send([email], from_address=campground_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
+    email_obj.send([email], from_address=default_campground_email, reply_to=campground_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
+
 
 def send_booking_confirmation(booking,request):
     email_obj = TemplateEmailBase()
@@ -89,7 +90,7 @@ def send_booking_confirmation(booking,request):
     att.seek(0)
 
 
-    email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
+    email_obj.send([email], from_address=default_campground_email, reply_to=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
     booking.confirmation_sent = True
     booking.save()
 
