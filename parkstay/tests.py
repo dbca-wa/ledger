@@ -1,37 +1,69 @@
 # -*- coding: utf8 -*-
 
 from django.conf import settings
-from django.test import TransactionTestCase, TestCase, Client
+from django.contrib import auth
+from django.contrib.auth.models import Group
+from django.core import mail
 from django.core.exceptions import ValidationError
 from django.shortcuts import reverse
+from django.test import TransactionTestCase, TestCase, Client
 
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, Country
 
 from parkstay import utils, models as ps
 from parkstay.exceptions import BookingRangeWithinException
 
 import mock
+import json
+
 import datetime
 from decimal import Decimal as D
+import re
+
+class SocialClient(Client):
+    """
+    A django Client for authenticating with the social auth password-less framework.
+    """
+
+    def login(self, email):
+        # important clear the mail box before
+        mail.outbox = []
+        self.post(reverse('social:complete', kwargs={'backend': "email"}), {'email': email})
+        if len(mail.outbox) == 0:
+            raise Exception("Email not received")
+        else:
+            login_url = re.search('(?P<url>https?://[^\s]+)', mail.outbox[0].body).group('url')
+            response = self.get(login_url, follow=True)
+            mail.outbox = []
+        return response
+
+    def logout(self):
+        self.get(reverse('accounts:logout'))
 
 
 ADMIN_USER_EMAIL = 'admin@test.net'
 NEW_USER_EMAIL = 'new_user@test.net'
 ANONYMOUS_USER_EMAIL = 'anonymous@test.net'
 ANONYMOUS_USER = {
-    'email': 'anonymous@test.net',
+    'email': ANONYMOUS_USER_EMAIL,
     'first_name': u'Anonymous',
     'last_name': u'user 🤦',
-    'phone': 1234,
-    'postcode': 1234,
+    'phone': '1234',
+    'postcode': '1234',
     'country': 'AU',
 }
 
 def create_fixtures():
+
+    au, _ = Country.objects.get_or_create(iso_3166_1_a2=u'AU', iso_3166_1_a3=u'AUS', iso_3166_1_numeric=u'036', printable_name=u'Australia')
+
+    pog = Group.objects.create(name='Parkstay Officers')
+    
     new_user = EmailUser.objects.create(email=NEW_USER_EMAIL, first_name=u'New', last_name=u'user 🤦')
 
     admin_user = EmailUser.objects.create(email=ADMIN_USER_EMAIL, first_name=u'Admin', last_name=u'user 🤦')
     admin_user.is_superuser = True
+    admin_user.groups.add(pog)
     admin_user.save()
 
     ar = ps.Region.objects.create(name='Region')
@@ -66,9 +98,11 @@ class ClientBookingTestCase(TransactionTestCase):
     checkout_url = reverse('checkout:index')
     payment_details_url = reverse('checkout:payment-details')
     preview_url = reverse('checkout:preview')
+    
+    booking_api_url = '/api/booking/'
 
     def setUp(self):
-        self.client = Client(SERVER_NAME='parkstaytests.lan.fyi')
+        self.client = SocialClient(SERVER_NAME='parkstaytests.lan.fyi')
         create_fixtures()
 
 
@@ -153,13 +187,25 @@ class ClientBookingTestCase(TransactionTestCase):
                 'child': 3,
                 'infant': 4,
             },
-            'campsites': list(ps.Campsite.objects.filter(campground__name='Campground 1').values_list('id')),
+            'campsites': list(ps.Campsite.objects.filter(campground__name='Campground 1').values_list('id', flat=True)),
             'customer': ANONYMOUS_USER,
             'regos': [
                 {'type': 'vehicle', 'rego': 'REGO1', 'entry_fee': True},
                 {'type': 'motorbike', 'rego': 'REGO2', 'entry_fee': False},
-            ]
+            ],
+            # FIXME: remove requirement for submitting cost
+            'costs': {'total': 319 }
         }
+        data_json = json.dumps(data)
+        
+        # attempt to use the private booking API without authentcation
+        response = self.client.post(self.booking_api_url, data_json, content_type='application/json')
+        self.assertEqual(response.status_code, 403)
+    
+        # login as an admin and try to create a booking
+        self.client.login(ADMIN_USER_EMAIL)
+        response = self.client.post(self.booking_api_url, data_json, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
 
 
 
