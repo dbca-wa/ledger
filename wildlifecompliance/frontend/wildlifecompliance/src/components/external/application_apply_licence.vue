@@ -21,10 +21,10 @@
                               
                                 
                                 
-                                <div v-for="(category,index) in licence_categories" class="radio">
+                                <div v-for="(category,index) in licence_classes" class="radio">
                                     <div class ="row">
                                         <div class="col-sm-9" >  
-                                            <input type="radio"  :id="category.id" name="licence_category" v-model="licence_categories.id"  :value="category.id" @change="handleRadioChange($event,index)"> {{category.name}} 
+                                            <input type="radio"  :id="category.id" name="licence_category" v-model="licence_classes.id"  :value="category.id" @change="handleRadioChange($event,index)"> {{category.name}} 
                                              
                                             <div class="row">
 
@@ -93,7 +93,7 @@ export default {
         selected_activity:[],
         activity_type_showing : [],
         organisations:null,
-        licence_categories : {
+        licence_classes : {
             checked:false,
             activity_type:[
              { 
@@ -147,19 +147,19 @@ export default {
 
     handleRadioChange: function(e,index){
         let vm=this
-        for(var i=0,_len=vm.licence_categories.length;i<_len;i++){
+        for(var i=0,_len=vm.licence_classes.length;i<_len;i++){
             if(i===index){
-                vm.licence_categories[i].checked = true;
+                vm.licence_classes[i].checked = true;
             }else{
-                for(var activity_type_index=0, len1=vm.licence_categories[i].activity_type.length; activity_type_index<len1; activity_type_index++){
-                        if (vm.licence_categories[i].activity_type[activity_type_index].selected){
-                            vm.licence_categories[i].activity_type[activity_type_index].selected=false;
-                            for(var activity_index=0, len2=vm.licence_categories[i].activity_type[activity_type_index].activity.length; activity_index<len2; activity_index++){
+                for(var activity_type_index=0, len1=vm.licence_classes[i].activity_type.length; activity_type_index<len1; activity_type_index++){
+                        if (vm.licence_classes[i].activity_type[activity_type_index].selected){
+                            vm.licence_classes[i].activity_type[activity_type_index].selected=false;
+                            for(var activity_index=0, len2=vm.licence_classes[i].activity_type[activity_type_index].activity.length; activity_index<len2; activity_index++){
 
                             }    
                         }
                 }
-                vm.licence_categories[i].checked=false;
+                vm.licence_classes[i].checked=false;
             }
 
         }
@@ -168,16 +168,16 @@ export default {
     handleActivityTypeCheckboxChange:function(index,index1){
         let vm = this
         var input = $(vm.$refs.selected_activity_type)[0];
-        if(!vm.licence_categories[index].activity_type[index1].selected){
-            for(var activity_index=0, len2=vm.licence_categories[index].activity_type[index1].activity.length; activity_index<len2; activity_index++){
-                         vm.licence_categories[index].activity_type[index1].activity[activity_index].selected= false;
+        if(!vm.licence_classes[index].activity_type[index1].selected){
+            for(var activity_index=0, len2=vm.licence_classes[index].activity_type[index1].activity.length; activity_index<len2; activity_index++){
+                         vm.licence_classes[index].activity_type[index1].activity[activity_index].selected= false;
                             }    
         }
     },
     createApplication:function () {
         let vm = this;
-        let category = JSON.stringify(vm.licence_categories)
-        console.log("from areate application",category)
+        let category = JSON.stringify(vm.licence_classes)
+        // console.log("from areate application",category)
         vm.$http.post('/api/application.json',{
             behalf_of: vm.behalf_of,
             licence_activity_type:vm.selected_activity_type,
@@ -197,34 +197,15 @@ export default {
     
   },
  
-  created:function(){
-    console.log("created application apply licence")
-  },
-  beforeMount:function(){
-    console.log("Before mpunt application apply licence")
-  },
-   
-  mounted: function() {
-    let vm = this;
-    console.log("1inside mounted")
-    vm.form = document.forms.new_application;
-    console.log(vm.licence_select);
-    console.log("Mounted",this.licence_select)
-    console.log("2. Inside mounted end")
-
-  },
   beforeRouteEnter:function(to,from,next){
         let initialisers = [
 
-            utils.fetchLicenceCategories()
+            utils.fetchLicenceClasses()
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
 
-                vm.licence_categories = data[0]
-                console.log(vm.licence_categories)
-                
-                console.log()
+                vm.licence_classes = data[0]
             });
         });
     },
