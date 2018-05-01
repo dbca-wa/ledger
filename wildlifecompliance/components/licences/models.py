@@ -48,19 +48,18 @@ class WildlifeLicenceActivity(models.Model):
 
 
 class WildlifeLicenceActivityType(models.Model):
-    # LICENCE_ACTIVITY_STATUS_CHOICES = (
-    #     ('current','Current'),
-    #     ('expired','Expired'),
-    #     ('cancelled','Cancelled'),
-    #     ('surrendered','Surrendered'),
-    #     ('suspended','Suspended')
-    #     )
-    # licence_activity_status = models.CharField(max_length=40, choices=LICENCE_ACTIVITY_STATUS_CHOICES,default=LICENCE_ACTIVITY_STATUS_CHOICES[0][0])
+    LICENCE_ACTIVITY_STATUS_CHOICES = (
+        ('current','Current'),
+        ('expired','Expired'),
+        ('cancelled','Cancelled'),
+        ('surrendered','Surrendered'),
+        ('suspended','Suspended')
+        )
+    licence_activity_status = models.CharField(max_length=40, choices=LICENCE_ACTIVITY_STATUS_CHOICES,default=LICENCE_ACTIVITY_STATUS_CHOICES[0][0])
     name = models.CharField(max_length = 100)
     activity = models.ManyToManyField(WildlifeLicenceActivity, blank= True,through='DefaultActivity',related_name='wildlifecompliance_activity')
     short_name = models.CharField(max_length=30, blank=True, null=True)
-    # licence_class= models.ManyToManyField(WildlifeLicenceClass)
-    # descriptor = models.ForeignKey(WildlifeLicenceDescriptor)
+    schema=JSONField(default=list)
     # default_condition = models.ManyToManyField(Condition, through='DefaultCondition',blank= True)
     # default_period = models.PositiveIntegerField('Default Licence Period (days)', blank = True, null = True)
     class Meta:
