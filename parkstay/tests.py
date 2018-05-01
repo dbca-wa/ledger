@@ -207,7 +207,7 @@ class ClientBookingTestCase(TransactionTestCase):
 
         booking = ps.Booking.objects.order_by('-created').first()
         self.assertIsNotNone(booking)
-        self.assertEqual(booking.booking_type, 1)
+        self.assertEqual(booking.booking_type, 0)
 
 
 class BookingRangeTestCase(TestCase):
