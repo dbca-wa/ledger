@@ -54,7 +54,6 @@ ANONYMOUS_USER = {
 }
 
 def create_fixtures():
-
     au, _ = Country.objects.get_or_create(iso_3166_1_a2=u'AU', iso_3166_1_a3=u'AUS', iso_3166_1_numeric=u'036', printable_name=u'Australia')
 
     pog = Group.objects.create(name='Parkstay Officers')
@@ -69,7 +68,6 @@ def create_fixtures():
     ar = ps.Region.objects.create(name='Region')
     ad = ps.District.objects.create(name='District', region=ar)
     ap = ps.Park.objects.create(name='Park', district=ad,entry_fee_required=True, oracle_code='pk1')
-
 
     c1 = ps.Campground.objects.create(name='Campground 1', park=ap, oracle_code='cg1', site_type=0, campground_type=0)
     c2 = ps.Campground.objects.create(name='Campground 2', park=ap, oracle_code='cg2', site_type=1, campground_type=0)
@@ -198,15 +196,18 @@ class ClientBookingTestCase(TransactionTestCase):
         }
         data_json = json.dumps(data)
         
-        # attempt to use the private booking API without authentcation
+        # attempt to use the admin booking API without authentcation
         response = self.client.post(self.booking_api_url, data_json, content_type='application/json')
         self.assertEqual(response.status_code, 403)
     
-        # login as an admin and try to create a booking
+        # login as an admin and try to create a proxy booking
         self.client.login(ADMIN_USER_EMAIL)
         response = self.client.post(self.booking_api_url, data_json, content_type='application/json')
         self.assertEqual(response.status_code, 200)
 
+        booking = ps.Booking.objects.order_by('-created').first()
+        self.assertIsNotNone(booking)
+        self.assertEqual(booking.booking_type, 1)
 
 
 class BookingRangeTestCase(TestCase):
