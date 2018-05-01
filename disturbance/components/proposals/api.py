@@ -540,12 +540,24 @@ class ProposalViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def create(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
         try:
             http_status = status.HTTP_200_OK
+            qs_proposal_type = ProposalType.objects.filter(name__icontains=request.data.get('application_name'))
             data = {
-                'schema': ProposalType.objects.first().schema,
+                'schema': qs_proposal_type.order_by('-version').first().schema,
                 'submitter': request.user.id,
-                'applicant': request.data.get('behalf_of')
+                'applicant': request.data.get('behalf_of'),
+                'region': request.data.get('region'),
+                'activity': request.data.get('activity'),
+                'tenure': request.data.get('tenure'),
+                'data': [{u'RegionActivitySection': 
+                    [{
+                        'Activity': request.data.get('activity'), 
+                        'Region': request.data.get('region'), 
+                        'Tenure': request.data.get('tenure')
+                    }]
+                }], 
             }
             serializer = SaveProposalSerializer(data=data)
             serializer.is_valid(raise_exception=True)

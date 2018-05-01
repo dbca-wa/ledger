@@ -36,6 +36,8 @@
         data:function () {
             return{
                 values:null
+                //[{'RegionActivitySection': [{'Activity': 'PublicUtilities 1','Region': ['Kimberley (Region) 1'], 'Tenure':'My Tenure 1'}]}]
+                //'RegionActivitySection': [{'Activity': 'PublicUtilities 1','Region': ['Kimberley (Region) 1'], 'Tenure':'My Tenure 1'}]
             }
         },
         methods:{

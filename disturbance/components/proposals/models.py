@@ -29,13 +29,23 @@ def update_proposal_doc_filename(instance, filename):
 def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
 
+
 class ProposalType(models.Model):
+    name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24)
+    description = models.CharField(max_length=256, blank=True, null=True)
+    #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=APPLICATION_NAME_CHOICES)
     schema = JSONField()
     activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
-    site = models.OneToOneField(Site, default='1')
+    #site = models.OneToOneField(Site, default='1')
+    replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
+
+    def __str__(self):
+        return '{} - v{}'.format(self.name, self.version)
 
     class Meta:
         app_label = 'disturbance'
+        unique_together = ('name', 'version')
 
 
 class TaggedProposalAssessorGroupRegions(TaggedItemBase):
@@ -213,14 +223,18 @@ class Proposal(RevisionedMixin):
         ('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
         ('accepted', 'Accepted'))
 
-    APPLICATION_TYPE_CHOICES = (
-        ('new_licence', 'New Licence'),
-        ('amendment', 'Amendment'),
-        ('renewal', 'Renewal'),
+    PROPOSAL_STATE_NEW_LICENCE = 'New Licence'
+    PROPOSAL_STATE_AMENDMENT = 'Amendment'
+    PROPOSAL_STATE_RENEWAL = 'Renewal'
+    PROPOSAL_STATE_CHOICES = (
+        (1, PROPOSAL_STATE_NEW_LICENCE),
+        (2, PROPOSAL_STATE_AMENDMENT),
+        (3, PROPOSAL_STATE_RENEWAL),
     )
 
-    proposal_type = models.CharField('Proposal Type', max_length=40, choices=APPLICATION_TYPE_CHOICES,
-                                        default=APPLICATION_TYPE_CHOICES[0][0])
+    #proposal_type = models.ForeignKey(ProposalType, on_delete=models.PROTECT)
+    proposal_state = models.PositiveSmallIntegerField('Proposal state', choices=PROPOSAL_STATE_CHOICES, 
+                                                    default=1)
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)

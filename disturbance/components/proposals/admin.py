@@ -7,7 +7,8 @@ from reversion.admin import VersionAdmin
 
 @admin.register(models.ProposalType)
 class ProposalTypeAdmin(admin.ModelAdmin):
-    exclude=("site",) 
+    list_display = ['name','description', 'version']
+    #exclude=("site",) 
 
 class ProposalDocumentInline(admin.TabularInline):
     model = models.ProposalDocument

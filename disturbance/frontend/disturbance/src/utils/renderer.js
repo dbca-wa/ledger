@@ -11,6 +11,7 @@ import DateField from '../components/forms/date-field.vue'
 import TextField from '../components/forms/text.vue'
 import TextArea from '../components/forms/text-area.vue'
 import Label from '../components/forms/label.vue'
+import TextInfo from '../components/forms/text_info.vue'
 import AssessorText from '../components/forms/readonly_text.vue'
 import HelpText from '../components/forms/help_text.vue'
 import CommentRadioCheckBox from '../components/forms/comment_icon_checkbox_radio.vue'
@@ -49,6 +50,11 @@ module.exports = {
             case 'text':
                 _elements.push(
                     <TextField type="text" name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility}/>
+                )
+                break;
+            case 'text_info':
+                _elements.push(
+                    <TextInfo label={c.label} name={c.name} value={val} />
                 )
                 break;
             case 'number':

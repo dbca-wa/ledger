@@ -11,6 +11,7 @@ from disturbance.components.organisations import api as org_api
 from disturbance.components.proposals import api as proposal_api
 from disturbance.components.approvals import api as approval_api
 from disturbance.components.compliances import api as compliances_api
+from disturbance.components.main import api as main_api
 
 from ledger.urls import urlpatterns as ledger_patterns
 
@@ -28,6 +29,7 @@ router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
 router.register(r'users',users_api.UserViewSet)
 router.register(r'amendment_request',proposal_api.AmendmentRequestViewSet)
 router.register(r'compliance_amendment_request',compliances_api.ComplianceAmendmentRequestViewSet)
+router.register(r'region', main_api.RegionViewSet)
 
 
 api_patterns = [

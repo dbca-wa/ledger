@@ -26,7 +26,13 @@
                   </div>
                 </div>
               </div>
-           </div>
+            </div>
+
+            <!--
+            <label for="region-label">Region(*)</label>
+            <input type="text" name="region-text"class="form-control" disabled="true">
+            -->
+
             <Proposal v-if="proposal" :proposal="proposal">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
@@ -157,6 +163,7 @@ export default {
         },(error) => {
         });
     }
+
   },
 
   mounted: function() {

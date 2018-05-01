@@ -56,44 +56,60 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-sm-12">
-                                <div class="form-group">
-                                    <select v-model="selected_application_type">
-                                        <option v-for="application_type in application_types" :value="application_type.value">
-                                            {{ application_type.text }}
-                                        </option>
-                                    </select>
-                                    <label for="" class="control-label" >Select Proposal Type</label>
+
+                            <div>
+                                <label for="" class="control-label" >Proposal Type</label>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <select v-model="selected_application_type">
+											<option value="" selected>Select proposal type</option>
+                                            <option v-for="application_type in application_types" :value="application_type.value">
+                                                {{ application_type.text }}
+                                            </option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-sm-12">
-                                <div class="form-group">
-                                    <select v-model="selected_region">
-                                        <option v-for="region in regions" :value="region.value">
-                                            {{ region.text }}
-                                        </option>
-                                    </select>
-                                    <label for="" class="control-label" >Select region</label>
+
+                            <div>
+                                <label for="" class="control-label" >Region</label>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <select v-model="selected_region">
+											<option value="" selected>Select region</option>
+                                            <option v-for="region in regions" :value="region.value">
+                                                {{ region.text }}
+                                            </option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-sm-12">
-                                <div class="form-group">
-                                    <select v-model="selected_activity">
-                                        <option v-for="activity in activities" :value="activity.value">
-                                            {{ activity.text }}
-                                        </option>
-                                    </select>
-                                    <label for="" class="control-label" >Select activity</label>
+
+                            <div>
+                                <label for="" class="control-label" >Activity</label>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <select v-model="selected_activity">
+											<option value="" selected>Select activity</option>
+                                            <option v-for="activity in activities" :value="activity.value">
+                                                {{ activity.text }}
+                                            </option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-sm-12">
-                                <div class="form-group">
-                                    <select v-model="selected_tenure">
-                                        <option v-for="tenure in tenures" :value="tenure.value">
-                                            {{ tenure.text }}
-                                        </option>
-                                    </select>
-                                    <label for="" class="control-label" >Select tenure</label>
+
+                            <div>
+                                <label for="" class="control-label" >Tenure</label>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <select v-model="selected_tenure">
+											<option value="" selected>Select tenure</option>
+                                            <option v-for="tenure in tenures" :value="tenure.value">
+                                                {{ tenure.text }}
+                                            </option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -134,26 +150,21 @@ export default {
         selected_activity: '',
         selected_tenure: '',
         application_types: [
-            { text: '', value: '', selected:'true', disabled:'disabled' },
             { text: 'Disturbance', value: 'Disturbance' },
             { text: 'Apiary', value: 'Apiary' }
         ],
         regions: [
-            { text: '', value: ''},
             { text: 'Kimberley (Region)', value: 'Kimberley (Region)' },
             { text: 'East Kimberley (District)', value: 'East Kimberley (District)' },
             { text: 'West Kimberley (District)', value: 'West Kimberley (District)' },
             { text: 'Pilbara (Region)', value: 'Pilbara (Region)' }
         ],
         activities: [
-            { text: '', value: ''},
-            { text: 'Public Utilities', value: 'PublicUtilities' },
             { text: 'Native Forest Silviculture and Timber Harvesting', value: 'NativeForestSilvicultureAndTimberHarvesting' },
             { text: 'Plantations', value: 'Plantations' },
             { text: 'Other Wood', value: 'OtherWood' }
         ],
         tenures: [
-            { text: '', value: ''},
             { text: 'National park', value: 'National park' },
             { text: 'Nature reserve (class a19)', value: 'Nature reserve (class a19)' },
             { text: 'Conservation park', value: 'Conservation park' },
@@ -218,36 +229,33 @@ export default {
 			console.log(err);
 		});
     },
-	/*
-    createApiary:function () {
-        let vm = this;
-		vm.$http.post('/api/apiary.json',{
-            behalf_of: vm.behalf_of,
-            region: vm.region,
-            activity: vm.activity,
-            tenure: vm.tenure
-		}).then(res => {
-			vm.apiary = res.body;
-			vm.$router.push({
-			    name:"draft_apiary",
-				params:{apiary_id:vm.apiary.id}
-			});
-		},
-		err => {
-			console.log(err);
-		});
-    },
-	*/
     isDisabled: function() {
         let vm = this;
         if (vm.behalf_of == '' || vm.selected_application_type == '' || vm.selected_region == '' || vm.selected_activity == '' || vm.selected_tenure == ''){
 			return true;
         }
 		return false;
-    }
+    },
+	fetchRegions: function(){
+		let vm = this;
+		//vm.$http.get('/api/region/').then((response) => {
+		vm.$http.get('/api/region/').then(response => response.json())
+			.then(json => {
+			//next(vm => {
+			//	this.api_regions = response.body;
+			//	console.log('api_regions ' + response.body);
+			//})
+				this.api_regions = response.body;
+				console.log('api_regions ' + response.body);
+		},(error) => {
+			console.log(error);
+		})
+	}
+
   },
   mounted: function() {
     let vm = this;
+	vm.fetchRegions();
     vm.form = document.forms.new_proposal;
   },
   beforeRouteEnter: function(to, from, next) {
@@ -266,4 +274,8 @@ export default {
 </script>
 
 <style lang="css">
+input[type=text], select{
+    width:40%;
+    box-sizing:border-box;
+}
 </style>
