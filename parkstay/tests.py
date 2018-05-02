@@ -15,6 +15,7 @@ from parkstay.exceptions import BookingRangeWithinException
 
 import mock
 import json
+import itertools
 
 import datetime
 from decimal import Decimal as D
@@ -109,16 +110,20 @@ class ClientBookingTestCase(TransactionTestCase):
         base_date = datetime.date.today()
         ext_date = lambda x: base_date+datetime.timedelta(days=x)
 
+        campsite = ps.Campsite.objects.get(name='Campsite 1a')
+
         # create a temporary booking
-        response = self.client.post(self.create_booking_url, {
+        temporary = {
             'arrival': ext_date(1).strftime('%Y/%m/%d'),
             'departure': ext_date(10).strftime('%Y/%m/%d'),
-            'campsite': ps.Campsite.objects.get(name='Campsite 1a').id,
+            'campsite': campsite.id,
             'num_adult': 1,
             'num_child': 2,
             'num_concession': 3,
             'num_infant': 4
-        })
+        }
+
+        response = self.client.post(self.create_booking_url, temporary)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'success')
 
@@ -166,15 +171,24 @@ class ClientBookingTestCase(TransactionTestCase):
             'action': 'place_order'
         }, follow=True)
 
+        # check booking exists
         booking = ps.Booking.objects.order_by('-created').first()
         self.assertIsNotNone(booking)
+        # check booking is finalized
         self.assertEqual(booking.booking_type, 1)
+        # check campsite blocks are reserved
+        self.assertEqual(
+            set(booking.campsites.values_list('campsite', 'date')),
+            set([(campsite.id, ext_date(i)) for i in range(1, 10)])
+        )
 
 
     @mock.patch('ledger.checkout.views.PaymentDetailsView.handle_last_check')
-    def test_booking_internal_class(self, handle_last_check):
+    def test_booking_internal_sites(self, handle_last_check):
         base_date = datetime.date.today()
         ext_date = lambda x: base_date+datetime.timedelta(days=x)
+
+        campsite_qs = ps.Campsite.objects.filter(campground__name='Campground 1')
 
         data = {
             'arrival': ext_date(1).strftime('%Y-%m-%d'),
@@ -185,7 +199,7 @@ class ClientBookingTestCase(TransactionTestCase):
                 'child': 3,
                 'infant': 4,
             },
-            'campsites': list(ps.Campsite.objects.filter(campground__name='Campground 1').values_list('id', flat=True)),
+            'campsites': list(campsite_qs.values_list('id', flat=True)),
             'customer': ANONYMOUS_USER,
             'regos': [
                 {'type': 'vehicle', 'rego': 'REGO1', 'entry_fee': True},
@@ -205,9 +219,16 @@ class ClientBookingTestCase(TransactionTestCase):
         response = self.client.post(self.booking_api_url, data_json, content_type='application/json')
         self.assertEqual(response.status_code, 200)
 
+        # check booking exists
         booking = ps.Booking.objects.order_by('-created').first()
         self.assertIsNotNone(booking)
+        # check booking is finalized
         self.assertEqual(booking.booking_type, 0)
+        # check campsite blocks are reserved
+        self.assertEqual(
+            set(booking.campsites.values_list('campsite', 'date')),
+            set(itertools.chain(*[[(c.id, ext_date(i)) for i in range(1, 10)] for c in campsite_qs])),
+        )
 
 
 class BookingRangeTestCase(TestCase):
