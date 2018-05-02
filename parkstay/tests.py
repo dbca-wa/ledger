@@ -106,7 +106,7 @@ class ClientBookingTestCase(TransactionTestCase):
 
 
     @mock.patch('ledger.checkout.views.PaymentDetailsView.handle_last_check')
-    def test_booking_external_anonymous(self, handle_last_check):
+    def test_booking_anonymous_sites(self, handle_last_check):
         base_date = datetime.date.today()
         ext_date = lambda x: base_date+datetime.timedelta(days=x)
 
@@ -123,6 +123,7 @@ class ClientBookingTestCase(TransactionTestCase):
             'num_infant': 4
         }
 
+        # start a temporary booking
         response = self.client.post(self.create_booking_url, temporary)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'success')
@@ -181,6 +182,76 @@ class ClientBookingTestCase(TransactionTestCase):
             set(booking.campsites.values_list('campsite', 'date')),
             set([(campsite.id, ext_date(i)) for i in range(1, 10)])
         )
+
+
+    @mock.patch('ledger.checkout.views.PaymentDetailsView.handle_last_check')
+    def test_booking_anonymous_class(self, handle_last_check):
+        base_date = datetime.date.today()
+        ext_date = lambda x: base_date+datetime.timedelta(days=x)
+
+        campground = ps.Campground.objects.get(name='Campground 2')
+        campsite_class = ps.CampsiteClass.objects.get(name='Class 2a')
+        # create a temporary booking
+        temporary = {
+            'arrival': ext_date(1).strftime('%Y/%m/%d'),
+            'departure': ext_date(10).strftime('%Y/%m/%d'),
+            'campground': campground.id,
+            'campsite_class': campsite_class.id,
+            'num_adult': 1,
+            'num_child': 2,
+            'num_concession': 3,
+            'num_infant': 4
+        }
+
+        # start a temporary booking
+        response = self.client.post(self.create_booking_url, temporary)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'success')
+
+        # submit details, promote to a legitimate booking
+        submission = {
+            'num_adult': 1,
+            'num_child': 2,
+            'num_concession': 3,
+            'num_infant': 4,
+            'form-0-entry_fee': 'on',
+            'form-0-vehicle_rego': 'REGO1',
+            'form-0-vehicle_type': 0,
+            'form-1-entry_fee': 'off',
+            'form-1-vehicle_rego': 'REGO2',
+            'form-1-vehicle_type': 1,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 8,
+            'form-MIN_NUM_FORMS': 0,
+            'form-TOTAL_FORMS': 2,
+        }
+        submission.update(ANONYMOUS_USER)
+        submission['confirm_email'] = submission['email']
+        response = self.client.post(self.booking_url, submission, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[-1][0], self.payment_details_url)
+
+        # attempt a BPAY payment
+        response = self.client.post(self.preview_url, {
+            'payment_method': 'bpay'
+        })
+        self.assertEqual(response.status_code, 200)
+
+        # check that preview page works
+        response = self.client.get(self.preview_url)
+        self.assertEqual(response.status_code, 200)
+
+        # submit the order
+        response = self.client.post(self.preview_url, {
+            'action': 'place_order'
+        }, follow=True)
+
+        # check booking exists
+        booking = ps.Booking.objects.order_by('-created').first()
+        self.assertIsNotNone(booking)
+        # check booking is finalized
+        self.assertEqual(booking.booking_type, 1)
 
 
     @mock.patch('ledger.checkout.views.PaymentDetailsView.handle_last_check')
