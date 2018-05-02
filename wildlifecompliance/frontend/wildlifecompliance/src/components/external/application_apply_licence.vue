@@ -103,6 +103,15 @@ export default {
              }
             ]
         },
+        licence_class_selected:{
+            id:null,
+            activity_type:[
+                {
+                    id:null,
+                    activity:[]
+                }
+            ]
+        },
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
@@ -132,7 +141,6 @@ export default {
   methods: {
     submit: function() {
         let vm = this;
-
         swal({
             title: "Create Application",
             text: "Are you sure you want to create a application ",
@@ -150,6 +158,7 @@ export default {
         for(var i=0,_len=vm.licence_classes.length;i<_len;i++){
             if(i===index){
                 vm.licence_classes[i].checked = true;
+                // vm.licence_class_selected.id=vm.licence_classes[i].id
             }else{
                 for(var activity_type_index=0, len1=vm.licence_classes[i].activity_type.length; activity_type_index<len1; activity_type_index++){
                         if (vm.licence_classes[i].activity_type[activity_type_index].selected){
@@ -163,6 +172,7 @@ export default {
             }
 
         }
+        console.log("This is the value to pass on",vm.licence_class_selected)
 
     },
     handleActivityTypeCheckboxChange:function(index,index1){
@@ -177,18 +187,18 @@ export default {
     createApplication:function () {
         let vm = this;
         let category = JSON.stringify(vm.licence_classes)
-        // console.log("from areate application",category)
+        console.log("from areate application",category)
         vm.$http.post('/api/application.json',{
             behalf_of: vm.behalf_of,
-            licence_activity_type:vm.selected_activity_type,
-            licence_activity:vm.selected_activity,
-            licence_category:vm.licence_category
+            licence_class:JSON.stringify(vm.licence_classes)
+            // licence_activity:vm.selected_activity,
+            // licence_category:vm.licence_category
         }).then(res => {
-              vm.application = res.body;
-              vm.$router.push({
-                  name:"draft_application",
-                  params:{application_id:vm.application.id}
-              });
+              // vm.application = res.body;
+              // vm.$router.push({
+              //     name:"draft_application",
+              //     params:{application_id:vm.application.id}
+              // });
           },
           err => {
             console.log(err);

@@ -29,7 +29,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_schema
+from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_schema,get_licence_data
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.applications.models import (
     ApplicationType,
@@ -429,21 +429,27 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             
             app_data = request.data.copy()
             # print(app_data)
-            activities=app_data.pop('licence_activity')
-            print(activities)
-            activity_schema=get_activity_schema(activities)
-            data = {
-                'schema':activity_schema,
-                'submitter': request.user.id,
-                # 'licence_category':request.data.get('licence_category'),
-                'licence_activity_type':app_data.pop('licence_activity_type'),
-                'applicant': request.data.get('behalf_of')
-            }
+            # print(request.data.get('behalf_of'))
+            licence_class_data=app_data.pop('licence_class')
+            print(type(licence_class_data))
+            licence_data=get_licence_data(licence_class_data)
+            # print(type(licence_data))
+            # print(licence_class_data)
+            # activities=app_data.pop('licence_activity')
+            # print(activities)
+            # activity_schema=get_activity_schema(activities)
+            # data = {
+            #     'schema':activity_schema,
+            #     'submitter': request.user.id,
+            #     # 'licence_category':request.data.get('licence_category'),
+            #     'licence_activity_type':app_data.pop('licence_activity_type'),
+            #     'applicant': request.data.get('behalf_of')
+            # }
 
-            # print(licence_activity_type)
-            serializer = SaveApplicationSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+            # # print(licence_activity_type)
+            # serializer = SaveApplicationSerializer(data=data)
+            # serializer.is_valid(raise_exception=True)
+            # serializer.save()
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())
