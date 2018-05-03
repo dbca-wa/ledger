@@ -136,7 +136,6 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             user_obj = EmailUser.objects.get(
                 email=serializer.validated_data['email']
             )
-
             instance.accept_user(user_obj, request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data);
@@ -159,7 +158,6 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             user_obj = EmailUser.objects.get(
                 email=serializer.validated_data['email']
             )
-
             instance.accept_declined_user(user_obj, request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data);
