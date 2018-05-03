@@ -124,7 +124,7 @@
                                                 <td class="site"> {{c.name}} <span v-if="c.class"> - {{ classes[c.class] }}</span></td>
                                                 <td class="book"> {{ c.campsites.length }} available </td>
                                                 <td class="numBook">
-                                                    <input type="number" name="campsite-type" class="form-control" v-model="c.selected_campsite_class" @change="updatePrices()">
+                                                    <input type="number" min="1" v-bind:max="c.campsites.length" name="campsite-type" class="form-control" v-model="c.selected_campsite_class" @change="updatePrices()">
                                                 </td>
                                             </tr></template>
                                         </tbody>
