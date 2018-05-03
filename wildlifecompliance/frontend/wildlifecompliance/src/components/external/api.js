@@ -4,5 +4,5 @@ module.exports = {
     countries: 'https://restcountries.eu/rest/v1/?fullText=true',
     organisations: '/api/organisations.json',
     organisation_contacts: '/api/organisation_contacts.json',
-    licences_category:'/api/licences_category'
+    licences_class:'/api/licences_class'
 }
