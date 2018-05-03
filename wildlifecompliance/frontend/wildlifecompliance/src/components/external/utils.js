@@ -45,9 +45,9 @@ export default {
             });
         });
     },
-    fetchLicenceCategories: function(){
+    fetchLicenceClasses: function(){
         return new Promise ((resolve,reject) => {
-            Vue.http.get(api.licences_category).then((response) => {
+            Vue.http.get(api.licences_class).then((response) => {
                 resolve(response.body);
             },
             (error) => {

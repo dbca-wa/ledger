@@ -352,3 +352,18 @@ def get_activity_schema(activities):
 
     return schema_activity
 
+def get_licence_data(licence_class):
+    licence_class_data={}
+    # print(type(licence_class))
+    for item in licence_class:
+        # print(item['id'])
+        if 'id' in item:
+
+            print(item['id'])
+            # if item['checked']:
+            #     licence_class_data[id]=id
+
+    return licence_class
+
+
+
