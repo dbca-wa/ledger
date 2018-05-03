@@ -1,52 +1,10 @@
 <template>
-<div class="container" id="internalApproval">
+<div class="container" id="externalApproval">
     <div class="row">
         <h3>Approval {{ approval.reference }}</h3>
-        <div class="col-md-3">
-            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
-            <div class="row">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                       Submission 
-                    </div>
-                    <div class="panel-body panel-collapse">
-                        <div class="row">
-                            
-                            <div class="col-sm-12 top-buffer-s">
-                                <strong>Issued on</strong><br/>
-                                {{ approval.issued_date | formatDate}}
-                            </div>
-                            <div class="col-sm-12 top-buffer-s">
-                                <table class="table small-table">
-                                    <tr>
-                                        <th>Lodgement</th>
-                                        <th>Date</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        Workflow 
-                    </div>
-                    <div class="panel-body panel-collapse">
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <strong>Status</strong><br/>
-                                {{ approval.status }}
-                            </div>                        
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-1"></div>
-        <div class="col-md-8">
+      
+        
+        <div class="col-sm-12">
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -205,9 +163,7 @@ export default {
         },
         
         // Filters
-        logs_url: helpers.add_endpoint_json(api_endpoints.approvals,vm.$route.params.approval_id+'/action_log'),
-        comms_url: helpers.add_endpoint_json(api_endpoints.approvals,vm.$route.params.approval_id+'/comms_log'),  
-        comms_add_url: helpers.add_endpoint_json(api_endpoints.approvals,vm.$route.params.approval_id+'/add_comms_log'),
+        
     }
   },
   watch: {},

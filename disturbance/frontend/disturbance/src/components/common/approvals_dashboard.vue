@@ -139,10 +139,49 @@ export default {
                 columns: [
                     {
                         data: "id",
-                        mRender:function(data,type,full){
-                            return full.reference;
-                        }
+                        /*mRender:function(data,type,full){
+                            //return full.reference;
+                            return '<span data-toggle="tooltip" title="' + data + '">' + data + '</span>';
+                        }*/
+                        'render':function(data,type,full){
+                        if(!vm.is_external){
+                            var result = '';
+                            var popTemplate = '';
+                            var message = '';
+                            let tick = '';
+                            tick = "<i class='fa fa-exclamation-triangle' style='color:red'></i>"
+                            result = '<span>' + full.reference + '</span>';
+                            if(full.can_reissue){
+                                if(!full.can_action){
+                                    if(full.set_to_cancel){
+                                        message = 'This Approval is marked for cancellation to future date';
+                                    }
+                                    if(full.set_to_suspend){
+                                        message = 'This Approval is marked for suspension to future date';
+                                    }
+                                    if(full.set_to_surrender){
+                                        message = 'This Approval is marked for surrendering to future date';
+                                    }
+                                    popTemplate = _.template('<a href="#" ' +
+                                            'role="button" ' +
+                                            'data-toggle="popover" ' +
+                                            'data-trigger="hover" ' +
+                                            'data-placement="top auto"' +
+                                            'data-html="true" ' +
+                                            'data-content="<%= text %>" ' +
+                                            '><%= tick %></a>');
+                                    result += popTemplate({
+                                        text: message,
+                                        tick: tick
+                                    });   
 
+                                }
+                            }                          
+                            return result;
+                        }
+                        else { return full.reference }
+                        },
+                        'createdCell': helpers.dtPopoverCellFn
                     },
                     {
                         data: "region",
@@ -183,32 +222,36 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if(vm.check_assessor(full) && full.can_reissue){
-                                    
-                                    links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-cancel-approval='${full.id}'>Cancel</a><br/>`;
-                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
-                                    if(full.status== 'Suspended')
+                                if(vm.check_assessor(full)){
+                                    if(full.can_reissue){
+                                        links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
+                                    }
+                                    if(full.can_reissue && full.can_action){
+                                        links +=  `<a href='#${full.id}' data-cancel-approval='${full.id}'>Cancel</a><br/>`;
+                                        links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
+                                    }
+                                    if(full.status == 'Current' && full.can_action){
+                                        links +=  `<a href='#${full.id}' data-suspend-approval='${full.id}'>Suspend</a><br/>`;
+                                    }
+                                    if(full.status== 'Suspended' && full.can_action)
                                     {
                                         links +=  `<a href='#${full.id}' data-reinstate-approval='${full.id}'>Reinstate</a><br/>`;
                                     }
-                                    else{
-                                        links +=  `<a href='#${full.id}' data-suspend-approval='${full.id}'>Suspend</a><br/>`;
-                                    }
-
+                                    links +=  `<a href='/internal/approval/${full.id}'>View</a><br/>`;
                                 }
                                 else{
-                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                    links +=  `<a href='/internal/approval/${full.id}'>View</a><br/>`;
                                 }
                             }
                             else{
                                 if (full.can_reissue) {
-                                    links +=  `<a href='/external/proposal/${full.current_proposal}'>View</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
+                                    links +=  `<a href='/external/approval/${full.id}'>View</a><br/>`;
+                                    if(full.can_action){
+                                        links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
+                                    }                                    
                                 }
                                 else {
-                                    links +=  `<a href='/external/proposal/${full.current_proposal}'>View</a><br/>`;
+                                    links +=  `<a href='/external/approval/${full.id}'>View</a><br/>`;
                                 }
                             }
                             return links;
@@ -326,6 +369,11 @@ export default {
                     vm.filterProposalLodgedFrom = "";
                 }
             });
+
+            $(vm.$refs.proposal_datatable.vmDataTable).on('draw.dt', function () {
+                    $('[data-toggle="tooltip"]').tooltip();
+                });
+
             // End Proposal Date Filters
             // Internal Reissue listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reissue-approval]', function(e) {

@@ -33,7 +33,7 @@ class ApprovalSurrenderNotificationEmail(TemplateEmailBase):
     txt_template = 'disturbance/emails/approval_surrender_notification.txt'
 
 class ApprovalReinstateNotificationEmail(TemplateEmailBase):
-    subject = 'Your Approval has been reinstate.'
+    subject = 'Your Approval has been reinstated.'
     html_template = 'disturbance/emails/approval_reinstate_notification.html'
     txt_template = 'disturbance/emails/approval_reinstate_notification.txt'
 
@@ -53,7 +53,7 @@ def send_approval_expire_email_notification(approval):
     except:
         EmailUser.objects.create(email=sender, password='')
         sender_user = EmailUser.objects.get(email__icontains=sender)
-    _log_proposal_email(msg, proposal, sender=sender_user)
+    _log_approval_email(msg, approval, sender=sender_user)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
 
 def send_approval_cancel_email_notification(approval):
@@ -72,7 +72,7 @@ def send_approval_cancel_email_notification(approval):
         sender_user = EmailUser.objects.get(email__icontains=sender)    
     msg = email.send(proposal.submitter.email, context=context)
     sender = settings.DEFAULT_FROM_EMAIL    
-    _log_proposal_email(msg, proposal, sender=sender_user)
+    _log_approval_email(msg, approval, sender=sender_user)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
 
 
@@ -94,7 +94,7 @@ def send_approval_suspend_email_notification(approval):
         sender_user = EmailUser.objects.get(email__icontains=sender)   
     msg = email.send(proposal.submitter.email, context=context)
     sender = settings.DEFAULT_FROM_EMAIL    
-    _log_proposal_email(msg, proposal, sender=sender_user)
+    _log_approval_email(msg, approval, sender=sender_user)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
 
 
@@ -115,7 +115,7 @@ def send_approval_surrender_email_notification(approval):
         sender_user = EmailUser.objects.get(email__icontains=sender)   
     msg = email.send(proposal.submitter.email, context=context)
     sender = settings.DEFAULT_FROM_EMAIL    
-    _log_proposal_email(msg, proposal, sender=sender_user)
+    _log_approval_email(msg, approval, sender=sender_user)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
 
 
@@ -129,13 +129,13 @@ def send_approval_reinstate_email_notification(approval, request):
     }    
     msg = email.send(proposal.submitter.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL    
-    _log_proposal_email(msg, proposal, sender=sender)
+    _log_approval_email(msg, approval, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
 
 
 
-def _log_proposal_email(email_message, proposal, sender=None):
-    from disturbance.components.proposals.models import ProposalLogEntry
+def _log_approval_email(email_message, approval, sender=None):
+    from disturbance.components.approvals.models import ApprovalLogEntry
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
         # TODO this will log the plain text body, should we log the html instead
         text = email_message.body
@@ -157,18 +157,18 @@ def _log_proposal_email(email_message, proposal, sender=None):
     else:
         text = smart_text(email_message)
         subject = ''
-        to = proposal.submitter.email
+        to = approval.current_proposal.submitter.email
         fromm = smart_text(sender) if sender else SYSTEM_NAME
         all_ccs = ''
 
-    customer = proposal.submitter
+    customer = approval.current_proposal.submitter
 
     staff = sender
 
     kwargs = {
         'subject': subject,
         'text': text,
-        'proposal': proposal,
+        'approval': approval,
         'customer': customer,
         'staff': staff,
         'to': to,
@@ -176,7 +176,7 @@ def _log_proposal_email(email_message, proposal, sender=None):
         'cc': all_ccs
     }
 
-    email_entry = ProposalLogEntry.objects.create(**kwargs)
+    email_entry = ApprovalLogEntry.objects.create(**kwargs)
 
     return email_entry
 

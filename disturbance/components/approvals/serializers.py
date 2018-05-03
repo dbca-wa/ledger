@@ -1,11 +1,14 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from disturbance.components.approvals.models import (
-    Approval
+    Approval,
+    ApprovalLogEntry,
+    ApprovalUserAction
 )
 from disturbance.components.organisations.models import (
                                 Organisation
                             )
+from disturbance.components.main.serializers import CommunicationLogEntrySerializer 
 from rest_framework import serializers
 
 
@@ -17,6 +20,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
 
 class ApprovalSerializer(serializers.ModelSerializer):
     applicant = serializers.CharField(source='applicant.name')
+    applicant_id = serializers.ReadOnlyField(source='applicant.id')
     licence_document = serializers.CharField(source='licence_document._file.url')
     status = serializers.CharField(source='get_status_display')
     allowed_assessors = EmailUserSerializer(many=True)
@@ -46,7 +50,12 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'can_reissue',
             'allowed_assessors',
             'cancellation_date',
-            'cancellation_details'
+            'cancellation_details',
+            'applicant_id',
+            'can_action',
+            'set_to_cancel',
+            'set_to_surrender',
+            'set_to_suspend'
         )
 
 class ApprovalCancellationSerializer(serializers.Serializer):
@@ -62,3 +71,20 @@ class ApprovalSurrenderSerializer(serializers.Serializer):
     surrender_date = serializers.DateField(input_formats=['%d/%m/%Y'])    
     surrender_details = serializers.CharField()
     
+class ApprovalUserActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+    class Meta:
+        model = ApprovalUserAction
+        fields = '__all__'
+
+class ApprovalLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = ApprovalLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
