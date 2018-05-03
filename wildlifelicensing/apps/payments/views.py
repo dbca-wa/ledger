@@ -54,11 +54,10 @@ class CheckoutApplicationView(LoginRequiredMixin, RedirectView):
         checkout_params = {
             'system': PAYMENT_SYSTEM_ID,
             'basket_owner': user,
-            'associateInvoiceWithToken': True,
-            'checkoutWithToken': True,
+            'associate_invoice_with_token': True,
             'fallback_url': error_url,
             'return_url': success_url,
-            'forceRedirect': True,
+            'force_redirect': True,
             'template': 'wl/payment_information.html',
             'proxy': is_officer(request.user),
         }

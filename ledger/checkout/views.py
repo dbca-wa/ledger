@@ -194,7 +194,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
     def do_place_order(self, request):
         # Helper method to check that the hidden forms wasn't tinkered
         # with.
-        if not self.checkout_session.checkoutWithToken():
+        if not self.checkout_session.checkout_token():
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
                 messages.error(request, "Invalid submission")
@@ -203,7 +203,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # Attempt to submit the order, passing the bankcard object so that it
         # gets passed back to the 'handle_payment' method below.
         submission = self.build_submission()
-        if not self.checkout_session.checkoutWithToken():
+        if not self.checkout_session.checkout_token():
             submission['payment_kwargs']['bankcard'] = bankcard_form.bankcard
         return self.submit(**submission)
 
@@ -282,9 +282,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         # Get the payment action for bpoint
                         card_method = self.checkout_session.card_method()
                         # Check if the user is paying using a stored card
-                        if self.checkout_session.checkoutWithToken():
+                        if self.checkout_session.checkout_token():
                             try:
-                                token = BpointToken.objects.get(id=self.checkout_session.checkoutWithToken())
+                                token = BpointToken.objects.get(id=self.checkout_session.checkout_token())
                             except BpointToken.DoesNotExist:
                                 raise ValueError('This stored card does not exist.')
                             if self.checkout_session.invoice_association():

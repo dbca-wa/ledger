@@ -56,11 +56,6 @@ def create_basket_session(request, parameters):
 def create_checkout_session(request, parameters):
     serializer = serializers.CheckoutSerializer(data=parameters)
     serializer.is_valid(raise_exception=True)
-    # fields = [
-    #     'card_method', 'basket_owner', 'template', 'fallback_url', 'return_url', 
-    #     'return_preload_url', 'associateInvoiceWithToken', 'forceRedirect', 'sendEmail', 'proxy',
-    #     'checkoutWithToken', 'bpay_format', 'icrn_format', 'invoice_text', 'check_url'
-    # ]
 
     session_data = CheckoutSessionData(request) 
 
@@ -79,11 +74,11 @@ def create_checkout_session(request, parameters):
     # fallback url?
     session_data.return_to(serializer.validated_data['return_url'])
     session_data.return_preload_to(serializer.validated_data['return_preload_url'])
-    session_data.associate_invoice(serializer.validated_data['associateInvoiceWithToken'])
-    session_data.redirect_forcefully(serializer.validated_data['forceRedirect'])
-    session_data.return_email(serializer.validated_data['sendEmail'])
+    session_data.associate_invoice(serializer.validated_data['associate_invoice_with_token'])
+    session_data.redirect_forcefully(serializer.validated_data['force_redirect'])
+    session_data.return_email(serializer.validated_data['send_email'])
     session_data.is_proxy(serializer.validated_data['proxy'])
-    session_data.checkout_using_token(serializer.validated_data['checkoutWithToken'])
+    session_data.checkout_using_token(serializer.validated_data['checkout_token'])
 
     session_data.bpay_using(serializer.validated_data['bpay_format'])
     session_data.icrn_using(serializer.validated_data['icrn_format'])
@@ -183,7 +178,7 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def checkout_using_token(self, token):
         self._set('ledger','checkout_token',token)
 
-    def checkoutWithToken(self):
+    def checkout_token(self):
         return self._get('ledger','checkout_token')
 
     # Associate token to invoice

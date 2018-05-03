@@ -858,7 +858,7 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         'fallback_url': request.build_absolute_uri('/'),
         'return_url': request.build_absolute_uri(reverse('public_booking_success')),
         'return_preload_url': request.build_absolute_uri(reverse('public_booking_success')),
-        'forceRedirect': True,
+        'force_redirect': True,
         'proxy': True if internal else False,
         'invoice_text': invoice_text,
     }
