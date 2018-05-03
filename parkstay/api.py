@@ -1738,7 +1738,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             if userCreated:
                 customer.delete()
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e[0]))
+            raise serializers.ValidationError(str(e))
 
     def update(self, request, *args, **kwargs):
         try:

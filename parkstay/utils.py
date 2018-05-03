@@ -9,10 +9,12 @@ from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
 from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange,CampgroundStayHistory, CampsiteRate, ParkEntryRate, BookingVehicleRego)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 from parkstay.emails import send_booking_invoice,send_booking_confirmation
@@ -472,7 +474,7 @@ def get_campsites_current_rate(request, campsites, start_date, end_date):
     return res
 
 def get_park_entry_rate(request,start_date):
-    res = []
+    res = {}
     if start_date:
         start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
         price_history = ParkEntryRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
@@ -843,53 +845,43 @@ def create_or_update_booking(request,booking_details,updating=False,override_che
     return booking
 
 def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
-    JSON_REQUEST_HEADER_PARAMS = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Referer": request.META.get('HTTP_REFERER'),
-        "X-CSRFToken": request.COOKIES.get('csrftoken')
+    basket_params = {
+        'products': lines,
+        'vouchers': vouchers,
+        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'custom_basket': True,
     }
-    try:
-        parameters = {
-            'system': settings.PS_PAYMENT_SYSTEM_ID,
-            'fallback_url': request.build_absolute_uri('/'),
-            'return_url': request.build_absolute_uri(reverse('public_booking_success')),
-            'forceRedirect': True,
-            'proxy': True if internal else False,
-            "products": lines,
-            "custom_basket": True,
-            "invoice_text": invoice_text,
-            "vouchers": vouchers,
-        }
-        if not internal:
-            parameters["check_url"] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
-            parameters["return_preload_url"] = request.build_absolute_uri(reverse('public_booking_success'))
-        if internal or request.user.is_anonymous():
-            parameters['basket_owner'] = booking.customer.id
+    basket, basket_hash = create_basket_session(request, basket_params)
 
-        url = request.build_absolute_uri(
-            reverse('payments:ledger-initial-checkout')
+    checkout_params = {
+        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'fallback_url': request.build_absolute_uri('/'),
+        'return_url': request.build_absolute_uri(reverse('public_booking_success')),
+        'return_preload_url': request.build_absolute_uri(reverse('public_booking_success')),
+        'forceRedirect': True,
+        'proxy': True if internal else False,
+        'invoice_text': invoice_text,
+    }
+    if not internal:
+        checkout_params['check_url'] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
+    if internal or request.user.is_anonymous():
+        checkout_params['basket_owner'] = booking.customer.id
+    create_checkout_session(request, checkout_params)
+
+    if internal:
+        response = place_order_submission(request)
+    else:
+        response = HttpResponseRedirect(reverse('checkout:index'))
+        # inject the current basket into the redirect response cookies
+        # or else, anonymous users will be directionless
+        response.set_cookie(
+            settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
+            max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
+            secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
         )
-        COOKIES = request.COOKIES
-        if internal and 'ps_booking' in request.session:
-            COOKIES['ps_booking_internal'] = str(request.session['ps_booking'])
-        response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=COOKIES,
-                                 data=json.dumps(parameters))
-        response.raise_for_status()
+    
+    return response
 
-        return response
-
-
-    except requests.exceptions.HTTPError as e:
-        if 400 <= e.response.status_code < 500:
-            http_error_msg = '{} Client Error: {} for url: {} > {}'.format(e.response.status_code, e.response.reason, e.response.url,e.response._content)
-
-        elif 500 <= e.response.status_code < 600:
-            http_error_msg = '{} Server Error: {} for url: {}'.format(e.response.status_code, e.response.reason, e.response.url)
-        e.message = http_error_msg
-
-        e.args = (http_error_msg,)
-        raise
 
 def internal_create_booking_invoice(booking, reference):
     try:
@@ -906,7 +898,6 @@ def internal_booking(request,booking_details,internal=True,updating=False):
     try:
         booking = create_or_update_booking(request, booking_details, updating, override_checks=internal)
         with transaction.atomic():
-            #import pdb; pdb.set_trace()
             set_session_booking(request.session,booking)
             # Get line items
             booking_arrival = booking.arrival.strftime('%d-%m-%Y')
