@@ -14,8 +14,7 @@ from django.utils import timezone
 
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
-from ledger.checkout.utils import create_basket_session, create_checkout_session
-from ledger.checkout.views import place_order_submission
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
 from parkstay.models import (Campground, Campsite, CampsiteRate, CampsiteBooking, Booking, BookingInvoice, CampsiteBookingRange, Rate, CampgroundBookingRange,CampgroundStayHistory, CampsiteRate, ParkEntryRate, BookingVehicleRego)
 from parkstay.serialisers import BookingRegoSerializer, CampsiteRateSerializer, ParkEntryRateSerializer,RateSerializer,CampsiteRateReadonlySerializer
 from parkstay.emails import send_booking_invoice,send_booking_confirmation

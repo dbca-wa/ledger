@@ -511,10 +511,3 @@ class ThankYouView(CoreThankYouView):
                 #del self.request.session['checkout_return_url']
 
         return order
-
-
-def place_order_submission(request):
-    pdv = PaymentDetailsView(request=request, checkout_session=CheckoutSessionData(request))
-    result = pdv.handle_place_order_submission(request)
-
-    return result

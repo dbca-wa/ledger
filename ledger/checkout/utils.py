@@ -15,6 +15,8 @@ from ledger.basket.middleware import BasketMiddleware
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
 
+# create a basket in Oscar.
+# a basket contains the system ID, list of product line items, vouchers, and not much else.
 def create_basket_session(request, parameters):
     serializer = serializers.BasketSerializer(data=parameters)
     serializer.is_valid(raise_exception=True)
@@ -48,6 +50,9 @@ def create_basket_session(request, parameters):
     return basket, BasketMiddleware().get_basket_hash(basket.id)
 
 
+# create a checkout session in Oscar.
+# the checkout session contains all of the attributes about a purchase session (e.g. payment method,
+# shipping method, ID of the person performing the checkout)
 def create_checkout_session(request, parameters):
     serializer = serializers.CheckoutSerializer(data=parameters)
     serializer.is_valid(raise_exception=True)
@@ -87,7 +92,18 @@ def create_checkout_session(request, parameters):
     session_data.set_invoice_text(serializer.validated_data['invoice_text'])
 
     session_data.set_last_check(serializer.validated_data['check_url'])
-    
+
+
+# shortcut for finalizing a checkout session and creating an invoice.
+# equivalent to checking out with a deferred payment method (e.g. BPAY).
+# useful for internal booking methods being invoked from server-side.
+def place_order_submission(request):
+    from ledger.checkout.views import PaymentDetailsView
+    pdv = PaymentDetailsView(request=request, checkout_session=CheckoutSessionData(request))
+    result = pdv.handle_place_order_submission(request)
+
+    return result
+
 
 class CheckoutSessionData(CoreCheckoutSessionData):
     # Custom Ledger methods
