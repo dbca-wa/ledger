@@ -43,6 +43,8 @@ class OracleInterface(models.Model):
     status = models.CharField(max_length=15)
     line_item = models.TextField(blank=True,null=True)
     status_date = models.DateField()
+    source = models.CharField(max_length=30, null=True)
+    method = models.CharField(max_length=30, null=True)
 
 class OracleInterfaceSystem(models.Model):
     system_id = models.CharField(max_length=10)
