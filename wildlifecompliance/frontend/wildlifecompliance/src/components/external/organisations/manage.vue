@@ -109,7 +109,7 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div v-if="org.edits" class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
