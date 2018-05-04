@@ -5,9 +5,10 @@
             <div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
                     <div class="small-12 columns">
-                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/>THIS IS A TEST</label>
+                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/></label>
                     </div>
-                </div><div class="row">
+                </div>
+                <div class="row">
                     <div class="small-12 medium-12 large-4 columns">
                         <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
@@ -22,19 +23,21 @@
                             <div class="row">
                                 <div class="small-6 columns">
                                     <label for="num_adults" class="text-right">Adults (non-concessions)<label>
-                                </div><div class="small-6 columns">
+                                </div>
+                                <div class="small-6 columns">
                                     <input type="number" id="numAdults" name="num_adults" v-model="numAdults" min="0" max="16"/></label>
                                 </div>
                             </div><div class="row">
                                 <div class="small-6 columns">
                                     <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
-- Seniors Card
-- Age Pension
-- Disability Support
-- Carer Payment
-- Carer Allowance
-- Companion Card
-- Department of Veterans' Affairs">Concessions</span></label>
+					- Seniors Card
+					- Age Pension
+					- Disability Support
+					- Carer Payment
+					- Carer Allowance
+				        - Companion Card
+- Department of Veterans' Affairs">Concessions</span>
+			  	   </label>
                                 </div><div class="small-6 columns">
                                     <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
                                 </div>
@@ -44,17 +47,16 @@
                                 </div><div class="small-6 columns">
                                     <input type="number" id="numChildren" name="num_children" v-model="numChildren" min="0" max="16"/></label>
                                 </div>
-                            </div><div class="row">
-                                <div class="small-6 columns">
-                                    <label for="num_infants" class="text-right">Infants (ages 0-5)<label>
-                                </div><div class="small-6 columns">
-                                    <input type="number" id="numInfants" name="num_infants" v-model="numInfants" min="0" max="16"/></label>
-                                </div>
                             </div>
                         </div>
-                    </div>
+                       </div>
+                     <div class="small-12 medium-12 large-4 columns">
+                        <label>Vessel Size (meters) <input id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
+                      </div>
+
+                    
                     <div class="small-12 medium-12 large-12 columns">
-                        <label><input type="checkbox" v-model="bookableOnly"/> Show bookable campsites only</label>
+                        <label><input type="checkbox" v-model="bookableOnly"/> Show bookable moorings only</label>
                     </div>
                 </div>
                 <div class="row"><div class="small-12 columns">
@@ -68,14 +70,16 @@
                     <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
                     </div>
-
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Jetty Penn</label>
+                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Rental Mooring (available)</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Rental Mooring (not available)</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Public Mooring (not bookable)</label>
                     </div>
 
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Mooring</label>
-                    </div>
                 </div>
                 <div class="row"><div class="small-12 columns">
                     <hr class="search"/>
@@ -96,7 +100,7 @@
                         </div>
                     </template>
 -->
-</div>
+		</div>
 <!--
                 <div class="row">
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
@@ -123,6 +127,7 @@
                         <p><i id="mapPopupPrice"></i></p>
                         <img class="thumbnail" id="mapPopupImage" />
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
+                        <p><small>Vessel Size: <span id='vessel_size_popup'></span></p>
                         <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;" target="_blank">More info</a>
                         <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank">Book now</a>
                     </div>
@@ -143,6 +148,7 @@
                             <div class="small-12 medium-9 large-9 columns">
                                 <div v-html="f.description"/>
                                 <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
+                                <p v-if="f.props.vessel_size_limit && Number(f.props.vessel_size_limit)"><i><small>Vessel Size Limit: ${{ f.props.vessel_size_limit }} </small></i></p>
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
                                 <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
                             </div>
@@ -446,6 +452,7 @@ div.awesomplete > input {
     height: 2em;
     width: 2em;
 }
+
 </style>
 
 <script>
@@ -486,8 +493,8 @@ export default {
                 // {name: 'Toilets', symb: 'RF1', key: 'toilets', 'remoteKey': ['TOILETS']},
                 // {name: 'Walk trail', symb: 'RW3', key: 'walktrail', 'remoteKey': ['WALK TRAIL']},
                 // {name: 'Powered sites', symb: 'MAINS', key: 'walktrail', 'remoteKey': ['POWERED SITES']},
-                {name: 'Jetty Penn', symb: 'MAINS', key: 'jettpenn', 'remoteKey': ['POWERED SITES']},
-                {name: 'Mooring', symb: 'MAINS', key: 'mooring', 'remoteKey': ['POWERED SITES']},
+                {name: 'Bookable Mooring', symb: 'MAINS', key: 'jettpenn', 'remoteKey': ['POWERED SITES']},
+                {name: 'Non Bookable Mooring', symb: 'MAINS', key: 'mooring', 'remoteKey': ['POWERED SITES']},
             ],
             hideExtraFilters: true,
             suggestions: {},
@@ -512,6 +519,8 @@ export default {
             paginate: ['filterResults'],
             selectedFeature: null,
             current_map_scale: 1950001,
+            anchorPins: null,
+            anchorGroups: null, 
         }
     },
     computed: {
@@ -524,7 +533,7 @@ export default {
                 this.sitesOnline = true;
                 this.sitesInPerson = !val;
                 this.sitesAlt = !val;
-                this.reload();
+                // this.reload();
             }
         },
         extent: {
@@ -588,6 +597,7 @@ export default {
             if (!place) {
                 return;
             }
+
             var vm = this;
             // search through the autocomplete list first
             var target = this.suggestions['features'].find(function (el) {
@@ -610,7 +620,7 @@ export default {
 
                 // Open the popup
                 /*let feature = this.groundsData.a.find(f => parseInt(f.a) == parseInt(target.properties.id));
-                if (feature){
+                if (feature) {
                     setTimeout(() => {
                         vm.popup.setPosition(feature.getGeometry().getCoordinates());
                         // really want to make vue.js render this, except reactivity dies
@@ -663,16 +673,14 @@ export default {
                             resolution: vm.resolutions[12],
                             duration: 1000
                         });
-
                     }
                 }
             })
-
         },
-        refreshPopup: function(){
+        refreshPopup: function() {
             let vm = this;
             let feature = vm.selectedFeature;
-            if (feature != null){
+            if (feature != null) {
                 vm.popup.setPosition(feature.getGeometry().getCoordinates());
                 // really want to make vue.js render this, except reactivity dies
                 // when you pass control of the popup element to OpenLayers :(
@@ -705,9 +713,15 @@ export default {
         updateViewport: function(runNow) {
             var vm = this;
             var updateViewportFunc = function() {
+
                 // this object is going to be hammered by vue.js introspection, strip openlayers stuff
+                console.log("LOAD VM");
+                console.log(vm.extent + vm.groundFilter);
+                console.log("LOAD END");
                 vm.extentFeatures = vm.groundsSource.getFeaturesInExtent(vm.extent).filter(vm.groundFilter).map(function (el) {
+                     console.log("GET THA PROPS");
                     var props = el.getProperties(); 
+                    console.log("Did I get the Properties");
                     props.style = undefined;
                     props.geometry = props.geometry.getCoordinates();
                     props.distance = Math.sqrt(Math.pow(props.geometry[0]-vm.center[0], 2) + Math.pow(props.geometry[1]-vm.center[1], 2));
@@ -715,6 +729,7 @@ export default {
                     return props;
                 }).sort(function (a, b) {
                     /* distance from map center sort */
+                       console.log("MAYBE I AM HERE");
                     if (a.distance < b.distance) {
                         return -1;
                     }
@@ -736,13 +751,17 @@ export default {
                 });
                 
             };
+            console.log("AM  I RUNNING");
+            console.log(runNow);
             if (runNow) {
                 updateViewportFunc();
             } else {
+                console.log('RUNNING 2');
                 if (!vm._updateViewport) {
                     vm._updateViewport = debounce(function() {
                         updateViewportFunc();
                     }, 100);
+                    console.log('RUNNING 3');
                 }
                 vm._updateViewport();
             }
@@ -756,13 +775,13 @@ export default {
                 this.dateSetFirstTime = false;
                 this.bookableOnly = true;
             }
-            this.reload();
+            // this.reload();
         },
         reload: debounce(function () {
-            this.groundsSource.loadSource();
-            this.refreshPopup();
-            console.log("RELOAD");
-            console.log(this);
+         //   this.groundsSource.loadSource();
+         //   this.refreshPopup();
+         //   console.log("RELOAD");
+         //   console.log(this);
         }, 250),
         updateFilter: function() {
             var vm = this;
@@ -823,6 +842,7 @@ export default {
                     }
                 }
             });
+            console.log("SEND DATA TO updateViewPort");
             this.updateViewport(true);
         },
         buildmarkers: function() {
@@ -832,108 +852,119 @@ export default {
           var scale = Math.floor(this.current_map_scale);
           var map = this.olmap;
 
-//                map.getLayers().forEach(function (layer2) {
-//                       var layer = layer2.I;
-//                       console.log("W:"+layer.markerGroup);
-//                       if (layer != null) {
-//                       if (layer.hasOwnProperty("canDelete")) {
-//                         if (layer.canDelete == 'no') {
-//                         } else {
-//                             map.removeLayer(layer2);
-//                         }
-//                        } else {
-//                        map.removeLayer(layer2);
-//                        }
-//			}
-//
-//                });
+        // console.log("SCALE");
+        // console.log(scale);
 
-        console.log("SCALE");
-        console.log(scale);
-
-        if (scale >= 0 && scale <= 1000000) {
-              // scale = Math.round(scale / 1000) + "K";
-
-//              map.getLayers().forEach(function (layer2) {
-//                       var layer = layer2.I;
-//                       console.log("M:"+layer.markerGroup);
- //                      if (layer != null) {
-//                           if (layer.hasOwnProperty("markerGroup")) {
-//                                if (layer.markerGroup == 'circle') { 
-//                                  map.removeLayer(layer2);
-//                                }
-//                           }
-//                        }
-//
-//              });
-
-
-              console.log('anchors scales:'+scale);
-                
-//              map.addLayer(this.buildMarker(115.026756, -32.001970));
-//              map.addLayer(this.buildMarker(115.749654,-31.998905));
-//              map.addLayer(this.buildMarker(115.749654,-32.000000));
-//              map.addLayer(this.buildMarker(115.749654,-32.010000));
-//              map.addLayer(this.buildMarker(115.749654,-32.020000));
-//              map.addLayer(this.buildMarker(115.749654,-32.080000));
-//              map.addLayer(this.buildMarker(115.749654,-32.090000));
-//              map.addLayer(this.buildMarker(115.749654,-32.100000));
-//              map.addLayer(this.buildMarker(115.749654,-32.110000));
-//              map.addLayer(this.buildMarker(115.749654,-32.120000));
-//              map.addLayer(this.buildMarker(115.749654,-32.130000));
-//              map.addLayer(this.buildMarker(115.749654,-32.140000));
-
-//	      map.addLayer(this.buildMarker(115.719654,-31.998905));
-//	      map.addLayer(this.buildMarker(115.719654,-32.000000));
-//	      map.addLayer(this.buildMarker(115.719654,-32.010000));
-//	      map.addLayer(this.buildMarker(115.719654,-32.020000));
-//	      map.addLayer(this.buildMarker(115.719654,-32.080000));
-//	      map.addLayer(this.buildMarker(115.719654,-32.090000));
-//	      map.addLayer(this.buildMarker(115.719654,-32.100000));
-//	      map.addLayer(this.buildMarker(115.719654,-32.110000));
-//	      map.addLayer(this.buildMarker(115.719654,-32.120000));
-//	      map.addLayer(this.buildMarker(115.719654,-32.130000));
-//	      map.addLayer(this.buildMarker(115.719654,-32.140000));
-
-        $.ajax({
-            url: vm.parkstayUrl+'/api/mooring_map/?format=json',
-            dataType: 'json',
-            async: false,
-	    success: function (response, stat, xhr) {
-
-              map.getLayers().forEach(function (layer2) {
-                        if (layer2 != null) { 
+ //  map.getOverlays().clear();
+//   map.getLayers().clear();
+   // vm.loadMap(); 
+               map.getLayers().forEach(function (layer2) {
+                       if (layer2 != null) {
                        var layer = layer2.I;
                        console.log("M:"+layer.markerGroup);
+                       console.log("A:"+layer.hasOwnProperty("markerGroup"));
+                       console.log("B:"+layer2.hasOwnProperty("markerGroup"));
+                       console.log(layer2);
+
                        if (layer != null) {
                            if (layer.hasOwnProperty("markerGroup")) {
+                                map.removeLayer(layer2);
                                 if (layer.markerGroup == 'circle') {
-                                  map.removeLayer(layer2);
+//                                    map.removeLayer(layer2);
+                                    // setTimeout(function(layer2) { map.removeLayer(layer2) }, 50);
+                                }
+                                if (layer.markerGroup == 'anchor') {
+  //                                console.log(layer2);
+  //                                  map.removeLayer(layer2);
+                                    // setTimeout(function(layer2) { map.removeLayer(layer2) }, 50);
                                 }
                           }
                        }
-			}
+                }
 
               });
 
+        if (scale >= 0 && scale <= 1300000) {
 
-                    for (var x in response) {
+            console.log('anchors scales:'+scale);
+              
+            if (vm.anchorPins == null) {   
+            $.ajax({
+               url: vm.parkstayUrl+'/api/mooring_map/?format=json',
+               dataType: 'json',
+               async: true,
+    	       success: function(response, stat, xhr) {
+               vm.anchorPins = response;          
+               map.getLayers().forEach(function (layer2) {  
+                       if (layer2 != null) { 
+                       var layer = layer2.I;
+                       console.log("M:"+layer.markerGroup);
+                       if (layer != null) {
+                           // map.removeLayer(layer2);
+                           if (layer.hasOwnProperty("markerGroup")) {
+                                if (layer.markerGroup == 'circle') {
+                                      map.removeLayer(layer2);
+//                                    setTimeout("map.removeLayer("+layer2+")", 50);
+//                                    setTimeout(function(layer2) { map.removeLayer(layer2) }, 50);
+                                }
+                                if (layer.markerGroup == 'anchor') {
+                                      map.removeLayer(layer2);
+//                                    map.removeLayer(layer2); 
+//                                    setTimeout(function(layer2) { map.removeLayer(layer2) }, 50); 
+                                }
+                          }
+                       }
+		}
+
+              });
+             }
+	     });
+
+	     }
+             var response = vm.anchorPins; 
+             var pin_count = 0;
+             for (var x in response) {
                         var mooring = response[x];
                         for (var m in mooring) {
                              for (var b in response[x][m]) {
 				   if (b == 'geometry') {
-                                      map.addLayer(vm.buildMarker(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1]));
+                                      var vessel_size = $("#vesselSize").val();
+                                      var show_marker = true;
+                                      if (response[x][m]['properties']['vessel_size_limit'].length == 0) { 
+						response[x][m]['properties']['vessel_size_limit'] = 0;
+				      }
+                                     
+                                      if (parseInt(vessel_size) > 0) {
+                                          show_marker = false;
+                                          if (parseInt(response[x][m]['properties']['vessel_size_limit']) >= parseInt(vessel_size)) {
+                                               show_marker = true;
+                                          }
+                                      }
+
+                                      if (show_marker == true) {
+                                      pin_count =  pin_count + 1;
+                                      if (response[x][m]['properties']['mooring_type'] == 0) { 
+                                           map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+//                                            vm.updateFilter();
+				      } 
+                                      if (response[x][m]['properties']['mooring_type'] == 1) {
+					   map.addLayer(vm.buildMarkerNotBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+//                                            vm.updateFilter();
+				      }
+                                      }
+                                      
                                    }
 		   	      }
 			}
 			//console.log(map);
+             }
+             console.log('PIN COUNT');
+             console.log(pin_count);
+        //   }
+       // });
 
-                    }
-            }
-        });
-
-      } else if (scale >= 1000001) {
-     console.log("marker group scales:"+scale);
+      } else if (scale >= 1300001) {
+         console.log("marker group scales:"+scale);
 	      var center = map.getView().getCenter();
               if (center) {
                 	console.log(center[0]);
@@ -942,38 +973,7 @@ export default {
                 	console.log(latLon);
 	      }
 
-        $.ajax({
-            url: vm.parkstayUrl+'/api/marine_parks_map/?format=json',
-            dataType: 'json',
-            async: false,
-            success: function (response, stat, xhr) {
-                    //vectorSource.clear();
-                   console.log("MARINE PARK");
-
                      map.getLayers().forEach(function (layer2) {
-                       if (layer2 != null) {
-                       var layer = layer2.I;
-                       console.log("M:"+layer.markerGroup);
-                       if (layer != null) {
-                           if (layer.hasOwnProperty("markerGroup")) {
-                                if (layer.markerGroup == 'anchor') {
-                                  map.removeLayer(layer2);
-                                }
-                           }
-                        }
-			}
-	              });
-
-                   for (var x in response) {
-                        var marinepark = response[x];
-			var longitude = marinepark['park_id__wkb_geometry']['longitude'];
-                        var latitude = marinepark['park_id__wkb_geometry']['latitude'];
-                        var total = marinepark['total'];
-                        map.addLayer(vm.buildMarkerGroup(parseFloat(longitude),parseFloat(latitude),total));
-
-                   }
-
-		                     map.getLayers().forEach(function (layer2) {
                        if (layer2 != null) {
                        var layer = layer2.I;
                        console.log("M:"+layer.markerGroup);
@@ -987,36 +987,130 @@ export default {
                         }
                       });
 
+        if (vm.anchorGroups == null) {
 
-
+        $.ajax({
+            url: vm.parkstayUrl+'/api/marine_parks_map/?format=json',
+            dataType: 'json',
+            async: true,
+            success: function (response, stat, xhr) {
+                   vm.anchorGroups = response;
+                   vm.groundsFilter.clear();
+                    //vectorSource.clear();
+                   console.log("MARINE PARK");
             }
-        });
+	});
+        } 
+        var response = vm.anchorGroups;
+//                     map.getLayers().forEach(function (layer2) {
+//                       if (layer2 != null) {
+//                       var layer = layer2.I;
+//                       console.log("M:"+layer.markerGroup);
+//                       if (layer != null) {
+//                           if (layer.hasOwnProperty("markerGroup")) {
+//                                if (layer.markerGroup == 'anchor') {
+//                                  map.removeLayer(layer2);
+//                                }
+//                           }
+//                        }
+//			}
+//	              });
 
+                   for (var x in response) {
+                        var marinepark = response[x];
+			var longitude = marinepark['park_id__wkb_geometry']['longitude'];
+                        var latitude = marinepark['park_id__wkb_geometry']['latitude'];
+                        var total = marinepark['total'];
+                        var name = marinepark['park_id__name']; 
+                        map.addLayer(vm.buildMarkerGroup(parseFloat(longitude),parseFloat(latitude),total,name));
+
+                   }
+
+                   map.getLayers().forEach(function (layer2) {
+                       if (layer2 != null) {
+                       var layer = layer2.I;
+                       console.log("M:"+layer.markerGroup);
+                       if (layer != null) {
+                           if (layer.hasOwnProperty("markerGroup")) {
+                                if (layer.markerGroup == 'anchor') {
+                                  map.removeLayer(layer2);
+                                }
+                           }
+                        }
+                        }
+                   });
+
+            // }
+     // });
         console.log('anchors groups');
-      } else {
-		console.log('somehting else');
-	        scale = Math.round(scale);
-      }
+     } else {
+        console.log('somehting else');
+        scale = Math.round(scale);
+     }
 //        document.getElementById('scale').innerHTML = "Scale = 1 : " + scale;
+     },
+     buildMarkerBookable: function(lat,lon,props,name,marker_id) {
 
-      },
-     buildMarker: function(lat,lon) {
+                var iconFeature = new ol.Feature({
+                  marker_group: 'mooring_marker',
+                  geometry: new ol.geom.Point(ol.proj.transform([lat, lon], 'EPSG:4326', 'EPSG:3857')),
+                  name: name,
+                  population: 4000,
+                  rainfall: 500,
+                  marker_id: marker_id,
+                  props: props
+                });
+
+                var iconStyle = new ol.style.Style({
+                  image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+                  imgSize: [32, 32],
+                  snapToPixel: true,
+                  anchor: [0.5, 1.0],
+                  anchorXUnits: 'fraction',
+                  anchorYUnits: 'fraction',
+                  opacity: 0.95,
+                  src: require('assets/map_pins/pin_orange.png')
+                 }))
+            });
+
+            iconFeature.setStyle(iconStyle);
+
+            var vectorSource = new ol.source.Vector({
+                features: [iconFeature]
+            });
+
+            console.log(vectorSource);
+            var vectorLayer = new ol.layer.Vector({
+               canDelete: "yes",
+               markerGroup: "anchor",
+               source: vectorSource
+            });
+
+            return vectorLayer;
+    },
+    buildMarkerNotBookable: function(lat,lon,props,name,marker_id) {
 
 		var iconFeature = new ol.Feature({
+                  marker_group: 'mooring_marker',
 		  geometry: new ol.geom.Point(ol.proj.transform([lat, lon], 'EPSG:4326', 'EPSG:3857')),
-		  name: 'Null Island',
+		  name: name,
 		  population: 4000,
-		  rainfall: 500
+		  rainfall: 500,
+                  marker_id: marker_id,
+                  props: props
 		});
 
 		var iconStyle = new ol.style.Style({
 		  image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
-		    anchor: [0.5, 46],
+                    imgSize: [32, 32],
+                    snapToPixel: true,
+                    anchor: [0.5, 1.0],
 			//    anchor: [115.864627, -32.007385],
 		    anchorXUnits: 'fraction',
-		    anchorYUnits: 'pixels',
-		    opacity: 0.75,
-		    src: require('assets/map_pins/icon.png')
+                    anchorYUnits: 'fraction',
+		    opacity: 0.95,
+		    src: require('assets/map_pins/pin_gray.png')
+
 	         }))
 	    });
 
@@ -1032,31 +1126,29 @@ export default {
 	       source: vectorSource
 	    });
 
-
 	    return vectorLayer;
     },
-    buildMarkerGroup:function(lat,lon,text) {
+    buildMarkerGroup:function(lat,lon,text, name) {
 
                console.log("Marker Group");
                var iconFeature = new ol.Feature({
+                  marker_group: 'group_marker',
                   geometry: new ol.geom.Point(ol.proj.transform([lat, lon], 'EPSG:4326', 'EPSG:3857')),
-                  name: '<div style="font-weight: bold;">iiiiNull Island</div>',
+                  name: name,
                   population: 4000,
                   rainfall: 500
                });
 
-                var icon = require('assets/map_pins/geo_group_red.png');
-                if (text > 30) {
+               var icon = require('assets/map_pins/geo_group_red.png');
+               if (text > 30) {
                         icon = require('assets/map_pins/geo_group2.png');
-                } else if (text > 10) {
+               } else if (text > 10) {
                         icon = require('assets/map_pins/geo_group_orange.png');
-                } else {
+               } else {
                         icon = require('assets/map_pins/geo_group_red.png');
-                }
+               }
 
-
-
-                var iconStyle = new ol.style.Style({
+               var iconStyle = new ol.style.Style({
                         image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
                           anchor: [0.5, 24],
                           anchorXUnits: 'fraction',
@@ -1092,7 +1184,295 @@ export default {
 
 
               return vectorLayer;
+      },
+      loadMap: function() {
+
+var vm = this;
+
+        console.log('Loading map...');
+        var nowTemp = new Date();
+        var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
+
+        this.arrivalEl = $('#dateArrival');
+        this.departureEl = $('#dateDeparture');
+
+
+        this.arrivalData = this.arrivalEl.fdatepicker({
+            format: 'dd/mm/yyyy',
+            onRender: function (date) {
+                // disallow start dates before today
+                return date.valueOf() < now.valueOf() ? 'disabled': '';
+                //return '';
+            }
+        }).on('changeDate', function (ev) {
+            //console.log('arrivalEl changeDate');
+            ev.target.dispatchEvent(new CustomEvent('change'));
+        }).on('change', function (ev) {
+            if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
+                var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
+                vm.departureData.date = newDate;
+                vm.departureData.setValue();
+                vm.departureData.fill();
+                vm.departureEl.trigger('changeDate');
+            }
+            vm.arrivalData.hide();
+            vm.arrivalDate = moment(vm.arrivalData.date);
+        }).on('keydown', function (ev) {
+            if (ev.keyCode == 13) {
+                ev.target.dispatchEvent(new CustomEvent('change'));
+            }
+        }).data('datepicker');
+
+        this.departureData = this.departureEl.fdatepicker({
+            format: 'dd/mm/yyyy',
+            onRender: function (date) {
+                return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
+            }
+        }).on('changeDate', function (ev) {
+            //console.log('departureEl changeDate');
+            ev.target.dispatchEvent(new CustomEvent('change'));
+        }).on('change', function (ev) {
+            vm.departureData.hide();
+            vm.departureDate = moment(vm.departureData.date);
+        }).on('keydown', function (ev) {
+            if (ev.keyCode == 13) {
+                ev.target.dispatchEvent(new CustomEvent('change'));
+            }
+        }).data('datepicker');
+
+        // load autosuggest choices
+        var search = document.getElementById('searchInput');
+        var autocomplete = new Awesomplete(search);
+        autocomplete.autoFirst = true;
+
+
+        $.ajax({
+            url: vm.parkstayUrl+'/api/search_suggest',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+                vm.suggestions = response;
+                $(search).on('awesomplete-selectcomplete', function(ev) {
+                    //console.log('autoselect');
+                    //console.log(ev);
+                    this.blur();
+                    //vm.search(ev.target.value);
+                });
+
+                autocomplete.list = response['features'].map(function (el) {
+                    return el['properties']['name'];
+                });
+            }
+        });
+
+        // wire up search box
+        $(search).on('blur', function(ev) {
+            //console.log('blur');
+            //console.log(ev);
+            vm.search(ev.target.value);
+        }).on('keypress', function(ev) {
+            if (!ev) {
+                ev = window.event;
+            }
+            // intercept enter keys
+            var keyCode = ev.keyCode || ev.which;
+            if (keyCode == '13') {
+                //console.log('enter');
+                this.blur();
+                return false;
+            }
+        });
+
+        // generate WMTS tile grid
+        this.projection = ol.proj.get('EPSG:3857');
+        this.projectionExtent = this.projection.getExtent();
+        var size = ol.extent.getWidth(this.projectionExtent) / 256;
+        this.matrixSet = 'mercator';
+        this.resolutions = new Array(21);
+        this.matrixIds = new Array(21);
+        for (var z = 0; z < 21; ++z) {
+            // generate resolutions and matrixIds arrays for this WMTS
+            this.resolutions[z] = size / Math.pow(2, z);
+            this.matrixIds[z] = this.matrixSet + ':' + z;
+        }
+
+        var tileGrid = new ol.tilegrid.WMTS({
+            origin: ol.extent.getTopLeft(this.projectionExtent),
+            resolutions: this.resolutions,
+            matrixIds: this.matrixIds
+        });
+        this.streets = new ol.layer.Tile({
+            canDelete: "no",
+            source: new ol.source.WMTS({
+                url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
+                format: 'image/png',
+                layer: 'public:mapbox-streets',
+                matrixSet: this.matrixSet,
+                projection: this.projection,
+                tileGrid: tileGrid
+            })
+        });
+
+        this.tenure = new ol.layer.Tile({
+            canDelete: "no",
+            opacity: 0.6,
+            source: new ol.source.WMTS({
+                url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
+                format: 'image/png',
+                layer: 'public:dpaw_lands_and_waters',
+                matrixSet: this.matrixSet,
+                projection: this.projection,
+                tileGrid: tileGrid
+            })
+        });
+
+        this.geojson = new ol.format.GeoJSON({
+            featureProjection: 'EPSG:3857'
+        });
+
+        this.groundsData = new ol.Collection();
+        this.groundsIds = new Set();
+        this.groundsFilter = new ol.Collection();
+
+        this.groundsSource = new ol.source.Vector({
+            features: vm.groundsFilter
+        });
+
+        this.groundsSource.loadSource = function (onSuccess) {
+            var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
+            var params = {format: 'json'};
+            var isCustom = false;
+
+            if ((vm.arrivalData.date) && (vm.departureData.date)) {
+                isCustom = true;
+                var arrival = vm.arrivalDateString;
+                if (arrival) {
+                    params.arrival = arrival;
+                }
+                var departure = vm.departureDateString;
+                if (departure) {
+                    params.departure = vm.departureDateString;
+                }
+                params.num_adult = vm.numAdults;
+                params.num_concessions = vm.numConcessions;
+                params.num_children = vm.numChildren;
+                params.num_infants = vm.numInfants;
+                params.gear_type = vm.gearType;
+            }
+
+            $.ajax({
+                url: urlBase+$.param(params),
+                success: function (response, stat, xhr) {
+                    vm.groundsIds.clear();
+                    response.forEach(function(el) {
+                        vm.groundsIds.add(el.id);
+                    });
+                    vm.updateFilter();
+                },
+                dataType: 'json'
+            });
+        };
+
+        this.grounds = new ol.layer.Vector({
+            source: this.groundsSource,
+            style: function (feature) {
+                var style = feature.get('style');
+                if (!style) {
+                    var icon = vm.sitesInPersonIcon;
+                    var campgroundType = feature.get('campground_type');
+                    switch (campgroundType) {
+                        case 0:
+                        icon = vm.sitesOnlineIcon;
+                        break;
+                        case 2:
+                        icon = vm.sitesAltIcon;
+                        break;
+                        default:
+                        break;
+                    }
+                    style = new ol.style.Style({
+                        image: new ol.style.Icon({
+                            src: icon,
+                            imgSize: [32, 32],
+                            snapToPixel: true,
+                            anchor: [0.5, 1.0],
+                            anchorXUnits: 'fraction',
+                            anchorYUnits: 'fraction'
+                        }),
+                        zIndex: -feature.getGeometry().getCoordinates()[1]
+                    });
+                    feature.set('style', style);
+                }
+                //console.log(style);
+                return style;
+            }
+        });
+       // Marker Popup Code
+        $('#mapPopupClose').on('click', function(ev) {
+            // console.log(ev);
+            $('#mapPopup').hide();
+            // console.log("mapPopupClose yes");
+            vm.popup.setPosition(undefined);
+            vm.selectedFeature = null;
+            return false;
+        });
+        this.popupContent = document.getElementById('mapPopupContent');
+        this.popup = new ol.Overlay({
+            element: document.getElementById('mapPopup'),
+            autoPan: true,
+            autoPanAnimation: {
+                duration: 250
+            }
+        });
+
+        this.posFeature = new ol.Feature();
+        this.posFeature.setStyle(new ol.style.Style({
+            image: new ol.style.Icon({
+                src: vm.locationIcon,
+                snapToPixel: true,
+                anchor: [0.5, 0.5],
+                anchorXUnits: 'fraction',
+                anchorYUnits: 'fraction'
+            })
+        }));
+
+        this.posLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: [this.posFeature]
+            })
+        });
+        // create OpenLayers map object, prefill with all the stuff we made
+        this.olmap = new ol.Map({
+            logo: false,
+            renderer: 'canvas',
+            target: 'map',
+            view: new ol.View({
+                projection: 'EPSG:3857',
+                center: vm.defaultCenter,
+                zoom: 5,
+                maxZoom: 21,
+                minZoom: 5
+            }),
+            controls: [
+                new ol.control.Zoom(),
+                new ol.control.ScaleLine(),
+            ],
+            interactions: ol.interaction.defaults({
+                altShiftDragRotate: false,
+                pinchRotate: false,
+            }),
+            layers: [
+                this.streets,
+                this.tenure,
+                this.grounds,
+                this.posLayer
+            ],
+            overlays: [this.popup]
+        });
+
+
       }
+
+
     },
     mounted: function() {
         var vm = this;
@@ -1101,7 +1481,6 @@ export default {
 //        console.log(this.buildmarkers('3'));
         $(document).foundation();
         console.log('Loading map...');
-        console.log('Loading map 2');
         // enable arrival/departure date pickers
         var nowTemp = new Date();
         var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
@@ -1193,7 +1572,6 @@ export default {
             }
         });
 
-
         // generate WMTS tile grid
         this.projection = ol.proj.get('EPSG:3857');
         this.projectionExtent = this.projection.getExtent();
@@ -1206,6 +1584,7 @@ export default {
             this.resolutions[z] = size / Math.pow(2, z);
             this.matrixIds[z] = this.matrixSet + ':' + z;
         }
+
         var tileGrid = new ol.tilegrid.WMTS({
             origin: ol.extent.getTopLeft(this.projectionExtent),
             resolutions: this.resolutions,
@@ -1249,9 +1628,9 @@ export default {
 //            dataType: 'json',
 //            success: function (response, stat, xhr) {
 //                var features = vm.geojson.readFeatures(response);
- //           //    vm.groundsData.clear();
+ //           //   vm.groundsData.clear();
 //            //   vm.groundsData.extend(features);
-//           //     vm.groundsSource.loadSource();
+//           //    vm.groundsSource.loadSource();
 //            }
 //        });
 
@@ -1293,8 +1672,6 @@ export default {
                 dataType: 'json'
             });
         };
-
-
         this.grounds = new ol.layer.Vector({
             source: this.groundsSource,
             style: function (feature) {
@@ -1330,7 +1707,11 @@ export default {
             }
         });
 
+	// Marker Popup Code
         $('#mapPopupClose').on('click', function(ev) {
+            // console.log(ev);
+            $('#mapPopup').hide();
+	    // console.log("mapPopupClose yes");
             vm.popup.setPosition(undefined);
             vm.selectedFeature = null;
             return false;
@@ -1343,7 +1724,6 @@ export default {
                 duration: 250
             }
         });
-
 
         this.posFeature = new ol.Feature();
         this.posFeature.setStyle(new ol.style.Style({
@@ -1361,6 +1741,8 @@ export default {
                 features: [this.posFeature]
             })
         });
+	// End of Marker Popup Code
+
 
         // create OpenLayers map object, prefill with all the stuff we made
         this.olmap = new ol.Map({
@@ -1400,6 +1782,7 @@ export default {
             var coords = vm.geolocation.getPosition();
             vm.posFeature.setGeometry(coords ? new ol.geom.Point(coords) : null);
         });
+
         // JASON ADDED
         var map = this.olmap;
 
@@ -1410,24 +1793,29 @@ export default {
                // console.log(map);
                // console.log("OL MAP");
                // console.log(this.olmap);   
-                var resolution = evt.target.get('resolution');
-                var units = map.getView().getProjection().getUnits();
-                var dpi = 25.4 / 0.28;
-                var mpu = ol.proj.METERS_PER_UNIT[units];
+               var resolution = evt.target.get('resolution');
+               var units = map.getView().getProjection().getUnits();
+               var dpi = 25.4 / 0.28;
+               var mpu = ol.proj.METERS_PER_UNIT[units];
  
-                var scale_res = resolution * mpu * 39.37 * dpi;
-                // console.log("New Scale");
-                // console.log(scale);
-                //console.log(vm);
-                vm.current_map_scale = scale_res;
-                setTimeout(function(){ if (scale_res == vm.current_map_scale) { vm.buildmarkers(); }  }, 600);
-//                vm.buildmarkers();
-        //   gs_map.reloadMarkers(map);
+               var scale_res = resolution * mpu * 39.37 * dpi;
+               // console.log("New Scale");
+               // console.log(scale);
+               //console.log(vm);
+               vm.current_map_scale = scale_res;
+               setTimeout(function() { console.log("Current Scale"); console.log(scale_res + ':'+vm.current_map_scale); if (scale_res == vm.current_map_scale) { console.log("LOADED"); console.log(scale_res + ':'+vm.current_map_scale); vm.buildmarkers(); }}, 400);
+               // vm.buildmarkers();
+               //   gs_map.reloadMarkers(map);
         });
 
-
+        $('#vesselSize').blur(function() { 
+              console.log('VESSELL CHANGE');
+               // vm.olmap.zoomOut();
+               // vm.olmap.zoomIn();
+	       vm.buildmarkers();
+	});
  
-        // sad loop to change the pointer when mousing over a vector layer
+        // loop to change the pointer when mousing over a vector layer
         this.olmap.on('pointermove', function(ev) {
             if (ev.dragging) {
                 return;
@@ -1446,52 +1834,128 @@ export default {
             $('#map').toggleClass('click', result);
         });
 
-        // another loop to spawn the popup on click
-        this.olmap.on('singleclick', function(ev) {
-            var result = ev.map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
-                vm.selectedFeature = feature;
-                vm.popup.setPosition(feature.getGeometry().getCoordinates());
-                // really want to make vue.js render this, except reactivity dies
-                // when you pass control of the popup element to OpenLayers :(
-                $("#mapPopupName")[0].innerHTML = feature.get('name');
-                if (feature.get('images')) {
-                    // console.log(feature.get('images')[0].image);
-                    $("#mapPopupImage").attr('src', feature.get('images')[0].image);
-                    $("#mapPopupImage").show();
+
+       var element = document.getElementById('mapPopup');
+
+       var popup = new ol.Overlay({
+          element: element,
+          positioning: 'bottom-center',
+          stopEvent: false
+       });
+
+       map.addOverlay(popup);
+
+       // another loop to spawn the popup on click
+       this.olmap.on('singleclick', function(ev) {
+          var feature = ev.map.forEachFeatureAtPixel(ev.pixel, 
+             function(feature, layer) {
+                return feature;
+             });
+
+          if (feature) {
+            var geometry = feature.getGeometry();
+            var coord = geometry.getCoordinates();
+            var properties = feature.getProperties();
+            if (properties.marker_group == 'mooring_marker') {
+
+                $('#mapPopupName').html(properties.props.name);
+                console.log("PROPERTIES");
+                console.log(properties);
+                console.log(properties.name);
+                console.log(properties.marker_id);
+
+                if (properties.props.mooring_type == 0) { 
+                   $('#mapPopupBook').show();
+                   $("#mapPopupImage").show();
+                   $("#mapPopupImage").attr('src',  '/static/exploreparks/mooring_photo_scaled.png');
+                    vessel_size_popup
+                   console.log("VESSEL SIZE"+properties['vessel_size_limit']+':'+properties);
+                   console.log(properties);
+                   console.log(properties.props.vessel_size_limit);
+                   $("#vessel_size_popup").html(properties.props.vessel_size_limit);
+                   $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
                 } else {
-                    $("#mapPopupImage").hide();
+		   $("#vessel_size_popup").html(properties.props.vessel_size_limit);
+                   $('#mapPopupBook').hide();
                 }
-                if (feature.get('price_hint') && Number(feature.get('price_hint'))) {
-                    $("#mapPopupPrice")[0].innerHTML = '<small>From $' + feature.get('price_hint') + ' per night</small>';
-                } else {
-                    $("#mapPopupPrice")[0].innerHTML = '';
-                }
-                $("#mapPopupDescription")[0].innerHTML = feature.get('description');
-                $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
-                if (feature.get('campground_type') == 0) {
-                    $("#mapPopupBook").show();
-                } else {
-                    $("#mapPopupBook").hide();
-                }
-                return true;
-            }, {
-                layerFilter: function (layer) {
-                    return layer === vm.grounds;
-                }
-            });
-            // if just single-clicking the map, hide the popup
-            if (!result) {
-                vm.popup.setPosition(undefined);
-            }
+
+                popup.setPosition(coord);
+
+       //       $(element).popover({
+       //         'placement': 'top',
+        //        'html': true,
+        //        'content': feature.get('name')
+        //      });
+
+                $(element).show();
+//                $(element).popover('show');
+
+                } else if (properties.marker_group == 'group_marker') {
+                    if (properties.props.mooring_type == 0) {
+                        $('#mapPopupBook').show();
+                        $("#mapPopupImage").hide();
+                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                    } else {
+                        $('#mapPopupBook').hide();
+                    }
+	        } 
+
+          } else {
+             $(element).hide();
+ //            $(element).popover('destroy');
+          }
         });
+
+
+//function(feature, layer) {
+//                console.log('loading results');
+//                vm.selectedFeature = feature;
+//                vm.popup.setPosition(feature.getGeometry().getCoordinates());
+//                // really want to make vue.js render this, except reactivity dies
+//                // when you pass control of the popup element to OpenLayers :(
+//                $("#mapPopupName")[0].innerHTML = feature.get('name');
+//                if (feature.get('images')) {
+//                   // console.log(feature.get('images')[0].image);
+//                    $("#mapPopupImage").attr('src', feature.get('images')[0].image);
+//                    $("#mapPopupImage").show();
+//                } else {
+//                    $("#mapPopupImage").hide();
+//                }
+//                if (feature.get('price_hint') && Number(feature.get('price_hint'))) {
+//                    $("#mapPopupPrice")[0].innerHTML = '<small>From $' + feature.get('price_hint') + ' per night</small>';
+//                } else {
+//                    $("#mapPopupPrice")[0].innerHTML = '';
+//                }
+//                $("#mapPopupDescription")[0].innerHTML = feature.get('description');
+//                $("#mapPopupInfo").attr('href', feature.get('info_url'));
+//                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+//                if (feature.get('campground_type') == 0) {
+//                    $("#mapPopupBook").show();
+//                } else {
+//                    $("#mapPopupBook").hide();
+//                }
+//                return feature;
+ //           }, {
+//                layerFilter: function (layer) {
+//                    console.log('did not make it');
+//                    console.log(layer);
+ //                   return layer === vm.grounds;
+//                }
+ //           });
+
+//            // if just single-clicking the map, hide the popup
+//            if (!result) {
+//                vm.popup.setPosition(undefined);
+//            }
+//        });
 
         // hook to update the visible feature list on viewport change
         this.olmap.getView().on('propertychange', function(ev) {
-            vm.updateViewport();
+//            vm.updateViewport();
+            vm.buildmarkers();
         });
 
-        this.reload();
+	//        this.reload();
     }
 };
 </script>

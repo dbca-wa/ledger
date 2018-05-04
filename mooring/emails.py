@@ -11,16 +11,16 @@ from ledger.emails.emails import EmailBase
 default_campground_email = settings.CAMPGROUNDS_EMAIL
 class TemplateEmailBase(EmailBase):
     subject = ''
-    html_template = 'ps/email/base_email.html'
+    html_template = 'mooring/email/base_email.html'
     # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
-    txt_template = 'ps/email/base_email.txt'
+    txt_template = 'mooring/email/base_email.txt'
 
 
 def send_booking_invoice(booking):
     email_obj = TemplateEmailBase()
     email_obj.subject = 'Your booking invoice for {}'.format(booking.campground.name)
-    email_obj.html_template = 'ps/email/invoice.html'
-    email_obj.txt_template = 'ps/email/invoice.txt'
+    email_obj.html_template = 'mooring/email/invoice.html'
+    email_obj.txt_template = 'mooring/email/invoice.txt'
 
     email = booking.customer.email
 
@@ -39,8 +39,8 @@ def send_booking_invoice(booking):
 def send_booking_confirmation(booking,request):
     email_obj = TemplateEmailBase()
     email_obj.subject = 'Your booking {} at {} is confirmed'.format(booking.confirmation_number,booking.campground.name)
-    email_obj.html_template = 'ps/email/confirmation.html'
-    email_obj.txt_template = 'ps/email/confirmation.txt'
+    email_obj.html_template = 'mooring/email/confirmation.html'
+    email_obj.txt_template = 'mooring/email/confirmation.txt'
 
     email = booking.customer.email
 
@@ -95,15 +95,15 @@ def send_booking_confirmation(booking,request):
 
 def send_booking_cancelation(booking,request):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Canceled:your booking REF {} at {},{}.'.format(booking.confirmation_number,booking.campground.name,booking.campground.park.name)
-    email_obj.html_template = 'ps/email/cancel.html'
-    email_obj.txt_template = 'ps/email/cancel.txt'
+    email_obj.subject = 'Canceled:your booking REF {} at {},{}.'.format(booking.confirmation_number,booking.mooringarea.name,booking.mooringarea.park.name)
+    email_obj.html_template = 'mooring/email/cancel.html'
+    email_obj.txt_template = 'mooring/email/cancel.txt'
 
     email = booking.customer.email
 
     bcc = [default_campground_email]
 
-    campground_email = booking.campground.email if booking.campground.email else default_campground_email
+    campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
     my_bookings_url = '{}/mybookings/'.format(settings.PARKSTAY_EXTERNAL_URL)
     context = {
         'booking': booking,
@@ -116,8 +116,8 @@ def send_booking_cancelation(booking,request):
 def send_booking_lapse(booking):
     email_obj = TemplateEmailBase()
     email_obj.subject = 'Your booking for {} has expired'.format(booking.campground.name)
-    email_obj.html_template = 'ps/email/lapse.html'
-    email_obj.txt_template = 'ps/email/lapse.txt'
+    email_obj.html_template = 'mooring/email/lapse.html'
+    email_obj.txt_template = 'mooring/email/lapse.txt'
 
     email = booking.customer.email
 

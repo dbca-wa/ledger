@@ -18,10 +18,10 @@ class MarinaAdmin(admin.ModelAdmin):
 
 @admin.register(models.MooringArea)
 class MooringAreaAdmin(admin.GeoModelAdmin):
-    list_display = ('name','park','promo_area','campground_type','site_type','max_advance_booking')
+    list_display = ('name','park','promo_area','mooring_type','site_type','max_advance_booking')
     ordering = ('name',)
     search_fields = ('name',)
-    list_filter = ('campground_type','site_type')
+    list_filter = ('mooring_type','site_type')
     openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
 
 @admin.register(models.MooringAreaGroup)

@@ -104,7 +104,6 @@ class DashboardView(UserPassesTestMixin, TemplateView):
     def test_func(self):
         return is_officer(self.request.user)
 
-
 def abort_booking_view(request, *args, **kwargs):
     try:
         change = bool(request.GET.get('change',False))
@@ -138,7 +137,6 @@ def abort_booking_view(request, *args, **kwargs):
         pass
     return redirect('public_make_booking')
 
-
 class MakeBookingsView(TemplateView):
     template_name = 'mooring/booking/make_booking.html'
 
@@ -148,7 +146,7 @@ class MakeBookingsView(TemplateView):
         expiry = booking.expiry_time.isoformat() if booking else ''
         timer = (booking.expiry_time-timezone.now()).seconds if booking else -1
         campsite = booking.campsites.all()[0].campsite if booking else None
-        entry_fees = MarinaEntryRate.objects.filter(Q(period_start__lte = booking.arrival), Q(period_end__gt=booking.arrival)|Q(period_end__isnull=True)).order_by('-period_start').first() if (booking and campsite.campground.park.entry_fee_required) else None
+        entry_fees = MarinaEntryRate.objects.filter(Q(period_start__lte = booking.arrival), Q(period_end__gt=booking.arrival)|Q(period_end__isnull=True)).order_by('-period_start').first() if (booking and campsite.mooringarea.park.entry_fee_required) else None
         pricing = {
             'adult': Decimal('0.00'),
             'concession': Decimal('0.00'),
@@ -158,6 +156,7 @@ class MakeBookingsView(TemplateView):
             'vehicle_conc': entry_fees.concession if entry_fees else Decimal('0.00'),
             'motorcycle': entry_fees.motorbike if entry_fees else Decimal('0.00')
         }
+
         if booking:
             pricing_list = utils.get_visit_rates(Mooringsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
             pricing['adult'] = sum([x['adult'] for x in pricing_list.values()])
@@ -187,6 +186,7 @@ class MakeBookingsView(TemplateView):
             'num_child': booking.details.get('num_child', 0) if booking else 0,
             'num_infant': booking.details.get('num_infant', 0) if booking else 0
         }
+
         if request.user.is_anonymous():
             form = AnonymousMakeBookingsForm(form_context)
         else:
@@ -256,7 +256,7 @@ class MakeBookingsView(TemplateView):
             form.add_error(None, '{} Please contact Marinas and Visitors services with this error message, the campground/campsite and the time of the request.'.format(str(e)))
             return self.render_page(request, booking, form, vehicles, show_errors=True)
             
-        print(lines)
+        #print(lines)
         total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
 
         # get the customer object
@@ -288,7 +288,7 @@ class MakeBookingsView(TemplateView):
                u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
                 booking.arrival.strftime('%d-%m-%Y'),
                 booking.departure.strftime('%d-%m-%Y'),
-                booking.campground.name
+                booking.mooringarea.name
         )
         
         logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id))

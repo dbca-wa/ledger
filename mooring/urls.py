@@ -77,7 +77,10 @@ urlpatterns = [
     url(r'^mybookings/', views.MyBookingsView.as_view(), name='public_my_bookings'),
     url(r'^success/', views.BookingSuccessView.as_view(), name='public_booking_success'),
     url(r'^map/', views.MapView.as_view(), name='map'),
-] + ledger_patterns
+##    url(r'^static/(?P<path>.*)$', 'django.conf.urls.static'),
+#    {'document_root': settings.STATIC_ROOT},
+] + ledger_patterns 
+
 
 if settings.DEBUG:  # Serve media locally in development.
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

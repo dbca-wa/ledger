@@ -86,17 +86,20 @@ def update_mooring_map_filename(instance, filename):
     return 'mooring/mooring_maps/{}/{}'.format(instance.id,filename)
 
 class MooringArea(models.Model):
-    CAMPGROUND_TYPE_CHOICES = (
+
+    MOORING_TYPE_CHOICES = (
         (0, 'Bookable Online'),
         (1, 'Not Bookable Online'),
         (2, 'Other Accomodation'),
         (3, 'Unpublished'),
     )
+
     CAMPGROUND_PRICE_LEVEL_CHOICES = (
         (0, 'Campground level'),
         (1, 'Mooringsite Class level'),
         (2, 'Mooringsite level'),
     )
+
     SITE_TYPE_CHOICES = (
         (0, 'Bookable Per Site'),
         (1, 'Bookable Per Site Type'),
@@ -107,7 +110,7 @@ class MooringArea(models.Model):
     park = models.ForeignKey('MarinePark', on_delete=models.PROTECT, related_name='marina')
     ratis_id = models.IntegerField(default=-1)
     contact = models.ForeignKey('Contact', on_delete=models.PROTECT, blank=True, null=True)
-    campground_type = models.SmallIntegerField(choices=CAMPGROUND_TYPE_CHOICES, default=3)
+    mooring_type = models.SmallIntegerField(choices=MOORING_TYPE_CHOICES, default=3)
     promo_area = models.ForeignKey('PromoArea', on_delete=models.PROTECT,blank=True, null=True)
     site_type = models.SmallIntegerField(choices=SITE_TYPE_CHOICES, default=0)
     address = JSONField(null=True,blank=True)
@@ -133,6 +136,7 @@ class MooringArea(models.Model):
     max_advance_booking = models.IntegerField(default =180)
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
     mooring_map = models.FileField(upload_to=update_mooring_map_filename,null=True,blank=True)
+    vessel_size_limit = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -535,15 +539,15 @@ class Mooringsite(models.Model):
     # ==============================
     @property
     def type(self):
-        return self.campsite_class.name
+        return self.mooringsite_class.name
 
     @property
     def price(self):
-        return 'Set at {}'.format(self.campground.get_price_level_display())
+        return 'Set at {}'.format(self.mooringarea.get_price_level_display())
 
     @property
     def can_add_rate(self):
-        return self.campground.price_level == 2
+        return self.mooringarea.price_level == 2
 
     @property
     def active(self):
@@ -562,7 +566,7 @@ class Mooringsite(models.Model):
     # Methods
     # =======================================
     def __is_campground_open(self):
-        return self.campground.active
+        return self.mooringarea.active
 
     def _is_open(self,period):
         '''Check if the campsite is open on a specified datetime
@@ -753,7 +757,7 @@ class MooringsiteClass(models.Model):
         can_add = False
         campsites = self.campsites.all()
         for c in campsites:
-            if c.campground.price_level == 1:
+            if c.mooringarea.price_level == 1:
                 can_add = True
                 break
         return can_add
@@ -1073,9 +1077,9 @@ class Booking(models.Model):
             other_bookings.exclude(id=self.pk)
         if customer and other_bookings and self.booking_type != 3:
             raise ValidationError('You cannot make concurrent bookings.')
-        if not self.campground.oracle_code:
-            raise ValidationError('Campground does not have an Oracle code.')
-        if self.campground.park.entry_fee_required and not self.campground.park.oracle_code:
+        #if not self.mooringarea.oracle_code:
+        #    raise ValidationError('Campground does not have an Oracle code.')
+        if self.mooringarea.park.entry_fee_required and not self.mooringarea.park.oracle_code:
             raise ValidationError('MarinePark does not have an Oracle code.')
         super(Booking,self).clean(*args,**kwargs)
 
@@ -1183,7 +1187,7 @@ class Booking(models.Model):
             details = self.details,
             cost_total = self.cost_total,
             confirmation_sent = self.confirmation_sent,
-            campground = self.campground.name,
+            campground = self.mooringarea.name,
             campsites = campsites,
             vehicles = vehicles,
             invoice=self.active_invoice
@@ -1205,7 +1209,7 @@ class Booking(models.Model):
             total_due = D('0.0')
             lines = []
             if not self.legacy_id:
-                lines = inv.order.lines.filter(oracle_code=self.campground.park.oracle_code)
+                lines = inv.order.lines.filter(oracle_code=self.mooringarea.park.oracle_code)
 
             price_dict = {}
             for line in lines:
@@ -1517,25 +1521,28 @@ class MarinaAreaListener(object):
             # Create an opening booking range on creation of Campground
              MooringAreaBookingRange.objects.create(campground=instance,range_start=datetime.now().date(),status=0)
         else:
-            if original_instance.price_level != instance.price_level:
+            pass
+            #print "INSTAN"
+            #print instance
+            #if original_instance.price_level != instance.price_level:
                 # Get all campsites
-                today = datetime.now().date()
-                campsites = instance.campsites.all()
-                campsite_list = campsites.values_list('id', flat=True)
-                rates = MooringsiteRate.objects.filter(campsite__in=campsite_list,update_level=original_instance.price_level)
-                current_rates = rates.filter(Q(date_end__isnull=True),Q(date_start__lte =  today)).update(date_end=today)
-                future_rates = rates.filter(date_start__gt = today).delete()
-                if instance.price_level == 1:
-                    #Check if there are any existant campsite class rates
-                    for c in campsites:
-                        try:
-                            ch = MooringsiteClassPriceHistory.objects.get(Q(date_end__isnull=True),id=c.campsite_class_id,date_start__lte = today)
-                            cr = MooringsiteRate(campsite=c,rate_id=ch.rate_id,date_start=today + timedelta(days=1))
-                            cr.save()
-                        except MooringsiteClassPriceHistory.DoesNotExist:
-                            pass
-                        except Exception:
-                            pass
+            #    today = datetime.now().date()
+            #    campsites = instance.campsites.all()
+            #    campsite_list = campsites.values_list('id', flat=True)
+            #    rates = MooringsiteRate.objects.filter(campsite__in=campsite_list,update_level=original_instance.price_level)
+            #    current_rates = rates.filter(Q(date_end__isnull=True),Q(date_start__lte =  today)).update(date_end=today)
+            #    future_rates = rates.filter(date_start__gt = today).delete()
+            #    if instance.price_level == 1:
+            #        #Check if there are any existant campsite class rates
+            #        for c in campsites:
+            #            try:
+            #                ch = MooringsiteClassPriceHistory.objects.get(Q(date_end__isnull=True),id=c.campsite_class_id,date_start__lte = today)
+            #                cr = MooringsiteRate(campsite=c,rate_id=ch.rate_id,date_start=today + timedelta(days=1))
+            #                cr.save()
+            #            except MooringsiteClassPriceHistory.DoesNotExist:
+             #               pass
+             #           except Exception:
+             #               pass
 
 class MooringsiteBookingRangeListener(object):
     """

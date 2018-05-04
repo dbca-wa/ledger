@@ -378,10 +378,9 @@ class MooringAreaStayHistoryViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
-
 class MooringAreaMapViewSet(viewsets.ReadOnlyModelViewSet):
 #   queryset = MooringArea.objects.exclude(campground_type=3).annotate(Min('mooringsites__rates__rate__adult'))
-    queryset = MooringArea.objects.exclude(campground_type=3)
+    queryset = MooringArea.objects.exclude(mooring_type=3)
     serializer_class = MooringAreaMapSerializer
     permission_classes = []
 #    print queryset
@@ -392,12 +391,10 @@ class MarineParksMapViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = MarineParkMapSerializer 
     permission_classes = []
 
-
 class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = MooringArea.objects.exclude(campground_type=3)
+    queryset = MooringArea.objects.exclude(mooring_type=3)
     serializer_class = MooringAreaMapFilterSerializer
     permission_classes = []
-
 
     def list(self, request, *args, **kwargs):
         data = {
@@ -974,7 +971,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         gear_type = serializer.validated_data['gear_type']
         
         # if campground doesn't support online bookings, abort!
-        if ground.campground_type != 0:
+        if ground.mooring_type != 0:
             return Response({'error': 'MooringArea doesn\'t support online bookings'}, status=400)
 
         #if not ground._is_open(start_date):
@@ -990,7 +987,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         context = {}
         if gear_type != 'all':
             context[gear_type] = True
-        sites_qs = Mooringsite.objects.filter(campground=ground).filter(**context)
+        sites_qs = Mooringsite.objects.filter(mooringarea=ground).filter(**context)
 
         # fetch rate map
         rates = {
@@ -1008,7 +1005,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'id': ground.id,
             'name': ground.name,
             'long_description': ground.long_description,
-            'map': ground.campground_map.url if ground.campground_map else None,
+            'map': ground.mooring_map.url if ground.mooring_map else None,
             'ongoing_booking': True if ongoing_booking else False,
             'ongoing_booking_id': ongoing_booking.id if ongoing_booking else None,
             'arrival': start_date.strftime('%Y/%m/%d'),
@@ -1024,7 +1021,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         # group results by campsite class
         if ground.site_type in (1, 2):
             # from our campsite queryset, generate a distinct list of campsite classes
-            classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name', 'tent', 'campervan', 'caravan')]
+#            classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name', 'tent', 'campervan', 'caravan')]
+            classes = [x for x in sites_qs.distinct('mooringsite_class__name').order_by('mooringsite_class__name').values_list('pk', 'mooringsite_class', 'mooringsite_class__name', 'tent', 'campervan', 'caravan')]
 
             classes_map = {}
             bookings_map = {}
@@ -1133,7 +1131,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             sites_qs = sites_qs.order_by('name')
 
             # from our campsite queryset, generate a digest for each site
-            sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
+            sites_map = OrderedDict([(s.name, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
             bookings_map = {}
 
             # make an entry under sites for each site
@@ -1141,7 +1139,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                 site = {
                     'name': k,
                     'id': v[0],
-                    'type': ground.campground_type,
+                    'type': ground.mooring_type,
                     'class': v[1].pk,
                     'price': '${}'.format(sum(v[2].values())) if not show_all else False,
                     'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)],
@@ -1227,8 +1225,8 @@ def create_booking(request, *args, **kwargs):
     # for a manually-specified campsite, do a sanity check
     # ensure that the campground supports per-site bookings and bomb out if it doesn't
     if campsite:
-        campsite_obj = Mooringsite.objects.prefetch_related('campground').get(pk=campsite)
-        if campsite_obj.campground.site_type != 0:
+        campsite_obj = Mooringsite.objects.prefetch_related('mooringarea').get(pk=campsite)
+        if campsite_obj.mooringarea.site_type != 0:
             return HttpResponse(geojson.dumps({
                 'status': 'error',
                 'msg': 'MooringArea doesn\'t support per-site bookings.'
@@ -1299,7 +1297,6 @@ def get_confirmation(request, *args, **kwargs):
     response['Content-Disposition'] = 'attachment; filename="confirmation-PS{}.pdf"'.format(booking_id)
 
     pdf.create_confirmation(response, booking)
-
     return response
 
 
@@ -1331,7 +1328,6 @@ class MarinaViewSet(viewsets.ModelViewSet):
             res ={
                 "Error": str(e)
             }
-
 
         return Response(res,status=http_status)
 
@@ -1556,19 +1552,19 @@ class BookingViewSet(viewsets.ModelViewSet):
 
             sql = ''
             http_status = status.HTTP_200_OK
-            sqlSelect = 'select distinct mooring_booking.id as id,mooring_booking.created,mooring_booking.customer_id, mooring_campground.name as campground_name,mooring_region.name as campground_region,mooring_booking.legacy_name,\
-                mooring_booking.legacy_id,mooring_campground.site_type as campground_site_type,\
-                mooring_booking.arrival as arrival, mooring_booking.departure as departure, mooring_campground.id as campground_id,coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
+            sqlSelect = 'select distinct mooring_booking.id as id,mooring_booking.created,mooring_booking.customer_id, mooring_mooringarea.name as campground_name,mooring_region.name as campground_region,mooring_booking.legacy_name,\
+                mooring_booking.legacy_id,mooring_mooringarea.site_type as campground_site_type,\
+                mooring_booking.arrival as arrival, mooring_booking.departure as departure, mooring_mooringarea.id as campground_id,coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
             sqlCount = 'select count(distinct mooring_booking.id)'
 
             sqlFrom = ' from mooring_booking\
-                join mooring_campground on mooring_campground.id = mooring_booking.campground_id\
-                join mooring_park on mooring_campground.park_id = mooring_park.id\
-                join mooring_district on mooring_park.district_id = mooring_district.id\
+                join mooring_mooringarea on mooring_mooringarea.id = mooring_booking.mooringarea_id\
+                join mooring_marinepark on mooring_mooringarea.park_id = mooring_marinepark.id\
+                join mooring_district on mooring_marinepark.district_id = mooring_district.id\
                 full outer join accounts_emailuser on mooring_booking.customer_id = accounts_emailuser.id\
                 join mooring_region on mooring_district.region_id = mooring_region.id\
-                left outer join mooring_campgroundgroup_campgrounds cg on cg.campground_id = mooring_booking.campground_id\
-                full outer join mooring_campgroundgroup_members cm on cm.campgroundgroup_id = cg.campgroundgroup_id'
+                left outer join mooring_mooringareagroup_campgrounds cg on cg.mooringarea_id = mooring_booking.mooringarea_id\
+                full outer join mooring_mooringareagroup_members cm on cm.mooringareagroup_id = cg.mooringareagroup_id'
 
             #sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
             #sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
@@ -1636,9 +1632,9 @@ class BookingViewSet(viewsets.ModelViewSet):
             #print(sql)
 
             cursor = connection.cursor()
-            cursor.execute("Select count(*) from mooring_booking ");
+            cursor.execute("Select count(*) from mooring_booking ")
             recordsTotal = cursor.fetchone()[0]
-            cursor.execute(sqlCount, sqlParams);
+            cursor.execute(sqlCount, sqlParams)
             recordsFiltered = cursor.fetchone()[0]
 
             cursor.execute(sql, sqlParams)
@@ -1647,13 +1643,13 @@ class BookingViewSet(viewsets.ModelViewSet):
                 dict(zip(columns, row))
                 for row in cursor.fetchall()
             ]
-            bookings_qs = Booking.objects.filter(id__in=[b['id'] for b in data]).prefetch_related('campground', 'campsites', 'campsites__campsite', 'customer', 'regos', 'history', 'invoices', 'canceled_by')
+            bookings_qs = Booking.objects.filter(id__in=[b['id'] for b in data]).prefetch_related('mooringarea', 'campsites', 'campsites__campsite', 'customer', 'regos', 'history', 'invoices', 'canceled_by')
             booking_map = {b.id: b for b in bookings_qs}
             clean_data = []
             for bk in data:
                 cg = None
                 booking = booking_map[bk['id']]
-                cg = booking.campground
+                cg = booking.mooringarea
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
                 bk['booking_type'] = booking.booking_type
@@ -1689,7 +1685,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                     else:
                         first_campsite = booking.first_campsite
                         bk['campground_site_type'] = first_campsite.type if first_campsite else ""
-                        if booking.campground.site_type != 2:
+                        if booking.mooringarea.site_type != 2:
                             bk['campground_site_type'] = '{}{}'.format('{} - '.format(first_campsite.name if first_campsite else ""),'({})'.format(bk['campground_site_type'] if bk['campground_site_type'] else ""))
                 else:
                     bk['campground_site_type'] = ""
@@ -1817,7 +1813,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def destroy(self, request, *args, **kwargs):
-
         http_status = status.HTTP_200_OK
         try:
             reason = request.GET.get('reason',None)
@@ -1917,6 +1912,7 @@ class BookingViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET'])
     def history(self, request, *args, **kwargs):
         http_status = status.HTTP_200_OK
+        print "HISTORY OOKING"
         try:
             history = self.get_object().history.all()
             data = BookingHistorySerializer(history,many=True).data

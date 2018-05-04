@@ -35,7 +35,6 @@ from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
 from drf_extra_fields.geo_fields import PointField
 
-
 class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
         model = District
@@ -197,10 +196,11 @@ class MooringAreaMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'name',
             'description',
             'features',
-            'campground_type',
+            'mooring_type',
             'park',
             'info_url',
             'images',
+            'vessel_size_limit'
  #           'price_hint'
         )
 
@@ -263,7 +263,7 @@ class MooringAreaDatatableSerializer(serializers.ModelSerializer):
             'ratis_id',
             'active',
             'current_closure',
-            'campground_type'
+            'mooring_type'
         )
 
     def get_park(self,obj):
@@ -274,13 +274,14 @@ class MooringAreaSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
     images = MooringAreaImageSerializer(many=True,required=False)
     mooring_map = serializers.FileField(read_only=True,required=False,allow_empty_file=True)
+
     class Meta:
         model = MooringArea
         fields = (
             'url',
             'id',
             'site_type',
-            'campground_type',
+            'mooring_type',
             'name',
             'address',
             'contact',
@@ -323,7 +324,7 @@ class MooringAreaSerializer(serializers.ModelSerializer):
         return dict(MooringArea.CAMPGROUND_PRICE_LEVEL_CHOICES).get(obj.price_level)
 
     def get_campground_type(self, obj):
-        return dict(MooringArea.CAMPGROUND_TYPE_CHOICES).get(obj.campground_type)
+        return dict(MooringArea.MOORING_TYPE_CHOICES).get(obj.campground_type)
 
     def __init__(self, *args, **kwargs):
         try:
@@ -337,7 +338,7 @@ class MooringAreaSerializer(serializers.ModelSerializer):
         super(MooringAreaSerializer, self).__init__(*args, **kwargs)
         if formatted:
             self.fields['site_type'] = serializers.SerializerMethodField()
-            self.fields['campground_type'] = serializers.SerializerMethodField()
+            self.fields['mooring_type'] = serializers.SerializerMethodField()
             self.fields['price_level'] = serializers.SerializerMethodField()
             self.fields['park'] = serializers.SerializerMethodField()
         if method == 'get':
@@ -347,10 +348,10 @@ class MooringAreaSerializer(serializers.ModelSerializer):
 
 class MarinaSerializer(serializers.HyperlinkedModelSerializer):
     district = DistrictSerializer()
-    campgrounds = MooringAreaSerializer(many=True)
+    mooringareas = MooringAreaSerializer(many=True)
     class Meta:
         model = MarinePark 
-        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'campgrounds','entry_fee_required')
+        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'mooringareas','entry_fee_required')
 
 class MooringsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
@@ -459,15 +460,16 @@ class BookingRegoSerializer(serializers.ModelSerializer):
         fields = ('rego','type','booking', 'entry_fee')
 
 class BookingSerializer(serializers.ModelSerializer):
-    campground_name = serializers.CharField(source='campground.name',read_only=True)
-    campground_region = serializers.CharField(source='campground.region',read_only=True)
-    campground_site_type = serializers.CharField(source='campground.site_type',read_only=True)
+    campground_name = serializers.CharField(source='mooringarea.name',read_only=True)
+    campground_region = serializers.CharField(source='mooringarea.region',read_only=True)
+    campground_site_type = serializers.CharField(source='mooringarea.site_type',read_only=True)
     campsites = serializers.SerializerMethodField()
     invoices = serializers.SerializerMethodField()
     regos = BookingRegoSerializer(many=True,read_only=True)
+
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','mooringarea','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
         read_only_fields = ('vehicle_payment_status','refund_status')
 
 
@@ -686,6 +688,7 @@ class BookingSettlementReportSerializer(serializers.Serializer):
 class BookingHistorySerializer(serializers.ModelSerializer):
     updated_by = serializers.CharField(source='updated_by.get_full_name')
     invoice = serializers.CharField(source='invoice.reference')
+
     class Meta:
         model = BookingHistory
         fields = (
@@ -701,7 +704,6 @@ class BookingHistorySerializer(serializers.ModelSerializer):
             'vehicles'
         )
 
-
 class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
@@ -711,7 +713,6 @@ class CountrySerializer(serializers.ModelSerializer):
             'name',
             'display_order'
         )
-
 
 # User Serializers
 # --------------------------

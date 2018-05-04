@@ -31,7 +31,13 @@ def get_all_officers():
     return EmailUser.objects.filter(groups__name='Marinastay Officers')
 
 def can_view_campground(user,campground):
-    for g in campground.campgroundgroup_set.all():
-        if user in g.members.all():
-            return True
+    print "JASON"
+    from pprint import pprint
+    #pprint(vars(campground))
+    #pprint(vars(campground.campgroundgroup_set))
+    #print "JASON END"
+
+    #for g in campground.campgroundgroup_set.all():
+    #    if user in g.members.all():
+    #        return True
     return False

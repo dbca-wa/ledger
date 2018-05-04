@@ -132,7 +132,7 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                         },
                         cost_total= Decimal(cost_total),
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
-                        campground=campsite.campground,
+                        mooringarea=campsite.mooringarea,
                         customer = customer
                     )
         for i in range((end_date-start_date).days):
@@ -209,11 +209,11 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
 
     # generate a campground-to-campsite-list map
-    mooring_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.campground.pk == cg[0]] for cg in campsites_qs.distinct('mooring').values_list('mooring')}
+    mooring_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.mooringarea.pk == cg[0]] for cg in campsites_qs.distinct('mooringarea').values_list('mooringarea')}
 
     # strike out whole campground closures
     cgbr_qs =    MooringAreaBookingRange.objects.filter(
-        Q(mooring__in=mooring_map.keys()),
+        Q(campground__in=mooring_map.keys()),
         Q(status=1),
         Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
     )
@@ -264,18 +264,22 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
 
     # strike out days after the max_advance_booking
     for site in campsites_qs:
-        stop = today + timedelta(days=site.campground.max_advance_booking)
+        stop = today + timedelta(days=site.mooringarea.max_advance_booking)
         stop_mark = min(max(stop, start_date), end_date)
         if start_date > stop:
             for i in range((end_date-stop_mark).days):
                 results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
-
+    print "MOORING SIRE"
+    print campsites_qs.first()
     # Get the current stay history
     stay_history = MooringAreaStayHistory.objects.filter(
                     Q(range_start__lte=start_date,range_end__gte=start_date)|# filter start date is within period
                     Q(range_start__lte=end_date,range_end__gte=end_date)|# filter end date is within period
                     Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
-                    ,campground=campsites_qs.first().campground)
+                    ,campground=campsites_qs.first().mooringarea
+                    )
+    print "DID I GET HIS"
+    print stay_history 
     if stay_history:
         max_days = min([x.max_days for x in stay_history])
     else:
@@ -427,7 +431,7 @@ def get_campsite_current_rate(request,campsite_id,start_date,end_date):
                 rate = RateSerializer(price_history[0].rate,context={'request':request}).data
                 rate['campsite'] = campsite_id
                 res.append({
-                    "date" : single_date.strftime("%Y-%m-%d") ,
+                    "date" : single_date.strftime("%Y-%m-%d"),
                     "rate" : rate
                 })
     return res
@@ -478,10 +482,10 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                     campsite = Mooringsite.objects.get(id=c)
                     if lines:
                         price = str((num_days * Decimal(r[k])))
-                        if not booking.campground.oracle_code:
-                            raise Exception('The campground selected does not have an Oracle code attached to it.')
+                        #if not booking.mooringarea.oracle_code:
+                        #    raise Exception('The mooringarea selected does not have an Oracle code attached to it.')
                         end_date = end + timedelta(days=1)
-                        invoice_lines.append({'ledger_description':'Camping fee {} ({} - {})'.format(k,start.strftime('%d-%m-%Y'),end_date.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":booking.campground.oracle_code})
+                        invoice_lines.append({'ledger_description':'Mooring fee {} ({} - {})'.format(k,start.strftime('%d-%m-%Y'),end_date.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":booking.mooringarea.oracle_code})
                     else:
                         price = (num_days * Decimal(r[k])) * v
                         total_price += price
@@ -491,11 +495,11 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     else:
         vehicles = old_booking.regos.all()
     if vehicles:
-        if booking.campground.park.entry_fee_required:
+        if booking.mooringarea.park.entry_fee_required:
             # Update the booking vehicle regos with the park entry requirement
             vehicles.update(park_entry_fee=True)
-            if not booking.campground.park.oracle_code:
-                raise Exception('A park entry Oracle code has not been set for the park that the campground belongs to.')
+            if not booking.mooringarea.park.oracle_code:
+                raise Exception('A marine park entry Oracle code has not been set for the park that the mooringarea belongs to.')
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
             'vehicle': vehicles.filter(entry_fee=True, type='vehicle'),
@@ -512,7 +516,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                         'ledger_description': 'Marina entry fee - {}'.format(k),
                         'quantity': v.count(),
                         'price_incl_tax': price,
-                        'oracle_code': booking.campground.park.oracle_code
+                        'oracle_code': booking.mooringarea.park.oracle_code
                     })
                 else:
                     price =  Decimal(park_entry_rate[k]) * v.count()
@@ -561,6 +565,7 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
             customer = old_booking.customer,
             updating_booking = True
     )
+
     # Move all the vehicles to the new booking
     for r in old_booking.regos.all():
         r.booking = booking
@@ -569,11 +574,10 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     lines = price_or_lineitems(request,booking,booking.campsite_id_list)
     booking_arrival = booking.arrival.strftime('%d-%m-%Y')
     booking_departure = booking.departure.strftime('%d-%m-%Y')
-    reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.campground.name)
+    reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.mooringarea.name)
     # Proceed to generate invoice
     checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
     internal_create_booking_invoice(booking, checkout_response)
-
 
     # Get the new invoice
     new_invoice = booking.invoices.first()
@@ -602,7 +606,6 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     # Change the booking for the selected invoice
     new_invoice.booking = old_booking
     new_invoice.save()
-
     return booking
 
 def update_booking(request,old_booking,booking_details):
@@ -611,6 +614,7 @@ def update_booking(request,old_booking,booking_details):
     same_campground = False
     same_details = False
     same_vehicles = True
+
     with transaction.atomic():
         try:
             set_session_booking(request.session, old_booking)
@@ -787,11 +791,12 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             "invoice_text": invoice_text,
             "vouchers": vouchers,
         }
+
+        print " AM I GETTING HERE"
         if not internal:
             parameters["check_url"] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
         if internal or request.user.is_anonymous():
             parameters['basket_owner'] = booking.customer.id
-
 
         url = request.build_absolute_uri(
             reverse('payments:ledger-initial-checkout')
@@ -802,7 +807,6 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=COOKIES,
                                  data=json.dumps(parameters))
         response.raise_for_status()
-
         return response
 
 

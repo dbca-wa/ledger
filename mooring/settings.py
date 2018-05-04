@@ -4,7 +4,7 @@ from decimal import Decimal
 ROOT_URLCONF = 'mooring.urls'
 SITE_ID = 1
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_ps')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_mo')
 
 # number of seconds before expiring a temporary booking
 BOOKING_TIMEOUT = 1200

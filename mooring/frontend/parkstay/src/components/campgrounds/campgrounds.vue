@@ -57,12 +57,12 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group pull-right">
-                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Campground</a>
-                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Campgrounds</a>
+                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Marine Park</a>
+                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Marine Park</a>
                                 </div>
                             </div>
                         </form>
-                        <datatable :dtHeaders="['Campground','Status','Region','District','Park','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
+                        <datatable :dtHeaders="['Mooring Area','Status','Region','District','Park','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
                     </div>
                 </div>
             </div>
@@ -90,7 +90,7 @@ module.exports = {
         return {
             grounds: [],
             rows: [],
-            title: 'Campgrounds',
+            title: 'Moorings',
             selected_status: 'All',
             selected_region: 'All',
             selected_park: 'All',

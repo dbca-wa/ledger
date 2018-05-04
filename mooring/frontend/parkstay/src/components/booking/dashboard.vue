@@ -15,7 +15,7 @@
           <div class="row">
             <div class="col-md-4">
                 <div class="form-group">
-                  <label for="">Campground</label>
+                  <label for="">Mooring Area</label>
                   <select v-show="isLoading" class="form-control" >
                       <option value="">Loading...</option>
                   </select>
@@ -275,7 +275,7 @@ export default {
                     },
                 ]
             },
-            dtHeaders:["Campground","Region","Person","Confirmation #"," Camp Site(Type)","Status","From","To","Action"],
+            dtHeaders:["Mooring","Region","Person","Confirmation #"," Mooring Site(Type)","Status","From","To","Action"],
             dateFromPicker:null,
             dateToPicker:null,
             datepickerOptions:{

@@ -15,7 +15,7 @@ from django.conf import settings
 from mooring.models import Booking, BookingVehicleRego
 
 
-DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'ps', 'img', 'mooring_header.png')
+DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring','img','mooring_header.png')
 
 LICENCE_HEADER_IMAGE_WIDTH = 840
 LICENCE_HEADER_IMAGE_HEIGHT = 166
@@ -129,8 +129,8 @@ def create_confirmation(confirmation_buffer, booking):
     
 
     table_data = []
-    table_data.append([Paragraph('Campground', styles['BoldLeft']), Paragraph('{}, {}'.format(booking.campground.name, booking.campground.park.name), styles['BoldLeft'])])
-    campsite = u'{}'.format(booking.first_campsite.type) if booking.campground.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
+    table_data.append([Paragraph('Campground', styles['BoldLeft']), Paragraph('{}, {}'.format(booking.mooringarea.name, booking.mooringarea.park.name), styles['BoldLeft'])])
+    campsite = u'{}'.format(booking.first_campsite.type) if booking.mooringarea.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
     table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
     
     table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph(booking.stay_dates, styles['Left'])])
@@ -156,8 +156,8 @@ def create_confirmation(confirmation_buffer, booking):
     else:
         table_data.append([Paragraph('Vehicles', styles['BoldLeft']), Paragraph('No vehicles', styles['Left'])])
         
-    if booking.campground.additional_info:        
-        table_data.append([Paragraph('Additional confirmation information', styles['BoldLeft']), Paragraph(booking.campground.additional_info, styles['Left'])])
+    if booking.mooringarea.additional_info:        
+        table_data.append([Paragraph('Additional confirmation information', styles['BoldLeft']), Paragraph(booking.mooringarea.additional_info, styles['Left'])])
 
     elements.append(Table(table_data, colWidths=(200, None), style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
 

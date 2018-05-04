@@ -371,9 +371,11 @@ export default {
         validateRego: function(e) {
             formValidate.isNotEmpty(e.target);
         },
-        updateCampground(){
+        updateCampground() {
             let vm = this;
-            vm.campground = vm.booking.campground ? vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.campground)) : null;
+            console.log('SETTING CAMPGROUND');
+            vm.campground = vm.booking.mooringarea ? vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.mooringarea)) : null;
+            console.log('AM I'+vm.campground);
             vm.fetchSites();
         },
         updatePrices: function() {
@@ -498,6 +500,8 @@ export default {
         },
         fetchPark: function() {
             let vm = this;
+            console.log("FETCHPARK");
+            console.log(vm);
             vm.loading.push('fetching park');
             vm.$http.get(api_endpoints.park(vm.campground.park)).then((response) => {
                 vm.park = response.body;
@@ -841,7 +845,11 @@ export default {
             vm.selected_arrival = vm.booking.arrival;
             vm.selected_departure = vm.booking.departure;
             // set the campground
-            vm.campground = vm.booking.campground ? vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.campground)) : null;
+            console.log('MOo LOG');
+            console.log(vm.booking.mooringarea);
+            console.log(vm.campgrounds);
+            console.log(vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.mooringarea)));
+            vm.campground = vm.booking.mooringarea ? vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.mooringarea)) : null;
             // fetch park details
             vm.fetchPark();
             // fetch the sites

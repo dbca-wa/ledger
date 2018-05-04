@@ -48,7 +48,7 @@
                                 {% block left_menu_items %}
                                     {% if request.user.is_staff %}
                                     <li><a href="{% url 'dash-campgrounds'%}">Mooring</a></li>
-                                    <li><a href="{% url 'dash-campsite-types'%}">Camp Site Types</a></li>
+                                    <li><a href="{% url 'dash-campsite-types'%}">Mooring Types</a></li>
                                     <li><a href="{% url 'dash-bulkpricing'%}">Bulk Pricing</a></li>
                                     <li><a href="{% url 'dash-bookings'%}">Existing Bookings</a></li>
                                     {% else %}
