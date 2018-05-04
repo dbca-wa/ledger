@@ -139,10 +139,6 @@ export default {
                 columns: [
                     {
                         data: "id",
-                        /*mRender:function(data,type,full){
-                            //return full.reference;
-                            return '<span data-toggle="tooltip" title="' + data + '">' + data + '</span>';
-                        }*/
                         'render':function(data,type,full){
                         if(!vm.is_external){
                             var result = '';
@@ -370,10 +366,6 @@ export default {
                 }
             });
 
-            $(vm.$refs.proposal_datatable.vmDataTable).on('draw.dt', function () {
-                    $('[data-toggle="tooltip"]').tooltip();
-                });
-
             // End Proposal Date Filters
             // Internal Reissue listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reissue-approval]', function(e) {
@@ -389,21 +381,21 @@ export default {
                 vm.cancelApproval(id);
             });
 
-            //Internal Cancel listener
+            //Internal Suspend listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-suspend-approval]', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-suspend-approval');
                 vm.suspendApproval(id);
             });
 
-            // Internal Reissue listener
+            // Internal Reinstate listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reinstate-approval]', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-reinstate-approval');
                 vm.reinstateApproval(id);
             });
 
-            //Internal Cancel listener
+            //Internal/ External Surrender listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-surrender-approval]', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-surrender-approval');
