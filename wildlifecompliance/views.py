@@ -79,4 +79,13 @@ def first_time(request):
     return render(request, 'wildlifecompliance/dash/index.html', context)
 
 
+class HealthCheckView(TemplateView):
+    """A basic template view not requiring auth, used for service monitoring.
+    """
+    template_name = 'wildlifecompliance/healthcheck.html'
 
+    def get_context_data(self, **kwargs):
+        context = super(HealthCheckView, self).get_context_data(**kwargs)
+        context['page_title'] = 'Wildlife Compliance application status'
+        context['status'] = 'HEALTHY'
+        return context

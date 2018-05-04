@@ -57,6 +57,7 @@ urlpatterns = [
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     url(r'^application/$', application_views.ApplicationView.as_view(), name='application'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
+    url('^healthcheck/', views.HealthCheckView.as_view(), name='health_check'),
 ] + ledger_patterns
 
 if settings.DEBUG:  # Serve media locally in development.
