@@ -195,9 +195,17 @@ class OrganisationUnlinkUserSerializer(serializers.Serializer):
         
 
 class OrgUserAcceptSerializer(serializers.Serializer):
-    
+
     first_name = serializers.CharField()
     last_name =serializers.CharField()
     email= serializers.EmailField()
-    mobile_number = serializers.IntegerField(allow_null=True)
-    phone_number = serializers.IntegerField(allow_null=True)
+    mobile_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
+    def validate(self, data):
+        '''
+        Check for either mobile number or phone number
+        '''
+        if not (data['mobile_number'] or data['phone_number']):
+            raise serializers.ValidationError("User must have an associated phone number or mobile number.")
+        return data
