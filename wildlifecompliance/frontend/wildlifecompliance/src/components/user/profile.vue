@@ -341,6 +341,8 @@ export default {
             },
             
             newOrg: {
+                'name': '',
+                'abn': '',
                 'detailsChecked': false,
                 'exists': false
             },
@@ -648,27 +650,46 @@ export default {
         orgRequest: function() {
             let vm = this;
             vm.registeringOrg = true;
-            let data = new FormData()
-            data.append('name', vm.newOrg.name)
-            data.append('abn', vm.newOrg.abn)
-            data.append('identification', vm.uploadedFile)
-            data.append('role',vm.role)
-            vm.$http.post(api_endpoints.organisation_requests,data,{
-                emulateJSON:true
-            }).then((response) => {
+            let data = new FormData();
+            data.append('name', vm.newOrg.name);
+            data.append('abn', vm.newOrg.abn);
+            data.append('identification', vm.uploadedFile);
+            data.append('role',vm.role);
+            if (vm.newOrg.name == '' || vm.newOrg.abn == '' || vm.uploadedFile == null){
                 vm.registeringOrg = false;
-                vm.uploadedFile = null;
-                vm.addingCompany = false;
-                vm.resetNewOrg();
                 swal(
-                    'Sent',
-                    'Your organisation request has been successfuly submited.',
-                    'success'
+                    'Error submitting organisation request',
+                    'Please enter the organisation details and attach a file before submitting your request.',
+                    'error'
                 )
-            }, (error) => {
-                vm.registeringOrg = false;
-            });
-
+            } else {
+                vm.$http.post(api_endpoints.organisation_requests,data,{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    swal(
+                        'Sent',
+                        'Your organisation request has been successfully submitted.',
+                        'success'
+                    );
+                    window.location.reload(true);
+                }, (error) => {
+                    console.log(error);
+                    vm.registeringOrg = false;
+                    let error_msg = '<br/>';
+                    for (var key in error.body) {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                    swal(
+                        'Error submitting organisation request',
+                        error_msg,
+                        'error'
+                    );
+                });
+            }
         },
         toggleSection: function (e) {
             let el = e.target;
