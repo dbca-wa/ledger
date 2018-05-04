@@ -233,8 +233,11 @@
                                   <div class="col-sm-6">
                                       <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="">
                                   </div>
+                                  <div class="col-sm-2">
+                                      <button @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
+                                  </div>
                               </div>
-                              <div class="form-group" >
+                              <div class="form-group" v-if="newOrg.detailsChecked">
                                     <label class="col-sm-12" style="text-align:left;">
                                       Please upload a letter on organisation letter head stating that you are a consultant for the origanisation.
                                         <span class="btn btn-info btn-file">
@@ -367,10 +370,13 @@ export default {
     watch: {
         managesOrg: function() {
             if (this.managesOrg == 'Yes'){
+              this.newOrg.detailsChecked = false;
               this.role = 'employee'
             } else if (this.managesOrg == 'Consultant'){
+              this.newOrg.detailsChecked = false;
               this.role ='consultant'
             }else{this.role = null
+              this.newOrg.detailsChecked = false;
             }
 
             if (this.managesOrg  == 'Yes' && !this.hasOrgs && this.newOrg){
@@ -670,12 +676,13 @@ export default {
                     vm.uploadedFile = null;
                     vm.addingCompany = false;
                     vm.resetNewOrg();
-                    swal(
-                        'Sent',
-                        'Your organisation request has been successfully submitted.',
-                        'success'
-                    );
-                    window.location.reload(true);
+                    swal({
+                        title: 'Sent',
+                        html: 'Your organisation request has been successfully submitted.',
+                        type: 'success',
+                    }).then(() => {
+                        window.location.reload(true);
+                    });
                 }, (error) => {
                     console.log(error);
                     vm.registeringOrg = false;

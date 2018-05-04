@@ -602,7 +602,7 @@ class OrganisationRequest(models.Model):
         except ledger_organisation.DoesNotExist:
             ledger_org = ledger_organisation.objects.create(name=self.name,abn=self.abn)
         # Create Organisation in wildlifecompliance
-        org = Organisation.objects.create(organisation=ledger_org)
+        org, created = Organisation.objects.get_or_create(organisation=ledger_org)
         #org.generate_pins()
         # Link requester to organisation
         delegate = UserDelegation.objects.create(user=self.requester,organisation=org)
