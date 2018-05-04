@@ -635,7 +635,7 @@ export default {
           ];
           fields.splice(4, 0, "Email");
           fields.splice(5, 0, "Phone");
-          fields.splice(9, 0, "Amount Due");
+          fields.splice(9, 0, "Booking Total");
           fields.splice(10, 0, "Amount Paid");
           fields.splice(22, 0, "Booking Type");
           fields.splice(23, 0, "Override Reason");
@@ -676,7 +676,19 @@ export default {
                   bk[field] = booking.id;
                   break;
                 case 7:
-                  bk[field] = booking.campground_site_type;
+                  var results = {};
+                  for (var i = 0; i < booking.campground_site_type.length; i++) {
+                    if (results[booking.campground_site_type[i].type] == undefined) {
+                      results[booking.campground_site_type[i].type] = 0;
+                    }
+                    results[booking.campground_site_type[i].type] += 1;
+                  }
+                  var resultList = [];
+                  for (var index in results) {
+                    resultList.push(`${results[index]}x ${index}`);
+                  }
+                  var resultString = resultList.join(", ");
+                  bk[field] = resultString;
                   break;
                 case 8:
                   bk[field] = booking.status;
