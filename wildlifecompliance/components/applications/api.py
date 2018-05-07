@@ -2,6 +2,7 @@ import traceback
 import os
 import datetime
 import base64
+import json
 import geojson
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
@@ -428,11 +429,20 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
             
             app_data = request.data.copy()
-            # print(app_data)
-            # print(request.data.get('behalf_of'))
-            licence_class_data=app_data.pop('licence_class')
-            print(type(licence_class_data))
-            licence_data=get_licence_data(licence_class_data)
+            print(type(app_data))
+            print(app_data)
+            # behalf_of=app_data.pop('behalf_of')
+            # print(behalf_of)
+            # licence_class_data=app_data.pop('licence_class')
+            # licence_class_data=app_data.pop('licence_class')
+            
+            # print(type(licence_class_data))
+            # print(licence_class_data)
+            # d= json.JSONEncoder()
+            # licence_class_data_json = d.encode(licence_class_data)
+            # print(type(licence_class_data_json))
+            # print(licence_class_data_json)
+            # licence_data=get_licence_data(licence_class_data)
             # print(type(licence_data))
             # print(licence_class_data)
             # activities=app_data.pop('licence_activity')
