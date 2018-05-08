@@ -238,6 +238,10 @@ export default {
                                 else{
                                     links +=  `<a href='/internal/approval/${full.id}'>View</a><br/>`;
                                 }
+                                if(full.renewal_document && full.renewal_sent){
+                                  links +=  `<a href='${full.renewal_document}' target='_blank'>Renewal Notice</a><br/>`;  
+
+                                }
                             }
                             else{
                                 if (full.can_reissue) {

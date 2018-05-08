@@ -18,7 +18,7 @@ from disturbance.components.approvals.email import (
 import itertools
 
 class Command(BaseCommand):
-    help = 'Change the status of Approvals to Expired when past expiry date'
+    help = 'Change the status of Approvals to Surrender/ Cancelled/ suspended.'
 
     def handle(self, *args, **options):
         try:

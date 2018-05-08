@@ -37,6 +37,10 @@ class ApprovalReinstateNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/approval_reinstate_notification.html'
     txt_template = 'disturbance/emails/approval_reinstate_notification.txt'
 
+class ApprovalRenewalNotificationEmail(TemplateEmailBase):
+    subject = 'Your Approval renewal.'
+    html_template = 'disturbance/emails/approval_renewal_notification.html'
+    txt_template = 'disturbance/emails/approval_renewal_notification.txt'
 
 def send_approval_expire_email_notification(approval):
     email = ApprovalExpireNotificationEmail()
@@ -117,6 +121,36 @@ def send_approval_surrender_email_notification(approval):
     sender = settings.DEFAULT_FROM_EMAIL    
     _log_approval_email(msg, approval, sender=sender_user)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
+
+#approval renewal notice
+def send_approval_renewal_email_notification(approval):
+    email = ApprovalRenewalNotificationEmail()
+    proposal = approval.current_proposal
+
+    context = {
+        'approval': approval,
+        'proposal': approval.current_proposal
+                    
+    }
+    sender = settings.DEFAULT_FROM_EMAIL
+    try:
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    except:
+        EmailUser.objects.create(email=sender, password='')
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    #attach renewal notice
+    renewal_document= approval.renewal_document._file
+    if renewal_document is not None:
+        file_name = approval.renewal_document.name
+        attachment = (file_name, renewal_document.file.read(), 'application/pdf')
+        attachment = [attachment]
+    else:
+        attachment = []   
+    msg = email.send(proposal.submitter.email, attachments=attachment, context=context)
+    sender = settings.DEFAULT_FROM_EMAIL    
+    _log_approval_email(msg, approval, sender=sender_user)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
+
 
 
 def send_approval_reinstate_email_notification(approval, request):

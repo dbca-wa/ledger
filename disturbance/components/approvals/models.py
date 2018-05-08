@@ -29,8 +29,8 @@ from disturbance.components.approvals.email import (
 #from disturbance.components.approvals.email import send_referral_email_notification
 
 
-def update_approval_doc_filename(instance, filename):
-    return 'approvals/{}/documents/{}'.format(instance.id,filename)
+def update_approval_doc_filename(instance, filename): 
+    return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
 
 def update_approval_comms_log_filename(instance, filename):
     return 'approvals/{}/communications/{}/{}'.format(instance.log_entry.approval.id,instance.id,filename)
@@ -61,6 +61,7 @@ class Approval(models.Model):
     region = models.CharField(max_length=255)
     tenure = models.CharField(max_length=255,null=True)
     title = models.CharField(max_length=255)
+    renewal_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='renewal_document')
     renewal_sent = models.BooleanField(default=False)
     issue_date = models.DateField()
     original_issue_date = models.DateField(auto_now_add=True)
@@ -110,6 +111,11 @@ class Approval(models.Model):
     def generate_doc(self):
         from disturbance.components.approvals.pdf import create_approval_doc 
         self.licence_document = create_approval_doc(self,self.current_proposal)
+        self.save()
+
+    def generate_renewal_doc(self):
+        from disturbance.components.approvals.pdf import create_renewal_doc 
+        self.renewal_document = create_renewal_doc(self,self.current_proposal)
         self.save()
 
     def log_user_action(self, action, request):
