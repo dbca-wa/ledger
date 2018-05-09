@@ -27,6 +27,7 @@ router.register(r'application_conditions',application_api.ApplicationConditionVi
 router.register(r'application_standard_conditions',application_api.ApplicationStandardConditionViewSet)
 router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
+router.register(r'my_organisations',org_api.MyOrganisationsViewSet)
 router.register(r'users',users_api.UserViewSet)
 router.register(r'profiles',users_api.ProfileViewSet)
 router.register(r'my_profiles',users_api.MyProfilesViewSet)

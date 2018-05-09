@@ -157,13 +157,13 @@
                                              </div>
                                              <div class="col-sm-6">
                                   
-                                                <div class="form-group" :disabled ='!org.edits'>
+                                                <div class="form-group" :disabled ='!myorgperms.is_admin'>
                                                     <label for="" class="col-sm-6 control-label"> Organisation Administrator Pin Code 1:</label>
                                                     <div class="col-sm-6">
                                                         <label class="control-label">{{org.pins.one}}</label>
                                                     </div>
                                                 </div>
-                                                <div class="form-group" :disabled ='!org.edits'>
+                                                <div class="form-group" :disabled ='!myorgperms.is_admin'>
                                                     <label for="" class="col-sm-6 control-label" >Organisation Administrator Pin Code 2:</label>
                                                     <div class="col-sm-6">
                                                         <label class="control-label">{{org.pins.two}}</label>
@@ -240,6 +240,7 @@ export default {
             org: {
                 address: {}
             },
+            myorgperms: null,
             loading: [],
             countries: [],
             updatingDetails: false,
@@ -333,12 +334,14 @@ export default {
     beforeRouteEnter: function(to, from, next){
         let initialisers = [
             utils.fetchCountries(),
-            utils.fetchOrganisation(to.params.org_id)
+            utils.fetchOrganisation(to.params.org_id),
+            utils.fetchOrganisationPermissions(to.params.org_id)
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
                 vm.countries = data[0];
                 vm.org = data[1];
+                vm.myorgperms = data[2];
                 vm.org.address = vm.org.address != null ? vm.org.address : {};
                 vm.org.pins = vm.org.pins != null ? vm.org.pins : {};
             });
@@ -346,11 +349,13 @@ export default {
     },
     beforeRouteUpdate: function(to, from, next){
         let initialisers = [
-            utils.fetchOrganisation(to.params.org_id)
+            utils.fetchOrganisation(to.params.org_id),
+            utils.fetchOrganisationPermissions(to.params.org_id)
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
                 vm.org = data[0];
+                vm.myorgperms = data[1];
                 vm.org.address = vm.org.address != null ? vm.org.address : {};
                 vm.org.pins = vm.org.pins != null ? vm.org.pins : {};
             });
