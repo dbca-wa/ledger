@@ -9,7 +9,7 @@ from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 
 @python_2_unicode_compatible
 class Region(models.Model):
-    name = models.CharField(max_length=200, blank=False, unique=True)
+    name = models.CharField(max_length=200, unique=True)
     forest_region = models.BooleanField(default=False)
 
     class Meta:
@@ -33,6 +33,45 @@ class District(models.Model):
 
     def __str__(self):
         return self.name
+
+
+@python_2_unicode_compatible
+class ApplicationType(models.Model):
+    name = models.CharField(max_length=64, unique=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'name']
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return self.name
+ 
+@python_2_unicode_compatible
+class Activity(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    order = models.PositiveSmallIntegerField(default=0)
+    application_type = models.ForeignKey(ApplicationType, related_name='activity_app_types')
+
+    class Meta:
+        ordering = ['order', 'name']
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return '{}: {}'.format(self.name, self.application_type)
+
+@python_2_unicode_compatible
+class Tenure(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    order = models.PositiveSmallIntegerField(default=0)
+    application_type = models.ForeignKey(ApplicationType, related_name='tenure_app_types')
+
+    class Meta:
+        ordering = ['order', 'name']
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return '{}: {}'.format(self.name, self.application_type)
 
 
 @python_2_unicode_compatible

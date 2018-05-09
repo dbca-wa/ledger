@@ -122,4 +122,7 @@ class ApprovalUserAction(UserAction):
 @receiver(pre_delete, sender=Approval)
 def delete_documents(sender, instance, *args, **kwargs):
     for document in instance.documents.all():
-        document.delete()
+        try:
+            document.delete()
+        except:
+            pass

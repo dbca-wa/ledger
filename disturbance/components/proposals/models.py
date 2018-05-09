@@ -17,7 +17,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
-from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
+from disturbance.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Activity, Tenure
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
@@ -272,10 +272,14 @@ class Proposal(RevisionedMixin):
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     proposed_decline_status = models.BooleanField(default=False)
     # Special Fields
-    activity = models.CharField(max_length=255,null=True,blank=True)
-    region = models.CharField(max_length=255,null=True,blank=True)
     title = models.CharField(max_length=255,null=True,blank=True)
-    tenure = models.CharField(max_length=255,null=True,blank=True)
+    #activity = models.CharField(max_length=255,null=True,blank=True)
+    #region = models.CharField(max_length=255,null=True,blank=True)
+    #tenure = models.CharField(max_length=255,null=True,blank=True)
+    activity = models.ForeignKey(Activity, null=True, blank=True)
+    region = models.ForeignKey(Region, null=True, blank=True)
+    district = models.ForeignKey(District, null=True, blank=True)
+    tenure = models.ForeignKey(Tenure, null=True, blank=True)
 
     class Meta:
         app_label = 'disturbance'

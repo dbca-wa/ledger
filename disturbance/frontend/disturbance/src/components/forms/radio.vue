@@ -10,7 +10,7 @@
     <div v-else>
         <div class="radio">
             <label>
-                <input ref="radioB" :name="name" type="radio" :value="value" @change="handleChange"  :required="isRequired" :data-conditions="options" :checked="isChecked"/>{{ label}}
+                <input ref="radioB" :name="name" type="radio" :value="value" @change="handleChange"  :required="true" :data-conditions="options" :checked="isChecked"/>{{ label}}
             </label>
         </div>
     </div>

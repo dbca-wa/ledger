@@ -7,8 +7,8 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
-from disturbance.components.main.models import Region, District
-from disturbance.components.main.serializers import RegionSerializer, DistrictSerializer
+from disturbance.components.main.models import Region, District, Activity, Tenure, ApplicationType
+from disturbance.components.main.serializers import RegionSerializer, DistrictSerializer, ActivitySerializer, TenureSerializer, ApplicationTypeSerializer
 
 
 class DistrictViewSet(viewsets.ReadOnlyModelViewSet):
@@ -18,4 +18,16 @@ class DistrictViewSet(viewsets.ReadOnlyModelViewSet):
 class RegionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Region.objects.all().order_by('id')
     serializer_class = RegionSerializer
+
+class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Activity.objects.all().order_by('order')
+    serializer_class = ActivitySerializer
+
+class TenureViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tenure.objects.all().order_by('order')
+    serializer_class = TenureSerializer
+
+class ApplicationTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ApplicationType.objects.all().order_by('order')
+    serializer_class = ApplicationTypeSerializer
 

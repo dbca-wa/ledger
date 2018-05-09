@@ -15,6 +15,7 @@ import TextInfo from '../components/forms/text_info.vue'
 import AssessorText from '../components/forms/readonly_text.vue'
 import HelpText from '../components/forms/help_text.vue'
 import CommentRadioCheckBox from '../components/forms/comment_icon_checkbox_radio.vue'
+import IFrame from '../components/forms/iframe.vue'
 
 module.exports = {
     renderChildren(h,c,data=null,assessorData=null,_readonly) {
@@ -55,6 +56,11 @@ module.exports = {
             case 'text_info':
                 _elements.push(
                     <TextInfo label={c.label} name={c.name} value={val} />
+                )
+                break;
+            case 'iframe':
+                _elements.push(
+                    <IFrame src={c.src} title={c.title} name={c.name} width={c.width} height={c.height} frameborder={c.frameborder} scrolling={c.scrolling} marginheight={c.marginheight} marginwidth={c.marginwidth} />
                 )
                 break;
             case 'number':

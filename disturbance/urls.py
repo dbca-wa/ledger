@@ -29,7 +29,10 @@ router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
 router.register(r'users',users_api.UserViewSet)
 router.register(r'amendment_request',proposal_api.AmendmentRequestViewSet)
 router.register(r'compliance_amendment_request',compliances_api.ComplianceAmendmentRequestViewSet)
-router.register(r'region', main_api.RegionViewSet)
+router.register(r'regions', main_api.RegionViewSet)
+router.register(r'activity', main_api.ActivityViewSet)
+router.register(r'tenure', main_api.TenureViewSet)
+router.register(r'application_types', main_api.ApplicationTypeViewSet)
 
 
 api_patterns = [

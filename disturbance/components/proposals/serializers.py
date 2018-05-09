@@ -264,10 +264,13 @@ class ReferralProposalSerializer(InternalProposalSerializer):
         # TODO check if the proposal has been accepted or declined
         request = self.context['request']
         user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
-        referral = Referral.objects.get(proposal=obj,referral=user)
+        try:
+            referral = Referral.objects.get(proposal=obj,referral=user)
+        except:
+            referral = None
         return {
             'assessor_mode': True,
-            'assessor_can_assess': referral.can_assess_referral(user), 
+            'assessor_can_assess': referral.can_assess_referral(user) if referral else None, 
             'assessor_level': 'referral'
         }
 
@@ -315,7 +318,6 @@ class DTReferralSerializer(serializers.ModelSerializer):
             'id',
             'region',
             'activity',
-            'tenure',
             'title',
             'applicant',
             'submitter',
