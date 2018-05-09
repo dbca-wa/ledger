@@ -41,7 +41,7 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
         kwargs['form_structure'] = application.licence_type.application_schema
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application),
-                                          posthook=format_assessment)
+                                          posthook=format_assessment,exclude=['application','applicationrequest_ptr'])
 
         kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
                                                            fromm=self.request.user.get_full_name())
@@ -97,10 +97,10 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
         kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
         kwargs['form_structure'] = application.licence_type.application_schema
 
-        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment)
+        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment,exclude=['application','applicationrequest_ptr'])
 
         kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
-                                                exclude(id=assessment.id).order_by('id'), posthook=format_assessment)
+                                                exclude(id=assessment.id).order_by('id'), posthook=format_assessment,exclude=['application','applicationrequest_ptr'])
 
         assessors = [{'id': assessor.id, 'text': assessor.get_full_name()} for assessor in
                      assessment.assessor_group.members.all().order_by('first_name')]

@@ -167,7 +167,7 @@ export default {
                     range_start: vm.range_start,
                     range_end: vm.range_end,
                     campgrounds: vm.selected_campgrounds,
-                    reason: vm.reason,
+                    closure_reason: vm.reason,
                     status:'1'
                 }
                 if (vm.reason == '1') {

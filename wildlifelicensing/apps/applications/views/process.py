@@ -89,7 +89,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
                                             posthook=format_amendment_request),
             'assessor_groups': ass_groups,
             'assessments': serialize(Assessment.objects.filter(application=application),
-                                     posthook=format_assessment),
+                                     posthook=format_assessment,exclude=['application','applicationrequest_ptr']),
             'previous_versions': serialize(previous_lodgements),
             'returns_outstanding': previous_application_returns_outstanding,
             'payment_status': payment_utils.PAYMENT_STATUSES.get(payment_utils.
@@ -372,7 +372,7 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
 
         assessment.save()
 
-        return JsonResponse({'assessment': serialize(assessment, posthook=format_assessment),
+        return JsonResponse({'assessment': serialize(assessment, posthook=format_assessment,exclude=['application','applicationrequest_ptr']),
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 

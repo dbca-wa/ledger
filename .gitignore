@@ -2,6 +2,7 @@
 .env
 venv/
 venv2/
+node_modules/
 cronjobs
 
 # Byte-compiled / optimized / DLL files
@@ -91,6 +92,12 @@ importo.py
 
 #local uwsgi.ini files
 uwsgi*.ini
+*.djcache
 
 # wildlifecompliance build static files
 wildlifecompliance/static/wildlifecompliance_vue/static/
+
+disturbance/static/disturbance_vue/static/css/app.css
+disturbance/static/disturbance_vue/static/js/app.js
+disturbance/static/disturbance_vue/static/js/manifest.js
+disturbance/static/disturbance_vue/static/js/vendor.js

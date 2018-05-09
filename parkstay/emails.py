@@ -34,7 +34,8 @@ def send_booking_invoice(booking):
     invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
 
     campground_email = booking.campground.email if booking.campground.email else default_campground_email
-    email_obj.send([email], from_address=campground_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
+    email_obj.send([email], from_address=default_campground_email, reply_to=campground_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
+
 
 def send_booking_confirmation(booking,request):
     email_obj = TemplateEmailBase()
@@ -89,13 +90,13 @@ def send_booking_confirmation(booking,request):
     att.seek(0)
 
 
-    email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
+    email_obj.send([email], from_address=default_campground_email, reply_to=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
     booking.confirmation_sent = True
     booking.save()
 
 def send_booking_cancelation(booking,request):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Canceled:your booking REF {} at {},{}.'.format(booking.confirmation_number,booking.campground.name,booking.campground.park.name)
+    email_obj.subject = 'Cancelled: your booking {} at {}'.format(booking.confirmation_number,booking.campground.name)
     email_obj.html_template = 'ps/email/cancel.html'
     email_obj.txt_template = 'ps/email/cancel.txt'
 
@@ -111,7 +112,7 @@ def send_booking_cancelation(booking,request):
         'campground_email': campground_email
     }
 
-    email_obj.send([email], from_address=campground_email, cc=[campground_email], bcc=bcc, context=context)
+    email_obj.send([email], from_address=default_campground_email, reply_to=campground_email, cc=[campground_email], bcc=bcc, context=context)
 
 def send_booking_lapse(booking):
     email_obj = TemplateEmailBase()
@@ -120,10 +121,11 @@ def send_booking_lapse(booking):
     email_obj.txt_template = 'ps/email/lapse.txt'
 
     email = booking.customer.email
+    campground_email = booking.campground.email if booking.campground.email else default_campground_email
 
     context = {
         'booking': booking,
         'settings': settings,
     }
-    email_obj.send([email], from_address=camground_email, context=context)
+    email_obj.send([email], from_address=default_campground_email, reply_to=campground_email, context=context)
 

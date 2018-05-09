@@ -1,0 +1,12 @@
+{%  extends 'disturbance/emails/base_email.txt' %}
+
+{%  block content %}
+   
+      
+    
+        A Application for Proposal P{{proposal.id}} has been declined.
+
+   
+
+
+{%  endblock %}
