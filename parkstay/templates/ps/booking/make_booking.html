@@ -35,7 +35,7 @@
     </div>
 {% else %}
     <form method="POST" name="addBookingForm" @submit.prevent="validate()" novalidate><div class="container">
-        {% csrf_token %}
+        {% csrf_token %} 
         <div class="row">
             <div class="col-lg-12">
                 <div class="well">

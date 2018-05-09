@@ -25,6 +25,7 @@ from parkstay.models import (   CampgroundPriceHistory,
                                 ClosureReason,
                                 PriceReason,
                                 MaximumStayReason,
+                                DiscountReason,
                                 CampgroundStayHistory,
                                 ParkEntryRate,
                                 BookingVehicleRego,
@@ -443,8 +444,8 @@ class BookingSerializer(serializers.ModelSerializer):
     regos = BookingRegoSerializer(many=True,read_only=True)
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
-        read_only_fields = ('vehicle_payment_status','refund_status')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','override_price','override_reason','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
+        read_only_fields = ('vehicle_payment_status','refund_status','campground_name','campground_region','campground_site_type')
 
 
     def get_invoices(self,obj):
@@ -585,6 +586,11 @@ class MaximumStayReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaximumStayReason
         fields = ('id','text')
+
+class DiscountReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DiscountReason
+        fields = ('id', 'text')
 
 class AccountsAddressSerializer(serializers.ModelSerializer):
     class Meta:

@@ -34,9 +34,9 @@ class EmailUserManager(BaseUserManager):
         if not email:
             raise ValueError('Email must be set')
         email = self.normalize_email(email)
-        if (EmailUser.objects.filter(email__iexact=email.lower()) or
-            Profile.objects.filter(email__iexact=email.lower()) or
-            EmailIdentity.objects.filter(email__iexact=email.lower())):
+        if (EmailUser.objects.filter(email__iexact=email) or
+            Profile.objects.filter(email__iexact=email) or
+            EmailIdentity.objects.filter(email__iexact=email)):
             raise ValueError('This email is already in use')
         user = self.model(
             email=email, is_staff=is_staff, is_superuser=is_superuser)
