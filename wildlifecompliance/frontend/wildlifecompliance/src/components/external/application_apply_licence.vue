@@ -16,7 +16,7 @@
                           
                             <div class="col-sm-12">
                                 <div class = row>  
-                                <label class="col-sm-4">Select the licence you want to apply for</label>
+                                <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
                                 </div>
                               
                                 

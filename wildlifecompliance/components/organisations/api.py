@@ -50,10 +50,16 @@ from wildlifecompliance.components.organisations.serializers import (
                                         OrganisationCommsSerializer,
                                         OrganisationUnlinkUserSerializer,
                                         OrgUserAcceptSerializer,
+                                        MyOrganisationsSerializer,
                                     )
 from wildlifecompliance.components.applications.serializers import (
                                         DTApplicationSerializer,
                                     )
+
+from wildlifecompliance.components.organisations.emails import (
+                        send_organisation_address_updated_email_notification,
+                    )
+
 
 class OrganisationViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
@@ -440,6 +446,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             )
             instance.postal_address = address
             instance.save()
+            send_organisation_address_updated_email_notification(request.user, instance, org, request)
             serializer = self.get_serializer(org)
             return Response(serializer.data);
         except serializers.ValidationError:
@@ -673,59 +680,12 @@ class OrganisationContactViewSet(viewsets.ModelViewSet):
     queryset = OrganisationContact.objects.all()
 
 
-    # @detail_route(methods=['GET',])
-    # def decline_user(self, request, *args, **kwargs):
-    #     try:
-    #         instance = self.get_object()
-    #         serializer = OrgUserAcceptSerializer(data=request.data)
-    #         serializer.is_valid(raise_exception=True)
-    #         user_obj = EmailUser.objects.get(
-    #             first_name = serializer.validated_data['first_name'],
-    #             last_name = serializer.validated_data['last_name'],
-    #             mobile_number = serializer.validated_data['mobile_number'],
-    #             phone_number = serializer.validated_data['phone_number'],
-    #             email = serializer.validated_data['email']
-    #             )
-            
-    #         instance.decline_user(user_obj,request)
-    #         serializer = OrganisationContactSerializer(instance)
-    #         return Response(serializer.data)
-    #     except serializers.ValidationError:
-    #         print(traceback.print_exc())
-    #         raise
-    #     except ValidationError as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(repr(e.error_dict))
-    #     except Exception as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(str(e))
+class MyOrganisationsViewSet(viewsets.ModelViewSet):
+    queryset = Organisation.objects.all()
+    serializer_class = MyOrganisationsSerializer
 
+    def get_queryset(self):
+        queryset = self.queryset
+        query_set = queryset.filter(delegates__id__contains=self.request.user.id).distinct()
 
-
-
-
-
-    # @detail_route(methods=['POST',])
-    # def unlink_user(self, request, *args, **kwargs):
-    #     try:
-    #         instance = self.get_object()
-    #         serializer = OrgUserAcceptSerializer(data=request.data)
-    #         serializer.is_valid(raise_exception=True)
-    #         user_obj = EmailUser.objects.get(
-    #             first_name = serializer.validated_data['first_name'],
-    #             last_name = serializer.validated_data['last_name'],
-    #             mobile_number = serializer.validated_data['mobile_number'],
-    #             phone_number = serializer.validated_data['phone_number'],
-    #             email = serializer.validated_data['email']
-    #             )
-    #         instance.unlink_user(user_obj,request)
-    #         return Response(serializer.data);
-    #     except serializers.ValidationError:
-    #         print(traceback.print_exc())
-    #         raise
-    #     except ValidationError as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(repr(e.error_dict))
-    #     except Exception as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(str(e))
+        return query_set

@@ -22,7 +22,7 @@
                                 <div class="small-6 columns">
                                     <label for="num_adults" class="text-right">Adults (non-concessions)<label>
                                 </div><div class="small-6 columns">
-                                    <input type="number" id="numAdults" name="num_adults" v-model="numAdults" min="0" max="16"/></label>
+                                    <input type="number" id="numAdults" name="num_adults" v-model.number="numAdults" min="0" max="16"/></label>
                                 </div>
                             </div><div class="row">
                                 <div class="small-6 columns">
@@ -35,19 +35,19 @@
 - Companion Card
 - Department of Veterans' Affairs">Concessions</span></label>
                                 </div><div class="small-6 columns">
-                                    <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
+                                    <input type="number" id="numConcessions" name="num_concessions" v-model.number="numConcessions" min="0" max="16"/></label>
                                 </div>
                             </div><div class="row">
                                 <div class="small-6 columns">
                                     <label for="num_children" class="text-right">Children (ages 6-15)<label>
                                 </div><div class="small-6 columns">
-                                    <input type="number" id="numChildren" name="num_children" v-model="numChildren" min="0" max="16"/></label>
+                                    <input type="number" id="numChildren" name="num_children" v-model.number="numChildren" min="0" max="16"/></label>
                                 </div>
                             </div><div class="row">
                                 <div class="small-6 columns">
                                     <label for="num_infants" class="text-right">Infants (ages 0-5)<label>
                                 </div><div class="small-6 columns">
-                                    <input type="number" id="numInfants" name="num_infants" v-model="numInfants" min="0" max="16"/></label>
+                                    <input type="number" id="numInfants" name="num_infants" v-model.number="numInfants" min="0" max="16"/></label>
                                 </div>
                             </div>
                         </div>
@@ -442,7 +442,7 @@ div.awesomplete > input {
 import Awesomplete from 'awesomplete';
 import ol from 'openlayers';
 //var ol = require('openlayers/dist/ol-debug');
-import 'foundation-sites';
+import 'foundation-sites/dist/js/foundation.min';
 import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
@@ -541,11 +541,15 @@ export default {
         numPeople: {
             cache: false,
             get: function() {
-                var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
+                // annoying wrapper to deal with vue.js' weak number casting
+                var count = (this.numAdults ? this.numAdults : 0) + 
+                            (this.numConcessions ? this.numConcessions : 0) + 
+                            (this.numChildren ? this.numChildren : 0) + 
+                            (this.numInfants ? this.numInfants : 0);
                 if (count === 1) {
-                    return count +" person ▼";
+                    return `${count} person ▼`;
                 } else {
-                    return count + " people ▼";
+                    return `${count} people ▼`;
                 }
             }
         },

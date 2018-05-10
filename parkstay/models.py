@@ -880,13 +880,16 @@ class Booking(models.Model):
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
     expiry_time = models.DateTimeField(blank=True, null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    override_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+    override_reason = models.ForeignKey('DiscountReason', null=True, blank=True)
+    overridden_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True, related_name='overridden_bookings')
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
     cancellation_reason = models.TextField(null=True,blank=True)
     cancelation_time = models.DateTimeField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
-    canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
+    canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True, related_name='canceled_bookings')
 
     # Properties
     # =================================
@@ -946,6 +949,14 @@ class Booking(models.Model):
     def first_campsite(self):
         cb = self.campsites.all().first()
         return cb.campsite if cb else None
+
+    @property
+    def first_campsite_list(self):
+        cbs = self.campsites.distinct('campsite')
+        first_campsite_list = []
+        for item in cbs:
+            first_campsite_list.append(item.campsite)
+        return first_campsite_list
 
     @property
     def editable(self):
@@ -1323,6 +1334,10 @@ class ClosureReason(Reason):
 
 class PriceReason(Reason):
     pass
+
+class DiscountReason(Reason):
+    pass
+    
 # VIEWS
 # =====================================
 class ViewPriceHistory(models.Model):

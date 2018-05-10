@@ -361,7 +361,6 @@ export default {
             updatingPersonal: false,
             updatingAddress: false,
             updatingContact: false,
-            registeringOrg: false,
             role:null,
             orgRequest_pending:[],
             new_user: false
@@ -609,14 +608,39 @@ export default {
         },
         checkOrganisation: function() {
             let vm = this;
+            let new_organisation = vm.newOrg;
+            for (var organisation in vm.profile.wildlifecompliance_organisations) {
+                if (new_organisation.abn && vm.profile.wildlifecompliance_organisations[organisation].abn == new_organisation.abn) {
+                    swal({
+                        title: 'Checking Organisation',
+                        html: 'You are already associated with this organisation.',
+                        type: 'info'
+                    })
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    return;
+                }
+            }
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,'existance'),JSON.stringify(this.newOrg),{
                 emulateJSON:true
             }).then((response) => {
                 this.newOrg.exists = response.body.exists;
-                this.newOrg.detailsChecked = true;
                 this.newOrg.id = response.body.id;
                 if (response.body.first_five){this.newOrg.first_five = response.body.first_five }
+                this.newOrg.detailsChecked = true;
             }, (error) => {
+                this.newOrg.detailsChecked = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal({
+                    title: 'Checking Organisation',
+                    html: 'There was an error checking this organisation.<br/>' + error_msg,
+                    type: 'error'
+                })
             });
         },
         validatePins: function() {
