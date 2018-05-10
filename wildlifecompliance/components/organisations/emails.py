@@ -55,6 +55,11 @@ class OrganisationContactDeclineNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/organisation_contact_decline_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_contact_decline_notification.txt'
 
+class OrganisationAddressUpdatedNotificationEmail(TemplateEmailBase):
+    subject = 'An organisation''s address has been updated.'
+    html_template = 'wildlifecompliance/emails/organisation_address_updated_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_address_updated_notification.txt'
+
     
 
 def send_organisation_reinstate_email_notification(linked_user,linked_by,organisation,request):
@@ -176,6 +181,24 @@ def send_organisation_request_decline_email_notification(org_request,request):
     msg = email.send(org_request.requester.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_request_email(msg, org_request, sender=sender)
+    # _log_org_email(msg, organisation, org_request.requester, sender=sender)
+
+def send_organisation_address_updated_email_notification(address_updated_by,ledger_organisation,wc_organisation,request):
+    from wildlifecompliance.components.organisations.models import OrganisationContact
+
+    email = OrganisationAddressUpdatedNotificationEmail()
+
+    context = {
+        'address_updated_by': address_updated_by,
+        'organisation': ledger_organisation
+    }
+
+    for org_contact in OrganisationContact.objects.filter(user_role='organisation_admin',organisation=wc_organisation):
+        msg = email.send(org_contact.email, context=context)
+        sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+
+        # TODO change this to log an entry for organisation audit records instead of organisation request
+        # _log_org_request_email(msg, request, sender=sender)
     # _log_org_email(msg, organisation, org_request.requester, sender=sender)
 
 def _log_org_request_email(email_message, request, sender=None):

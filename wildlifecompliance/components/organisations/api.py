@@ -56,6 +56,11 @@ from wildlifecompliance.components.applications.serializers import (
                                         DTApplicationSerializer,
                                     )
 
+from wildlifecompliance.components.organisations.emails import (
+                        send_organisation_address_updated_email_notification,
+                    )
+
+
 class OrganisationViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
     serializer_class = OrganisationSerializer
@@ -441,6 +446,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             )
             instance.postal_address = address
             instance.save()
+            send_organisation_address_updated_email_notification(request.user, instance, org, request)
             serializer = self.get_serializer(org)
             return Response(serializer.data);
         except serializers.ValidationError:
