@@ -433,11 +433,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(app_data)
             # behalf_of=app_data.pop('behalf_of')
             # print(behalf_of)
-            # licence_class_data=app_data.pop('licence_class')
+            licence_class_data=app_data.pop('licence_class_data')
             # licence_class_data=app_data.pop('licence_class')
             
-            # print(type(licence_class_data))
-            # print(licence_class_data)
+            print(type(licence_class_data))
+            print(licence_class_data)
+
+            # schema_data=get_activity_type_schema(app_data)
             # d= json.JSONEncoder()
             # licence_class_data_json = d.encode(licence_class_data)
             # print(type(licence_class_data_json))

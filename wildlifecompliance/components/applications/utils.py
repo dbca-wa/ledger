@@ -4,6 +4,7 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from wildlifecompliance.components.applications.models import ApplicationDocument
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
+import json
 
 import traceback
 
@@ -351,6 +352,26 @@ def get_activity_schema(activities):
         schema_activity= schema_activity+licence_activity.schema
 
     return schema_activity
+
+# def get_activity_type_schema(licence_class_data):
+#     # print(type(licence_class_data))
+#     # encoder = json.JSONEncoder()
+#     # obj=encoder.encode(licence_class_data)
+#     # print(type(licence_class_data))
+#     # print("hi")
+#     obj={}
+#     q= QueryDict(licence_class_data)
+#     obj=q.dict()
+#     print(type(obj))
+#     print(obj)
+#     for item in licence_class_data:
+#         print(item)
+
+#         # data =item.pop('licence_class_data')
+#         # item_obj=encoder.encode(item)
+#         # print(type(item_obj))
+#         # print(item_obj['applicant'])
+
 
 def get_licence_data(licence_class):
     licence_class_data={}

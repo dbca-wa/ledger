@@ -210,12 +210,13 @@ export default {
         data.append('licence_class_data', vm.licence_class)
         console.log(vm.licence_class)
 
-        vm.$http.post('/api/application.json',data,{emulateJSON:true}).then(res => {
+        vm.$http.post('/api/application.json',data,{emulateJSON:true},{headers:{'content-type': 'application/json; charset=utf-8'}}).then(res => {
               // vm.application = res.body;
               // vm.$router.push({
               //     name:"draft_application",
               //     params:{application_id:vm.application.id}
               // });
+              console.log(request)
           },
           err => {
             console.log(err);
