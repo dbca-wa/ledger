@@ -30,7 +30,7 @@ from datetime import datetime, timedelta, date
 from disturbance.components.proposals.utils import save_proponent_data,save_assessor_data
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from disturbance.components.main.models import Document
+from disturbance.components.main.models import Document, Region, District, Activity, Tenure, ApplicationType
 from disturbance.components.proposals.models import (
     ProposalType,
     Proposal,
@@ -84,6 +84,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     serializer_class = ProposalSerializer
 
     def list(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
         queryset = self.get_queryset() 
         serializer = DTProposalSerializer(queryset, many=True)
         return Response(serializer.data)
@@ -543,19 +544,34 @@ class ProposalViewSet(viewsets.ModelViewSet):
         #import ipdb; ipdb.set_trace()
         try:
             http_status = status.HTTP_200_OK
-            qs_proposal_type = ProposalType.objects.filter(name__icontains=request.data.get('application_name'))
+            application_type = request.data.get('application')
+            activity = request.data.get('activity')
+            region = request.data.get('region') 
+            district = request.data.get('district') 
+            tenure = request.data.get('tenure')
+
+            application_name = ApplicationType.objects.get(id=application_type).name
+            # Get most recent versions of the Proposal Types
+            qs_proposal_type = ProposalType.objects.all().order_by('name', '-version').distinct('name')
+            proposal_type = qs_proposal_type.get(name=application_name)
+
             data = {
-                'schema': qs_proposal_type.order_by('-version').first().schema,
+                #'schema': qs_proposal_type.order_by('-version').first().schema,
+                'schema': proposal_type.schema,
                 'submitter': request.user.id,
                 'applicant': request.data.get('behalf_of'),
-                'region': request.data.get('region'),
-                'activity': request.data.get('activity'),
-                'tenure': request.data.get('tenure'),
+                'application_type': application_type,
+                'region': region,
+                'district': district,
+                'activity': activity,
+                'tenure': tenure,
                 'data': [{u'RegionActivitySection': 
                     [{
-                        'Activity': request.data.get('activity'), 
-                        'Region': request.data.get('region'), 
-                        'Tenure': request.data.get('tenure')
+                        'Activity': Activity.objects.get(id=activity).name if activity else None, 
+                        'Region': Region.objects.get(id=region).name if region else None, 
+                        'District': District.objects.get(id=district).name if district else None, 
+                        'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
+                        'ApplicationType': ApplicationType.objects.get(id=application_type).name
                     }]
                 }], 
             }

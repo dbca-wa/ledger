@@ -45,9 +45,11 @@ class BaseProposalSerializer(serializers.ModelSerializer):
         model = Proposal
         fields = (
                 'id',
+                'application_type',
                 'activity',
                 'title',
                 'region',
+                'district',
                 'tenure',
                 'data',
                 'schema',
@@ -101,6 +103,11 @@ class DTProposalSerializer(BaseProposalSerializer):
     assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
 
 class ProposalSerializer(BaseProposalSerializer):
+    application_type = serializers.CharField(source='application_type.name')
+    region = serializers.CharField(source='region.name')
+    district = serializers.CharField(source='district.name')
+    activity = serializers.CharField(source='activity.name')
+    tenure = serializers.CharField(source='tenure.name')
     submitter = serializers.CharField(source='submitter.get_full_name')
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
@@ -116,9 +123,11 @@ class SaveProposalSerializer(BaseProposalSerializer):
         model = Proposal
         fields = (
                 'id',
+                'application_type',
                 'activity',
                 'title',
                 'region',
+                'district',
                 'tenure',
                 'data',
                 'assessor_data',

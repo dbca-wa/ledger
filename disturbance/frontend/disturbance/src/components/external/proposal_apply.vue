@@ -61,9 +61,9 @@
                                 <label for="" class="control-label" >Proposal Type</label>
                                 <div class="col-sm-12">
                                     <div class="form-group">
-                                        <select v-model="selected_application_type" @change="chainedSelectAppType(selected_application_type)">
+                                        <select v-model="selected_application_id" @change="chainedSelectAppType(selected_application_id)">
 											<option value="" selected disabled>Select proposal type</option>
-                                            <option v-for="application_type in application_types" :value="application_type.text">
+                                            <option v-for="application_type in application_types" :value="application_type.value">
                                                 {{ application_type.text }}
                                             </option>
                                         </select>
@@ -77,7 +77,7 @@
                                     <div class="form-group">
                                         <select v-model="selected_region" @change="chainedSelectDistricts(selected_region)">
 											<option value="" selected disabled>Select region</option>
-                                            <option v-for="region in regions" :value="region.text">
+                                            <option v-for="region in regions" :value="region.value">
                                                 {{ region.text }}
                                             </option>
                                         </select>
@@ -105,7 +105,7 @@
                                     <div class="form-group">
                                         <select v-model="selected_activity">
 											<option value="" selected disabled>Select activity</option>
-                                            <option v-for="activity in activities" :value="activity.text">
+                                            <option v-for="activity in activities" :value="activity.value">
                                                 {{ activity.text }}
                                             </option>
                                         </select>
@@ -119,7 +119,7 @@
                                     <div class="form-group">
                                         <select v-model="selected_tenure">
 											<option value="" selected disabled>Select tenure</option>
-                                            <option v-for="tenure in tenures" :value="tenure.text">
+                                            <option v-for="tenure in tenures" :value="tenure.value">
                                                 {{ tenure.text }}
                                             </option>
                                         </select>
@@ -159,7 +159,8 @@ export default {
         form: null,
         pBody: 'pBody' + vm._uid,
 
-        selected_application_type: '',
+        selected_application_id: '',
+        selected_application_name: '',
         selected_region: '',
         selected_district: '',
         selected_activity: '',
@@ -219,7 +220,7 @@ export default {
         let vm = this;
 			
         swal({
-            title: "Create " + vm.selected_application_type,
+            title: "Create " + vm.selected_application_name,
             text: "Are you sure you want to create " + this.alertText() + " proposal on behalf of "+vm.org+" ?",
             type: "question",
             showCancelButton: true,
@@ -231,9 +232,9 @@ export default {
     },
     alertText: function() {
         let vm = this;
-		if (vm.selected_application_type == 'Disturbance') {
+		if (vm.selected_application_name == 'Disturbance') {
         	return "a disturbance";
-		} else if (vm.selected_application_type == 'Apiary') {
+		} else if (vm.selected_application_name == 'Apiary') {
         	return "an apiary";
 		}
 	},
@@ -241,7 +242,7 @@ export default {
         let vm = this;
 		vm.$http.post('/api/proposal.json',{
 			behalf_of: vm.behalf_of,
-			application_name: vm.selected_application_type,
+			application: vm.selected_application_id,
 			region: vm.selected_region,
 			district: vm.selected_district,
 			activity: vm.selected_activity,
@@ -259,12 +260,12 @@ export default {
     },
     isDisabled: function() {
         let vm = this;
-        if (vm.selected_application_type == 'Disturbance') {
-            if (vm.behalf_of == '' || vm.selected_application_type == '' || vm.selected_region == '' || vm.selected_activity == '' || vm.selected_tenure == ''){
+        if (vm.selected_application_name == 'Disturbance') {
+            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_activity == '' || vm.selected_tenure == ''){
 	    		return true;
             }
         } else {
-            if (vm.behalf_of == '' || vm.selected_application_type == ''){
+            if (vm.behalf_of == '' || vm.selected_application_id == ''){
 	    		return true;
             }
         }
@@ -286,20 +287,20 @@ export default {
 		})
 	},
 
-	searchList: function(item, search_list){
+	searchList: function(id, search_list){
         /* Searches for dictionary in list */
         for (var i = 0; i < search_list.length; i++) {
-            if (search_list[i].text == item) {
+            if (search_list[i].value == id) {
                 return search_list[i];
             }
         }
         return [];
     },
-	chainedSelectDistricts: function(region_name){
+	chainedSelectDistricts: function(region_id){
 		let vm = this;
         vm.districts = [];
 
-        var api_districts = this.searchList(region_name, vm.regions).districts;
+        var api_districts = this.searchList(region_id, vm.regions).districts;
         if (api_districts.length > 0) {
             for (var i = 0; i < api_districts.length; i++) {
                 this.districts.push( {text: api_districts[i].name, value: api_districts[i].id} );
@@ -326,24 +327,24 @@ export default {
 			console.log(error);
 		})
 	},
-    chainedSelectActivities: function(application_type){
+    chainedSelectActivities: function(application_id){
 		let vm = this;
         vm.activities = [];
-        var api_activities = this.searchList(application_type, vm.application_types).activities;
+        var api_activities = this.searchList(application_id, vm.application_types).activities;
         //var api_activities = vm.application_types[region_id-1].districts
         for (var i = 0; i < api_activities.length; i++) {
             this.activities.push( {text: api_activities[i].name, value: api_activities[i].id} );
         }
 	},
-    chainedSelectTenures: function(application_type){
+    chainedSelectTenures: function(application_id){
 		let vm = this;
         vm.tenures = [];
-        var api_tenures = this.searchList(application_type, vm.application_types).tenures;
+        var api_tenures = this.searchList(application_id, vm.application_types).tenures;
         for (var i = 0; i < api_tenures.length; i++) {
             this.tenures.push( {text: api_tenures[i].name, value: api_tenures[i].id} );
         }
 	},
-    chainedSelectAppType: function(application_type){
+    chainedSelectAppType: function(application_id){
         /* reset */
 		let vm = this;
         vm.selected_region = '';
@@ -352,10 +353,11 @@ export default {
         vm.selected_tenure = '';
         vm.display_region_selectbox = false;
 
-        this.chainedSelectActivities(application_type);
-        this.chainedSelectTenures(application_type);
+        vm.selected_application_name = this.searchList(application_id, vm.application_types).text
+        this.chainedSelectActivities(application_id);
+        this.chainedSelectTenures(application_id);
 
-        if (application_type == 'Disturbance') {
+        if (vm.selected_application_name == 'Disturbance') {
             vm.display_region_selectbox = true;
         } 
 

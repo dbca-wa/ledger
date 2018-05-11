@@ -17,7 +17,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
-from disturbance.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Activity, Tenure
+from disturbance.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Activity, Tenure, ApplicationType
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
@@ -29,11 +29,15 @@ def update_proposal_doc_filename(instance, filename):
 def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
 
+def application_type_choicelist():
+    return [( (choice.name), (choice.name) ) for choice in ApplicationType.objects.all()]
 
 class ProposalType(models.Model):
-    name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24)
+    #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24)
+    #application_type = models.ForeignKey(ApplicationType, related_name='aplication_types')
     description = models.CharField(max_length=256, blank=True, null=True)
-    #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=APPLICATION_NAME_CHOICES)
+    #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=application_type_choicelist(), default=application_type_choicelist()[0][0])
+    name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=application_type_choicelist(), default='Disturbance')
     schema = JSONField()
     activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
     #site = models.OneToOneField(Site, default='1')
@@ -280,6 +284,7 @@ class Proposal(RevisionedMixin):
     region = models.ForeignKey(Region, null=True, blank=True)
     district = models.ForeignKey(District, null=True, blank=True)
     tenure = models.ForeignKey(Tenure, null=True, blank=True)
+    application_type = models.ForeignKey(ApplicationType)
 
     class Meta:
         app_label = 'disturbance'
@@ -346,7 +351,8 @@ class Proposal(RevisionedMixin):
 
     @property
     def regions_list(self):
-        return self.region.split(',') if self.region else []
+        #return self.region.split(',') if self.region else []
+        return [self.region.name] if self.region else []
 
     @property
     def permit(self):
