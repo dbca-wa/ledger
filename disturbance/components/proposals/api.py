@@ -336,6 +336,18 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET',])
+    def renew_approval(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance = instance.renew_approval(request)
+            serializer = SaveProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
     @detail_route(methods=['POST',])
     def proposed_approval(self, request, *args, **kwargs):
         try:

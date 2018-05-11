@@ -1,7 +1,7 @@
 <template>
 <div class="container" id="externalApproval">
     <div class="row">
-        <h3>Approval {{ approval.reference }}</h3>
+        <h3>Approval {{ approval.lodgement_number }}</h3>
       
         
         <div class="col-sm-12">

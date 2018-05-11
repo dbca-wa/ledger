@@ -51,6 +51,7 @@ class Approval(models.Model):
         ('surrendered','Surrendered'),
         ('suspended','Suspended')
     )
+    lodgement_number = models.CharField(max_length=9, blank=True, default='')
     status = models.CharField(max_length=40, choices=STATUS_CHOICES,
                                        default=STATUS_CHOICES[0][0])
     licence_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='licence_document')
@@ -78,8 +79,17 @@ class Approval(models.Model):
     set_to_surrender = models.BooleanField(default=False)
 
 
+
     class Meta:
         app_label = 'disturbance'
+        unique_together= ('lodgement_number', 'issue_date')
+
+    def save(self, *args, **kwargs):
+        super(Approval, self).save(*args,**kwargs)
+        if self.lodgement_number == '':
+            new_lodgment_id = 'A{}'.format(self.pk)
+            self.lodgement_number = new_lodgment_id
+            self.save()
 
     def __str__(self):
         return self.reference
@@ -274,6 +284,7 @@ class ApprovalUserAction(UserAction):
     ACTION_SUSPEND_APPROVAL = "Suspend approval {}"
     ACTION_REINSTATE_APPROVAL = "Reinstate approval {}"
     ACTION_SURRENDER_APPROVAL = "surrender approval {}"
+    ACTION_RENEW_APPROVAL = "Create renewal Proposal for approval {}"
     
     
     class Meta:

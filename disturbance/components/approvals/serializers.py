@@ -30,6 +30,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
         model = Approval
         fields = (
             'id',
+            'lodgement_number',
             'licence_document',
             'replaced_by',
             'current_proposal',

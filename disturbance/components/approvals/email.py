@@ -38,7 +38,7 @@ class ApprovalReinstateNotificationEmail(TemplateEmailBase):
     txt_template = 'disturbance/emails/approval_reinstate_notification.txt'
 
 class ApprovalRenewalNotificationEmail(TemplateEmailBase):
-    subject = 'Your Approval renewal.'
+    subject = 'Your Approval is due for renewal.'
     html_template = 'disturbance/emails/approval_renewal_notification.html'
     txt_template = 'disturbance/emails/approval_renewal_notification.txt'
 

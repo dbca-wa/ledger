@@ -3,7 +3,7 @@
 {%  block content %}
     Your Approval has been suspended:
 
-    Approval : {{ approval.reference}}
+    Approval : {{ approval.lodgement_number}}
 
     Suspension Details : {{details}}    
 

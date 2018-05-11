@@ -46,7 +46,8 @@ class ApprovalViewSet(viewsets.ModelViewSet):
     serializer_class = ApprovalSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset() 
+        queryset = self.get_queryset()
+        queryset = queryset.order_by('lodgement_number', '-issue_date').distinct('lodgement_number') 
         # Filter by org
         org_id = request.GET.get('org_id',None)
         if org_id:
@@ -59,7 +60,9 @@ class ApprovalViewSet(viewsets.ModelViewSet):
         user_orgs = [org.id for org in request.user.disturbance_organisations.all()];
         qs = []
         #qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])))
-        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs)))
+        #qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs)))
+        qset = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+        qs.extend(list(qset.filter(applicant_id__in = user_orgs)))
         queryset = list(set(qs))
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

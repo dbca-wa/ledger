@@ -142,7 +142,7 @@ def _create_approval_header(canvas, doc, draw_page_number=True):
 
     if hasattr(doc, 'approval'):
         canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2,
-                          '{}'.format(doc.approval.id))
+                          '{}'.format(doc.approval.lodgement_number))
 
 def _create_approval(approval_buffer, approval, proposal):
     site_url = settings.SITE_URL
