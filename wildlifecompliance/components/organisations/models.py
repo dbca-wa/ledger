@@ -566,6 +566,7 @@ class OrganisationLogEntry(CommunicationsLogEntry):
 class OrganisationRequest(models.Model):
     STATUS_CHOICES = (
         ('with_assessor','With Assessor'),
+        ('amendment_requested','Amendment Requested'),
         ('approved','Approved'),
         ('declined','Declined')
     )

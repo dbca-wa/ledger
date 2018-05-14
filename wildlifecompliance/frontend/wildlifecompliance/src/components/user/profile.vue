@@ -199,7 +199,7 @@
                                 <div class="col-sm-3"> 
                                     <input type="text" disabled class="form-control" name="organisation" v-model="org.name" placeholder="">
                                 </div>
-                                <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                <label for="" class="col-sm-1 control-label" >ABN/ACN</label>
                                 <div class="col-sm-3"> 
                                     <input type="text" disabled class="form-control" name="organisation" v-model="org.abn" placeholder="">
                                 </div>
@@ -212,11 +212,24 @@
                                 <div class="col-sm-3"> 
                                     <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
                                 </div>
-                                <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                <label for="" class="col-sm-1 control-label" >ABN/ACN</label>
                                 <div class="col-sm-3"> 
                                     <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
                                 </div>
-                                <label>Pending for Approval {{orgReq.id}}</label>
+                                <label><i class="fa fa-hourglass-o fa-2x" ></i> Pending Approval</label>
+                              </div>
+                          </div>
+                          <div v-for="orgReq in orgRequest_amendment_requested">
+                              <div class="form-group">
+                                <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                <div class="col-sm-3">
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                </div>
+                                <label for="" class="col-sm-1 control-label" >ABN/ACN</label>
+                                <div class="col-sm-3">
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
+                                </div>
+                                <label><i class="fa fa-wrench fa-2x" ></i> Amendment Requested</label>
                               </div>
                           </div>
 
@@ -363,6 +376,7 @@ export default {
             updatingContact: false,
             role:null,
             orgRequest_pending:[],
+            orgRequest_amendment_requested:[],
             new_user: false
         }
     },
@@ -744,9 +758,18 @@ export default {
             let vm =this;
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response)=>{
                 vm.orgRequest_pending = response.body;
-                vm.loading.splice('fetching pending organisation requests ',1);
+                vm.loading.splice('fetching pending organisation requests',1);
             },(response)=>{
                 vm.loading.splice('fetching pending organisation requests',1);
+            });
+        },
+        fetchOrgRequestAmendmentRequested:function (){
+            let vm =this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_amendment_requested_requests')).then((response)=>{
+                vm.orgRequest_amendment_requested = response.body;
+                vm.loading.splice('fetching amendment requested organisation requests',1);
+            },(response)=>{
+                vm.loading.splice('fetching amendment requested organisation requests',1);
             });
         },
         unlinkUser: function(org){
@@ -813,6 +836,7 @@ export default {
     mounted: function(){
         this.fetchCountries();
         this.fetchOrgRequestPending();
+        this.fetchOrgRequestAmendmentRequested();
         this.personal_form = document.forms.personal_form;
         $('.panelClicker[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];
