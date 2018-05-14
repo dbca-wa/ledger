@@ -30,7 +30,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_schema,get_licence_data
+from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_schema,get_licence_data,get_activity_type_schema
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.applications.models import (
     ApplicationType,
@@ -431,15 +431,15 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             app_data = request.data.copy()
             print(type(app_data))
             print(app_data)
-            # behalf_of=app_data.pop('behalf_of')
-            # print(behalf_of)
+            applicant=app_data.pop('applicant')
+            print(type(applicant))
             licence_class_data=app_data.pop('licence_class_data')
             # licence_class_data=app_data.pop('licence_class')
             
             print(type(licence_class_data))
             print(licence_class_data)
 
-            # schema_data=get_activity_type_schema(app_data)
+            schema_data=get_activity_type_schema(licence_class_data)
             # d= json.JSONEncoder()
             # licence_class_data_json = d.encode(licence_class_data)
             # print(type(licence_class_data_json))

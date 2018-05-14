@@ -353,24 +353,25 @@ def get_activity_schema(activities):
 
     return schema_activity
 
-# def get_activity_type_schema(licence_class_data):
-#     # print(type(licence_class_data))
-#     # encoder = json.JSONEncoder()
-#     # obj=encoder.encode(licence_class_data)
-#     # print(type(licence_class_data))
-#     # print("hi")
-#     obj={}
-#     q= QueryDict(licence_class_data)
-#     obj=q.dict()
-#     print(type(obj))
-#     print(obj)
-#     for item in licence_class_data:
-#         print(item)
+def get_activity_type_schema(licence_class_data):
+    # print(type(licence_class_data))
+    # encoder = json.JSONEncoder()
+    # obj=encoder.encode(licence_class_data)
+    # print(type(licence_class_data))
+    # print("hi")
+    # print(licence_class_data[0]['id'])
+    # print(len(licence_class_data))
+    # result=json.dumps(licence_class_data[0])
+    # print(type(result))
+    # for item in licence_class_data:
+    #     # print(item[0])
+    #     print(len(item))
 
-#         # data =item.pop('licence_class_data')
-#         # item_obj=encoder.encode(item)
-#         # print(type(item_obj))
-#         # print(item_obj['applicant'])
+        # data =item.pop('licence_class_data')
+        # item_obj=encoder.encode(item)
+        # print(type(item_obj))
+        # print(item_obj['applicant'])
+    return licence_class_data
 
 
 def get_licence_data(licence_class):

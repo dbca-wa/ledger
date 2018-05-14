@@ -205,18 +205,30 @@ export default {
                 }
             }
         }
-        // console.log("printing licence",vm.licence_class)
+        // console.log("printing licence",JSON.stringify(vm.licence_class))
         data.append('applicant', vm.behalf_of)
-        data.append('licence_class_data', vm.licence_class)
-        console.log(vm.licence_class)
+        data.append('licence_class_data', JSON.stringify(vm.licence_class))
+        var convertedjson={};
+        // for(const[key,value] of data.entries()){
+        //     // console.log(key,value)
+        //     convertedjson[key]=JSON.stringify(value);
+        // }
+        for(var pair of data.entries()) {
+           console.log(pair[0]+ ', '+ pair[1]); 
+           convertedjson[pair[0]]=pair[1];
+        }
+        // data_ser=JSON.stringify($data.serializeArray())
+        console.log(convertedjson)
+        // console.log(JSON.stringify(convertedjson))
+        // vm.$http.post('/api/application.json',JSON.stringify(convertedjson),{emulateJSON:true}).then(res => {
 
-        vm.$http.post('/api/application.json',data,{emulateJSON:true},{headers:{'content-type': 'application/json; charset=utf-8'}}).then(res => {
+        vm.$http.post('/api/application.json',convertedjson,{emulateJSON:true}).then(res => {
               // vm.application = res.body;
               // vm.$router.push({
               //     name:"draft_application",
               //     params:{application_id:vm.application.id}
               // });
-              console.log(request)
+              // console.log(request)
           },
           err => {
             console.log(err);
