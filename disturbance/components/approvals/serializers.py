@@ -22,6 +22,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
     applicant = serializers.CharField(source='applicant.name')
     applicant_id = serializers.ReadOnlyField(source='applicant.id')
     licence_document = serializers.CharField(source='licence_document._file.url')
+    renewal_document = serializers.CharField(source='renewal_document._file.url')
     status = serializers.CharField(source='get_status_display')
     allowed_assessors = EmailUserSerializer(many=True)
     
@@ -29,6 +30,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
         model = Approval
         fields = (
             'id',
+            'lodgement_number',
             'licence_document',
             'replaced_by',
             'current_proposal',
@@ -36,6 +38,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'region',
             'tenure',
             'title',
+            'renewal_document',
             'renewal_sent',
             'issue_date',
             'original_issue_date',

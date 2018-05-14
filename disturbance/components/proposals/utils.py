@@ -343,3 +343,44 @@ def save_assessor_data(instance,request,viewset):
             # End Save Documents
         except:
             raise
+
+def clone_proposal_with_status_reset(proposal):
+    with transaction.atomic():
+        try:
+            proposal.customer_status = 'draft'
+            proposal.processing_status = 'draft'
+            proposal.assessor_data = {}
+            proposal.comment_data = {}
+
+            #proposal.id_check_status = 'not_checked'
+            #proposal.character_check_status = 'not_checked'
+            #proposal.compliance_check_status = 'not_checked'
+            #Sproposal.review_status = 'not_reviewed'
+
+            proposal.lodgement_number = ''
+            proposal.lodgement_sequence = 0
+            proposal.lodgement_date = None
+
+            proposal.assigned_officer = None
+            proposal.assigned_approver = None
+
+            proposal.approval = None
+            
+            original_proposal_id = proposal.id
+
+            proposal.previous_proposal = proposal.objects.get(id=original_proposal_id)
+
+            proposal.id = None
+
+            proposal.save(no_revision=True)
+
+            
+            # clone documents
+            for proposal_document in ProposalDocuments.objects.filter(proposal=original_proposal_id):
+                proposal_document.proposal = proposal
+                proposal_document.id = None
+                proposal_document.save()
+            
+            return proposal
+        except:
+            raise

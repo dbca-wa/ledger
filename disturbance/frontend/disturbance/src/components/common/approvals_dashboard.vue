@@ -139,10 +139,6 @@ export default {
                 columns: [
                     {
                         data: "id",
-                        /*mRender:function(data,type,full){
-                            //return full.reference;
-                            return '<span data-toggle="tooltip" title="' + data + '">' + data + '</span>';
-                        }*/
                         'render':function(data,type,full){
                         if(!vm.is_external){
                             var result = '';
@@ -150,7 +146,7 @@ export default {
                             var message = '';
                             let tick = '';
                             tick = "<i class='fa fa-exclamation-triangle' style='color:red'></i>"
-                            result = '<span>' + full.reference + '</span>';
+                            result = '<span>' + full.lodgement_number + '</span>';
                             if(full.can_reissue){
                                 if(!full.can_action){
                                     if(full.set_to_cancel){
@@ -179,7 +175,7 @@ export default {
                             }                          
                             return result;
                         }
-                        else { return full.reference }
+                        else { return full.lodgement_number }
                         },
                         'createdCell': helpers.dtPopoverCellFn
                     },
@@ -242,16 +238,24 @@ export default {
                                 else{
                                     links +=  `<a href='/internal/approval/${full.id}'>View</a><br/>`;
                                 }
+                                if(full.renewal_document && full.renewal_sent){
+                                  links +=  `<a href='${full.renewal_document}' target='_blank'>Renewal Notice</a><br/>`;  
+
+                                }
                             }
                             else{
                                 if (full.can_reissue) {
                                     links +=  `<a href='/external/approval/${full.id}'>View</a><br/>`;
                                     if(full.can_action){
                                         links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
+                                    }
+                                    if(full.renewal_document && full.renewal_sent) {
+                                    links +=  `<a href='#${full.id}' data-renew-approval='${full.current_proposal}'>Renew</a><br/>`;
                                     }                                    
                                 }
                                 else {
                                     links +=  `<a href='/external/approval/${full.id}'>View</a><br/>`;
+
                                 }
                             }
                             return links;
@@ -370,10 +374,6 @@ export default {
                 }
             });
 
-            $(vm.$refs.proposal_datatable.vmDataTable).on('draw.dt', function () {
-                    $('[data-toggle="tooltip"]').tooltip();
-                });
-
             // End Proposal Date Filters
             // Internal Reissue listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reissue-approval]', function(e) {
@@ -389,25 +389,32 @@ export default {
                 vm.cancelApproval(id);
             });
 
-            //Internal Cancel listener
+            //Internal Suspend listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-suspend-approval]', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-suspend-approval');
                 vm.suspendApproval(id);
             });
 
-            // Internal Reissue listener
+            // Internal Reinstate listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reinstate-approval]', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-reinstate-approval');
                 vm.reinstateApproval(id);
             });
 
-            //Internal Cancel listener
+            //Internal/ External Surrender listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-surrender-approval]', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-surrender-approval');
                 vm.surrenderApproval(id);
+            });
+
+            // External renewal listener
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-renew-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-renew-approval');
+                vm.renewApproval(id);
             });
 
         },
@@ -563,6 +570,37 @@ export default {
                         'success'
                     )
                     vm.$refs.proposal_datatable.vmDataTable.ajax.reload();
+                    
+                }, (error) => {
+                    console.log(error);
+                });
+            },(error) => {
+
+            });
+        },
+
+        renewApproval:function (proposal_id) {
+            let vm = this;
+            let status= 'with_approver'
+            //let data = {'status': status}
+            swal({
+                title: "Renew Approval",
+                text: "Are you sure you want to renew this approval?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: 'Renew approval',
+                //confirmButtonColor:'#d9534f'
+            }).then(() => {
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/renew_approval')),{
+                
+                })
+                .then((response) => {
+                   let proposal = {}
+                   proposal = response.body
+                   vm.$router.push({
+                    name:"draft_proposal",
+                    params:{proposal_id: proposal.id}
+                   });
                     
                 }, (error) => {
                     console.log(error);

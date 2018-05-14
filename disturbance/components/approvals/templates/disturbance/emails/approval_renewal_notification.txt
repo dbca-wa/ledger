@@ -1,14 +1,12 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Approval has been suspended:
+    Your Approval is due for renewal:
 
     Approval : {{ approval.lodgement_number}}
+    Proposal : {{ proposal.lodgement_number}}
 
-    Suspension Details : {{details}}    
+    Please find the attached renewal notice.
 
-    From Date : {{from_date}}
-
-    To Date : {{to_date}}
-
+   
 {%  endblock %}

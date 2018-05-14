@@ -3,7 +3,7 @@
 {%  block content %}
     Your Approval has been cancelled:
 
-    Approval : {{ approval.reference}}
+    Approval : {{ approval.lodgement_number}}
 
     Cancellation Details : {{ approval.cancellation_details}}
 

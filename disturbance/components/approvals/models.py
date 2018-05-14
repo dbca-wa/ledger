@@ -29,8 +29,8 @@ from disturbance.components.approvals.email import (
 #from disturbance.components.approvals.email import send_referral_email_notification
 
 
-def update_approval_doc_filename(instance, filename):
-    return 'approvals/{}/documents/{}'.format(instance.id,filename)
+def update_approval_doc_filename(instance, filename): 
+    return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
 
 def update_approval_comms_log_filename(instance, filename):
     return 'approvals/{}/communications/{}/{}'.format(instance.log_entry.approval.id,instance.id,filename)
@@ -51,6 +51,7 @@ class Approval(models.Model):
         ('surrendered','Surrendered'),
         ('suspended','Suspended')
     )
+    lodgement_number = models.CharField(max_length=9, blank=True, default='')
     status = models.CharField(max_length=40, choices=STATUS_CHOICES,
                                        default=STATUS_CHOICES[0][0])
     licence_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='licence_document')
@@ -61,6 +62,7 @@ class Approval(models.Model):
     region = models.CharField(max_length=255)
     tenure = models.CharField(max_length=255,null=True)
     title = models.CharField(max_length=255)
+    renewal_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='renewal_document')
     renewal_sent = models.BooleanField(default=False)
     issue_date = models.DateField()
     original_issue_date = models.DateField(auto_now_add=True)
@@ -77,8 +79,17 @@ class Approval(models.Model):
     set_to_surrender = models.BooleanField(default=False)
 
 
+
     class Meta:
         app_label = 'disturbance'
+        unique_together= ('lodgement_number', 'issue_date')
+
+    def save(self, *args, **kwargs):
+        super(Approval, self).save(*args,**kwargs)
+        if self.lodgement_number == '':
+            new_lodgment_id = 'A{}'.format(self.pk)
+            self.lodgement_number = new_lodgment_id
+            self.save()
 
     def __str__(self):
         return self.reference
@@ -110,6 +121,11 @@ class Approval(models.Model):
     def generate_doc(self):
         from disturbance.components.approvals.pdf import create_approval_doc 
         self.licence_document = create_approval_doc(self,self.current_proposal)
+        self.save()
+
+    def generate_renewal_doc(self):
+        from disturbance.components.approvals.pdf import create_renewal_doc 
+        self.renewal_document = create_renewal_doc(self,self.current_proposal)
         self.save()
 
     def log_user_action(self, action, request):
@@ -268,6 +284,7 @@ class ApprovalUserAction(UserAction):
     ACTION_SUSPEND_APPROVAL = "Suspend approval {}"
     ACTION_REINSTATE_APPROVAL = "Reinstate approval {}"
     ACTION_SURRENDER_APPROVAL = "surrender approval {}"
+    ACTION_RENEW_APPROVAL = "Create renewal Proposal for approval {}"
     
     
     class Meta:
