@@ -10,7 +10,7 @@ import datetime
 import itertools
 
 class Command(BaseCommand):
-    help = 'Change the status of Approvals to Expired when past expiry date'
+    help = 'Send reminder notification for compliances which has past due dates'
 
     def handle(self, *args, **options):
         try:

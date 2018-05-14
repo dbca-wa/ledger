@@ -23,6 +23,7 @@ from disturbance.components.proposals.email import send_referral_email_notificat
 from disturbance.ordered_model import OrderedModel
 
 
+
 def update_proposal_doc_filename(instance, filename):
     return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
 
@@ -704,20 +705,42 @@ class Proposal(RevisionedMixin):
                 if self.processing_status == 'approved':
                     # TODO if it is an ammendment proposal then check appropriately
                     checking_proposal = self
-                    approval,created = Approval.objects.update_or_create(
-                        current_proposal = checking_proposal,
-                        defaults = {
-                            'activity' : self.activity,
-                            'region' : self.region, 
-                            'tenure' : self.tenure, 
-                            'title' : self.title,
-                            'issue_date' : timezone.now(),
-                            'expiry_date' : details.get('expiry_date'),
-                            'start_date' : details.get('start_date'),
-                            'applicant' : self.applicant 
-                            #'extracted_fields' = JSONField(blank=True, null=True)
-                        }
-                    )
+                    if self.proposal_type == 'renewal':
+                        if self.previous_application:
+                            previous_approval = self.previous_application.approval
+                            approval,created = Approval.objects.update_or_create(
+                                current_proposal = checking_proposal,
+                                defaults = {
+                                    'activity' : self.activity,
+                                    'region' : self.region, 
+                                    'tenure' : self.tenure, 
+                                    'title' : self.title,
+                                    'issue_date' : timezone.now(),
+                                    'expiry_date' : details.get('expiry_date'),
+                                    'start_date' : details.get('start_date'),
+                                    'applicant' : self.applicant,
+                                    'lodgement_number': previous_approval.lodgement_number
+                                    #'extracted_fields' = JSONField(blank=True, null=True)
+                                }
+                            )
+                            if created:
+                                previous_approval.replaced_by = approval
+                                previous_approval.save()
+                    else:
+                        approval,created = Approval.objects.update_or_create(
+                            current_proposal = checking_proposal,
+                            defaults = {
+                                'activity' : self.activity,
+                                'region' : self.region, 
+                                'tenure' : self.tenure, 
+                                'title' : self.title,
+                                'issue_date' : timezone.now(),
+                                'expiry_date' : details.get('expiry_date'),
+                                'start_date' : details.get('start_date'),
+                                'applicant' : self.applicant 
+                                #'extracted_fields' = JSONField(blank=True, null=True)
+                            }
+                        )
                     # Generate compliances
                     self.generate_compliances(approval)
                     if created:
@@ -805,6 +828,34 @@ class Proposal(RevisionedMixin):
                             requirement=req.requirement,
                         )
 
+    
+
+    def renew_approval(self,request):  
+        with transaction.atomic():       
+            previous_proposal = self        
+            try:
+                proposal=Proposal.objects.get(previous_application = previous_proposal)
+                if proposal.customer_status=='under_review':
+                    raise ValidationError('A renewal for this licence has already been lodged and is awaiting review.')
+            except Proposal.DoesNotExist:            
+                previous_proposal = Proposal.objects.get(id=self.id) 
+                proposal = clone_proposal_with_status_reset(previous_proposal)
+                proposal.proposal_type = 'renewal'
+                proposal.schema = ProposalType.objects.first().schema
+                proposal.submitter = request.user
+                proposal.previous_application = self
+                print(self, previous_proposal, proposal)
+                # Create a log entry for the proposal
+                self.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
+                # Create a log entry for the organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
+                #Log entry for approval
+                from disturbance.components.approvals.models import ApprovalUserAction
+                self.approval.log_user_action(ApprovalUserAction.ACTION_RENEW_APPROVAL.format(self.approval.id),request)
+                proposal.save()
+                return proposal
+
+
 
 class ProposalLogDocument(Document):
     log_entry = models.ForeignKey('ProposalLogEntry',related_name='documents')
@@ -865,7 +916,7 @@ class AmendmentRequest(ProposalRequest):
                         proposal.processing_status = 'draft'
                         proposal.customer_status = 'draft'
                         proposal.save()
-                  
+                    
                     # Create a log entry for the proposal
                     proposal.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
                     # Create a log entry for the organisation
@@ -970,11 +1021,14 @@ class ProposalUserAction(UserAction):
     ACTION_BACK_TO_PROCESSING = "Back to processing for proposal {}"
     RECALL_REFERRAL = "Referral {} for proposal {} has been recalled"
     CONCLUDE_REFERRAL = "Referral {} for proposal {} has been concluded by {}"
+    #Approval
     ACTION_REISSUE_APPROVAL = "Reissue approval for proposal {}"
     ACTION_CANCEL_APPROVAL = "Cancel approval for proposal {}"
     ACTION_SUSPEND_APPROVAL = "Suspend approval for proposal {}"
     ACTION_REINSTATE_APPROVAL = "Reinstate approval for proposal {}"
     ACTION_SURRENDER_APPROVAL = "Surrender approval for proposal {}"
+    ACTION_RENEW_PROPOSAL = "Create Renewal proposal for proposal {}"
+
 
 
     class Meta:
@@ -1148,3 +1202,45 @@ class Referral(models.Model):
 def delete_documents(sender, instance, *args, **kwargs):
     for document in instance.documents.all():
         document.delete()
+
+def clone_proposal_with_status_reset(proposal):
+        with transaction.atomic():
+            try:
+                proposal.customer_status = 'draft'
+                proposal.processing_status = 'draft'
+                proposal.assessor_data = None
+                proposal.comment_data = None
+
+                #proposal.id_check_status = 'not_checked'
+                #proposal.character_check_status = 'not_checked'
+                #proposal.compliance_check_status = 'not_checked'
+                #Sproposal.review_status = 'not_reviewed'
+
+                proposal.lodgement_number = ''
+                proposal.lodgement_sequence = 0
+                proposal.lodgement_date = None
+
+                proposal.assigned_officer = None
+                proposal.assigned_approver = None
+
+                proposal.approval = None
+                
+                original_proposal_id = proposal.id
+
+                #proposal.previous_application = Proposal.objects.get(id=original_proposal_id)
+
+                proposal.id = None
+
+                proposal.save(no_revision=True)
+
+                
+                # clone documents
+                for proposal_document in ProposalDocument.objects.filter(proposal=original_proposal_id):
+                    proposal_document.proposal = proposal
+                    proposal_document.id = None
+                    proposal_document.save()
+                
+                return proposal
+            except:
+                raise
+

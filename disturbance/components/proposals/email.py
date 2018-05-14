@@ -72,7 +72,8 @@ def send_proposal_decline_email_notification(proposal,request,proposal_decline):
     }
     cc_list = proposal_decline.cc_email
     all_ccs = []
-    all_ccs = cc_list.split(',')
+    if cc_list:
+        all_ccs = cc_list.split(',')
 
     msg = email.send(proposal.submitter.email, bcc= all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
@@ -90,7 +91,8 @@ def send_proposal_approval_email_notification(proposal,request):
     }
     cc_list = proposal.proposed_issuance_approval['cc_email']
     all_ccs = []
-    all_ccs = cc_list.split(',')
+    if cc_list:
+        all_ccs = cc_list.split(',')
 
     licence_document= proposal.approval.licence_document._file
     if licence_document is not None:

@@ -3,7 +3,7 @@
 {%  block content %}
     Your Approval has been surrendered:
 
-    Approval : {{ approval.reference}}
+    Approval : {{ approval.lodgement_number}}
 
     Surrender Details : {{details}}
 
