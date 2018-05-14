@@ -8,7 +8,8 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('disturbance', '0006_approval_renewal_document'),
+        #('disturbance', '0006_approval_renewal_document'),
+        ('disturbance', '0034_approval_renewal_document'),
     ]
 
     operations = [
