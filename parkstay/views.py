@@ -28,7 +28,7 @@ from parkstay.models import (Campground,
                                 CampsiteRate,
                                 ParkEntryRate
                                 )
-from ledger.accounts.models import EmailUser, Address
+from ledger.accounts.models import EmailUser, Address, EmailIdentity
 from ledger.payments.models import Invoice
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
@@ -262,9 +262,11 @@ class MakeBookingsView(TemplateView):
 
         # get the customer object
         if request.user.is_anonymous():
-            try:
-                customer = EmailUser.objects.get(email=form.cleaned_data.get('email'))
-            except EmailUser.DoesNotExist:
+            # searching on EmailIdentity looks for both EmailUser and Profile objects with the email entered by user
+            customer_qs = EmailIdentity.objects.filter(email__iexact=form.cleaned_data.get('email'))
+            if customer_qs:
+                customer = customer_qs.first().user
+            else:
                 customer = EmailUser.objects.create(
                         email=form.cleaned_data.get('email'), 
                         first_name=form.cleaned_data.get('first_name'),

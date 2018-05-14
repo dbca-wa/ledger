@@ -951,6 +951,14 @@ class Booking(models.Model):
         return cb.campsite if cb else None
 
     @property
+    def first_campsite_list(self):
+        cbs = self.campsites.distinct('campsite')
+        first_campsite_list = []
+        for item in cbs:
+            first_campsite_list.append(item.campsite)
+        return first_campsite_list
+
+    @property
     def editable(self):
         today = datetime.now().date()
         if today <= self.departure:

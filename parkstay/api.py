@@ -1189,7 +1189,7 @@ def create_booking(request, *args, **kwargs):
     try:
         if campsite:
             booking = utils.create_booking_by_site(
-                Campsite.objects.filter(campsite_id=campsite.id), start_date, end_date,
+                Campsite.objects.filter(id=campsite), start_date, end_date,
                 num_adult, num_concession,
                 num_child, num_infant
             )
@@ -1619,6 +1619,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['regos'] = [{r.type: r.rego} for r in booking.regos.all()]
                 bk['firstname'] = booking.details.get('first_name','')
                 bk['lastname'] = booking.details.get('last_name','')
+                if  booking.override_reason:                        
+                    bk['override_reason'] = booking.override_reason.text
                 if not booking.paid:
                     bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
                 if booking.customer:
@@ -1632,10 +1634,14 @@ class BookingViewSet(viewsets.ModelViewSet):
                     if booking.is_canceled:
                         bk['campground_site_type'] = ""
                     else:
-                        first_campsite = booking.first_campsite
-                        bk['campground_site_type'] = first_campsite.type if first_campsite else ""
-                        if booking.campground.site_type != 2:
-                            bk['campground_site_type'] = '{}{}'.format('{} - '.format(first_campsite.name if first_campsite else ""),'({})'.format(bk['campground_site_type'] if bk['campground_site_type'] else ""))
+                        first_campsite_list = booking.first_campsite_list    
+                        campground_site_type = []              
+                        for item in first_campsite_list:
+                            campground_site_type.append ({
+                                "name": '{}'.format(item.name if item else ""),
+                                "type": '{}'.format(item.type if item.type else "")
+                                })
+                        bk['campground_site_type'] = campground_site_type
                 else:
                     bk['campground_site_type'] = ""
                 if refund_status and canceled == 't':
@@ -1676,6 +1682,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             regos = request.data['regos']
             override_price = serializer.validated_data.get('override_price', None)
             override_reason = serializer.validated_data.get('override_reason', None)
+            overridden_by = None if (override_price is None) else request.user
             try:
                 emailUser = request.data['customer']
                 customer = EmailUser.objects.get(email = emailUser['email'])
@@ -1706,6 +1713,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'cost_total' : costs['total'],
                 'override_price' : override_price,
                 'override_reason' : override_reason,
+                'overridden_by': overridden_by,
                 'customer' : customer,
                 'first_name': emailUser['first_name'],
                 'last_name': emailUser['last_name'],
@@ -1714,7 +1722,6 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'phone': emailUser['phone'],
                 'regos': regos
             }
-
             data = utils.internal_booking(request,booking_details)
             serializer = self.get_serializer(data)
             return Response(serializer.data)

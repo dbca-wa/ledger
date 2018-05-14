@@ -955,6 +955,7 @@ class ProposalUserAction(UserAction):
     ACTION_CREATE_CONDITION_ = "Create requirement {}"
     ACTION_ISSUE_APPROVAL_ = "Issue Approval for proposal {}"
     ACTION_UPDATE_APPROVAL_ = "Update Approval for proposal {}"
+    ACTION_EXPIRED_APPROVAL_ = "Expire Approval for proposal {}"
     ACTION_DISCARD_PROPOSAL = "Discard proposal {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
@@ -970,7 +971,11 @@ class ProposalUserAction(UserAction):
     RECALL_REFERRAL = "Referral {} for proposal {} has been recalled"
     CONCLUDE_REFERRAL = "Referral {} for proposal {} has been concluded by {}"
     ACTION_REISSUE_APPROVAL = "Reissue approval for proposal {}"
-    
+    ACTION_CANCEL_APPROVAL = "Cancel approval for proposal {}"
+    ACTION_SUSPEND_APPROVAL = "Suspend approval for proposal {}"
+    ACTION_REINSTATE_APPROVAL = "Reinstate approval for proposal {}"
+    ACTION_SURRENDER_APPROVAL = "Surrender approval for proposal {}"
+
 
     class Meta:
         app_label = 'disturbance'

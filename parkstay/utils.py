@@ -93,7 +93,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     return booking
 
 
-def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, cost_total=0, customer=None, updating_booking=False, override_checks=False):
+def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, cost_total=0, override_price=None, override_reason=None, overridden_by=None, customer=None, updating_booking=False, override_checks=False):
     """Create a new temporary booking in the system for a set of specific campsites."""
 
     # the CampsiteBooking table runs the risk of a race condition,
@@ -133,6 +133,9 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
                             'num_infant': num_infant
                         },
                         cost_total= Decimal(cost_total),
+                        override_price = Decimal(override_price) if (override_price is not None) else None,
+                        override_reason = override_reason,
+                        overridden_by = overridden_by,
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
                         campground=sites_qs[0].campground,
                         customer = customer
@@ -549,15 +552,23 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                 else:
                     price =  Decimal(park_entry_rate[k]) * v.count()
                     total_price += price
-    # Create line items overrude_price               
-    if lines:
-        total_price = booking.override_price - booking.cost_total 
+    
+    # Override price if required
+    if booking.override_price is not None:
         reason = booking.override_reason
-        invoice_lines.append({'ledger_description':'{}'.format(reason), "Total": total_price, "oracle_code":booking.campground.oracle_code})
-        return total_price
+        invoice_lines.append({
+            'ledger_description': '{}'.format(reason.text),
+            'quantity': 1,
+            'price_incl_tax': str(booking.override_price - booking.cost_total),
+            'oracle_code': booking.campground.oracle_code
+        })
+        total_price = booking.override_price 
     
     if lines:
-        return invoice_lines      
+        return invoice_lines
+    else:
+        return total_price
+
 
 def check_date_diff(old_booking,new_booking):
     if old_booking.arrival == new_booking.arrival and old_booking.departure == new_booking.departure:
@@ -798,6 +809,9 @@ def create_or_update_booking(request,booking_details,updating=False,override_che
             num_child=booking_details['num_child'],
             num_infant=booking_details['num_infant'],
             cost_total=booking_details['cost_total'],
+            override_price=booking_details['override_price'],
+            override_reason=booking_details['override_reason'],
+            overridden_by=booking_details['overridden_by'],
             customer=booking_details['customer'],
             override_checks=override_checks
         )

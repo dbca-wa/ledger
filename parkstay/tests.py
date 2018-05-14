@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.test import TestCase, Client
 from django.core.exceptions import ValidationError
+from django.shortcuts import reverse
 
 from ledger.accounts.models import EmailUser
 
@@ -13,6 +14,7 @@ import datetime
 
 ADMIN_USER_EMAIL = 'admin@test.net'
 NEW_USER_EMAIL = 'new_user@test.net'
+ANONYMOUS_USER_EMAIL = 'anonymous@test.net'
 
 def create_fixtures():
     new_user = EmailUser.objects.create(email=NEW_USER_EMAIL, first_name=u'New', last_name=u'user 🤦')
@@ -24,8 +26,8 @@ def create_fixtures():
 
     ar = ps.Region.objects.create(name='Region')
     ad = ps.District.objects.create(name='District', region=ar)
-    ap = ps.Park.objects.create(name='Park', district=ad, entry_fee_required=True, oracle_code='pk1')
-    c1 = ps.Campground.objects.create(name='Campground 1', park=ap)
+    ap = ps.Park.objects.create(name='Park', district=ad,entry_fee_required=True, oracle_code='pk1')
+    c1 = ps.Campground.objects.create(name='Campground 1', park=ap, oracle_code='cg1')
     c2 = ps.Campground.objects.create(name='Campground 2', park=ap)
     cg = ps.CampgroundGroup.objects.create(name='All campgrounds')
     cg.campgrounds.add(c1, c2)
@@ -34,6 +36,34 @@ def create_fixtures():
     cs1b = ps.Campsite.objects.create(name='Campsite 1b', campground=c1)
     cs2a = ps.Campsite.objects.create(name='Campsite 2a', campground=c2)
     cs2b = ps.Campsite.objects.create(name='Campsite 2b', campground=c2)
+
+
+class ClientBookingTestCase(TestCase):
+    client = Client()
+    create_booking_url = reverse('create_booking')
+    booking_url = reverse('public_make_booking')
+    success_url = reverse('public_booking_success')
+
+    def setUp(self):
+        create_fixtures()
+
+    def test_booking_external_anonymous(self):
+        base_date = datetime.date.today()
+        ext_date = lambda x: base_date+datetime.timedelta(days=x)
+
+        # create a temporary booking
+        response = self.client.post(self.create_booking_url, {
+            'arrival': ext_date(1).strftime('%Y/%m/%d'),
+            'departure': ext_date(10).strftime('%Y/%m/%d'),
+            'campsite': ps.Campsite.objects.get(name='Campsite 1a').id,
+            'num_adult': 1,
+            'num_child': 2,
+            'num_concession': 3,
+            'num_infant': 4
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'success')
+
 
 
 class BookingRangeTestCase(TestCase):

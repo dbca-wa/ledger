@@ -126,29 +126,30 @@ class Remittance(Flowable):
         canvas.drawString(cheque_x + 32, cheque_y, 'Locked Bag 30')
         cheque_y -= 15
         canvas.drawString(cheque_x + 32, cheque_y, 'Bentley Delivery Centre WA 6983')
-        # Outer BPAY Box
-        canvas.rect(current_x,current_y - 25,2.3*inch,-1.2*inch)
-        canvas.setFillColorCMYK(0.8829,0.6126,0.0000,0.5647)
-        # Move into bpay box
-        current_y += 5
-        box_pos = current_x + 0.1 * inch
-        bpay_logo_size = bpay_logo.getSize()
-        canvas.drawImage(bpay_logo, box_pos, current_y - (bpay_logo_size[1]/12 * 1.7), height= bpay_logo_size[1]/12,width=bpay_logo_size[0]/12, mask='auto')
-        # Create biller information box
-        biller_x = box_pos + bpay_logo_size[0]/12 + 1
-        canvas.rect(biller_x,(current_y - (bpay_logo_size[1]/12 * 1.7)) + 3,1.65*inch,(bpay_logo_size[1]/12)-5)
-        # Bpay info
-        canvas.setFont(BOLD_FONTNAME, MEDIUM_FONTSIZE)
-        info_y = ((current_y - (bpay_logo_size[1]/12 * 1.7)) + 3) + (0.35 * inch)
-        canvas.drawString(biller_x + 5, info_y, 'Biller Code: {}'.format(self.invoice.biller_code))
-        canvas.drawString(biller_x + 5, info_y - 20, 'Ref: {}'.format(self.invoice.reference))
-        # Bpay Info string
-        canvas.setFont(BOLD_FONTNAME,SMALL_FONTSIZE)
-        canvas.drawString(box_pos, info_y - 0.55 * inch, 'Telephone & Internet Banking - BPAY')
-        canvas.setFont(DEFAULT_FONTNAME,6.5)
-        canvas.drawString(box_pos, info_y - 0.65 * inch, 'Contact your bank or financial institution to make')
-        canvas.drawString(box_pos, info_y - 0.75 * inch, 'this payment from your cheque, savings, debit or')
-        canvas.drawString(box_pos, info_y - 0.85 * inch, 'transaction account. More info: www.bpay.com.au')
+        if settings.BPAY_ALLOWED:
+            # Outer BPAY Box
+            canvas.rect(current_x,current_y - 25,2.3*inch,-1.2*inch)
+            canvas.setFillColorCMYK(0.8829,0.6126,0.0000,0.5647)
+            # Move into bpay box
+            current_y += 5
+            box_pos = current_x + 0.1 * inch
+            bpay_logo_size = bpay_logo.getSize()
+            canvas.drawImage(bpay_logo, box_pos, current_y - (bpay_logo_size[1]/12 * 1.7), height= bpay_logo_size[1]/12,width=bpay_logo_size[0]/12, mask='auto')
+            # Create biller information box
+            biller_x = box_pos + bpay_logo_size[0]/12 + 1
+            canvas.rect(biller_x,(current_y - (bpay_logo_size[1]/12 * 1.7)) + 3,1.65*inch,(bpay_logo_size[1]/12)-5)
+            # Bpay info
+            canvas.setFont(BOLD_FONTNAME, MEDIUM_FONTSIZE)
+            info_y = ((current_y - (bpay_logo_size[1]/12 * 1.7)) + 3) + (0.35 * inch)
+            canvas.drawString(biller_x + 5, info_y, 'Biller Code: {}'.format(self.invoice.biller_code))
+            canvas.drawString(biller_x + 5, info_y - 20, 'Ref: {}'.format(self.invoice.reference))
+            # Bpay Info string
+            canvas.setFont(BOLD_FONTNAME,SMALL_FONTSIZE)
+            canvas.drawString(box_pos, info_y - 0.55 * inch, 'Telephone & Internet Banking - BPAY')
+            canvas.setFont(DEFAULT_FONTNAME,6.5)
+            canvas.drawString(box_pos, info_y - 0.65 * inch, 'Contact your bank or financial institution to make')
+            canvas.drawString(box_pos, info_y - 0.75 * inch, 'this payment from your cheque, savings, debit or')
+            canvas.drawString(box_pos, info_y - 0.85 * inch, 'transaction account. More info: www.bpay.com.au')
         
         self.current_y = current_y
     
@@ -304,7 +305,7 @@ def _create_invoice(invoice_buffer, invoice):
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
     # /Products Table
     if invoice.payment_status != 'paid' and invoice.payment_status != 'over_paid':
-        elements.append(Paragraph('Your application cannot be processed until payment is received.', styles['Left']))
+        elements.append(Paragraph(settings.INVOICE_UNPAID_WARNING, styles['Left']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 6))
     
