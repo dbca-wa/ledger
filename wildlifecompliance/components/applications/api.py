@@ -2,6 +2,7 @@ import traceback
 import os
 import datetime
 import base64
+import json
 import geojson
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
@@ -29,7 +30,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_schema,get_licence_data
+from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_schema,get_licence_data,get_activity_type_schema
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.applications.models import (
     ApplicationType,
@@ -428,11 +429,22 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
             
             app_data = request.data.copy()
-            # print(app_data)
-            # print(request.data.get('behalf_of'))
-            licence_class_data=app_data.pop('licence_class')
+            print(type(app_data))
+            print(app_data)
+            applicant=app_data.pop('applicant')
+            print(type(applicant))
+            licence_class_data=app_data.pop('licence_class_data')
+            # licence_class_data=app_data.pop('licence_class')
+            
             print(type(licence_class_data))
-            licence_data=get_licence_data(licence_class_data)
+            print(licence_class_data)
+
+            schema_data=get_activity_type_schema(licence_class_data)
+            # d= json.JSONEncoder()
+            # licence_class_data_json = d.encode(licence_class_data)
+            # print(type(licence_class_data_json))
+            # print(licence_class_data_json)
+            # licence_data=get_licence_data(licence_class_data)
             # print(type(licence_data))
             # print(licence_class_data)
             # activities=app_data.pop('licence_activity')

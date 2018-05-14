@@ -38,7 +38,7 @@
                                                             <div v-for="(activity,index2) in type.activity" class="checkbox">
                                                                 
                                                                 <div class ="col-sm-6">
-                                                                    <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected"@click="handleActivityCheckboxChange()" >{{activity.name}}
+                                                                    <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected" @click="handleActivityCheckboxChange()" >{{activity.name}}
                                                                 </div>
 
                                                             </div>
@@ -103,14 +103,9 @@ export default {
              }
             ]
         },
-        licence_class_selected:{
+        licence_class:{
             id:null,
-            activity_type:[
-                {
-                    id:null,
-                    activity:[]
-                }
-            ]
+            activity_type:[]
         },
         "loading": [],
         form: null,
@@ -188,19 +183,54 @@ export default {
     },
     createApplication:function () {
         let vm = this;
-        let category = JSON.stringify(vm.licence_classes)
-        console.log("from areate application",category)
-        vm.$http.post('/api/application.json',{
-            behalf_of: vm.behalf_of,
-            licence_class:JSON.stringify(vm.licence_classes)
-            // licence_activity:vm.selected_activity,
-            // licence_category:vm.licence_category
-        }).then(res => {
+        let index=0
+        let index1=0
+        let data = new FormData()
+        // let category = JSON.stringify({behalf_of: vm.behalf_of,licence_class:vm.licence_classes})
+        // console.log("from areate application",category)
+        for(var i=0,_len=vm.licence_classes.length;i<_len;i++){
+            if(vm.licence_classes[i].checked){
+                // console.log("Licence classes",vm.licence_classes)
+                vm.licence_class.id=vm.licence_classes[i].id
+
+                for(var j=0,_len1=vm.licence_classes[i].activity_type.length;j<_len1;j++){
+                    if(vm.licence_classes[i].activity_type[j].selected){
+                        // console.log("activity type selected",vm.licence_classes[i].activity_type[j].id)
+                        vm.licence_class.activity_type.push({id:vm.licence_classes[i].activity_type[j].id})
+                        for(var k=0,_len2=vm.licence_classes[i].activity_type[j].activity.length;k<_len2;k++){
+                            vm.licence_class.activity_type[index].activity=[]
+                            vm.licence_class.activity_type[index].activity.push({id:vm.licence_classes[i].activity_type[j].activity[k].id})
+                            index1++
+                        }
+                    }
+                    // console.log("activity type copied",vm.licence_class.activity_type)
+                }
+            }
+        }
+        // console.log("printing licence",JSON.stringify(vm.licence_class))
+        data.append('applicant', vm.behalf_of)
+        data.append('licence_class_data', JSON.stringify(vm.licence_class))
+        var convertedjson={};
+        // for(const[key,value] of data.entries()){
+        //     // console.log(key,value)
+        //     convertedjson[key]=JSON.stringify(value);
+        // }
+        for(var pair of data.entries()) {
+           console.log(pair[0]+ ', '+ pair[1]); 
+           convertedjson[pair[0]]=pair[1];
+        }
+        // data_ser=JSON.stringify($data.serializeArray())
+        console.log(convertedjson)
+        // console.log(JSON.stringify(convertedjson))
+        // vm.$http.post('/api/application.json',JSON.stringify(convertedjson),{emulateJSON:true}).then(res => {
+
+        vm.$http.post('/api/application.json',convertedjson,{emulateJSON:true}).then(res => {
               // vm.application = res.body;
               // vm.$router.push({
               //     name:"draft_application",
               //     params:{application_id:vm.application.id}
               // });
+              // console.log(request)
           },
           err => {
             console.log(err);

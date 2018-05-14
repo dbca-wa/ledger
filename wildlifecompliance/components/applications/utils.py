@@ -4,6 +4,7 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from wildlifecompliance.components.applications.models import ApplicationDocument
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
+import json
 
 import traceback
 
@@ -352,14 +353,36 @@ def get_activity_schema(activities):
 
     return schema_activity
 
+def get_activity_type_schema(licence_class_data):
+    # print(type(licence_class_data))
+    # encoder = json.JSONEncoder()
+    # obj=encoder.encode(licence_class_data)
+    # print(type(licence_class_data))
+    # print("hi")
+    # print(licence_class_data[0]['id'])
+    # print(len(licence_class_data))
+    # result=json.dumps(licence_class_data[0])
+    # print(type(result))
+    # for item in licence_class_data:
+    #     # print(item[0])
+    #     print(len(item))
+
+        # data =item.pop('licence_class_data')
+        # item_obj=encoder.encode(item)
+        # print(type(item_obj))
+        # print(item_obj['applicant'])
+    return licence_class_data
+
+
 def get_licence_data(licence_class):
     licence_class_data={}
     # print(type(licence_class))
-    for item in licence_class:
-        # print(item['id'])
-        if 'id' in item:
+    # print(licence_class)
+    # for item in licence_class:
+    #     # print(item['id'])
+    #     if 'id' in item:
 
-            print(item['id'])
+    #         print(item['id'])
             # if item['checked']:
             #     licence_class_data[id]=id
 
