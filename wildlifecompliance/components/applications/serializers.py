@@ -109,7 +109,7 @@ class ActivityTypeserializer(serializers.ModelSerializer):
 
 class SaveApplicationSerializer(BaseApplicationSerializer):
     assessor_data = serializers.JSONField(required=False)
-    licence_activity_type=ActivityTypeserializer(many=True,read_only =True)
+    # licence_activity_type=ActivityTypeserializer(many=True,read_only =True)
 
     class Meta:
         model = Application
@@ -138,7 +138,7 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
                 'can_user_edit',
                 'can_user_view',
                 # 'licence_category',
-                'licence_activity_type'
+                'licence_type_data'
                 )
         read_only_fields=('documents','conditions')
 
