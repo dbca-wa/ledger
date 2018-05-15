@@ -59,6 +59,7 @@
                             <div class="col-sm-12 top-buffer-s" v-if="!isFinalised">
                                 <strong>Action</strong><br/>
                                 <button class="btn btn-primary" @click.prevent="acceptRequest()">Accept</button><br/>
+                                <button class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
                                 <button class="btn btn-primary top-buffer-s" @click.prevent="declineRequest()">Decline</button>
                             </div>
                         </div>
@@ -385,6 +386,31 @@ export default {
         }).then((result) => {
             if (result.value) {
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/accept')))
+                .then((response) => {
+                    console.log(response);
+                    vm.access = response.body;
+                }, (error) => {
+                    console.log(error);
+                });
+            }
+        },(error) => {
+
+        });
+
+    },
+    amendmentRequest: function() {
+        let vm = this;
+        swal({
+            title: "Amendment Request",
+            text: "Request a new letter from the user.",
+            type: "question",
+            input: "textarea",
+            inputPlaceholder: 'Type your reason for your amendment request here',
+            showCancelButton: true,
+            confirmButtonText: 'Send Request'
+        }).then((result) => {
+            if (result.value) {
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/amendment_request')))
                 .then((response) => {
                     console.log(response);
                     vm.access = response.body;

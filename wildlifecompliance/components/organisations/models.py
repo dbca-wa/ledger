@@ -13,6 +13,7 @@ from wildlifecompliance.components.main.models import UserAction,CommunicationsL
 from wildlifecompliance.components.organisations.utils import random_generator
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
+                        send_organisation_request_amendment_requested_email_notification,
                         send_organisation_link_email_notification,
                         send_organisation_unlink_email_notification,
                         send_organisation_contact_adminuser_email_notification,
@@ -475,7 +476,7 @@ class OrganisationContact(models.Model):
 
 
 class OrganisationContactAction(UserAction):
-    ACTION_ORGANISATION_CONTACT_ACCEPT = "Accept  request {}"
+    ACTION_ORGANISATION_CONTACT_ACCEPT = "Accept request {}"
     ACTION_ORGANISATION_CONTACT_DECLINE = "Decline Request {}"
     ACTION_UNLINK ="Unlinked the user{}"
     
@@ -586,54 +587,75 @@ class OrganisationRequest(models.Model):
     class Meta:
         app_label = 'wildlifecompliance'
 
-   
     def accept(self, request):
         with transaction.atomic():
             self.status = 'approved'
             self.save()
-            self.log_user_action(OrganisationRequestUserAction.ACTION_ACCEPT_REQUEST.format(self.id),request)
+            self.log_user_action(OrganisationRequestUserAction.ACTION_ACCEPT_REQUEST.format(self.id), request)
             # Continue with remaining logic
             self.__accept(request)
 
-    def __accept(self,request):
+    def __accept(self, request):
         # Check if orgsanisation exists in ledger
         ledger_org = None
         try:
-            ledger_org = ledger_organisation.objects.get(abn=self.abn) 
+            ledger_org = ledger_organisation.objects.get(abn=self.abn)
         except ledger_organisation.DoesNotExist:
-            ledger_org = ledger_organisation.objects.create(name=self.name,abn=self.abn)
+            ledger_org = ledger_organisation.objects.create(name=self.name, abn=self.abn)
         # Create Organisation in wildlifecompliance
         org, created = Organisation.objects.get_or_create(organisation=ledger_org)
-        #org.generate_pins()
+        # org.generate_pins()
         # Link requester to organisation
-        delegate = UserDelegation.objects.create(user=self.requester,organisation=org)
+        delegate = UserDelegation.objects.create(user=self.requester, organisation=org)
         # log who approved the request
         # org.log_user_action(OrganisationAction.ACTION_REQUEST_APPROVED.format(self.id),request)
         # log who created the link
-        org.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
-        
-        if self.role == 'consultant' :
+        org.log_user_action(OrganisationAction.ACTION_LINK.format(
+            '{} {}({})'.format(delegate.user.first_name, delegate.user.last_name, delegate.user.email)), request)
+
+        if self.role == 'consultant':
             role = 'consultant'
-        else :
+        else:
             role = 'organisation_admin'
         # Create contact person
 
         OrganisationContact.objects.create(
-            organisation = org,
-            first_name = self.requester.first_name,
-            last_name = self.requester.last_name,
-            mobile_number = self.requester.mobile_number,
-            phone_number = self.requester.phone_number,
-            fax_number = self.requester.fax_number,
-            email = self.requester.email,
-            user_role = role,
-            user_status= 'active',
-            is_admin = True
-        
+            organisation=org,
+            first_name=self.requester.first_name,
+            last_name=self.requester.last_name,
+            mobile_number=self.requester.mobile_number,
+            phone_number=self.requester.phone_number,
+            fax_number=self.requester.fax_number,
+            email=self.requester.email,
+            user_role=role,
+            user_status='active',
+            is_admin=True
+
         )
 
         # send email to requester
-        send_organisation_request_accept_email_notification(self,org,request)
+        send_organisation_request_accept_email_notification(self, org, request)
+
+    def amendment_request(self, request):
+        with transaction.atomic():
+            self.status = 'amendment_requested'
+            self.save()
+            self.log_user_action(OrganisationRequestUserAction.ACTION_AMENDMENT_REQUEST.format(self.id), request)
+            # Continue with remaining logic
+            self.__amendment_request(request)
+
+    def __amendment_request(self, request):
+        # Check if orgsanisation exists in ledger
+        ledger_org = None
+        try:
+            ledger_org = ledger_organisation.objects.get(abn=self.abn)
+        except ledger_organisation.DoesNotExist:
+            print('error getting ledger_org for this amendment request, should never happen as org should already exist')
+            #ledger_org = ledger_organisation.objects.create(name=self.name, abn=self.abn)
+        # Create Organisation in wildlifecompliance
+        org = Organisation.objects.get(organisation=ledger_org)
+        # send email to original requester
+        send_organisation_request_amendment_requested_email_notification(self, org, request)
 
     def assign_to(self, user,request):
         with transaction.atomic():
@@ -686,6 +708,7 @@ class OrganisationRequestUserAction(UserAction):
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_ACCEPT_REQUEST = "Accept request {}"
+    ACTION_AMENDMENT_REQUEST = "Amendment request {}"
     ACTION_DECLINE_REQUEST = "Decline request {}"
     # Assessors
     ACTION_CONCLUDE_REQUEST = "Conclude request {}"

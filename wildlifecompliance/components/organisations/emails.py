@@ -15,6 +15,11 @@ class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/organisation_request_accept_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_accept_notification.txt'
 
+class OrganisationRequestAmendmentRequestNotificationEmail(TemplateEmailBase):
+    subject = 'Your organisation has requested an amendment to your request.'
+    html_template = 'wildlifecompliance/emails/organisation_amendment_requested_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_amendment_requested_notification.txt'
+
 class OrganisationRequestDeclineNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation request has been declined.'
     html_template = 'wildlifecompliance/emails/organisation_request_decline_notification.html'
@@ -161,6 +166,18 @@ def send_organisation_unlink_email_notification(unlinked_user,unlinked_by,organi
 
 def send_organisation_request_accept_email_notification(org_request,organisation,request):
     email = OrganisationRequestAcceptNotificationEmail()
+
+    context = {
+        'request': org_request
+    }
+
+    msg = email.send(org_request.requester.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_request_email(msg, org_request, sender=sender)
+    # _log_org_email(msg, organisation, org_request.requester, sender=sender)
+
+def send_organisation_request_amendment_requested_email_notification(org_request,organisation,request):
+    email = OrganisationRequestAmendmentRequestNotificationEmail()
 
     context = {
         'request': org_request
