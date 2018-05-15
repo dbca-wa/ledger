@@ -166,7 +166,6 @@ def send_organisation_unlink_email_notification(unlinked_user,unlinked_by,organi
 
 def send_organisation_request_accept_email_notification(org_request,organisation,request):
     email = OrganisationRequestAcceptNotificationEmail()
-
     context = {
         'request': org_request
     }
@@ -178,9 +177,9 @@ def send_organisation_request_accept_email_notification(org_request,organisation
 
 def send_organisation_request_amendment_requested_email_notification(org_request,organisation,request):
     email = OrganisationRequestAmendmentRequestNotificationEmail()
-
     context = {
-        'request': org_request
+        'request': org_request,
+        'reason': request.query_params.get('reason').split('.json')[0]
     }
 
     msg = email.send(org_request.requester.email, context=context)

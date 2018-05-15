@@ -5,8 +5,8 @@
 
     Organisation : {{ request.name }}
 
-    ABN : {{ request.abn}}
+    ABN : {{ request.abn }}
 
-    Reason : TEST
+    Reason : {{ reason }}
 
 {%  endblock %}

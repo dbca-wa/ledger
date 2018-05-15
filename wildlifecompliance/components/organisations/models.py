@@ -650,10 +650,9 @@ class OrganisationRequest(models.Model):
         try:
             ledger_org = ledger_organisation.objects.get(abn=self.abn)
         except ledger_organisation.DoesNotExist:
-            print('error getting ledger_org for this amendment request, should never happen as org should already exist')
-            #ledger_org = ledger_organisation.objects.create(name=self.name, abn=self.abn)
+            ledger_org = ledger_organisation.objects.create(name=self.name, abn=self.abn)
         # Create Organisation in wildlifecompliance
-        org = Organisation.objects.get(organisation=ledger_org)
+        org, created = Organisation.objects.get_or_create(organisation=ledger_org)
         # send email to original requester
         send_organisation_request_amendment_requested_email_notification(self, org, request)
 

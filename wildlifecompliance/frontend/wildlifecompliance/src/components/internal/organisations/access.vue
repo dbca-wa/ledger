@@ -410,8 +410,13 @@ export default {
             confirmButtonText: 'Send Request'
         }).then((result) => {
             if (result.value) {
-                vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/amendment_request')))
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/amendment_request/?reason='+result.value)))
                 .then((response) => {
+                    swal({
+                        title: "Amendment Request",
+                        text: "A new letter has been requested.",
+                        type: "success"}
+                    );
                     console.log(response);
                     vm.access = response.body;
                 }, (error) => {
