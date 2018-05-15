@@ -30,7 +30,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_schema,get_licence_data,get_activity_type_schema
+from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_type_schema
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.applications.models import (
     ApplicationType,
@@ -424,44 +424,23 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
             
-            app_data = request.data.copy()
-            print(type(app_data))
-            print(app_data)
-            applicant=app_data.pop('applicant')
-            print(type(applicant))
+            app_data = self.request.data
             licence_class_data=app_data.pop('licence_class_data')
-            # licence_class_data=app_data.pop('licence_class')
-            
-            print(type(licence_class_data))
-            print(licence_class_data)
-
             schema_data=get_activity_type_schema(licence_class_data)
-            # d= json.JSONEncoder()
-            # licence_class_data_json = d.encode(licence_class_data)
-            # print(type(licence_class_data_json))
-            # print(licence_class_data_json)
-            # licence_data=get_licence_data(licence_class_data)
-            # print(type(licence_data))
-            # print(licence_class_data)
-            # activities=app_data.pop('licence_activity')
-            # print(activities)
-            # activity_schema=get_activity_schema(activities)
-            # data = {
-            #     'schema':activity_schema,
-            #     'submitter': request.user.id,
-            #     # 'licence_category':request.data.get('licence_category'),
-            #     'licence_activity_type':app_data.pop('licence_activity_type'),
-            #     'applicant': request.data.get('behalf_of')
-            # }
-
-            # # print(licence_activity_type)
-            # serializer = SaveApplicationSerializer(data=data)
-            # serializer.is_valid(raise_exception=True)
-            # serializer.save()
+            data = {
+                'schema':schema_data,
+                'submitter': request.user.id,
+                'licence_type_data':licence_class_data,
+                'applicant': request.data.get('applicant')
+            }
+            serializer = SaveApplicationSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())
