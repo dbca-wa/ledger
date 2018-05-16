@@ -660,10 +660,6 @@ class OrganisationRequest(models.Model):
     def reupload_identification_amendment_request(self, request):
         with transaction.atomic():
             self.status = 'with_assessor'
-            print(request)
-            print(request.data)
-            print(request.data.dict())
-            print(request.data.dict()['identification'])
             self.identification = request.data.dict()['identification']
             self.save()
             self.log_user_action(OrganisationRequestUserAction.ACTION_REUPLOAD_IDENTIFICATION_AMENDMENT_REQUEST.format(self.id), request)

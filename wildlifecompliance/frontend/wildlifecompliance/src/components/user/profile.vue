@@ -183,16 +183,17 @@
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Consultant"> Yes, as a consultant
                                 </label>
                             </div>
+                            <div v-if="managesOrg=='Yes'">
+                                <div class="col-sm-3">
+                                    <button class="btn btn-primary" v-if="hasOrgs && !addingCompany" @click.prevent="addCompany()">Add Another Organisation</button>
+                                </div>
+                            </div>
                           </div>
 
                           
 
 
-                          <div class="form-group" v-if="managesOrg=='Yes'">
-                            <div class="col-sm-12">
-                                <button class="btn btn-primary pull-right" v-if="hasOrgs && !addingCompany" @click.prevent="addCompany()">Add Another Organisation</button>   
-                            </div>
-                          </div>
+
                           <div v-for="org in profile.wildlifecompliance_organisations">
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>

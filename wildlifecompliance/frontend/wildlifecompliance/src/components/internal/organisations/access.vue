@@ -58,8 +58,10 @@
                             </div>
                             <div class="col-sm-12 top-buffer-s" v-if="!isFinalised">
                                 <strong>Action</strong><br/>
-                                <button class="btn btn-primary" @click.prevent="acceptRequest()">Accept</button><br/>
-                                <button class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
+                                <button v-if="!isAmendmentRequested" class="btn btn-primary" @click.prevent="acceptRequest()">Accept</button>
+                                <button v-if="isAmendmentRequested" disabled class="btn btn-primary">Accept</button><br/>
+                                <button v-if="!isAmendmentRequested" class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button>
+                                <button v-if="isAmendmentRequested" disabled class="btn btn-primary top-buffer-s">Amendment Requested</button><br/>
                                 <button class="btn btn-primary top-buffer-s" @click.prevent="declineRequest()">Decline</button>
                             </div>
                         </div>
@@ -323,6 +325,9 @@ export default {
     },
     isFinalised: function(){
         return this.access.status == 'With Assesor' || this.access.status == 'Approved' || this.access.status == 'Declined';
+    },
+    isAmendmentRequested: function(){
+        return this.access.status == 'Amendment Requested';
     }
   },
   methods: {
