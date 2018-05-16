@@ -498,12 +498,28 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     #         print(traceback.print_exc())
     #         raise serializers.ValidationError(str(e))
 
-    @list_route(methods=['GET',])
+    @list_route(methods=['GET', ])
     def get_pending_requests(self, request, *args, **kwargs):
         try:
-            qs = self.get_queryset().filter(requester=request.user,status='with_assessor')
-            serializer = OrganisationRequestDTSerializer(qs,many=True)
-            return Response(serializer.data) 
+            qs = self.get_queryset().filter(requester=request.user, status='with_assessor')
+            serializer = OrganisationRequestDTSerializer(qs, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['GET', ])
+    def get_amendment_requested_requests(self, request, *args, **kwargs):
+        try:
+            qs = self.get_queryset().filter(requester=request.user, status='amendment_requested')
+            serializer = OrganisationRequestDTSerializer(qs, many=True)
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -555,6 +571,40 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             instance.accept(request)
             serializer = OrganisationRequestSerializer(instance)
             return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def amendment_request(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.amendment_request(request)
+            serializer = OrganisationRequestSerializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['PUT',])
+    def reupload_identification_amendment_request(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.reupload_identification_amendment_request(request)
+            serializer = OrganisationRequestSerializer(instance, partial=True)
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

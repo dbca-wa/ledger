@@ -183,23 +183,24 @@
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Consultant"> Yes, as a consultant
                                 </label>
                             </div>
+                            <div v-if="managesOrg=='Yes'">
+                                <div class="col-sm-3">
+                                    <button class="btn btn-primary" v-if="hasOrgs && !addingCompany" @click.prevent="addCompany()">Add Another Organisation</button>
+                                </div>
+                            </div>
                           </div>
 
                           
 
 
-                          <div class="form-group" v-if="managesOrg=='Yes'">
-                            <div class="col-sm-12">
-                                <button class="btn btn-primary pull-right" v-if="hasOrgs && !addingCompany" @click.prevent="addCompany()">Add Another Organisation</button>   
-                            </div>
-                          </div>
+
                           <div v-for="org in profile.wildlifecompliance_organisations">
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
                                 <div class="col-sm-3"> 
                                     <input type="text" disabled class="form-control" name="organisation" v-model="org.name" placeholder="">
                                 </div>
-                                <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                <label for="" class="col-sm-1 control-label" >ABN/ACN</label>
                                 <div class="col-sm-3"> 
                                     <input type="text" disabled class="form-control" name="organisation" v-model="org.abn" placeholder="">
                                 </div>
@@ -212,11 +213,27 @@
                                 <div class="col-sm-3"> 
                                     <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
                                 </div>
-                                <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                <label for="" class="col-sm-1 control-label" >ABN/ACN</label>
                                 <div class="col-sm-3"> 
                                     <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
                                 </div>
-                                <label>Pending for Approval {{orgReq.id}}</label>
+                                <label><i class="fa fa-hourglass-o fa-2x" ></i> Pending Approval</label>
+                              </div>
+                          </div>
+                          <div v-for="orgReq in orgRequest_amendment_requested">
+                              <div class="form-group">
+                                <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                <div class="col-sm-3">
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                </div>
+                                <label for="" class="col-sm-1 control-label" >ABN/ACN</label>
+                                <div class="col-sm-3">
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
+                                </div>
+                                    <span class="btn btn-info btn-file pull-left">
+                                        Upload New File <input type="file" ref="uploadedFile" @change="uploadNewFileUpdateOrgRequest(orgReq)"/>
+                                    </span>
+                                    <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                               </div>
                           </div>
 
@@ -239,7 +256,7 @@
                               </div>
                               <div class="form-group" v-if="newOrg.detailsChecked">
                                     <label class="col-sm-12" style="text-align:left;">
-                                      Please upload a letter on organisation letter head stating that you are a consultant for the origanisation.
+                                      Please upload a letter on organisation letter head stating that you are a consultant for the organisation.
                                         <span class="btn btn-info btn-file">
                                             Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                         </span>
@@ -302,7 +319,7 @@
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-info btn-file pull-left">
-                                        Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                        Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                     </span>
                                     <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                                   </div>
@@ -363,6 +380,7 @@ export default {
             updatingContact: false,
             role:null,
             orgRequest_pending:[],
+            orgRequest_amendment_requested:[],
             new_user: false
         }
     },
@@ -722,6 +740,37 @@ export default {
                 });
             }
         },
+        uploadNewFileUpdateOrgRequest: function(orgReq) {
+            let vm = this;
+            vm.readFile();
+            let data = new FormData();
+            data.append('identification', vm.uploadedFile);
+            vm.$http.put(helpers.add_endpoint_json(api_endpoints.organisation_requests,orgReq.id+'/reupload_identification_amendment_request'),data,{
+                emulateJSON:true
+            }).then((response) => {
+                vm.uploadedFile = null;
+                vm.resetNewOrg();
+                swal({
+                    title: 'Sent',
+                    html: 'Your organisation request has been successfully submitted.',
+                    type: 'success',
+                }).then(() => {
+                    window.location.reload(true);
+                });
+            }, (error) => {
+                console.log(error);
+                vm.registeringOrg = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal(
+                    'Error submitting organisation request',
+                    error_msg,
+                    'error'
+                );
+            });
+        },
         toggleSection: function (e) {
             let el = e.target;
             let chev = null;
@@ -744,9 +793,18 @@ export default {
             let vm =this;
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response)=>{
                 vm.orgRequest_pending = response.body;
-                vm.loading.splice('fetching pending organisation requests ',1);
+                vm.loading.splice('fetching pending organisation requests',1);
             },(response)=>{
                 vm.loading.splice('fetching pending organisation requests',1);
+            });
+        },
+        fetchOrgRequestAmendmentRequested:function (){
+            let vm =this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_amendment_requested_requests')).then((response)=>{
+                vm.orgRequest_amendment_requested = response.body;
+                vm.loading.splice('fetching amendment requested organisation requests',1);
+            },(response)=>{
+                vm.loading.splice('fetching amendment requested organisation requests',1);
             });
         },
         unlinkUser: function(org){
@@ -813,6 +871,7 @@ export default {
     mounted: function(){
         this.fetchCountries();
         this.fetchOrgRequestPending();
+        this.fetchOrgRequestAmendmentRequested();
         this.personal_form = document.forms.personal_form;
         $('.panelClicker[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];

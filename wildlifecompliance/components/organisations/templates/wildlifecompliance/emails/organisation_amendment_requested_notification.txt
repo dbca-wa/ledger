@@ -1,0 +1,12 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{%  block content %}
+    Your organisation has requested a new letter for your access request. Please review the reason below and upload a new letter for your access request.
+
+    Organisation : {{ request.name }}
+
+    ABN : {{ request.abn }}
+
+    Reason : {{ reason }}
+
+{%  endblock %}

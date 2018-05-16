@@ -4,6 +4,8 @@ from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from wildlifecompliance.components.applications.models import ApplicationDocument
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
+import json
+from wildlifecompliance.components.licences.models import WildlifeLicenceActivity,DefaultActivity,WildlifeLicenceActivityType,DefaultActivityType
 
 import traceback
 
@@ -343,27 +345,26 @@ def save_assessor_data(instance,request,viewset):
         except:
             raise
 
-def get_activity_schema(activities):
-    from wildlifecompliance.components.licences.models import WildlifeLicenceActivity
-    schema_activity=[]
-    for acivity in activities:
-        licence_activity = WildlifeLicenceActivity.objects.get(id=acivity)
-        schema_activity= schema_activity+licence_activity.schema
 
+def get_activity_type_schema(licence_class_data):
+    schema_activity=[]
+    # print(len(licence_class_data['activity_type']))
+    for index,item in enumerate(licence_class_data['activity_type']):
+        default_activity_type_id = item['id']
+        default_activity_type_obj=DefaultActivityType.objects.get(id=default_activity_type_id)
+        activity_type_obj=WildlifeLicenceActivityType.objects.get(id=default_activity_type_obj.activity_type_id)
+        for index1,item1 in enumerate(item['activity']):
+            default_activity_id=item1['id']
+            default_activity_obj=DefaultActivity.objects.get(id=default_activity_id)
+            activity_obj=WildlifeLicenceActivity.objects.get(id=default_activity_obj.activity_id)
+            for child in activity_obj.schema:
+                child['tabname']=activity_type_obj.name
+                child['tablabel']=activity_type_obj.name
+            schema_activity=schema_activity+activity_obj.schema
+            print(schema_activity)
     return schema_activity
 
-def get_licence_data(licence_class):
-    licence_class_data={}
-    # print(type(licence_class))
-    for item in licence_class:
-        # print(item['id'])
-        if 'id' in item:
 
-            print(item['id'])
-            # if item['checked']:
-            #     licence_class_data[id]=id
-
-    return licence_class
-
+    
 
 
