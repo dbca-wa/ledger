@@ -262,10 +262,11 @@ class MakeBookingsView(TemplateView):
 
         # get the customer object
         if request.user.is_anonymous():
-            try:
-                # searching on EmailIdentity looks for both EmailUser and Profile objects with the email entered by user
-                customer = EmailIdentity.objects.filter(email__iexact=form.cleaned_data.get('email'))[0].user
-            except EmailUser.DoesNotExist:
+            # searching on EmailIdentity looks for both EmailUser and Profile objects with the email entered by user
+            customer_qs = EmailIdentity.objects.filter(email__iexact=form.cleaned_data.get('email'))
+            if customer_qs:
+                customer = customer_qs.first().user
+            else:
                 customer = EmailUser.objects.create(
                         email=form.cleaned_data.get('email'), 
                         first_name=form.cleaned_data.get('first_name'),
@@ -290,18 +291,8 @@ class MakeBookingsView(TemplateView):
         
         logger.info(u'{} built booking {} and handing over to payment gateway'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',booking.id))
 
-        response = utils.checkout(request, booking, lines, invoice_text=reservation)
-        result =  HttpResponse(
-            content=response.content,
-            status=response.status_code,
-            content_type=response.headers['Content-Type'],
-        )
+        result = utils.checkout(request, booking, lines, invoice_text=reservation)
 
-        # if we're anonymous add the basket cookie to the current session
-        if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
-            basket_cookie = response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN]
-            result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_cookie)
-        
         return result
 
 
