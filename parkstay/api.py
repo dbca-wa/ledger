@@ -1743,7 +1743,7 @@ class BookingViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
-
+            
             instance = self.get_object()
             start_date = datetime.strptime(request.data['arrival'],'%d/%m/%Y').date()
             end_date = datetime.strptime(request.data['departure'],'%d/%m/%Y').date()

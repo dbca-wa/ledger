@@ -98,9 +98,11 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
 
     # the CampsiteBooking table runs the risk of a race condition,
     # wrap all this behaviour up in a transaction
+
+    campsite_qs = Campsite.objects.filter(pk__in = sites_qs)
     with transaction.atomic():
         # get availability for campsite, error out if booked/closed
-        availability = get_campsite_availability(sites_qs, start_date, end_date)
+        availability = get_campsite_availability(campsite_qs, start_date, end_date)
         for site_id, dates in availability.items():
             if updating_booking:
                 if not all([v[0] in ['open','tooearly'] for k, v in dates.items()]):
@@ -112,8 +114,8 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
         if not override_checks:
             # Prevent booking if max people passed
             total_people = num_adult + num_concession + num_child + num_infant
-            min_people = sum([cs.min_people for cs in sites_qs])
-            max_people = sum([cs.max_people for cs in sites_qs])
+            min_people = sum([cs.min_people for cs in campsite_qs])
+            max_people = sum([cs.max_people for cs in campsite_qs])
 
             if total_people > max_people:
                 raise ValidationError('Maximum number of people exceeded for the selected campsite(s)')
@@ -137,14 +139,14 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
                             'num_infant': num_infant
                         },
                         cost_total = updated_cost_total,
-                        override_price = Decimal(override_price) if (override_price is not None) else None,
+                        override_price = Decimal(override_price) if (override_price is not None) else 0,
                         override_reason = override_reason,
                         overridden_by = overridden_by,
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
-                        campground=sites_qs[0].campground,
+                        campground=campsite_qs[0].campground,
                         customer = customer
                     )
-        for cs in sites_qs:
+        for cs in campsite_qs:
             for i in range((end_date-start_date).days):
                 cb =    CampsiteBooking.objects.create(
                             campsite=cs,
@@ -219,7 +221,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
 
     # generate a campground-to-campsite-list map
     campground_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.campground.pk == cg[0]] for cg in campsites_qs.distinct('campground').values_list('campground')}
-
+   
     # strike out whole campground closures
     cgbr_qs =    CampgroundBookingRange.objects.filter(
         Q(campground__in=campground_map.keys()),
@@ -298,8 +300,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
             results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
 
     return results
-
-
+    
 def get_visit_rates(campsites_qs, start_date, end_date):
     """Fetch the per-day pricing for each visitor type over a range of visit dates."""
     # fetch the applicable rates for the campsites
@@ -607,7 +608,7 @@ def get_diff_days(old_booking,new_booking,additional=True):
 def create_temp_bookingupdate(request,arrival,departure,booking_details,old_booking,total_price):
     # delete all the campsites in the old moving so as to transfer them to the new booking
     old_booking.campsites.all().delete()
-    booking = create_booking_by_site(booking_details['campsites'][0],
+    booking = create_booking_by_site(booking_details['campsites'],
             start_date = arrival,
             end_date = departure,
             num_adult = booking_details['num_adult'],
@@ -906,7 +907,6 @@ def internal_booking(request,booking_details,internal=True,updating=False):
     try:
         booking = create_or_update_booking(request, booking_details, updating, override_checks=internal)
         with transaction.atomic():
-            #import pdb; pdb.set_trace()
             set_session_booking(request.session,booking)
             # Get line items
             booking_arrival = booking.arrival.strftime('%d-%m-%Y')
