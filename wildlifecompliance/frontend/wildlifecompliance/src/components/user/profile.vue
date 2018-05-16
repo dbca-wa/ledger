@@ -229,7 +229,10 @@
                                 <div class="col-sm-3">
                                     <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.abn" placeholder="">
                                 </div>
-                                <label><i class="fa fa-wrench fa-2x" ></i> Amendment Requested</label>
+                                    <span class="btn btn-info btn-file pull-left">
+                                        Upload New File <input type="file" ref="uploadedFile" @change="uploadNewFileUpdateOrgRequest(orgReq)"/>
+                                    </span>
+                                    <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                               </div>
                           </div>
 
@@ -252,7 +255,7 @@
                               </div>
                               <div class="form-group" v-if="newOrg.detailsChecked">
                                     <label class="col-sm-12" style="text-align:left;">
-                                      Please upload a letter on organisation letter head stating that you are a consultant for the origanisation.
+                                      Please upload a letter on organisation letter head stating that you are a consultant for the organisation.
                                         <span class="btn btn-info btn-file">
                                             Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                         </span>
@@ -315,7 +318,7 @@
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-info btn-file pull-left">
-                                        Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                        Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                     </span>
                                     <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                                   </div>
@@ -735,6 +738,37 @@ export default {
                     );
                 });
             }
+        },
+        uploadNewFileUpdateOrgRequest: function(orgReq) {
+            let vm = this;
+            vm.readFile();
+            let data = new FormData();
+            data.append('identification', vm.uploadedFile);
+            vm.$http.put(helpers.add_endpoint_json(api_endpoints.organisation_requests,orgReq.id+'/reupload_identification_amendment_request'),data,{
+                emulateJSON:true
+            }).then((response) => {
+                vm.uploadedFile = null;
+                vm.resetNewOrg();
+                swal({
+                    title: 'Sent',
+                    html: 'Your organisation request has been successfully submitted.',
+                    type: 'success',
+                }).then(() => {
+                    window.location.reload(true);
+                });
+            }, (error) => {
+                console.log(error);
+                vm.registeringOrg = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal(
+                    'Error submitting organisation request',
+                    error_msg,
+                    'error'
+                );
+            });
         },
         toggleSection: function (e) {
             let el = e.target;

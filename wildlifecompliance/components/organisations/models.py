@@ -536,6 +536,7 @@ class OrganisationAction(UserAction):
     ACTION_MAKE_CONTACT_SUSPEND = "Suspended contact {}"
     ACTION_MAKE_CONTACT_REINSTATE = "REINSTATED contact {}"
 
+
     @classmethod
     def log_action(cls, organisation, action, user):
         return cls.objects.create(
@@ -656,6 +657,32 @@ class OrganisationRequest(models.Model):
         # send email to original requester
         send_organisation_request_amendment_requested_email_notification(self, org, request)
 
+    def reupload_identification_amendment_request(self, request):
+        with transaction.atomic():
+            self.status = 'with_assessor'
+            print(request)
+            print(request.data)
+            print(request.data.dict())
+            print(request.data.dict()['identification'])
+            self.identification = request.data.dict()['identification']
+            self.save()
+            self.log_user_action(OrganisationRequestUserAction.ACTION_REUPLOAD_IDENTIFICATION_AMENDMENT_REQUEST.format(self.id), request)
+            # Continue with remaining logic
+            self.__reupload_identification_amendment_request(request)
+
+    def __reupload_identification_amendment_request(self, request):
+        # Check if orgsanisation exists in ledger
+        ledger_org = None
+        try:
+            ledger_org = ledger_organisation.objects.get(abn=self.abn)
+        except ledger_organisation.DoesNotExist:
+            pass #should never happen
+            #ledger_org = ledger_organisation.objects.create(name=self.name, abn=self.abn)
+        # Create Organisation in wildlifecompliance
+        org = Organisation.objects.get(organisation=ledger_org)
+        # send email to original requester
+        # TODO: send_organisation_request_amendment_requested_email_notification(self, org, request)
+
     def assign_to(self, user,request):
         with transaction.atomic():
             self.assigned_officer = user
@@ -708,6 +735,7 @@ class OrganisationRequestUserAction(UserAction):
     ACTION_UNASSIGN = "Unassign"
     ACTION_ACCEPT_REQUEST = "Accept request {}"
     ACTION_AMENDMENT_REQUEST = "Amendment request {}"
+    ACTION_REUPLOAD_IDENTIFICATION_AMENDMENT_REQUEST = "Reupload identification amendment request {}"
     ACTION_DECLINE_REQUEST = "Decline request {}"
     # Assessors
     ACTION_CONCLUDE_REQUEST = "Conclude request {}"
