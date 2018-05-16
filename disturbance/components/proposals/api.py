@@ -345,7 +345,18 @@ class ProposalViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+
+    @detail_route(methods=['GET',])
+    def amend_approval(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance = instance.amend_approval(request)
+            serializer = SaveProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e[0].encode('utf-8')))
 
 
     @detail_route(methods=['POST',])
@@ -583,7 +594,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             instance = self.get_object()
-            serializer = SaveProposalSerializer(instance,{'processing_status':'discarded'},partial=True)
+            serializer = SaveProposalSerializer(instance,{'processing_status':'discarded', 'previous_application': None},partial=True)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
             return Response(serializer.data,status=http_status)

@@ -117,6 +117,35 @@ class Approval(models.Model):
         else:
             return False
 
+    @property
+    def can_renew(self):
+        try: 
+            renew_conditions = {
+                    'previous_application': self.current_proposal,
+                    'proposal_type': 'renewal'
+                    }
+            proposal=Proposal.objects.get(**renew_conditions)
+            if proposal:
+                return False
+        except Proposal.DoesNotExist:
+            return True
+
+    @property
+    def can_amend(self):
+        try: 
+            amend_conditions = {
+                    'previous_application': self.current_proposal,
+                    'proposal_type': 'amendment'
+                    }
+            proposal=Proposal.objects.get(**amend_conditions)
+            if proposal:
+                return False
+        except Proposal.DoesNotExist:
+            if self.can_renew:
+                return True
+            else:
+                return False
+
 
     def generate_doc(self):
         from disturbance.components.approvals.pdf import create_approval_doc 
@@ -285,6 +314,7 @@ class ApprovalUserAction(UserAction):
     ACTION_REINSTATE_APPROVAL = "Reinstate approval {}"
     ACTION_SURRENDER_APPROVAL = "surrender approval {}"
     ACTION_RENEW_APPROVAL = "Create renewal Proposal for approval {}"
+    ACTION_AMEND_APPROVAL = "Create amendment Proposal for approval {}"
     
     
     class Meta:
