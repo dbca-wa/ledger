@@ -1,4 +1,5 @@
 import Section from '../components/forms/section.vue'
+import Tab from '../components/forms/tab.vue'
 import Group from '../components/forms/group.vue'
 import Radio from '../components/forms/radio.vue'
 import Conditions from '../components/forms/conditions.vue'
@@ -27,6 +28,7 @@ module.exports = {
         var assessorLevel = '';
         var readonly = false;
         var _elements = [];
+
         if (assessorStatus != null){
             assessorMode = assessorStatus['assessor_mode'];
             assessorCanAssess = assessorStatus['has_assessor_mode'];
@@ -140,6 +142,26 @@ module.exports = {
                             )
                         })}
                     </Section>
+                    
+                )
+                break;
+             case 'tab':
+                var value = null;
+                if(data !== null && data !== undefined) {
+                  value = ( data[c.name] )? data[c.name][0] : null ;
+                }
+                
+                _elements.push(
+                    <Tab label={c.label} Key={c.name} id={c.name}>
+                        {c.children.map(d=>{
+                            return (
+                                <div>
+                                    {this.renderChildren(h,d,value)}
+                                </div>
+                            )
+                        })}
+                    </Tab>
+                    
                 )
                 break;
 

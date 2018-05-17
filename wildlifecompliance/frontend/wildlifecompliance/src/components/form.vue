@@ -96,10 +96,16 @@
                             </div>
                         </div>
                         <div class="col-md-9">
+                        
+                        
+                            
+                        
                             {vm.application.schema.map(d =>{
                                 return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor_mode,vm.application.assessor)
                             })}
                             { this.$slots.default }
+                            
+
                         </div>
                     </div>
                 )
@@ -108,20 +114,31 @@
                 if (vm.form_width == 'inherit'){
                     return (
                         <div>
+                        <ul class="nav nav-tabs">
+                          <li class="nav-item">
+                            <a class="nav-link active" href="#">Active</a>
+                          </li>
+                        </ul>
                             {vm.application.schema.map(d =>{
                                 return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor_mode,vm.application.assessor)
                             })}
                             { this.$slots.default }
+                        
                         </div>
                     )
                 }
                 else {
                     return (
                         <div class={vm.form_width}>
-                            {vm.application.schema.map(d =>{
-                                return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor_mode,vm.application.assessor)
-                            })}
-                            { this.$slots.default }
+                            <ul class="nav nav-tabs">
+                              <li class="nav-item">
+                                <a class="nav-link active" href="#">Active</a>
+                              </li>
+                            </ul>
+                                {vm.application.schema.map(d =>{
+                                    return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor_mode,vm.application.assessor)
+                                })}
+                                { this.$slots.default }
                         </div>
                     )
                 }
