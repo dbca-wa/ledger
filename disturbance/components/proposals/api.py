@@ -30,7 +30,7 @@ from datetime import datetime, timedelta, date
 from disturbance.components.proposals.utils import save_proponent_data,save_assessor_data
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from disturbance.components.main.models import Document, Region, District, Activity, Tenure, ApplicationType
+from disturbance.components.main.models import Document, Region, District, Tenure, ApplicationType
 from disturbance.components.proposals.models import (
     ProposalType,
     Proposal,
@@ -575,17 +575,20 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'application_type': application_type,
                 'region': region,
                 'district': district,
-                'activity': activity,
+                #'activity': activity,
                 'tenure': tenure,
-                'data': [{u'RegionActivitySection': 
-                    [{
-                        'Activity': Activity.objects.get(id=activity).name if activity else None, 
-                        'Region': Region.objects.get(id=region).name if region else None, 
-                        'District': District.objects.get(id=district).name if district else None, 
-                        'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
-                        'ApplicationType': ApplicationType.objects.get(id=application_type).name
-                    }]
-                }], 
+                'data': [
+                    {
+                        u'regionTenureSection': [{
+                            #'Activity': activity if activity else None,
+                            'Region': Region.objects.get(id=region).name if region else None, 
+                            'District': District.objects.get(id=district).name if district else None, 
+                            'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
+                            #'ApplicationType': ApplicationType.objects.get(id=application_type).name
+                        }]
+                    }
+
+                ], 
             }
             serializer = SaveProposalSerializer(data=data)
             serializer.is_valid(raise_exception=True)

@@ -47,18 +47,18 @@ class ApplicationType(models.Model):
     def __str__(self):
         return self.name
  
-@python_2_unicode_compatible
-class Activity(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    order = models.PositiveSmallIntegerField(default=0)
-    application_type = models.ForeignKey(ApplicationType, related_name='activity_app_types')
-
-    class Meta:
-        ordering = ['order', 'name']
-        app_label = 'disturbance'
-
-    def __str__(self):
-        return '{}: {}'.format(self.name, self.application_type)
+#@python_2_unicode_compatible
+#class Activity(models.Model):
+#    name = models.CharField(max_length=255, unique=True)
+#    order = models.PositiveSmallIntegerField(default=0)
+#    application_type = models.ForeignKey(ApplicationType, related_name='activity_app_types')
+#
+#    class Meta:
+#        ordering = ['order', 'name']
+#        app_label = 'disturbance'
+#
+#    def __str__(self):
+#        return '{}: {}'.format(self.name, self.application_type)
 
 @python_2_unicode_compatible
 class Tenure(models.Model):

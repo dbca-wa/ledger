@@ -99,6 +99,7 @@
                                 </div>
                             </div>
 
+                            <!--
                             <div v-if="activities.length > 0">
                                 <label for="" class="control-label" >Activity</label>
                                 <div class="col-sm-12">
@@ -112,6 +113,7 @@
                                     </div>
                                 </div>
                             </div>
+                            -->
 
                             <div v-if="tenures.length > 0">
                                 <label for="" class="control-label" >Tenure</label>
@@ -261,7 +263,8 @@ export default {
     isDisabled: function() {
         let vm = this;
         if (vm.selected_application_name == 'Disturbance') {
-            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_activity == '' || vm.selected_tenure == ''){
+            //if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_activity == '' || vm.selected_tenure == ''){
+            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_tenure == ''){
 	    		return true;
             }
         } else {
@@ -318,7 +321,7 @@ export default {
                     this.application_types.push( {
                         text: vm.api_app_types[i].name, 
                         value: vm.api_app_types[i].id, 
-                        activities: (vm.api_app_types[i].activity_app_types.length > 0) ? vm.api_app_types[i].activity_app_types : [],
+                        //activities: (vm.api_app_types[i].activity_app_types.length > 0) ? vm.api_app_types[i].activity_app_types : [],
                         tenures: (vm.api_app_types[i].tenure_app_types.length > 0) ? vm.api_app_types[i].tenure_app_types : [],
                     } );
                 }
@@ -354,7 +357,7 @@ export default {
         vm.display_region_selectbox = false;
 
         vm.selected_application_name = this.searchList(application_id, vm.application_types).text
-        this.chainedSelectActivities(application_id);
+        //this.chainedSelectActivities(application_id);
         this.chainedSelectTenures(application_id);
 
         if (vm.selected_application_name == 'Disturbance') {
@@ -391,5 +394,9 @@ export default {
 input[type=text], select{
     width:40%;
     box-sizing:border-box;
+
+    min-height: 34px;
+    padding: 0;
+    height: auto;
 }
 </style>

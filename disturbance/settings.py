@@ -16,7 +16,7 @@ INSTALLED_APPS += [
     'taggit',
     'rest_framework',
     'rest_framework_gis',
-    #'reset_migrations',
+    'reset_migrations',
 ]
 
 SITE_ID = 1

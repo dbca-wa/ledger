@@ -17,7 +17,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
-from disturbance.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Activity, Tenure, ApplicationType
+from disturbance.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
@@ -228,18 +228,25 @@ class Proposal(RevisionedMixin):
         ('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
         ('accepted', 'Accepted'))
 
-    PROPOSAL_STATE_NEW_LICENCE = 'New Licence'
-    PROPOSAL_STATE_AMENDMENT = 'Amendment'
-    PROPOSAL_STATE_RENEWAL = 'Renewal'
-    PROPOSAL_STATE_CHOICES = (
-        (1, PROPOSAL_STATE_NEW_LICENCE),
-        (2, PROPOSAL_STATE_AMENDMENT),
-        (3, PROPOSAL_STATE_RENEWAL),
-    )
+#    PROPOSAL_STATE_NEW_LICENCE = 'New Licence'
+#    PROPOSAL_STATE_AMENDMENT = 'Amendment'
+#    PROPOSAL_STATE_RENEWAL = 'Renewal'
+#    PROPOSAL_STATE_CHOICES = (
+#        (1, PROPOSAL_STATE_NEW_LICENCE),
+#        (2, PROPOSAL_STATE_AMENDMENT),
+#        (3, PROPOSAL_STATE_RENEWAL),
+#    )
 
-    #proposal_type = models.ForeignKey(ProposalType, on_delete=models.PROTECT)
-    proposal_state = models.PositiveSmallIntegerField('Proposal state', choices=PROPOSAL_STATE_CHOICES, 
-                                                    default=1)
+    APPLICATION_TYPE_CHOICES = ( 
+        ('new_licence', 'New Licence'), 
+        ('amendment', 'Amendment'), 
+        ('renewal', 'Renewal'), 
+    ) 
+ 
+    proposal_type = models.CharField('Proposal Type', max_length=40, choices=APPLICATION_TYPE_CHOICES, 
+                                        default=APPLICATION_TYPE_CHOICES[0][0])
+    #proposal_state = models.PositiveSmallIntegerField('Proposal state', choices=PROPOSAL_STATE_CHOICES, default=1)
+
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
@@ -278,10 +285,10 @@ class Proposal(RevisionedMixin):
     proposed_decline_status = models.BooleanField(default=False)
     # Special Fields
     title = models.CharField(max_length=255,null=True,blank=True)
-    #activity = models.CharField(max_length=255,null=True,blank=True)
+    activity = models.CharField(max_length=255,null=True,blank=True)
     #region = models.CharField(max_length=255,null=True,blank=True)
     #tenure = models.CharField(max_length=255,null=True,blank=True)
-    activity = models.ForeignKey(Activity, null=True, blank=True)
+    #activity = models.ForeignKey(Activity, null=True, blank=True)
     region = models.ForeignKey(Region, null=True, blank=True)
     district = models.ForeignKey(District, null=True, blank=True)
     tenure = models.ForeignKey(Tenure, null=True, blank=True)
@@ -300,6 +307,24 @@ class Proposal(RevisionedMixin):
             new_lodgment_id = 'P{}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
             self.save()
+
+    def find(self, key, dictionary):
+        """
+        FOR TESTING: 
+
+        for l in p.data:
+            print list(p.find('Section2-5', l))
+        """
+        for k, v in dictionary.iteritems():
+            if k == key:
+                yield v
+            elif isinstance(v, dict):
+                for result in self.find(key, v):
+                    yield result
+            elif isinstance(v, list):
+                for d in v:
+                    for result in self.find(key, d):
+                        yield result
 
     @property
     def reference(self):
@@ -420,7 +445,7 @@ class Proposal(RevisionedMixin):
             raise exceptions.ProposalNotComplete()
         missing_fields = []
         required_fields = {
-            'region':'Region/District',
+            #'region':'Region/District',
             'title': 'Title',
             'activity': 'Activity'
         }
@@ -476,6 +501,7 @@ class Proposal(RevisionedMixin):
                             q.status = 'amended'
                             q.save()
                         
+        		import ipdb; ipdb.set_trace()
                 self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
@@ -704,6 +730,7 @@ class Proposal(RevisionedMixin):
 
                 if self.processing_status == 'approved':
                     # TODO if it is an ammendment proposal then check appropriately
+                    #import ipdb; ipdb.set_trace()
                     checking_proposal = self
                     if self.proposal_type == 'renewal':
                         if self.previous_application:
@@ -711,10 +738,10 @@ class Proposal(RevisionedMixin):
                             approval,created = Approval.objects.update_or_create(
                                 current_proposal = checking_proposal,
                                 defaults = {
-                                    'activity' : self.activity,
-                                    'region' : self.region, 
-                                    'tenure' : self.tenure, 
-                                    'title' : self.title,
+                                    #'activity' : self.activity,
+                                    #'region' : self.region, 
+                                    #'tenure' : self.tenure, 
+                                    #'title' : self.title,
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
@@ -730,10 +757,10 @@ class Proposal(RevisionedMixin):
                         approval,created = Approval.objects.update_or_create(
                             current_proposal = checking_proposal,
                             defaults = {
-                                'activity' : self.activity,
-                                'region' : self.region, 
-                                'tenure' : self.tenure, 
-                                'title' : self.title,
+                                #'activity' : self.activity,
+                                #'region' : self.region.name, 
+                                #'tenure' : self.tenure.name, 
+                                #'title' : self.title,
                                 'issue_date' : timezone.now(),
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),

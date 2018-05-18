@@ -49,6 +49,7 @@ module.exports = {
         var comment_val = (commentData) ? (commentData[c.name]) ? commentData[c.name] : null : null;
         switch (c.type) {
             case 'text':
+        		readonly = (c.readonly) ? (c.readonly): (readonly);
                 _elements.push(
                     <TextField type="text" name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility}/>
                 )
@@ -101,7 +102,7 @@ module.exports = {
                 )
                 break;
             case 'radiobuttons':
-            var value = null;
+                var value = null;
                 if(data !== null && data !== undefined) {
                   value = ( data )? data : null ;
                 }

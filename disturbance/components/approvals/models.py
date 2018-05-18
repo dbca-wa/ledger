@@ -58,10 +58,10 @@ class Approval(models.Model):
     cover_letter_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='cover_letter_document')
     replaced_by = models.ForeignKey('self', blank=True, null=True)
     current_proposal = models.ForeignKey(Proposal,related_name = '+')
-    activity = models.CharField(max_length=255)
-    region = models.CharField(max_length=255)
-    tenure = models.CharField(max_length=255,null=True)
-    title = models.CharField(max_length=255)
+#    activity = models.CharField(max_length=255)
+#    region = models.CharField(max_length=255)
+#    tenure = models.CharField(max_length=255,null=True)
+#    title = models.CharField(max_length=255)
     renewal_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='renewal_document')
     renewal_sent = models.BooleanField(default=False)
     issue_date = models.DateField()
@@ -78,11 +78,25 @@ class Approval(models.Model):
     set_to_suspend = models.BooleanField(default=False)
     set_to_surrender = models.BooleanField(default=False)
 
-
-
     class Meta:
         app_label = 'disturbance'
         unique_together= ('lodgement_number', 'issue_date')
+
+    @property
+    def region(self):
+        return self.current_proposal.region.name
+
+    @property
+    def tenure(self):
+        return self.current_proposal.tenure.name
+
+    @property
+    def activity(self):
+        return self.current_proposal.activity
+
+    @property
+    def title(self):
+        return self.current_proposal.title
 
     def save(self, *args, **kwargs):
         super(Approval, self).save(*args,**kwargs)
