@@ -23,6 +23,8 @@ from datetime import datetime, date
 from ledger.accounts.signals import name_changed, post_clean
 from ledger.address.models import UserAddress, Country
 
+
+
 class EmailUserManager(BaseUserManager):
     """A custom Manager for the EmailUser model.
     """
@@ -359,6 +361,10 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         else:
             return -1
 
+    def log_user_action(self, action, request):
+        return EmailUserAction.log_action(self, action, request.user)
+
+
 def query_emailuser_by_args(**kwargs):
     ORDER_COLUMN_CHOICES = [
         'title',
@@ -406,6 +412,44 @@ def query_emailuser_by_args(**kwargs):
     }
 
 
+@python_2_unicode_compatible
+class UserAction(models.Model):
+    who = models.ForeignKey(EmailUser, null=False, blank=False)
+    when = models.DateTimeField(null=False, blank=False, auto_now_add=True)
+    what = models.TextField(blank=False)
+
+    def __str__(self):
+        return "{what} ({who} at {when})".format(
+            what=self.what,
+            who=self.who,
+            when=self.when
+        )
+
+    class Meta:
+        abstract = True
+        app_label = 'ledger'
+
+
+class EmailUserAction(UserAction):
+    ACTION_CREATE = "EmailUser {} Created"
+    ACTION_PERSONAL_DETAILS_UPDATE = "EmailUser {} Personal Details Updated"
+    ACTION_POSTAL_ADDRESS_UPDATE = "EmailUser {} Postal Address Updated"
+
+    @classmethod
+    def log_action(cls, emailuser, action, user):
+        return cls.objects.create(
+            emailuser=emailuser,
+            who=user,
+            what=str(action)
+        )
+
+    emailuser = models.ForeignKey(EmailUser, related_name='action_logs')
+
+    class Meta:
+        app_label = 'ledger'
+        ordering = ['-when']
+
+
 class EmailUserListener(object):
     """
     Event listener for EmailUser
@@ -430,7 +474,8 @@ class EmailUserListener(object):
 
     @staticmethod
     @receiver(post_save, sender=EmailUser)
-    def _post_save(sender, instance, **kwargs):
+    def _post_save(sender, instance, created, **kwargs):
+        print('created in user _post_save:', created)
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         # add user's email to email identity and social auth if not exist
         if not instance.is_dummy_user:
@@ -451,6 +496,10 @@ class EmailUserListener(object):
         if original_instance and any([original_instance.first_name != instance.first_name, original_instance.last_name != instance.last_name]):
             # user changed first name or last name, send a named_changed signal.
             name_changed.send(sender=instance.__class__, user=instance)
+
+        # log create user
+        if created:
+            instance.log_user_action(EmailUserAction.ACTION_CREATE.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
 
 
 class RevisionedMixin(models.Model):

@@ -35,7 +35,8 @@ from wildlifecompliance.components.users.serializers import   (
                                                 UserAddressSerializer,
                                                 PersonalSerializer,
                                                 ContactSerializer,
-												EmailIdentitySerializer
+												EmailIdentitySerializer,
+                                                EmailUserActionSerializer
                                             )
 from wildlifecompliance.components.organisations.serializers import (
                                                 OrganisationRequestDTSerializer,
@@ -163,6 +164,25 @@ class UserViewSet(viewsets.ModelViewSet):
 
             except Exception as e:
                 return Response(e)
+
+
+    @detail_route(methods=['GET',])
+    def action_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.action_logs.all()
+            serializer = EmailUserActionSerializer(qs,many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 
     @detail_route(methods=['GET',])
