@@ -49,10 +49,17 @@
             this.mapDataToApplication();
         },
         mounted:function () {
+            console.log(Renderer.sections)
+            console.log(Renderer.tabs_list)
+            // Renderer.tabs.map(tsec => {
+            //         $('#tabs-section').append(`<li class="nav-item" ><a data-toggle="tab" href="#">${tsec.label}</a></li>`);
+            //     });
             if (this.withSectionsSelector){
+                
                 Renderer.sections.map(sec => {
                     $('#scrollspy-section').append(`<li class="list-group-item" ><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
                 });
+
                 $('a.page-scroll').bind('click', function(event) {
                    var $anchor = $(this);
                    $('html, body').stop().animate({
@@ -71,10 +78,14 @@
                         $('.fixed').width('100%');
                     }
                 });
+
             }
+
+                
         },
         render(h) {
             let vm =this;
+            console.log('inside renderer',Renderer.tabs_list)
             //Renderer.sections = [];
             Renderer.store_status_data(vm.application.readonly,vm.application.assessor_data,vm.application.comment_data,vm.application.current_assessor,vm.application.assessor_mode,vm.application.can_user_edit,vm.application.documents_url);
             if (vm.withSectionsSelector){
@@ -96,7 +107,9 @@
                             </div>
                         </div>
                         <div class="col-md-9">
-                        
+                            <ul class="nav" id="tabs-section">
+
+                            </ul>
                         
                             
                         
@@ -142,6 +155,7 @@
                         </div>
                     )
                 }
+
             }
         }
     }

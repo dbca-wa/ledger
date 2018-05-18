@@ -1,15 +1,15 @@
 <template lang="html">
-	<div>
+	<!-- <div>
 		<ul>
 			<div class="nav nav-tabs" >
 	            <li><a data-toggle="tab" :href="'#'+tab_id">{{label}}</a></li>
 		    </div>
-		</ul>
-	    <div class="tab-content">
+		</ul> -->
+	    <div class="tab-content" id="label">
 	    	<slot></slot>
 	    	
 	    </div>
-	</div>
+	<!-- </div> -->
 </template>
 <script>
 export default {
