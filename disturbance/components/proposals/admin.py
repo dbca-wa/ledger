@@ -45,3 +45,18 @@ class ProposalApproverGroupAdmin(admin.ModelAdmin):
 @admin.register(models.ProposalStandardRequirement)
 class ProposalStandardRequirementAdmin(admin.ModelAdmin):
     list_display = ['code','text','obsolete']
+
+
+from django import forms
+from ckeditor.widgets import CKEditorWidget
+class HelpPageAdminForm(forms.ModelForm):
+    content = forms.CharField(widget=CKEditorWidget())
+    class Meta:
+        model = models.HelpPage
+        fields = '__all__'
+
+@admin.register(models.HelpPage)
+class HelpPageAdmin(admin.ModelAdmin):
+    form = HelpPageAdminForm
+
+#admin.site.register(models.HelpPage, HelpPageAdmin)

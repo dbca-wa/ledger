@@ -1300,3 +1300,14 @@ def clone_proposal_with_status_reset(proposal):
             except:
                 raise
 
+from ckeditor.fields import RichTextField
+class HelpPage(models.Model):
+    application_type = models.ForeignKey(ApplicationType)
+    content = RichTextField()
+    description = models.CharField(max_length=256, blank=True, null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
+
+    class Meta:
+        app_label = 'disturbance'
+        unique_together = ('application_type', 'version')
+
