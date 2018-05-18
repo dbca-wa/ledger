@@ -862,16 +862,15 @@ class Proposal(RevisionedMixin):
             previous_proposal = self        
             try:
                 proposal=Proposal.objects.get(previous_application = previous_proposal)
-                if proposal.customer_status=='under_review':
+                if proposal.customer_status=='with_assessor':
                     raise ValidationError('A renewal for this licence has already been lodged and is awaiting review.')
             except Proposal.DoesNotExist:            
-                previous_proposal = Proposal.objects.get(id=self.id) 
+                previous_proposal = Proposal.objects.get(id=self.id)
                 proposal = clone_proposal_with_status_reset(previous_proposal)
                 proposal.proposal_type = 'renewal'
                 proposal.schema = ProposalType.objects.first().schema
                 proposal.submitter = request.user
                 proposal.previous_application = self
-                print(self, previous_proposal, proposal)
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation
@@ -880,7 +879,36 @@ class Proposal(RevisionedMixin):
                 from disturbance.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_RENEW_APPROVAL.format(self.approval.id),request)
                 proposal.save()
-                return proposal
+            return proposal
+
+    def amend_approval(self,request):  
+        with transaction.atomic():       
+            previous_proposal = self        
+            try:
+                amend_conditions = {
+                'previous_application': previous_proposal,
+                'proposal_type': 'amendment'
+
+                }
+                proposal=Proposal.objects.get(**amend_conditions)
+                if proposal.customer_status=='under_review':
+                    raise ValidationError('A renewal for this licence has already been lodged and is awaiting review.')
+            except Proposal.DoesNotExist:            
+                previous_proposal = Proposal.objects.get(id=self.id)
+                proposal = clone_proposal_with_status_reset(previous_proposal)
+                proposal.proposal_type = 'amendment'
+                proposal.schema = ProposalType.objects.first().schema
+                proposal.submitter = request.user
+                proposal.previous_application = self
+                # Create a log entry for the proposal
+                self.log_user_action(ProposalUserAction.ACTION_AMEND_PROPOSAL.format(self.id),request)
+                # Create a log entry for the organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_AMEND_PROPOSAL.format(self.id),request)
+                #Log entry for approval
+                from disturbance.components.approvals.models import ApprovalUserAction
+                self.approval.log_user_action(ApprovalUserAction.ACTION_AMEND_APPROVAL.format(self.approval.id),request)
+                proposal.save()
+            return proposal
 
 
 
@@ -1055,6 +1083,7 @@ class ProposalUserAction(UserAction):
     ACTION_REINSTATE_APPROVAL = "Reinstate approval for proposal {}"
     ACTION_SURRENDER_APPROVAL = "Surrender approval for proposal {}"
     ACTION_RENEW_PROPOSAL = "Create Renewal proposal for proposal {}"
+    ACTION_AMEND_PROPOSAL = "Create Amendment proposal for proposal {}"
 
 
 

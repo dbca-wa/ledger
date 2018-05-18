@@ -248,8 +248,11 @@ export default {
                                     links +=  `<a href='/external/approval/${full.id}'>View</a><br/>`;
                                     if(full.can_action){
                                         links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
+                                        if(full.can_amend){
+                                           links +=  `<a href='#${full.id}' data-amend-approval='${full.current_proposal}'>Amend</a><br/>`; 
+                                       }                                        
                                     }
-                                    if(full.renewal_document && full.renewal_sent) {
+                                    if(full.renewal_document && full.renewal_sent && full.can_renew) {
                                     links +=  `<a href='#${full.id}' data-renew-approval='${full.current_proposal}'>Renew</a><br/>`;
                                     }                                    
                                 }
@@ -415,6 +418,13 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-renew-approval');
                 vm.renewApproval(id);
+            });
+
+            // External amend listener
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-amend-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-amend-approval');
+                vm.amendApproval(id);
             });
 
         },
@@ -604,6 +614,46 @@ export default {
                     
                 }, (error) => {
                     console.log(error);
+                    swal({
+                    title: "Renew Approval",
+                    text: error.body,
+                    type: "error",                   
+                    })
+                });
+            },(error) => {
+
+            });
+        },
+
+        amendApproval:function (proposal_id) {
+            let vm = this;
+            swal({
+                title: "Amend Approval",
+                text: "Are you sure you want to amend this approval?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: 'Amend approval',
+                //confirmButtonColor:'#d9534f'
+            }).then(() => {
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/amend_approval')),{
+                
+                })
+                .then((response) => {
+                   let proposal = {}
+                   proposal = response.body
+                   vm.$router.push({
+                    name:"draft_proposal",
+                    params:{proposal_id: proposal.id}
+                   });
+                    
+                }, (error) => {
+                    console.log(error);
+                    swal({
+                    title: "Amend Approval",
+                    text: error.body,
+                    type: "error",                   
+                    })
+
                 });
             },(error) => {
 

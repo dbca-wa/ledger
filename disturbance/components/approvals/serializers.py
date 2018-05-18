@@ -67,7 +67,8 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'set_to_cancel',
             'set_to_surrender',
             'set_to_suspend',
-            'current_proposal'
+            'can_renew',
+            'can_amend'
         )
 
 class ApprovalCancellationSerializer(serializers.Serializer):
