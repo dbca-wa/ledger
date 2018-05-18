@@ -427,11 +427,12 @@ class UserAction(models.Model):
 
     class Meta:
         abstract = True
-        app_label = 'ledger'
+        app_label = 'accounts'
 
 
 class EmailUserAction(UserAction):
     ACTION_CREATE = "EmailUser {} Created"
+    ACTION_UPDATE = "EmailUser {} Updated"
     ACTION_PERSONAL_DETAILS_UPDATE = "EmailUser {} Personal Details Updated"
     ACTION_POSTAL_ADDRESS_UPDATE = "EmailUser {} Postal Address Updated"
 
@@ -446,7 +447,7 @@ class EmailUserAction(UserAction):
     emailuser = models.ForeignKey(EmailUser, related_name='action_logs')
 
     class Meta:
-        app_label = 'ledger'
+        app_label = 'accounts'
         ordering = ['-when']
 
 
@@ -498,8 +499,12 @@ class EmailUserListener(object):
             name_changed.send(sender=instance.__class__, user=instance)
 
         # log create user
-        if created:
-            instance.log_user_action(EmailUserAction.ACTION_CREATE.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
+        # TODO: this isn't going to work here, needs to be done outside this post_save because request object may not exist (e.g. if created by internal or shell)
+        # if created:
+        #     pass
+        #     # instance.log_user_action(EmailUserAction.ACTION_CREATE.format('{} {}({})'.format(instance.first_name,instance.last_name,instance.email)),request)
+        # else:
+        #     instance.log_user_action(EmailUserAction.ACTION_UPDATE.format('{} {}({})'.format(instance.first_name,instance.last_name,instance.email)),request)
 
 
 class RevisionedMixin(models.Model):
