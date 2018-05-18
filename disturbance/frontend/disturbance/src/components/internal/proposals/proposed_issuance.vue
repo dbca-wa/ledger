@@ -30,7 +30,7 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="due_date" style="width: 70%;">
-                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" v-model="approval.expiry_date">
+                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" v-model="approval.expiry_date" :disabled="is_amendment">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
@@ -92,6 +92,10 @@ export default {
         processing_status: {
             type: String,
             required: true
+        },
+        proposal_type: {
+            type: String,
+            required: true
         }
     },
     data:function () {
@@ -123,6 +127,9 @@ export default {
         },
         title: function(){
             return this.processing_status == 'With Approver' ? 'Issue Approval' : 'Propose to issue approval';
+        },
+        is_amendment: function(){
+            return this.proposal_type == 'amendment' ? true : false;
         }
     },
     methods:{

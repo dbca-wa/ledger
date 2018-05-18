@@ -70,7 +70,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'lodgement_number',
                 'lodgement_sequence',
                 'can_officer_process',
-                'allowed_assessors'
+                'allowed_assessors',
+                'proposal_type'
                 )
         read_only_fields=('documents',)
     
@@ -140,9 +141,7 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'reference',
                 'lodgement_number',
                 'lodgement_sequence',
-                'can_officer_process',
-
-               
+                'can_officer_process',               
                 )
         read_only_fields=('documents','requirements')
 
@@ -228,7 +227,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'reference',
                 'lodgement_number',
                 'lodgement_sequence',
-                'can_officer_process'
+                'can_officer_process',
+                'proposal_type'
                 )
         read_only_fields=('documents','requirements')
 

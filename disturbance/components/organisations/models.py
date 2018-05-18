@@ -71,11 +71,16 @@ class Organisation(models.Model):
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
             # delete contact person
             try:
-                OrganisationContact.objects.get(
+                '''OrganisationContact.objects.get(
                     organisation = self,
                     email = delegate.user.email
                 
-                ).delete()
+                ).delete()'''
+                org_contact = OrganisationContact.objects.get(organisation = self, email = delegate.user.email)
+                if OrganisationContact.objects.filter(organisation=self).count()>1:
+                    org_contact.delete()
+                else:
+                    raise ValidationError('You cannot unlink the last Organisation user')
             except OrganisationContact.DoesNotExist:
                 pass
             # delete delegate

@@ -377,10 +377,10 @@ def _create_renewal(renewal_buffer, approval, proposal):
 
     title = approval.title.encode('UTF-8')
 
-    elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
+    '''elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
     elements.append(Paragraph(approval.activity, styles['InfoTitleLargeLeft']))
     elements.append(Paragraph(approval.region, styles['InfoTitleLargeLeft']))
-    elements.append(Paragraph(approval.tenure if approval.tenure else '', styles['InfoTitleLargeRight']))
+    elements.append(Paragraph(approval.tenure if approval.tenure else '', styles['InfoTitleLargeRight']))'''
 
    
     # additional information
@@ -393,7 +393,7 @@ def _create_renewal(renewal_buffer, approval, proposal):
     delegation = []
 
     # dates and licensing officer
-    dates_licensing_officer_table_style = TableStyle([('VALIGN', (0, 0), (-2, -1), 'TOP'),
+    '''dates_licensing_officer_table_style = TableStyle([('VALIGN', (0, 0), (-2, -1), 'TOP'),
                                                       ('VALIGN', (0, 0), (-1, -1), 'BOTTOM')])
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
@@ -409,7 +409,7 @@ def _create_renewal(renewal_buffer, approval, proposal):
 
     delegation.append(Table([[date_headings, date_values]],
                             colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
-                            style=dates_licensing_officer_table_style))
+                            style=dates_licensing_officer_table_style))'''
 
     # proponent details
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
@@ -424,15 +424,39 @@ def _create_renewal(renewal_buffer, approval, proposal):
                             colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                             style=approval_table_style))
 
+    expiry_date = approval.expiry_date.strftime(DATE_FORMAT)
+    full_name = proposal.submitter.get_full_name()
+
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    delegation.append(Paragraph('Your approval will expire in 30 days. '
-                                'Please apply for renewal if you wish to renew this approval. '
+    delegation.append(Paragraph('Dear {} '.format(full_name), styles['Left']))
+
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('This is a reminder that your approval: ', styles['Left']))
+
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    title_with_number = '{} - {}'.format(approval.lodgement_number, title)
+
+    delegation.append(Paragraph(title_with_number, styles['InfoTitleLargeLeft']))
+
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('is due to expire on {}'.format(expiry_date), styles['Left']))
+
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('Please not that if you have outstanding compliances these are required to be submitted before the approval can be renewed'
                                 , styles['Left']))
 
-    delegation.append(Paragraph('Issued by a Disturbance Licensing Officer of the {} '
-                                'under delegation from the Minister for Environment pursuant to section 133(1) '
-                                'of the Conservation and Land Management Act 1984.'.format(settings.DEP_NAME), styles['Left']))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('If you have any queries, contact the {} '
+                                'on {}.'.format(settings.DEP_NAME, settings.DEP_PHONE), styles['Left']))
 
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('Yours sincerely ', styles['Left']))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('DIRECTOR GENERAL', styles['Left']))
+    delegation.append(Paragraph('{}'.format(settings.DEP_NAME), styles['Left']))
 
     elements.append(KeepTogether(delegation))
 
