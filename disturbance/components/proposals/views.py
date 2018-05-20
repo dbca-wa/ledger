@@ -23,4 +23,4 @@ class ProposalView(TemplateView):
             return redirect(reverse('external'))
         except:
             traceback.print_exc
-            return JsonResponse({error:"someting went wrong"},safe=False,status=400)
+            return JsonResponse({error:"something went wrong"},safe=False,status=400)

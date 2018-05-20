@@ -1,7 +1,9 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from ledger.accounts.models import EmailUser
-from disturbance.components.proposals.models import ProposalAssessorGroup,ProposalApproverGroup
+from disturbance.components.proposals.models import ProposalAssessorGroup,ProposalApproverGroup, HelpPage
+from ckeditor.widgets import CKEditorWidget
+
 
 class ProposalAssessorGroupAdminForm(forms.ModelForm):
     class Meta:
@@ -21,7 +23,8 @@ class ProposalAssessorGroupAdminForm(forms.ModelForm):
             for o in original_members:
                 if o not in current_members:
                     if self.instance.member_is_assigned(o):
-                        raise ValidationError('{} is currently assigned to a proposal(s)'.format(o.email)) 
+                        raise ValidationError('{} is currently assigned to a proposal(s)'.format(o.email))
+
 
 class ProposalApproverGroupAdminForm(forms.ModelForm):
     class Meta:
@@ -41,4 +44,13 @@ class ProposalApproverGroupAdminForm(forms.ModelForm):
             for o in original_members:
                 if o not in current_members:
                     if self.instance.member_is_assigned(o):
-                        raise ValidationError('{} is currently assigned to a proposal(s)'.format(o.email)) 
+                        raise ValidationError('{} is currently assigned to a proposal(s)'.format(o.email))
+
+
+class HelpPageAdminForm(forms.ModelForm):
+    content = forms.CharField(widget=CKEditorWidget())
+    class Meta:
+        model = HelpPage
+        fields = '__all__'
+
+

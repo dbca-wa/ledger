@@ -1,14 +1,14 @@
 from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from disturbance.components.proposals import models
-from disturbance.components.proposals import forms 
+from disturbance.components.proposals import forms
 from reversion.admin import VersionAdmin
 # Register your models here.
 
 @admin.register(models.ProposalType)
 class ProposalTypeAdmin(admin.ModelAdmin):
     list_display = ['name','description', 'version']
-    #exclude=("site",) 
+    #exclude=("site",)
 
 class ProposalDocumentInline(admin.TabularInline):
     model = models.ProposalDocument
@@ -16,7 +16,7 @@ class ProposalDocumentInline(admin.TabularInline):
 
 @admin.register(models.Proposal)
 class ProposalAdmin(VersionAdmin):
-    inlines =[ProposalDocumentInline,] 
+    inlines =[ProposalDocumentInline,]
 
 @admin.register(models.ProposalAssessorGroup)
 class ProposalAssessorGroupAdmin(admin.ModelAdmin):
@@ -47,16 +47,22 @@ class ProposalStandardRequirementAdmin(admin.ModelAdmin):
     list_display = ['code','text','obsolete']
 
 
-from django import forms
-from ckeditor.widgets import CKEditorWidget
-class HelpPageAdminForm(forms.ModelForm):
-    content = forms.CharField(widget=CKEditorWidget())
-    class Meta:
-        model = models.HelpPage
-        fields = '__all__'
-
 @admin.register(models.HelpPage)
 class HelpPageAdmin(admin.ModelAdmin):
-    form = HelpPageAdminForm
+    list_display = ['application_type','description', 'version']
+    form = forms.HelpPageAdminForm
 
-#admin.site.register(models.HelpPage, HelpPageAdmin)
+
+from disturbance.views import MyCustomView
+_admin_site_get_urls = admin.site.get_urls
+def get_urls():
+    from django.conf.urls import url
+    urls = _admin_site_get_urls()
+    urls += [
+            url(r'^my_custom_view/$',
+                 admin.site.admin_view(MyCustomView.as_view()))
+        ]
+    return urls
+
+admin.site.get_urls = get_urls
+

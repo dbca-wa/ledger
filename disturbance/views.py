@@ -94,7 +94,35 @@ class HelpView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(HelpView, self).get_context_data(**kwargs)
         #import ipdb; ipdb.set_trace()
-        context['help'] = HelpPage.objects.all().first()
+        qs_help_page = HelpPage.objects.filter(application_type__name='Disturbance').order_by('-version')
+        context['help'] = qs_help_page.first()
         return context
+
+class MyCustomView(LoginRequiredMixin, TemplateView):
+    #template_name = 'admin/myapp/views/my_custom_template.html'
+    template_name = 'disturbance/mgt_cmds_changelist.html'
+
+    def get(self, request):
+        data = {'test': 'test',
+        #'opts': MyCustomView._meta,
+
+        'change': True,
+        'is_popup': False,
+        'save_as': False,
+        'has_delete_permission': False,
+        'has_add_permission': False,
+        'has_change_permission': False}
+
+        return render(request, self.template_name, data)
+
+    def get_context_data(self, **kwargs):
+        context = super(MyCustomView, self).get_context_data(**kwargs)
+        #import ipdb; ipdb.set_trace()
+        #context['help'] = HelpPage.objects.all().first()
+        return context
+
+    def post(self, request):
+      # Do something
+      pass
 
 
