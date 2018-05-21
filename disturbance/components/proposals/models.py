@@ -501,7 +501,6 @@ class Proposal(RevisionedMixin):
                             q.status = 'amended'
                             q.save()
                         
-        		import ipdb; ipdb.set_trace()
                 self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
@@ -865,7 +864,7 @@ class Proposal(RevisionedMixin):
                 if proposal.customer_status=='with_assessor':
                     raise ValidationError('A renewal for this licence has already been lodged and is awaiting review.')
             except Proposal.DoesNotExist:            
-                previous_proposal = Proposal.objects.get(id=self.id)
+                previous_proposal = Proposal.objects.get(id=self.id) 
                 proposal = clone_proposal_with_status_reset(previous_proposal)
                 proposal.proposal_type = 'renewal'
                 proposal.schema = ProposalType.objects.first().schema
@@ -909,7 +908,6 @@ class Proposal(RevisionedMixin):
                 self.approval.log_user_action(ApprovalUserAction.ACTION_AMEND_APPROVAL.format(self.approval.id),request)
                 proposal.save()
             return proposal
-
 
 
 class ProposalLogDocument(Document):
