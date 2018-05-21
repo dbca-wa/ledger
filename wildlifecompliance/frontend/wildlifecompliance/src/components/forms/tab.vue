@@ -5,8 +5,10 @@
 	            <li><a data-toggle="tab" :href="'#'+tab_id">{{label}}</a></li>
 		    </div>
 		</ul> -->
-	    <div class="tab-content" id="label">
-	    	<slot></slot>
+	    <div class="tab-content">
+            <div class="tab-pane active" :id="id">
+	    	  <slot></slot>
+            </div>
 	    	
 	    </div>
 	<!-- </div> -->
@@ -14,7 +16,7 @@
 <script>
 export default {
     name:"tab",
-    props:["label","name"],
+    props:["label","id"],
     data:function () {
         return {
             title:"Tab title",
