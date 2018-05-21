@@ -17,6 +17,7 @@ INSTALLED_APPS += [
     'rest_framework',
     'rest_framework_gis',
     'reset_migrations',
+    'ckeditor',
 ]
 
 SITE_ID = 1
@@ -71,3 +72,16 @@ DEP_NAME = env('DEP_NAME','Department of Biodiversity,Conservation and Attractio
 SITE_URL = env('SITE_URL','https://via-uat.dpaw.wa.gov.au')
 
 BASE_URL=env('BASE_URL')
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        #'width': 300,
+        'width': '100%',
+    },
+    'awesome_ckeditor': {
+        'toolbar': 'Basic',
+    },
+}
+
