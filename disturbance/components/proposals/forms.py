@@ -47,7 +47,7 @@ class ProposalApproverGroupAdminForm(forms.ModelForm):
                         raise ValidationError('{} is currently assigned to a proposal(s)'.format(o.email))
 
 
-class HelpPageAdminForm(forms.ModelForm):
+class DisturbanceHelpPageAdminForm(forms.ModelForm):
     content = forms.CharField(widget=CKEditorWidget())
     class Meta:
         model = HelpPage

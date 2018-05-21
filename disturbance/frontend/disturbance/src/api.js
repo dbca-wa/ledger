@@ -1,3 +1,7 @@
+//TODO: Need to figure out how to rqead the following from Django .env file
+var site_url = 'https://via-dev-internal.dpaw.wa.gov.au/'
+//var _site_url = process.env.SITE_URL || 'https://via-uat-internal.dpaw.wa.gov.au/'
+
 module.exports = {
     organisations: '/api/organisations.json',
     organisation_requests: '/api/organisation_requests.json',
@@ -20,6 +24,7 @@ module.exports = {
     application_types:"/api/application_types.json",
     discard_proposal:function (id) {
       return `/api/proposal/${id}.json`;
-    }
+    },
+    site_url: site_url
 
 }

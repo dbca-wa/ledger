@@ -50,7 +50,7 @@ class ProposalStandardRequirementAdmin(admin.ModelAdmin):
 @admin.register(models.HelpPage)
 class HelpPageAdmin(admin.ModelAdmin):
     list_display = ['application_type','description', 'version']
-    form = forms.HelpPageAdminForm
+    form = forms.DisturbanceHelpPageAdminForm
 
 
 from disturbance.views import MyCustomView

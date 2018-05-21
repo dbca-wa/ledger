@@ -16,6 +16,7 @@ import AssessorText from '../components/forms/readonly_text.vue'
 import HelpText from '../components/forms/help_text.vue'
 import CommentRadioCheckBox from '../components/forms/comment_icon_checkbox_radio.vue'
 import IFrame from '../components/forms/iframe.vue'
+import {helpers,api_endpoints} from "@/utils/hooks.js"
 
 module.exports = {
     renderChildren(h,c,data=null,assessorData=null,_readonly) {
@@ -25,6 +26,7 @@ module.exports = {
         var commentData = this.status_data.commentData;
         var assessorInfo = this.status_data.assessorInfo;
         var proposalId = this.status_data.proposalId;
+        var applicationType = this.status_data.applicationType;
         var assessorMode = false; 
         var assessorCanAssess = false; 
         var assessorLevel = '';
@@ -35,6 +37,7 @@ module.exports = {
             assessorCanAssess = assessorStatus['has_assessor_mode'];
             assessorLevel = assessorStatus['assessor_level'];
         }
+        var site_url = api_endpoints.site_url;
 
         // Visibility 
         var visibility = this.getVisibility(h,c,is_readonly,assessorMode,assessorCanAssess)
@@ -47,11 +50,19 @@ module.exports = {
 
         var val = (data) ? (data[c.name]) ? data[c.name] : null : null;
         var comment_val = (commentData) ? (commentData[c.name]) ? commentData[c.name] : null : null;
+        
+        if (c && c.help_text && c.help_text.indexOf("site_url:") >= 0) {
+            var help_text = c.help_text.replace('site_url:', site_url)
+        } else { 
+            var help_text = c.help_text
+        }
+
         switch (c.type) {
             case 'text':
         		readonly = (c.readonly) ? (c.readonly): (readonly);
+                console.log('site_url: ' + site_url)
                 _elements.push(
-                    <TextField type="text" name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={c.help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility}/>
+                    <TextField type="text" name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility}/>
                 )
                 break;
             case 'text_info':
@@ -315,7 +326,7 @@ module.exports = {
         return boxes;
     },
     status_data : {},
-    store_status_data(readonly,assessorData,commentData,assessorEmail,assessorMode,can_user_edit,docs_url, proposalId){
+    store_status_data(readonly,assessorData,commentData,assessorEmail,assessorMode,can_user_edit,docs_url, proposalId, applicationType){
         this.status_data = {
             'readonly': readonly,
             'assessorData': assessorData,
@@ -324,7 +335,8 @@ module.exports = {
             'assessorStatus': assessorMode,
             'can_user_edit': can_user_edit,
             'docs_url': docs_url,
-            'proposalId': proposalId
+            'proposalId': proposalId,
+            'applicationType': applicationType
         }
     },
     getVisibility(h,c,readonly,assessor_mode,assessor_can_assess){

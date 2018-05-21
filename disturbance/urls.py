@@ -56,7 +56,8 @@ urlpatterns = [
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
-    url(r'^help/$', views.HelpView.as_view(), name='help'),
+    url(r'^help-disturbance/$', views.DisturbanceHelpView.as_view(), name='help'),
+    url(r'^help-apiary/$', views.ApiaryHelpView.as_view(), name='help-apiary'),
     #url(r'^/help/apiary/$', views.ApiaryHelpView.as_view(), name='help_apiary'),
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     #following url is used to include url path when sending Proposal amendment request to user.

@@ -88,15 +88,30 @@ def first_time(request):
     return render(request, 'disturbance/dash/index.html', context)
 
 
-class HelpView(LoginRequiredMixin, TemplateView):
+
+class DisturbanceHelpView(LoginRequiredMixin, TemplateView):
     template_name = 'disturbance/help.html'
 
+    def get_queryset(self):
+        return HelpPage.objects.filter(application_type__name='Disturbance').order_by('-version')
+
     def get_context_data(self, **kwargs):
-        context = super(HelpView, self).get_context_data(**kwargs)
-        #import ipdb; ipdb.set_trace()
-        qs_help_page = HelpPage.objects.filter(application_type__name='Disturbance').order_by('-version')
-        context['help'] = qs_help_page.first()
+        context = super(DisturbanceHelpView, self).get_context_data(**kwargs)
+        context['help'] = self.get_queryset().first()
         return context
+
+
+class ApiaryHelpView(LoginRequiredMixin, DetailView):
+    template_name = 'disturbance/help.html'
+
+    def get_queryset(self):
+        return HelpPage.objects.filter(application_type__name='Apiary').order_by('-version')
+
+    def get_context_data(self, **kwargs):
+        context = super(ApiaryHelpView, self).get_context_data(**kwargs)
+        context['help'] = self.get_queryset().first()
+        return context
+
 
 class MyCustomView(LoginRequiredMixin, TemplateView):
     #template_name = 'admin/myapp/views/my_custom_template.html'
