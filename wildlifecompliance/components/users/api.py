@@ -22,7 +22,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity,query_emailuser_by_args
+from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity,EmailUserAction,query_emailuser_by_args
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
 from wildlifecompliance.components.organisations.models import  (   
@@ -207,7 +207,10 @@ class UserViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = PersonalSerializer(instance,data=request.data)
             serializer.is_valid(raise_exception=True)
-            instance = serializer.save()
+            with transaction.atomic():
+                instance = serializer.save()
+                instance.log_user_action(EmailUserAction.ACTION_PERSONAL_DETAILS_UPDATE.format(
+                '{} {} ({})'.format(instance.first_name, instance.last_name, instance.email)), request)
             serializer = UserSerializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -226,7 +229,10 @@ class UserViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = ContactSerializer(instance,data=request.data)
             serializer.is_valid(raise_exception=True)
-            instance = serializer.save()
+            with transaction.atomic():
+                instance = serializer.save()
+                instance.log_user_action(EmailUserAction.ACTION_CONTACT_DETAILS_UPDATE.format(
+                '{} {} ({})'.format(instance.first_name, instance.last_name, instance.email)), request)
             serializer = UserSerializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -254,7 +260,10 @@ class UserViewSet(viewsets.ModelViewSet):
                 user = instance 
             )
             instance.residential_address = address
-            instance.save()
+            with transaction.atomic():
+                instance.save()
+                instance.log_user_action(EmailUserAction.ACTION_POSTAL_ADDRESS_UPDATE.format(
+                '{} {} ({})'.format(instance.first_name, instance.last_name, instance.email)), request)
             serializer = UserSerializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:

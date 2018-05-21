@@ -361,8 +361,11 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         else:
             return -1
 
-    def log_user_action(self, action, request):
-        return EmailUserAction.log_action(self, action, request.user)
+    def log_user_action(self, action, request=None):
+        if request:
+            return EmailUserAction.log_action(self, action, request.user)
+        else:
+            pass
 
 
 def query_emailuser_by_args(**kwargs):
@@ -431,10 +434,9 @@ class UserAction(models.Model):
 
 
 class EmailUserAction(UserAction):
-    ACTION_CREATE = "EmailUser {} Created"
-    ACTION_UPDATE = "EmailUser {} Updated"
-    ACTION_PERSONAL_DETAILS_UPDATE = "EmailUser {} Personal Details Updated"
-    ACTION_POSTAL_ADDRESS_UPDATE = "EmailUser {} Postal Address Updated"
+    ACTION_PERSONAL_DETAILS_UPDATE = "User {} Personal Details Updated"
+    ACTION_CONTACT_DETAILS_UPDATE = "User {} Contact Details Updated"
+    ACTION_POSTAL_ADDRESS_UPDATE = "User {} Postal Address Updated"
 
     @classmethod
     def log_action(cls, emailuser, action, user):
@@ -475,8 +477,7 @@ class EmailUserListener(object):
 
     @staticmethod
     @receiver(post_save, sender=EmailUser)
-    def _post_save(sender, instance, created, **kwargs):
-        print('created in user _post_save:', created)
+    def _post_save(sender, instance, **kwargs):
         original_instance = getattr(instance, "_original_instance") if hasattr(instance, "_original_instance") else None
         # add user's email to email identity and social auth if not exist
         if not instance.is_dummy_user:
@@ -497,14 +498,6 @@ class EmailUserListener(object):
         if original_instance and any([original_instance.first_name != instance.first_name, original_instance.last_name != instance.last_name]):
             # user changed first name or last name, send a named_changed signal.
             name_changed.send(sender=instance.__class__, user=instance)
-
-        # log create user
-        # TODO: this isn't going to work here, needs to be done outside this post_save because request object may not exist (e.g. if created by internal or shell)
-        # if created:
-        #     pass
-        #     # instance.log_user_action(EmailUserAction.ACTION_CREATE.format('{} {}({})'.format(instance.first_name,instance.last_name,instance.email)),request)
-        # else:
-        #     instance.log_user_action(EmailUserAction.ACTION_UPDATE.format('{} {}({})'.format(instance.first_name,instance.last_name,instance.email)),request)
 
 
 class RevisionedMixin(models.Model):
