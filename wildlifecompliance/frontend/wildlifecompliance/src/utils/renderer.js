@@ -150,6 +150,7 @@ module.exports = {
                 if(data !== null && data !== undefined) {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
+                this.tabs_list.push({name:c.name,label:c.label});
                 
                 _elements.push(
                     <Tab label={c.label} Key={c.name} id={c.name}>
@@ -250,6 +251,10 @@ module.exports = {
         return this.sections;
     },
     sections:[],
+    tabs_list:[],
+    getTabslist(){
+        return this.tabs_list;
+    },
     generateAssessorTextBoxes(h,c,val,assessor_mode,assessor_data,assessor_info){
         var boxes = [];
         if (!this.status_data.can_user_edit){
