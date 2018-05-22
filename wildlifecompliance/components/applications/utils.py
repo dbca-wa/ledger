@@ -348,8 +348,10 @@ def save_assessor_data(instance,request,viewset):
 
 def get_activity_type_schema(licence_class_data):
     schema_activity=[]
+    schema_tab=[]
     # print(len(licence_class_data['activity_type']))
     for index,item in enumerate(licence_class_data['activity_type']):
+        schema_activity=[]
         default_activity_type_id = item['id']
         default_activity_type_obj=DefaultActivityType.objects.get(id=default_activity_type_id)
         activity_type_obj=WildlifeLicenceActivityType.objects.get(id=default_activity_type_obj.activity_type_id)
@@ -357,12 +359,22 @@ def get_activity_type_schema(licence_class_data):
             default_activity_id=item1['id']
             default_activity_obj=DefaultActivity.objects.get(id=default_activity_id)
             activity_obj=WildlifeLicenceActivity.objects.get(id=default_activity_obj.activity_id)
-            for child in activity_obj.schema:
-                child['tabname']=activity_type_obj.name
-                child['tablabel']=activity_type_obj.name
             schema_activity=schema_activity+activity_obj.schema
-            print(schema_activity)
-    return schema_activity
+            
+        schema_tab.append({"type":"tab",
+                  "id":activity_type_obj.id,
+                  "label":activity_type_obj.name,
+                  "name":activity_type_obj.name,
+                  "children":schema_activity
+                })
+
+    print(schema_tab)            
+            # for child in activity_obj.schema:
+            #     child['name']=activity_type_obj.name
+            #     child['label']=activity_type_obj.name
+            # old code schema_activity=schema_activity+activity_obj.schema
+            # print(schema_activity)
+    return schema_tab
 
 
     

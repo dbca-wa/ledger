@@ -27,6 +27,7 @@ module.exports = {
         var assessorLevel = '';
         var readonly = false;
         var _elements = [];
+
         if (assessorStatus != null){
             assessorMode = assessorStatus['assessor_mode'];
             assessorCanAssess = assessorStatus['has_assessor_mode'];
@@ -140,9 +141,42 @@ module.exports = {
                             )
                         })}
                     </Section>
+                    
                 )
                 break;
-
+             case 'tab':
+                var value = null;
+                if(data !== null && data !== undefined) {
+                  value = ( data[c.name] )? data[c.name][0] : null ;
+                }
+                if(this.tabs_list.length>0){
+                     _elements.push(
+                        <div class="tab-pane fade" id={c.id}>
+                            {c.children.map(d=>{
+                                return (
+                                    <div>
+                                        {this.renderChildren(h,d,value)}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )
+                }else{
+                     _elements.push(
+                    
+                        <div class="tab-pane fade in active" id={c.id}>
+                            {c.children.map(d=>{
+                                return (
+                                    <div>
+                                        {this.renderChildren(h,d,value)}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )
+                }
+                this.tabs_list.push({name:c.name,label:c.label,id:c.id});
+                break;
             case 'checkbox':
                 _elements.push(
                     <div class="form-group">
@@ -228,6 +262,10 @@ module.exports = {
         return this.sections;
     },
     sections:[],
+    tabs_list:[],
+    getTabslist(){
+        return this.tabs_list;
+    },
     generateAssessorTextBoxes(h,c,val,assessor_mode,assessor_data,assessor_info){
         var boxes = [];
         if (!this.status_data.can_user_edit){
