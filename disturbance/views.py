@@ -13,6 +13,7 @@ from disturbance.forms import *
 from disturbance.components.proposals.models import Referral, Proposal, HelpPage
 from disturbance.components.compliances.models import Compliance
 from disturbance.components.proposals.mixins import ReferralOwnerMixin
+from django.core.management import call_command
 
 
 class InternalView(UserPassesTestMixin, TemplateView):
@@ -101,7 +102,7 @@ class DisturbanceHelpView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class ApiaryHelpView(LoginRequiredMixin, DetailView):
+class ApiaryHelpView(LoginRequiredMixin, TemplateView):
     template_name = 'disturbance/help.html'
 
     def get_queryset(self):
@@ -112,6 +113,20 @@ class ApiaryHelpView(LoginRequiredMixin, DetailView):
         context['help'] = self.get_queryset().first()
         return context
 
+
+class ManagementCommandsView(LoginRequiredMixin, TemplateView):
+    template_name = 'disturbance/mgt-commands.html'
+
+    def post(self, request):
+        #import ipdb; ipdb.set_trace()
+        data = {}
+        command_script = request.POST.get('script', None)
+        if command_script:
+            print 'running {}'.format(command_script)
+            call_command(command_script)
+            data.update({command_script: 'true'})
+
+        return render(request, self.template_name, data)
 
 class MyCustomView(LoginRequiredMixin, TemplateView):
     #template_name = 'admin/myapp/views/my_custom_template.html'

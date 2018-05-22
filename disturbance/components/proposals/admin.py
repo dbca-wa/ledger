@@ -3,6 +3,10 @@ from ledger.accounts.models import EmailUser
 from disturbance.components.proposals import models
 from disturbance.components.proposals import forms
 from reversion.admin import VersionAdmin
+from django.conf.urls import url
+from django.template.response import TemplateResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from disturbance.utils import create_helppage_object
 # Register your models here.
 
 @admin.register(models.ProposalType)
@@ -51,6 +55,23 @@ class ProposalStandardRequirementAdmin(admin.ModelAdmin):
 class HelpPageAdmin(admin.ModelAdmin):
     list_display = ['application_type','description', 'version']
     form = forms.DisturbanceHelpPageAdminForm
+    change_list_template = "disturbance/help_page_changelist.html"
+
+    def get_urls(self):
+        urls = super(HelpPageAdmin, self).get_urls()
+        my_urls = [
+            url('create_disturbance_help/', self.admin_site.admin_view(self.create_disturbance_help)),
+            url('create_apiary_help/', self.admin_site.admin_view(self.create_apiary_help)),
+        ]
+        return my_urls + urls
+
+    def create_disturbance_help(self, request):
+        create_helppage_object(application_type='Disturbance')
+        return HttpResponseRedirect("../")
+
+    def create_apiary_help(self, request):
+        create_helppage_object(application_type='Apiary')
+        return HttpResponseRedirect("../")
 
 
 from disturbance.views import MyCustomView
