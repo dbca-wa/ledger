@@ -1,4 +1,5 @@
-from disturbance.components.proposals.models import Proposal
+from disturbance.components.proposals.models import Proposal, ProposalType, HelpPage, ApplicationType
+from collections import OrderedDict
 
 def search_all(search_list, application_type='Disturbance'):
     """
@@ -31,6 +32,41 @@ def search(dictionary, search_list):
 
     return result
 
+def create_helppage_object(application_type='Disturbance'):
+	"""
+	Create a new HelpPage object, with latest help_text/label anchors defined in the latest ProposalType.schema
+	"""
+	application_type_id = ApplicationType.objects.get(name=application_type).id
+	help_page = HelpPage.objects.filter(application_type_id=application_type_id).latest('version')
+	proposal_type = ProposalType.objects.filter(name=application_type).latest('version')
+
+	help_list = search_keys(proposal_type.schema, search_list=['help_text','label'])
+	richtext = create_richtext_help(help_list)
+	next_version = help_page.version + 1
+
+	HelpPage.objects.create(application_type_id=application_type_id, version=next_version, content=richtext)
+
+def create_richtext_help(help_list=None):
+
+	# for testing
+	if not help_list:
+		pt = ProposalType.objects.all()[4]  
+		help_list = search_keys(pt.schema, search_list=['help_text','label'])[:3]
+
+	richtext = u''
+	for i in help_list:
+		if 'anchor' in i['help_text']:
+			anchor = i['help_text'].split("anchor=")[1].split(" ")[0].strip("\"").strip("\'")
+			#print anchor, i['label'] 
+
+			richtext += u'<h1><a id="{0}" name="{0}"> {1} </a></h1><p>&nbsp;</p>'.format(anchor, i['label'])
+		#else:
+		#	richtext += u'<h1> {} </h1><p>&nbsp;</p>'.format(i['label'])
+			
+	return richtext
+
+
+
 def search_keys(dictionary, search_list=['help_text', 'label']):
     """
     To run:
@@ -43,7 +79,22 @@ def search_keys(dictionary, search_list=['help_text', 'label']):
         if any(x in k for x in search_list):
             result.append( {k: v} )
 
-    return result
+    help_list = []
+    for i in result:
+        try:
+            key = i.keys()[0]
+            if key and key.endswith('help_text'):
+                corresponding_label_key = '.'.join(key.split('.')[:-1]) + '.label'
+                for j in result:
+                    key_label = j.keys()[0]
+                    if key_label and key_label.endswith('label') and key_label == corresponding_label_key: # and result.has_key(key):
+                        #import ipdb; ipdb.set_trace()
+                        help_list.append({'label': j[key_label], 'help_text': i[key]})
+        except Exception, e:
+            #import ipdb; ipdb.set_trace()
+            print e
+
+    return help_list
 
 
 def flatten(old_data, new_data=None, parent_key='', sep='.', width=4):
@@ -56,7 +107,8 @@ def flatten(old_data, new_data=None, parent_key='', sep='.', width=4):
     :width: width of the field when converting list indexes
     '''
     if new_data is None:
-        new_data = {}
+        #new_data = {}
+        new_data = OrderedDict()
 
     if isinstance(old_data, dict):
         for k, v in old_data.items():
@@ -71,6 +123,7 @@ def flatten(old_data, new_data=None, parent_key='', sep='.', width=4):
                 flatten(elem, new_data, new_key, sep, width)
     else:
         if parent_key not in new_data:
+            #import ipdb; ipdb.set_trace()
             new_data[parent_key] = old_data
         else:
             raise AttributeError("key {} is already used".format(parent_key))

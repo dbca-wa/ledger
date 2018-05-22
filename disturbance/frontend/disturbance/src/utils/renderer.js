@@ -37,7 +37,8 @@ module.exports = {
             assessorCanAssess = assessorStatus['has_assessor_mode'];
             assessorLevel = assessorStatus['assessor_level'];
         }
-        var site_url = api_endpoints.site_url;
+        //var site_url = api_endpoints.site_url;
+        var site_url = (api_endpoints.site_url.endsWith("/")) ? (api_endpoints.site_url): (api_endpoints.site_url + "/");
 
         // Visibility 
         var visibility = this.getVisibility(h,c,is_readonly,assessorMode,assessorCanAssess)
@@ -51,10 +52,14 @@ module.exports = {
         var val = (data) ? (data[c.name]) ? data[c.name] : null : null;
         var comment_val = (commentData) ? (commentData[c.name]) ? commentData[c.name] : null : null;
         
-        if (c && c.help_text && c.help_text.indexOf("site_url:") >= 0) {
-            var help_text = c.help_text.replace('site_url:', site_url)
+        if (c && c.help_text && c.help_text.indexOf("site_url:/") >= 0) {
+            var help_text = c.help_text.replace('site_url:/', site_url);
+            if (help_text.indexOf("anchor=") >= 0) {
+                var anchor = help_text.split("href=").slice(-1)[0].split(' ')[0].split("anchor=").slice(-1)[0];
+                help_text = help_text.replace('anchor=', "#" + anchor);
+            }
         } else { 
-            var help_text = c.help_text
+            var help_text = c.help_text;
         }
 
         switch (c.type) {
