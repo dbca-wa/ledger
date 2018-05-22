@@ -26,10 +26,25 @@ def search(dictionary, search_list):
     result = []
     flat_dict = flatten(dictionary)
     for k, v in flat_dict.iteritems():
-        if any(x in v for x in search_list):
+        if all(x in v for x in search_list):
             result.append( {k: v} )
 
     return result
+
+def search_keys(dictionary, search_list=['help_text', 'label']):
+    """
+    To run:
+        from disturbance.utils import search
+        search(dictionary, ['BRM', 'JM 1'])
+    """
+    result = []
+    flat_dict = flatten(dictionary)
+    for k, v in flat_dict.iteritems():
+        if any(x in k for x in search_list):
+            result.append( {k: v} )
+
+    return result
+
 
 def flatten(old_data, new_data=None, parent_key='', sep='.', width=4):
     '''
