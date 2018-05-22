@@ -49,12 +49,9 @@
             this.mapDataToApplication();
         },
         mounted:function () {
-            console.log(Renderer.sections)
-            console.log(Renderer.tabs_list)
             var tabs=Renderer.tabs_list
-            console.log(tabs)
             tabs.map(tsec => {
-                    $('#tabs-section').append(`<li class="nav-item"><a class="nav-link" data-toggle="tab" href='#${tsec.name}'>${tsec.label}</a></li>`);
+                    $('#tabs-section').append(`<li><a data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
                 });
             if (this.withSectionsSelector){
                 
@@ -87,8 +84,6 @@
         },
         render(h) {
             let vm =this;
-            // console.log('inside renderer',Renderer.getTabslist)
-            //Renderer.sections = [];
             Renderer.store_status_data(vm.application.readonly,vm.application.assessor_data,vm.application.comment_data,vm.application.current_assessor,vm.application.assessor_mode,vm.application.can_user_edit,vm.application.documents_url);
             if (vm.withSectionsSelector){
                 return (
@@ -112,15 +107,12 @@
                             <ul class="nav nav-tabs" id="tabs-section">
 
                             </ul>
-                        
-                            
-                        
-                            {vm.application.schema.map(d =>{
-                                return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor_mode,vm.application.assessor)
-                            })}
-                            { this.$slots.default }
-                            
-
+                            <div class="tab-content">
+                                {vm.application.schema.map(d =>{
+                                    return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor_mode,vm.application.assessor)
+                                })}
+                                { this.$slots.default }
+                            </div>
                         </div>
                     </div>
                 )

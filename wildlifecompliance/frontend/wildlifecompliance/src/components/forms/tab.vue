@@ -5,12 +5,13 @@
 	            <li><a data-toggle="tab" :href="'#'+tab_id">{{label}}</a></li>
 		    </div>
 		</ul> -->
-	    <div class="tab-content">
-            <div class="tab-pane active" :id="id">
-	    	  <slot></slot>
+	    
+            <div class="tab-pane fade" :id="id">
+                
+	    	      <slot></slot>
             </div>
 	    	
-	    </div>
+	    
 	<!-- </div> -->
 </template>
 <script>

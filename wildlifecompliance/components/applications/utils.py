@@ -362,6 +362,7 @@ def get_activity_type_schema(licence_class_data):
             schema_activity=schema_activity+activity_obj.schema
             
         schema_tab.append({"type":"tab",
+                  "id":activity_type_obj.id,
                   "label":activity_type_obj.name,
                   "name":activity_type_obj.name,
                   "children":schema_activity
