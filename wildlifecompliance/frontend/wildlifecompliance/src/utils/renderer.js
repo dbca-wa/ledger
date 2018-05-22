@@ -1,5 +1,4 @@
 import Section from '../components/forms/section.vue'
-import Tab from '../components/forms/tab.vue'
 import Group from '../components/forms/group.vue'
 import Radio from '../components/forms/radio.vue'
 import Conditions from '../components/forms/conditions.vue'
@@ -150,22 +149,34 @@ module.exports = {
                 if(data !== null && data !== undefined) {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
-                this.tabs_list.push({name:c.name,label:c.label});
-                
-                _elements.push(
-                    <Tab label={c.label} Key={c.name} id={c.name}>
-                        {c.children.map(d=>{
-                            return (
-                                <div>
-                                    {this.renderChildren(h,d,value)}
-                                </div>
-                            )
-                        })}
-                    </Tab>
+                if(this.tabs_list.length>0){
+                     _elements.push(
+                        <div class="tab-pane fade" id={c.id}>
+                            {c.children.map(d=>{
+                                return (
+                                    <div>
+                                        {this.renderChildren(h,d,value)}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )
+                }else{
+                     _elements.push(
                     
-                )
+                        <div class="tab-pane fade in active" id={c.id}>
+                            {c.children.map(d=>{
+                                return (
+                                    <div>
+                                        {this.renderChildren(h,d,value)}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )
+                }
+                this.tabs_list.push({name:c.name,label:c.label,id:c.id});
                 break;
-
             case 'checkbox':
                 _elements.push(
                     <div class="form-group">
