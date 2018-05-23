@@ -349,17 +349,15 @@ def save_assessor_data(instance,request,viewset):
 def get_activity_type_schema(licence_class_data):
     schema_activity=[]
     schema_tab=[]
-    # print(len(licence_class_data['activity_type']))
-    for index,item in enumerate(licence_class_data['activity_type']):
+    for index, item in enumerate(licence_class_data['activity_type']):
         schema_activity=[]
-        default_activity_type_id = item['id']
-        default_activity_type_obj=DefaultActivityType.objects.get(id=default_activity_type_id)
-        activity_type_obj=WildlifeLicenceActivityType.objects.get(id=default_activity_type_obj.activity_type_id)
-        for index1,item1 in enumerate(item['activity']):
-            default_activity_id=item1['id']
-            default_activity_obj=DefaultActivity.objects.get(id=default_activity_id)
-            activity_obj=WildlifeLicenceActivity.objects.get(id=default_activity_obj.activity_id)
-            schema_activity=schema_activity+activity_obj.schema
+        wl_activity_type_id = item['id']
+        activity_type_obj = WildlifeLicenceActivityType.objects.get(id = wl_activity_type_id)
+
+        for index1, item1 in enumerate(item['activity']):
+            wl_activity_id = item1['id']
+            activity_obj = WildlifeLicenceActivity.objects.get(id = wl_activity_id)
+            schema_activity = schema_activity + activity_obj.schema
             
         schema_tab.append({"type":"tab",
                   "id":activity_type_obj.id,
