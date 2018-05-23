@@ -19,6 +19,7 @@ from ledger.licence.models import  Licence
 from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
 from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
+from disturbance.components.proposals.models import ProposalRequirement
 from disturbance.components.compliances.email import (
                         send_compliance_accept_email_notification,
                         send_amendment_email_notification,
@@ -46,7 +47,8 @@ class Compliance(models.Model):
     processing_status = models.CharField(choices=PROCESSING_STATUS_CHOICES,max_length=20)
     customer_status = models.CharField(choices=CUSTOMER_STATUS_CHOICES,max_length=20, default=CUSTOMER_STATUS_CHOICES[1][0])
     assigned_to = models.ForeignKey(EmailUser,related_name='disturbance_compliance_assignments',null=True,blank=True)
-    requirement = models.TextField(null=True,blank=True)
+    #requirement = models.TextField(null=True,blank=True)
+    requirement = models.ForeignKey(ProposalRequirement, blank=True, null=True, related_name='compliance_requirement')
     lodgement_date = models.DateField(blank=True, null=True)
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_compliances')
 
@@ -168,6 +170,7 @@ class ComplianceDocument(Document):
         app_label = 'disturbance'
 
 class ComplianceUserAction(UserAction):
+    ACTION_CREATE = "Create compliance {}"
     ACTION_SUBMIT_REQUEST = "Submit compliance {}"
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
