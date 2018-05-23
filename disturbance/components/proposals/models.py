@@ -24,6 +24,7 @@ from disturbance.ordered_model import OrderedModel
 
 
 
+
 def update_proposal_doc_filename(instance, filename):
     return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
 
@@ -718,19 +719,25 @@ class Proposal(RevisionedMixin):
                             }
                         )
                     # Generate compliances
-                    self.generate_compliances(approval)
+                    #self.generate_compliances(approval, request)
+                    from disturbance.components.compliances.models import Compliance, ComplianceUserAction
                     if created:
                         # Log creation
                         # Generate the document
                         approval.generate_doc()
+                        self.generate_compliances(approval, request)
                         # send the doc and log in approval and org
                     else:
-                        # Log update
                         #approval.replaced_by = request.user
                         approval.replaced_by = self.approval
                         # Generate the document
                         approval.generate_doc()
-                        # send the doc and log in approval and org
+                        #Delete the future compliances if Approval is reissued and generate the compliances again.
+                        approval_compliances = Compliance.objects.filter(approval= approval, proposal = self, processing_status='future')
+                        if approval_compliances:
+                            for c in approval_compliances:
+                                c.delete()
+                        self.generate_compliances(approval, request)
                         # Log proposal action
                         self.log_user_action(ProposalUserAction.ACTION_UPDATE_APPROVAL_.format(self.id),request)
                         # Log entry for organisation
@@ -743,38 +750,9 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
-    '''def generate_compliances(self,approval):
-        from disturbance.components.compliances.models import Compliance
-        today = timezone.now().date()
-        timedelta = datetime.timedelta
-       
-        for req in self.requirements.all():
-            if req.recurrence and req.due_date > today:
-                current_date = req.due_date                
-                for x in range(req.recurrence_schedule):
-                    #Weekly
-                    if req.recurrence_pattern == 1:
-                        current_date += timedelta(weeks=1)
-                    #Monthly
-                    elif req.recurrence_pattern == 2:
-                        current_date += timedelta(weeks=4)
-                        pass
-                    #Yearly
-                    elif req.recurrence_pattern == 3:
-                        current_date += timedelta(days=365)
-                # Create the compliance
-                if current_date < approval.expiry_date:    
-                    Compliance.objects.create(
-                        proposal=self,
-                        due_date=current_date,
-                        processing_status='future',
-                        customer_status='future',
-                        approval=approval,
-                        requirement=req.requirement,
-                    )
-                    #TODO add logging for compliance'''
+    
 
-    def generate_compliances(self,approval):
+    '''def generate_compliances(self,approval):
         from disturbance.components.compliances.models import Compliance
         today = timezone.now().date()
         timedelta = datetime.timedelta
@@ -803,6 +781,57 @@ class Proposal(RevisionedMixin):
                             approval=approval,
                             requirement=req.requirement,
                         )
+                        #TODO add logging for compliance'''
+
+
+    def generate_compliances(self,approval, request):        
+        today = timezone.now().date()
+        timedelta = datetime.timedelta
+        from disturbance.components.compliances.models import Compliance, ComplianceUserAction
+        for req in self.requirements.all():
+            try:
+                if req.due_date >= today:
+                    current_date = req.due_date
+                    #create a first Compliance
+                    try:
+                        compliance= Compliance.objects.get(requirement = req, due_date = current_date)
+                    except Compliance.DoesNotExist:
+                        compliance =Compliance.objects.create(
+                                    proposal=self,
+                                    due_date=current_date,
+                                    processing_status='future',
+                                    approval=approval,
+                                    requirement=req,
+                        )
+                        compliance.log_user_action(ComplianceUserAction.ACTION_CREATE.format(compliance.id),request)
+                    if req.recurrence:
+                        while current_date < approval.expiry_date:
+                            for x in range(req.recurrence_schedule):
+                            #Weekly
+                                if req.recurrence_pattern == 1:
+                                    current_date += timedelta(weeks=1)
+                            #Monthly
+                                elif req.recurrence_pattern == 2:
+                                    current_date += timedelta(weeks=4)
+                                    pass
+                            #Yearly
+                                elif req.recurrence_pattern == 3:
+                                    current_date += timedelta(days=365)
+                            # Create the compliance
+                            if current_date <= approval.expiry_date:
+                                try:
+                                    compliance= Compliance.objects.get(requirement = req, due_date = current_date)
+                                except Compliance.DoesNotExist:
+                                    compliance =Compliance.objects.create(
+                                                proposal=self,
+                                                due_date=current_date,
+                                                processing_status='future',
+                                                approval=approval,
+                                                requirement=req,
+                                    )
+                                    compliance.log_user_action(ComplianceUserAction.ACTION_CREATE.format(compliance.id),request)
+            except:
+                raise
 
     
 
