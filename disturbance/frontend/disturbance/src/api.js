@@ -1,7 +1,4 @@
-//TODO: Need to figure out how to rqead the following from Django .env file
-var site_url = 'http://localhost:8499'
-//var site_url = 'https://via-dev-internal.dpaw.wa.gov.au/'
-//var _site_url = process.env.SITE_URL || 'https://via-uat-internal.dpaw.wa.gov.au/'
+var site_url = location.origin
 
 module.exports = {
     organisations: '/api/organisations.json',

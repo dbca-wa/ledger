@@ -55,8 +55,7 @@ module.exports = {
         if (c && c.help_text && c.help_text.indexOf("site_url:/") >= 0) {
             var help_text = c.help_text.replace('site_url:/', site_url);
             if (help_text.indexOf("anchor=") >= 0) {
-                var anchor = help_text.split("href=").slice(-1)[0].split(' ')[0].split("anchor=").slice(-1)[0];
-                help_text = help_text.replace('anchor=', "#" + anchor);
+                help_text = help_text.replace('anchor=', "#");
             }
         } else {
             var help_text = c.help_text;
