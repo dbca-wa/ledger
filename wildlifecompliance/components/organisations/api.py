@@ -50,10 +50,16 @@ from wildlifecompliance.components.organisations.serializers import (
                                         OrganisationCommsSerializer,
                                         OrganisationUnlinkUserSerializer,
                                         OrgUserAcceptSerializer,
+                                        MyOrganisationsSerializer,
                                     )
 from wildlifecompliance.components.applications.serializers import (
                                         DTApplicationSerializer,
                                     )
+
+from wildlifecompliance.components.organisations.emails import (
+                        send_organisation_address_updated_email_notification,
+                    )
+
 
 class OrganisationViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
@@ -127,18 +133,16 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-
-    @detail_route(methods=['POST',])
+    @detail_route(methods=['POST', ])
     def accept_user(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email = serializer.validated_data['email']
-                )
-            
-            instance.accept_user(user_obj,request)
+                email=serializer.validated_data['email']
+            )
+            instance.accept_user(user_obj, request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data);
         except serializers.ValidationError:
@@ -150,6 +154,29 @@ class OrganisationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def accept_declined_user(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = OrgUserAcceptSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user_obj = EmailUser.objects.get(
+                email=serializer.validated_data['email']
+            )
+            instance.accept_declined_user(user_obj, request)
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
     @detail_route(methods=['POST',])
     def decline_user(self, request, *args, **kwargs):
@@ -290,6 +317,29 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
+    @detail_route(methods=['POST',])
+    def relink_user(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = OrgUserAcceptSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user_obj = EmailUser.objects.get(
+                email = serializer.validated_data['email']
+                )
+            instance.relink_user(user_obj,request)
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
 
     @detail_route(methods=['GET',])
     def action_log(self, request, *args, **kwargs):
@@ -396,6 +446,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             )
             instance.postal_address = address
             instance.save()
+            send_organisation_address_updated_email_notification(request.user, instance, org, request)
             serializer = self.get_serializer(org)
             return Response(serializer.data);
         except serializers.ValidationError:
@@ -447,12 +498,28 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     #         print(traceback.print_exc())
     #         raise serializers.ValidationError(str(e))
 
-    @list_route(methods=['GET',])
+    @list_route(methods=['GET', ])
     def get_pending_requests(self, request, *args, **kwargs):
         try:
-            qs = self.get_queryset().filter(requester=request.user,status='with_assessor')
-            serializer = OrganisationRequestDTSerializer(qs,many=True)
-            return Response(serializer.data) 
+            qs = self.get_queryset().filter(requester=request.user, status='with_assessor')
+            serializer = OrganisationRequestDTSerializer(qs, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['GET', ])
+    def get_amendment_requested_requests(self, request, *args, **kwargs):
+        try:
+            qs = self.get_queryset().filter(requester=request.user, status='amendment_requested')
+            serializer = OrganisationRequestDTSerializer(qs, many=True)
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -504,6 +571,40 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             instance.accept(request)
             serializer = OrganisationRequestSerializer(instance)
             return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def amendment_request(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.amendment_request(request)
+            serializer = OrganisationRequestSerializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['PUT',])
+    def reupload_identification_amendment_request(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.reupload_identification_amendment_request(request)
+            serializer = OrganisationRequestSerializer(instance, partial=True)
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -629,59 +730,12 @@ class OrganisationContactViewSet(viewsets.ModelViewSet):
     queryset = OrganisationContact.objects.all()
 
 
-    # @detail_route(methods=['GET',])
-    # def decline_user(self, request, *args, **kwargs):
-    #     try:
-    #         instance = self.get_object()
-    #         serializer = OrgUserAcceptSerializer(data=request.data)
-    #         serializer.is_valid(raise_exception=True)
-    #         user_obj = EmailUser.objects.get(
-    #             first_name = serializer.validated_data['first_name'],
-    #             last_name = serializer.validated_data['last_name'],
-    #             mobile_number = serializer.validated_data['mobile_number'],
-    #             phone_number = serializer.validated_data['phone_number'],
-    #             email = serializer.validated_data['email']
-    #             )
-            
-    #         instance.decline_user(user_obj,request)
-    #         serializer = OrganisationContactSerializer(instance)
-    #         return Response(serializer.data)
-    #     except serializers.ValidationError:
-    #         print(traceback.print_exc())
-    #         raise
-    #     except ValidationError as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(repr(e.error_dict))
-    #     except Exception as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(str(e))
+class MyOrganisationsViewSet(viewsets.ModelViewSet):
+    queryset = Organisation.objects.all()
+    serializer_class = MyOrganisationsSerializer
 
+    def get_queryset(self):
+        queryset = self.queryset
+        query_set = queryset.filter(delegates__id__contains=self.request.user.id).distinct()
 
-
-
-
-
-    # @detail_route(methods=['POST',])
-    # def unlink_user(self, request, *args, **kwargs):
-    #     try:
-    #         instance = self.get_object()
-    #         serializer = OrgUserAcceptSerializer(data=request.data)
-    #         serializer.is_valid(raise_exception=True)
-    #         user_obj = EmailUser.objects.get(
-    #             first_name = serializer.validated_data['first_name'],
-    #             last_name = serializer.validated_data['last_name'],
-    #             mobile_number = serializer.validated_data['mobile_number'],
-    #             phone_number = serializer.validated_data['phone_number'],
-    #             email = serializer.validated_data['email']
-    #             )
-    #         instance.unlink_user(user_obj,request)
-    #         return Response(serializer.data);
-    #     except serializers.ValidationError:
-    #         print(traceback.print_exc())
-    #         raise
-    #     except ValidationError as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(repr(e.error_dict))
-    #     except Exception as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(str(e))
+        return query_set

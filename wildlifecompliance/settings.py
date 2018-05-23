@@ -62,6 +62,9 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # Department details
 SYSTEM_EMAIL = env('SYSTEM_EMAIL','wildlifecompliance@dbca.wa.gov.au')
+WC_PAYMENT_SYSTEM_ID = env('WC_PAYMENT_SYSTEM_ID', 'S999')
+if not VALID_SYSTEMS:
+    VALID_SYSTEMS = [WC_PAYMENT_SYSTEM_ID]
 DEP_URL = env('DEP_URL','www.dbca.wa.gov.au')
 DEP_PHONE = env('DEP_PHONE','(08) 9219 9831')
 DEP_FAX = env('DEP_FAX','(08) 9423 8242')

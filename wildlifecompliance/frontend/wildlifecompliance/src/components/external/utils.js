@@ -45,6 +45,16 @@ export default {
             });
         });
     },
+    fetchOrganisationPermissions: function(id){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(helpers.add_endpoint_json(api.my_organisations,id)).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
     fetchLicenceClasses: function(){
         return new Promise ((resolve,reject) => {
             Vue.http.get(api.licences_class).then((response) => {

@@ -483,18 +483,20 @@ export default {
                 type: "question",
                 showCancelButton: true,
                 confirmButtonText: 'Submit'
-            }).then(() => { 
-                vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
-                    vm.referral = res.body;
-                    vm.referral.application.applicant.address = vm.referral.application.applicant.address != null ? vm.referral.application.applicant.address : {};
-                },
-                error => {
-                    swal(
-                        'Referral Error',
-                        helpers.apiVueResourceError(error),
-                        'error'
-                    )
-                });
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
+                        vm.referral = res.body;
+                        vm.referral.application.applicant.address = vm.referral.application.applicant.address != null ? vm.referral.application.applicant.address : {};
+                    },
+                    error => {
+                        swal(
+                            'Referral Error',
+                            helpers.apiVueResourceError(error),
+                            'error'
+                        )
+                    });
+                }
             },(error) => {
             });
         }

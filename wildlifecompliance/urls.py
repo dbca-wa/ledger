@@ -27,6 +27,7 @@ router.register(r'application_conditions',application_api.ApplicationConditionVi
 router.register(r'application_standard_conditions',application_api.ApplicationStandardConditionViewSet)
 router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
+router.register(r'my_organisations',org_api.MyOrganisationsViewSet)
 router.register(r'users',users_api.UserViewSet)
 router.register(r'profiles',users_api.ProfileViewSet)
 router.register(r'my_profiles',users_api.MyProfilesViewSet)
@@ -57,6 +58,7 @@ urlpatterns = [
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     url(r'^application/$', application_views.ApplicationView.as_view(), name='application'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
+    url('^healthcheck/', views.HealthCheckView.as_view(), name='health_check'),
 ] + ledger_patterns
 
 if settings.DEBUG:  # Serve media locally in development.

@@ -37,6 +37,7 @@ router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
 router.register(r'users',api.UsersViewSet)
 router.register(r'contacts',api.ContactViewSet)
 router.register(r'countries', api.CountryViewSet)
+router.register(r'discountReasons',api.DiscountReasonViewset)
 
 api_patterns = [
     url(r'^api/profile$',api.GetProfile.as_view(), name='get-profile'),

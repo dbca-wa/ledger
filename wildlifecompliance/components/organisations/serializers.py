@@ -47,49 +47,62 @@ class DelegateSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
-        ) 
+        )
+
 
 class OrganisationSerializer(serializers.ModelSerializer):
-    address = OrganisationAddressSerializer(read_only=True) 
+    address = OrganisationAddressSerializer(read_only=True)
     pins = serializers.SerializerMethodField(read_only=True)
-    delegates = DelegateSerializer(many=True,read_only=True)
-    edits = serializers.SerializerMethodField(read_only=True)
-    is_consultant = serializers.SerializerMethodField(read_only=True)
+    delegates = DelegateSerializer(many=True, read_only=True)
+
     class Meta:
         model = Organisation
         fields = (
-                    'id',
-                    'name',
-                    'abn',
-                    'address',
-                    'email',
-                    'phone_number',
-                    'pins',
-                    'delegates',
-                    'edits',
-                    'is_consultant'
-                )
+            'id',
+            'name',
+            'abn',
+            'address',
+            'email',
+            'phone_number',
+            'pins',
+            'delegates'
+        )
 
-    def get_is_consultant(self,obj):
-        user =  self.context['request'].user
+    def get_pins(self, obj):
+        user = self.context['request'].user
         # Check if the request user is among the first five delegates in the organisation
-        return is_consultant(obj,user)
-        
-
-
-    def get_edits(self,obj):
-        user =  self.context['request'].user
-        # Check if the request user is among the first five delegates in the organisation
-        return can_admin_org(obj,user)
-            
-
-    def get_pins(self,obj):
-        user =  self.context['request'].user
-        # Check if the request user is among the first five delegates in the organisation
-        if can_manage_org(obj,user):
-            return {'one': obj.admin_pin_one, 'two': obj.admin_pin_two, 'three':obj.user_pin_one,'four':obj.user_pin_two}
+        if can_manage_org(obj, user):
+            return {'one': obj.admin_pin_one, 'two': obj.admin_pin_two, 'three': obj.user_pin_one,
+                    'four': obj.user_pin_two}
         else:
             return None
+
+
+class MyOrganisationsSerializer(serializers.ModelSerializer):
+    is_admin = serializers.SerializerMethodField(read_only=True)
+    is_consultant = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Organisation
+        fields = (
+            'id',
+            'name',
+            'abn',
+            'is_admin',
+            'is_consultant'
+        )
+
+    def get_is_consultant(self, obj):
+        user = self.context['request'].user
+        # Check if the request user is among the first five delegates in the organisation
+        return is_consultant(obj, user)
+
+    def get_is_admin(self, obj):
+        user = self.context['request'].user
+        # Check if the request user is among the first five delegates in the organisation
+        return can_admin_org(obj, user)
+
+
 
 class DetailsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -195,9 +208,17 @@ class OrganisationUnlinkUserSerializer(serializers.Serializer):
         
 
 class OrgUserAcceptSerializer(serializers.Serializer):
-    
+
     first_name = serializers.CharField()
     last_name =serializers.CharField()
     email= serializers.EmailField()
-    mobile_number = serializers.IntegerField()
-    phone_number = serializers.IntegerField()
+    mobile_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
+    def validate(self, data):
+        '''
+        Check for either mobile number or phone number
+        '''
+        if not (data['mobile_number'] or data['phone_number']):
+            raise serializers.ValidationError("User must have an associated phone number or mobile number.")
+        return data

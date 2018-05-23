@@ -396,7 +396,43 @@ export default {
                 })
             });
         },
+        unlinkUser: function(org){
+            let vm = this;
+            let org_name = org.name;
 
+            swal({
+                title: "Unlink From Organisation",
+                text: "Are you sure you want to be unlinked from "+org.name+" ?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),JSON.stringify(vm.user),{
+                        emulateJSON:true
+                    }).then((response) => {
+                        Vue.http.get(api_endpoints.profile).then((response) => {
+                            vm.profile = response.body
+                            if (vm.user.residential_address == null){ vm.user.residential_address = {}; }
+                            if ( vm.user.wildlifecompliance_organisations && vm.user.wildlifecompliance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+                        },(error) => {
+                        })
+                        swal(
+                            'Unlink',
+                            'You have been successfully unlinked from '+org_name+'.',
+                            'success'
+                        )
+                    }, (error) => {
+                        swal(
+                            'Unlink',
+                            'There was an error unlinking you from '+org_name+'.',
+                            'error'
+                        )
+                    });
+                }
+            },(error) => {
+            });
+        },
     },
     mounted: function(){
         let vm = this;

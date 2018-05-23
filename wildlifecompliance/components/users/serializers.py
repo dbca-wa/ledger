@@ -1,5 +1,5 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity
+from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity,EmailUserAction
 from wildlifecompliance.components.organisations.models import (   
                                     Organisation,
                                     OrganisationRequest,
@@ -179,6 +179,13 @@ class UserSerializer(serializers.ModelSerializer):
         wildlifecompliance_organisations = obj.wildlifecompliance_organisations
         serialized_orgs = UserOrganisationSerializer(wildlifecompliance_organisations, many=True,context={'user_id':obj.id}).data
         return serialized_orgs
+
+
+class EmailUserActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+    class Meta:
+        model = EmailUserAction
+        fields = '__all__'
 
 
 class PersonalSerializer(serializers.ModelSerializer):

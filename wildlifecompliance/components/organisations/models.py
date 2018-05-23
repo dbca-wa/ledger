@@ -13,6 +13,7 @@ from wildlifecompliance.components.main.models import UserAction,CommunicationsL
 from wildlifecompliance.components.organisations.utils import random_generator
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
+                        send_organisation_request_amendment_requested_email_notification,
                         send_organisation_link_email_notification,
                         send_organisation_unlink_email_notification,
                         send_organisation_contact_adminuser_email_notification,
@@ -105,7 +106,7 @@ class Organisation(models.Model):
     def decline_user(self, user,request):
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = user.email)
-                org_contact.user_status ='decline'
+                org_contact.user_status ='declined'
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
                 pass
@@ -118,44 +119,94 @@ class Organisation(models.Model):
             self.log_user_action(OrganisationAction.ACTION_CONTACT_DECLINED.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
             send_organisation_contact_decline_email_notification(user,request.user,self,request)
 
-    
-
-    
-    def link_user(self,user,request,admin_flag):
+    def link_user(self, user, request, admin_flag):
         with transaction.atomic():
             try:
-                UserDelegation.objects.get(organisation=self,user=user)
+                UserDelegation.objects.get(organisation=self, user=user)
                 raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
             except UserDelegation.DoesNotExist:
-                delegate = UserDelegation.objects.create(organisation=self,user=user)
+                delegate = UserDelegation.objects.create(organisation=self, user=user)
             if self.first_five_admin:
                 is_admin = True
                 role = 'organisation_admin'
             elif admin_flag:
                 role = 'organisation_admin'
                 is_admin = True
-            else :
+            else:
                 role = 'organisation_user'
                 is_admin = False
-                
+
             # Create contact person
             OrganisationContact.objects.create(
-                organisation = self,
-                first_name = user.first_name,
-                last_name = user.last_name,
-                mobile_number = user.mobile_number,
-                phone_number = user.phone_number,
-                fax_number = user.fax_number,
-                email = user.email,
-                user_role = role,
+                organisation=self,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                mobile_number=user.mobile_number,
+                phone_number=user.phone_number,
+                fax_number=user.fax_number,
+                email=user.email,
+                user_role=role,
                 user_status='pending',
-                is_admin = is_admin
-            
+                is_admin=is_admin
+
             )
             # log linking
-            self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            self.log_user_action(OrganisationAction.ACTION_LINK.format(
+                '{} {}({})'.format(delegate.user.first_name, delegate.user.last_name, delegate.user.email)), request)
             # send email
-            send_organisation_link_email_notification(user,request.user,self,request)
+            send_organisation_link_email_notification(user, request.user, self, request)
+
+
+    def accept_declined_user(self, user, request):
+        with transaction.atomic():
+            try:
+                UserDelegation.objects.get(organisation=self, user=user)
+                raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
+            except UserDelegation.DoesNotExist:
+                delegate = UserDelegation.objects.create(organisation=self, user=user)
+            if self.first_five_admin:
+                is_admin = True
+                role = 'organisation_admin'
+            elif admin_flag:
+                role = 'organisation_admin'
+                is_admin = True
+            else:
+                role = 'organisation_user'
+                is_admin = False
+
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_status ='active'
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_LINK.format(
+                '{} {}({})'.format(delegate.user.first_name, delegate.user.last_name, delegate.user.email)), request)
+            # send email
+            send_organisation_link_email_notification(user, request.user, self, request)
+
+
+    def relink_user(self, user, request):
+        with transaction.atomic():
+            try:
+                UserDelegation.objects.get(organisation=self, user=user)
+                raise ValidationError('This user has not yet been linked to {}'.format(str(self.organisation)))
+            except UserDelegation.DoesNotExist:
+                delegate = UserDelegation.objects.create(organisation=self, user=user)
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_status ='active'
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_REINSTATE.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_reinstate_email_notification(user,request.user,self,request)
+
+
 
     def unlink_user(self,user,request):
         with transaction.atomic():
@@ -165,9 +216,9 @@ class Organisation(models.Model):
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
             # delete contact person
             try:
-                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)  
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
                 if org_contact.user_role == 'organisation_admin':
-                    if OrganisationContact.objects.filter(organisation = self,user_role = 'organisation_admin', user_status ='active').count() > 1 :    
+                    if OrganisationContact.objects.filter(organisation = self,user_role = 'organisation_admin', user_status ='active').count() > 1 :
                         org_contact.user_status ='unlinked'
                         org_contact.save()
                         # delete delegate
@@ -183,7 +234,7 @@ class Organisation(models.Model):
             except OrganisationContact.DoesNotExist:
                 pass
 
-            
+
             # log linking
             self.log_user_action(OrganisationAction.ACTION_UNLINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
@@ -263,7 +314,7 @@ class Organisation(models.Model):
             except OrganisationContact.DoesNotExist:
                 pass
             # log linking
-            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_SUSPEND.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_REINSTATE.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
             send_organisation_reinstate_email_notification(user,request.user,self,request)
 
@@ -355,7 +406,7 @@ class OrganisationContact(models.Model):
     USER_STATUS_CHOICES = (('draft', 'Draft'),
         ('pending', 'Pending'),
         ('active', 'Active'),
-        ('decline', 'Decline'),
+        ('declined', 'Declined'),
         ('unlinked', 'Unlinked'),
         ('suspended', 'Suspended'))
     USER_ROLE_CHOICES = (('organisation_admin', 'Organisation Admin'),
@@ -425,7 +476,7 @@ class OrganisationContact(models.Model):
 
 
 class OrganisationContactAction(UserAction):
-    ACTION_ORGANISATION_CONTACT_ACCEPT = "Accept  request {}"
+    ACTION_ORGANISATION_CONTACT_ACCEPT = "Accept request {}"
     ACTION_ORGANISATION_CONTACT_DECLINE = "Decline Request {}"
     ACTION_UNLINK ="Unlinked the user{}"
     
@@ -485,6 +536,7 @@ class OrganisationAction(UserAction):
     ACTION_MAKE_CONTACT_SUSPEND = "Suspended contact {}"
     ACTION_MAKE_CONTACT_REINSTATE = "REINSTATED contact {}"
 
+
     @classmethod
     def log_action(cls, organisation, action, user):
         return cls.objects.create(
@@ -516,6 +568,7 @@ class OrganisationLogEntry(CommunicationsLogEntry):
 class OrganisationRequest(models.Model):
     STATUS_CHOICES = (
         ('with_assessor','With Assessor'),
+        ('amendment_requested','Amendment Requested'),
         ('approved','Approved'),
         ('declined','Declined')
     )
@@ -535,54 +588,96 @@ class OrganisationRequest(models.Model):
     class Meta:
         app_label = 'wildlifecompliance'
 
-   
     def accept(self, request):
         with transaction.atomic():
             self.status = 'approved'
             self.save()
-            self.log_user_action(OrganisationRequestUserAction.ACTION_ACCEPT_REQUEST.format(self.id),request)
+            self.log_user_action(OrganisationRequestUserAction.ACTION_ACCEPT_REQUEST.format(self.id), request)
             # Continue with remaining logic
             self.__accept(request)
 
-    def __accept(self,request):
+    def __accept(self, request):
         # Check if orgsanisation exists in ledger
         ledger_org = None
         try:
-            ledger_org = ledger_organisation.objects.get(abn=self.abn) 
+            ledger_org = ledger_organisation.objects.get(abn=self.abn)
         except ledger_organisation.DoesNotExist:
-            ledger_org = ledger_organisation.objects.create(name=self.name,abn=self.abn)
+            ledger_org = ledger_organisation.objects.create(name=self.name, abn=self.abn)
         # Create Organisation in wildlifecompliance
-        org = Organisation.objects.create(organisation=ledger_org)
-        #org.generate_pins()
+        org, created = Organisation.objects.get_or_create(organisation=ledger_org)
+        # org.generate_pins()
         # Link requester to organisation
-        delegate = UserDelegation.objects.create(user=self.requester,organisation=org)
+        delegate = UserDelegation.objects.create(user=self.requester, organisation=org)
         # log who approved the request
         # org.log_user_action(OrganisationAction.ACTION_REQUEST_APPROVED.format(self.id),request)
         # log who created the link
-        org.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
-        
-        if self.role == 'consultant' :
+        org.log_user_action(OrganisationAction.ACTION_LINK.format(
+            '{} {}({})'.format(delegate.user.first_name, delegate.user.last_name, delegate.user.email)), request)
+
+        if self.role == 'consultant':
             role = 'consultant'
-        else :
+        else:
             role = 'organisation_admin'
         # Create contact person
 
         OrganisationContact.objects.create(
-            organisation = org,
-            first_name = self.requester.first_name,
-            last_name = self.requester.last_name,
-            mobile_number = self.requester.mobile_number,
-            phone_number = self.requester.phone_number,
-            fax_number = self.requester.fax_number,
-            email = self.requester.email,
-            user_role = role,
-            user_status= 'active',
-            is_admin = True
-        
+            organisation=org,
+            first_name=self.requester.first_name,
+            last_name=self.requester.last_name,
+            mobile_number=self.requester.mobile_number,
+            phone_number=self.requester.phone_number,
+            fax_number=self.requester.fax_number,
+            email=self.requester.email,
+            user_role=role,
+            user_status='active',
+            is_admin=True
+
         )
 
         # send email to requester
-        send_organisation_request_accept_email_notification(self,org,request)
+        send_organisation_request_accept_email_notification(self, org, request)
+
+    def amendment_request(self, request):
+        with transaction.atomic():
+            self.status = 'amendment_requested'
+            self.save()
+            self.log_user_action(OrganisationRequestUserAction.ACTION_AMENDMENT_REQUEST.format(self.id), request)
+            # Continue with remaining logic
+            self.__amendment_request(request)
+
+    def __amendment_request(self, request):
+        # Check if orgsanisation exists in ledger
+        ledger_org = None
+        try:
+            ledger_org = ledger_organisation.objects.get(abn=self.abn)
+        except ledger_organisation.DoesNotExist:
+            ledger_org = ledger_organisation.objects.create(name=self.name, abn=self.abn)
+        # Create Organisation in wildlifecompliance
+        org, created = Organisation.objects.get_or_create(organisation=ledger_org)
+        # send email to original requester
+        send_organisation_request_amendment_requested_email_notification(self, org, request)
+
+    def reupload_identification_amendment_request(self, request):
+        with transaction.atomic():
+            self.status = 'with_assessor'
+            self.identification = request.data.dict()['identification']
+            self.save()
+            self.log_user_action(OrganisationRequestUserAction.ACTION_REUPLOAD_IDENTIFICATION_AMENDMENT_REQUEST.format(self.id), request)
+            # Continue with remaining logic
+            self.__reupload_identification_amendment_request(request)
+
+    def __reupload_identification_amendment_request(self, request):
+        # Check if orgsanisation exists in ledger
+        ledger_org = None
+        try:
+            ledger_org = ledger_organisation.objects.get(abn=self.abn)
+        except ledger_organisation.DoesNotExist:
+            pass #should never happen
+            #ledger_org = ledger_organisation.objects.create(name=self.name, abn=self.abn)
+        # Create Organisation in wildlifecompliance
+        org = Organisation.objects.get(organisation=ledger_org)
+        # send email to original requester
+        # TODO: send_organisation_request_amendment_requested_email_notification(self, org, request)
 
     def assign_to(self, user,request):
         with transaction.atomic():
@@ -602,7 +697,7 @@ class OrganisationRequest(models.Model):
             self.save()
             OrganisationRequestDeclinedDetails.objects.create(
                 officer = request.user,
-                reason = 'decline',
+                reason = 'declined',
                 request = self
             )
             self.log_user_action(OrganisationRequestUserAction.ACTION_DECLINE_REQUEST.format('{} {}({})'.format(request.user.first_name,request.user.last_name,request.user.email)),request)
@@ -635,6 +730,8 @@ class OrganisationRequestUserAction(UserAction):
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_ACCEPT_REQUEST = "Accept request {}"
+    ACTION_AMENDMENT_REQUEST = "Amendment request {}"
+    ACTION_REUPLOAD_IDENTIFICATION_AMENDMENT_REQUEST = "Reupload identification amendment request {}"
     ACTION_DECLINE_REQUEST = "Decline request {}"
     # Assessors
     ACTION_CONCLUDE_REQUEST = "Conclude request {}"

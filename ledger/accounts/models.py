@@ -23,6 +23,8 @@ from datetime import datetime, date
 from ledger.accounts.signals import name_changed, post_clean
 from ledger.address.models import UserAddress, Country
 
+
+
 class EmailUserManager(BaseUserManager):
     """A custom Manager for the EmailUser model.
     """
@@ -34,9 +36,9 @@ class EmailUserManager(BaseUserManager):
         if not email:
             raise ValueError('Email must be set')
         email = self.normalize_email(email)
-        if (EmailUser.objects.filter(email__iexact=email.lower()) or
-            Profile.objects.filter(email__iexact=email.lower()) or
-            EmailIdentity.objects.filter(email__iexact=email.lower())):
+        if (EmailUser.objects.filter(email__iexact=email) or
+            Profile.objects.filter(email__iexact=email) or
+            EmailIdentity.objects.filter(email__iexact=email)):
             raise ValueError('This email is already in use')
         user = self.model(
             email=email, is_staff=is_staff, is_superuser=is_superuser)
@@ -359,6 +361,13 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         else:
             return -1
 
+    def log_user_action(self, action, request=None):
+        if request:
+            return EmailUserAction.log_action(self, action, request.user)
+        else:
+            pass
+
+
 def query_emailuser_by_args(**kwargs):
     ORDER_COLUMN_CHOICES = [
         'title',
@@ -404,6 +413,44 @@ def query_emailuser_by_args(**kwargs):
         'total': total,
         'draw': draw
     }
+
+
+@python_2_unicode_compatible
+class UserAction(models.Model):
+    who = models.ForeignKey(EmailUser, null=False, blank=False)
+    when = models.DateTimeField(null=False, blank=False, auto_now_add=True)
+    what = models.TextField(blank=False)
+
+    def __str__(self):
+        return "{what} ({who} at {when})".format(
+            what=self.what,
+            who=self.who,
+            when=self.when
+        )
+
+    class Meta:
+        abstract = True
+        app_label = 'accounts'
+
+
+class EmailUserAction(UserAction):
+    ACTION_PERSONAL_DETAILS_UPDATE = "User {} Personal Details Updated"
+    ACTION_CONTACT_DETAILS_UPDATE = "User {} Contact Details Updated"
+    ACTION_POSTAL_ADDRESS_UPDATE = "User {} Postal Address Updated"
+
+    @classmethod
+    def log_action(cls, emailuser, action, user):
+        return cls.objects.create(
+            emailuser=emailuser,
+            who=user,
+            what=str(action)
+        )
+
+    emailuser = models.ForeignKey(EmailUser, related_name='action_logs')
+
+    class Meta:
+        app_label = 'accounts'
+        ordering = ['-when']
 
 
 class EmailUserListener(object):
