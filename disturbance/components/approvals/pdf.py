@@ -376,12 +376,6 @@ def _create_renewal(renewal_buffer, approval, proposal):
 
 
     title = approval.title.encode('UTF-8')
-
-    '''elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
-    elements.append(Paragraph(approval.activity, styles['InfoTitleLargeLeft']))
-    elements.append(Paragraph(approval.region, styles['InfoTitleLargeLeft']))
-    elements.append(Paragraph(approval.tenure if approval.tenure else '', styles['InfoTitleLargeRight']))'''
-
    
     # additional information
     '''if approval.additional_information:
@@ -391,26 +385,6 @@ def _create_renewal(renewal_buffer, approval, proposal):
 
     # delegation holds the dates, approvale and issuer details.
     delegation = []
-
-    # dates and licensing officer
-    '''dates_licensing_officer_table_style = TableStyle([('VALIGN', (0, 0), (-2, -1), 'TOP'),
-                                                      ('VALIGN', (0, 0), (-1, -1), 'BOTTOM')])
-
-    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    date_headings = [Paragraph('Date of Issue', styles['BoldLeft']), Paragraph('Valid From', styles['BoldLeft']),
-                     Paragraph('Date of Expiry', styles['BoldLeft'])]
-    date_values = [Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']),
-                   Paragraph(approval.start_date.strftime(DATE_FORMAT), styles['Left']),
-                   Paragraph(approval.expiry_date.strftime(DATE_FORMAT), styles['Left'])]
-
-    if approval.original_issue_date is not None:
-        date_headings.insert(0, Paragraph('Original Date of Issue', styles['BoldLeft']))
-        date_values.insert(0, Paragraph(approval.original_issue_date.strftime(DATE_FORMAT), styles['Left']))
-
-    delegation.append(Table([[date_headings, date_values]],
-                            colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
-                            style=dates_licensing_officer_table_style))'''
-
     # proponent details
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     address = proposal.applicant.organisation.postal_address

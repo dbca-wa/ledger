@@ -22,6 +22,7 @@ class ComplianceSerializer(serializers.ModelSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
     allowed_assessors = EmailUserSerializer(many=True)
     assigned_to = serializers.CharField(source='assigned_to.get_full_name')
+    requirement = serializers.CharField(source='requirement.requirement')
 
 
     class Meta:
