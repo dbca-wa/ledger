@@ -154,7 +154,7 @@ export default {
     handleActivityTypeCheckboxChange:function(index,index1){
         let vm = this
         var input = $(vm.$refs.selected_activity_type)[0];
-        if(!vm.licence_classes[index].activity_type[index1].selected){
+        if(vm.licence_classes[index].activity_type[index1].selected){
             for(var activity_index=0, len2=vm.licence_classes[index].activity_type[index1].activity.length; activity_index<len2; activity_index++){
                          vm.licence_classes[index].activity_type[index1].activity[activity_index].selected= false;
                             }    
