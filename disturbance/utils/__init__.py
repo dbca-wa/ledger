@@ -33,6 +33,54 @@ def search(dictionary, search_list):
 
     return result
 
+def test_compare_data():
+    p=Proposal.objects.get(id=110)
+
+    dict1=p.data[0]
+    dict2=p.previous_application.data[0]
+    return compare_data(dict1, dict2, p.schema)
+
+
+def compare_data(dict1, dict2, schema):
+    """
+    dict1 - most recent data
+    dict2 - prev data
+    schema - proposal.schema
+
+    To run:
+        from disturbance.utils import compare
+        compare_data(dict1, dict2, schema)
+
+    eg.
+        p=Proposal.objects.get(id=110)
+        dict1=p.data[0]
+        dict2=p.previous_application.data[0]
+        return compare_data(dict1, dict2, p.schema)
+    """
+    result = []
+    flat_dict1 = flatten(dict1)
+    flat_dict2 = flatten(dict2)
+    for k1, v1 in flat_dict1.iteritems():
+        for k2, v2 in flat_dict2.iteritems():
+            if k1 ==k2 and v2:
+                if v1 != v2:
+                    result.append( {k1: [v1, v2]} )
+                continue
+
+    # Now find the Question(label) for this section(k1 or k2) and incorporate into the dict result
+    new = {}
+    name_map=search_keys2(flatten(schema), search_list=['name', 'label'])
+    for item in result:
+        k = item.keys()[0]
+        v = item[k]
+        section = k.split('.')[-1]
+        label = [i['label'] for i in name_map if section in i['name'] ]
+        if label:
+            new.update( {k: {label[0]: v}} )
+
+    return new
+
+
 def create_helppage_object(application_type='Disturbance'):
 	"""
 	Create a new HelpPage object, with latest help_text/label anchors defined in the latest ProposalType.schema
@@ -82,9 +130,11 @@ def create_richtext_help(help_list=None):
 
 def search_keys(dictionary, search_list=['help_text', 'label']):
     """
+    Return search_list pairs from the schema -- given help_text, finds the equiv. label
+
     To run:
-        from disturbance.utils import search
-        search(dictionary, ['BRM', 'JM 1'])
+        from disturbance.utils import search_keys
+        search_keys(dictionary, search_list=['help_text', 'label'])
     """
     result = []
     flat_dict = flatten(dictionary)
@@ -103,6 +153,40 @@ def search_keys(dictionary, search_list=['help_text', 'label']):
                     if key_label and key_label.endswith('label') and key_label == corresponding_label_key: # and result.has_key(key):
                         #import ipdb; ipdb.set_trace()
                         help_list.append({'label': j[key_label], 'help_text': i[key]})
+        except Exception, e:
+            #import ipdb; ipdb.set_trace()
+            print e
+
+    return help_list
+
+def search_keys2(dictionary, search_list=['help_text', 'label']):
+    """
+    Generic version of search_keys(). Return search_list pairs from the schema -- given help_text, finds the equiv. label
+
+    To run:
+        from disturbance.utils import search_keys
+        search_keys2(dictionary, search_list=['help_text', 'label'])
+        search_keys2(dictionary, search_list=['name', 'label'])
+    """
+    search_item1 = search_list[0]
+    search_item2 = search_list[1]
+    result = []
+    flat_dict = flatten(dictionary)
+    for k, v in flat_dict.iteritems():
+        if any(x in k for x in search_list):
+            result.append( {k: v} )
+
+    help_list = []
+    for i in result:
+        try:
+            key = i.keys()[0]
+            if key and key.endswith(search_item1):
+                corresponding_label_key = '.'.join(key.split('.')[:-1]) + '.' + search_item2
+                for j in result:
+                    key_label = j.keys()[0]
+                    if key_label and key_label.endswith(search_item2) and key_label == corresponding_label_key: # and result.has_key(key):
+                        #import ipdb; ipdb.set_trace()
+                        help_list.append({search_item2: j[key_label], search_item1: i[key]})
         except Exception, e:
             #import ipdb; ipdb.set_trace()
             print e
