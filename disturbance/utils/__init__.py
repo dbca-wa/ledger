@@ -10,9 +10,10 @@ def search_all(search_list, application_type='Disturbance'):
     result = {}
     for p in Proposal.objects.filter(application_type__name=application_type):
         try:
-            ret = search(p.data[0], search_list)
-            if ret:
-                result.update( {p.lodgement_number: ret} )
+            if p.data:
+                ret = search(p.data[0], search_list)
+                if ret:
+                    result.update( {p.lodgement_number: ret} )
         except:
             pass
 
@@ -27,7 +28,7 @@ def search(dictionary, search_list):
     result = []
     flat_dict = flatten(dictionary)
     for k, v in flat_dict.iteritems():
-        if all(x in v for x in search_list):
+        if any(x in v for x in search_list):
             result.append( {k: v} )
 
     return result

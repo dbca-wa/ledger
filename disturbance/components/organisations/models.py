@@ -337,6 +337,11 @@ class OrganisationAccessGroup(models.Model):
         #all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
         return all_members
 
+    def clean(self):
+        if OrganisationAccessGroup.objects.all().count() == 1:
+            raise ValidationError('Cannot delete. There must be at least one Organisation Access Group')
+
+
     class Meta:
         app_label = 'disturbance'
         

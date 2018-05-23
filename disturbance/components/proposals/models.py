@@ -86,9 +86,9 @@ class ProposalAssessorGroup(models.Model):
             default = None
 
         if self.pk:
-            if int(self.pk) != int(default.id):
-                if default and self.default:
-                    raise ValidationError('There can only be one default proposal assessor group')
+            #if int(self.pk) != int(default.id):
+            if default and self.default:
+                raise ValidationError('There can only be one default proposal assessor group')
         else:
             if default and self.default:
                 raise ValidationError('There can only be one default proposal assessor group')

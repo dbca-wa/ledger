@@ -27,7 +27,7 @@ class ProposalAssessorGroupAdmin(admin.ModelAdmin):
     list_display = ['name','default']
     filter_horizontal = ('members',)
     form = forms.ProposalAssessorGroupAdminForm
-    readonly_fields = ['default']
+    #readonly_fields = ['default']
 
     def has_delete_permission(self, request, obj=None):
         if obj and obj.default:
