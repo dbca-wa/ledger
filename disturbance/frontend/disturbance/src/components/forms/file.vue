@@ -20,7 +20,9 @@
                 <div v-for="v in files">
                     <p>
                         File: <a :href="docsUrl+v" target="_blank">{{v}}</a> &nbsp;
-                        <a @click="removeImage(v)" class="fa fa-trash-o" title="Remove file" :filename="v" style="color:red"></a>
+                        <span v-if="!readonly">
+                            <a @click="removeImage(v)" class="fa fa-trash-o" title="Remove file" :filename="v" style="color:red"></a>
+                        </span>
                     </p>
                     <input :name="name+'-existing'" type="hidden" :value="value"/>
                 </div>

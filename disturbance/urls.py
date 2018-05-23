@@ -11,6 +11,7 @@ from disturbance.components.organisations import api as org_api
 from disturbance.components.proposals import api as proposal_api
 from disturbance.components.approvals import api as approval_api
 from disturbance.components.compliances import api as compliances_api
+from disturbance.components.main import api as main_api
 
 from ledger.urls import urlpatterns as ledger_patterns
 
@@ -28,6 +29,9 @@ router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
 router.register(r'users',users_api.UserViewSet)
 router.register(r'amendment_request',proposal_api.AmendmentRequestViewSet)
 router.register(r'compliance_amendment_request',compliances_api.ComplianceAmendmentRequestViewSet)
+router.register(r'regions', main_api.RegionViewSet)
+#router.register(r'tenure', main_api.TenureViewSet)
+router.register(r'application_types', main_api.ApplicationTypeViewSet)
 
 
 api_patterns = [
@@ -52,10 +56,14 @@ urlpatterns = [
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
+    url(r'^help-disturbance/$', views.DisturbanceHelpView.as_view(), name='help-disturbance'),
+    url(r'^help-apiary/$', views.ApiaryHelpView.as_view(), name='help-apiary'),
+    url(r'^mgt-commands/$', views.ManagementCommandsView.as_view(), name='mgt-commands'),
+    #url(r'^/help/apiary/$', views.ApiaryHelpView.as_view(), name='help_apiary'),
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     #following url is used to include url path when sending Proposal amendment request to user.
     url(r'^proposal/$', proposal_views.ProposalView.as_view(), name='proposal'),
-    
+
     #following url is defined so that to include url path when sending Proposal amendment request to user.
     url(r'^external/proposal/(?P<proposal_pk>\d+)/$', views.ExternalProposalView.as_view(), name='external-proposal-detail'),
     url(r'^external/compliance/(?P<compliance_pk>\d+)/$', views.ExternalComplianceView.as_view(), name='external-compliance-detail'),

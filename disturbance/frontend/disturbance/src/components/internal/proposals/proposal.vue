@@ -1,6 +1,6 @@
 <template lang="html">
     <div v-if="proposal" class="container" id="internalProposal">
-            <div class="row">
+      <div class="row">
         <h3>Proposal: {{ proposal.lodgement_number }}</h3>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
@@ -311,7 +311,7 @@
                                       <div class="col-lg-12 pull-right">
                                         <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
                                       </div>
-                                    </div>
+                                    </div>                                
                                 </Proposal>
                             </form>
                         </div>

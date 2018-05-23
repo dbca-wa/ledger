@@ -1,0 +1,19 @@
+{% extends 'disturbance/base.html' %}
+
+{% block content %}
+    <div>
+        <form action="" method="POST">
+            {% csrf_token %}
+            <button type="submit" name="script" value="approval_renewal_notices" {% if approval_renewal_notices == 'true' %}style="color:green" {% endif %}>Run Script 'approval_renewal_notices'</button><br><br>
+            <button type="submit" name="script" value="expire_approvals" {% if expire_approvals == 'true' %}style="color:green" {% endif %}>Run Script 'expire_approvals'</button><br><br>
+            <button type="submit" name="script" value="send_compliance_reminder" {% if send_compliance_reminder == 'true' %}style="color:green" {% endif %}>Run Script 'send_compliance_reminder'</button><br><br>
+            <button type="submit" name="script" value="update_approval_status" {% if update_approval_status == 'true' %}style="color:green" {% endif %}>Run Script 'update_approval_status'</button><br><br>
+            <button type="submit" name="script" value="update_compliance_status" {% if update_compliance_status == 'true' %}style="color:green" {% endif %}>Run Script 'update_compliance_status'</button><br><br>
+        </form>
+        <br>
+    </div>
+    <br />
+    {{ ret }}
+    {{ block.super }}
+{% endblock %}
+

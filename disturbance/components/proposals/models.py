@@ -17,7 +17,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
-from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
+from disturbance.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
@@ -31,13 +31,27 @@ def update_proposal_doc_filename(instance, filename):
 def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
 
+def application_type_choicelist():
+    return [( (choice.name), (choice.name) ) for choice in ApplicationType.objects.all()]
+
 class ProposalType(models.Model):
+    #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24)
+    #application_type = models.ForeignKey(ApplicationType, related_name='aplication_types')
+    description = models.CharField(max_length=256, blank=True, null=True)
+    #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=application_type_choicelist(), default=application_type_choicelist()[0][0])
+    name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=application_type_choicelist(), default='Disturbance')
     schema = JSONField()
     activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
-    site = models.OneToOneField(Site, default='1')
+    #site = models.OneToOneField(Site, default='1')
+    replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
+
+    def __str__(self):
+        return '{} - v{}'.format(self.name, self.version)
 
     class Meta:
         app_label = 'disturbance'
+        unique_together = ('name', 'version')
 
 
 class TaggedProposalAssessorGroupRegions(TaggedItemBase):
@@ -87,9 +101,9 @@ class ProposalAssessorGroup(models.Model):
 
     @property
     def current_proposals(self):
-        assessable_states = ['with_assessor','with_referral','with_assessor_requirements'] 
+        assessable_states = ['with_assessor','with_referral','with_assessor_requirements']
         return Proposal.objects.filter(processing_status__in=assessable_states)
-        
+
 class TaggedProposalApproverGroupRegions(TaggedItemBase):
     content_object = models.ForeignKey("ProposalApproverGroup")
 
@@ -137,9 +151,9 @@ class ProposalApproverGroup(models.Model):
 
     @property
     def current_proposals(self):
-        assessable_states = ['with_approver'] 
+        assessable_states = ['with_approver']
         return Proposal.objects.filter(processing_status__in=assessable_states)
-        
+
 class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
     _file = models.FileField(upload_to=update_proposal_doc_filename)
@@ -183,14 +197,14 @@ class Proposal(RevisionedMixin):
     PROCESSING_STATUS_APPROVED = 'approved'
     PROCESSING_STATUS_DECLINED = 'declined'
     PROCESSING_STATUS_DISCARDED = 'discarded'
-    PROCESSING_STATUS_CHOICES = ((PROCESSING_STATUS_TEMP, 'Temporary'), 
-                                 (PROCESSING_STATUS_DRAFT, 'Draft'), 
+    PROCESSING_STATUS_CHOICES = ((PROCESSING_STATUS_TEMP, 'Temporary'),
+                                 (PROCESSING_STATUS_DRAFT, 'Draft'),
                                  (PROCESSING_STATUS_WITH_ASSESSOR, 'With Assessor'),
                                  (PROCESSING_STATUS_WITH_REFERRAL, 'With Referral'),
                                  (PROCESSING_STATUS_WITH_ASSESSOR_REQUIREMENTS, 'With Assessor (Requirements)'),
                                  (PROCESSING_STATUS_WITH_APPROVER, 'With Approver'),
                                  (PROCESSING_STATUS_RENEWAL, 'Renewal'),
-                                 (PROCESSING_STATUS_LICENCE_AMENDMENT, 'Licence Amendment'), 
+                                 (PROCESSING_STATUS_LICENCE_AMENDMENT, 'Licence Amendment'),
                                  (PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE, 'Awaiting Applicant Response'),
                                  (PROCESSING_STATUS_AWAITING_ASSESSOR_RESPONSE, 'Awaiting Assessor Response'),
                                  (PROCESSING_STATUS_AWAITING_RESPONSES, 'Awaiting Responses'),
@@ -215,6 +229,15 @@ class Proposal(RevisionedMixin):
         ('not_reviewed', 'Not Reviewed'), ('awaiting_amendments', 'Awaiting Amendments'), ('amended', 'Amended'),
         ('accepted', 'Accepted'))
 
+#    PROPOSAL_STATE_NEW_LICENCE = 'New Licence'
+#    PROPOSAL_STATE_AMENDMENT = 'Amendment'
+#    PROPOSAL_STATE_RENEWAL = 'Renewal'
+#    PROPOSAL_STATE_CHOICES = (
+#        (1, PROPOSAL_STATE_NEW_LICENCE),
+#        (2, PROPOSAL_STATE_AMENDMENT),
+#        (3, PROPOSAL_STATE_RENEWAL),
+#    )
+
     APPLICATION_TYPE_CHOICES = (
         ('new_licence', 'New Licence'),
         ('amendment', 'Amendment'),
@@ -223,6 +246,8 @@ class Proposal(RevisionedMixin):
 
     proposal_type = models.CharField('Proposal Type', max_length=40, choices=APPLICATION_TYPE_CHOICES,
                                         default=APPLICATION_TYPE_CHOICES[0][0])
+    #proposal_state = models.PositiveSmallIntegerField('Proposal state', choices=PROPOSAL_STATE_CHOICES, default=1)
+
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
@@ -260,10 +285,15 @@ class Proposal(RevisionedMixin):
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     proposed_decline_status = models.BooleanField(default=False)
     # Special Fields
-    activity = models.CharField(max_length=255,null=True,blank=True)
-    region = models.CharField(max_length=255,null=True,blank=True)
     title = models.CharField(max_length=255,null=True,blank=True)
-    tenure = models.CharField(max_length=255,null=True,blank=True)
+    activity = models.CharField(max_length=255,null=True,blank=True)
+    #region = models.CharField(max_length=255,null=True,blank=True)
+    #tenure = models.CharField(max_length=255,null=True,blank=True)
+    #activity = models.ForeignKey(Activity, null=True, blank=True)
+    region = models.ForeignKey(Region, null=True, blank=True)
+    district = models.ForeignKey(District, null=True, blank=True)
+    tenure = models.ForeignKey(Tenure, null=True, blank=True)
+    application_type = models.ForeignKey(ApplicationType)
 
     class Meta:
         app_label = 'disturbance'
@@ -330,7 +360,8 @@ class Proposal(RevisionedMixin):
 
     @property
     def regions_list(self):
-        return self.region.split(',') if self.region else []
+        #return self.region.split(',') if self.region else []
+        return [self.region.name] if self.region else []
 
     @property
     def permit(self):
@@ -344,7 +375,7 @@ class Proposal(RevisionedMixin):
             group = self.__assessor_group()
         return group.members.all() if group else []
 
-    @property   
+    @property
     def can_officer_process(self):
         """
         :return: True if the application is in one of the processable status for Assessor role.
@@ -355,7 +386,7 @@ class Proposal(RevisionedMixin):
         else:
             return True
 
-    @property        
+    @property
     def amendment_requests(self):
         qs =AmendmentRequest.objects.filter(proposal = self)
         return qs
@@ -366,14 +397,14 @@ class Proposal(RevisionedMixin):
             try:
                 check_group = ProposalAssessorGroup.objects.filter(
                     activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list         
+                    regions__name__in=self.regions_list
                 ).distinct()
                 if check_group:
                     return check_group[0]
             except ProposalAssessorGroup.DoesNotExist:
                 pass
         default_group = ProposalAssessorGroup.objects.get(default=True)
- 
+
         return default_group
 
     def __approver_group(self):
@@ -382,14 +413,14 @@ class Proposal(RevisionedMixin):
             try:
                 check_group = ProposalApproverGroup.objects.filter(
                     activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list         
+                    regions__name__in=self.regions_list
                 ).distinct()
                 if check_group:
                     return check_group[0]
             except ProposalApproverGroup.DoesNotExist:
                 pass
         default_group = ProposalApproverGroup.objects.get(default=True)
- 
+
         return default_group
 
     def __check_proposal_filled_out(self):
@@ -397,7 +428,7 @@ class Proposal(RevisionedMixin):
             raise exceptions.ProposalNotComplete()
         missing_fields = []
         required_fields = {
-            'region':'Region/District',
+            #'region':'Region/District',
             'title': 'Title',
             'activity': 'Activity'
         }
@@ -417,22 +448,22 @@ class Proposal(RevisionedMixin):
 
     def has_assessor_mode(self,user):
         status_without_assessor = ['with_approver','approved','declined','draft']
-        if self.processing_status in status_without_assessor: 
+        if self.processing_status in status_without_assessor:
             return False
         else:
-            if self.assigned_officer: 
+            if self.assigned_officer:
                 if self.assigned_officer == user:
                     return self.__assessor_group() in user.proposalassessorgroup_set.all()
                 else:
                     return False
             else:
                 return self.__assessor_group() in user.proposalassessorgroup_set.all()
-        
+
     def log_user_action(self, action, request):
         return ProposalUserAction.log_action(self, action, request.user)
 
     def submit(self,request,viewset):
-        from disturbance.components.proposals.utils import save_proponent_data 
+        from disturbance.components.proposals.utils import save_proponent_data
         with transaction.atomic():
             if self.can_user_edit:
                 # Save the data first
@@ -449,10 +480,10 @@ class Proposal(RevisionedMixin):
                 if (self.amendment_requests):
                     qs = self.amendment_requests.filter(status = "requested")
                     if (qs):
-                        for q in qs:    
+                        for q in qs:
                             q.status = 'amended'
                             q.save()
-                        
+
                 self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
@@ -478,7 +509,7 @@ class Proposal(RevisionedMixin):
                         if not department_user:
                             raise ValidationError('The user you want to send the referral to is not a member of the department')
                         # Check if the user is in ledger or create
-                        
+
                         user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
                         if created:
                             user.first_name = department_user['given_name']
@@ -492,7 +523,7 @@ class Proposal(RevisionedMixin):
                         referral = Referral.objects.create(
                             proposal = self,
                             referral=user,
-                            sent_by=request.user 
+                            sent_by=request.user
                         )
                     # Create a log entry for the proposal
                     self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
@@ -509,7 +540,7 @@ class Proposal(RevisionedMixin):
         with transaction.atomic():
             try:
                 if not self.can_assess(request.user):
-                    raise exceptions.ProposalNotAuthorized() 
+                    raise exceptions.ProposalNotAuthorized()
                 if not self.can_assess(officer):
                     raise ValidationError('The selected person is not authorised to be assigned to this proposal')
                 if self.processing_status == 'with_approver':
@@ -535,10 +566,10 @@ class Proposal(RevisionedMixin):
         with transaction.atomic():
             try:
                 if not self.can_assess(request.user):
-                    raise exceptions.ProposalNotAuthorized() 
+                    raise exceptions.ProposalNotAuthorized()
                 if self.processing_status == 'with_approver':
                     if self.assigned_approver:
-                        self.assigned_approver = None 
+                        self.assigned_approver = None
                         self.save()
                         # Create a log entry for the proposal
                         self.log_user_action(ProposalUserAction.ACTION_UNASSIGN_APPROVER.format(self.id),request)
@@ -546,7 +577,7 @@ class Proposal(RevisionedMixin):
                         self.applicant.log_user_action(ProposalUserAction.ACTION_UNASSIGN_APPROVER.format(self.id),request)
                 else:
                     if self.assigned_officer:
-                        self.assigned_officer = None 
+                        self.assigned_officer = None
                         self.save()
                         # Create a log entry for the proposal
                         self.log_user_action(ProposalUserAction.ACTION_UNASSIGN_ASSESSOR.format(self.id),request)
@@ -556,7 +587,7 @@ class Proposal(RevisionedMixin):
                 raise
 
     def move_to_status(self,request,status):
-        if not self.can_assess(request.user):            
+        if not self.can_assess(request.user):
             raise exceptions.ProposalNotAuthorized()
         if status in ['with_assessor','with_assessor_requirements','with_approver']:
             if self.processing_status == 'with_referral' or self.can_user_edit:
@@ -574,7 +605,7 @@ class Proposal(RevisionedMixin):
             raise ValidationError('The provided status cannot be found.')
 
 
-    def reissue_approval(self,request,status):     
+    def reissue_approval(self,request,status):
         if not self.processing_status=='approved' :
             raise ValidationError('You cannot change the current status at this time')
         elif self.approval and self.approval.can_reissue:
@@ -582,7 +613,7 @@ class Proposal(RevisionedMixin):
                 self.processing_status = status
                 self.save()
                 # Create a log entry for the proposal
-                self.log_user_action(ProposalUserAction.ACTION_REISSUE_APPROVAL.format(self.id),request)               
+                self.log_user_action(ProposalUserAction.ACTION_REISSUE_APPROVAL.format(self.id),request)
         else:
             raise ValidationError('Cannot reissue Approval')
 
@@ -681,6 +712,7 @@ class Proposal(RevisionedMixin):
 
                 if self.processing_status == 'approved':
                     # TODO if it is an ammendment proposal then check appropriately
+                    #import ipdb; ipdb.set_trace()
                     checking_proposal = self
                     if self.proposal_type == 'renewal':
                         if self.previous_application:
@@ -688,10 +720,10 @@ class Proposal(RevisionedMixin):
                             approval,created = Approval.objects.update_or_create(
                                 current_proposal = checking_proposal,
                                 defaults = {
-                                    'activity' : self.activity,
-                                    'region' : self.region, 
-                                    'tenure' : self.tenure, 
-                                    'title' : self.title,
+                                    #'activity' : self.activity,
+                                    #'region' : self.region,
+                                    #'tenure' : self.tenure,
+                                    #'title' : self.title,
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
@@ -707,14 +739,14 @@ class Proposal(RevisionedMixin):
                         approval,created = Approval.objects.update_or_create(
                             current_proposal = checking_proposal,
                             defaults = {
-                                'activity' : self.activity,
-                                'region' : self.region, 
-                                'tenure' : self.tenure, 
-                                'title' : self.title,
+                                #'activity' : self.activity,
+                                #'region' : self.region.name,
+                                #'tenure' : self.tenure.name,
+                                #'title' : self.title,
                                 'issue_date' : timezone.now(),
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),
-                                'applicant' : self.applicant 
+                                'applicant' : self.applicant
                                 #'extracted_fields' = JSONField(blank=True, null=True)
                             }
                         )
@@ -746,7 +778,7 @@ class Proposal(RevisionedMixin):
                 #send Proposal approval email with attachment
                 send_proposal_approval_email_notification(self,request)
                 self.save()
-        
+
             except:
                 raise
 
@@ -756,7 +788,7 @@ class Proposal(RevisionedMixin):
         from disturbance.components.compliances.models import Compliance
         today = timezone.now().date()
         timedelta = datetime.timedelta
-       
+
         for req in self.requirements.all():
             if req.recurrence and req.due_date > today:
                 current_date = req.due_date
@@ -833,16 +865,16 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
-    
 
-    def renew_approval(self,request):  
-        with transaction.atomic():       
-            previous_proposal = self        
+
+    def renew_approval(self,request):
+        with transaction.atomic():
+            previous_proposal = self
             try:
                 proposal=Proposal.objects.get(previous_application = previous_proposal)
                 if proposal.customer_status=='with_assessor':
                     raise ValidationError('A renewal for this licence has already been lodged and is awaiting review.')
-            except Proposal.DoesNotExist:            
+            except Proposal.DoesNotExist:
                 previous_proposal = Proposal.objects.get(id=self.id)
                 proposal = clone_proposal_with_status_reset(previous_proposal)
                 proposal.proposal_type = 'renewal'
@@ -859,9 +891,9 @@ class Proposal(RevisionedMixin):
                 proposal.save()
             return proposal
 
-    def amend_approval(self,request):  
-        with transaction.atomic():       
-            previous_proposal = self        
+    def amend_approval(self,request):
+        with transaction.atomic():
+            previous_proposal = self
             try:
                 amend_conditions = {
                 'previous_application': previous_proposal,
@@ -871,7 +903,7 @@ class Proposal(RevisionedMixin):
                 proposal=Proposal.objects.get(**amend_conditions)
                 if proposal.customer_status=='under_review':
                     raise ValidationError('A renewal for this licence has already been lodged and is awaiting review.')
-            except Proposal.DoesNotExist:            
+            except Proposal.DoesNotExist:
                 previous_proposal = Proposal.objects.get(id=self.id)
                 proposal = clone_proposal_with_status_reset(previous_proposal)
                 proposal.proposal_type = 'amendment'
@@ -887,7 +919,6 @@ class Proposal(RevisionedMixin):
                 self.approval.log_user_action(ApprovalUserAction.ACTION_AMEND_APPROVAL.format(self.approval.id),request)
                 proposal.save()
             return proposal
-
 
 
 class ProposalLogDocument(Document):
@@ -942,23 +973,23 @@ class AmendmentRequest(ProposalRequest):
         with transaction.atomic():
             try:
                 if not self.proposal.can_assess(request.user):
-                    raise exceptions.ProposalNotAuthorized() 
+                    raise exceptions.ProposalNotAuthorized()
                 if self.status == 'requested':
                     proposal = self.proposal
                     if proposal.processing_status != 'draft':
                         proposal.processing_status = 'draft'
                         proposal.customer_status = 'draft'
                         proposal.save()
-                    
+
                     # Create a log entry for the proposal
                     proposal.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
                     # Create a log entry for the organisation
                     proposal.applicant.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
-                    
+
                     # send email
                     send_amendment_email_notification(self,request, proposal)
-                   
-                self.save() 
+
+                self.save()
             except:
                 raise
 
@@ -1009,7 +1040,7 @@ class ProposalRequirement(OrderedModel):
     #order = models.IntegerField(default=1)
 
     class Meta:
-        app_label = 'disturbance' 
+        app_label = 'disturbance'
 
 
     @property
@@ -1097,7 +1128,7 @@ class Referral(models.Model):
     linked = models.BooleanField(default=False)
     sent_from = models.SmallIntegerField(choices=SENT_CHOICES,default=SENT_CHOICES[0][0])
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
-                                         default=PROCESSING_STATUS_CHOICES[0][0]) 
+                                         default=PROCESSING_STATUS_CHOICES[0][0])
 
     class Meta:
         app_label = 'disturbance'
@@ -1105,13 +1136,13 @@ class Referral(models.Model):
 
     def __str__(self):
         return 'Proposal {} - Referral {}'.format(self.proposal.id,self.id)
-    
+
     # Methods
 
     def recall(self,request):
         with transaction.atomic():
             if not self.proposal.can_assess(request.user):
-                raise exceptions.ProposalNotAuthorized() 
+                raise exceptions.ProposalNotAuthorized()
             self.processing_status = 'recalled'
             self.save()
             # TODO Log proposal action
@@ -1122,7 +1153,7 @@ class Referral(models.Model):
     def remind(self,request):
         with transaction.atomic():
             if not self.proposal.can_assess(request.user):
-                raise exceptions.ProposalNotAuthorized() 
+                raise exceptions.ProposalNotAuthorized()
             # Create a log entry for the proposal
             self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
             # Create a log entry for the organisation
@@ -1133,7 +1164,7 @@ class Referral(models.Model):
     def resend(self,request):
         with transaction.atomic():
             if not self.proposal.can_assess(request.user):
-                raise exceptions.ProposalNotAuthorized() 
+                raise exceptions.ProposalNotAuthorized()
             self.processing_status = 'with_referral'
             self.proposal.processing_status = 'with_referral'
             self.proposal.save()
@@ -1180,7 +1211,7 @@ class Referral(models.Model):
                         if not department_user:
                             raise ValidationError('The user you want to send the referral to is not a member of the department')
                         # Check if the user is in ledger or create
-                        
+
                         user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
                         if created:
                             user.first_name = department_user['given_name']
@@ -1258,7 +1289,7 @@ def clone_proposal_with_status_reset(proposal):
                 proposal.assigned_approver = None
 
                 proposal.approval = None
-                
+
                 original_proposal_id = proposal.id
 
                 #proposal.previous_application = Proposal.objects.get(id=original_proposal_id)
@@ -1267,14 +1298,25 @@ def clone_proposal_with_status_reset(proposal):
 
                 proposal.save(no_revision=True)
 
-                
+
                 # clone documents
                 for proposal_document in ProposalDocument.objects.filter(proposal=original_proposal_id):
                     proposal_document.proposal = proposal
                     proposal_document.id = None
                     proposal_document.save()
-                
+
                 return proposal
             except:
                 raise
+
+from ckeditor.fields import RichTextField
+class HelpPage(models.Model):
+    application_type = models.ForeignKey(ApplicationType)
+    content = RichTextField()
+    description = models.CharField(max_length=256, blank=True, null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
+
+    class Meta:
+        app_label = 'disturbance'
+        unique_together = ('application_type', 'version')
 

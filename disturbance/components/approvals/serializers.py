@@ -1,5 +1,6 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
+from disturbance.components.proposals.serializers import ProposalSerializer, InternalProposalSerializer
 from disturbance.components.approvals.models import (
     Approval,
     ApprovalLogEntry,
@@ -17,7 +18,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
 
-
+from disturbance.components.proposals.serializers import ProposalSerializer
 class ApprovalSerializer(serializers.ModelSerializer):
     applicant = serializers.CharField(source='applicant.name')
     applicant_id = serializers.ReadOnlyField(source='applicant.id')
@@ -25,6 +26,12 @@ class ApprovalSerializer(serializers.ModelSerializer):
     renewal_document = serializers.CharField(source='renewal_document._file.url')
     status = serializers.CharField(source='get_status_display')
     allowed_assessors = EmailUserSerializer(many=True)
+    region = serializers.CharField(source='current_proposal.region.name')
+    district = serializers.CharField(source='current_proposal.district.name')
+    tenure = serializers.CharField(source='current_proposal.tenure.name')
+    activity = serializers.CharField(source='current_proposal.activity')
+    title = serializers.CharField(source='current_proposal.title')
+    #current_proposal = InternalProposalSerializer(many=False)
     
     class Meta:
         model = Approval
@@ -36,6 +43,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'current_proposal',
             'activity',
             'region',
+            'district',
             'tenure',
             'title',
             'renewal_document',

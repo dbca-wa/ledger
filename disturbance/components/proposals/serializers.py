@@ -45,9 +45,12 @@ class BaseProposalSerializer(serializers.ModelSerializer):
         model = Proposal
         fields = (
                 'id',
+                'application_type',
                 'activity',
                 'title',
                 'region',
+                'district',
+                'tenure',
                 'data',
                 'schema',
                 'customer_status',
@@ -100,11 +103,23 @@ class DTProposalSerializer(BaseProposalSerializer):
     customer_status = serializers.SerializerMethodField(read_only=True)
     assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
 
+    application_type = serializers.CharField(source='application_type.name', read_only=True)
+    region = serializers.CharField(source='region.name', read_only=True)
+    district = serializers.CharField(source='district.name', read_only=True)
+    #activity = serializers.CharField(source='activity.name', read_only=True)
+    tenure = serializers.CharField(source='tenure.name', read_only=True)
+
 class ProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
+
+    application_type = serializers.CharField(source='application_type.name', read_only=True)
+    region = serializers.CharField(source='region.name', read_only=True)
+    district = serializers.CharField(source='district.name', read_only=True)
+    #activity = serializers.CharField(source='activity.name', read_only=True)
+    tenure = serializers.CharField(source='tenure.name', read_only=True)
 
     def get_readonly(self,obj):
         return obj.can_user_view 
@@ -116,9 +131,12 @@ class SaveProposalSerializer(BaseProposalSerializer):
         model = Proposal
         fields = (
                 'id',
+                'application_type',
                 'activity',
                 'title',
                 'region',
+                'district',
+                'tenure',
                 'data',
                 'assessor_data',
                 'comment_data',
@@ -188,13 +206,22 @@ class InternalProposalSerializer(BaseProposalSerializer):
     latest_referrals = ProposalReferralSerializer(many=True) 
     allowed_assessors = EmailUserSerializer(many=True)
 
+    application_type = serializers.CharField(source='application_type.name', read_only=True)
+    region = serializers.CharField(source='region.name', read_only=True)
+    district = serializers.CharField(source='district.name', read_only=True)
+    #activity = serializers.CharField(source='activity.name', read_only=True)
+    tenure = serializers.CharField(source='tenure.name', read_only=True)
+
     class Meta:
         model = Proposal
         fields = (
                 'id',
+                'application_type',
                 'activity',
-                'title',
                 'region',
+                'district',
+                'tenure',
+                'title',
                 'data',
                 'schema',
                 'customer_status',
@@ -261,10 +288,13 @@ class ReferralProposalSerializer(InternalProposalSerializer):
         # TODO check if the proposal has been accepted or declined
         request = self.context['request']
         user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
-        referral = Referral.objects.get(proposal=obj,referral=user)
+        try:
+            referral = Referral.objects.get(proposal=obj,referral=user)
+        except:
+            referral = None
         return {
             'assessor_mode': True,
-            'assessor_can_assess': referral.can_assess_referral(user), 
+            'assessor_can_assess': referral.can_assess_referral(user) if referral else None, 
             'assessor_level': 'referral'
         }
 
@@ -305,6 +335,7 @@ class DTReferralSerializer(serializers.ModelSerializer):
     proposal_lodgement_date = serializers.CharField(source='proposal.lodgement_date')
     proposal_lodgement_number = serializers.CharField(source='proposal.lodgement_number')
     submitter = serializers.SerializerMethodField()
+    region = serializers.CharField(source='region.name', read_only=True)
     referral = EmailUserSerializer()
     class Meta:
         model = Referral

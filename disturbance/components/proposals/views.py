@@ -11,6 +11,7 @@ class ProposalView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         extracted_fields = []
+        #import ipdb; ipdb.set_trace()
         try:
             proposal_id = request.POST.pop('proposal_id')
             proposal = Proposal.objects.get(proposal_id)
@@ -22,4 +23,4 @@ class ProposalView(TemplateView):
             return redirect(reverse('external'))
         except:
             traceback.print_exc
-            return JsonResponse({error:"someting went wrong"},safe=False,status=400)
+            return JsonResponse({error:"something went wrong"},safe=False,status=400)

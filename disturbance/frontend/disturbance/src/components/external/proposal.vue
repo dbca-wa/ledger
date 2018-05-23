@@ -26,7 +26,13 @@
                   </div>
                 </div>
               </div>
-           </div>
+            </div>
+
+            <!--
+            <label for="region-label">Region(*)</label>
+            <input type="text" name="region-text"class="form-control" disabled="true">
+            -->
+
             <Proposal v-if="proposal" :proposal="proposal">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
@@ -38,7 +44,6 @@
                         <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
 
                         <!-- hidden 'save_and_continue_btn' used to allow File (file.vue component) to trigger save -->
-                        <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                   </div>
                 </div>
                 <div v-else class="row" style="margin-bottom:20px;">
@@ -157,6 +162,7 @@ export default {
         },(error) => {
         });
     }
+
   },
 
   mounted: function() {

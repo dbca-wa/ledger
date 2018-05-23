@@ -10,9 +10,10 @@ from datetime import datetime, timedelta
 
 from disturbance.helpers import is_officer, is_departmentUser
 from disturbance.forms import *
-from disturbance.components.proposals.models import Referral, Proposal
+from disturbance.components.proposals.models import Referral, Proposal, HelpPage
 from disturbance.components.compliances.models import Compliance
 from disturbance.components.proposals.mixins import ReferralOwnerMixin
+from django.core.management import call_command
 
 
 class InternalView(UserPassesTestMixin, TemplateView):
@@ -40,11 +41,11 @@ class ReferralView(ReferralOwnerMixin, DetailView):
     model = Referral
     template_name = 'disturbance/dash/index.html'
 
-class ExternalProposalView(DetailView):        
+class ExternalProposalView(DetailView):
     model = Proposal
     template_name = 'disturbance/dash/index.html'
 
-class ExternalComplianceView(DetailView):        
+class ExternalComplianceView(DetailView):
     model = Compliance
     template_name = 'disturbance/dash/index.html'
 
@@ -60,7 +61,7 @@ class DisturbanceRoutingView(TemplateView):
         return super(DisturbanceRoutingView, self).get(*args, **kwargs)
 
 @login_required(login_url='ds_home')
-def first_time(request): 
+def first_time(request):
     context = {}
     if request.method == 'POST':
         form = FirstTimeForm(request.POST)
@@ -86,5 +87,72 @@ def first_time(request):
     context['dev_url'] = settings.DEV_STATIC_URL
     #return render(request, 'disturbance/user_profile.html', context)
     return render(request, 'disturbance/dash/index.html', context)
+
+
+
+class DisturbanceHelpView(LoginRequiredMixin, TemplateView):
+    template_name = 'disturbance/help.html'
+
+    def get_queryset(self):
+        return HelpPage.objects.filter(application_type__name='Disturbance').order_by('-version')
+
+    def get_context_data(self, **kwargs):
+        context = super(DisturbanceHelpView, self).get_context_data(**kwargs)
+        context['help'] = self.get_queryset().first()
+        return context
+
+
+class ApiaryHelpView(LoginRequiredMixin, TemplateView):
+    template_name = 'disturbance/help.html'
+
+    def get_queryset(self):
+        return HelpPage.objects.filter(application_type__name='Apiary').order_by('-version')
+
+    def get_context_data(self, **kwargs):
+        context = super(ApiaryHelpView, self).get_context_data(**kwargs)
+        context['help'] = self.get_queryset().first()
+        return context
+
+
+class ManagementCommandsView(LoginRequiredMixin, TemplateView):
+    template_name = 'disturbance/mgt-commands.html'
+
+    def post(self, request):
+        #import ipdb; ipdb.set_trace()
+        data = {}
+        command_script = request.POST.get('script', None)
+        if command_script:
+            print 'running {}'.format(command_script)
+            call_command(command_script)
+            data.update({command_script: 'true'})
+
+        return render(request, self.template_name, data)
+
+class MyCustomView(LoginRequiredMixin, TemplateView):
+    #template_name = 'admin/myapp/views/my_custom_template.html'
+    template_name = 'disturbance/mgt_cmds_changelist.html'
+
+    def get(self, request):
+        data = {'test': 'test',
+        #'opts': MyCustomView._meta,
+
+        'change': True,
+        'is_popup': False,
+        'save_as': False,
+        'has_delete_permission': False,
+        'has_add_permission': False,
+        'has_change_permission': False}
+
+        return render(request, self.template_name, data)
+
+    def get_context_data(self, **kwargs):
+        context = super(MyCustomView, self).get_context_data(**kwargs)
+        #import ipdb; ipdb.set_trace()
+        #context['help'] = HelpPage.objects.all().first()
+        return context
+
+    def post(self, request):
+      # Do something
+      pass
 
 

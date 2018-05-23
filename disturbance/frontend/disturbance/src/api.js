@@ -1,3 +1,5 @@
+var site_url = location.origin
+
 module.exports = {
     organisations: '/api/organisations.json',
     organisation_requests: '/api/organisation_requests.json',
@@ -16,8 +18,11 @@ module.exports = {
     proposal_standard_requirements:"/api/proposal_standard_requirements.json",
     proposal_requirements:"/api/proposal_requirements.json",
     amendment_request:"/api/amendment_request.json",
+    regions:"/api/regions.json",
+    application_types:"/api/application_types.json",
     discard_proposal:function (id) {
       return `/api/proposal/${id}.json`;
-    }
+    },
+    site_url: site_url
 
 }

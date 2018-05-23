@@ -83,11 +83,13 @@
                                                 {% if request.user.is_staff %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                     <li role="separator" class="divider"></li>
+                                                    <li><a href="{% url 'mgt-commands' %}">Management Commands</a></li>
                                                 {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
                                                 {% for org in request.user.disturbance_organisations.all %}
                                                     <li><a href="/external/organisations/manage/{{org.id}}">Manage {{ org.organisation.name}}</a></li>
                                                 {% endfor %}
+
                                                 <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
                                             </ul>
                                         </li>
