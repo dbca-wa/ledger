@@ -21,7 +21,7 @@
                     <p>
                         File: <a :href="docsUrl+v" target="_blank">{{v}}</a> &nbsp;
                         <span v-if="!readonly">
-                            <a @click="removeImage(v)" class="fa fa-trash-o" title="Remove file" :filename="v" style="color:red"></a>
+                            <a @click="removeImage(v)" class="fa fa-trash-o" title="Remove file" :filename="v" style="cursor: pointer; color:red;"></a>
                         </span>
                     </p>
                     <input :name="name+'-existing'" type="hidden" :value="value"/>

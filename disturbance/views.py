@@ -1,6 +1,7 @@
 from django.http import Http404, HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
+from django.template.response import TemplateResponse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
 from django.views.generic.base import View, TemplateView
 from django.conf import settings
@@ -89,28 +90,25 @@ def first_time(request):
     return render(request, 'disturbance/dash/index.html', context)
 
 
-
-class DisturbanceHelpView(LoginRequiredMixin, TemplateView):
+class HelpView(LoginRequiredMixin, TemplateView):
     template_name = 'disturbance/help.html'
 
-    def get_queryset(self):
-        return HelpPage.objects.filter(application_type__name='Disturbance').order_by('-version')
-
     def get_context_data(self, **kwargs):
-        context = super(DisturbanceHelpView, self).get_context_data(**kwargs)
-        context['help'] = self.get_queryset().first()
-        return context
+        context = super(HelpView, self).get_context_data(**kwargs)
 
-
-class ApiaryHelpView(LoginRequiredMixin, TemplateView):
-    template_name = 'disturbance/help.html'
-
-    def get_queryset(self):
-        return HelpPage.objects.filter(application_type__name='Apiary').order_by('-version')
-
-    def get_context_data(self, **kwargs):
-        context = super(ApiaryHelpView, self).get_context_data(**kwargs)
-        context['help'] = self.get_queryset().first()
+        if self.request.user.is_authenticated():
+            application_type = kwargs.get('application_type', None) 
+            #import ipdb; ipdb.set_trace()
+            if kwargs.get('help_type', None)=='assessor':
+                if is_officer(self.request.user) or is_departmentUser(self.request.user):
+                    qs = HelpPage.objects.filter(application_type__name__icontains=application_type, help_type=HelpPage.HELP_TEXT_INTERNAL).order_by('-version')
+                    context['help'] = qs.first()
+#                else:
+#                    return TemplateResponse(self.request, 'disturbance/not-permitted.html', context)
+#                    context['permitted'] = False
+            else:
+                qs = HelpPage.objects.filter(application_type__name__icontains=application_type, help_type=HelpPage.HELP_TEXT_EXTERNAL).order_by('-version')
+                context['help'] = qs.first()
         return context
 
 

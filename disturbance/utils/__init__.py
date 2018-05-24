@@ -81,7 +81,7 @@ def compare_data(dict1, dict2, schema):
     return new
 
 
-def create_helppage_object(application_type='Disturbance'):
+def create_helppage_object(application_type='Disturbance', help_type=HelpPage.HELP_TEXT_EXTERNAL):
 	"""
 	Create a new HelpPage object, with latest help_text/label anchors defined in the latest ProposalType.schema
 	"""
@@ -91,7 +91,7 @@ def create_helppage_object(application_type='Disturbance'):
 		print 'application type: {} does not exist, maybe!'.format(application_type, e)
 
 	try:
-		help_page = HelpPage.objects.filter(application_type_id=application_type_id).latest('version')
+		help_page = HelpPage.objects.filter(application_type_id=application_type_id, help_type=help_type).latest('version')
 		next_version = help_page.version + 1
 	except Exception, e:
 		next_version = 1
@@ -101,11 +101,12 @@ def create_helppage_object(application_type='Disturbance'):
 	except Exception, e:
 		print 'proposal type: {} does not exist, maybe!'.format(application_type, e)
 
-
-	help_list = search_keys(proposal_type.schema, search_list=['help_text','label'])
+   
+ 	help_text = 'help_text' if help_type==HelpPage.HELP_TEXT_EXTERNAL else 'help_text_assessor'
+	help_list = search_keys(proposal_type.schema, search_list=[help_text,'label'])
 	richtext = create_richtext_help(help_list)
 
-	HelpPage.objects.create(application_type_id=application_type_id, version=next_version, content=richtext)
+	HelpPage.objects.create(application_type_id=application_type_id, help_type=help_type, version=next_version, content=richtext)
 
 def create_richtext_help(help_list=None):
 
