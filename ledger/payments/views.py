@@ -6,7 +6,7 @@ from django.conf import settings
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
-from django.template import Template, Context
+from django.template import Template, Context, TemplateDoesNotExist
 from django.http import HttpResponse
 from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.utils import checkURL

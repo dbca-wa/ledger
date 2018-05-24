@@ -13,7 +13,6 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.utils.translation import ugettext as _
 from django.template.loader import get_template
-from django.template import TemplateDoesNotExist
 #
 from ledger.payment import forms, models
 from ledger.payments.helpers import is_payment_admin
@@ -24,7 +23,7 @@ from oscar.apps.shipping.methods import NoShippingRequired
 from ledger.payments.models import Invoice, BpointToken
 from ledger.accounts.models import EmailUser
 from ledger.payments.facade import invoice_facade, bpoint_facade, bpay_facade
-from ledger.payments.utils import validSystem, checkURL, isLedgerURL, systemid_check
+from ledger.payments.utils import isLedgerURL, systemid_check
 
 Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
@@ -36,6 +35,8 @@ RedirectRequired, UnableToTakePayment, PaymentError \
                                          'UnableToTakePayment',
                                          'PaymentError'])
 UnableToPlaceOrder = get_class('order.exceptions', 'UnableToPlaceOrder')
+CheckoutSessionData = get_class(
+    'checkout.utils', 'CheckoutSessionData')
 
 # Standard logger for checkout events
 logger = logging.getLogger('oscar.checkout')
@@ -45,158 +46,6 @@ class IndexView(CoreIndexView):
     success_url = reverse_lazy('checkout:payment-details')
     class FallbackMissing(Exception):
         pass
-
-    def validate_ledger(self,details):
-        # validate there is a fallback url
-        self.__validate_url(details.get('fallback_url'),'fallback')
-        # validate card method to be used
-        self.__validate_card_method(details.get('card_method'))
-        # validate template if its present
-        self.__validate_template(details.get('template'))
-        # validate system id
-        self.__validate_system(self.request.basket.system)
-        # validate return url
-        self.__validate_url(details.get('return_url'),'return')
-        self.__validate_url(details.get('return_preload_url'),'return_preload')
-        # validate bpay if present
-        self.__validate_bpay(details.get('bpay_details'))
-        # validate basket owner if present
-        self.__validate_basket_owner(details.get('basket_owner'), details.get('is_anonymous'))
-        # validate if to associate invoice with token
-        self.__validate_associate_token_details(details.get('associateInvoiceWithToken'))
-        # validate force redirection
-        self.__validate_force_redirect(details.get('forceRedirect'))
-        # validate send email
-        self.__validate_send_email(details.get('sendEmail'))
-        # validate proxy
-        self.__validate_proxy(details.get('proxy'))
-        # Add invoice text
-        if details.get('invoice_text'):
-            self.checkout_session.set_invoice_text(details.get('invoice_text'))
-        # Add check url
-        if details.get('check_url'):
-            # Check if the url works
-            check = URLValidator()
-            try:
-                check(details.get('check_url'))
-            except ValidationError as e:
-                raise e
-            self.checkout_session.set_last_check(details.get('check_url'))
-        else:
-            self.checkout_session.set_last_check('')
-        return True
-
-    def __validate_send_email(self, details):
-        ''' Check send email details to set the checkout session data
-        '''
-        if not details:
-            self.checkout_session.return_email(False)
-        elif details == 'true' or details == 'True':
-            self.checkout_session.return_email(True)
-
-    def __validate_proxy(self, details):
-        ''' Check proxy details to set the checkout session data
-        '''
-        if not details:
-            self.checkout_session.is_proxy(False)
-        elif details == 'true' or details == 'True':
-            self.checkout_session.is_proxy(True)
-
-    def __validate_associate_token_details(self, details):
-        ''' Check the associate with token details to set the checkout session data
-        '''
-        # Check associate with token parameter
-        if not details:
-            self.checkout_session.associate_invoice(False)
-        elif details == 'true' or details == 'True':
-            self.checkout_session.associate_invoice(True)
-
-    def __validate_force_redirect(self, details):
-        ''' Check the force redirect to set the checkout session data
-        '''
-        # Check associate with token parameter
-        if not details:
-            self.checkout_session.redirect_forcefully(False)
-        elif details == 'true' or details == 'True':
-            self.checkout_session.redirect_forcefully(True)
-
-    def __validate_basket_owner(self, user_id, is_anonymous):
-        ''' Check if the user entered for basket and order swapping is valid
-        '''
-        user = None
-        if user_id:
-            try:
-                user = EmailUser.objects.get(id=user_id)
-                self.checkout_session.owned_by(user.id)
-                # for anonymous sessions, pass oscar the email address.
-                # this fixes all of the check_user_email_is_captured checks
-                if is_anonymous:
-                    self.checkout_session.set_guest_email(user.email)
-            except EmailUser.DoesNotExist:
-                raise
-
-    def __validate_system(self, system):
-        ''' Validate the system id
-        '''
-        if not system:
-            raise ValueError('This basket is not associated with any system.')
-        elif not len(system) == 4:
-            raise ValueError('The system id should be 4 characters long.')
-        elif not validSystem(system):
-            raise ValueError('The System id is not valid.')
-        self.checkout_session.use_system(system)
-
-    def __validate_url(self, url, _type):
-        if not url and _type == 'return':
-            raise ValueError('Return url is required. eg ?return_url=')
-        elif not url and _type == 'fallback':
-            msg = 'A fallback url is required. eg ?fallback_url=<url>'
-            messages.error(self.request,msg)
-            raise self.FallbackMissing()
-        # Check if the url works
-        if _type == 'return':
-            checkURL(url)
-            self.checkout_session.return_to(url)
-        elif _type == 'fallback':
-            checkURL(url)
-        elif _type == 'return_preload':
-            self.checkout_session.return_preload_to(url)
-
-    def __validate_card_method(self, method):
-        ''' Validate if the card method is payment or preauth
-        '''
-        if method in ['preauth','payment']:
-            # 
-            self.checkout_session.charge_by(method)
-
-    def __validate_template(self, template_url):
-        ''' Validate if the template exists
-        '''
-        if template_url:
-            try:
-                get_template(template_url)
-                #
-                self.checkout_session.use_template(template_url)
-            except TemplateDoesNotExist:
-                raise 
-        return True
-
-    def __validate_bpay(self,details):
-        ''' Validate all the bpay data
-        '''
-        if details.get('bpay_format') == 'crn':
-            self.checkout_session.bpay_using(details.get('bpay_format'))
-            return True
-        elif details.get('bpay_format') == 'icrn':
-            if details.get('icrn_format') == 'ICRNAMT':
-                self.checkout_session.bpay_using(details.get('bpay_format'))
-                self.checkout_session.icrn_using(details.get('icrn_format'))
-            elif details.get('icrn_format') in ['ICRNDATE','ICRAMTDATE'] and details.get('icrn_date'):
-                self.checkout_session.bpay_using(details.get('bpay_format'))
-                self.checkout_session.icrn_using(details.get('icrn_format'))
-                self.checkout_session.bpay_by(details.get('icrn_date'))
-            else:
-                pass
 
     def proper_errorpage(self,url,r,e):
         messages.error(r,str(e))
@@ -213,43 +62,6 @@ class IndexView(CoreIndexView):
             # checkout process so analytics tools can track this event.
             signals.start_checkout.send_robust(
                 sender=self, request=request)
-            # Set session variables that are required by ledger
-            ledger_details = {
-                'card_method': request.GET.get('card_method','payment'),
-                'basket_owner': request.GET.get('basket_owner',None),
-                'template': request.GET.get('template',None),
-                'fallback_url': request.GET.get('fallback_url',None),
-                'return_url': request.GET.get('return_url',None),
-                'return_preload_url': request.GET.get('return_preload_url', None),
-                'associateInvoiceWithToken': request.GET.get('associateInvoiceWithToken',False),
-                'forceRedirect': request.GET.get('forceRedirect',False),
-                'sendEmail': request.GET.get('sendEmail',False),
-                'proxy': request.GET.get('proxy',False),
-                'bpay_details': {
-                    'bpay_format': request.GET.get('bpay_method','crn'),
-                    'icrn_format': request.GET.get('icrn_format','ICRNAMT'),
-                    'icrn_date': request.GET.get('icrn_date', None),
-                },
-                'invoice_text': request.GET.get('invoice_text',None),
-                'is_anonymous': request.user.is_anonymous(),
-                'check_url': request.GET.get('check_url',None)
-            }
-            # Check if all the required parameters are set
-            # and redirect to appropriate page if not
-            try:
-                self.validate_ledger(ledger_details)
-            except HTTPError as e:
-                return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
-            except ConnectionError as e:
-                return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
-            except self.FallbackMissing as e:
-                return HttpResponseRedirect(reverse('payments:payments-error'))
-            except ValueError as e:
-                return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
-            except EmailUser.DoesNotExist as e:
-                return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
-            except Exception as e:
-                return self.proper_errorpage(ledger_details.get('fallback_url'),request,e)
 
             return self.get_success_response()
         return super(IndexView, self).get(request, *args, **kwargs)
@@ -382,7 +194,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
     def do_place_order(self, request):
         # Helper method to check that the hidden forms wasn't tinkered
         # with.
-        if not self.checkout_session.checkoutWithToken():
+        if not self.checkout_session.checkout_token():
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
                 messages.error(request, "Invalid submission")
@@ -391,7 +203,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # Attempt to submit the order, passing the bankcard object so that it
         # gets passed back to the 'handle_payment' method below.
         submission = self.build_submission()
-        if not self.checkout_session.checkoutWithToken():
+        if not self.checkout_session.checkout_token():
             submission['payment_kwargs']['bankcard'] = bankcard_form.bankcard
         return self.submit(**submission)
 
@@ -470,9 +282,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         # Get the payment action for bpoint
                         card_method = self.checkout_session.card_method()
                         # Check if the user is paying using a stored card
-                        if self.checkout_session.checkoutWithToken():
+                        if self.checkout_session.checkout_token():
                             try:
-                                token = BpointToken.objects.get(id=self.checkout_session.checkoutWithToken())
+                                token = BpointToken.objects.get(id=self.checkout_session.checkout_token())
                             except BpointToken.DoesNotExist:
                                 raise ValueError('This stored card does not exist.')
                             if self.checkout_session.invoice_association():

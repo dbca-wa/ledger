@@ -3,7 +3,6 @@ from django.db import transaction
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
-from django.template import TemplateDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from wsgiref.util import FileWrapper
@@ -19,16 +18,13 @@ from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
 from ledger.payments.models import TrackRefund
-from ledger.payments.utils import checkURL, createBasket, createCustomBasket, validSystem, systemid_check,update_payments
+from ledger.payments.utils import systemid_check, update_payments
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv
 from ledger.payments.emails import send_refund_email 
 
 from ledger.accounts.models import EmailUser
-from ledger.catalogue.models import Product
-from ledger.basket.middleware import BasketMiddleware
 from oscar.apps.order.models import Order
-from oscar.apps.voucher.models import Voucher
 from oscar.apps.payment import forms
 import traceback
 import six
@@ -706,194 +702,6 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
 #                    /INVOICE                         #
 #                                                     #
 #######################################################
-
-#######################################################
-#                                                     #
-#                    CHECKOUT                         #
-#                                                     #
-#######################################################
-class CheckoutProductSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    quantity = serializers.IntegerField(min_value=1,default=1)
-
-    def validate_id(self, value):
-        try:
-            Product.objects.get(id=value)
-        except Product.DoesNotExist as e:
-            raise serializers.ValidationError('{} (id={})'.format(str(e),value))
-        return value
-
-class CheckoutCustomProductSerializer(serializers.Serializer):
-    ledger_description = serializers.CharField()
-    quantity = serializers.IntegerField(min_value=1,default=1)
-    price_excl_tax = serializers.DecimalField(max_digits=8, decimal_places=2, default=0)
-    price_incl_tax = serializers.DecimalField(max_digits=8, decimal_places=2, default=0)
-
-
-class VoucherSerializer(serializers.Serializer):
-    code = serializers.CharField(max_length=128)
-
-    def validate_code(self, value):
-        try:
-            Voucher.objects.get(code=value)
-        except Voucher.DoesNotExist as e:
-            raise serializers.ValidationError('{} (code={})'.format(str(e),value))
-        return value
-
-class CheckoutSerializer(serializers.Serializer):
-    card_method = serializers.ChoiceField(choices=BpointTransaction.ACTION_TYPES, default='payment')
-    system = serializers.CharField(max_length=4, min_length=4)
-    basket_owner = serializers.IntegerField(required=False)
-    template = serializers.CharField(required=False)
-    fallback_url = serializers.URLField()
-    return_preload_url = serializers.URLField(required=False)
-    return_url = serializers.URLField()
-    associateInvoiceWithToken = serializers.BooleanField(default=False)
-    forceRedirect = serializers.BooleanField(default=False)
-    sendEmail = serializers.BooleanField(default=False)
-    proxy = serializers.BooleanField(default=False)
-    checkoutWithToken = serializers.BooleanField(default=False)
-    bpay_format = serializers.ChoiceField(choices=['crn','icrn'],default='crn')
-    icrn_format = serializers.ChoiceField(choices=['ICRNAMT','ICRNDATE','ICRNAMTDATE'], default='ICRNAMT')
-    products = serializers.ListField()#CheckoutProductSerializer(many=True)
-    vouchers = VoucherSerializer(many=True,required=False)
-    custom_basket = serializers.BooleanField(default=False)
-    invoice_text = serializers.CharField(required=False)
-    check_url = serializers.URLField(required=False)
-
-    def validate(self, data):
-        if data['proxy'] and not data['basket_owner']:
-            raise serializers.ValidationError('A proxy payment requires the basket_owner to be set.')
-        return data
-    def validate_template(self, value):
-        try:
-            get_template(value)
-        except TemplateDoesNotExist as e:
-            raise serializers.ValidationError(str(e))
-        return value
-
-    def validate_system(self, value):
-        try:
-            if not validSystem(value):
-                raise serializers.ValidationError('This is not a valid system')
-        except Exception as e:
-            raise serializers.ValidationError(str(e))
-        return value
-
-    def validate_basket_owner(self, value):
-        try:
-            EmailUser.objects.get(id=value)
-        except EmailUser.DoesNotExist as e:
-            raise serializers.ValidationError(str(e))
-        return value
-
-    def validate_fallback_url(self,value):
-        try:
-            checkURL(value)
-        except Exception as e:
-            raise serializers.ValidationError(str(e))
-        return value
-
-    def validate_return_url(self,value):
-        try:
-            checkURL(value)
-        except Exception as e:
-            raise serializers.ValidationError(str(e))
-        return value
-
-class CheckoutCreateView(generics.CreateAPIView):
-    ''' Initiate checkout process.
-    :return: HTTPResponseRedirect
-    Example:
-    {
-        "card_method": "payment", (optional, default='payment')
-        "template": "", (optional)
-        "system": "", (mandatory)
-        "fallback_url": "http://", (mandatory)
-        "return_url": "http://", (mandatory)
-        "associateInvoiceWithToken": "true", (optional, default=False)
-        "forceRedirect": "true", (optional, default=False)
-        "sendEmail": "false", (optional, default=False)
-        "checkoutWithToken": "true", (optional, default=False)
-        "bpay_format": "crn", (optional, default='crn')
-        "proxy": "true", (optional, default=False)
-        "icrn_format": "ICRNAMT", (optional, default='ICRNAMT')
-        "products": [ (mandatory if custom_basket = False)
-            {"id": 1}
-        ]
-        "products": [ (mandatory if custom_basket = True)
-            {"ledger_description":"test","quantity":2,"price_excl_tax":50,"price_incl_tax":50,"oracle_code":"1236"},
-            {"ledger_description":"test123","quantity":1,"price_excl_tax":50,"price_incl_tax":50,"oracle_code":"3423"}
-        ],
-        "vouchers": [ (optional)
-            {"code": "<code>}
-        ],
-        "custom_basket": "false" (optional, default=False),
-        "invoice_text" : "" (optional),
-        "check_url" : "" (optional)
-    }
-    '''
-    serializer_class = CheckoutSerializer
-    renderer_classes = (JSONRenderer,)
-    authentication_classes = [SessionAuthentication]
-    permission_classes = []
-
-    def create(self, request):
-        try:
-            http_status = status.HTTP_200_OK
-            #parse and validate data
-            serializer = self.serializer_class(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            #Check if it is a custom basket
-            custom = serializer.validated_data.get('custom_basket')
-            # Validate Products
-            if custom:
-                product_serializer = CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'),many=True)
-            else:
-                product_serializer = CheckoutProductSerializer(data=serializer.initial_data.get('products'),many=True)
-            product_serializer.is_valid(raise_exception=True)
-            #create basket
-            if serializer.validated_data.get('vouchers'):
-                if custom:
-                    basket = createCustomBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
-                else:
-                    basket = createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'],vouchers=serializer.validated_data['vouchers'])
-            else:
-                if custom:
-                    basket = createCustomBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
-                else:
-                    basket = createBasket(serializer.validated_data['products'],request.user,serializer.validated_data['system'])
-
-            fields = [
-                'card_method', 'basket_owner', 'template', 'fallback_url', 'return_url', 'return_preload_url', 'associateInvoiceWithToken', 'forceRedirect', 'sendEmail', 'proxy',
-                'checkoutWithToken', 'bpay_format', 'icrn_format', 'invoice_text', 'check_url'
-            ]
-            url_args = {f: six.text_type(serializer.validated_data[f]).encode('utf8') for f in fields if f in serializer.validated_data and serializer.validated_data[f] is not None}
-            # bodges for nullable fields
-            for f in ['basket_owner', 'check_url', 'return_preload_url']:
-                if f not in url_args:
-                    url_args[f] = ''
-
-            redirect = HttpResponseRedirect(reverse('checkout:index')+'?'+six.moves.urllib.parse.urlencode(url_args))
-            # inject the current basket into the redirect response cookies
-            # or else, anonymous users will be directionless
-            redirect.set_cookie(
-                settings.OSCAR_BASKET_COOKIE_OPEN, BasketMiddleware().get_basket_hash(basket.id),
-                max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
-                secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
-            )
-            return redirect
-        except serializers.ValidationError:
-            raise
-        except Exception as e:
-            traceback.print_exc()
-            raise serializers.ValidationError(str(e))
-
-#######################################################
-#                                                     #
-#                    /CHECKOUT                        #
-#                                                     #
-#######################################################
 #######################################################
 #                                                     #
 #                    REPORTS                          #
@@ -912,7 +720,7 @@ class ReportSerializer(serializers.Serializer):
 
     '''def validate_system(self,value):
         try:
-            if not validSystem(value):
+            if not is_valid_system(value):
                 raise serializers.ValidationError('This is not a valid system.')
         except Exception as e:
             raise serializers.ValidationError(str(e))
@@ -973,3 +781,4 @@ class ReportCreateView(views.APIView):
 #                    /REPORTS                         #
 #                                                     #
 #######################################################
+

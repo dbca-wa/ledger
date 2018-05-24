@@ -35,7 +35,7 @@
 
         <div class="row" v-if="name">
             <div class="columns small-12">
-                <h1>Book a campsite at {{ name }}</h1>
+                <h1>Book camping at {{ name }}</h1>
             </div>
         </div>
         <div v-if="ongoing_booking" class="row">

@@ -287,27 +287,12 @@ class MakeBookingsView(TemplateView):
         booking.save()
 
         # generate invoice
-        reservation = u"Reservation for {} from {} to {} at {}".format(
-               u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
-                booking.arrival.strftime('%d-%m-%Y'),
-                booking.departure.strftime('%d-%m-%Y'),
-                booking.campground.name
-        )
+        reservation = u"Reservation for {} confirmation {}".format(u'{} {}'.format(booking.customer.first_name, booking.customer.last_name), booking.id)
         
         logger.info(u'{} built booking {} and handing over to payment gateway'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',booking.id))
 
-        response = utils.checkout(request, booking, lines, invoice_text=reservation)
-        result =  HttpResponse(
-            content=response.content,
-            status=response.status_code,
-            content_type=response.headers['Content-Type'],
-        )
+        result = utils.checkout(request, booking, lines, invoice_text=reservation)
 
-        # if we're anonymous add the basket cookie to the current session
-        if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
-            basket_cookie = response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN]
-            result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_cookie)
-        
         return result
 
 
