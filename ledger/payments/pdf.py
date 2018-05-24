@@ -1,6 +1,7 @@
 import os
 
 from io import BytesIO
+from oscar.templatetags.currency_filters import currency
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, \
@@ -258,9 +259,9 @@ def _create_invoice(invoice_buffer, invoice):
                 val,
                 Paragraph(item.description, s),
                 item.quantity,
-                '${}'.format(item.unit_price_excl_tax),
-                '${}'.format(item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
-                '${}'.format(item.line_price_before_discounts_incl_tax)
+                currency(item.unit_price_excl_tax),
+                currency(item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
+                currency(item.line_price_before_discounts_incl_tax)
             ]
         )
         val += 1

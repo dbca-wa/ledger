@@ -56,6 +56,7 @@ class Line(CoreAbstractLine):
     line_reference = SlugField(_("Line Reference"), max_length=128, db_index=True,blank=True,null=True)
     ledger_description = models.TextField(blank=True,null=True)
     oracle_code = models.CharField("Oracle Code",max_length=50,null=True,blank=True)
+    price_excl_tax = models.DecimalField(_('Price excl. Tax'), decimal_places=12, max_digits=22,null=True)
 
 
     def __str__(self):
