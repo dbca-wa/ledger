@@ -72,7 +72,7 @@ class ApplicationAssessorGroup(models.Model):
         except ApplicationAssessorGroup.DoesNotExist:
             default = None
 
-        if self.pk:
+        if default and self.pk:
             if int(self.pk) != int(default.id):
                 if default and self.default:
                     raise ValidationError('There can only be one default application assessor group')
