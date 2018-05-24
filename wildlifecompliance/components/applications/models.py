@@ -122,7 +122,7 @@ class ApplicationApproverGroup(models.Model):
         except ApplicationApproverGroup.DoesNotExist:
             default = None
 
-        if self.pk:
+        if default and self.pk:
             if int(self.pk) != int(default.id):
                 if default and self.default:
                     raise ValidationError('There can only be one default application approver group')
