@@ -228,7 +228,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
         return {
             'assessor_mode': True,
-            'has_assessor_mode': obj.has_assessor_mode(user),
+            # 'has_assessor_mode': obj.has_assessor_mode(user),
             'assessor_can_assess': obj.can_assess(user), 
             'assessor_level': 'assessor'
         }

@@ -402,10 +402,10 @@ class Application(RevisionedMixin):
                 # Save the data first
                 save_proponent_data(self,request,viewset)
                 # Check if the special fields have been completed
-                missing_fields = self.__check_application_filled_out()
-                if missing_fields:
-                    error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
-                    raise exceptions.ApplicationMissingFields(detail=error_text)
+                # missing_fields = self.__check_application_filled_out()
+                # if missing_fields:
+                #     error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
+                #     raise exceptions.ApplicationMissingFields(detail=error_text)
                 self.processing_status = 'with_assessor'
                 self.customer_status = 'with_assessor'
                 self.submitter = request.user
