@@ -76,18 +76,20 @@
                         <div class="col-sm-12">
                             <div v-show="booking.campsites.length > 0" >
                                 <div class="column table-scroll">
-                                    <table class="hover table table-striped table-bordered dt-responsive nowrap"  cellspacing="0" width="100%"  name="campsite" v-model="selected_campsite">
+                                    <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%"  name="campsite" v-model="selected_campsite">
                                         <thead>
                                             <tr>
-                                                <th class="site">Campsite</th>
-                                                <th class="numBook">Sites to book</th>
+                                                <th class="form-group">Campsite</th>
+                                                <th >Sites to book
+                                                    <input class="checkbox" type="checkbox" v-model="selected_campsite" @click="selectAll"> 
+                                                </th>
                                             </tr>
                                         </thead>
                                             <tbody><template v-for="campsite in booking.campsites">
                                                 <tr>
-                                                    <td class="site"> {{campsite.name}} - {{campsite.type}}</td>
-                                                    <td class="numBook">
-                                                        <input type="checkbox" v-model="campsite.is_selected" @change="updatePrices()">
+                                                    <td class="form-group"> {{campsite.name}} - {{campsite.type}}</td>
+                                                    <td>
+                                                        <input class="checkbox" type="checkbox" :value="campsite.id" v-model="campsite.is_selected" @change="updatePrices()">
                                                     </td>                                              
                                                 </tr></template>
                                             </tbody>
@@ -121,7 +123,7 @@
                                         </thead>
                                         <tbody><template v-for="c in booking.campsite_classes">
                                             <tr>
-                                                <td class="site"> {{c.name}} <span v-if="c.class"> - {{ classes[c.class] }}</span></td>
+                                                <td class="site"> {{c.name}} </td>
                                                 <td class="book"> {{ c.campsites.length }} available </td>
                                                 <td class="numBook">
                                                     <input type="number" min="1" v-bind:max="c.campsites.length" name="campsite-type" class="form-control" v-model="c.selected_campsite_class" @change="updatePrices()">
@@ -557,6 +559,30 @@ export default {
         }
     },
     methods:{
+        selectAll: function() {
+            //let vm = this;
+            this.is_selected=[];
+            this.booking.campsites.forEach((el) => {
+                this.is_selected.push(el.id)
+
+            })
+
+
+            
+            // for (var campsite in this.booking.campsites){
+            //     this.is_selected.push(this.booking.campsites[campsite].id);
+            // }
+
+            // var results = [];
+            // if (vm.booking_type == vm.booking_types.CAMPSITE) {
+            //     return vm.booking.campsites.forEach(function(el){
+            //     for (var i in el.selected_campsite) {
+            //         results.push(el.is_selected);
+            //     }           
+            // });
+            // return results;
+            // }
+        },
         fetchSites:function () {
             let vm =this;
             if (vm.booking_type == vm.booking_types.CAMPSITE) {

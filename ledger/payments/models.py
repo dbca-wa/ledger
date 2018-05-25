@@ -25,10 +25,10 @@ class OracleParserInvoice(models.Model):
     details = JSONField() 
 
 def increment_receipt_number():
-    last_interface = OracleInterface.objects.all().order_by('id').last()
+    last_interface = OracleInterface.objects.values('id', 'receipt_number').order_by('-id').first()
     if not last_interface:
          return settings.ORACLE_IMPORT_SEQUENCE
-    receipt_no = last_interface.receipt_number
+    receipt_no = last_interface['receipt_number']
     new_receipt_no = receipt_no + 1
     return new_receipt_no
 
@@ -43,6 +43,8 @@ class OracleInterface(models.Model):
     status = models.CharField(max_length=15)
     line_item = models.TextField(blank=True,null=True)
     status_date = models.DateField()
+    source = models.CharField(max_length=30, null=True)
+    method = models.CharField(max_length=30, null=True)
 
 class OracleInterfaceSystem(models.Model):
     system_id = models.CharField(max_length=10)
