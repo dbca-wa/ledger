@@ -34,7 +34,7 @@ def search(dictionary, search_list):
     return result
 
 def test_compare_data():
-    p=Proposal.objects.get(id=110)
+    p=Proposal.objects.get(id=100)
 
     dict1=p.data[0]
     dict2=p.previous_application.data[0]

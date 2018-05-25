@@ -80,8 +80,17 @@ class GetEmptyList(views.APIView):
         return Response([])
 
 class ProposalViewSet(viewsets.ModelViewSet):
+    #import ipdb; ipdb.set_trace()
     queryset = Proposal.objects.all()
+    #queryset = None
     serializer_class = ProposalSerializer
+
+#    def get_queryset(self):
+#        user = self.request.user
+#        user_orgs = [org.id for org in user.disturbance_organisations.all()]
+#        self.queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+#        return self.queryset
+
 
     def list(self, request, *args, **kwargs):
         #import ipdb; ipdb.set_trace()
@@ -201,6 +210,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
         queryset = list(set(qs))
         serializer = DTProposalSerializer(queryset, many=True)
         return Response(serializer.data)
+
+
+#    @list_route(methods=['GET',])
+#    def user_list(self, request, *args, **kwargs):
+#        qs = self.get_queryset.exclude(processing_status='discarded')
+#        serializer = DTProposalSerializer(qs, many=True)
+#        return Response(serializer.data)
+
 
     @detail_route(methods=['GET',])
     def internal_proposal(self, request, *args, **kwargs):
