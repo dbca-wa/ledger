@@ -76,6 +76,7 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     if 'conditions' in item:
         for condition in item['conditions'].keys():
             for child in item['conditions'][condition]:
+                print(child)
                 item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
 
     return item_data
@@ -85,6 +86,7 @@ def generate_item_data(item_name,item,item_data,post_data,file_data,repetition,s
     for rep in xrange(0, repetition):
         child_data = {}
         for child_item in item.get('children'):
+            print(child_item)
             child_data.update(_create_data_from_item(child_item, post_data, file_data, 0,
                                                      '{}-{}'.format(suffix, rep)))
         item_data_list.append(child_data)
@@ -358,6 +360,10 @@ def get_activity_type_schema(licence_class_data):
             wl_activity_id = item1['id']
             activity_obj = WildlifeLicenceActivity.objects.get(id = wl_activity_id)
             schema_activity = schema_activity + activity_obj.schema
+
+        update_schema_name(schema_activity,index)
+        for item in schema_activity:
+            print(item['name'])
             
         schema_tab.append({"type":"tab",
                   "id":activity_type_obj.id,
@@ -365,14 +371,22 @@ def get_activity_type_schema(licence_class_data):
                   "name":activity_type_obj.name,
                   "children":schema_activity
                 })
+        # print(schema_tab)
 
-    print(schema_tab)            
-            # for child in activity_obj.schema:
-            #     child['name']=activity_type_obj.name
-            #     child['label']=activity_type_obj.name
-            # old code schema_activity=schema_activity+activity_obj.schema
-            # print(schema_activity)
     return schema_tab
+
+
+def update_schema_name(item_data,id):
+
+    for item in item_data:
+        # print('name')
+        item['name'] = item['name']+'_'+str(id)
+        # print(item['name'])
+        if 'children' in item:
+            update_schema_name(item['children'],id)
+            # print(item['children'])
+
+
 
 
     
