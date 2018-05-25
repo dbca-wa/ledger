@@ -1621,6 +1621,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['lastname'] = booking.details.get('last_name','')
                 if  booking.override_reason:                        
                     bk['override_reason'] = booking.override_reason.text
+                if booking.override_price:
+                    discount = booking.discount
                 if not booking.paid:
                     bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
                 if booking.customer:
@@ -1743,7 +1745,7 @@ class BookingViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
-            
+
             instance = self.get_object()
             start_date = datetime.strptime(request.data['arrival'],'%d/%m/%Y').date()
             end_date = datetime.strptime(request.data['departure'],'%d/%m/%Y').date()
@@ -1875,7 +1877,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['GET'])
     def history(self, request, *args, **kwargs):
-        http_status = status.HTTP_200_OK
+        http_status = status.HTTP_200_OK                
         try:
             history = self.get_object().history.all()
             data = BookingHistorySerializer(history,many=True).data

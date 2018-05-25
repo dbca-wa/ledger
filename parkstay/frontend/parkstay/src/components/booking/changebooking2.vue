@@ -295,7 +295,7 @@ export default {
             arrivalPicker: {},
             departurePicker: {},
             campsite_classes: [],
-            selected_campsite: '',
+            selected_campsite: [],
             booking_type: "campsite",
             initialised: false,
             fetchingSites: false,
@@ -397,6 +397,7 @@ export default {
         updatePrices: function() {
             let vm = this;
             var campsite_ids = vm.selected_campsite;
+            console.log(vm.selected_campsite)
             vm.booking.price = 0;
             if (vm.selected_campsite) {
                 if (vm.booking.arrival && vm.booking.departure) {
