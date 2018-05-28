@@ -69,7 +69,8 @@ def compare_data(dict1, dict2, schema):
 
     # Now find the Question(label) for this section(k1 or k2) and incorporate into the dict result
     new = {}
-    name_map=search_keys2(flatten(schema), search_list=['name', 'label'])
+    #name_map=search_keys2(flatten(schema), search_list=['name', 'label'])
+    name_map=search_keys(schema, search_list=['name', 'label'])
     for item in result:
         k = item.keys()[0]
         v = item[k]
@@ -127,42 +128,40 @@ def create_richtext_help(help_list=None):
 
 	return richtext
 
-
+#def search_keys(dictionary, search_list=['help_text', 'label']):
+#    """
+#    Return search_list pairs from the schema -- given help_text, finds the equiv. label
+#
+#    To run:
+#        from disturbance.utils import search_keys
+#        search_keys(dictionary, search_list=['help_text', 'label'])
+#    """
+#    result = []
+#    flat_dict = flatten(dictionary)
+#    for k, v in flat_dict.iteritems():
+#        if any(x in k for x in search_list):
+#            result.append( {k: v} )
+#
+#    help_list = []
+#    for i in result:
+#        try:
+#            key = i.keys()[0]
+#            if key and key.endswith('help_text'):
+#                corresponding_label_key = '.'.join(key.split('.')[:-1]) + '.label'
+#                for j in result:
+#                    key_label = j.keys()[0]
+#                    if key_label and key_label.endswith('label') and key_label == corresponding_label_key: # and result.has_key(key):
+#                        #import ipdb; ipdb.set_trace()
+#                        help_list.append({'label': j[key_label], 'help_text': i[key]})
+#        except Exception, e:
+#            #import ipdb; ipdb.set_trace()
+#            print e
+#
+#    return help_list
 
 def search_keys(dictionary, search_list=['help_text', 'label']):
     """
     Return search_list pairs from the schema -- given help_text, finds the equiv. label
-
-    To run:
-        from disturbance.utils import search_keys
-        search_keys(dictionary, search_list=['help_text', 'label'])
-    """
-    result = []
-    flat_dict = flatten(dictionary)
-    for k, v in flat_dict.iteritems():
-        if any(x in k for x in search_list):
-            result.append( {k: v} )
-
-    help_list = []
-    for i in result:
-        try:
-            key = i.keys()[0]
-            if key and key.endswith('help_text'):
-                corresponding_label_key = '.'.join(key.split('.')[:-1]) + '.label'
-                for j in result:
-                    key_label = j.keys()[0]
-                    if key_label and key_label.endswith('label') and key_label == corresponding_label_key: # and result.has_key(key):
-                        #import ipdb; ipdb.set_trace()
-                        help_list.append({'label': j[key_label], 'help_text': i[key]})
-        except Exception, e:
-            #import ipdb; ipdb.set_trace()
-            print e
-
-    return help_list
-
-def search_keys2(dictionary, search_list=['help_text', 'label']):
-    """
-    Generic version of search_keys(). Return search_list pairs from the schema -- given help_text, finds the equiv. label
 
     To run:
         from disturbance.utils import search_keys

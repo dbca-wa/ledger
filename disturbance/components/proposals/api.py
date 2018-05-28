@@ -81,21 +81,25 @@ class GetEmptyList(views.APIView):
 
 class ProposalViewSet(viewsets.ModelViewSet):
     #import ipdb; ipdb.set_trace()
-    queryset = Proposal.objects.all()
-    #queryset = None
+    #queryset = Proposal.objects.all()
+    queryset = Proposal.objects.none()
     serializer_class = ProposalSerializer
 
-#    def get_queryset(self):
-#        user = self.request.user
-#        user_orgs = [org.id for org in user.disturbance_organisations.all()]
-#        self.queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
-#        return self.queryset
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated():
+            user_orgs = [org.id for org in user.disturbance_organisations.all()]
+            queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+            return queryset
+        return Proposal.objects.none()
+
 
 
     def list(self, request, *args, **kwargs):
         #import ipdb; ipdb.set_trace()
-        queryset = self.get_queryset() 
-        serializer = DTProposalSerializer(queryset, many=True)
+        #queryset = self.get_queryset() 
+        #serializer = DTProposalSerializer(queryset, many=True)
+        serializer = DTProposalSerializer(self.get_queryset(), many=True)
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])
@@ -199,24 +203,24 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
 
 
-    @list_route(methods=['GET',])
-    def user_list(self, request, *args, **kwargs):
-        user_orgs = [org.id for org in request.user.disturbance_organisations.all()];
-        qs = []
-        qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded')))
-        #Remove filter to include 'Apporved Proposals in external dashboard .exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])
-        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs).exclude(processing_status='discarded')))
-        #Remove filter to include 'Apporved Proposals in external dashboard .exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])
-        queryset = list(set(qs))
-        serializer = DTProposalSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-
 #    @list_route(methods=['GET',])
 #    def user_list(self, request, *args, **kwargs):
-#        qs = self.get_queryset.exclude(processing_status='discarded')
-#        serializer = DTProposalSerializer(qs, many=True)
+#        user_orgs = [org.id for org in request.user.disturbance_organisations.all()];
+#        qs = []
+#        qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded')))
+#        #Remove filter to include 'Apporved Proposals in external dashboard .exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])
+#        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs).exclude(processing_status='discarded')))
+#        #Remove filter to include 'Apporved Proposals in external dashboard .exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])
+#        queryset = list(set(qs))
+#        serializer = DTProposalSerializer(queryset, many=True)
 #        return Response(serializer.data)
+
+
+    @list_route(methods=['GET',])
+    def user_list(self, request, *args, **kwargs):
+        qs = self.get_queryset.exclude(processing_status='discarded')
+        serializer = DTProposalSerializer(qs, many=True)
+        return Response(serializer.data)
 
 
     @detail_route(methods=['GET',])
@@ -651,8 +655,17 @@ class ProposalViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 class ReferralViewSet(viewsets.ModelViewSet):
-    queryset = Referral.objects.all()
+    #queryset = Referral.objects.all()
+    queryset = Referral.objects.none()
     serializer_class = ReferralSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated():
+            queryset =  Referral.objects.filter(referral=user)
+            return queryset
+        return Referral.objects.none()
+
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -661,8 +674,9 @@ class ReferralViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
-        qs = self.get_queryset().filter(referral=request.user)
-        serializer = DTReferralSerializer(qs, many=True)
+        #qs = self.get_queryset().filter(referral=request.user)
+        #serializer = DTReferralSerializer(qs, many=True)
+        serializer = DTReferralSerializer(self.get_queryset(), many=True)
         return Response(serializer.data)
 
     @list_route(methods=['GET',])
