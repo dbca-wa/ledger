@@ -54,7 +54,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if is_internal(user):
             return Compliance.objects.all()
-        if is_customer(user):
+        elif is_customer(user):
             user_orgs = [org.id for org in user.disturbance_organisations.all()]
             queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = user) )
             return queryset

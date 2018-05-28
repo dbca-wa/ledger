@@ -51,7 +51,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if is_internal(user):
             return Approval.objects.all()
-        if is_customer(user):
+        elif is_customer(user):
             user_orgs = [org.id for org in user.disturbance_organisations.all()]
             queryset =  Approval.objects.filter(applicant_id__in = user_orgs)
             return queryset

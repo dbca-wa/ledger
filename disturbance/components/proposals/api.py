@@ -90,7 +90,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if is_internal(user): #user.is_authenticated():
             return Proposal.objects.all() 
-        if is_customer(user): 
+        elif is_customer(user): 
             user_orgs = [org.id for org in user.disturbance_organisations.all()]
             queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             return queryset
@@ -221,10 +221,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
-        qs = self.get_queryset.exclude(processing_status='discarded')
+        qs = self.get_queryset().exclude(processing_status='discarded')
         serializer = DTProposalSerializer(qs, many=True)
         return Response(serializer.data)
-
 
     @detail_route(methods=['GET',])
     def internal_proposal(self, request, *args, **kwargs):
