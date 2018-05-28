@@ -40,6 +40,7 @@ from disturbance.components.approvals.serializers import (
     ApprovalUserActionSerializer,
     ApprovalLogEntrySerializer
 )
+from disturbance.helpers import is_customer, is_internal
 
 class ApprovalViewSet(viewsets.ModelViewSet):
     #queryset = Approval.objects.all()
@@ -48,8 +49,9 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        #print 'Approval: {}'.format(user)
-        if user.is_authenticated():
+        if is_internal(user):
+            return Approval.objects.all()
+        if is_customer(user):
             user_orgs = [org.id for org in user.disturbance_organisations.all()]
             queryset =  Approval.objects.filter(applicant_id__in = user_orgs)
             return queryset

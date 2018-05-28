@@ -42,6 +42,7 @@ from disturbance.components.compliances.serializers import (
     ComplianceAmendmentRequestSerializer,
 
 )
+from disturbance.helpers import is_customer, is_internal
 
 
 class ComplianceViewSet(viewsets.ModelViewSet):
@@ -51,8 +52,9 @@ class ComplianceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        print user
-        if user.is_authenticated():
+        if is_internal(user):
+            return Compliance.objects.all()
+        if is_customer(user):
             user_orgs = [org.id for org in user.disturbance_organisations.all()]
             queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = user) )
             return queryset

@@ -60,6 +60,7 @@ from disturbance.components.proposals.serializers import (
     AmendmentRequestSerializer,
     
 )
+from disturbance.helpers import is_customer, is_internal
 
 
 class GetProposalType(views.APIView):
@@ -87,7 +88,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated():
+        if is_internal(user): #user.is_authenticated():
+            return Proposal.objects.all() 
+        if is_customer(user): 
             user_orgs = [org.id for org in user.disturbance_organisations.all()]
             queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             return queryset
