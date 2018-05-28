@@ -1,5 +1,6 @@
 import os
 
+from decimal import Decimal as D
 from io import BytesIO
 from oscar.templatetags.currency_filters import currency
 from reportlab.lib import enums
@@ -162,14 +163,14 @@ class Remittance(Flowable):
         canvas.setFillColor(colors.black)
         canvas.drawString(current_x, current_y, 'Invoice Number')
         canvas.drawString(PAGE_WIDTH/4, current_y, 'Invoice Date')
-        canvas.drawString(PAGE_WIDTH/4, current_y, 'GST included')
-        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, 'Invoice Total')
+        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, 'GST included')
+        canvas.drawString((PAGE_WIDTH/4) * 3, current_y, 'Invoice Total')
         current_y -= 20
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawString(current_x, current_y, self.invoice.reference)
         canvas.drawString(PAGE_WIDTH/4, current_y, self.invoice.created.strftime(DATE_FORMAT))
-        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, currency(D(100.0)/ D(100 + settings.LEDGER_GST) * self.invoice.amount))
-        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, currency(self.invoice.amount))
+        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, currency(self.invoice.amount * (1- (D(100.0)/ D(100 + settings.LEDGER_GST)))))
+        canvas.drawString((PAGE_WIDTH/4) * 3, current_y, currency(self.invoice.amount))
     
     def draw(self):
         if settings.BPAY_ALLOWED:
@@ -294,7 +295,6 @@ def _create_invoice(invoice_buffer, invoice):
             0.7 * inch,
             None,
             0.7 * inch,
-            1.0 * inch,
             1.0 * inch,
             1.0 * inch,
             )
