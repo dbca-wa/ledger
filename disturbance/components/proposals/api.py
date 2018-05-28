@@ -102,6 +102,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
         #import ipdb; ipdb.set_trace()
         #queryset = self.get_queryset() 
         #serializer = DTProposalSerializer(queryset, many=True)
+        #import ipdb; ipdb.set_trace()
         serializer = DTProposalSerializer(self.get_queryset(), many=True)
         return Response(serializer.data)
 
