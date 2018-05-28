@@ -80,9 +80,7 @@
                                         <thead>
                                             <tr>
                                                 <th class="form-group">Campsite</th>
-                                                <th >Sites to book
-                                                    <input class="checkbox" type="checkbox" v-model="selected_campsite" @click="selectAll"> 
-                                                </th>
+                                                <th >Sites to book</th>
                                             </tr>
                                         </thead>
                                             <tbody><template v-for="campsite in booking.campsites">
@@ -559,30 +557,6 @@ export default {
         }
     },
     methods:{
-        selectAll: function() {
-            //let vm = this;
-            this.is_selected=[];
-            this.booking.campsites.forEach((el) => {
-                this.is_selected.push(el.id)
-
-            })
-
-
-            
-            // for (var campsite in this.booking.campsites){
-            //     this.is_selected.push(this.booking.campsites[campsite].id);
-            // }
-
-            // var results = [];
-            // if (vm.booking_type == vm.booking_types.CAMPSITE) {
-            //     return vm.booking.campsites.forEach(function(el){
-            //     for (var i in el.selected_campsite) {
-            //         results.push(el.is_selected);
-            //     }           
-            // });
-            // return results;
-            // }
-        },
         fetchSites:function () {
             let vm =this;
             if (vm.booking_type == vm.booking_types.CAMPSITE) {
