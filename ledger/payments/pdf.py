@@ -161,13 +161,15 @@ class Remittance(Flowable):
         canvas.setFont(DEFAULT_FONTNAME, LARGE_FONTSIZE)
         canvas.setFillColor(colors.black)
         canvas.drawString(current_x, current_y, 'Invoice Number')
-        canvas.drawString(PAGE_WIDTH/3, current_y, 'Invoice Date')
-        canvas.drawString((PAGE_WIDTH/3) * 2, current_y, 'Invoice Total')
+        canvas.drawString(PAGE_WIDTH/4, current_y, 'Invoice Date')
+        canvas.drawString(PAGE_WIDTH/4, current_y, 'GST included')
+        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, 'Invoice Total')
         current_y -= 20
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawString(current_x, current_y, self.invoice.reference)
-        canvas.drawString(PAGE_WIDTH/3, current_y, self.invoice.created.strftime(DATE_FORMAT))
-        canvas.drawString((PAGE_WIDTH/3) * 2, current_y, '${}'.format(self.invoice.amount))
+        canvas.drawString(PAGE_WIDTH/4, current_y, self.invoice.created.strftime(DATE_FORMAT))
+        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, currency(D(100.0)/ D(100 + settings.LEDGER_GST) * self.invoice.amount))
+        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, currency(self.invoice.amount))
     
     def draw(self):
         if settings.BPAY_ALLOWED:
@@ -247,7 +249,7 @@ def _create_invoice(invoice_buffer, invoice):
         elements.append(Paragraph(invoice.text, styles['Left']))
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
     data = [
-        ['Item','Product', 'Quantity','Unit Price','GST', 'Total']
+        ['Item','Product', 'Quantity','Unit Price', 'Total']
     ]
     val = 1
     s = styles["BodyText"]
@@ -259,8 +261,7 @@ def _create_invoice(invoice_buffer, invoice):
                 val,
                 Paragraph(item.description, s),
                 item.quantity,
-                currency(item.unit_price_excl_tax),
-                currency(item.line_price_before_discounts_incl_tax-item.line_price_before_discounts_excl_tax),
+                currency(item.unit_price_incl_tax),
                 currency(item.line_price_before_discounts_incl_tax)
             ]
         )
@@ -268,8 +269,6 @@ def _create_invoice(invoice_buffer, invoice):
     # Discounts
     data.append(
         [
-            '',
-            '',
             '',
             '',
             '',
@@ -281,7 +280,6 @@ def _create_invoice(invoice_buffer, invoice):
             [
                 '',
                 discount.offer,
-                '',
                 '',
                 '',
                 '-${}'.format(discount.amount)
