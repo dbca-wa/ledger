@@ -33,9 +33,8 @@ class Basket(CoreAbstractBasket):
 
         if not data.get('quantity'):
             data['quantity'] = 1 
-        line, created = self.lines.get_or_create(**data)
-
-        return line, created
+        line = self.lines.create(**data)
+        return line
 
     def is_shipping_required(self):
         """
