@@ -229,7 +229,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         return {
             'assessor_mode': True,
             # 'has_assessor_mode': obj.has_assessor_mode(user),
-            'assessor_can_assess': obj.can_assess(user), 
+            # 'assessor_can_assess': obj.can_assess(user), 
             'assessor_level': 'assessor'
         }
 

@@ -432,6 +432,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             app_data = self.request.data
             licence_class_data=app_data.pop('licence_class_data')
             schema_data=get_activity_type_schema(licence_class_data)
+            applicant=request.data.get('applicant')
             data = {
                 'schema':schema_data,
                 'submitter': request.user.id,

@@ -209,6 +209,14 @@
                     <Conditions :application="application"/>
                 </template>
                 <template v-if="canSeeSubmission || (!canSeeSubmission && showingApplication)">
+                    <div>
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
+                        <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
+                    </ul>
+                    <div class="tab-content">
+                    <div :id="applicantTab" class="tab-pane fade in active">
+
                     <div class="col-md-12">
                         <div class="row">
                             <div class="panel panel-default">
@@ -301,6 +309,31 @@
                         </div>
                     </div>
                     <div class="col-md-12">
+                        <div class ="row">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Check List
+                                    <a class="panelClicker" :href="'#'+checksBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="checksBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                    </a>
+                                </h3>
+
+                            </div>
+                            <div class="panel-body panel-collapse collapse" :id="checksBody">
+                                <div><h7>ID Check</h7><button class="btn btn-primary">Accept</button><button class="btn btn-primary">Request Update</button></div>
+                                <div><h7>Character Check</h7><button class="btn btn-primary">Accept</button></div>
+                                <div><h7>Returns Check</h7><button class="btn btn-primary">Request Completion</button></div>
+                            </div>
+
+
+                        </div>
+                    </div>
+
+
+                    </div>
+                </div>
+                <div :id="applicationTab" class="tab-pane fade in active">
+                    <div class="col-md-12">
                         <div class="row">
                             <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
                                 <Application form_width="inherit" :withSectionsSelector="false" v-if="application" :application="application">
@@ -316,6 +349,10 @@
                             </form>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
                 </template>
             </div>
         </div>
@@ -347,9 +384,12 @@ export default {
     data: function() {
         let vm = this;
         return {
+            applicantTab: 'applicantTab'+vm._uid,
+            applicationTab: 'applicationTab'+vm._uid,
             detailsBody: 'detailsBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
             contactsBody: 'contactsBody'+vm._uid,
+            checksBody: 'checksBody'+vm._uid,
             "application": null,
             "original_application": null,
             "loading": [],
