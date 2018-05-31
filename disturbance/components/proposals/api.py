@@ -28,6 +28,7 @@ from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from disturbance.components.proposals.utils import save_proponent_data,save_assessor_data
+from disturbance.utils import missing_required_fields
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from disturbance.components.main.models import Document, Region, District, Tenure, ApplicationType
@@ -235,6 +236,35 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            save_proponent_data(instance,request,self)
+            missing_fields = missing_required_fields(instance)
+
+            #import ipdb; ipdb.set_trace()
+            if missing_fields:
+            	return Response({'missing_fields': missing_fields})
+            else:
+				#raise serializers.ValidationError(repr({'abcde': 123, 'missing_fields':True}))
+				instance.submit(request,self)
+				serializer = self.get_serializer(instance)
+				return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def _submit(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             instance.submit(request,self)

@@ -193,6 +193,73 @@ def search_keys(dictionary, search_list=['help_text', 'label']):
 
     return help_list
 
+def missing_required_fields(proposal):
+    """
+    Returns the missing required fields from the schema (no data is entered)
+    """
+    data = flatten(proposal.data[0])
+    sections = search_multiple_keys(proposal.schema, primary_search='isRequired', search_list=['label', 'name'])
+
+    missing_fields = []
+    for flat_key in data.iteritems():
+        for item in sections:
+            if flat_key[0].endswith(item['name']):
+                if not flat_key[1].strip():
+                   missing_fields.append( dict(name=flat_key[0], label=item['label']) )
+    return missing_fields
+
+def test_search_multiple_keys():
+    p=Proposal.objects.get(id=139)
+    return search_multiple_keys(p.schema, primary_search='isRequired', search_list=['label', 'name'])
+
+def search_multiple_keys(dictionary, primary_search='isRequired', search_list=['label', 'name']):
+    """
+    Given a primary search key, return a list of key/value pairs corresponding to the same section/level
+    
+    To test:
+        p=Proposal.objects.get(id=139)
+        return search_multiple_keys(p.schema, primary_search='isRequired', search_list=['label', 'name'])
+
+    Example result:
+		[
+			{'isRequired': {'label': u'Enter the title of this proposal','name': u'Section0-0'}},
+		 	{'isRequired': {'label': u'Enter the purpose of this proposal', 'name': u'Section0-1'}},
+		 	{'isRequired': {'label': u'In which Local Government Authority (LAG) is this proposal located?','name': u'Section0-2'}},
+		 	{'isRequired': {'label': u'Describe where this proposal is located', 'name': u'Section0-3'}}
+		]
+    """
+
+    # get a flat list of the schema and keep only items in all_search_list
+    all_search_list = [primary_search] + search_list
+    result = []
+    flat_dict = flatten(dictionary)
+    for k, v in flat_dict.iteritems():
+        if any(x in k for x in all_search_list):
+            result.append( {k: v} )
+
+    # iterate through the schema and get the search items corresponding to each primary_search item (at the same level/section)
+    help_list = []
+    for i in result:
+        try:
+            tmp_dict = {}
+            key = i.keys()[0]
+            if key and key.endswith(primary_search):
+                for item in all_search_list:
+                    corresponding_label_key = '.'.join(key.split('.')[:-1]) + '.' + item
+                    for j in result:
+                        key_label = j.keys()[0]
+                        if key_label and key_label.endswith(item) and key_label == corresponding_label_key: # and result.has_key(key):
+                            tmp_dict.update({item: j[key_label]})
+                if tmp_dict:
+                    help_list.append(  tmp_dict )
+                #if tmp_dict:
+                #  help_list.append( {primary_search: tmp_dict} )
+
+        except Exception, e:
+            #import ipdb; ipdb.set_trace()
+            print e
+
+    return help_list
 
 def flatten(old_data, new_data=None, parent_key='', sep='.', width=4):
     '''

@@ -148,10 +148,27 @@ export default {
             let formData = new FormData(vm.form);
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
                 vm.proposal = res.body;
-                vm.$router.push({
-                    name: 'submit_proposal',
-                    params: { proposal: vm.proposal} 
-                });
+                
+                if ('missing_fields' in vm.proposal) {
+                    var missing_text = '';
+                    //vm.proposal.missing_fields.forEach(function(iitem) {
+                    for (var i = 0; i < vm.proposal.missing_fields.length; i++) {
+                        missing_text = missing_text + i + ". " + vm.proposal.missing_fields[i].label + '<br>'
+                    }
+                    //});
+                    swal({
+                        title: "Required field(s) are missing",
+                        html: missing_text,
+                        confirmButtonText: 'Submit',
+                        type: 'warning',
+                    })
+                } else {
+
+                    vm.$router.push({
+                        name: 'submit_proposal',
+                        params: { proposal: vm.proposal} 
+                    });
+                }
             },err=>{
                 swal(
                     'Submit Error',
