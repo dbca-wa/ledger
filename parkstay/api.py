@@ -844,6 +844,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             start_date = self.try_parsing_date(request.GET.get('arrival')).date()
             end_date = self.try_parsing_date(request.GET.get('departure')).date()
             booking_id = request.GET.get('booking',None) 
+            print "This is booking_id"
+            print booking_id
             if not booking_id:
                 raise serializers.ValidationError('Booking has not been defined')
             try:
@@ -1762,7 +1764,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             }
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)
-
             return Response(serializer.data, status=http_status)
 
         except serializers.ValidationError:
@@ -1877,7 +1878,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['GET'])
     def history(self, request, *args, **kwargs):
-        http_status = status.HTTP_200_OK                
+        http_status = status.HTTP_200_OK              
         try:
             history = self.get_object().history.all()
             data = BookingHistorySerializer(history,many=True).data

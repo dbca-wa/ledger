@@ -81,7 +81,7 @@
                                             <tr>
                                                 <th class="form-group">Campsite</th>
                                                 <th >Sites to book
-                                                    <input class="checkbox" type="checkbox" v-model="selected_campsite" @click="selectAll"> 
+                                                    <input class="checkbox" type="checkbox" id="selectAll"  v-model="selectAll" @change="updatePrices2()"> 
                                                 </th>
                                             </tr>
                                         </thead>
@@ -284,20 +284,19 @@
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="form-group">
-                                        <div class="checkbox">
-                                            <label><input type="checkbox" v-model="checked"/>Override price charged</label>
-                                        </div>
-                                        <div class="input-group" v-if="checked">
-                                        <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
-                                        <input type="text" class="form-control" :placeholder="0|formatMoney(2)" v-model="booking.override_price">
+                                        <input type="checkbox" name="overrideCharge" class="form control" v-model="overrideCharge"/>
+                                        <label for="OverrideCharge">Override price charged </label>
+                                        <div class="input-group" v-if="overrideCharge">
+                                            <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
+                                            <input type="text" class="form-control" name="overridePrice" :placeholder="0|formatMoney(2)" v-model="booking.override_price">
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-lg-12">
-                                    <div class="form-group" v-if="checked">
-                                        <reason type="discount" v-model="booking.override_reason" ref="reason" ></reason>
+                                    <div class="form-group" v-if="overrideCharge">
+                                        <reason type="discount" name="overrideReason" v-model="booking.override_reason" ref="reason" required="true"></reason>
                                     </div>
                                 </div>
                             </div>
@@ -349,7 +348,7 @@ export default {
     data:function () {
         let vm =this;
         return {
-            checked: false,
+            overrideCharge: false,
             isModalOpen:false,
             bookingForm:null,
             countries:[],
@@ -559,30 +558,6 @@ export default {
         }
     },
     methods:{
-        selectAll: function() {
-            //let vm = this;
-            this.is_selected=[];
-            this.booking.campsites.forEach((el) => {
-                this.is_selected.push(el.id)
-
-            })
-
-
-            
-            // for (var campsite in this.booking.campsites){
-            //     this.is_selected.push(this.booking.campsites[campsite].id);
-            // }
-
-            // var results = [];
-            // if (vm.booking_type == vm.booking_types.CAMPSITE) {
-            //     return vm.booking.campsites.forEach(function(el){
-            //     for (var i in el.selected_campsite) {
-            //         results.push(el.is_selected);
-            //     }           
-            // });
-            // return results;
-            // }
-        },
         fetchSites:function () {
             let vm =this;
             if (vm.booking_type == vm.booking_types.CAMPSITE) {
@@ -622,6 +597,16 @@ export default {
                     });
                 }
             }
+        },
+        updatePrices2:function (){
+            let vm=this;
+            var campsite_ids = [];
+            vm.booking.campsites.forEach(function (value) {
+                vm.selected_campsites.push(value.id);
+                value.is_selected = true;
+            });
+            console.log(vm.selected_campsites);
+            vm.updatePrices();           
         },
         fetchCountries:function (){
             let vm =this;
@@ -1001,7 +986,7 @@ export default {
         },
         isFormValid:function () {
             let vm =this;
-            return (vm.validateParkEntry() && $(vm.bookingForm).valid());
+            return (vm.validateParkEntry() && vm.overrideChargeReason() && $(vm.bookingForm).valid());
         },
         validateParkEntry:function () {
             let vm = this;
@@ -1010,6 +995,15 @@ export default {
             }, 0);
 
             return (validRegos == vm.parkEntryVehicles.length);
+        },
+        overrideChargeReason:function () {
+            let vm = this;
+            if(vm.overrideCharge){
+                if(vm.booking.override_price != null && vm.booking.override_reason == "") {                   
+                    return false;
+                } 
+            }
+            return true;
         },
         addFormValidations: function() {
             $(this.bookingForm).validate({

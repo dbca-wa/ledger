@@ -125,11 +125,7 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
             if total_people < min_people:
                 raise ValidationError('Number of people is less than the minimum allowed for the selected campsite(s)')
 
-        # Create a new temporary booking with an expiry timestamp (default 20mins)
-        # updated_cost_total = cost_total
-        # if override_price is not None:
-        #     updated_cost_total = cost_total - override_price
-        
+        # Create a new temporary booking with an expiry timestamp (default 20mins)       
         booking =   Booking.objects.create(
                         booking_type=3,
                         arrival=start_date,
