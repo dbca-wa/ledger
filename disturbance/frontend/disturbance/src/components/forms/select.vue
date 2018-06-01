@@ -38,11 +38,11 @@
                 </template>
             </template>
             <template v-else>
-                <select v-if="!isMultiple" ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
+                <select v-if="!isMultiple" ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%" :required="isRequired">
                     <option value="">Select...</option>
                     <option v-for="op in options"  :value="op.value" @change="handleChange" :selected="op.value == value">{{ op.label }}</option>
                 </select>
-                <select v-else ref="selectB" :id="selectid" :name="name" class="form-control" multiple style="width:100%">
+                <select v-else ref="selectB" :id="selectid" :name="name" class="form-control" multiple style="width:100%" :required="isRequired">
                     <option value="">Select...</option>
                     <option v-for="op in options"  :value="op.value" :selected="multipleSelection(op.value)">{{ op.label }}</option>
                 </select>
