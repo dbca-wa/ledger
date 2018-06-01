@@ -2,7 +2,7 @@
     <div>
         <div class="form-group">
 
-            <label>{{label}}</label>
+            <label :id="id">{{label}}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
@@ -21,18 +21,18 @@
                     <p>
                         File: <a :href="docsUrl+v" target="_blank">{{v}}</a> &nbsp;
                         <span v-if="!readonly">
-                            <a @click="removeImage(v)" class="fa fa-trash-o" title="Remove file" :filename="v" style="color:red"></a>
+                            <a @click="removeImage(v)" class="fa fa-trash-o" title="Remove file" :filename="v" style="cursor: pointer; color:red;"></a>
                         </span>
                     </p>
                     <input :name="name+'-existing'" type="hidden" :value="value"/>
                 </div>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
-                <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange"/><br/>
+                <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/><br/>
             </div>
 
         </div>
-        <Comment :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
+        <Comment :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value" :required="isRequired"/> 
     </div>
 </template>
 
@@ -44,6 +44,8 @@ export default {
         proposal_id: null,
         name:String,
         label:String,
+        id:String,
+        isRequired:String,
         comment_value: String,
         assessor_readonly: Boolean,
         help_text:String,

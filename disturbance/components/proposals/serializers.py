@@ -41,6 +41,13 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     documents_url = serializers.SerializerMethodField()
     allowed_assessors = EmailUserSerializer(many=True)
 
+#    def __init__(self, *args, **kwargs):
+#        import ipdb; ipdb.set_trace()
+#        user = kwargs['context']['request'].user
+#
+#        super(BaseProposalSerializer, self).__init__(*args, **kwargs)
+#        self.fields['parent'].queryset = self.get_request(user)
+
     class Meta:
         model = Proposal
         fields = (

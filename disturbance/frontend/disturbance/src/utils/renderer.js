@@ -61,32 +61,46 @@ module.exports = {
             var help_text = c.help_text;
         }
 
+        if (c && c.help_text_assessor && c.help_text_assessor.indexOf("site_url:/") >= 0) {
+            var help_text_assessor = c.help_text_assessor.replace('site_url:/', site_url);
+            if (help_text_assessor.indexOf("anchor=") >= 0) {
+                help_text_assessor = help_text_assessor.replace('anchor=', "#");
+            }
+        } else {
+            var help_text_assessor = c.help_text_assessor;
+        }
+
+        var id = 'id_' + c.name;
+        var id1 = id + '_1'
+        var id2 = id + '_2'
+        var id3 = id + '_3'
+
         switch (c.type) {
             case 'text':
         		readonly = (c.readonly) ? (c.readonly): (readonly);
                 console.log('site_url: ' + site_url)
                 _elements.push(
-                    <TextField type="text" name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility}/>
+                    <TextField type="text" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility} isRequired={c.isRequired}/>
                 )
                 break;
             case 'text_info':
                 _elements.push(
-                    <TextInfo label={c.label} name={c.name} value={val} />
+                    <TextInfo label={c.label} name={c.name} value={val} id={id} />
                 )
                 break;
             case 'iframe':
                 _elements.push(
-                    <IFrame src={c.src} title={c.title} name={c.name} width={c.width} height={c.height} frameborder={c.frameborder} scrolling={c.scrolling} marginheight={c.marginheight} marginwidth={c.marginwidth} />
+                    <IFrame src={c.src} title={c.title} name={c.name} id={id} width={c.width} height={c.height} frameborder={c.frameborder} scrolling={c.scrolling} marginheight={c.marginheight} marginwidth={c.marginwidth} />
                 )
                 break;
             case 'number':
                 _elements.push(
-                    <TextField type="number" name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility}/>
+                    <TextField type="number" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility} isRequired={c.isRequired}/>
                 )
                 break;
             case 'email':
                 _elements.push(
-                    <TextField type="email" name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility}/>
+                    <TextField type="email" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility} isRequired={c.isRequired}/>
                 )
                 break;
             case 'select':
@@ -96,24 +110,25 @@ module.exports = {
                 }
                 _elements.push(
                     <div>
-                        <Select readonly={readonly} name={c.name} label={c.label} value={c.value} comment_value={comment_val} options={c.options} help_text={help_text} value={val} handleChange={this.selectionChanged}  conditions={c.conditions} assessorMode={assessorMode} assessor_readonly={assessor_visibility}/>
-                        <SelectConditions conditions={c.conditions} renderer={this} name={c.name} data={data} readonly={readonly} />
+                        <Select readonly={readonly} name={c.name} label={c.label} value={c.value} id={id1} comment_value={comment_val} options={c.options} help_text={help_text} value={val} handleChange={this.selectionChanged}  conditions={c.conditions} assessorMode={assessorMode} assessor_readonly={assessor_visibility} isRequired={c.isRequired}/>
+                        <SelectConditions conditions={c.conditions} renderer={this} name={c.name} data={data} id={id2} readonly={readonly} isRequired={c.isRequired}/>
                     </div>
                 )
                 break;
             case 'multi-select':
                 _elements.push(
-                    <Select name={c.name} label={c.label} value={val} comment_value={comment_val} options={c.options} value={val} help_text={help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} assessor_readonly={assessor_visibility}/>
+                    <Select name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} options={c.options} value={val} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} assessor_readonly={assessor_visibility} isRequired={c.isRequired}/>
                 )
                 break;
             case 'text_area':
                 _elements.push(
-                    <TextArea readonly={readonly} name={c.name} value={val} comment_value={comment_val} label={c.label} help_text={help_text} assessorMode={assessorMode} assessor_readonly={assessor_visibility}/>
+                    <TextArea readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} assessorMode={assessorMode} assessor_readonly={assessor_visibility} isRequired={c.isRequired}/>
                 )
                 break;
             case 'label':
                 _elements.push(
-                    <Label value={c.label} />
+                    //<Label value={c.label} id='id_' + {c.name}/>
+                    <Label value={c.label} id={id} />
                 )
                 break;
             case 'radiobuttons':
@@ -125,14 +140,14 @@ module.exports = {
                     <div class="form-group">
                         <label>{c.label}</label>
                             <HelpText help_text={help_text}/>
-                            <HelpText help_text={c.help_text_assessor} assessorMode={assessorMode} isForAssessor={true}/>
+                            <HelpText help_text={help_text_assessor} assessorMode={assessorMode} isForAssessor={true}/>
                             <CommentRadioCheckBox assessor_readonly={assessor_visibility} name={c.name} comment_value={comment_val} assessorMode={assessorMode} label={c.label}/>
                             {c.options.map(op =>{
                                 return(
-                                    <Radio name={c.name} label={op.label} value={op.value} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly}/>
+                                    <Radio name={c.name} label={op.label} value={op.value} id={id1} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly} isRequired={c.isRequired}/>
                                 )
                             })}
-                            <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data} readonly={readonly} />
+                            <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data} id={id2} readonly={readonly} isRequired={c.isRequired}/>
                     </div>
                 )
                 break;
@@ -175,8 +190,8 @@ module.exports = {
             case 'checkbox':
                 _elements.push(
                     <div class="form-group">
-                        <Checkbox name={c.name} label={c.label} help_text={help_text} value={val} handleChange={this.handleCheckBoxChange} conditions={c.conditions} readonly={readonly}/>
-                        <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data}/>
+                        <Checkbox name={c.name} label={c.label} id={id1} help_text={help_text} value={val} handleChange={this.handleCheckBoxChange} conditions={c.conditions} readonly={readonly} isRequired={c.isRequired}/>
+                        <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data} id={id2} isRequired={c.isRequired}/>
                     </div>
                 )
                 break;
@@ -187,20 +202,20 @@ module.exports = {
                 }
                 _elements.push(
                     <div class="form-group">
-                        <label>{c.label}</label>
-                        <Checkbox name={c.name} label={c.label} value={val} help_text={help_text} handleChange={this.handleCheckBoxChange} conditions={c.conditions} />
-                        <Conditions conditions={c.conditions} renderer={this} name={c.name} data={value}/>
+                        <label id={id1}>{c.label}</label>
+                        <Checkbox name={c.name} label={c.label} value={val} id={id2} help_text={help_text} handleChange={this.handleCheckBoxChange} conditions={c.conditions} isRequired={c.isRequired}/>
+                        <Conditions conditions={c.conditions} renderer={this} name={c.name} data={value} id={id3} isRequired={c.isRequired}/>
                     </div>
                 )
                 break;
             case 'file':
                 _elements.push(
-                    <File name={c.name} label={c.label} value={val} comment_value={comment_val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} docsUrl={this.status_data.docs_url} readonly={readonly} assessor_readonly={assessor_visibility} proposal_id={proposalId}/>
+                    <File name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} docsUrl={this.status_data.docs_url} readonly={readonly} assessor_readonly={assessor_visibility} proposal_id={proposalId} isRequired={c.isRequired}/>
                 )
                 break;
             case 'date':
                 _elements.push(
-                    <DateField name={c.name} label={c.label} value={val} comment_value={comment_val}  handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={c.help_text_assessor} assessorMode={assessorMode} assessor_readonly={assessor_visibility}/>
+                    <DateField name={c.name} label={c.label} value={val} id={id} comment_value={comment_val}  handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} assessor_readonly={assessor_visibility} isRequired={c.isRequired}/>
                 )
                 break;
             default:

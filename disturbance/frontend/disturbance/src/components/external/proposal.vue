@@ -1,6 +1,6 @@
 <template lang="html">
     <div class="container" >
-        <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
+        <form :action="proposal_submit_url" method="post" name="new_proposal" enctype="multipart/form-data">
           <div v-if="!proposal_readonly">
             <div v-if="hasAmendmentRequest" class="row" style="color:red;">
                 <div class="col-lg-12 pull-right">
@@ -39,9 +39,11 @@
                 <input type='hidden' name="proposal_id" :value="1" />
                 <div v-if="!proposal.readonly" class="row" style="margin-bottom:20px;">
                   <div class="col-lg-12 pull-right">
-                        <input type="submit" class="btn btn-primary" value="Save and Exit"/>
+                        <!-- <input type="submit" class="btn btn-primary" value="Save and Exit"/> -->
+                        <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                        <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                        <!-- <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/> -->
+                        <input type="submit" class="btn btn-primary" value="Submit"/>
 
                         <!-- hidden 'save_and_continue_btn' used to allow File (file.vue component) to trigger save -->
                   </div>
@@ -89,6 +91,9 @@ export default {
     proposal_form_url: function() {
       return (this.proposal) ? `/api/proposal/${this.proposal.id}/draft.json` : '';
     },
+    proposal_submit_url: function() {
+      return (this.proposal) ? `/api/proposal/${this.proposal.id}/submit.json` : '';
+    },
   
    
     
@@ -103,12 +108,19 @@ export default {
             'Your proposal has been saved',
             'success'
           );
-         
-              
       },err=>{
-
       });
     },
+    save_exit: function(e) {
+      let vm = this;
+      this.save(e);
+
+      // redirect back to dashboard
+      vm.$router.push({
+        name: 'external-proposals-dash'
+      });
+    },
+
     save_wo_confirm: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
@@ -135,9 +147,17 @@ export default {
 
     },
 
+    highlight_missing_fields: function(missing_fields){
+        for (var i = 0; i < missing_fields.length; i++) {
+            //$("#id_" + missing_fields[i].name).css("color", 'red');
+            var name = missing_fields[i].name.split('.').slice(-1)[0];
+            $("#id_" + name).css("color", 'red');
+        }
+    },
+
     submit: function(){
         let vm = this;
-        
+
         swal({
             title: "Submit Proposal",
             text: "Are you sure you want to submit this proposal?",
@@ -150,7 +170,7 @@ export default {
                 vm.proposal = res.body;
                 vm.$router.push({
                     name: 'submit_proposal',
-                    params: { proposal: vm.proposal} 
+                    params: { proposal: vm.proposal}
                 });
             },err=>{
                 swal(
@@ -161,7 +181,65 @@ export default {
             });
         },(error) => {
         });
-    }
+    },
+
+//    _submit: function(){
+//        let vm = this;
+//
+//        swal({
+//            title: "Submit Proposal",
+//            text: "Are you sure you want to submit this proposal?",
+//            type: "question",
+//            showCancelButton: true,
+//            confirmButtonText: 'Submit'
+//        }).then(() => {
+//            let formData = new FormData(vm.form);
+//            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
+//                vm.proposal = res.body;
+//
+//                if ('missing_fields' in vm.proposal) {
+//                    var missing_text = '';
+//                    for (var i = 0; i < vm.proposal.missing_fields.length; i++) {
+//                        missing_text = missing_text + i + ". " + vm.proposal.missing_fields[i].label + '<br>'
+//                    }
+//                    //vm.proposal.missing_fields.forEach(function(field) {
+//                        //missing_text = missing_text + field.label + '<br>'
+//                    //});
+//                    swal({
+//                        title: "Required field(s) are missing",
+//                        html: missing_text,
+//                        confirmButtonText: 'Submit',
+//                        type: 'warning',
+//                    }).then(() => {
+//                        //vm.form = document.forms.new_proposal;
+//                        //vm.$router.go();
+//                        this.highlight_missing_fields(vm.proposal.missing_fields);
+//                        //this.proposal = vm.proposal;
+//
+//                        vm.$router.push({
+//                            name: 'draft_proposal',
+//                            params: { proposal_id:vm.proposal.id}
+//                            //params: { proposal: vm.proposal} 
+//                        });
+//
+//                    });
+//                } else {
+//
+//                    vm.$router.push({
+//                        name: 'submit_proposal',
+//                        params: { proposal: vm.proposal} 
+//                    });
+//                }
+//            },err=>{
+//                swal(
+//                    'Submit Error',
+//                    helpers.apiVueResourceError(err),
+//                    'error'
+//                )
+//            });
+//        },(error) => {
+//        });
+//    }
 
   },
 
