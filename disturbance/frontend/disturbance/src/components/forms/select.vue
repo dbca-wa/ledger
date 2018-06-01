@@ -31,10 +31,10 @@
                     <option v-for="op in options"  :value="op.value" :selected="multipleSelection(op.value)">{{ op.label }}</option>
                 </select>
                 <template v-if="isMultiple">
-                    <input v-for="v in value" input type="hidden" :name="name" :value="v"/>
+                    <input v-for="v in value" input type="hidden" :name="name" :value="v" :required="isRequired"/>
                 </template>
                 <template v-else>
-                    <input type="hidden" :name="name" :value="value"/>
+                    <input type="hidden" :name="name" :value="value" :required="isRequired"/>
                 </template>
             </template>
             <template v-else>
@@ -67,6 +67,7 @@ export default {
         'name':String,
         'label':String,
         'id': String,
+        'isRequired': String,
         'help_text':String,
         'help_text_assessor':String,
         "value":[String,Array],

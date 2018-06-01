@@ -3,7 +3,7 @@
         <div class="form-group">
             <div class="checkbox">
                 <label :id="id">
-                    <input :disabled="readonly" ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" />
+                    <input :disabled="readonly" ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" :required="isRequired"/>
                     {{ label }}
                 <template v-if="help_text">
                   <HelpText :help_text="help_text" />
@@ -16,7 +16,7 @@
 <script>
 import HelpText from './help_text.vue'
 export default {
-  props: ['name', 'label', 'value', 'id', 'help_text', 'conditions', "handleChange","readonly"],
+  props: ['name', 'label', 'value', 'id', 'help_text', 'conditions', "handleChange","readonly", "isRequired"],
   components: {HelpText},
   computed: {
     isChecked: function() {

@@ -28,11 +28,11 @@
                 </div>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
-                <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange"/><br/>
+                <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/><br/>
             </div>
 
         </div>
-        <Comment :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
+        <Comment :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value" :required="isRequired"/> 
     </div>
 </template>
 
@@ -45,6 +45,7 @@ export default {
         name:String,
         label:String,
         id:String,
+        isRequired:String,
         comment_value: String,
         assessor_readonly: Boolean,
         help_text:String,

@@ -432,6 +432,7 @@ class Proposal(RevisionedMixin):
             'title': 'Title',
             'activity': 'Activity'
         }
+        #import ipdb; ipdb.set_trace()
         for k,v in required_fields.items():
             val = getattr(self,k)
             if not val:

@@ -5,7 +5,7 @@
                 <div class="row">
                   <label :id="id" class="col-md-3" for="label" >Deficiency</label>
                   <div class="col-md-9">
-                      <textarea :readonly="readonly" :data-question="question" class="form-control deficiency" :name="name" :value="value"></textarea>
+                      <textarea :readonly="readonly" :data-question="question" class="form-control deficiency" :name="name" :value="value" :required="isRequired"></textarea>
                   </div>
                 </div>
             </div>
@@ -15,7 +15,7 @@
 
 <script>
 export default {
-    props:["name","question","value", "id", "readonly"]
+    props:["name","question","value", "id", "readonly", "isRequired"]
 }
 </script>
 
