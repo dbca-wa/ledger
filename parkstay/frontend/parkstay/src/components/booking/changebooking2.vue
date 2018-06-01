@@ -10,28 +10,7 @@
                             </div>
                             <div class="col-md-8 col-md-offset-1">
                                 <div class="row form-horizontal">
-                                    <div class="col-md-12">
-                                        <div class="form-group">
-                                            <div class="col-md-4">
-                                                <label class="control-label pull-left required"  for="Dates">Dates: </label>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="input-group date" id="dateArrival">
-                                                    <input type="text" class="form-control" name="arrival" placeholder="Arrival" v-model="selected_arrival">
-                                                    <span class="input-group-addon">
-                                                        <span class="glyphicon glyphicon-calendar"></span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="input-group date" id="datedeparture">
-                                                    <input type="text" class="form-control" name="departure" placeholder="Departure" v-model="selected_departure">
-                                                    <span class="input-group-addon">
-                                                        <span class="glyphicon glyphicon-calendar"></span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div class="col-md-12">                                       
                                         <div class="form-group">
                                             <div class="col-md-4">
                                                 <label class="control-label pull-left required"  for="Dates">Campground: </label>
@@ -54,6 +33,27 @@
                                             </div>                                           
                                             <div class="col-md-8" v-else>
                                                 <h4>Sorry, no available campsites were found.</h4>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-md-4">
+                                                <label class="control-label pull-left required"  for="Dates">Dates: </label>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group date" id="dateArrival">
+                                                    <input type="text" class="form-control" name="arrival" placeholder="Arrival" v-model="selected_arrival">
+                                                    <span class="input-group-addon">
+                                                        <span class="glyphicon glyphicon-calendar" ></span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group date" id="datedeparture">
+                                                    <input type="text" class="form-control" name="departure" placeholder="Departure" v-model="selected_departure">
+                                                    <span class="input-group-addon">
+                                                        <span class="glyphicon glyphicon-calendar"></span>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="form-group">
@@ -548,16 +548,7 @@ export default {
                 vm.departurePicker.data("DateTimePicker").minDate(minDate);
                 // Set the departure date to a day after the arrival date
                 vm.departurePicker.data("DateTimePicker").date(minDate);
-            });
-            vm.departurePicker.on('dp.change', function(e) {
-                if (vm.departurePicker.data('DateTimePicker').date()) {
-                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('DD/MM/YYYY');
-                    vm.selected_departure = vm.booking.departure;
-                } else {
-                    vm.booking.departure = null;
-                    vm.selected_departure = vm.booking.departure;
-                }
-            });
+            });           
             // Set the initial minimum departure date for the booking
             vm.departurePicker.data("DateTimePicker").minDate(Moment(vm.selected_arrival,"DD/MM/YYYY").add(1,'days'));
 
@@ -846,7 +837,7 @@ export default {
             vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
             vm.booking_price = vm.booking.price;
         },
-        initBooking(response) {
+        initBooking(response) {           
             let vm = this;
             vm.booking = JSON.parse(JSON.stringify(response.body));
             vm.booking.arrival = Moment(vm.booking.arrival).format('DD/MM/YYYY');
