@@ -3,7 +3,7 @@
         <div class="col-md-12">
             <div class="form-group">
                 <div class="row">
-                  <label class="col-md-3" for="label" >Deficiency</label>
+                  <label :id="id" class="col-md-3" for="label" >Deficiency</label>
                   <div class="col-md-9">
                       <textarea :readonly="readonly" :data-question="question" class="form-control deficiency" :name="name" :value="value"></textarea>
                   </div>
@@ -15,7 +15,7 @@
 
 <script>
 export default {
-    props:["name","question","value","readonly"]
+    props:["name","question","value", "id", "readonly"]
 }
 </script>
 

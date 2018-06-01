@@ -1,6 +1,6 @@
 <template lang="html">
     <div class="form-group">
-        <label>
+        <label :id="id">
             <input ref="Checkbox" :name="name" type="checkbox" @change="handleDeclaration" data-parsley-required :checked="isChecked" />
             {{label}}
         </label>
@@ -10,7 +10,7 @@
 
 <script>
 export default {
-    props:['name','label','help_text',"handleDeclaration"],
+    props:['name','label', 'id', 'help_text',"handleDeclaration"],
     computed:{
         isChecked:function () {
             return (this.value == 'on');

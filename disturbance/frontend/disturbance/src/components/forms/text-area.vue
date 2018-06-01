@@ -1,7 +1,7 @@
 <template lang="html">
     <div>
         <div class="form-group">
-            <label for="label" >{{ label }}</label>
+            <label :id="id" for="label" >{{ label }}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
@@ -26,7 +26,7 @@
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 export default {
-    props:["name","value","help_text","help_text_assessor","assessorMode","label","readonly","comment_value","assessor_readonly"],
+    props:["name","value", "id", "help_text","help_text_assessor","assessorMode","label","readonly","comment_value","assessor_readonly"],
     components: {Comment, HelpText},
     data(){
         let vm = this;

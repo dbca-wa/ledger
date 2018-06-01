@@ -24,7 +24,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser, Address 
+from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from disturbance.components.proposals.utils import save_proponent_data,save_assessor_data
@@ -59,7 +59,7 @@ from disturbance.components.proposals.serializers import (
     ProposedApprovalSerializer,
     PropedDeclineSerializer,
     AmendmentRequestSerializer,
-    
+
 )
 from disturbance.helpers import is_customer, is_internal
 
@@ -90,8 +90,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if is_internal(user): #user.is_authenticated():
-            return Proposal.objects.all() 
-        elif is_customer(user): 
+            return Proposal.objects.all()
+        elif is_customer(user):
             user_orgs = [org.id for org in user.disturbance_organisations.all()]
             queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             return queryset
@@ -101,7 +101,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         #import ipdb; ipdb.set_trace()
-        #queryset = self.get_queryset() 
+        #queryset = self.get_queryset()
         #serializer = DTProposalSerializer(queryset, many=True)
         #import ipdb; ipdb.set_trace()
         serializer = DTProposalSerializer(self.get_queryset(), many=True)
@@ -113,7 +113,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.action_logs.all()
             serializer = ProposalUserActionSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -130,7 +130,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.comms_logs.all()
             serializer = ProposalLogEntrySerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -159,8 +159,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents
-                
-                return Response(serializer.data) 
+
+                return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -177,7 +177,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.requirements.all()
             serializer = ProposalRequirementSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -195,7 +195,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             qs = instance.amendment_requests
             qs = qs.filter(status = 'requested')
             serializer = AmendmentRequestSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -237,18 +237,18 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
+            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             save_proponent_data(instance,request,self)
             missing_fields = missing_required_fields(instance)
 
-            #import ipdb; ipdb.set_trace()
             if missing_fields:
-            	return Response({'missing_fields': missing_fields})
+                return Response({'missing_fields': missing_fields})
             else:
-				#raise serializers.ValidationError(repr({'abcde': 123, 'missing_fields':True}))
-				instance.submit(request,self)
-				serializer = self.get_serializer(instance)
-				return Response(serializer.data)
+                #raise serializers.ValidationError(repr({'abcde': 123, 'missing_fields':True}))
+                instance.submit(request,self)
+                serializer = self.get_serializer(instance)
+                return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -288,7 +288,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.assign_officer(request,request.user)
             serializer = InternalProposalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -313,7 +313,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError('A user with the id passed in does not exist')
             instance.assign_officer(request,user)
             serializer = InternalProposalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -330,7 +330,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.unassign(request)
             serializer = InternalProposalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -353,7 +353,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                     raise serializers.ValidationError('The status provided is not allowed')
             instance.move_to_status(request,status)
             serializer = InternalProposalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -378,7 +378,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                     raise serializers.ValidationError('The status provided is not allowed')
             instance.reissue_approval(request,status)
             serializer = InternalProposalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -422,7 +422,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance.proposed_approval(request,serializer.validated_data)
             serializer = InternalProposalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -443,7 +443,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance.final_approval(request,serializer.validated_data)
             serializer = InternalProposalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -464,7 +464,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance.proposed_decline(request,serializer.validated_data)
             serializer = InternalProposalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -485,7 +485,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance.final_decline(request,serializer.validated_data)
             serializer = InternalProposalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -557,7 +557,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 #        import ipdb; ipdb.set_trace()
 #        try:
 #            instance = self.get_object()
-#            
+#
 #            if request.data.has_key('upload_file'):
 #                parent_section = request.data.get('upload_file')['parent_section']
 #                section = request.data.get('upload_file')['section']
@@ -575,8 +575,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
 #                        instance.data = [ {parent_section: [{section: filename}]} ]
 #                instance.save()
 #                return redirect(reverse('external'))
-#                
-#        
+#
+#
 #            elif request.data.has_key('delete_file'):
 #                # TODO currently assumes only one file in instance.data section
 #                parent_section = request.data.get('upload_file')['parent_section']
@@ -623,8 +623,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
             application_type = request.data.get('application')
             activity = request.data.get('activity')
-            region = request.data.get('region') 
-            district = request.data.get('district') 
+            region = request.data.get('region')
+            district = request.data.get('district')
             tenure = request.data.get('tenure')
 
             application_name = ApplicationType.objects.get(id=application_type).name
@@ -646,14 +646,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
                     {
                         u'regionTenureSection': [{
                             #'Activity': activity if activity else None,
-                            'Region': Region.objects.get(id=region).name if region else None, 
-                            'District': District.objects.get(id=district).name if district else None, 
+                            'Region': Region.objects.get(id=region).name if region else None,
+                            'District': District.objects.get(id=district).name if district else None,
                             'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
                             #'ApplicationType': ApplicationType.objects.get(id=application_type).name
                         }]
                     }
 
-                ], 
+                ],
             }
             serializer = SaveProposalSerializer(data=data)
             serializer.is_valid(raise_exception=True)
@@ -703,7 +703,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, context={'request':request})
-        return Response(serializer.data) 
+        return Response(serializer.data)
 
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
@@ -743,7 +743,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.remind(request)
             serializer = InternalProposalSerializer(instance.proposal,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -760,7 +760,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.recall(request)
             serializer = InternalProposalSerializer(instance.proposal,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -777,7 +777,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.resend(request)
             serializer = InternalProposalSerializer(instance.proposal,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -855,7 +855,7 @@ class ProposalStandardRequirementViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ProposalStandardRequirementSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset() 
+        queryset = self.get_queryset()
         search = request.GET.get('search')
         if search:
             queryset = queryset.filter(text__icontains=search)
@@ -888,10 +888,10 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-    
+
 
 class AmendmentRequestReasonChoicesView(views.APIView):
-    
+
     renderer_classes = [JSONRenderer,]
     def get(self,request, format=None):
         choices_list = []
@@ -899,5 +899,5 @@ class AmendmentRequestReasonChoicesView(views.APIView):
         if choices:
             for c in choices:
                 choices_list.append({'key': c[0],'value': c[1]})
-       
+
         return Response(choices_list)

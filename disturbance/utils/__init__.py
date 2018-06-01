@@ -102,7 +102,7 @@ def create_helppage_object(application_type='Disturbance', help_type=HelpPage.HE
 	except Exception, e:
 		print 'proposal type: {} does not exist, maybe!'.format(application_type, e)
 
-   
+
  	help_text = 'help_text' if help_type==HelpPage.HELP_TEXT_EXTERNAL else 'help_text_assessor'
 	help_list = search_keys(proposal_type.schema, search_list=[help_text,'label'])
 	richtext = create_richtext_help(help_list)
@@ -215,18 +215,18 @@ def test_search_multiple_keys():
 def search_multiple_keys(dictionary, primary_search='isRequired', search_list=['label', 'name']):
     """
     Given a primary search key, return a list of key/value pairs corresponding to the same section/level
-    
+
     To test:
         p=Proposal.objects.get(id=139)
         return search_multiple_keys(p.schema, primary_search='isRequired', search_list=['label', 'name'])
 
     Example result:
-		[
-			{'isRequired': {'label': u'Enter the title of this proposal','name': u'Section0-0'}},
-		 	{'isRequired': {'label': u'Enter the purpose of this proposal', 'name': u'Section0-1'}},
-		 	{'isRequired': {'label': u'In which Local Government Authority (LAG) is this proposal located?','name': u'Section0-2'}},
-		 	{'isRequired': {'label': u'Describe where this proposal is located', 'name': u'Section0-3'}}
-		]
+    [
+        {'isRequired': {'label': u'Enter the title of this proposal','name': u'Section0-0'}},
+        {'isRequired': {'label': u'Enter the purpose of this proposal', 'name': u'Section0-1'}},
+        {'isRequired': {'label': u'In which Local Government Authority (LAG) is this proposal located?','name': u'Section0-2'}},
+        {'isRequired': {'label': u'Describe where this proposal is located', 'name': u'Section0-3'}}
+    ]
     """
 
     # get a flat list of the schema and keep only items in all_search_list

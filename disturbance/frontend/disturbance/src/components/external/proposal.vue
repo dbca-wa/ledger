@@ -135,9 +135,17 @@ export default {
 
     },
 
+    highlight_missing_fields: function(missing_fields){
+        for (var i = 0; i < missing_fields.length; i++) {
+            //$("#id_" + missing_fields[i].name).css("color", 'red');
+            var name = missing_fields[i].name.split('.').slice(-1)[0];
+            $("#id_" + name).css("color", 'red');
+        }
+    },
+
     submit: function(){
         let vm = this;
-        
+
         swal({
             title: "Submit Proposal",
             text: "Are you sure you want to submit this proposal?",
@@ -148,20 +156,33 @@ export default {
             let formData = new FormData(vm.form);
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
                 vm.proposal = res.body;
-                
+
                 if ('missing_fields' in vm.proposal) {
                     var missing_text = '';
-                    //vm.proposal.missing_fields.forEach(function(iitem) {
                     for (var i = 0; i < vm.proposal.missing_fields.length; i++) {
                         missing_text = missing_text + i + ". " + vm.proposal.missing_fields[i].label + '<br>'
                     }
+                    //vm.proposal.missing_fields.forEach(function(field) {
+                        //missing_text = missing_text + field.label + '<br>'
                     //});
                     swal({
                         title: "Required field(s) are missing",
                         html: missing_text,
                         confirmButtonText: 'Submit',
                         type: 'warning',
-                    })
+                    }).then(() => {
+                        //vm.form = document.forms.new_proposal;
+                        //vm.$router.go();
+                        this.highlight_missing_fields(vm.proposal.missing_fields);
+                        //this.proposal = vm.proposal;
+
+                        vm.$router.push({
+                            name: 'draft_proposal',
+                            params: { proposal_id:vm.proposal.id}
+                            //params: { proposal: vm.proposal} 
+                        });
+
+                    });
                 } else {
 
                     vm.$router.push({

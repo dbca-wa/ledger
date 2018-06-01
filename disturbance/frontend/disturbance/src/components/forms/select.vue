@@ -1,7 +1,7 @@
 <template lang="html">
     <div>
         <div class="form-group">
-            <label>{{ label }}</label>
+            <label :id="id">{{ label }}</label>
 
        
             <template v-if="help_text">
@@ -66,6 +66,7 @@ export default {
     props:{
         'name':String,
         'label':String,
+        'id': String,
         'help_text':String,
         'help_text_assessor':String,
         "value":[String,Array],

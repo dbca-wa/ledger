@@ -2,7 +2,7 @@
     <div>
         <div class="form-group">
 
-            <label>{{label}}</label>
+            <label :id="id">{{label}}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
@@ -44,6 +44,7 @@ export default {
         proposal_id: null,
         name:String,
         label:String,
+        id:String,
         comment_value: String,
         assessor_readonly: Boolean,
         help_text:String,
