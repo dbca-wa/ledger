@@ -27,10 +27,100 @@ def search(dictionary, search_list):
     result = []
     flat_dict = flatten(dictionary)
     for k, v in flat_dict.iteritems():
-        if all(x in v for x in search_list):
+        if any(x in v for x in search_list):
             result.append( {k: v} )
 
     return result
+
+def search_approval(approval, searchWords):
+    qs=[] 
+    a = approval
+    if a.surrender_details:
+        try:
+            results = search(a.surrender_details, searchWords)
+            if results:
+                res = {
+                    'number': a.lodgement_number,
+                    'id': a.id,
+                    'type': 'Approval',
+                    'applicant': a.applicant.name,
+                    'text': results,
+                    }
+                qs.append(res)
+        except:
+            raise
+    if a.suspension_details:
+        try:
+            results = search(a.suspension_details, searchWords)
+            if results:
+                res = {
+                    'number': a.lodgement_number,
+                    'id': a.id,
+                    'type': 'Approval',
+                    'applicant': a.applicant.name,
+                    'text': results,
+                    }
+                qs.append(res)
+        except:
+            raise
+    if a.cancellation_details:
+        try: 
+            found = False
+            for s in searchWords:
+                if s in a.cancellation_details:
+                    found = True
+            if found:
+                res = {
+                    'number': a.lodgement_number,
+                    'id': a.id,
+                    'type': 'Approval',
+                    'applicant': a.applicant.name,
+                    'text': a.cancellation_details,
+                    }
+                qs.append(res)
+        except:
+            raise       
+    return qs
+
+def search_compliance(compliance, searchWords):
+    qs=[] 
+    c = compliance
+    if c.text:
+        try: 
+            found = False
+            for s in searchWords:
+                if s in c.text:
+                    found = True
+            if found:
+                res = {
+                    'number': c.reference,
+                    'id': c.id,
+                    'type': 'Compliance',
+                    'applicant': c.proposal.applicant.name,
+                    'text': c.text,
+                    }
+                qs.append(res)
+        except:
+            raise 
+    if c.requirement:
+        try: 
+            found = False
+            for s in searchWords:
+                if s in c.requirement.requirement:
+                    found = True
+            if found:
+                res = {
+                    'number': c.reference,
+                    'id': c.id,
+                    'type': 'Compliance',
+                    'applicant': c.proposal.applicant.name,
+                    'text': c.requirement.requirement,
+                    }
+                qs.append(res)
+        except:
+            raise 
+    return qs
+
 
 def create_helppage_object(application_type='Disturbance'):
 	"""

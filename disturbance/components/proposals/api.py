@@ -28,6 +28,7 @@ from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from disturbance.components.proposals.utils import save_proponent_data,save_assessor_data
+from disturbance.components.proposals.models import searchKeyWords, search_reference
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from disturbance.components.main.models import Document, Region, District, Tenure, ApplicationType
@@ -58,6 +59,7 @@ from disturbance.components.proposals.serializers import (
     ProposedApprovalSerializer,
     PropedDeclineSerializer,
     AmendmentRequestSerializer,
+    SearchReferenceSerializer,   
     
 )
 
@@ -837,3 +839,43 @@ class AmendmentRequestReasonChoicesView(views.APIView):
                 choices_list.append({'key': c[0],'value': c[1]})
        
         return Response(choices_list)
+
+class SearchKeywordsView(views.APIView):    
+    renderer_classes = [JSONRenderer,]
+    def post(self,request, format=None):
+        qs = []
+        searchWords = request.data.get('searchKeywords')
+        searchProposal = request.data.get('searchProposal')
+        searchApproval = request.data.get('searchApproval')
+        searchCompliance = request.data.get('searchCompliance')
+        if searchWords:
+            qs= searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance)
+        #queryset = list(set(qs))
+        serializer = SearchKeywordSerializer(qs, many=True)
+        return Response(serializer.data)
+
+class SearchReferenceView(views.APIView):    
+    renderer_classes = [JSONRenderer,]
+    def post(self,request, format=None):
+        try:
+            qs = []
+            reference_number = request.data.get('reference_number')
+            if reference_number:
+                qs= search_reference(reference_number)
+            #queryset = list(set(qs))
+            serializer = SearchReferenceSerializer(qs)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+

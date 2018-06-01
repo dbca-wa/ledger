@@ -390,3 +390,14 @@ class AmendmentRequestSerializer(serializers.ModelSerializer):
     
     def get_reason (self,obj):
         return obj.get_reason_display()
+
+class SearchKeywordSerializer(serializers.Serializer):
+    number = serializers.CharField()
+    id = serializers.IntegerField()
+    type = serializers.CharField()
+    applicant = serializers.CharField()
+    text = serializers.CharField(required=False,allow_null=True)
+
+class SearchReferenceSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    type = serializers.CharField()

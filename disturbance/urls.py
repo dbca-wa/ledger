@@ -43,7 +43,8 @@ api_patterns = [
     url(r'^api/',include(router.urls)),
     url(r'^api/amendment_request_reason_choices',proposal_api.AmendmentRequestReasonChoicesView.as_view(),name='amendment_request_reason_choices'),
     url(r'^api/compliance_amendment_reason_choices',compliances_api.ComplianceAmendmentReasonChoicesView.as_view(),name='amendment_request_reason_choices'),
-
+    url(r'^api/search_keywords',proposal_api.SearchKeywordsView.as_view(),name='search_keywords'),
+    url(r'^api/search_reference',proposal_api.SearchReferenceView.as_view(),name='search_reference'),
 ]
 
 # URL Patterns
