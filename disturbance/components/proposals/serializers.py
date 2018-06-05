@@ -116,6 +116,21 @@ class DTProposalSerializer(BaseProposalSerializer):
     #activity = serializers.CharField(source='activity.name', read_only=True)
     tenure = serializers.CharField(source='tenure.name', read_only=True)
 
+class DTProposalSerializer22(BaseProposalSerializer):
+    submitter = EmailUserSerializer()
+    applicant = serializers.CharField(source='applicant.organisation.name')
+    processing_status = serializers.SerializerMethodField(read_only=True)
+    review_status = serializers.SerializerMethodField(read_only=True)
+    customer_status = serializers.SerializerMethodField(read_only=True)
+    assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
+
+    application_type = serializers.CharField(source='application_type.name', read_only=True)
+    region = serializers.CharField(source='region.name', read_only=True)
+    district = serializers.CharField(source='district.name', read_only=True)
+    #activity = serializers.CharField(source='activity.name', read_only=True)
+    tenure = serializers.CharField(source='tenure.name', read_only=True)
+
+
 class ProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
     processing_status = serializers.SerializerMethodField(read_only=True)
