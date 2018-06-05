@@ -86,9 +86,9 @@ class ProposalAssessorGroup(models.Model):
             default = None
 
         if self.pk:
-            if int(self.pk) != int(default.id):
-                if default and self.default:
-                    raise ValidationError('There can only be one default proposal assessor group')
+            #if int(self.pk) != int(default.id):
+            if default and not self.default:
+                raise ValidationError('There can only be one default proposal assessor group')
         else:
             if default and self.default:
                 raise ValidationError('There can only be one default proposal assessor group')
@@ -432,6 +432,7 @@ class Proposal(RevisionedMixin):
             'title': 'Title',
             'activity': 'Activity'
         }
+        #import ipdb; ipdb.set_trace()
         for k,v in required_fields.items():
             val = getattr(self,k)
             if not val:
@@ -1390,12 +1391,20 @@ def search_reference(reference_number):
 
 from ckeditor.fields import RichTextField
 class HelpPage(models.Model):
+    HELP_TEXT_EXTERNAL = 1
+    HELP_TEXT_INTERNAL = 2
+    HELP_TYPE_CHOICES = (
+        (HELP_TEXT_EXTERNAL, 'External'),
+        (HELP_TEXT_INTERNAL, 'Internal'), 
+    )
+    
     application_type = models.ForeignKey(ApplicationType)
     content = RichTextField()
     description = models.CharField(max_length=256, blank=True, null=True)
+    help_type = models.SmallIntegerField('Help Type', max_length=40, choices=HELP_TYPE_CHOICES, default=HELP_TEXT_EXTERNAL)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
 
     class Meta:
         app_label = 'disturbance'
-        unique_together = ('application_type', 'version')
+        unique_together = ('application_type', 'help_type', 'version')
 

@@ -1,7 +1,7 @@
 <template lang="html">
     <div>
         <div class="form-group">
-            <label for="label" >{{ label }}</label>
+            <label :id="id" for="label" >{{ label }}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
@@ -15,7 +15,7 @@
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
-            <input :readonly="readonly" :type="type" class="form-control" :name="name" :value="value" />
+            <input :readonly="readonly" :type="type" class="form-control" :name="name" :value="value" :required="isRequired" />
         </div>
         <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
     </div>
@@ -25,7 +25,7 @@
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 export default {
-    props:["type","name","comment_value","value","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly"],
+    props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly"],
     components: {Comment, HelpText},
     data(){
         let vm = this;

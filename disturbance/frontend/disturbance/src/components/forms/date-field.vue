@@ -1,7 +1,7 @@
 <template lang="html">
     <div>
         <div class="form-group">
-            <label>{{ label }}</label>
+            <label :id="id">{{ label }}</label>
             
             <template v-if="help_text">
                 
@@ -21,7 +21,7 @@
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
             <div class='input-group date'>
-                <input :readonly="readonly" :name="name" class="form-control" placeholder="DD/MM/YYYY" :value="value"/>
+                <input :readonly="readonly" :name="name" class="form-control" placeholder="DD/MM/YYYY" :value="value" :required="isRequired"/>
                 <span class="input-group-addon">
                     <span class="glyphicon glyphicon-calendar"></span>
                 </span>
@@ -37,7 +37,7 @@ import datetimepicker from 'datetimepicker'
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 export default {
-    props: ['name', 'label', 'readonly', 'help_text', 'help_text_assessor', 'assessorMode', 'value', 'conditions', "handleChange","comment_value","assessor_readonly"],
+    props: ['name', 'label', 'id', 'readonly', 'help_text', 'help_text_assessor', 'assessorMode', 'value', 'conditions', "handleChange","comment_value","assessor_readonly", "isRequired"],
     data(){
         return {
             showingComment: false

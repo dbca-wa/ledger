@@ -29,6 +29,8 @@ def is_customer(user):
     """
     return user.is_authenticated() and not is_officer(user)
 
+def is_internal(user):
+    return is_officer(user) or is_departmentUser(user)
 
 def get_all_officers():
     return EmailUser.objects.filter(groups__name='Disturbance Officers')

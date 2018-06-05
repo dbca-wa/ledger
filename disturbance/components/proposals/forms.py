@@ -13,11 +13,12 @@ class ProposalAssessorGroupAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(ProposalAssessorGroupAdminForm, self).__init__(*args, **kwargs)
         if self.instance:
-            self.fields['members'].queryset = EmailUser.objects.filter(email__icontains='@dbca.wa.gov.au')
+            #self.fields['members'].queryset = EmailUser.objects.filter(email__icontains='@dbca.wa.gov.au')
+            self.fields['members'].queryset = EmailUser.objects.filter(is_staff=True)
 
     def clean(self):
         super(ProposalAssessorGroupAdminForm, self).clean()
-        if self.instance:
+        if self.instance and ProposalAssessorGroup.objects.all().exists():
             original_members = ProposalAssessorGroup.objects.get(id=self.instance.id).members.all()
             current_members = self.cleaned_data.get('members')
             for o in original_members:
@@ -34,7 +35,8 @@ class ProposalApproverGroupAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(ProposalApproverGroupAdminForm, self).__init__(*args, **kwargs)
         if self.instance:
-            self.fields['members'].queryset = EmailUser.objects.filter(email__icontains='@dbca.wa.gov.au')
+            #self.fields['members'].queryset = EmailUser.objects.filter(email__icontains='@dbca.wa.gov.au')
+            self.fields['members'].queryset = EmailUser.objects.filter(is_staff=True)
 
     def clean(self):
         super(ProposalApproverGroupAdminForm, self).clean()
