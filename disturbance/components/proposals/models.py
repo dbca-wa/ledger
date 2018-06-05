@@ -1310,6 +1310,85 @@ def clone_proposal_with_status_reset(proposal):
             except:
                 raise
 
+def searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance, is_internal= True):
+    from disturbance.utils import search, search_approval, search_compliance
+    from disturbance.components.approvals.models import Approval
+    from disturbance.components.compliances.models import Compliance
+    qs = []
+    if is_internal:
+        proposal_list = Proposal.objects.filter(application_type__name='Disturbance').exclude(processing_status__in=['discarded','draft'])
+        approval_list = Approval.objects.all().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+        compliance_list = Compliance.objects.all()
+    if searchWords:
+        if searchProposal:
+            for p in proposal_list:
+                if p.data:
+                    try:
+                        results = search(p.data[0], searchWords)
+                        if results:
+                            res = {
+                                'number': p.lodgement_number,
+                                'id': p.id,
+                                'type': 'Proposal',
+                                'applicant': p.applicant.name,
+                                'text': results,
+                                }
+                            qs.append(res)
+                    except:
+                        raise 
+        if searchApproval:
+            for a in approval_list:
+                try:
+                    results = search_approval(a, searchWords)
+                    qs.extend(results)
+                except:
+                    raise
+        if searchCompliance:
+            for c in compliance_list:
+                try:
+                    results = search_compliance(c, searchWords)
+                    qs.extend(results)
+                    print results
+                except:
+                    raise
+    return qs
+
+def search_reference(reference_number):
+    from disturbance.components.approvals.models import Approval
+    from disturbance.components.compliances.models import Compliance
+    proposal_list = Proposal.objects.all().exclude(processing_status__in=['discarded'])
+    approval_list = Approval.objects.all().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+    compliance_list = Compliance.objects.all().exclude(processing_status__in=['future'])
+    record = {}
+    try:
+        result = proposal_list.get(lodgement_number = reference_number)
+        record = {  'id': result.id,
+                    'type': 'proposal' }
+    except Proposal.DoesNotExist:
+        try: 
+            result = approval_list.get(lodgement_number = reference_number)
+            record = {  'id': result.id,
+                        'type': 'approval' }
+        except Approval.DoesNotExist:
+            try:
+                for c in compliance_list:
+                    if c.reference == reference_number:
+                        record = {  'id': c.id,
+                                    'type': 'compliance' }
+            except:
+                raise ValidationError('Record with provided reference number does not exist')
+    if record:
+        return record
+    else:
+        raise ValidationError('Record with provided reference number does not exist')
+
+
+
+
+
+               
+
+
 from ckeditor.fields import RichTextField
 class HelpPage(models.Model):
     HELP_TEXT_EXTERNAL = 1

@@ -646,11 +646,13 @@ class Migration(migrations.Migration):
             name='proposal',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='compliances', to='disturbance.Proposal'),
         ),
-#        migrations.AddField(
-#            model_name='compliance',
-#            name='requirement',
-#            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='compliance_requirement', to='disturbance.ProposalRequirement'),
-#        ),
+
+        #migrations.AddField(
+        #    model_name='compliance',
+        #    name='requirement',
+        #    field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='compliance_requirement', to='disturbance.ProposalRequirement'),
+        #),
+
         migrations.AddField(
             model_name='compliance',
             name='submitter',
