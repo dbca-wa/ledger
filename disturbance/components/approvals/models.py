@@ -101,7 +101,7 @@ class Approval(models.Model):
     def save(self, *args, **kwargs):
         super(Approval, self).save(*args,**kwargs)
         if self.lodgement_number == '':
-            new_lodgment_id = 'A{}'.format(self.pk)
+            new_lodgment_id = 'A{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
             self.save()
 

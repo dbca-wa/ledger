@@ -305,7 +305,7 @@ class Proposal(RevisionedMixin):
     def save(self, *args, **kwargs):
         super(Proposal, self).save(*args,**kwargs)
         if self.lodgement_number == '':
-            new_lodgment_id = 'P{}'.format(self.pk)
+            new_lodgment_id = 'P{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
             self.save()
 
