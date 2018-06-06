@@ -14,7 +14,7 @@ from disturbance.components.proposals.models import (
 from disturbance.components.organisations.models import (
                                 Organisation
                             )
-from disturbance.components.main.serializers import CommunicationLogEntrySerializer 
+from disturbance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
 
 class ProposalTypeSerializer(serializers.ModelSerializer):
@@ -40,6 +40,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
     allowed_assessors = EmailUserSerializer(many=True)
+
+    get_history = serializers.ReadOnlyField()
 
 #    def __init__(self, *args, **kwargs):
 #        import ipdb; ipdb.set_trace()
@@ -69,6 +71,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'submitter',
                 'assigned_officer',
                 'previous_application',
+                'get_history',
                 'lodgement_date',
                 'documents',
                 'requirements',
@@ -84,10 +87,10 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'proposal_type'
                 )
         read_only_fields=('documents',)
-    
+
     def get_documents_url(self,obj):
         return '/media/proposals/{}/documents/'.format(obj.id)
-        
+
     def get_readonly(self,obj):
         return False
 
@@ -100,7 +103,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     def get_customer_status(self,obj):
         return obj.get_customer_status_display()
 
-    
+
 
 class DTProposalSerializer(BaseProposalSerializer):
     submitter = EmailUserSerializer()
@@ -144,7 +147,7 @@ class ProposalSerializer(BaseProposalSerializer):
     tenure = serializers.CharField(source='tenure.name', read_only=True)
 
     def get_readonly(self,obj):
-        return obj.can_user_view 
+        return obj.can_user_view
 
 class SaveProposalSerializer(BaseProposalSerializer):
     assessor_data = serializers.JSONField(required=False)
@@ -181,7 +184,7 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'reference',
                 'lodgement_number',
                 'lodgement_sequence',
-                'can_officer_process',               
+                'can_officer_process',
                 )
         read_only_fields=('documents','requirements')
 
@@ -225,7 +228,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     assessor_mode = serializers.SerializerMethodField()
     current_assessor = serializers.SerializerMethodField()
     assessor_data = serializers.SerializerMethodField()
-    latest_referrals = ProposalReferralSerializer(many=True) 
+    latest_referrals = ProposalReferralSerializer(many=True)
     allowed_assessors = EmailUserSerializer(many=True)
 
     application_type = serializers.CharField(source='application_type.name', read_only=True)
@@ -288,13 +291,13 @@ class InternalProposalSerializer(BaseProposalSerializer):
         return {
             'assessor_mode': True,
             'has_assessor_mode': obj.has_assessor_mode(user),
-            'assessor_can_assess': obj.can_assess(user), 
+            'assessor_can_assess': obj.can_assess(user),
             'assessor_level': 'assessor'
         }
 
     def get_readonly(self,obj):
         return True
-    
+
     def get_current_assessor(self,obj):
         return {
             'id': self.context['request'].user.id,
@@ -316,7 +319,7 @@ class ReferralProposalSerializer(InternalProposalSerializer):
             referral = None
         return {
             'assessor_mode': True,
-            'assessor_can_assess': referral.can_assess_referral(user) if referral else None, 
+            'assessor_can_assess': referral.can_assess_referral(user) if referral else None,
             'assessor_level': 'referral'
         }
 
@@ -376,7 +379,7 @@ class DTReferralSerializer(serializers.ModelSerializer):
             'referral',
             'proposal_lodgement_date',
             'proposal_lodgement_number'
-        ) 
+        )
 
     def get_submitter(self,obj):
         return EmailUserSerializer(obj.proposal.submitter).data
@@ -409,7 +412,7 @@ class AmendmentRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = AmendmentRequest
         fields = '__all__'
-    
+
     def get_reason (self,obj):
         return obj.get_reason_display()
 
