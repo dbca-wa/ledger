@@ -34,7 +34,7 @@ def search(dictionary, search_list):
     return result
 
 def search_approval(approval, searchWords):
-    qs=[] 
+    qs=[]
     a = approval
     if a.surrender_details:
         try:
@@ -65,7 +65,7 @@ def search_approval(approval, searchWords):
         except:
             raise
     if a.cancellation_details:
-        try: 
+        try:
             found = False
             for s in searchWords:
                 if s in a.cancellation_details:
@@ -80,14 +80,14 @@ def search_approval(approval, searchWords):
                     }
                 qs.append(res)
         except:
-            raise       
+            raise
     return qs
 
 def search_compliance(compliance, searchWords):
-    qs=[] 
+    qs=[]
     c = compliance
     if c.text:
-        try: 
+        try:
             found = False
             for s in searchWords:
                 if s in c.text:
@@ -102,9 +102,9 @@ def search_compliance(compliance, searchWords):
                     }
                 qs.append(res)
         except:
-            raise 
+            raise
     if c.requirement:
-        try: 
+        try:
             found = False
             for s in searchWords:
                 if s in c.requirement.requirement:
@@ -119,7 +119,7 @@ def search_compliance(compliance, searchWords):
                     }
                 qs.append(res)
         except:
-            raise 
+            raise
     return qs
 
 
@@ -352,5 +352,4 @@ def flatten(old_data, new_data=None, parent_key='', sep='.', width=4):
             raise AttributeError("key {} is already used".format(parent_key))
 
     return new_data
-
 

@@ -21,8 +21,7 @@ from disturbance.components.main.models import CommunicationsLogEntry, UserActio
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
-
-
+import copy
 
 
 def update_proposal_doc_filename(instance, filename):
@@ -312,6 +311,26 @@ class Proposal(RevisionedMixin):
     @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
+
+    @property
+    def get_history(self):
+        """ Return the prev proposal versions """
+        l = []
+        p = copy.deepcopy(self)
+        while (p.previous_application):
+            l.append( p.previous_application.id )
+            p = p.previous_application
+        return l
+
+
+    def _get_history(self):
+        """ Return the prev proposal versions """
+        l = []
+        p = copy.deepcopy(self)
+        while (p.previous_application):
+            l.append( [p.id, p.previous_application.id] )
+            p = p.previous_application
+        return l
 
     @property
     def is_assigned(self):
@@ -783,7 +802,7 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
-    
+
 
     '''def generate_compliances(self,approval):
         from disturbance.components.compliances.models import Compliance
@@ -817,7 +836,7 @@ class Proposal(RevisionedMixin):
                         #TODO add logging for compliance'''
 
 
-    def generate_compliances(self,approval, request):        
+    def generate_compliances(self,approval, request):
         today = timezone.now().date()
         timedelta = datetime.timedelta
         from disturbance.components.compliances.models import Compliance, ComplianceUserAction
@@ -1335,7 +1354,7 @@ def searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance
                                 }
                             qs.append(res)
                     except:
-                        raise 
+                        raise
         if searchApproval:
             for a in approval_list:
                 try:
@@ -1365,7 +1384,7 @@ def search_reference(reference_number):
         record = {  'id': result.id,
                     'type': 'proposal' }
     except Proposal.DoesNotExist:
-        try: 
+        try:
             result = approval_list.get(lodgement_number = reference_number)
             record = {  'id': result.id,
                         'type': 'approval' }
@@ -1386,7 +1405,7 @@ def search_reference(reference_number):
 
 
 
-               
+
 
 
 from ckeditor.fields import RichTextField
@@ -1395,9 +1414,9 @@ class HelpPage(models.Model):
     HELP_TEXT_INTERNAL = 2
     HELP_TYPE_CHOICES = (
         (HELP_TEXT_EXTERNAL, 'External'),
-        (HELP_TEXT_INTERNAL, 'Internal'), 
+        (HELP_TEXT_INTERNAL, 'Internal'),
     )
-    
+
     application_type = models.ForeignKey(ApplicationType)
     content = RichTextField()
     description = models.CharField(max_length=256, blank=True, null=True)
