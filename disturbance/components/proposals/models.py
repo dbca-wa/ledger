@@ -448,8 +448,8 @@ class Proposal(RevisionedMixin):
         missing_fields = []
         required_fields = {
             #'region':'Region/District',
-            'title': 'Title',
-            'activity': 'Activity'
+            #'title': 'Title',
+            #'activity': 'Activity'
         }
         #import ipdb; ipdb.set_trace()
         for k,v in required_fields.items():
@@ -1420,7 +1420,7 @@ class HelpPage(models.Model):
     application_type = models.ForeignKey(ApplicationType)
     content = RichTextField()
     description = models.CharField(max_length=256, blank=True, null=True)
-    help_type = models.SmallIntegerField('Help Type', max_length=40, choices=HELP_TYPE_CHOICES, default=HELP_TEXT_EXTERNAL)
+    help_type = models.SmallIntegerField('Help Type', choices=HELP_TYPE_CHOICES, default=HELP_TEXT_EXTERNAL)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
 
     class Meta:

@@ -144,10 +144,10 @@ class AssessorDataSearch(object):
                 item_data = self.generate_item_data_special_field(extended_item_name, item, item_data, post_data, file_data,1,suffix)
 
 
-        if 'conditions' in item:
-            for condition in item['conditions'].keys():
-                for child in item['conditions'][condition]:
-                    item_data.update(self.extract_special_fields(child, post_data, file_data, repetition, suffix))
+            if 'conditions' in item:
+                for condition in item['conditions'].keys():
+                    for child in item['conditions'][condition]:
+                        item_data.update(self.extract_special_fields(child, post_data, file_data, repetition, suffix))
 
         return item_data
 
