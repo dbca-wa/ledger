@@ -250,7 +250,6 @@ export default {
           {
             vm.searchKeywords.push(vm.keyWord);
           }
-          console.log(vm.searchApproval, vm.searchProposal, vm.searchCompliance);
         },
         removeKeyword: function(index) {
           let vm = this;

@@ -116,6 +116,50 @@ class DTProposalSerializer(BaseProposalSerializer):
     #activity = serializers.CharField(source='activity.name', read_only=True)
     tenure = serializers.CharField(source='tenure.name', read_only=True)
 
+class ListProposalSerializer(BaseProposalSerializer):
+    submitter = EmailUserSerializer()
+    applicant = serializers.CharField(source='applicant.organisation.name')
+    processing_status = serializers.SerializerMethodField(read_only=True)
+    review_status = serializers.SerializerMethodField(read_only=True)
+    customer_status = serializers.SerializerMethodField(read_only=True)
+    assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
+
+    application_type = serializers.CharField(source='application_type.name', read_only=True)
+    region = serializers.CharField(source='region.name', read_only=True)
+    district = serializers.CharField(source='district.name', read_only=True)
+    #activity = serializers.CharField(source='activity.name', read_only=True)
+    tenure = serializers.CharField(source='tenure.name', read_only=True)
+
+    class Meta:
+        model = Proposal
+        fields = (
+                'id',
+                'application_type',
+                'activity',
+                'title',
+                'region',
+                'district',
+                'tenure',
+                'customer_status',
+                'processing_status',
+                'review_status',
+                'applicant',
+                'proxy_applicant',
+                'submitter',
+                'assigned_officer',
+                'previous_application',
+                'lodgement_date',
+                'readonly',
+                'can_user_edit',
+                'can_user_view',
+                'reference',
+                'lodgement_number',
+                'lodgement_sequence',
+                'can_officer_process',
+                'allowed_assessors',
+                'proposal_type'
+                )
+
 class ProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
     processing_status = serializers.SerializerMethodField(read_only=True)

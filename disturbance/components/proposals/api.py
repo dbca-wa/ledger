@@ -61,7 +61,9 @@ from disturbance.components.proposals.serializers import (
     ProposedApprovalSerializer,
     PropedDeclineSerializer,
     AmendmentRequestSerializer,
-    SearchReferenceSerializer,   
+    SearchReferenceSerializer,  
+    SearchKeywordSerializer,
+    ListProposalSerializer
 )
 from disturbance.helpers import is_customer, is_internal
 
@@ -106,7 +108,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
         #queryset = self.get_queryset()
         #serializer = DTProposalSerializer(queryset, many=True)
         #import ipdb; ipdb.set_trace()
-        serializer = DTProposalSerializer(self.get_queryset(), many=True)
+        #serializer = DTProposalSerializer(self.get_queryset(), many=True)
+        serializer = ListProposalSerializer(self.get_queryset(), many=True)
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])
@@ -226,7 +229,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
         qs = self.get_queryset().exclude(processing_status='discarded')
-        serializer = DTProposalSerializer(qs, many=True)
+        #serializer = DTProposalSerializer(qs, many=True)
+        serializer = ListProposalSerializer(qs, many=True)
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])
