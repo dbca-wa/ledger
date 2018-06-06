@@ -499,32 +499,50 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                     rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
                 else:
                     rate_list[c['rate']['campsite']][c['rate']['id']]['end'] = c['date']
+
+    if len(campsite_list) > 1: # check if this is a multibook
+        # Get the cheapest campsite (based on adult rate) to be used
+        # for the whole booking period, using the first rate as default
+        # Set initial campsite and rate to first in rate_list
+        multibook_rate = rate_list.items()[0][1].items()[0][1]
+        multibook_rate_adult = Decimal(multibook_rate['adult'])
+        multibook_campsite = rate_list.items()[0][0]
+        multibook_index = 1
+        for campsite, ratelist in rate_list.items():
+            for index, rate in ratelist.items():
+                if Decimal(rate['adult']) < multibook_rate_adult:
+                    multibook_rate = rate
+                    multibook_rate_adult = Decimal(multibook_rate['adult'])
+                    multibook_campsite = campsite
+                    multibook_index = index
+        rate_list = {multibook_campsite: {multibook_index:multibook_rate}}
     # Get Guest Details
     guests = {}
     for k,v in booking.details.items():
         if 'num_' in k:
             guests[k.split('num_')[1]] = v
-    for k,v in guests.items():
-        if int(v) > 0:
-            for c,p in rate_list.items():
-                for i,r in p.items():
+    for guest_type, guest_count in guests.items():
+        if int(guest_count) > 0:
+            for campsite_id, price_periods in rate_list.items():
+                for index, rate in price_periods.items():
+                    # for each price period, add the cost per night
                     price = Decimal(0)
-                    end = datetime.strptime(r['end'],"%Y-%m-%d").date()
-                    start = datetime.strptime(r['start'],"%Y-%m-%d").date()
+                    end = datetime.strptime(rate['end'],"%Y-%m-%d").date()
+                    start = datetime.strptime(rate['start'],"%Y-%m-%d").date()
                     num_days = int ((end - start).days) + 1
-                    campsite = Campsite.objects.get(id=c)
+                    campsite = Campsite.objects.get(id=campsite_id)
                     if lines:
-                        price = str((num_days * Decimal(r[k])))
+                        price = str((num_days * Decimal(rate[guest_type])))
                         if not booking.campground.oracle_code:
                             raise Exception('The campground selected does not have an Oracle code attached to it.')
                         end_date = end + timedelta(days=1)
                         invoice_lines.append({
-                            'ledger_description':'Camping fee {} - {} night(s)'.format(k, num_days),
-                            "quantity":v,
+                            'ledger_description':'Camping fee {} - {} night(s)'.format(guest_type, num_days),
+                            "quantity":guest_count,
                             "price_incl_tax":price,
                             "oracle_code":booking.campground.oracle_code})
                     else:
-                        price = (num_days * Decimal(r[k])) * v
+                        price = (num_days * Decimal(rate[guest_type])) * guest_count
                         total_price += price
     # Create line items for vehicles
     if lines:

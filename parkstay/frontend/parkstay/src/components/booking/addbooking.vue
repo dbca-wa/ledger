@@ -81,7 +81,7 @@
                                             <tr>
                                                 <th class="form-group">Campsite</th>
                                                 <th >Sites to book
-                                                    <input class="checkbox" type="checkbox" id="selectAll"  v-model="selectAll" @change="updatePrices2()"> 
+                                                    <input class="checkbox" type="checkbox" id="selectAll"  v-model="selectAll"> 
                                                 </th>
                                             </tr>
                                         </thead>
@@ -89,7 +89,7 @@
                                                 <tr>
                                                     <td class="form-group"> {{campsite.name}} - {{campsite.type}}</td>
                                                     <td>
-                                                        <input class="checkbox" type="checkbox" :value="campsite.id" v-model="campsite.is_selected" @change="updatePrices()">
+                                                        <input class="checkbox" type="checkbox" :value="campsite.id" v-model="multibook_selected" @change="updatePrices()" number>
                                                     </td>                                              
                                                 </tr></template>
                                             </tbody>
@@ -475,7 +475,8 @@ export default {
             booking_types:{
                 CAMPSITE: "campsite",
                 CLASS:"class"
-            }
+            },
+			multibook_selected:[]
         };
     },
     components:{
@@ -493,23 +494,38 @@ export default {
             vm.booking.parkEntry.vehicles = entries;
             return entries;
         },
+        selectAll:{
+            get: function () {
+				let vm = this;
+                return vm.booking.campsites ? vm.multibook_selected.length == vm.booking.campsites.length : false;
+            },
+            set: function (value) {
+				let vm = this;
+                var selected = [];
+
+                if (value) {
+                    vm.booking.campsites.forEach(function (campsite) {
+                        selected.push(campsite.id);
+                    });
+                }
+
+                vm.multibook_selected = selected;
+				vm.updatePrices();
+            }
+        },
         selected_campsites: function () {
             let vm = this;
+            var results = [];
             if (vm.booking_type == vm.booking_types.CAMPSITE) {
-                return vm.booking.campsites.filter(function (el) {
-                    return el.is_selected;
-                }).map(function (el) {
-                    return el.id
-                });
-            }else{
-                var results = [];
+				results = vm.multibook_selected;
+            } else {
                 vm.booking.campsite_classes.forEach(function (el) {
                     for (var i=0; i<el.selected_campsite_class; i++) {
                         results.push(el.campsites[i]);
                     }
                 });
-                return results;
             }
+            return results;
         }
     },
     filters: {
@@ -573,7 +589,6 @@ export default {
         updatePrices:function () {
             let vm = this;
             vm.booking.price = 0;
-            console.log(vm.selected_campsites)
             var campsite_ids = vm.selected_campsites;
             if (vm.selected_campsite) {
                 if (vm.booking.arrival && vm.booking.departure) {
@@ -597,16 +612,6 @@ export default {
                     });
                 }
             }
-        },
-        updatePrices2:function (){
-            let vm=this;
-            var campsite_ids = [];
-            vm.booking.campsites.forEach(function (value) {
-                vm.selected_campsites.push(value.id);
-                value.is_selected = true;
-            });
-            console.log(vm.selected_campsites);
-            vm.updatePrices();           
         },
         fetchCountries:function (){
             let vm =this;
