@@ -47,18 +47,54 @@ class ApplicationType(models.Model):
     def __str__(self):
         return self.name
  
-#@python_2_unicode_compatible
-#class Activity(models.Model):
-#    name = models.CharField(max_length=255, unique=True)
-#    order = models.PositiveSmallIntegerField(default=0)
-#    application_type = models.ForeignKey(ApplicationType, related_name='activity_app_types')
-#
-#    class Meta:
-#        ordering = ['order', 'name']
-#        app_label = 'disturbance'
-#
-#    def __str__(self):
-#        return '{}: {}'.format(self.name, self.application_type)
+@python_2_unicode_compatible
+class Activity(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    order = models.PositiveSmallIntegerField(default=0)
+    application_type = models.ForeignKey(ApplicationType, related_name='activity_app_types')
+
+    class Meta:
+        ordering = ['order', 'name']
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return '{}: {}'.format(self.name, self.application_type)
+
+@python_2_unicode_compatible
+class SubActivityLevel1(models.Model):
+    activity = models.ForeignKey(Activity, related_name='activities')
+    name = models.CharField(max_length=200, unique=True)
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
+class SubActivityLevel2(models.Model):
+    sub_activity_1 = models.ForeignKey(SubActivityLevel1, related_name='sub_activities_1')
+    name = models.CharField(max_length=200, unique=True)
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
+class SubCategory(models.Model):
+    sub_activity_2 = models.ForeignKey(SubActivityLevel2, related_name='sub_activities_2')
+    name = models.CharField(max_length=200, unique=True)
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return self.name
 
 @python_2_unicode_compatible
 class Tenure(models.Model):

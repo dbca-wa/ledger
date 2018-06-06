@@ -2,6 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from disturbance.components.proposals import models
 from disturbance.components.proposals import forms
+from disturbance.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
 from django.template.response import TemplateResponse
@@ -96,6 +97,23 @@ def get_urls():
                  admin.site.admin_view(MyCustomView.as_view()))
         ]
     return urls
+
+
+@admin.register(Activity)
+class ActivityAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(SubActivityLevel1)
+class SubActivityLevel1Admin(admin.ModelAdmin):
+    pass
+
+@admin.register(SubActivityLevel2)
+class SubActivityLevel2Admin(admin.ModelAdmin):
+    pass
+
+@admin.register(SubCategory)
+class SubCategoryAdmin(admin.ModelAdmin):
+    pass
 
 admin.site.get_urls = get_urls
 
