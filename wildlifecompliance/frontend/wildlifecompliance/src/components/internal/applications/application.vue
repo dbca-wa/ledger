@@ -321,7 +321,7 @@
                             </div>
                             <div class="panel-body panel-collapse collapse" :id="checksBody">
                                 <div class="row">
-                                    <div class="col-sm-4">ID Check {{this.application.id_check_status}}</div>
+                                    <div class="col-sm-4">ID Check</div>
                                     <div class="col-sm-4">
                                         <button v-if="!isIdCheckAccepted || isIdCheckRequested" class="btn btn-primary" @click.prevent="acceptIdRequest()">Accept</button>
                                         <button v-if="isIdCheckAccepted" disabled class="btn btn-primary">Accepted</button>
@@ -335,7 +335,7 @@
                                     <div class="col-sm-4">Character Check</div>
                                     <div class="col-sm-4">
                                         <button v-if="!isCharacterCheckAccepted" class="btn btn-primary" @click.prevent="acceptCharacterRequest()">Accept</button>
-                                        <button v-if="isCharacterCheckAccepted" class="btn btn-primary">Accept</button>
+                                        <button v-if="isCharacterCheckAccepted" disabled class="btn btn-primary">Accepted</button>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -518,7 +518,7 @@ export default {
         },
         isCharacterCheckAccepted: function(){
             console.log(this.application.id_check_status)
-            return this.application.id_check_status == 'Accepted';
+            return this.application.character_check_status == 'Accepted';
         },
         canAction: function(){
             if (this.application.processing_status == 'With Approver'){

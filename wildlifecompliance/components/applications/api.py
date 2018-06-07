@@ -236,10 +236,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-            
 
-
-@detail_route(methods=['POST',])
+    @detail_route(methods=['POST',])
     def accept_character_check(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -255,7 +253,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-            
+
 
 
 

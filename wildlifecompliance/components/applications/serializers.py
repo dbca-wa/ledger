@@ -41,6 +41,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
 class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
+    character_check_status = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Application
         fields = (
@@ -66,7 +67,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'can_user_edit',
                 'can_user_view',
                 'documents_url',
-                'id_check_status'
+                'id_check_status',
+                'character_check_status'
                 )
         read_only_fields=('documents',)
     
@@ -81,6 +83,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_id_check_status(self,obj):
         return obj.get_id_check_status_display()
+
+    def get_character_check_status(self,obj):
+        return obj.get_character_check_status_display()
 
     def get_review_status(self,obj):
         return obj.get_review_status_display()

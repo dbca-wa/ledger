@@ -422,26 +422,26 @@ class Application(RevisionedMixin):
             self.id_check_status = 'accepted'
             self.save()
             # Create a log entry for the application
-            self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
             # Create a log entry for the organisation
-            self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
             
     def update_id_check(self,request):
             self.id_check_status = 'awaiting_update'
             self.save()
             # Create a log entry for the application
-            self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            self.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
             # Create a log entry for the organisation
-            self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            self.applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
 
 
     def accept_character_check(self,request):
-            self.character_check_status = 'accept'
+            self.character_check_status = 'accepted'
             self.save()
             # Create a log entry for the application
-            self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
             # Create a log entry for the organisation
-            self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)        
+            self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)        
 
 
     def send_referral(self,request,referral_email):
