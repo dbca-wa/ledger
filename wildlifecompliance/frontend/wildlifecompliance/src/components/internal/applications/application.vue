@@ -43,7 +43,7 @@
                                 <strong>Status</strong><br/>
                                 {{ application.processing_status }}
                             </div>
-                            <div class="col-sm-12">
+                            <!-- <div class="col-sm-12">
                                 <div class="separator"></div>
                             </div>
                             <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'">
@@ -92,7 +92,7 @@
                                 <div class="col-sm-12">
                                     <div class="separator"></div>
                                 </div>
-                            </template>
+                            </template> -->
                             <div v-if="!isFinalised" class="col-sm-12 top-buffer-s">
                                 <strong>Currently assigned to</strong><br/>
                                 <div class="form-group">
@@ -320,9 +320,30 @@
 
                             </div>
                             <div class="panel-body panel-collapse collapse" :id="checksBody">
-                                <div><h7>ID Check</h7><button class="btn btn-primary">Accept</button><button class="btn btn-primary">Request Update</button></div>
-                                <div><h7>Character Check</h7><button class="btn btn-primary">Accept</button></div>
-                                <div><h7>Returns Check</h7><button class="btn btn-primary">Request Completion</button></div>
+                                <div class="row">
+                                    <div class="col-sm-4">ID Check {{this.application.id_check_status}}</div>
+                                    <div class="col-sm-4">
+                                        <button v-if="!isIdCheckAccepted || isIdCheckRequested" class="btn btn-primary" @click.prevent="acceptIdRequest()">Accept</button>
+                                        <button v-if="isIdCheckAccepted" disabled class="btn btn-primary">Accepted</button>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <button v-if="!isIdCheckAccepted || !isIdCheckRequested" class="btn btn-primary" @click.prevent="updateIdRequest()">Request Update</button>
+                                        <button v-if="isIdCheckRequested" disabled class="btn btn-primary">Update Requested</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-4">Character Check</div>
+                                    <div class="col-sm-4">
+                                        <button v-if="!isCharacterCheckAccepted" class="btn btn-primary" @click.prevent="acceptCharacterRequest()">Accept</button>
+                                        <button v-if="isCharacterCheckAccepted" class="btn btn-primary">Accept</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-4">Returns Check</div>
+                                    <div class="col-sm-4">
+                                        <button v-if="isCharacterCheckAccepted" class="btn btn-primary">Request Completion</button>
+                                    </div>
+                                </div>
                             </div>
 
 
@@ -332,7 +353,7 @@
 
                     </div>
                 </div>
-                <div :id="applicationTab" class="tab-pane fade in active">
+                <div :id="applicationTab" class="tab-pane fade">
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
@@ -487,6 +508,18 @@ export default {
         hasAssessorMode:function(){
             return this.application && this.application.assessor_mode.has_assessor_mode ? true : false;
         },
+        isIdCheckAccepted: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Accepted';
+        },
+        isIdCheckRequested: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Awaiting Update';
+        },
+        isCharacterCheckAccepted: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Accepted';
+        },
         canAction: function(){
             if (this.application.processing_status == 'With Approver'){
                 return this.application && (this.application.processing_status == 'With Approver' || this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_approver || this.application.assigned_approver == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
@@ -535,6 +568,72 @@ export default {
         declineApplication:function(){
             this.$refs.proposed_decline.decline = helpers.copyObject(this.application.applicationdeclineddetails);
             this.$refs.proposed_decline.isModalOpen = true;
+        },
+        acceptIdRequest: function() {
+            let vm = this;
+            swal({
+                title: "Accept ID Check",
+                text: "Are you sure you want to accept this ID Check?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_id_check')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
+        },
+        updateIdRequest: function() {
+            let vm = this;
+            swal({
+                title: "Request Update ID Check",
+                text: "Are you sure you want to request this ID Check update?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/request_id_check')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
+        },
+        acceptCharacterRequest: function() {
+            let vm = this;
+            swal({
+                title: "Accept Character Check",
+                text: "Are you sure you want to accept this Character Check?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_character_check')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
         },
         ammendmentRequest: function(){
             let values = '';
