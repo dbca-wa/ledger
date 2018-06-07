@@ -10,7 +10,7 @@
                             </div>
                             <div class="col-md-8 col-md-offset-1">
                                 <div class="row form-horizontal">
-                                    <div class="col-md-12">                                       
+                                    <div class="col-md-12">
                                         <div class="form-group">
                                             <div class="col-md-4">
                                                 <label class="control-label pull-left required"  for="Dates">Campground: </label>
@@ -27,7 +27,7 @@
                                             </div>
                                             <div class="col-md-8" v-if="campsites.length > 0"></div>
                                             <div class="col-md-8" >
-                                                <select class="form-control" style="width: 100%;" id="multi-campsites" name="campground" placeholder="" multiple v-model="selected_campsite">
+                                                <select class="form-control" style="width: 100%;" id="multi-campsites" name="campground" placeholder="" multiple v-model="selected_campsites">
                                                     <option v-for="c in campsites" v-bind:value="c.id">{{c.name}}</option>
                                                 </select>
                                             </div>                                           
@@ -43,7 +43,7 @@
                                                 <div class="input-group date" id="dateArrival">
                                                     <input type="text" class="form-control" name="arrival" placeholder="Arrival" v-model="selected_arrival">
                                                     <span class="input-group-addon">
-                                                        <span class="glyphicon glyphicon-calendar" ></span>
+                                                        <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
                                                 </div>
                                             </div>
@@ -295,7 +295,7 @@ export default {
             arrivalPicker: {},
             departurePicker: {},
             campsite_classes: [],
-            selected_campsite: [],
+            selected_campsites: [],
             booking_type: "campsite",
             initialised: false,
             fetchingSites: false,
@@ -344,7 +344,7 @@ export default {
             if (vm.booking.arrival) {
                 $.each(vm.stayHistory, function(i, his) {
                     var range = Moment.range(Moment(his.range_start, "DD/MM/YYYY"), Moment(his.range_end, "DD/MM/YYYY"));
-                    var arrival = Moment(vm.booking.arrival, "YYYY/MM/DD");
+                    var arrival = Moment(vm.booking.arrival, "YYYY-MM-DD");
                     if (range.contains(arrival)) {
                         vm.departurePicker.data("DateTimePicker").maxDate(arrival.clone().add(his.max_days, 'days'));
                         vm.departurePicker.data("DateTimePicker").date(null);
@@ -387,17 +387,16 @@ export default {
                     tags:false,
                 }).
                 on("select2:select",function (e) {
-                    vm.selected_campsite = $(e.currentTarget).val();
+                    vm.selected_campsites = $(e.currentTarget).val();
                 }).
                 on("select2:unselect",function (e) {
-                    vm.selected_campsite = $(e.currentTarget).val();
+                    vm.selected_campsites = $(e.currentTarget).val();
                 });
             },100)
         },
         updatePrices: function() {
             let vm = this;
-            var campsite_ids = vm.selected_campsite;
-            console.log(vm.selected_campsite)
+            var campsite_ids = vm.selected_campsites;
             vm.booking.price = 0;
             if (vm.selected_campsite) {
                 if (vm.booking.arrival && vm.booking.departure) {
@@ -548,7 +547,16 @@ export default {
                 vm.departurePicker.data("DateTimePicker").minDate(minDate);
                 // Set the departure date to a day after the arrival date
                 vm.departurePicker.data("DateTimePicker").date(minDate);
-            });           
+            });
+            vm.departurePicker.on('dp.change', function(e) {
+                if (vm.departurePicker.data('DateTimePicker').date()) {
+                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('DD/MM/YYYY');
+                    vm.selected_departure = vm.booking.departure;
+                } else {
+                    vm.booking.departure = null;
+                    vm.selected_departure = vm.booking.departure;
+                }
+            });
             // Set the initial minimum departure date for the booking
             vm.departurePicker.data("DateTimePicker").minDate(Moment(vm.selected_arrival,"DD/MM/YYYY").add(1,'days'));
 
@@ -711,7 +719,7 @@ export default {
                 booking.arrival = vm.booking.arrival;
                 booking.departure = vm.booking.departure;
                 booking.guests = vm.booking.guests;
-                booking.campsites = vm.selected_campsite;
+                booking.campsites = vm.selected_campsites;
                 booking.campground = vm.booking.campground
                 // Hide the alert
                 vm.$store.dispatch("updateAlert", {
@@ -843,7 +851,7 @@ export default {
             vm.booking.arrival = Moment(vm.booking.arrival).format('DD/MM/YYYY');
             vm.booking.departure = Moment(vm.booking.departure).format('DD/MM/YYYY');
             // set the campsite
-            vm.selected_campsite = vm.booking.campsites;
+            vm.selected_campsites = vm.booking.campsites;
             // Update dates
             vm.selected_arrival = vm.booking.arrival;
             vm.selected_departure = vm.booking.departure;
