@@ -32,6 +32,26 @@
                     </div>
                 </div>
             </div>
+
+
+            <div class="row" v-if="canSeeSubmission">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                       History {{proposal.get_history}}
+                    </div>
+                                    <table class="table small-table">
+                                        <tr>
+                                            <th>ID</th>
+                                        </tr>
+                                        <tr v-for="p in proposal.get_history">
+                                            </td>
+                                                <small><strong>{{p }}</strong></small>
+                                            </td>
+                                        </tr>
+                                    </table>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">

@@ -34,7 +34,7 @@ def search(dictionary, search_list):
     return result
 
 def search_approval(approval, searchWords):
-    qs=[] 
+    qs=[]
     a = approval
     if a.surrender_details:
         try:
@@ -65,7 +65,7 @@ def search_approval(approval, searchWords):
         except:
             raise
     if a.cancellation_details:
-        try: 
+        try:
             found = False
             for s in searchWords:
                 if s in a.cancellation_details:
@@ -80,14 +80,14 @@ def search_approval(approval, searchWords):
                     }
                 qs.append(res)
         except:
-            raise       
+            raise
     return qs
 
 def search_compliance(compliance, searchWords):
-    qs=[] 
+    qs=[]
     c = compliance
     if c.text:
-        try: 
+        try:
             found = False
             for s in searchWords:
                 if s in c.text:
@@ -102,9 +102,9 @@ def search_compliance(compliance, searchWords):
                     }
                 qs.append(res)
         except:
-            raise 
+            raise
     if c.requirement:
-        try: 
+        try:
             found = False
             for s in searchWords:
                 if s in c.requirement.requirement:
@@ -119,7 +119,7 @@ def search_compliance(compliance, searchWords):
                     }
                 qs.append(res)
         except:
-            raise 
+            raise
     return qs
 
 
@@ -195,21 +195,21 @@ def create_helppage_object(application_type='Disturbance', help_type=HelpPage.HE
 
  	help_text = 'help_text' if help_type==HelpPage.HELP_TEXT_EXTERNAL else 'help_text_assessor'
 	help_list = search_keys(proposal_type.schema, search_list=[help_text,'label'])
-	richtext = create_richtext_help(help_list)
+	richtext = create_richtext_help(help_list, help_text)
 
 	HelpPage.objects.create(application_type_id=application_type_id, help_type=help_type, version=next_version, content=richtext)
 
-def create_richtext_help(help_list=None):
+def create_richtext_help(help_list=None, help_text='help_text'):
 
 	# for testing
-	if not help_list:
-		pt = ProposalType.objects.all()[4]
-		help_list = search_keys(pt.schema, search_list=['help_text','label'])[:3]
+	#if not help_list:
+	#	pt = ProposalType.objects.all()[4]
+	#	help_list = search_keys(pt.schema, search_list=['help_text','label'])[:3]
 
 	richtext = u''
 	for i in help_list:
-		if 'anchor=' in i['help_text']:
-			anchor = i['help_text'].split("anchor=")[1].split("\"")[0]
+		if i.has_key(help_text) and 'anchor=' in i[help_text]:
+			anchor = i[help_text].split("anchor=")[1].split("\"")[0]
 			#print anchor, i['label']
 
 			richtext += u'<h1><a id="{0}" name="{0}"> {1} </a></h1><p>&nbsp;</p>'.format(anchor, i['label'])
@@ -217,37 +217,6 @@ def create_richtext_help(help_list=None):
 			richtext += u'<h1> {} </h1><p>&nbsp;</p>'.format(i['label'])
 
 	return richtext
-
-#def search_keys(dictionary, search_list=['help_text', 'label']):
-#    """
-#    Return search_list pairs from the schema -- given help_text, finds the equiv. label
-#
-#    To run:
-#        from disturbance.utils import search_keys
-#        search_keys(dictionary, search_list=['help_text', 'label'])
-#    """
-#    result = []
-#    flat_dict = flatten(dictionary)
-#    for k, v in flat_dict.iteritems():
-#        if any(x in k for x in search_list):
-#            result.append( {k: v} )
-#
-#    help_list = []
-#    for i in result:
-#        try:
-#            key = i.keys()[0]
-#            if key and key.endswith('help_text'):
-#                corresponding_label_key = '.'.join(key.split('.')[:-1]) + '.label'
-#                for j in result:
-#                    key_label = j.keys()[0]
-#                    if key_label and key_label.endswith('label') and key_label == corresponding_label_key: # and result.has_key(key):
-#                        #import ipdb; ipdb.set_trace()
-#                        help_list.append({'label': j[key_label], 'help_text': i[key]})
-#        except Exception, e:
-#            #import ipdb; ipdb.set_trace()
-#            print e
-#
-#    return help_list
 
 def search_keys(dictionary, search_list=['help_text', 'label']):
     """
@@ -383,5 +352,4 @@ def flatten(old_data, new_data=None, parent_key='', sep='.', width=4):
             raise AttributeError("key {} is already used".format(parent_key))
 
     return new_data
-
 

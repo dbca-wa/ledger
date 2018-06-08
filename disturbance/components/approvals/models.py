@@ -313,8 +313,10 @@ class ApprovalLogEntry(CommunicationsLogEntry):
         super(ApprovalLogEntry, self).save(**kwargs)
 
 class ApprovalLogDocument(Document):
-    log_entry = models.ForeignKey('ApprovalLogEntry',related_name='documents')
-    _file = models.FileField(upload_to=update_approval_comms_log_filename)
+    #log_entry = models.ForeignKey('ApprovalLogEntry',related_name='apdocuments')
+    approval = models.ForeignKey(Approval, related_name='comms_logs1')
+    #_file = models.FileField(upload_to=update_approval_comms_log_filename)
+    #_file = models.FileField(upload_to=update_approval_doc_filename)
 
     class Meta:
         app_label = 'disturbance'
