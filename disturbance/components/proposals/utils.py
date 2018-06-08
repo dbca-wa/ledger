@@ -120,7 +120,7 @@ class AssessorDataSearch(object):
                                 'email':ref_parts[1],
                                 'full_name': EmailUser.objects.get(email=ref_parts[1]).get_full_name()
                             })
-                        else:
+                        elif k.split('-')[-1].lower() == 'assessor':
                             # Assessor
                             res['assessor'] = v
 
@@ -134,6 +134,11 @@ class AssessorDataSearch(object):
             raise Exception('Missing name in item %s' % item['label'])
 
         if 'children' not in item:
+            if 'conditions' in item:
+                for condition in item['conditions'].keys():
+                    for child in item['conditions'][condition]:
+                        item_data.update(self.extract_special_fields(child, post_data, file_data, repetition, suffix))
+
             if item.get(self.lookup_field):
                 self.assessor_data.append(self.extract_assessor_data(extended_item_name,post_data))
 
@@ -143,11 +148,10 @@ class AssessorDataSearch(object):
             else:
                 item_data = self.generate_item_data_special_field(extended_item_name, item, item_data, post_data, file_data,1,suffix)
 
-
-        if 'conditions' in item:
-            for condition in item['conditions'].keys():
-                for child in item['conditions'][condition]:
-                    item_data.update(self.extract_special_fields(child, post_data, file_data, repetition, suffix))
+            if 'conditions' in item:
+                for condition in item['conditions'].keys():
+                    for child in item['conditions'][condition]:
+                        item_data.update(self.extract_special_fields(child, post_data, file_data, repetition, suffix))
 
         return item_data
 

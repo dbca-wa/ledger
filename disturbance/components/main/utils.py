@@ -6,6 +6,7 @@ from django.core.cache import cache
 
 def retrieve_department_users():
     try:
+       # import ipdb; ipdb.set_trace()
         res = requests.get('{}/api/users?minimal'.format(settings.CMS_URL), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
         res.raise_for_status()
         cache.set('department_users',json.loads(res.content).get('objects'),10800)
