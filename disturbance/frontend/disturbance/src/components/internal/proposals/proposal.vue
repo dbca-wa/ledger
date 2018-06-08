@@ -480,6 +480,7 @@ export default {
             return s.replace(/[,;]/g, '\n');
         },
         proposedDecline: function(){
+            this.save_wo();
             this.$refs.proposed_decline.decline = this.proposal.proposaldeclineddetails != null ? helpers.copyObject(this.proposal.proposaldeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
@@ -497,6 +498,7 @@ export default {
             this.$refs.proposed_decline.isModalOpen = true;
         },
         amendmentRequest: function(){
+            this.save_wo();
             let values = '';
             $('.deficiency').each((i,d) => {
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
@@ -517,6 +519,15 @@ export default {
           },err=>{
           });
         },
+        save_wo: function() {
+          let vm = this;
+          let formData = new FormData(vm.form);
+          vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+              
+          },err=>{
+          });
+        },
+
         toggleProposal:function(){
             this.showingProposal = !this.showingProposal;
         },
@@ -615,6 +626,7 @@ export default {
         },
         switchStatus: function(status){
             let vm = this;
+            vm.save_wo();
             let data = {'status': status}
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
                 emulateJSON:true,
@@ -706,6 +718,7 @@ export default {
         },
         sendReferral: function(){
             let vm = this;
+            vm.save_wo();
 
             let data = {'email':vm.selected_referral};
             vm.sendingReferral = true;
