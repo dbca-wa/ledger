@@ -74,7 +74,7 @@ class Compliance(models.Model):
 
     @property
     def reference(self):
-        return 'C{}'.format(self.id)
+        return 'C{0:06d}'.format(self.id)
 
     @property
     def allowed_assessors(self):

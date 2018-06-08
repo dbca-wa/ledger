@@ -119,7 +119,8 @@ class DTProposalSerializer(BaseProposalSerializer):
     #activity = serializers.CharField(source='activity.name', read_only=True)
     tenure = serializers.CharField(source='tenure.name', read_only=True)
 
-class DTProposalSerializer22(BaseProposalSerializer):
+    
+class ListProposalSerializer(BaseProposalSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(source='applicant.organisation.name')
     processing_status = serializers.SerializerMethodField(read_only=True)
@@ -133,6 +134,36 @@ class DTProposalSerializer22(BaseProposalSerializer):
     #activity = serializers.CharField(source='activity.name', read_only=True)
     tenure = serializers.CharField(source='tenure.name', read_only=True)
 
+    class Meta:
+        model = Proposal
+        fields = (
+                'id',
+                'application_type',
+                'activity',
+                'title',
+                'region',
+                'district',
+                'tenure',
+                'customer_status',
+                'processing_status',
+                'review_status',
+                'applicant',
+                'proxy_applicant',
+                'submitter',
+                'assigned_officer',
+                'previous_application',
+                'lodgement_date',
+                'readonly',
+                'can_user_edit',
+                'can_user_view',
+                'reference',
+                'lodgement_number',
+                'lodgement_sequence',
+                'can_officer_process',
+                'allowed_assessors',
+                'proposal_type'
+                )
+        
 
 class ProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
