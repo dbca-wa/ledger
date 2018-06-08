@@ -13,6 +13,8 @@ from disturbance.utils import create_helppage_object
 @admin.register(models.ProposalType)
 class ProposalTypeAdmin(admin.ModelAdmin):
     list_display = ['name','description', 'version']
+    ordering = ('name', '-version')
+    list_filter = ('name',)
     #exclude=("site",)
 
 class ProposalDocumentInline(admin.TabularInline):
@@ -58,6 +60,9 @@ class HelpPageAdmin(admin.ModelAdmin):
     list_display = ['application_type','help_type', 'description', 'version']
     form = forms.DisturbanceHelpPageAdminForm
     change_list_template = "disturbance/help_page_changelist.html"
+    ordering = ('application_type', 'help_type', '-version')
+    list_filter = ('application_type', 'help_type')
+
 
     def get_urls(self):
         urls = super(HelpPageAdmin, self).get_urls()
