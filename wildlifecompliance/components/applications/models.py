@@ -406,7 +406,7 @@ class Application(RevisionedMixin):
                 # if missing_fields:
                 #     error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
                 #     raise exceptions.ApplicationMissingFields(detail=error_text)
-                self.processing_status = 'with_officer'
+                self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
                 self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
@@ -426,7 +426,7 @@ class Application(RevisionedMixin):
             # Create a log entry for the organisation
             self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
             
-    def update_id_check(self,request):
+    def request_id_check(self,request):
             self.id_check_status = 'awaiting_update'
             self.save()
             # Create a log entry for the application
@@ -437,6 +437,14 @@ class Application(RevisionedMixin):
 
     def accept_character_check(self,request):
             self.character_check_status = 'accepted'
+            self.save()
+            # Create a log entry for the application
+            self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
+            # Create a log entry for the organisation
+            self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)    
+
+    def send_to_assessor(self,request):
+            self.processing_status = 'with_assessor'
             self.save()
             # Create a log entry for the application
             self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
@@ -542,8 +550,9 @@ class Application(RevisionedMixin):
         if not self.can_assess(request.user):
             raise exceptions.ApplicationNotAuthorized()
         if status in ['with_assessor','with_assessor_conditions','with_approver']:
-            if self.processing_status == 'with_referral' or self.can_user_edit:
-                raise ValidationError('You cannot change the current status at this time')
+            # Code from disturbance
+            # if self.processing_status == 'with_referral' or self.can_user_edit:
+            #     raise ValidationError('You cannot change the current status at this time')
             if self.processing_status != status:
                 self.processing_status = status
                 self.save()

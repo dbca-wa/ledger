@@ -221,10 +221,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
-    def update_id_check(self, request, *args, **kwargs):
+    def request_id_check(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            instance.update_id_check(request)
+            instance.request_id_check(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 
         except serializers.ValidationError:
@@ -254,6 +254,22 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST',])
+    def send_to_assessor(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.send_to_assessor(request)
+            serializer = InternalApplicationSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 
 
