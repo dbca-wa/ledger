@@ -646,7 +646,7 @@ export default {
         },
         switchStatus: function(status){
             let vm = this;
-            vm.save_wo();
+            //vm.save_wo();
             let data = {'status': status}
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
                 emulateJSON:true,

@@ -1367,7 +1367,6 @@ def searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance
                 try:
                     results = search_compliance(c, searchWords)
                     qs.extend(results)
-                    print results
                 except:
                     raise
     return qs
