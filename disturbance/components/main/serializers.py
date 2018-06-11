@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from disturbance.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType
+from disturbance.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix
 from ledger.accounts.models import EmailUser
 
 class CommunicationLogEntrySerializer(serializers.ModelSerializer):
@@ -38,6 +38,11 @@ class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
         fields = ('id', 'name', 'forest_region', 'districts')
+
+class ActivityMatrixSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActivityMatrix
+        fields = ('id', 'name', 'description', 'version', 'schema')
 
 
 #class ActivitySerializer(serializers.ModelSerializer):

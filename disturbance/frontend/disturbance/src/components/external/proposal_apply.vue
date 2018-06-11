@@ -129,6 +129,49 @@
                                 </div>
                             </div>
 
+                            <div v-if="activities.length > 0">
+                                <label for="" class="control-label" >Activity</label>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <select v-model="selected_activity" @change="chainedSelectSubActivities1(selected_activity)">
+											<option value="" selected disabled>Select activity</option>
+                                            <option v-for="activity in activities" :value="activity.value">
+                                                {{ activity.text }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="sub_activities1.length > 0">
+                                <label for="" class="control-label" >Sub Activity 1</label>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <select v-model="selected_sub_activity1" @change="chainedSelectSubActivities2(selected_sub_activity1)">
+											<option value="" selected disabled>Select sub_activity 1</option>
+                                            <option v-for="sub_activity1 in sub_activities1" :value="sub_activity1.value">
+                                                {{ sub_activity1.text }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="sub_activities2.length > 0">
+                                <label for="" class="control-label" >Sub Activity 2</label>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <select v-model="selected_sub_activity2" @change="chainedSelectCategories(selected_sub_activity2)">
+											<option value="" selected disabled>Select sub_activity 2</option>
+                                            <option v-for="sub_activity2 in sub_activities2" :value="sub_activity2.value">
+                                                {{ sub_activity2.text }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+
                             <div class="col-sm-12">
                                 <button :disabled="isDisabled()" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
                              </div>
@@ -165,12 +208,19 @@ export default {
         selected_application_name: '',
         selected_region: '',
         selected_district: '',
-        selected_activity: '',
         selected_tenure: '',
         application_types: [],
+        selected_activity: '',
+        selected_sub_activity1: '',
+        selected_sub_activity2: '',
+        selected_category: '',
         regions: [],
         districts: [],
+        activity_matrix: [],
         activities: [],
+        sub_activities1: [],
+        sub_activities2: [],
+        categories: [],
         tenures: [],
         display_region_selectbox: false,
         /*
@@ -359,12 +409,62 @@ export default {
         vm.selected_application_name = this.searchList(application_id, vm.application_types).text
         //this.chainedSelectActivities(application_id);
         this.chainedSelectTenures(application_id);
+        this.chainedSelectActivities(application_id);
 
         if (vm.selected_application_name == 'Disturbance') {
             vm.display_region_selectbox = true;
         } 
 
-    }
+    },
+
+	fetchActivityMatrix: function(){
+		let vm = this;
+
+		vm.$http.get(api_endpoints.activity_matrix).then((response) => {
+				this.activity_matrix = response.body[0].schema[0];
+				console.log('this.activity_matrix ' + response.body[0].schema);
+
+                var keys = Object.keys(this.activity_matrix);
+                for (var i = 0; i < keys.length; i++) {
+                    this.activities.push( {text: keys[i], value: keys[i]} );
+                }
+				console.log('this.activities ' + this.activities);
+		},(error) => {
+			console.log(error);
+		})
+	},
+    chainedSelectSubActivities1: function(activity_name){
+		let vm = this;
+        vm.sub_activities1 = [];
+        var api_activities = vm.activity_matrix[activity_name]
+        for (var i = 0; i < api_activities.length; i++) {
+            this.sub_activities1.push( {text: Object.keys(api_activities[i])[0], value: Object.keys(api_activities[i])[0], object: api_activities} );
+        }
+	},
+    chainedSelectSubActivities2: function(activity_name){
+		let vm = this;
+        vm.sub_activities2 = [];
+        var api_activities = vm.activity_matrix[activity_name]
+        for (var i = 0; i < api_activities.length; i++) {
+            this.sub_activities1.push( {text: Object.keys(api_activities[i])[0], value: Object.keys(api_activities[i])[0]} );
+        }
+	},
+
+
+    /*
+	chainedSelectDistricts: function(region_id){
+		let vm = this;
+        vm.districts = [];
+
+        var api_districts = this.searchList(region_id, vm.regions).districts;
+        if (api_districts.length > 0) {
+            for (var i = 0; i < api_districts.length; i++) {
+                this.districts.push( {text: api_districts[i].name, value: api_districts[i].id} );
+            }
+        }
+	},
+    */
+
 
 
 
@@ -373,6 +473,7 @@ export default {
     let vm = this;
     vm.fetchRegions();
     vm.fetchApplicationTypes();
+    vm.fetchActivityMatrix();
     vm.form = document.forms.new_proposal;
   },
   beforeRouteEnter: function(to, from, next) {
