@@ -369,6 +369,7 @@ def get_activity_type_schema(licence_class_data):
                   "id":activity_type_obj.id,
                   "label":activity_type_obj.name,
                   "name":activity_type_obj.name,
+                  "status":"draft",
                   "children":schema_activity
                 })
         # print(schema_tab)

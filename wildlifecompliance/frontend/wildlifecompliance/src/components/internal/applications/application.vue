@@ -41,9 +41,10 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
-                                {{ application.processing_status }}
+                                {{ application.processing_status }}<br/>
+                                <div class ="col-sm-12" v-for="activity in application.schema">{{activity.name}}:{{activity.status}}</div>
                             </div>
-                            <div class="col-sm-12">
+                            <!-- <div class="col-sm-12">
                                 <div class="separator"></div>
                             </div>
                             <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'">
@@ -92,7 +93,7 @@
                                 <div class="col-sm-12">
                                     <div class="separator"></div>
                                 </div>
-                            </template>
+                            </template> -->
                             <div v-if="!isFinalised" class="col-sm-12 top-buffer-s">
                                 <strong>Currently assigned to</strong><br/>
                                 <div class="form-group">
@@ -130,30 +131,41 @@
                                     <div class="separator"></div>
                                 </div>
                             </template>
-                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAction">
-                                <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'">
+                            <!-- <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAction">
+                                <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'"> -->
+                              <div class="col-sm-12 top-buffer-s" >
+                                <template>
                                     <div class="row">
                                         <div class="col-sm-12">
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
                                     <div class="row">
+                                        <!-- <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor_conditions')">Send to Assessor</button><br/>
+                                        </div> -->
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor_conditions')">Enter Conditions</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary" @click.prevent="switchStatus('with_assessor')">Send to Assessor</button><br/>
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-sm-12">
+                                        <!-- <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
+                                        </div> -->
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
                                         </div>
                                     </div>
                                     <div class="row">
+                                        <!-- <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="proposedDecline()">Propose Decline</button>
+                                        </div> -->
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="proposedDecline()">Decline</button>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
                                         </div>
                                     </div>
                                 </template>
-                                <template v-else-if="application.processing_status == 'With Assessor (Conditions)'">
+                                <!-- <template v-else-if="application.processing_status == 'With Assessor (Conditions)'">
                                     <div class="row">
                                         <div class="col-sm-12">
                                             <strong>Action</strong><br/>
@@ -169,8 +181,8 @@
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="proposedLicence()">Issue Licence</button><br/>
                                         </div>
                                     </div>
-                                </template>
-                                <template v-else-if="application.processing_status == 'With Approver'">
+                                </template> -->
+                               <!--  <template v-else-if="application.processing_status == 'With Approver'">
                                     <div class="row">
                                         <div class="col-sm-12">
                                             <strong>Action</strong><br/>
@@ -192,7 +204,7 @@
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="declineApplication()">Decline</button><br/>
                                         </div>
                                     </div>
-                                </template>
+                                </template> -->
                             </div>
                         </div>
                     </div>
@@ -209,6 +221,14 @@
                     <Conditions :application="application"/>
                 </template>
                 <template v-if="canSeeSubmission || (!canSeeSubmission && showingApplication)">
+                    <div>
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
+                        <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
+                    </ul>
+                    <div class="tab-content">
+                    <div :id="applicantTab" class="tab-pane fade in active">
+
                     <div class="col-md-12">
                         <div class="row">
                             <div class="panel panel-default">
@@ -301,6 +321,57 @@
                         </div>
                     </div>
                     <div class="col-md-12">
+                        <div class ="row">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Check List
+                                    <a class="panelClicker" :href="'#'+checksBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="checksBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                    </a>
+                                </h3>
+
+                            </div>
+                            <div class="panel-body panel-collapse collapse" :id="checksBody">
+                                <div class="row">
+                                    <div class="col-sm-4">ID Check</div>
+                                    <div class="col-sm-4">
+                                        <button v-if="isIdNotChecked || isIdCheckUpdated" class="btn btn-primary" @click.prevent="acceptIdRequest()">Accept</button>
+                                        <button v-if="isIdCheckAccepted" disabled class="btn btn-light">Accepted</button>
+                                        <button v-if="isIdCheckRequested" disabled class="btn btn-light">Awaiting Update</button>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <button v-if="isIdNotChecked" class="btn btn-primary" @click.prevent="updateIdRequest()">Request Update</button>
+                                        <button v-if="isIdCheckUpdated" disabled class="btn btn-light">Request updated</button>
+                                        <button v-if="isIdCheckAccepted || isIdCheckRequested"  class="btn btn-primary">Reset</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-4">Character Check</div>
+                                    <div class="col-sm-4">
+                                        <button v-if="!isCharacterCheckAccepted" class="btn btn-primary" @click.prevent="acceptCharacterRequest()">Accept</button>
+                                        <button v-if="isCharacterCheckAccepted" disabled class="btn btn-light">Accepted</button>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <button v-if="isCharacterCheckAccepted"  class="btn btn-primary">Reset</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-4">Returns Check</div>
+                                    <div class="col-sm-4">
+                                        <button v-if="isCharacterCheckAccepted" class="btn btn-primary">Request Completion</button>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+                    </div>
+
+
+                    </div>
+                </div>
+                <div :id="applicationTab" class="tab-pane fade">
+                    <div class="col-md-12">
                         <div class="row">
                             <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
                                 <Application form_width="inherit" :withSectionsSelector="false" v-if="application" :application="application">
@@ -316,6 +387,10 @@
                             </form>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
                 </template>
             </div>
         </div>
@@ -347,9 +422,12 @@ export default {
     data: function() {
         let vm = this;
         return {
+            applicantTab: 'applicantTab'+vm._uid,
+            applicationTab: 'applicationTab'+vm._uid,
             detailsBody: 'detailsBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
             contactsBody: 'contactsBody'+vm._uid,
+            checksBody: 'checksBody'+vm._uid,
             "application": null,
             "original_application": null,
             "loading": [],
@@ -426,6 +504,7 @@ export default {
     watch: {
     },
     computed: {
+
         contactsURL: function(){
             return this.application!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.application.applicant.id+'/contacts') : '';
         },
@@ -446,6 +525,26 @@ export default {
         },
         hasAssessorMode:function(){
             return this.application && this.application.assessor_mode.has_assessor_mode ? true : false;
+        },
+        isIdCheckAccepted: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Accepted';
+        },
+        isIdNotChecked: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Not Checked';
+        },
+        isIdCheckRequested: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Awaiting Update';
+        },
+        isIdCheckUpdated: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Updated';
+        },
+        isCharacterCheckAccepted: function(){
+            console.log(this.application.id_check_status)
+            return this.application.character_check_status == 'Accepted';
         },
         canAction: function(){
             if (this.application.processing_status == 'With Approver'){
@@ -496,6 +595,74 @@ export default {
             this.$refs.proposed_decline.decline = helpers.copyObject(this.application.applicationdeclineddetails);
             this.$refs.proposed_decline.isModalOpen = true;
         },
+        acceptIdRequest: function() {
+            let vm = this;
+            swal({
+                title: "Accept ID Check",
+                text: "Are you sure you want to accept this ID Check?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_id_check')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
+        },
+        updateIdRequest: function() {
+            let vm = this;
+            console.log(vm.application.schema[0].name)
+            console.log(vm.application.schema[0].status)
+            swal({
+                title: "Request Update ID Check",
+                text: "Are you sure you want to request this ID Check update?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/request_id_check')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
+        },
+        acceptCharacterRequest: function() {
+            let vm = this;
+            swal({
+                title: "Accept Character Check",
+                text: "Are you sure you want to accept this Character Check?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_character_check')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
+        },
         ammendmentRequest: function(){
             let values = '';
             $('.deficiency').each((i,d) => {
@@ -503,6 +670,28 @@ export default {
             }); 
             this.$refs.ammendment_request.ammendment.details = values;
             this.$refs.ammendment_request.isModalOpen = true;
+        },
+        sendToAssessor: function(){
+            let vm = this;
+            swal({
+                title: "Send Assessor",
+                text: "Are you sure you want to send to assessor?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/send_to_assessor')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
         },
         save: function(e) {
           let vm = this;

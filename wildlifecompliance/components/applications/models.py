@@ -151,12 +151,12 @@ class ApplicationDocument(Document):
 
 class Application(RevisionedMixin):
 
-    CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
-                               ('with_assessor', 'Under Review'),
+    CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'),
+                               ('under_review', 'Under Review'),
                                ('amendment_required', 'Amendment Required'),
-                               ('approved', 'Approved'),
+                               ('accepted', 'Accepted'),
+                               ('partially_accepted', 'Partially Accepted'),
                                ('declined', 'Declined'),
-                               ('discarded', 'Discarded'),
                                )
 
     # List of statuses from above that allow a customer to edit an application.
@@ -168,8 +168,8 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to view an application (read-only)
     CUSTOMER_VIEWABLE_STATE = ['with_assessor', 'under_review', 'id_required', 'returns_required', 'approved', 'declined']
 
-    PROCESSING_STATUS_CHOICES = (('temp', 'Temporary'), 
-                                 ('draft', 'Draft'), 
+    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), 
+                                 ('with_officer', 'With Officer'), 
                                  ('with_assessor', 'With Assessor'),
                                  ('with_referral', 'With Referral'),
                                  ('with_assessor_conditions', 'With Assessor (Conditions)'),
@@ -406,8 +406,8 @@ class Application(RevisionedMixin):
                 # if missing_fields:
                 #     error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
                 #     raise exceptions.ApplicationMissingFields(detail=error_text)
-                self.processing_status = 'with_assessor'
-                self.customer_status = 'with_assessor'
+                self.processing_status = 'under_review'
+                self.customer_status = 'under_review'
                 self.submitter = request.user
                 self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.save()
@@ -417,6 +417,40 @@ class Application(RevisionedMixin):
                 self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
+
+    def accept_id_check(self,request):
+            self.id_check_status = 'accepted'
+            self.save()
+            # Create a log entry for the application
+            self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
+            # Create a log entry for the organisation
+            self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
+            
+    def request_id_check(self,request):
+            self.id_check_status = 'awaiting_update'
+            self.save()
+            # Create a log entry for the application
+            self.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
+            # Create a log entry for the organisation
+            self.applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
+
+
+    def accept_character_check(self,request):
+            self.character_check_status = 'accepted'
+            self.save()
+            # Create a log entry for the application
+            self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
+            # Create a log entry for the organisation
+            self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)    
+
+    def send_to_assessor(self,request):
+            self.processing_status = 'with_assessor'
+            self.save()
+            # Create a log entry for the application
+            self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
+            # Create a log entry for the organisation
+            self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)        
+
 
     def send_referral(self,request,referral_email):
         with transaction.atomic():
@@ -516,8 +550,9 @@ class Application(RevisionedMixin):
         if not self.can_assess(request.user):
             raise exceptions.ApplicationNotAuthorized()
         if status in ['with_assessor','with_assessor_conditions','with_approver']:
-            if self.processing_status == 'with_referral' or self.can_user_edit:
-                raise ValidationError('You cannot change the current status at this time')
+            # Code from disturbance
+            # if self.processing_status == 'with_referral' or self.can_user_edit:
+            #     raise ValidationError('You cannot change the current status at this time')
             if self.processing_status != status:
                 self.processing_status = status
                 self.save()

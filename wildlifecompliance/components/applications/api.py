@@ -203,6 +203,77 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST',])
+    def accept_id_check(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.accept_id_check(request)
+            serializer = InternalApplicationSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def request_id_check(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.request_id_check(request)
+            serializer = InternalApplicationSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def accept_character_check(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.accept_character_check(request)
+            serializer = InternalApplicationSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def send_to_assessor(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.send_to_assessor(request)
+            serializer = InternalApplicationSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+
+
     @detail_route(methods=['GET',])
     def assign_request_user(self, request, *args, **kwargs):
         try:
@@ -432,6 +503,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             app_data = self.request.data
             licence_class_data=app_data.pop('licence_class_data')
             schema_data=get_activity_type_schema(licence_class_data)
+            applicant=request.data.get('applicant')
             data = {
                 'schema':schema_data,
                 'submitter': request.user.id,
