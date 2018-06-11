@@ -89,7 +89,7 @@
                                                 <tr>
                                                     <td class="form-group"> {{campsite.name}} - {{campsite.type}}</td>
                                                     <td>
-                                                        <input class="checkbox" type="checkbox" :value="campsite.id" v-model="multibook_selected" @change="updatePrices()">
+                                                        <input class="checkbox" type="checkbox" :value="campsite.id" v-model="multibook_selected" @change="updatePrices()" number>
                                                     </td>                                              
                                                 </tr></template>
                                             </tbody>
