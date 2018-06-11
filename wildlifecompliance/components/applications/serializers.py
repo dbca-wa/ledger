@@ -41,6 +41,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
 class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
+    character_check_status = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Application
         fields = (
@@ -65,7 +66,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'readonly',
                 'can_user_edit',
                 'can_user_view',
-                'documents_url'
+                'documents_url',
+                'id_check_status',
+                'character_check_status'
                 )
         read_only_fields=('documents',)
     
@@ -77,6 +80,12 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_processing_status(self,obj):
         return obj.get_processing_status_display()
+
+    def get_id_check_status(self,obj):
+        return obj.get_id_check_status_display()
+
+    def get_character_check_status(self,obj):
+        return obj.get_character_check_status_display()
 
     def get_review_status(self,obj):
         return obj.get_review_status_display()
@@ -174,6 +183,8 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
+    id_check_status = serializers.SerializerMethodField(read_only=True)
+    character_check_status = serializers.SerializerMethodField(read_only=True)
     submitter = serializers.CharField(source='submitter.get_full_name')
     applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
     #
@@ -195,6 +206,8 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                 'customer_status',
                 'processing_status',
                 'review_status',
+                'id_check_status',
+                'character_check_status',
                 #'hard_copy',
                 'applicant',
                 'proxy_applicant',
@@ -229,9 +242,15 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         return {
             'assessor_mode': True,
             # 'has_assessor_mode': obj.has_assessor_mode(user),
-            'assessor_can_assess': obj.can_assess(user), 
+            # 'assessor_can_assess': obj.can_assess(user), 
             'assessor_level': 'assessor'
         }
+
+    def get_id_check_status(self,obj):
+        return obj.get_id_check_status_display()
+
+    def get_character_check_status(self,obj):
+        return obj.get_character_check_status_display()
 
     def get_readonly(self,obj):
         return True
