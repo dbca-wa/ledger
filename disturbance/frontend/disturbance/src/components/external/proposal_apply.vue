@@ -171,6 +171,20 @@
                                 </div>
                             </div>
 
+                            <div v-if="categories.length > 0">
+                                <label for="" class="control-label" >Category</label>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <select v-model="selected_category">
+											<option value="" selected disabled>Select category</option>
+                                            <option v-for="category in categories" :value="category.value">
+                                                {{ category.text }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
 
                             <div class="col-sm-12">
                                 <button :disabled="isDisabled()" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
@@ -436,34 +450,66 @@ export default {
     chainedSelectSubActivities1: function(activity_name){
 		let vm = this;
         vm.sub_activities1 = [];
-        var api_activities = vm.activity_matrix[activity_name]
+        //var api_activities = vm.activity_matrix[activity_name]
+        var [api_activities, res] = this.get_sub_matrix(activity_name, vm.activity_matrix)
         for (var i = 0; i < api_activities.length; i++) {
-            this.sub_activities1.push( {text: Object.keys(api_activities[i])[0], value: Object.keys(api_activities[i])[0], object: api_activities} );
+            var key = Object.keys(api_activities[i])[0];
+            this.sub_activities1.push( {text: key, value: key, sub_matrix: api_activities[i][key]} );
         }
 	},
     chainedSelectSubActivities2: function(activity_name){
 		let vm = this;
         vm.sub_activities2 = [];
-        var api_activities = vm.activity_matrix[activity_name]
-        for (var i = 0; i < api_activities.length; i++) {
-            this.sub_activities1.push( {text: Object.keys(api_activities[i])[0], value: Object.keys(api_activities[i])[0]} );
-        }
-	},
-
-
-    /*
-	chainedSelectDistricts: function(region_id){
-		let vm = this;
-        vm.districts = [];
-
-        var api_districts = this.searchList(region_id, vm.regions).districts;
-        if (api_districts.length > 0) {
-            for (var i = 0; i < api_districts.length; i++) {
-                this.districts.push( {text: api_districts[i].name, value: api_districts[i].id} );
+        vm.categories = [];
+        //var api_activities = this.get_sub_matrix(activity_name, vm.sub_activities1[0]['text'])
+        var [api_activities, res] = this.get_sub_matrix(activity_name, vm.sub_activities1)
+        if (res == null) {
+            return;
+        } else if (res == "pass") {
+            for (var i = 0; i < api_activities.length; i++) {
+                this.categories.push( {text: api_activities[i], value: api_activities[i]} );
+            }
+        } else {
+            for (var i = 0; i < vm.sub_activities1.length; i++) {
+                if (activity_name == vm.sub_activities1[i]['text']) {
+                    var api_activities2 = vm.sub_activities1[i]['sub_matrix'];
+                    for (var j = 0; j < api_activities2.length; j++) {
+                        var key = Object.keys(api_activities2[j])[0];
+                        this.sub_activities2.push( {text: key, value: key, sub_matrix: api_activities2[j][key]} );
+                    }
+                }
             }
         }
 	},
-    */
+    chainedSelectCategories: function(activity_name){
+		let vm = this;
+        vm.categories = [];
+        //var api_activities = this.get_sub_matrix(activity_name, vm.sub_activities1[0]['text'])
+        var [api_categories, res] = this.get_sub_matrix(activity_name, vm.sub_activities2)
+        for (var i = 0; i < api_categories.length; i++) {
+            this.categories.push( {text: api_categories[i], value: api_categories[i]} );
+        }
+	},
+
+    get_sub_matrix: function(activity_name, sub_activities){
+        // this.sub_activities1[0]['text']
+        if (activity_name in sub_activities) {
+            // not a sub_matrix --> this is the main activity_matrix data 
+            return [sub_activities[activity_name], true];
+        }
+        for (var i = 0; i < sub_activities.length; i++) {
+            if (activity_name == sub_activities[i]['text']) {
+                var key_sub_matrix = Object.keys(sub_activities[i]['sub_matrix'][0])[0];
+                if (key_sub_matrix == "null") {
+                    return [null, null]
+                } else if (key_sub_matrix == "pass") {
+                    return [sub_activities[i]['sub_matrix'][0]['pass'], "pass"]
+                } else {
+                    return [sub_activities[i]['sub_matrix'][0], true];
+                }
+            }
+        }
+    }
 
 
 
