@@ -43,8 +43,8 @@ class OracleInterface(models.Model):
     status = models.CharField(max_length=15)
     line_item = models.TextField(blank=True,null=True)
     status_date = models.DateField()
-    source = models.CharField(max_length=30, null=True)
-    method = models.CharField(max_length=30, null=True)
+    source = models.CharField(max_length=30)
+    method = models.CharField(max_length=30)
 
 class OracleInterfaceSystem(models.Model):
     system_id = models.CharField(max_length=10)
@@ -53,8 +53,8 @@ class OracleInterfaceSystem(models.Model):
     deduct_percentage = models.BooleanField(default=False)
     percentage = models.PositiveIntegerField(validators=[MaxValueValidator(99), MinValueValidator(1)],null=True,blank=True)
     percentage_account_code = models.CharField(max_length=50,null=True,blank=True)
-    source = models.CharField(max_length=30, null=True)
-    method = models.CharField(max_length=30, null=True)
+    source = models.CharField(max_length=30)
+    method = models.CharField(max_length=30)
 
     def __str__(self):
         return '{} - {}'.format(self.system_name, self.system_id)
