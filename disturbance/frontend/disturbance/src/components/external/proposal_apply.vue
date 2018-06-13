@@ -99,22 +99,6 @@
                                 </div>
                             </div>
 
-                            <!--
-                            <div v-if="activities.length > 0">
-                                <label for="" class="control-label" >Activity</label>
-                                <div class="col-sm-12">
-                                    <div class="form-group">
-                                        <select v-model="selected_activity">
-											<option value="" selected disabled>Select activity</option>
-                                            <option v-for="activity in activities" :value="activity.value">
-                                                {{ activity.text }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            -->
-
                             <div v-if="tenures.length > 0">
                                 <label for="" class="control-label" >Tenure</label>
                                 <div class="col-sm-12">
@@ -129,60 +113,62 @@
                                 </div>
                             </div>
 
-                            <div v-if="activities.length > 0">
-                                <label for="" class="control-label" >Activity</label>
-                                <div class="col-sm-12">
-                                    <div class="form-group">
-                                        <select v-model="selected_activity" @change="chainedSelectSubActivities1(selected_activity)">
-											<option value="" selected disabled>Select activity</option>
-                                            <option v-for="activity in activities" :value="activity.value">
-                                                {{ activity.text }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
+                            <div v-if="display_activity_matrix_selectbox">
+								<div v-if="activities.length > 0">
+									<label for="" class="control-label" >Activity</label>
+									<div class="col-sm-12">
+										<div class="form-group">
+											<select v-model="selected_activity" @change="chainedSelectSubActivities1(selected_activity)">
+												<option value="" selected disabled>Select activity</option>
+												<option v-for="activity in activities" :value="activity.value">
+													{{ activity.text }}
+												</option>
+											</select>
+										</div>
+									</div>
+								</div>
 
-                            <div v-if="sub_activities1.length > 0">
-                                <label for="" class="control-label" >Sub Activity 1</label>
-                                <div class="col-sm-12">
-                                    <div class="form-group">
-                                        <select v-model="selected_sub_activity1" @change="chainedSelectSubActivities2(selected_sub_activity1)">
-											<option value="" selected disabled>Select sub_activity 1</option>
-                                            <option v-for="sub_activity1 in sub_activities1" :value="sub_activity1.value">
-                                                {{ sub_activity1.text }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
+								<div v-if="sub_activities1.length > 0">
+									<label for="" class="control-label" >Sub Activity 1</label>
+									<div class="col-sm-12">
+										<div class="form-group">
+											<select v-model="selected_sub_activity1" @change="chainedSelectSubActivities2(selected_sub_activity1)">
+												<option value="" selected disabled>Select sub_activity 1</option>
+												<option v-for="sub_activity1 in sub_activities1" :value="sub_activity1.value">
+													{{ sub_activity1.text }}
+												</option>
+											</select>
+										</div>
+									</div>
+								</div>
 
-                            <div v-if="sub_activities2.length > 0">
-                                <label for="" class="control-label" >Sub Activity 2</label>
-                                <div class="col-sm-12">
-                                    <div class="form-group">
-                                        <select v-model="selected_sub_activity2" @change="chainedSelectCategories(selected_sub_activity2)">
-											<option value="" selected disabled>Select sub_activity 2</option>
-                                            <option v-for="sub_activity2 in sub_activities2" :value="sub_activity2.value">
-                                                {{ sub_activity2.text }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
+								<div v-if="sub_activities2.length > 0">
+									<label for="" class="control-label" >Sub Activity 2</label>
+									<div class="col-sm-12">
+										<div class="form-group">
+											<select v-model="selected_sub_activity2" @change="chainedSelectCategories(selected_sub_activity2)">
+												<option value="" selected disabled>Select sub_activity 2</option>
+												<option v-for="sub_activity2 in sub_activities2" :value="sub_activity2.value">
+													{{ sub_activity2.text }}
+												</option>
+											</select>
+										</div>
+									</div>
+								</div>
 
-                            <div v-if="categories.length > 0">
-                                <label for="" class="control-label" >Category</label>
-                                <div class="col-sm-12">
-                                    <div class="form-group">
-                                        <select v-model="selected_category">
-											<option value="" selected disabled>Select category</option>
-                                            <option v-for="category in categories" :value="category.value">
-                                                {{ category.text }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
+								<div v-if="categories.length > 0">
+									<label for="" class="control-label" >Category</label>
+									<div class="col-sm-12">
+										<div class="form-group">
+											<select v-model="selected_category">
+												<option value="" selected disabled>Select category</option>
+												<option v-for="category in categories" :value="category.value">
+													{{ category.text }}
+												</option>
+											</select>
+										</div>
+									</div>
+								</div>
                             </div>
 
 
@@ -237,31 +223,7 @@ export default {
         categories: [],
         tenures: [],
         display_region_selectbox: false,
-        /*
-
-        application_types: [
-            { text: 'Disturbance', value: 'Disturbance' },
-            { text: 'Apiary', value: 'Apiary' }
-        ],
-        regions: [
-            { text: 'Kimberley (Region)', value: 'Kimberley (Region)' },
-            { text: 'East Kimberley (District)', value: 'East Kimberley (District)' },
-            { text: 'West Kimberley (District)', value: 'West Kimberley (District)' },
-            { text: 'Pilbara (Region)', value: 'Pilbara (Region)' }
-        ],
-        activities: [
-            { text: 'Native Forest Silviculture and Timber Harvesting', value: 'NativeForestSilvicultureAndTimberHarvesting' },
-            { text: 'Plantations', value: 'Plantations' },
-            { text: 'Other Wood', value: 'OtherWood' }
-        ],
-        tenures: [
-            { text: 'National park', value: 'National park' },
-            { text: 'Nature reserve (class a19)', value: 'Nature reserve (class a19)' },
-            { text: 'Conservation park', value: 'Conservation park' },
-            { text: 'CALM Act section 5(1)g and 5(1)h reserve (class A20)', value: 'CALM Act section 5(1)g and 5(1)h reserve (class A20)' }
-        ]
-        */
-
+        display_activity_matrix_selectbox: false,
     }
   },
   components: {
@@ -394,7 +356,7 @@ export default {
 			console.log(error);
 		})
 	},
-    chainedSelectActivities: function(application_id){
+    _chainedSelectActivities: function(application_id){
 		let vm = this;
         vm.activities = [];
         var api_activities = this.searchList(application_id, vm.application_types).activities;
@@ -419,20 +381,25 @@ export default {
         vm.selected_activity = '';
         vm.selected_tenure = '';
         vm.display_region_selectbox = false;
+        vm.display_activity_matrix_selectbox = false;
 
         vm.selected_application_name = this.searchList(application_id, vm.application_types).text
         //this.chainedSelectActivities(application_id);
         this.chainedSelectTenures(application_id);
-        this.chainedSelectActivities(application_id);
+        //this.chainedSelectActivities(application_id);
 
         if (vm.selected_application_name == 'Disturbance') {
             vm.display_region_selectbox = true;
+            vm.display_activity_matrix_selectbox = true;
         } 
 
     },
 
 	fetchActivityMatrix: function(){
 		let vm = this;
+        vm.sub_activities1 = [];
+        vm.sub_activities2 = [];
+        vm.categories = [];
 
 		vm.$http.get(api_endpoints.activity_matrix).then((response) => {
 				this.activity_matrix = response.body[0].schema[0];
@@ -447,23 +414,62 @@ export default {
 			console.log(error);
 		})
 	},
-    chainedSelectSubActivities1: function(activity_name){
+    _chainedSelectSubActivities1: function(activity_name){
 		let vm = this;
         vm.sub_activities1 = [];
-        //var api_activities = vm.activity_matrix[activity_name]
         var [api_activities, res] = this.get_sub_matrix(activity_name, vm.activity_matrix)
         for (var i = 0; i < api_activities.length; i++) {
             var key = Object.keys(api_activities[i])[0];
             this.sub_activities1.push( {text: key, value: key, sub_matrix: api_activities[i][key]} );
         }
 	},
+    chainedSelectSubActivities1: function(activity_name){
+		let vm = this;
+        vm.sub_activities1 = [];
+        vm.sub_activities2 = [];
+        vm.categories = [];
+        vm.selected_sub_activity1 = '';
+        vm.selected_sub_activity2 = '';
+        vm.selected_category = '';
+
+        vm.sub_activities1 = [];
+        var [api_activities, res] = this.get_sub_matrix(activity_name, vm.activity_matrix)
+        if (res == "null" || res == null) {
+            return;
+        } else if (res == "pass") {
+            var api_sub_activities = this.get_sub_matrix("pass", api_activities[0])[0];
+            if ("pass" in api_sub_activities[0]) {
+                // go straight to categories widget
+                var categories = api_sub_activities[0]['pass']
+                for (var i = 0; i < categories.length; i++) {
+                    this.categories.push( {text: categories[i], value: categories[i]} );
+                }
+
+            } else {
+                // go to sub_activity2 widget
+                for (var i = 0; i < api_sub_activities.length; i++) {
+                    var key = Object.keys(api_activities[i])[0];
+                    this.sub_activities1.push( {text: key, value: key, sub_matrix: api_activities[i][key]} );
+                }
+            }
+        } else {
+            for (var i = 0; i < api_activities.length; i++) {
+                var key = Object.keys(api_activities[i])[0];
+                this.sub_activities1.push( {text: key, value: key, sub_matrix: api_activities[i][key]} );
+            }
+        }
+	},
+
     chainedSelectSubActivities2: function(activity_name){
 		let vm = this;
         vm.sub_activities2 = [];
         vm.categories = [];
+        vm.selected_sub_activity2 = '';
+        vm.selected_category = '';
+
         //var api_activities = this.get_sub_matrix(activity_name, vm.sub_activities1[0]['text'])
         var [api_activities, res] = this.get_sub_matrix(activity_name, vm.sub_activities1)
-        if (res == null) {
+        if (res == "null" || res == null) {
             return;
         } else if (res == "pass") {
             for (var i = 0; i < api_activities.length; i++) {
@@ -484,17 +490,29 @@ export default {
     chainedSelectCategories: function(activity_name){
 		let vm = this;
         vm.categories = [];
-        //var api_activities = this.get_sub_matrix(activity_name, vm.sub_activities1[0]['text'])
-        var [api_categories, res] = this.get_sub_matrix(activity_name, vm.sub_activities2)
-        for (var i = 0; i < api_categories.length; i++) {
-            this.categories.push( {text: api_categories[i], value: api_categories[i]} );
+        vm.selected_category = '';
+        for (var i = 0; i < vm.sub_activities2.length; i++) {
+            if (activity_name == vm.sub_activities2[i]['text']) {
+                var api_categories = vm.sub_activities2[i]['sub_matrix'];
+                for (var j = 0; j < api_categories.length; j++) {
+                    this.categories.push( {text: api_categories[j], value: api_categories[j]} );
+                }
+            }
         }
 	},
 
     get_sub_matrix: function(activity_name, sub_activities){
         // this.sub_activities1[0]['text']
         if (activity_name in sub_activities) {
-            // not a sub_matrix --> this is the main activity_matrix data 
+            if (sub_activities[activity_name].length > 0) {
+                if ('pass' in sub_activities[activity_name][0]) {
+                    return [sub_activities[activity_name], "pass"];
+                } else if ('null' in sub_activities[activity_name][0]) {
+                    return [sub_activities[activity_name], "null"];
+                }
+            }
+           
+            // not a sub_matrix --> this is the main activity_matrix data (as provided by the REST API)
             return [sub_activities[activity_name], true];
         }
         for (var i = 0; i < sub_activities.length; i++) {
@@ -510,9 +528,6 @@ export default {
             }
         }
     }
-
-
-
 
   },
   mounted: function() {
@@ -545,5 +560,11 @@ input[type=text], select{
     min-height: 34px;
     padding: 0;
     height: auto;
+}
+
+.group-box {
+	border-style: solid;
+	border-width: thin;
+	border-color: #FFFFFF;
 }
 </style>

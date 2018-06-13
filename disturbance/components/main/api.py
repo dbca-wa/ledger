@@ -20,8 +20,17 @@ class RegionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = RegionSerializer
 
 class ActivityMatrixViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = ActivityMatrix.objects.all().order_by('id')
+    #queryset = ActivityMatrix.objects.all().order_by('id')
+    queryset = ActivityMatrix.objects.none()
     serializer_class = ActivityMatrixSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated():
+            # specific to Disturbance application, so only exposing one record (most recent)
+            return [ActivityMatrix.objects.filter(name='Disturbance').order_by('-version').first()]
+        return ActivityMatrix.objects.none()
+
 
 #class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
 #    queryset = Activity.objects.all().order_by('order')
