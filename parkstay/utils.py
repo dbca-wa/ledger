@@ -504,9 +504,9 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
         # Get the cheapest campsite (based on adult rate) to be used
         # for the whole booking period, using the first rate as default
         # Set initial campsite and rate to first in rate_list
-        multibook_rate = rate_list.items()[0][1].items()[0][1]
+        multibook_rate = rate_list[next(iter(rate_list))][1]
         multibook_rate_adult = Decimal(multibook_rate['adult'])
-        multibook_campsite = rate_list.items()[0][0]
+        multibook_campsite = next(iter(rate_list))
         multibook_index = 1
         for campsite, ratelist in rate_list.items():
             for index, rate in ratelist.items():
