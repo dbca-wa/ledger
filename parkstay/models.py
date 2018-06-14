@@ -957,6 +957,10 @@ class Booking(models.Model):
         for item in cbs:
             first_campsite_list.append(item.campsite)
         return first_campsite_list
+    
+    @property
+    def discount(self):
+        return (self.cost_total - self.override_price)
 
     @property
     def editable(self):
@@ -1085,12 +1089,25 @@ class Booking(models.Model):
 
         if amount == 0:
             return 'unpaid'
-        if self.cost_total < amount:
-            return 'over_paid'
-        elif self.cost_total > amount:
-            return 'partially_paid'
-        else:return "paid"
+        # if self.cost_total < amount:
+        #     return 'over_paid'
+        # elif self.cost_total > amount:
+        #     return 'partially_paid'
+        # else:return "paid"
 
+        if self.override_price:
+            if self.override_price < amount:
+                return 'over_paid'
+            elif self.override_price > amount:
+                return 'partially_paid'
+            else:return "paid"
+        else:
+            if self.cost_total < amount:
+                return 'over_paid'
+            elif self.cost_total > amount:
+                return 'partially_paid'
+            else:return "paid"
+             
     def __check_refund_status(self):
         invoices = []
         amount = D('0.0')

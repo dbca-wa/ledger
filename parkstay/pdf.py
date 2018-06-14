@@ -92,22 +92,6 @@ def _create_letter_header_footer(canvas, doc):
     canvas.drawImage(dpaw_header_logo, LETTER_HEADER_MARGIN, current_y - LETTER_IMAGE_HEIGHT,
                      width=LETTER_IMAGE_WIDTH, height=LETTER_IMAGE_HEIGHT)
 
-    # footer
-    current_x = PAGE_WIDTH - LETTER_HEADER_MARGIN
-    current_y = LETTER_HEADER_MARGIN
-
-    canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
-    canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
-
-    canvas.drawRightString(current_x, current_y, DPAW_URL)
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE,
-                           'Phone: {} Fax: {} Email: {}'.format(DPAW_PHONE, DPAW_FAX, DPAW_EMAIL))
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 2, DPAW_PO_BOX)
-
-    canvas.setFont(BOLD_ITALIC_FONTNAME, SMALL_FONTSIZE)
-
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
-
 
 def create_confirmation(confirmation_buffer, booking):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
@@ -134,7 +118,7 @@ def create_confirmation(confirmation_buffer, booking):
     if booking.first_campsite_list:
         campsite = ""
         for item in booking.first_campsite_list:
-            campsite += ' {}{}'.format('{} - '.format(item.name if item else ""),'({})'.format(item.type if item.type else ""))
+            campsite += ' {},'.format(item.name if item else "")
 
     #campsite = u'{}'.format(booking.first_campsite_list) if booking.campground.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
     table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])

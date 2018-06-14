@@ -227,14 +227,14 @@ export default {
               } else if (data.length > 1) {
                 var results = {};
                 for (var i = 0; i < data.length; i++) {
-                  if (results[data[i].type] == undefined) {
-                    results[data[i].type] = 0;
+                  if (results[data[i].name] == undefined) {
+                    results[data[i].name] = 0;
                   }
-                  results[data[i].type] += 1;
+                  results[data[i].name] += 1;
                 }
                 var resultList = [];
                 for (var index in results) {
-                  resultList.push(`${results[index]}x ${index}`);
+                  resultList.push(`${index}`);
                 }
                 var resultString = resultList.join(", ");
 
@@ -678,14 +678,14 @@ export default {
                 case 7:
                   var results = {};
                   for (var i = 0; i < booking.campground_site_type.length; i++) {
-                    if (results[booking.campground_site_type[i].type] == undefined) {
-                      results[booking.campground_site_type[i].type] = 0;
+                    if (results[booking.campground_site_type[i].name] == undefined) {
+                      results[booking.campground_site_type[i].name] = 0;
                     }
-                    results[booking.campground_site_type[i].type] += 1;
+                    results[booking.campground_site_type[i].name] += 1;
                   }
                   var resultList = [];
                   for (var index in results) {
-                    resultList.push(`${results[index]}x ${index}`);
+                    resultList.push(`${index}`);
                   }
                   var resultString = resultList.join(", ");
                   bk[field] = resultString;

@@ -13,6 +13,30 @@
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <div class="col-md-4">
+                                                <label class="control-label pull-left required"  for="Dates">Campground: </label>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <select @change="updateCampground" class="form-control" name="campground" v-model="booking.campground">
+                                                    <option v-for="c in onlineCampgrounds" :value="c.id">{{c.name}}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group" v-if="booking.campground != null || booking.campground != ''">
+                                            <div class="col-md-4">
+                                                <label class="control-label pull-left required"  for="Dates" >Camp Site: </label>
+                                            </div>
+                                            <div class="col-md-8" v-if="campsites.length > 0"></div>
+                                            <div class="col-md-8" >
+                                                <select class="form-control" style="width: 100%;" id="multi-campsites" name="campground" placeholder="" multiple v-model="selected_campsites">
+                                                    <option v-for="c in campsites" v-bind:value="c.id">{{c.name}}</option>
+                                                </select>
+                                            </div>                                           
+                                            <div class="col-md-8" v-else>
+                                                <h4>Sorry, no available campsites were found.</h4>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-md-4">
                                                 <label class="control-label pull-left required"  for="Dates">Dates: </label>
                                             </div>
                                             <div class="col-md-4">
@@ -30,30 +54,6 @@
                                                         <span class="glyphicon glyphicon-calendar"></span>
                                                     </span>
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <div class="col-md-4">
-                                                <label class="control-label pull-left required"  for="Dates">Campground: </label>
-                                            </div>
-                                            <div class="col-md-8">
-                                                <select @change="updateCampground" class="form-control" name="campground" v-model="booking.campground">
-                                                    <option v-for="c in onlineCampgrounds" :value="c.id">{{c.name}}</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="form-group" v-if="booking.campground != null || booking.campground != ''">
-                                            <div class="col-md-4">
-                                                <label class="control-label pull-left required"  for="Dates" >Camp Site: </label>
-                                            </div>
-                                            <div class="col-md-8" v-if="campsites.length > 0"></div>
-                                            <div class="col-md-8" >
-                                                <select class="form-control" style="width: 100%;" id="multi-campsites" name="campground" placeholder="" multiple v-model="selected_campsite">
-                                                    <option v-for="c in campsites" v-bind:value="c.id">{{c.name}}</option>
-                                                </select>
-                                            </div>                                           
-                                            <div class="col-md-8" v-else>
-                                                <h4>Sorry, no available campsites were found.</h4>
                                             </div>
                                         </div>
                                         <div class="form-group">
@@ -295,7 +295,7 @@ export default {
             arrivalPicker: {},
             departurePicker: {},
             campsite_classes: [],
-            selected_campsite: '',
+            selected_campsites: [],
             booking_type: "campsite",
             initialised: false,
             fetchingSites: false,
@@ -344,7 +344,7 @@ export default {
             if (vm.booking.arrival) {
                 $.each(vm.stayHistory, function(i, his) {
                     var range = Moment.range(Moment(his.range_start, "DD/MM/YYYY"), Moment(his.range_end, "DD/MM/YYYY"));
-                    var arrival = Moment(vm.booking.arrival, "YYYY/MM/DD");
+                    var arrival = Moment(vm.booking.arrival, "YYYY-MM-DD");
                     if (range.contains(arrival)) {
                         vm.departurePicker.data("DateTimePicker").maxDate(arrival.clone().add(his.max_days, 'days'));
                         vm.departurePicker.data("DateTimePicker").date(null);
@@ -387,16 +387,16 @@ export default {
                     tags:false,
                 }).
                 on("select2:select",function (e) {
-                    vm.selected_campsite = $(e.currentTarget).val();
+                    vm.selected_campsites = $(e.currentTarget).val();
                 }).
                 on("select2:unselect",function (e) {
-                    vm.selected_campsite = $(e.currentTarget).val();
+                    vm.selected_campsites = $(e.currentTarget).val();
                 });
             },100)
         },
         updatePrices: function() {
             let vm = this;
-            var campsite_ids = vm.selected_campsite;
+            var campsite_ids = vm.selected_campsites;
             vm.booking.price = 0;
             if (vm.selected_campsite) {
                 if (vm.booking.arrival && vm.booking.departure) {
@@ -719,7 +719,7 @@ export default {
                 booking.arrival = vm.booking.arrival;
                 booking.departure = vm.booking.departure;
                 booking.guests = vm.booking.guests;
-                booking.campsites = vm.selected_campsite;
+                booking.campsites = vm.selected_campsites;
                 booking.campground = vm.booking.campground
                 // Hide the alert
                 vm.$store.dispatch("updateAlert", {
@@ -845,13 +845,13 @@ export default {
             vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
             vm.booking_price = vm.booking.price;
         },
-        initBooking(response) {
+        initBooking(response) {           
             let vm = this;
             vm.booking = JSON.parse(JSON.stringify(response.body));
             vm.booking.arrival = Moment(vm.booking.arrival).format('DD/MM/YYYY');
             vm.booking.departure = Moment(vm.booking.departure).format('DD/MM/YYYY');
             // set the campsite
-            vm.selected_campsite = vm.booking.campsites;
+            vm.selected_campsites = vm.booking.campsites;
             // Update dates
             vm.selected_arrival = vm.booking.arrival;
             vm.selected_departure = vm.booking.departure;
