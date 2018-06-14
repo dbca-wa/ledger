@@ -60,6 +60,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'region',
                 'district',
                 'tenure',
+                'assessor_data',
                 'data',
                 'schema',
                 'customer_status',
