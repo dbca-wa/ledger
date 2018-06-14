@@ -631,10 +631,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             application_type = request.data.get('application')
-            activity = request.data.get('activity')
             region = request.data.get('region')
             district = request.data.get('district')
             tenure = request.data.get('tenure')
+            activity = request.data.get('activity')
+            sub_activity1 = request.data.get('sub_activity1')
+            sub_activity2 = request.data.get('sub_activity2')
+            category = request.data.get('category')
+            approval_level = request.data.get('approval_level')
 
             application_name = ApplicationType.objects.get(id=application_type).name
             # Get most recent versions of the Proposal Types
@@ -659,6 +663,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
                             'District': District.objects.get(id=district).name if district else None,
                             'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
                             #'ApplicationType': ApplicationType.objects.get(id=application_type).name
+                            'Activity': activity,
+                            'Sub-activity level 1': sub_activity1,
+                            'Sub-activity level 2': sub_activity2,
+                            'Management area': category,
+                            'Approval Level': approval_level,
                         }]
                     }
 

@@ -19,11 +19,13 @@
                                           <input type="radio" name="behalf_of_org" v-model="behalf_of"  :value="org.id"> On behalf of {{org.name}}
                                         </label>
                                     </div>
+                                    <!--
                                     <div class="radio">
                                         <label class="radio-inline">
                                           <input type="radio" name="behalf_of_org" v-model="behalf_of"  value="other" > On behalf of an organisation (as an authorised agent)
                                         </label>
                                     </div>
+                                    -->
                                 </div>
                             </div>
                             <div v-if="behalf_of == 'other'" class="col-sm-12">
@@ -160,9 +162,9 @@
 									<label for="" class="control-label" >Category</label>
 									<div class="col-sm-12">
 										<div class="form-group">
-											<select v-model="selected_category">
+											<select v-model="selected_category" @change="get_approval_level(selected_category)">
 												<option value="" selected disabled>Select category</option>
-												<option v-for="category in categories" :value="category.value">
+												<option v-for="category in categories" :value="category.value" :name="category.approval">
 													{{ category.text }}
 												</option>
 											</select>
@@ -170,6 +172,11 @@
 									</div>
 								</div>
                             </div>
+                            <!-- For Testing
+                            <div v-if="approval_level">
+                                <label>Approval level required: </label>  {{ approval_level }}
+                            </div>
+                            -->
 
 
                             <div class="col-sm-12">
@@ -221,6 +228,7 @@ export default {
         sub_activities1: [],
         sub_activities2: [],
         categories: [],
+        approval_level: '',
         tenures: [],
         display_region_selectbox: false,
         display_activity_matrix_selectbox: false,
@@ -273,8 +281,12 @@ export default {
 			application: vm.selected_application_id,
 			region: vm.selected_region,
 			district: vm.selected_district,
+			tenure: vm.selected_tenure,
 			activity: vm.selected_activity,
-			tenure: vm.selected_tenure
+            sub_activity1: vm.selected_sub_activity1,
+            sub_activity2: vm.selected_sub_activity2,
+            category: vm.selected_category,
+            approval_level: vm.approval_level
 		}).then(res => {
 		    vm.proposal = res.body;
 			vm.$router.push({
@@ -290,7 +302,7 @@ export default {
         let vm = this;
         if (vm.selected_application_name == 'Disturbance') {
             //if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_activity == '' || vm.selected_tenure == ''){
-            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_tenure == ''){
+            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_tenure == '' || vm.approval_level == ''){
 	    		return true;
             }
         } else {
@@ -356,15 +368,6 @@ export default {
 			console.log(error);
 		})
 	},
-    _chainedSelectActivities: function(application_id){
-		let vm = this;
-        vm.activities = [];
-        var api_activities = this.searchList(application_id, vm.application_types).activities;
-        //var api_activities = vm.application_types[region_id-1].districts
-        for (var i = 0; i < api_activities.length; i++) {
-            this.activities.push( {text: api_activities[i].name, value: api_activities[i].id} );
-        }
-	},
     chainedSelectTenures: function(application_id){
 		let vm = this;
         vm.tenures = [];
@@ -400,6 +403,7 @@ export default {
         vm.sub_activities1 = [];
         vm.sub_activities2 = [];
         vm.categories = [];
+        vm.approval_level = '';
 
 		vm.$http.get(api_endpoints.activity_matrix).then((response) => {
 				this.activity_matrix = response.body[0].schema[0];
@@ -414,15 +418,6 @@ export default {
 			console.log(error);
 		})
 	},
-    _chainedSelectSubActivities1: function(activity_name){
-		let vm = this;
-        vm.sub_activities1 = [];
-        var [api_activities, res] = this.get_sub_matrix(activity_name, vm.activity_matrix)
-        for (var i = 0; i < api_activities.length; i++) {
-            var key = Object.keys(api_activities[i])[0];
-            this.sub_activities1.push( {text: key, value: key, sub_matrix: api_activities[i][key]} );
-        }
-	},
     chainedSelectSubActivities1: function(activity_name){
 		let vm = this;
         vm.sub_activities1 = [];
@@ -431,10 +426,17 @@ export default {
         vm.selected_sub_activity1 = '';
         vm.selected_sub_activity2 = '';
         vm.selected_category = '';
+        vm.approval_level = '';
 
         vm.sub_activities1 = [];
         var [api_activities, res] = this.get_sub_matrix(activity_name, vm.activity_matrix)
         if (res == "null" || res == null) {
+            //for (var i = 0; i < vm.activity_matrix.length; i++) {
+            //    if (activity_name == vm.activity_matrix[i]['text']) {
+            //        vm.activity_matrix[i]['sub_matrix']
+            //    }
+            //}
+            vm.approval_level = api_activities;
             return;
         } else if (res == "pass") {
             var api_sub_activities = this.get_sub_matrix("pass", api_activities[0])[0];
@@ -442,7 +444,7 @@ export default {
                 // go straight to categories widget
                 var categories = api_sub_activities[0]['pass']
                 for (var i = 0; i < categories.length; i++) {
-                    this.categories.push( {text: categories[i], value: categories[i]} );
+                    this.categories.push( {text: categories[i][0], value: categories[i][0], approval: categories[i][1]} );
                 }
 
             } else {
@@ -466,14 +468,16 @@ export default {
         vm.categories = [];
         vm.selected_sub_activity2 = '';
         vm.selected_category = '';
+        vm.approval_level = '';
 
         //var api_activities = this.get_sub_matrix(activity_name, vm.sub_activities1[0]['text'])
         var [api_activities, res] = this.get_sub_matrix(activity_name, vm.sub_activities1)
         if (res == "null" || res == null) {
+            vm.approval_level = api_activities;
             return;
         } else if (res == "pass") {
             for (var i = 0; i < api_activities.length; i++) {
-                this.categories.push( {text: api_activities[i], value: api_activities[i]} );
+                this.categories.push( {text: api_activities[i][0], value: api_activities[i][0], approval: api_activities[i][1]} );
             }
         } else {
             for (var i = 0; i < vm.sub_activities1.length; i++) {
@@ -491,11 +495,13 @@ export default {
 		let vm = this;
         vm.categories = [];
         vm.selected_category = '';
+        vm.approval_level = '';
+
         for (var i = 0; i < vm.sub_activities2.length; i++) {
             if (activity_name == vm.sub_activities2[i]['text']) {
                 var api_categories = vm.sub_activities2[i]['sub_matrix'];
                 for (var j = 0; j < api_categories.length; j++) {
-                    this.categories.push( {text: api_categories[j], value: api_categories[j]} );
+                    this.categories.push( {text: api_categories[j][0], value: api_categories[j][0], approval: api_categories[j][1]} );
                 }
             }
         }
@@ -508,7 +514,9 @@ export default {
                 if ('pass' in sub_activities[activity_name][0]) {
                     return [sub_activities[activity_name], "pass"];
                 } else if ('null' in sub_activities[activity_name][0]) {
-                    return [sub_activities[activity_name], "null"];
+                    var approval_level = sub_activities[activity_name]['sub_matrix'][0]['null'][0];
+                    return [approval_level, "null"];
+                    //return [sub_activities[activity_name], "null"];
                 }
             }
            
@@ -519,7 +527,8 @@ export default {
             if (activity_name == sub_activities[i]['text']) {
                 var key_sub_matrix = Object.keys(sub_activities[i]['sub_matrix'][0])[0];
                 if (key_sub_matrix == "null") {
-                    return [null, null]
+                    var approval_level = sub_activities[i]['sub_matrix'][0]['null'][0];
+                    return [approval_level, null]
                 } else if (key_sub_matrix == "pass") {
                     return [sub_activities[i]['sub_matrix'][0]['pass'], "pass"]
                 } else {
@@ -527,6 +536,15 @@ export default {
                 }
             }
         }
+    },
+    get_approval_level: function(category_name) {
+        let vm = this;
+        for (var i = 0; i < vm.categories.length; i++) {
+            if (category_name == vm.categories[i]['text']) {
+                vm.approval_level = vm.categories[i]['approval'];
+            }
+        }
+        
     }
 
   },
