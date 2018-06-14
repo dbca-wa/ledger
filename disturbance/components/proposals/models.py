@@ -318,7 +318,7 @@ class Proposal(RevisionedMixin):
         l = []
         p = copy.deepcopy(self)
         while (p.previous_application):
-            l.append( p.previous_application.id )
+            l.append( dict(id=p.previous_application.id, modified=p.previous_application.modified_date) )
             p = p.previous_application
         return l
 

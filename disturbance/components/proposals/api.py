@@ -61,7 +61,7 @@ from disturbance.components.proposals.serializers import (
     ProposedApprovalSerializer,
     PropedDeclineSerializer,
     AmendmentRequestSerializer,
-    SearchReferenceSerializer,  
+    SearchReferenceSerializer,
     SearchKeywordSerializer,
     ListProposalSerializer
 )
@@ -274,6 +274,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
+            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.submit(request,self)
             #serializer = self.get_serializer(instance)
@@ -920,7 +921,7 @@ class AmendmentRequestReasonChoicesView(views.APIView):
 
         return Response(choices_list)
 
-class SearchKeywordsView(views.APIView):    
+class SearchKeywordsView(views.APIView):
     renderer_classes = [JSONRenderer,]
     def post(self,request, format=None):
         qs = []
@@ -934,7 +935,7 @@ class SearchKeywordsView(views.APIView):
         serializer = SearchKeywordSerializer(qs, many=True)
         return Response(serializer.data)
 
-class SearchReferenceView(views.APIView):    
+class SearchReferenceView(views.APIView):
     renderer_classes = [JSONRenderer,]
     def post(self,request, format=None):
         try:

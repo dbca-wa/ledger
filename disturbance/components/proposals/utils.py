@@ -8,7 +8,7 @@ import traceback
 import os
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
-    data = {} 
+    data = {}
     special_fields_list = []
     assessor_data_list = []
     comment_data_list = {}
@@ -40,7 +40,7 @@ def _extend_item_name(name, suffix, repetition):
 
 def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     item_data = {}
-    
+
     if 'name' in item:
         extended_item_name = item['name']
     else:
@@ -129,7 +129,7 @@ class AssessorDataSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -174,7 +174,7 @@ class CommentDataSearch(object):
         self.comment_data = {}
 
     def extract_comment_data(self,item,post_data):
-        res = {} 
+        res = {}
         values = []
         for k in post_data:
             if re.match(item,k):
@@ -192,7 +192,7 @@ class CommentDataSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -234,7 +234,7 @@ class SpecialFieldsSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -297,7 +297,7 @@ def save_proponent_data(instance,request,viewset):
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
                 'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
                # 'lodgement_sequence': 1 if instance.lodgement_sequence == 0 else instance.lodgement_sequence,
-               
+
             }
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -369,7 +369,7 @@ def clone_proposal_with_status_reset(proposal):
             proposal.assigned_approver = None
 
             proposal.approval = None
-            
+
             original_proposal_id = proposal.id
 
             proposal.previous_proposal = proposal.objects.get(id=original_proposal_id)
@@ -378,13 +378,13 @@ def clone_proposal_with_status_reset(proposal):
 
             proposal.save(no_revision=True)
 
-            
+
             # clone documents
             for proposal_document in ProposalDocuments.objects.filter(proposal=original_proposal_id):
                 proposal_document.proposal = proposal
                 proposal_document.id = None
                 proposal_document.save()
-            
+
             return proposal
         except:
             raise

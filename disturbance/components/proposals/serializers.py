@@ -73,6 +73,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'previous_application',
                 'get_history',
                 'lodgement_date',
+                'modified_date',
                 'documents',
                 'requirements',
                 'readonly',
@@ -119,7 +120,7 @@ class DTProposalSerializer(BaseProposalSerializer):
     #activity = serializers.CharField(source='activity.name', read_only=True)
     tenure = serializers.CharField(source='tenure.name', read_only=True)
 
-    
+
 class ListProposalSerializer(BaseProposalSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(source='applicant.organisation.name')
@@ -152,7 +153,9 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'submitter',
                 'assigned_officer',
                 'previous_application',
+                'get_history',
                 'lodgement_date',
+                'modified_date',
                 'readonly',
                 'can_user_edit',
                 'can_user_view',
@@ -163,7 +166,7 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'allowed_assessors',
                 'proposal_type'
                 )
-        
+
 
 class ProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
@@ -290,7 +293,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'assigned_officer',
                 'assigned_approver',
                 'previous_application',
+                'get_history',
                 'lodgement_date',
+                'modified_date',
                 'documents',
                 'requirements',
                 'readonly',
