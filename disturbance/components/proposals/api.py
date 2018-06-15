@@ -653,12 +653,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'application_type': application_type,
                 'region': region,
                 'district': district,
-                #'activity': activity,
+                'activity': activity,
                 #'tenure': tenure,
                 'data': [
                     {
                         u'regionActivitySection': [{
-                            #'Activity': activity if activity else None,
                             'Region': Region.objects.get(id=region).name if region else None,
                             'District': District.objects.get(id=district).name if district else None,
                             #'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
