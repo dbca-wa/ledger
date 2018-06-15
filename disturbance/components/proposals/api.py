@@ -633,7 +633,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             application_type = request.data.get('application')
             region = request.data.get('region')
             district = request.data.get('district')
-            tenure = request.data.get('tenure')
+            #tenure = request.data.get('tenure') 
             activity = request.data.get('activity')
             sub_activity1 = request.data.get('sub_activity1')
             sub_activity2 = request.data.get('sub_activity2')
@@ -654,14 +654,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'region': region,
                 'district': district,
                 #'activity': activity,
-                'tenure': tenure,
+                #'tenure': tenure,
                 'data': [
                     {
                         u'regionActivitySection': [{
                             #'Activity': activity if activity else None,
                             'Region': Region.objects.get(id=region).name if region else None,
                             'District': District.objects.get(id=district).name if district else None,
-                            'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
+                            #'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
                             #'ApplicationType': ApplicationType.objects.get(id=application_type).name
                             'ActivityType': activity,
                             'Sub-activity level 1': sub_activity1,
