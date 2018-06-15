@@ -328,11 +328,16 @@
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
-                                    <div v-if="hasAssessorMode" class="row" style="margin-bottom:20px;">
-                                      <div class="col-lg-12 pull-right">
-                                        <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
-                                      </div>
-                                    </div>                                
+                                    <div class="navbar navbar-fixed-bottom" v-if="hasAssessorMode" style="background-color: #f5f5f5 ">
+                                        <div class="navbar-inner">
+                                            <div v-if="hasAssessorMode" class="container">
+                                            <p class="pull-right">                       
+                                            <button class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="save()">Save Changes</button>
+                                            </p>                      
+                                            </div>                   
+                                        </div>
+                                    </div>      
+
                                 </Proposal>
                             </form>
                         </div>
@@ -647,7 +652,7 @@ export default {
         },
         switchStatus: function(status){
             let vm = this;
-            vm.save_wo();
+            //vm.save_wo();
             let data = {'status': status}
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
                 emulateJSON:true,

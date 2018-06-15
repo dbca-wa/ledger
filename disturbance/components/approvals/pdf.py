@@ -144,7 +144,7 @@ def _create_approval_header(canvas, doc, draw_page_number=True):
         canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2,
                           '{}'.format(doc.approval.lodgement_number))
 
-def _create_approval(approval_buffer, approval, proposal):
+def _create_approval(approval_buffer, approval, proposal, copied_to_permit):
     site_url = settings.SITE_URL
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
@@ -178,6 +178,23 @@ def _create_approval(approval_buffer, approval, proposal):
             [Paragraph(a.requirement, styles['Left']) for a in proposal.requirements.order_by('order')],
             bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
         elements.append(conditionList)
+
+    if copied_to_permit:
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements.append(Paragraph('Assessor Comments', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        '''new_list =[]
+        for k, v in copied_to_permit:
+            new_item = '{} : {}'.format(v.encode('UTF-8'), k.encode('UTF-8'))
+            new_list.append(new_item)
+
+        copiedToPermitList = ListFlowable(
+            [Paragraph(c , styles['Left']) for c in new_list],bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
+        elements.append(copiedToPermitList)'''
+        for k,v in copied_to_permit:
+            elements.append(Paragraph(v.encode('UTF-8'), styles['Left']))
+            elements.append(Paragraph(k.encode('UTF-8'), styles['Left']))
+            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     
     elements += _layout_extracted_fields(approval.extracted_fields)
 
@@ -323,10 +340,10 @@ def _layout_extracted_fields(extracted_fields):
 
     return elements
 
-def create_approval_doc(approval,proposal):
+def create_approval_doc(approval,proposal, copied_to_permit):
     approval_buffer = BytesIO()
 
-    _create_approval(approval_buffer, approval, proposal)
+    _create_approval(approval_buffer, approval, proposal, copied_to_permit)
     filename = 'approval-{}.pdf'.format(approval.id)
     document = ApprovalDocument.objects.create(approval=approval,name=filename)
     document._file.save(filename, File(approval_buffer), save=True)
@@ -417,7 +434,7 @@ def _create_renewal(renewal_buffer, approval, proposal):
     delegation.append(Paragraph('is due to expire on {}'.format(expiry_date), styles['Left']))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    delegation.append(Paragraph('Please not that if you have outstanding compliances these are required to be submitted before the approval can be renewed'
+    delegation.append(Paragraph('Please note that if you have outstanding compliances these are required to be submitted before the approval can be renewed'
                                 , styles['Left']))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))

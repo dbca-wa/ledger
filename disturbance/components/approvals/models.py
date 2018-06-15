@@ -26,6 +26,7 @@ from disturbance.components.approvals.email import (
     send_approval_reinstate_email_notification,
     send_approval_surrender_email_notification
 )
+from disturbance.utils import search_keys, search_multiple_keys
 #from disturbance.components.approvals.email import send_referral_email_notification
 
 
@@ -162,14 +163,34 @@ class Approval(models.Model):
 
 
     def generate_doc(self):
-        from disturbance.components.approvals.pdf import create_approval_doc 
-        self.licence_document = create_approval_doc(self,self.current_proposal)
+        from disturbance.components.approvals.pdf import create_approval_doc
+        copied_to_permit = self.copiedToPermit_fields(self.current_proposal) #Get data related to isCopiedToPermit tag
+        self.licence_document = create_approval_doc(self,self.current_proposal, copied_to_permit)
         self.save()
 
     def generate_renewal_doc(self):
         from disturbance.components.approvals.pdf import create_renewal_doc 
         self.renewal_document = create_renewal_doc(self,self.current_proposal)
         self.save()
+
+    def copiedToPermit_fields(self, proposal):
+        p=proposal
+        copied_data = []
+        search_schema = search_multiple_keys(p.schema, primary_search='isCopiedToPermit', search_list=['label', 'name'])
+        if p.assessor_data:
+            search_assessor_data=search_keys(p.assessor_data, search_list=['assessor', 'name'])
+        if search_schema:
+            for c in search_schema:
+                try:
+                    if search_assessor_data:
+                        for d in search_assessor_data:
+                            if c['name'] == d['name']:
+                                if d['assessor']:
+                                    copied_data.append({c['label'], d['assessor']})
+                except: 
+                    raise
+        return copied_data
+
 
     def log_user_action(self, action, request):
        return ApprovalUserAction.log_action(self, action, request.user)
