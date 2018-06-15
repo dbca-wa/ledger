@@ -59,8 +59,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'title',
                 'region',
                 'district',
-                'tenure',
-                'assessor_data',
+                #'tenure',
                 'data',
                 'schema',
                 'customer_status',
@@ -118,8 +117,7 @@ class DTProposalSerializer(BaseProposalSerializer):
     application_type = serializers.CharField(source='application_type.name', read_only=True)
     region = serializers.CharField(source='region.name', read_only=True)
     district = serializers.CharField(source='district.name', read_only=True)
-    #activity = serializers.CharField(source='activity.name', read_only=True)
-    tenure = serializers.CharField(source='tenure.name', read_only=True)
+    #tenure = serializers.CharField(source='tenure.name', read_only=True)
 
 
 class ListProposalSerializer(BaseProposalSerializer):
@@ -133,8 +131,7 @@ class ListProposalSerializer(BaseProposalSerializer):
     application_type = serializers.CharField(source='application_type.name', read_only=True)
     region = serializers.CharField(source='region.name', read_only=True)
     district = serializers.CharField(source='district.name', read_only=True)
-    #activity = serializers.CharField(source='activity.name', read_only=True)
-    tenure = serializers.CharField(source='tenure.name', read_only=True)
+    #tenure = serializers.CharField(source='tenure.name', read_only=True)
 
     class Meta:
         model = Proposal
@@ -145,7 +142,7 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'title',
                 'region',
                 'district',
-                'tenure',
+                #'tenure',
                 'customer_status',
                 'processing_status',
                 'review_status',
@@ -178,8 +175,7 @@ class ProposalSerializer(BaseProposalSerializer):
     application_type = serializers.CharField(source='application_type.name', read_only=True)
     region = serializers.CharField(source='region.name', read_only=True)
     district = serializers.CharField(source='district.name', read_only=True)
-    #activity = serializers.CharField(source='activity.name', read_only=True)
-    tenure = serializers.CharField(source='tenure.name', read_only=True)
+    #tenure = serializers.CharField(source='tenure.name', read_only=True)
 
     def get_readonly(self,obj):
         return obj.can_user_view
@@ -196,7 +192,7 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'title',
                 'region',
                 'district',
-                'tenure',
+                #'tenure',
                 'data',
                 'assessor_data',
                 'comment_data',
@@ -269,8 +265,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     application_type = serializers.CharField(source='application_type.name', read_only=True)
     region = serializers.CharField(source='region.name', read_only=True)
     district = serializers.CharField(source='district.name', read_only=True)
-    #activity = serializers.CharField(source='activity.name', read_only=True)
-    tenure = serializers.CharField(source='tenure.name', read_only=True)
+    #tenure = serializers.CharField(source='tenure.name', read_only=True)
 
     class Meta:
         model = Proposal
@@ -280,7 +275,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'activity',
                 'region',
                 'district',
-                'tenure',
+                #'tenure',
                 'title',
                 'data',
                 'schema',
@@ -458,9 +453,7 @@ class SearchKeywordSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     type = serializers.CharField()
     applicant = serializers.CharField()
-    #text = serializers.CharField(required=False,allow_null=True)
-    text = serializers.JSONField(required=False,allow_null=True)
-
+    text = serializers.CharField(required=False,allow_null=True)
 
 class SearchReferenceSerializer(serializers.Serializer):
     id = serializers.IntegerField()
