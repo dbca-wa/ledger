@@ -180,7 +180,7 @@ export default {
               {data: "number"},
               {data:"type"},
               {data: "applicant"},
-              {data: "text"},
+              {data: "text.value"},
               {
                 data: "id",
                   mRender:function (data,type,full) {
@@ -264,9 +264,9 @@ export default {
           {
             vm.searchKeywords = [];
           }
-          vm.searchProposal = false;
+          /*vm.searchProposal = false;
           vm.searchApproval = false;
-          vm.searchCompliance = false;
+          vm.searchCompliance = false; */
           vm.keyWord = null; 
           vm.results = [];
           vm.$refs.proposal_datatable.vmDataTable.clear()

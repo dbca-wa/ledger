@@ -6,54 +6,50 @@
                 <div class="col-lg-12 pull-right">
                   <div class="panel panel-default">
                     <div class="panel-heading">
-
                         <h3 class="panel-title" style="color:red;">An amendment has been requested for this Proposal
                           <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                 <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                            </a>
+                          </a>
                         </h3>
                       </div>
                       <div class="panel-body collapse in" :id="pBody">
                         <div v-for="a in amendment_request">
-                      
                           <p>Reason: {{a.reason}}</p>
-                          <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>
-                        
+                          <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
                       </div>
                     </div>
-
-
                   </div>
                 </div>
               </div>
             </div>
-
             <!--
             <label for="region-label">Region(*)</label>
             <input type="text" name="region-text"class="form-control" disabled="true">
-            -->
-
-            <Proposal v-if="proposal" :proposal="proposal">
+            -->        
+            <Proposal v-if="proposal" :proposal="proposal" id="proposalStart">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
-                <div v-if="!proposal.readonly" class="row" style="margin-bottom:20px;">
-                  <div class="col-lg-12 pull-right">
+                  <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                  <div class="navbar-inner">
+                    <div v-if="!proposal.readonly" class="container">
+                      <p class="pull-right" style="margin-top:5px;">                       
                         <!-- <input type="submit" class="btn btn-primary" value="Save and Exit"/> -->
                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                         <!-- <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/> -->
                         <input type="submit" class="btn btn-primary" value="Submit"/>
-
                         <!-- hidden 'save_and_continue_btn' used to allow File (file.vue component) to trigger save -->
+                      </p>                      
+                    </div>
+                    <div v-else class="container">
+                      <p class="pull-right" style="margin-top:5px;">
+                        <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
+                      </p>                      
+                    </div>                    
                   </div>
-                </div>
-                <div v-else class="row" style="margin-bottom:20px;">
-                  <div class="col-lg-12 pull-right">
-                    <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
-                  </div>
-                </div>
-            </Proposal>
+                </div>                
+            </Proposal>           
         </form>
     </div>
 </template>
@@ -246,6 +242,7 @@ export default {
   mounted: function() {
     let vm = this;
     vm.form = document.forms.new_proposal;
+    
   },
   beforeRouteEnter: function(to, from, next) {
     if (to.params.proposal_id) {

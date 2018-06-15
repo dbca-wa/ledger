@@ -1344,13 +1344,17 @@ def searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance
                 if p.data:
                     try:
                         results = search(p.data[0], searchWords)
+                        final_results = {}
                         if results:
+                            for r in results:
+                                for key, value in r.iteritems():
+                                    final_results.update({'key': key, 'value': value})
                             res = {
                                 'number': p.lodgement_number,
                                 'id': p.id,
                                 'type': 'Proposal',
                                 'applicant': p.applicant.name,
-                                'text': results,
+                                'text': final_results,
                                 }
                             qs.append(res)
                     except:
@@ -1367,7 +1371,6 @@ def searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance
                 try:
                     results = search_compliance(c, searchWords)
                     qs.extend(results)
-                    print results
                 except:
                     raise
     return qs
