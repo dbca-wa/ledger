@@ -274,7 +274,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.submit(request,self)
             #serializer = self.get_serializer(instance)
@@ -664,7 +663,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                             'District': District.objects.get(id=district).name if district else None,
                             'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
                             #'ApplicationType': ApplicationType.objects.get(id=application_type).name
-                            'Activity': activity,
+                            'ActivityType': activity,
                             'Sub-activity level 1': sub_activity1,
                             'Sub-activity level 2': sub_activity2,
                             'Management area': category,

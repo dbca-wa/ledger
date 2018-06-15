@@ -2,16 +2,18 @@
     <div class="container" >
         <div class="row">
             <div class="col-sm-12">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Apply on behalf of
-                            <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
-                                <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                            </a>
-                        </h3>
-                    </div>
-                    <div class="panel-body collapse in" :id="pBody">
-                        <form class="form-horizontal" name="personal_form" method="post">
+                <form class="form-horizontal" name="personal_form" method="post">
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Apply on behalf of
+                                <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
+                                    <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                </a>
+                            </h3>
+                        </div>
+                        <div class="panel-body collapse in" :id="pBody">
+
                             <div class="col-sm-12">
                                 <div class="form-group">
                                     <div v-for="org in profile.disturbance_organisations" class="radio">
@@ -58,7 +60,18 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Apply for
+                                <a :href="'#'+pBody2" data-toggle="collapse"  data-parent="#userInfo2" expanded="true" :aria-controls="pBody2">
+                                    <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                </a>
+                            </h3>
+                        </div>
+                        <div class="panel-body collapse in" :id="pBody2">
                             <div>
                                 <label for="" class="control-label" >Proposal Type</label>
                                 <div class="col-sm-12">
@@ -179,12 +192,14 @@
                             -->
 
 
-                            <div class="col-sm-12">
-                                <button :disabled="isDisabled()" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
-                             </div>
-                        </form>
+                        </div>
                     </div>
-                </div>
+
+                    <div class="col-sm-12">
+                        <button :disabled="isDisabled()" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                    </div>
+                  </div>
+                </form>
             </div>
         </div>
     </div>
@@ -210,6 +225,7 @@ export default {
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
+        pBody2: 'pBody2' + vm._uid,
 
         selected_application_id: '',
         selected_application_name: '',

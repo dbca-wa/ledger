@@ -43,7 +43,7 @@
                                     <table class="table small-table">
                                         <tr>
                                             <th>ID</th>
-                                            <th>Modified Date</th>
+                                            <th>Last Modified</th>
                                         </tr>
                                         <tr v-for="p in proposal.get_history">
                                             <td>{{ p.id }}</td>
