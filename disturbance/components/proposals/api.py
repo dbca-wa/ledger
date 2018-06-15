@@ -633,7 +633,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             application_type = request.data.get('application')
             region = request.data.get('region')
             district = request.data.get('district')
-            #tenure = request.data.get('tenure')
+            #tenure = request.data.get('tenure') 
             activity = request.data.get('activity')
             sub_activity1 = request.data.get('sub_activity1')
             sub_activity2 = request.data.get('sub_activity2')

@@ -98,7 +98,7 @@
                                         </select>
                                     </div>
                                 </div>
-                            </div>
+                            </div> 
 
                             <div v-if="display_region_selectbox && selected_region">
                                 <label for="" class="control-label" >District</label>
