@@ -42,7 +42,14 @@
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
                                 {{ application.processing_status }}<br/>
-                                <div class ="col-sm-12" v-for="activity in application.schema">{{activity.name}}:{{activity.status}}</div>
+                                <div class ="col-sm-12" v-for="item in application.licence_type_data">
+                                    
+                                    <div v-for="item1 in item">
+                                        <div v-if="item1.name">
+                                            {{item1.name}}:{{item1.processing_status}}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <!-- <div class="col-sm-12">
                                 <div class="separator"></div>
@@ -395,7 +402,7 @@
             </div>
         </div>
         </div>
-        <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
+        <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
         <AmmendmentRequest ref="ammendment_request" :application_id="application.id"></AmmendmentRequest>
         <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" @refreshFromResponse="refreshFromResponse"/>
     </div>

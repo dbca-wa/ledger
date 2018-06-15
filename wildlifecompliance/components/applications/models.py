@@ -20,10 +20,9 @@ from wildlifecompliance import exceptions
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
-from wildlifecompliance.components.applications.email import send_referral_email_notification
+from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification
 from wildlifecompliance.ordered_model import OrderedModel
-
-
+# from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
 
 
 def update_application_doc_filename(instance, filename):
@@ -52,6 +51,25 @@ class TaggedApplicationAssessorGroupActivities(TaggedItemBase):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+class ApplicationGroupType(models.Model):
+    name= models.CharField(max_length=255)
+    licence_class=models.ForeignKey('wildlifecompliance.WildlifeLicenceClass')
+    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType')
+    members=models.ManyToManyField(EmailUser,blank=True)
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def member_is_assigned(self,member):
+        # for p in self.current_applications:
+        #     if p.assigned_officer == member:
+        #         return True
+        # return False
+        return False
+
+# class applicatio_dummy_group(models.Model):
+#     name= models.CharField(max_length=255)
+#     licence_class=models.ForeignKey('wildlifecompliance.components.WildlifeLicenceClass')
 
 class ApplicationAssessorGroup(models.Model):
     name = models.CharField(max_length=255)
@@ -406,15 +424,24 @@ class Application(RevisionedMixin):
                 # if missing_fields:
                 #     error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
                 #     raise exceptions.ApplicationMissingFields(detail=error_text)
+                
+                for activity_type in  self.licence_type_data['activity_type']:
+                    activity_type["processing_status"]="With Officer"
                 self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
                 self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
+                # # print(type(select_group))
+                # print(select_group.members.all())
+                # print(select_group)
+
                 self.save()
                 # Create a log entry for the application
                 self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 # Create a log entry for the organisation
                 self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                send_application_submit_email_notification(select_group.members.all(),self,request)
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
 

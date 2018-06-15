@@ -38,6 +38,7 @@ from wildlifecompliance.components.licences.serializers import (
     LicenceClassSerializer
 )
 
+
 class LicenceViewSet(viewsets.ModelViewSet):
     queryset = WildlifeLicence.objects.all()
     serializer_class = LicenceSerializer
