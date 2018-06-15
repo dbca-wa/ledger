@@ -453,7 +453,9 @@ class SearchKeywordSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     type = serializers.CharField()
     applicant = serializers.CharField()
-    text = serializers.CharField(required=False,allow_null=True)
+    #text = serializers.CharField(required=False,allow_null=True)
+    text = serializers.JSONField(required=False,allow_null=True)
+
 
 class SearchReferenceSerializer(serializers.Serializer):
     id = serializers.IntegerField()
