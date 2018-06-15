@@ -192,7 +192,7 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'title',
                 'region',
                 'district',
-                #'tenure',
+                'tenure',
                 'data',
                 'assessor_data',
                 'comment_data',

@@ -447,9 +447,9 @@ class Proposal(RevisionedMixin):
             raise exceptions.ProposalNotComplete()
         missing_fields = []
         required_fields = {
-            #'region':'Region/District',
-            #'title': 'Title',
-            #'activity': 'Activity'
+            'region':'Region/District',
+            'title': 'Title',
+            'activity': 'Activity'
         }
         #import ipdb; ipdb.set_trace()
         for k,v in required_fields.items():
@@ -842,7 +842,7 @@ class Proposal(RevisionedMixin):
         from disturbance.components.compliances.models import Compliance, ComplianceUserAction
         for req in self.requirements.all():
             try:
-                if req.due_date >= today:
+                if req.due_date and req.due_date >= today:
                     current_date = req.due_date
                     #create a first Compliance
                     try:

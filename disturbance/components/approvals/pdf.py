@@ -166,7 +166,8 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit):
     elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
     elements.append(Paragraph(approval.activity, styles['InfoTitleLargeLeft']))
     elements.append(Paragraph(approval.region, styles['InfoTitleLargeLeft']))
-    elements.append(Paragraph(approval.tenure if approval.tenure else '', styles['InfoTitleLargeRight']))
+    #import ipdb; ipdb.set_trace()
+    elements.append(Paragraph(approval.tenure if hasattr(approval, 'tenure') else '', styles['InfoTitleLargeRight']))
 
     # proposal requirements 
     if proposal.requirements.exists():

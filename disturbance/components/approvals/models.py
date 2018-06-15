@@ -176,6 +176,7 @@ class Approval(models.Model):
     def copiedToPermit_fields(self, proposal):
         p=proposal
         copied_data = []
+        search_assessor_data = []
         search_schema = search_multiple_keys(p.schema, primary_search='isCopiedToPermit', search_list=['label', 'name'])
         if p.assessor_data:
             search_assessor_data=search_keys(p.assessor_data, search_list=['assessor', 'name'])
