@@ -114,23 +114,9 @@
                                 </div>
                             </div>
 
-                            <div v-if="tenures.length > 0">
-                                <label for="" class="control-label" >Tenure</label>
-                                <div class="col-sm-12">
-                                    <div class="form-group">
-                                        <select v-model="selected_tenure">
-											<option value="" selected disabled>Select tenure</option>
-                                            <option v-for="tenure in tenures" :value="tenure.value">
-                                                {{ tenure.text }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div v-if="display_activity_matrix_selectbox">
 								<div v-if="activities.length > 0">
-									<label for="" class="control-label" >Activity</label>
+									<label for="" class="control-label" >Activity Type</label>
 									<div class="col-sm-12">
 										<div class="form-group">
 											<select v-model="selected_activity" @change="chainedSelectSubActivities1(selected_activity)">
@@ -231,7 +217,6 @@ export default {
         selected_application_name: '',
         selected_region: '',
         selected_district: '',
-        selected_tenure: '',
         application_types: [],
         selected_activity: '',
         selected_sub_activity1: '',
@@ -245,7 +230,6 @@ export default {
         sub_activities2: [],
         categories: [],
         approval_level: '',
-        tenures: [],
         display_region_selectbox: false,
         display_activity_matrix_selectbox: false,
     }
@@ -297,7 +281,7 @@ export default {
 			application: vm.selected_application_id,
 			region: vm.selected_region,
 			district: vm.selected_district,
-			tenure: vm.selected_tenure,
+			//tenure: vm.selected_tenure,
 			activity: vm.selected_activity,
             sub_activity1: vm.selected_sub_activity1,
             sub_activity2: vm.selected_sub_activity2,
@@ -318,7 +302,8 @@ export default {
         let vm = this;
         if (vm.selected_application_name == 'Disturbance') {
             //if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_activity == '' || vm.selected_tenure == ''){
-            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_tenure == '' || vm.approval_level == ''){
+            //if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_tenure == '' || vm.approval_level == ''){
+            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_district == '' || vm.approval_level == ''){
 	    		return true;
             }
         } else {
@@ -338,7 +323,6 @@ export default {
                 for (var i = 0; i < vm.api_regions.length; i++) {
                     this.regions.push( {text: vm.api_regions[i].name, value: vm.api_regions[i].id, districts: vm.api_regions[i].districts} );
                 }
-				console.log('this.regions ' + vm.regions);
 		},(error) => {
 			console.log(error);
 		})
@@ -376,21 +360,12 @@ export default {
                         text: vm.api_app_types[i].name, 
                         value: vm.api_app_types[i].id, 
                         //activities: (vm.api_app_types[i].activity_app_types.length > 0) ? vm.api_app_types[i].activity_app_types : [],
-                        tenures: (vm.api_app_types[i].tenure_app_types.length > 0) ? vm.api_app_types[i].tenure_app_types : [],
+                        //tenures: (vm.api_app_types[i].tenure_app_types.length > 0) ? vm.api_app_types[i].tenure_app_types : [],
                     } );
                 }
-				//console.log('this.application_types ' + vm.application_types);
 		},(error) => {
 			console.log(error);
 		})
-	},
-    chainedSelectTenures: function(application_id){
-		let vm = this;
-        vm.tenures = [];
-        var api_tenures = this.searchList(application_id, vm.application_types).tenures;
-        for (var i = 0; i < api_tenures.length; i++) {
-            this.tenures.push( {text: api_tenures[i].name, value: api_tenures[i].id} );
-        }
 	},
     chainedSelectAppType: function(application_id){
         /* reset */
@@ -398,13 +373,11 @@ export default {
         vm.selected_region = '';
         vm.selected_district = '';
         vm.selected_activity = '';
-        vm.selected_tenure = '';
         vm.display_region_selectbox = false;
         vm.display_activity_matrix_selectbox = false;
 
         vm.selected_application_name = this.searchList(application_id, vm.application_types).text
         //this.chainedSelectActivities(application_id);
-        this.chainedSelectTenures(application_id);
         //this.chainedSelectActivities(application_id);
 
         if (vm.selected_application_name == 'Disturbance') {
@@ -423,13 +396,12 @@ export default {
 
 		vm.$http.get(api_endpoints.activity_matrix).then((response) => {
 				this.activity_matrix = response.body[0].schema[0];
-				console.log('this.activity_matrix ' + response.body[0].schema);
+				//console.log('this.activity_matrix ' + response.body[0].schema);
 
                 var keys = Object.keys(this.activity_matrix);
                 for (var i = 0; i < keys.length; i++) {
                     this.activities.push( {text: keys[i], value: keys[i]} );
                 }
-				console.log('this.activities ' + this.activities);
 		},(error) => {
 			console.log(error);
 		})
