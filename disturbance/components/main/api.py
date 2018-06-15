@@ -7,8 +7,8 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
-from disturbance.components.main.models import Region, District, Tenure, ApplicationType
-from disturbance.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer
+from disturbance.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix
+from disturbance.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer
 
 
 class DistrictViewSet(viewsets.ReadOnlyModelViewSet):
@@ -18,6 +18,19 @@ class DistrictViewSet(viewsets.ReadOnlyModelViewSet):
 class RegionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Region.objects.all().order_by('id')
     serializer_class = RegionSerializer
+
+class ActivityMatrixViewSet(viewsets.ReadOnlyModelViewSet):
+    #queryset = ActivityMatrix.objects.all().order_by('id')
+    queryset = ActivityMatrix.objects.none()
+    serializer_class = ActivityMatrixSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated():
+            # specific to Disturbance application, so only exposing one record (most recent)
+            return [ActivityMatrix.objects.filter(name='Disturbance').order_by('-version').first()]
+        return ActivityMatrix.objects.none()
+
 
 #class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
 #    queryset = Activity.objects.all().order_by('order')

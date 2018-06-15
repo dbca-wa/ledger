@@ -19,6 +19,7 @@ module.exports = {
     proposal_requirements:"/api/proposal_requirements.json",
     amendment_request:"/api/amendment_request.json",
     regions:"/api/regions.json",
+    activity_matrix:"/api/activity_matrix.json",
     application_types:"/api/application_types.json",
     discard_proposal:function (id) {
       return `/api/proposal/${id}.json`;

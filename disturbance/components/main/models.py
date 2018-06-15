@@ -6,6 +6,7 @@ from django.db.models.signals import pre_delete
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+from django.contrib.postgres.fields.jsonb import JSONField
 
 @python_2_unicode_compatible
 class Region(models.Model):
@@ -46,6 +47,23 @@ class ApplicationType(models.Model):
 
     def __str__(self):
         return self.name
+
+@python_2_unicode_compatible
+class ActivityMatrix(models.Model):
+    #name = models.CharField(verbose_name='Activity matrix name', max_length=24, choices=application_type_choicelist(), default='Disturbance')
+    name = models.CharField(verbose_name='Activity matrix name', max_length=24, choices=[('Disturbance', u'Disturbance')], default='Disturbance')
+    description = models.CharField(max_length=256, blank=True, null=True)
+    schema = JSONField()
+    replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
+
+    class Meta:
+        app_label = 'disturbance'
+        unique_together = ('name', 'version')
+
+    def __str__(self):
+        return '{} - v{}'.format(self.name, self.version)
+
  
 #@python_2_unicode_compatible
 #class Activity(models.Model):

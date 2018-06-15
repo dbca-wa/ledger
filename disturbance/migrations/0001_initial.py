@@ -69,16 +69,16 @@ class Migration(migrations.Migration):
                 ('approval', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='documents', to='disturbance.Approval')),
             ],
         ),
-#        migrations.CreateModel(
-#            name='ApprovalLogDocument',
-#            fields=[
-#                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-#                ('name', models.CharField(blank=True, max_length=100, verbose_name='name')),
-#                ('description', models.TextField(blank=True, verbose_name='description')),
-#                ('uploaded_date', models.DateTimeField(auto_now_add=True)),
-#                ('_file', models.FileField(upload_to=disturbance.components.approvals.models.update_approval_comms_log_filename)),
-#            ],
-#        ),
+        migrations.CreateModel(
+            name='ApprovalLogDocument',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(blank=True, max_length=100, verbose_name='name')),
+                ('description', models.TextField(blank=True, verbose_name='description')),
+                ('uploaded_date', models.DateTimeField(auto_now_add=True)),
+                ('_file', models.FileField(upload_to=disturbance.components.approvals.models.update_approval_comms_log_filename)),
+            ],
+        ),
         migrations.CreateModel(
             name='ApprovalUserAction',
             fields=[
@@ -753,11 +753,11 @@ class Migration(migrations.Migration):
             name='approval',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comms_logs', to='disturbance.Approval'),
         ),
-        #migrations.AddField(
-        #    model_name='approvallogdocument',
-        #    name='log_entry',
-        #    field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='documents', to='disturbance.ApprovalLogEntry'),
-        #),
+        migrations.AddField(
+            model_name='approvallogdocument',
+            name='log_entry',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='documents', to='disturbance.ApprovalLogEntry'),
+        ),
         migrations.AlterUniqueTogether(
             name='approval',
             unique_together=set([('lodgement_number', 'issue_date')]),

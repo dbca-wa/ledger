@@ -2,16 +2,18 @@
     <div class="container" >
         <div class="row">
             <div class="col-sm-12">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Apply on behalf of
-                            <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
-                                <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                            </a>
-                        </h3>
-                    </div>
-                    <div class="panel-body collapse in" :id="pBody">
-                        <form class="form-horizontal" name="personal_form" method="post">
+                <form class="form-horizontal" name="personal_form" method="post">
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Apply on behalf of
+                                <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
+                                    <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                </a>
+                            </h3>
+                        </div>
+                        <div class="panel-body collapse in" :id="pBody">
+
                             <div class="col-sm-12">
                                 <div class="form-group">
                                     <div v-for="org in profile.disturbance_organisations" class="radio">
@@ -19,11 +21,13 @@
                                           <input type="radio" name="behalf_of_org" v-model="behalf_of"  :value="org.id"> On behalf of {{org.name}}
                                         </label>
                                     </div>
+                                    <!--
                                     <div class="radio">
                                         <label class="radio-inline">
                                           <input type="radio" name="behalf_of_org" v-model="behalf_of"  value="other" > On behalf of an organisation (as an authorised agent)
                                         </label>
                                     </div>
+                                    -->
                                 </div>
                             </div>
                             <div v-if="behalf_of == 'other'" class="col-sm-12">
@@ -56,7 +60,18 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Apply for
+                                <a :href="'#'+pBody2" data-toggle="collapse"  data-parent="#userInfo2" expanded="true" :aria-controls="pBody2">
+                                    <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                </a>
+                            </h3>
+                        </div>
+                        <div class="panel-body collapse in" :id="pBody2">
                             <div>
                                 <label for="" class="control-label" >Proposal Type</label>
                                 <div class="col-sm-12">
@@ -99,22 +114,6 @@
                                 </div>
                             </div>
 
-                            <!--
-                            <div v-if="activities.length > 0">
-                                <label for="" class="control-label" >Activity</label>
-                                <div class="col-sm-12">
-                                    <div class="form-group">
-                                        <select v-model="selected_activity">
-											<option value="" selected disabled>Select activity</option>
-                                            <option v-for="activity in activities" :value="activity.value">
-                                                {{ activity.text }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            -->
-
                             <div v-if="tenures.length > 0">
                                 <label for="" class="control-label" >Tenure</label>
                                 <div class="col-sm-12">
@@ -129,12 +128,78 @@
                                 </div>
                             </div>
 
-                            <div class="col-sm-12">
-                                <button :disabled="isDisabled()" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
-                             </div>
-                        </form>
+                            <div v-if="display_activity_matrix_selectbox">
+								<div v-if="activities.length > 0">
+									<label for="" class="control-label" >Activity</label>
+									<div class="col-sm-12">
+										<div class="form-group">
+											<select v-model="selected_activity" @change="chainedSelectSubActivities1(selected_activity)">
+												<option value="" selected disabled>Select activity</option>
+												<option v-for="activity in activities" :value="activity.value">
+													{{ activity.text }}
+												</option>
+											</select>
+										</div>
+									</div>
+								</div>
+
+								<div v-if="sub_activities1.length > 0">
+									<label for="" class="control-label" >Sub Activity 1</label>
+									<div class="col-sm-12">
+										<div class="form-group">
+											<select v-model="selected_sub_activity1" @change="chainedSelectSubActivities2(selected_sub_activity1)">
+												<option value="" selected disabled>Select sub_activity 1</option>
+												<option v-for="sub_activity1 in sub_activities1" :value="sub_activity1.value">
+													{{ sub_activity1.text }}
+												</option>
+											</select>
+										</div>
+									</div>
+								</div>
+
+								<div v-if="sub_activities2.length > 0">
+									<label for="" class="control-label" >Sub Activity 2</label>
+									<div class="col-sm-12">
+										<div class="form-group">
+											<select v-model="selected_sub_activity2" @change="chainedSelectCategories(selected_sub_activity2)">
+												<option value="" selected disabled>Select sub_activity 2</option>
+												<option v-for="sub_activity2 in sub_activities2" :value="sub_activity2.value">
+													{{ sub_activity2.text }}
+												</option>
+											</select>
+										</div>
+									</div>
+								</div>
+
+								<div v-if="categories.length > 0">
+									<label for="" class="control-label" >Category</label>
+									<div class="col-sm-12">
+										<div class="form-group">
+											<select v-model="selected_category" @change="get_approval_level(selected_category)">
+												<option value="" selected disabled>Select category</option>
+												<option v-for="category in categories" :value="category.value" :name="category.approval">
+													{{ category.text }}
+												</option>
+											</select>
+										</div>
+									</div>
+								</div>
+                            </div>
+                            <!-- For Testing
+                            <div v-if="approval_level">
+                                <label>Approval level required: </label>  {{ approval_level }}
+                            </div>
+                            -->
+
+
+                        </div>
                     </div>
-                </div>
+
+                    <div class="col-sm-12">
+                        <button :disabled="isDisabled()" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                    </div>
+                  </div>
+                </form>
             </div>
         </div>
     </div>
@@ -160,44 +225,29 @@ export default {
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
+        pBody2: 'pBody2' + vm._uid,
 
         selected_application_id: '',
         selected_application_name: '',
         selected_region: '',
         selected_district: '',
-        selected_activity: '',
         selected_tenure: '',
         application_types: [],
+        selected_activity: '',
+        selected_sub_activity1: '',
+        selected_sub_activity2: '',
+        selected_category: '',
         regions: [],
         districts: [],
+        activity_matrix: [],
         activities: [],
+        sub_activities1: [],
+        sub_activities2: [],
+        categories: [],
+        approval_level: '',
         tenures: [],
         display_region_selectbox: false,
-        /*
-
-        application_types: [
-            { text: 'Disturbance', value: 'Disturbance' },
-            { text: 'Apiary', value: 'Apiary' }
-        ],
-        regions: [
-            { text: 'Kimberley (Region)', value: 'Kimberley (Region)' },
-            { text: 'East Kimberley (District)', value: 'East Kimberley (District)' },
-            { text: 'West Kimberley (District)', value: 'West Kimberley (District)' },
-            { text: 'Pilbara (Region)', value: 'Pilbara (Region)' }
-        ],
-        activities: [
-            { text: 'Native Forest Silviculture and Timber Harvesting', value: 'NativeForestSilvicultureAndTimberHarvesting' },
-            { text: 'Plantations', value: 'Plantations' },
-            { text: 'Other Wood', value: 'OtherWood' }
-        ],
-        tenures: [
-            { text: 'National park', value: 'National park' },
-            { text: 'Nature reserve (class a19)', value: 'Nature reserve (class a19)' },
-            { text: 'Conservation park', value: 'Conservation park' },
-            { text: 'CALM Act section 5(1)g and 5(1)h reserve (class A20)', value: 'CALM Act section 5(1)g and 5(1)h reserve (class A20)' }
-        ]
-        */
-
+        display_activity_matrix_selectbox: false,
     }
   },
   components: {
@@ -247,8 +297,12 @@ export default {
 			application: vm.selected_application_id,
 			region: vm.selected_region,
 			district: vm.selected_district,
+			tenure: vm.selected_tenure,
 			activity: vm.selected_activity,
-			tenure: vm.selected_tenure
+            sub_activity1: vm.selected_sub_activity1,
+            sub_activity2: vm.selected_sub_activity2,
+            category: vm.selected_category,
+            approval_level: vm.approval_level
 		}).then(res => {
 		    vm.proposal = res.body;
 			vm.$router.push({
@@ -264,7 +318,7 @@ export default {
         let vm = this;
         if (vm.selected_application_name == 'Disturbance') {
             //if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_activity == '' || vm.selected_tenure == ''){
-            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_tenure == ''){
+            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_tenure == '' || vm.approval_level == ''){
 	    		return true;
             }
         } else {
@@ -330,15 +384,6 @@ export default {
 			console.log(error);
 		})
 	},
-    chainedSelectActivities: function(application_id){
-		let vm = this;
-        vm.activities = [];
-        var api_activities = this.searchList(application_id, vm.application_types).activities;
-        //var api_activities = vm.application_types[region_id-1].districts
-        for (var i = 0; i < api_activities.length; i++) {
-            this.activities.push( {text: api_activities[i].name, value: api_activities[i].id} );
-        }
-	},
     chainedSelectTenures: function(application_id){
 		let vm = this;
         vm.tenures = [];
@@ -355,24 +400,175 @@ export default {
         vm.selected_activity = '';
         vm.selected_tenure = '';
         vm.display_region_selectbox = false;
+        vm.display_activity_matrix_selectbox = false;
 
         vm.selected_application_name = this.searchList(application_id, vm.application_types).text
         //this.chainedSelectActivities(application_id);
         this.chainedSelectTenures(application_id);
+        //this.chainedSelectActivities(application_id);
 
         if (vm.selected_application_name == 'Disturbance') {
             vm.display_region_selectbox = true;
+            vm.display_activity_matrix_selectbox = true;
         } 
 
+    },
+
+	fetchActivityMatrix: function(){
+		let vm = this;
+        vm.sub_activities1 = [];
+        vm.sub_activities2 = [];
+        vm.categories = [];
+        vm.approval_level = '';
+
+		vm.$http.get(api_endpoints.activity_matrix).then((response) => {
+				this.activity_matrix = response.body[0].schema[0];
+				console.log('this.activity_matrix ' + response.body[0].schema);
+
+                var keys = Object.keys(this.activity_matrix);
+                for (var i = 0; i < keys.length; i++) {
+                    this.activities.push( {text: keys[i], value: keys[i]} );
+                }
+				console.log('this.activities ' + this.activities);
+		},(error) => {
+			console.log(error);
+		})
+	},
+    chainedSelectSubActivities1: function(activity_name){
+		let vm = this;
+        vm.sub_activities1 = [];
+        vm.sub_activities2 = [];
+        vm.categories = [];
+        vm.selected_sub_activity1 = '';
+        vm.selected_sub_activity2 = '';
+        vm.selected_category = '';
+        vm.approval_level = '';
+
+        vm.sub_activities1 = [];
+        var [api_activities, res] = this.get_sub_matrix(activity_name, vm.activity_matrix)
+        if (res == "null" || res == null) {
+            //for (var i = 0; i < vm.activity_matrix.length; i++) {
+            //    if (activity_name == vm.activity_matrix[i]['text']) {
+            //        vm.activity_matrix[i]['sub_matrix']
+            //    }
+            //}
+            vm.approval_level = api_activities;
+            return;
+        } else if (res == "pass") {
+            var api_sub_activities = this.get_sub_matrix("pass", api_activities[0])[0];
+            if ("pass" in api_sub_activities[0]) {
+                // go straight to categories widget
+                var categories = api_sub_activities[0]['pass']
+                for (var i = 0; i < categories.length; i++) {
+                    this.categories.push( {text: categories[i][0], value: categories[i][0], approval: categories[i][1]} );
+                }
+
+            } else {
+                // go to sub_activity2 widget
+                for (var i = 0; i < api_sub_activities.length; i++) {
+                    var key = Object.keys(api_activities[i])[0];
+                    this.sub_activities1.push( {text: key, value: key, sub_matrix: api_activities[i][key]} );
+                }
+            }
+        } else {
+            for (var i = 0; i < api_activities.length; i++) {
+                var key = Object.keys(api_activities[i])[0];
+                this.sub_activities1.push( {text: key, value: key, sub_matrix: api_activities[i][key]} );
+            }
+        }
+	},
+
+    chainedSelectSubActivities2: function(activity_name){
+		let vm = this;
+        vm.sub_activities2 = [];
+        vm.categories = [];
+        vm.selected_sub_activity2 = '';
+        vm.selected_category = '';
+        vm.approval_level = '';
+
+        //var api_activities = this.get_sub_matrix(activity_name, vm.sub_activities1[0]['text'])
+        var [api_activities, res] = this.get_sub_matrix(activity_name, vm.sub_activities1)
+        if (res == "null" || res == null) {
+            vm.approval_level = api_activities;
+            return;
+        } else if (res == "pass") {
+            for (var i = 0; i < api_activities.length; i++) {
+                this.categories.push( {text: api_activities[i][0], value: api_activities[i][0], approval: api_activities[i][1]} );
+            }
+        } else {
+            for (var i = 0; i < vm.sub_activities1.length; i++) {
+                if (activity_name == vm.sub_activities1[i]['text']) {
+                    var api_activities2 = vm.sub_activities1[i]['sub_matrix'];
+                    for (var j = 0; j < api_activities2.length; j++) {
+                        var key = Object.keys(api_activities2[j])[0];
+                        this.sub_activities2.push( {text: key, value: key, sub_matrix: api_activities2[j][key]} );
+                    }
+                }
+            }
+        }
+	},
+    chainedSelectCategories: function(activity_name){
+		let vm = this;
+        vm.categories = [];
+        vm.selected_category = '';
+        vm.approval_level = '';
+
+        for (var i = 0; i < vm.sub_activities2.length; i++) {
+            if (activity_name == vm.sub_activities2[i]['text']) {
+                var api_categories = vm.sub_activities2[i]['sub_matrix'];
+                for (var j = 0; j < api_categories.length; j++) {
+                    this.categories.push( {text: api_categories[j][0], value: api_categories[j][0], approval: api_categories[j][1]} );
+                }
+            }
+        }
+	},
+
+    get_sub_matrix: function(activity_name, sub_activities){
+        // this.sub_activities1[0]['text']
+        if (activity_name in sub_activities) {
+            if (sub_activities[activity_name].length > 0) {
+                if ('pass' in sub_activities[activity_name][0]) {
+                    return [sub_activities[activity_name], "pass"];
+                } else if ('null' in sub_activities[activity_name][0]) {
+                    var approval_level = sub_activities[activity_name]['sub_matrix'][0]['null'][0];
+                    return [approval_level, "null"];
+                    //return [sub_activities[activity_name], "null"];
+                }
+            }
+           
+            // not a sub_matrix --> this is the main activity_matrix data (as provided by the REST API)
+            return [sub_activities[activity_name], true];
+        }
+        for (var i = 0; i < sub_activities.length; i++) {
+            if (activity_name == sub_activities[i]['text']) {
+                var key_sub_matrix = Object.keys(sub_activities[i]['sub_matrix'][0])[0];
+                if (key_sub_matrix == "null") {
+                    var approval_level = sub_activities[i]['sub_matrix'][0]['null'][0];
+                    return [approval_level, null]
+                } else if (key_sub_matrix == "pass") {
+                    return [sub_activities[i]['sub_matrix'][0]['pass'], "pass"]
+                } else {
+                    return [sub_activities[i]['sub_matrix'][0], true];
+                }
+            }
+        }
+    },
+    get_approval_level: function(category_name) {
+        let vm = this;
+        for (var i = 0; i < vm.categories.length; i++) {
+            if (category_name == vm.categories[i]['text']) {
+                vm.approval_level = vm.categories[i]['approval'];
+            }
+        }
+        
     }
-
-
 
   },
   mounted: function() {
     let vm = this;
     vm.fetchRegions();
     vm.fetchApplicationTypes();
+    vm.fetchActivityMatrix();
     vm.form = document.forms.new_proposal;
   },
   beforeRouteEnter: function(to, from, next) {
@@ -398,5 +594,11 @@ input[type=text], select{
     min-height: 34px;
     padding: 0;
     height: auto;
+}
+
+.group-box {
+	border-style: solid;
+	border-width: thin;
+	border-color: #FFFFFF;
 }
 </style>

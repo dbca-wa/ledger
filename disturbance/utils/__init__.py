@@ -1,5 +1,6 @@
 from disturbance.components.proposals.models import Proposal, ProposalType, HelpPage, ApplicationType
 from collections import OrderedDict
+from copy import deepcopy
 
 def search_all(search_list, application_type='Disturbance'):
     """
@@ -130,6 +131,10 @@ def test_compare_data():
     dict2=p.previous_application.data[0]
     return compare_data(dict1, dict2, p.schema)
 
+
+def compare_proposal(current_proposal, prev_proposal_id):
+    prev_proposal = Proposal.objects.get(id=prev_proposal_id)
+    return compare_data(current_proposal.data[0], prev_proposal.data[0], current_proposal.schema)
 
 def compare_data(dict1, dict2, schema):
     """
@@ -352,4 +357,22 @@ def flatten(old_data, new_data=None, parent_key='', sep='.', width=4):
             raise AttributeError("key {} is already used".format(parent_key))
 
     return new_data
+
+
+def create_dummy_history(proposal_id):
+    p=Proposal.objects.get(id=proposal_id)
+    prev_proposal = deepcopy(p)
+    p.id=None
+    p.data[0]['proposalSummarySection'][0]['Section0-0']='dd 3'
+    p.data[0]['proposalSummarySection'][0]['Section0-1']='ee 3'
+    p.previous_application = prev_proposal
+    p.save()
+
+    prev_proposal = deepcopy(p)
+    p.id=None
+    p.data[0]['proposalSummarySection'][0]['Section0-0']='dd 44'
+    p.data[0]['proposalSummarySection'][0]['Section0-1']='ee 44'
+    p.previous_application = prev_proposal
+    p.save()
+    return p.id, p.get_history
 

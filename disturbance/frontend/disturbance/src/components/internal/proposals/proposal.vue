@@ -37,16 +37,17 @@
             <div class="row" v-if="canSeeSubmission">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                       History {{proposal.get_history}}
+                       <!--History {{proposal.get_history}}-->
+                       History
                     </div>
                                     <table class="table small-table">
                                         <tr>
                                             <th>ID</th>
+                                            <th>Last Modified</th>
                                         </tr>
                                         <tr v-for="p in proposal.get_history">
-                                            </td>
-                                                <small><strong>{{p }}</strong></small>
-                                            </td>
+                                            <td>{{ p.id }}</td>
+                                            <td>{{ p.modified | formatDate}}</td>
                                         </tr>
                                     </table>
                 </div>

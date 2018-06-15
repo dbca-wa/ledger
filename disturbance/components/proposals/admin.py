@@ -2,6 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from disturbance.components.proposals import models
 from disturbance.components.proposals import forms
+from disturbance.components.main.models import ActivityMatrix
 #from disturbance.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
@@ -90,18 +91,22 @@ class HelpPageAdmin(admin.ModelAdmin):
         create_helppage_object(application_type='Apiary', help_type=models.HelpPage.HELP_TEXT_INTERNAL)
         return HttpResponseRedirect("../")
 
+@admin.register(ActivityMatrix)
+class ActivityMatrixAdmin(admin.ModelAdmin):
+    list_display = ['name', 'description', 'version']
+    ordering = ('name', '-version')
 
 
-from disturbance.views import MyCustomView
-_admin_site_get_urls = admin.site.get_urls
-def get_urls():
-    from django.conf.urls import url
-    urls = _admin_site_get_urls()
-    urls += [
-            url(r'^my_custom_view/$',
-                 admin.site.admin_view(MyCustomView.as_view()))
-        ]
-    return urls
+#from disturbance.views import MyCustomView
+#_admin_site_get_urls = admin.site.get_urls
+#def get_urls():
+#    from django.conf.urls import url
+#    urls = _admin_site_get_urls()
+#    urls += [
+#            url(r'^my_custom_view/$',
+#                 admin.site.admin_view(MyCustomView.as_view()))
+#        ]
+#    return urls
 
 
 #@admin.register(Activity)
@@ -120,5 +125,5 @@ def get_urls():
 #class SubCategoryAdmin(admin.ModelAdmin):
 #    pass
 
-admin.site.get_urls = get_urls
+#admin.site.get_urls = get_urls
 
