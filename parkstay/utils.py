@@ -100,9 +100,11 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
 
     # the CampsiteBooking table runs the risk of a race condition,
     # wrap all this behaviour up in a transaction
+
+    campsite_qs = Campsite.objects.filter(pk__in = sites_qs)
     with transaction.atomic():
         # get availability for campsite, error out if booked/closed
-        availability = get_campsite_availability(sites_qs, start_date, end_date)
+        availability = get_campsite_availability(campsite_qs, start_date, end_date)
         for site_id, dates in availability.items():
             if updating_booking:
                 if not all([v[0] in ['open','tooearly'] for k, v in dates.items()]):
@@ -114,8 +116,8 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
         if not override_checks:
             # Prevent booking if max people passed
             total_people = num_adult + num_concession + num_child + num_infant
-            min_people = sum([cs.min_people for cs in sites_qs])
-            max_people = sum([cs.max_people for cs in sites_qs])
+            min_people = sum([cs.min_people for cs in campsite_qs])
+            max_people = sum([cs.max_people for cs in campsite_qs])
 
             if total_people > max_people:
                 raise ValidationError('Maximum number of people exceeded for the selected campsite(s)')
@@ -123,11 +125,7 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
             if total_people < min_people:
                 raise ValidationError('Number of people is less than the minimum allowed for the selected campsite(s)')
 
-        # Create a new temporary booking with an expiry timestamp (default 20mins)
-        updated_cost_total = cost_total
-        if override_price is not None:
-            updated_cost_total = cost_total - override_price
-        
+        # Create a new temporary booking with an expiry timestamp (default 20mins)       
         booking =   Booking.objects.create(
                         booking_type=3,
                         arrival=start_date,
@@ -138,15 +136,15 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
                             'num_child': num_child,
                             'num_infant': num_infant
                         },
-                        cost_total = updated_cost_total,
+                        cost_total = cost_total,
                         override_price = Decimal(override_price) if (override_price is not None) else None,
                         override_reason = override_reason,
                         overridden_by = overridden_by,
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
-                        campground=sites_qs[0].campground,
+                        campground=campsite_qs[0].campground,
                         customer = customer
                     )
-        for cs in sites_qs:
+        for cs in campsite_qs:
             for i in range((end_date-start_date).days):
                 cb =    CampsiteBooking.objects.create(
                             campsite=cs,
@@ -154,7 +152,7 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
                             date=start_date+timedelta(days=i),
                             booking=booking
                         )
-
+                        
     # On success, return the temporary booking
     return booking
 
@@ -214,14 +212,13 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     # prefill all slots as 'open'
     duration = (end_date-start_date).days
     results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
-
     # strike out existing bookings
     for b in bookings_qs:
         results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
 
     # generate a campground-to-campsite-list map
     campground_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.campground.pk == cg[0]] for cg in campsites_qs.distinct('campground').values_list('campground')}
-
+   
     # strike out whole campground closures
     cgbr_qs =    CampgroundBookingRange.objects.filter(
         Q(campground__in=campground_map.keys()),
@@ -300,8 +297,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
             results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
 
     return results
-
-
+    
 def get_visit_rates(campsites_qs, start_date, end_date):
     """Fetch the per-day pricing for each visitor type over a range of visit dates."""
     # fetch the applicable rates for the campsites
@@ -503,32 +499,51 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                     rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
                 else:
                     rate_list[c['rate']['campsite']][c['rate']['id']]['end'] = c['date']
+
+    if len(campsite_list) > 1: # check if this is a multibook
+        # Get the cheapest campsite (based on adult rate) to be used
+        # for the whole booking period, using the first rate as default
+        # Set initial campsite and rate to first in rate_list
+        first_ratelist_item = rate_list[next(iter(rate_list))]
+        multibook_rate = next(iter(first_ratelist_item.values()))
+        multibook_rate_adult = Decimal(multibook_rate['adult'])
+        multibook_campsite = next(iter(rate_list))
+        multibook_index = 1
+        for campsite, ratelist in rate_list.items():
+            for index, rate in ratelist.items():
+                if Decimal(rate['adult']) < multibook_rate_adult:
+                    multibook_rate = rate
+                    multibook_rate_adult = Decimal(multibook_rate['adult'])
+                    multibook_campsite = campsite
+                    multibook_index = index
+        rate_list = {multibook_campsite: {multibook_index:multibook_rate}}
     # Get Guest Details
     guests = {}
     for k,v in booking.details.items():
         if 'num_' in k:
             guests[k.split('num_')[1]] = v
-    for k,v in guests.items():
-        if int(v) > 0:
-            for c,p in rate_list.items():
-                for i,r in p.items():
+    for guest_type, guest_count in guests.items():
+        if int(guest_count) > 0:
+            for campsite_id, price_periods in rate_list.items():
+                for index, rate in price_periods.items():
+                    # for each price period, add the cost per night
                     price = Decimal(0)
-                    end = datetime.strptime(r['end'],"%Y-%m-%d").date()
-                    start = datetime.strptime(r['start'],"%Y-%m-%d").date()
+                    end = datetime.strptime(rate['end'],"%Y-%m-%d").date()
+                    start = datetime.strptime(rate['start'],"%Y-%m-%d").date()
                     num_days = int ((end - start).days) + 1
-                    campsite = Campsite.objects.get(id=c)
+                    campsite = Campsite.objects.get(id=campsite_id)
                     if lines:
-                        price = str((num_days * Decimal(r[k])))
+                        price = str((num_days * Decimal(rate[guest_type])))
                         if not booking.campground.oracle_code:
                             raise Exception('The campground selected does not have an Oracle code attached to it.')
                         end_date = end + timedelta(days=1)
                         invoice_lines.append({
-                            'ledger_description':'Camping fee {} - {} night(s)'.format(k, num_days),
-                            "quantity":v,
+                            'ledger_description':'Camping fee {} - {} night(s)'.format(guest_type, num_days),
+                            "quantity":guest_count,
                             "price_incl_tax":price,
                             "oracle_code":booking.campground.oracle_code})
                     else:
-                        price = (num_days * Decimal(r[k])) * v
+                        price = (num_days * Decimal(rate[guest_type])) * guest_count
                         total_price += price
     # Create line items for vehicles
     if lines:
@@ -563,17 +578,16 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                     price =  Decimal(park_entry_rate[k]) * v.count()
                     total_price += price
     
-    # Override price if required
+    # Create line item for Override price
     if booking.override_price is not None:
         if booking.override_reason is not None:
             reason = booking.override_reason
             invoice_lines.append({
                 'ledger_description': '{}'.format(reason.text),
                 'quantity': 1,
-                'price_incl_tax': str(total_price - booking.override_price),
+                'price_incl_tax': str(total_price - booking.discount),
                 'oracle_code': booking.campground.oracle_code
             })
-            total_price = booking.override_price
             
     if lines:
         return invoice_lines
@@ -609,7 +623,7 @@ def get_diff_days(old_booking,new_booking,additional=True):
 def create_temp_bookingupdate(request,arrival,departure,booking_details,old_booking,total_price):
     # delete all the campsites in the old moving so as to transfer them to the new booking
     old_booking.campsites.all().delete()
-    booking = create_booking_by_site(booking_details['campsites'][0],
+    booking = create_booking_by_site(booking_details['campsites'],
             start_date = arrival,
             end_date = departure,
             num_adult = booking_details['num_adult'],
@@ -618,7 +632,9 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
             num_infant= booking_details['num_infant'],
             cost_total = total_price,
             customer = old_booking.customer,
-            updating_booking = True
+            override_price=old_booking.override_price,
+            updating_booking = True,
+            override_checks=True
     )
     # Move all the vehicles to the new booking
     for r in old_booking.regos.all():
