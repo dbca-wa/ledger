@@ -31,8 +31,8 @@ class ProposalAssessorGroupAdmin(admin.ModelAdmin):
     list_display = ['name','default']
     filter_horizontal = ('members',)
     form = forms.ProposalAssessorGroupAdminForm
-    #readonly_fields = ['default']
-    readonly_fields = ['regions', 'activities']
+    readonly_fields = ['default']
+    #readonly_fields = ['regions', 'activities']
 
     def has_delete_permission(self, request, obj=None):
         if obj and obj.default:
@@ -44,7 +44,8 @@ class ProposalApproverGroupAdmin(admin.ModelAdmin):
     list_display = ['name','default']
     filter_horizontal = ('members',)
     form = forms.ProposalApproverGroupAdminForm
-    readonly_fields = ['default', 'regions', 'activities']
+    readonly_fields = ['default']
+    #readonly_fields = ['default', 'regions', 'activities']
 
     def has_delete_permission(self, request, obj=None):
         if obj and obj.default:
