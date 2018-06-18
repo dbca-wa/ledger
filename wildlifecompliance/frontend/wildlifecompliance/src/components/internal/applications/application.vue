@@ -1,0 +1,1053 @@
+<template lang="html">
+    <div v-if="application" class="container" id="internalApplication">
+            <div class="row">
+        <h3>Application: {{ application.id }}</h3>
+        <div class="col-md-3">
+            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
+            <div class="row" v-if="canSeeSubmission">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                       Submission 
+                    </div>
+                    <div class="panel-body panel-collapse">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <strong>Submitted by</strong><br/>
+                                {{ application.submitter }}
+                            </div>
+                            <div class="col-sm-12 top-buffer-s">
+                                <strong>Lodged on</strong><br/>
+                                {{ application.lodgement_date | formatDate}}
+                            </div>
+                            <div class="col-sm-12 top-buffer-s">
+                                <table class="table small-table">
+                                    <tr>
+                                        <th>Lodgement</th>
+                                        <th>Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Workflow 
+                    </div>
+                    <div class="panel-body panel-collapse">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <strong>Status</strong><br/>
+                                {{ application.processing_status }}<br/>
+                                <div class ="col-sm-12" v-for="activity in application.schema">{{activity.name}}:{{activity.status}}</div>
+                            </div>
+                            <!-- <div class="col-sm-12">
+                                <div class="separator"></div>
+                            </div>
+                            <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'">
+                                <div class="col-sm-12 top-buffer-s">
+                                    <strong>Referrals</strong><br/>
+                                    <div class="form-group">
+                                        <select :disabled="!canLimitedAction" ref="department_users" class="form-control">
+                                            <option value="null"></option>
+                                            <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
+                                        </select>
+                                        <template v-if='!sendingReferral'>
+                                            <template v-if="selected_referral">
+                                                <a v-if="canLimitedAction" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
+                                            </template>
+                                        </template>
+                                        <template v-else>
+                                            <span v-if="canLimitedAction" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
+                                                Sending Referral&nbsp;
+                                                <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+                                            </span>
+                                        </template>
+                                    </div>
+                                    <table class="table small-table">
+                                        <tr>
+                                            <th>Referral</th>
+                                            <th>Status/Action</th>
+                                        </tr>
+                                        <tr v-for="r in application.latest_referrals">
+                                            <td>
+                                                <small><strong>{{r.referral}}</strong></small><br/>
+                                                <small><strong>{{r.lodged_on | formatDate}}</strong></small>
+                                            </td>
+                                            <td>
+                                                <small><strong>{{r.processing_status}}</strong></small><br/>
+                                                <template v-if="r.processing_status == 'Awaiting'">
+                                                    <small v-if="canLimitedAction"><a @click.prevent="remindReferral(r)" href="#">Remind</a> / <a @click.prevent="recallReferral(r)"href="#">Recall</a></small>
+                                                </template>
+                                                <template v-else>
+                                                    <small v-if="canLimitedAction"><a @click.prevent="resendReferral(r)" href="#">Resend</a></small>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <MoreReferrals @refreshFromResponse="refreshFromResponse" :application="application" :canAction="canLimitedAction" :isFinalised="isFinalised"/>
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="separator"></div>
+                                </div>
+                            </template> -->
+                            <div v-if="!isFinalised" class="col-sm-12 top-buffer-s">
+                                <strong>Currently assigned to</strong><br/>
+                                <div class="form-group">
+                                    <template v-if="application.processing_status == 'With Approver'">
+                                        <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_approver">
+                                            <option v-for="member in application.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
+                                        </select>
+                                        <a v-if="canAssess && application.assigned_approver != application.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
+                                    </template>
+                                    <template v-else>
+                                        <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_officer">
+                                            <option v-for="member in application.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
+                                        </select>
+                                        <a v-if="canAssess && application.assigned_officer != application.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
+                                    </template>
+                                </div>
+                            </div>
+                            <template v-if="application.processing_status == 'With Assessor (Conditions)' || application.processing_status == 'With Approver' || isFinalised">
+                                <div class="col-sm-12">
+                                    <strong>Application</strong><br/>
+                                    <a class="actionBtn" v-if="!showingApplication" @click.prevent="toggleApplication()">Show Application</a>
+                                    <a class="actionBtn" v-else @click.prevent="toggleApplication()">Hide Application</a>
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="separator"></div>
+                                </div>
+                            </template>
+                            <template v-if="application.processing_status == 'With Approver' || isFinalised">
+                                <div class="col-sm-12">
+                                    <strong>Conditions</strong><br/>
+                                    <a class="actionBtn" v-if="!showingConditions" @click.prevent="toggleConditions()">Show Conditions</a>
+                                    <a class="actionBtn" v-else @click.prevent="toggleConditions()">Hide Conditions</a>
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="separator"></div>
+                                </div>
+                            </template>
+                            <!-- <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAction">
+                                <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'"> -->
+                              <div class="col-sm-12 top-buffer-s" >
+                                <template>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <!-- <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor_conditions')">Send to Assessor</button><br/>
+                                        </div> -->
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary" @click.prevent="switchStatus('with_assessor')">Send to Assessor</button><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <!-- <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
+                                        </div> -->
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <!-- <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="proposedDecline()">Propose Decline</button>
+                                        </div> -->
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
+                                        </div>
+                                    </div>
+                                </template>
+                                <!-- <template v-else-if="application.processing_status == 'With Assessor (Conditions)'">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor')">Back To Processing</button><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="proposedLicence()">Issue Licence</button><br/>
+                                        </div>
+                                    </div>
+                                </template> -->
+                               <!--  <template v-else-if="application.processing_status == 'With Approver'">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12" v-if="application.proposed_decline_status">
+                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor')">Back To Processing</button><br/>
+                                        </div>
+                                        <div class="col-sm-12" v-else>
+                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor_conditions')">Back To Conditions</button><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12" v-if="!application.proposed_decline_status">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="issueApplication()">Issue</button><br/>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="declineApplication()">Decline</button><br/>
+                                        </div>
+                                    </div>
+                                </template> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-1"></div>
+        <div class="col-md-8">
+            <div class="row">
+                <template v-if="application.processing_status == 'With Approver' || isFinalised">
+                    <LicenceScreen :application="application"/>
+                </template>
+                <template v-if="application.processing_status == 'With Assessor (Conditions)' || ((application.processing_status == 'With Approver' || isFinalised) && showingConditions)">
+                    <Conditions :application="application"/>
+                </template>
+                <template v-if="canSeeSubmission || (!canSeeSubmission && showingApplication)">
+                    <div>
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
+                        <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
+                    </ul>
+                    <div class="tab-content">
+                    <div :id="applicantTab" class="tab-pane fade in active">
+
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Applicant
+                                        <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="detailsBody">
+                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                        </a>
+                                    </h3> 
+                                </div>
+                                <div class="panel-body panel-collapse collapse in" :id="detailsBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Name</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.applicant.name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >ABN/ACN</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="application.applicant.abn">
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Address Details
+                                        <a class="panelClicker" :href="'#'+addressBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="addressBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                        </a>
+                                    </h3> 
+                                </div>
+                                <div class="panel-body panel-collapse collapse" :id="addressBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Street</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="street" placeholder="" v-model="application.applicant.address.line1">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="application.applicant.address.locality">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">State</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="country" placeholder="" v-model="application.applicant.address.state">
+                                            </div>
+                                            <label for="" class="col-sm-2 control-label">Postcode</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="application.applicant.address.postcode">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Country</label>
+                                            <div class="col-sm-4">
+                                                <input disabled type="text" class="form-control" name="country" v-model="application.applicant.address.country"/>
+                                            </div>
+                                          </div>
+                                       </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Contact Details
+                                        <a class="panelClicker" :href="'#'+contactsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="contactsBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                        </a>
+                                    </h3>
+                                </div>
+                                <div class="panel-body panel-collapse collapse" :id="contactsBody">
+                                    <table ref="contacts_datatable" :id="contacts_table_id" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class ="row">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Check List
+                                    <a class="panelClicker" :href="'#'+checksBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="checksBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                    </a>
+                                </h3>
+
+                            </div>
+                            <div class="panel-body panel-collapse collapse" :id="checksBody">
+                                <div class="row">
+                                    <div class="col-sm-4">ID Check</div>
+                                    <div class="col-sm-4">
+                                        <button v-if="isIdNotChecked || isIdCheckUpdated" class="btn btn-primary" @click.prevent="acceptIdRequest()">Accept</button>
+                                        <button v-if="isIdCheckAccepted" disabled class="btn btn-light">Accepted</button>
+                                        <button v-if="isIdCheckRequested" disabled class="btn btn-light">Awaiting Update</button>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <button v-if="isIdNotChecked" class="btn btn-primary" @click.prevent="updateIdRequest()">Request Update</button>
+                                        <button v-if="isIdCheckUpdated" disabled class="btn btn-light">Request updated</button>
+                                        <button v-if="isIdCheckAccepted || isIdCheckRequested"  class="btn btn-primary">Reset</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-4">Character Check</div>
+                                    <div class="col-sm-4">
+                                        <button v-if="!isCharacterCheckAccepted" class="btn btn-primary" @click.prevent="acceptCharacterRequest()">Accept</button>
+                                        <button v-if="isCharacterCheckAccepted" disabled class="btn btn-light">Accepted</button>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <button v-if="isCharacterCheckAccepted"  class="btn btn-primary">Reset</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-4">Returns Check</div>
+                                    <div class="col-sm-4">
+                                        <button v-if="isCharacterCheckAccepted" class="btn btn-primary">Request Completion</button>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+                    </div>
+
+
+                    </div>
+                </div>
+                <div :id="applicationTab" class="tab-pane fade">
+                    <div class="col-md-12">
+                        <div class="row">
+                            <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
+                                <Application form_width="inherit" :withSectionsSelector="false" v-if="application" :application="application">
+                                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+                                    <input type='hidden' name="schema" :value="JSON.stringify(application)" />
+                                    <input type='hidden' name="application_id" :value="1" />
+                                    <div v-if="hasAssessorMode" class="row" style="margin-bottom:20px;">
+                                      <div class="col-lg-12 pull-right">
+                                        <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
+                                      </div>
+                                    </div>
+                                </Application>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+                </template>
+            </div>
+        </div>
+        </div>
+        <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
+        <AmmendmentRequest ref="ammendment_request" :application_id="application.id"></AmmendmentRequest>
+        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" @refreshFromResponse="refreshFromResponse"/>
+    </div>
+</template>
+<script>
+import Application from '../../form.vue'
+import Vue from 'vue'
+import ProposedDecline from './application_proposed_decline.vue'
+import AmmendmentRequest from './ammendment_request.vue'
+import datatable from '@vue-utils/datatable.vue'
+import Conditions from './application_conditions.vue'
+import ProposedLicence from './proposed_issuance.vue'
+import LicenceScreen from './application_licence.vue'
+import CommsLogs from '@common-utils/comms_logs.vue'
+import MoreReferrals from '@common-utils/more_referrals.vue'
+import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
+import {
+    api_endpoints,
+    helpers
+}
+from '@/utils/hooks'
+export default {
+    name: 'InternalApplication',
+    data: function() {
+        let vm = this;
+        return {
+            applicantTab: 'applicantTab'+vm._uid,
+            applicationTab: 'applicationTab'+vm._uid,
+            detailsBody: 'detailsBody'+vm._uid,
+            addressBody: 'addressBody'+vm._uid,
+            contactsBody: 'contactsBody'+vm._uid,
+            checksBody: 'checksBody'+vm._uid,
+            "application": null,
+            "original_application": null,
+            "loading": [],
+            selected_referral: '',
+            form: null,
+            members: [],
+            department_users : [],
+            contacts_table_initialised: false,
+            initialisedSelects: false,
+            showingApplication:false,
+            showingConditions:false,
+            state_options: ['conditions','processing'],
+            contacts_table_id: vm._uid+'contacts-table',
+            contacts_options:{
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                ajax: {
+                    "url": vm.contactsURL,
+                    "dataSrc": ''
+                },
+                columns: [
+                    {
+                        title: 'Name',
+                        mRender:function (data,type,full) {
+                            return full.first_name + " " + full.last_name;
+                        }
+                    },
+                    {
+                        title: 'Phone',
+                        data:'phone_number'
+                    },
+                    {
+                        title: 'Mobile',
+                        data:'mobile_number'
+                    },
+                    {
+                        title: 'Fax',
+                        data:'fax_number'
+                    },
+                    {
+                        title: 'Email',
+                        data:'email'
+                    },
+                  ],
+                  processing: true
+            },
+            contacts_table: null,
+            DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
+            comms_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/comms_log'),
+            comms_add_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/add_comms_log'),
+            logs_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/action_log'),
+            panelClickersInitialised: false,
+            sendingReferral: false,
+        }
+    },
+    components: {
+        Application,
+        datatable,
+        ProposedDecline,
+        AmmendmentRequest,
+        Conditions,
+        ProposedLicence,
+        LicenceScreen,
+        CommsLogs,
+        MoreReferrals
+    },
+    filters: {
+        formatDate: function(data){
+            return data ? moment(data).format('DD/MM/YYYY HH:mm:ss'): '';
+        }
+    },
+    watch: {
+    },
+    computed: {
+
+        contactsURL: function(){
+            return this.application!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.application.applicant.id+'/contacts') : '';
+        },
+        isLoading: function() {
+          return this.loading.length > 0
+        },
+        csrf_token: function() {
+          return helpers.getCookie('csrftoken')
+        },
+        application_form_url: function() {
+          return (this.application) ? `/api/application/${this.application.id}/assessor_save.json` : '';
+        },
+        isFinalised: function(){
+            return this.application.processing_status == 'Declined' || this.application.processing_status == 'Approved';
+        },
+        canAssess: function(){
+            return this.application && this.application.assessor_mode.assessor_can_assess ? true : false;
+        },
+        hasAssessorMode:function(){
+            return this.application && this.application.assessor_mode.has_assessor_mode ? true : false;
+        },
+        isIdCheckAccepted: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Accepted';
+        },
+        isIdNotChecked: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Not Checked';
+        },
+        isIdCheckRequested: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Awaiting Update';
+        },
+        isIdCheckUpdated: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Updated';
+        },
+        isCharacterCheckAccepted: function(){
+            console.log(this.application.id_check_status)
+            return this.application.character_check_status == 'Accepted';
+        },
+        canAction: function(){
+            if (this.application.processing_status == 'With Approver'){
+                return this.application && (this.application.processing_status == 'With Approver' || this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_approver || this.application.assigned_approver == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
+            }
+            else{
+                return this.application && (this.application.processing_status == 'With Approver' || this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_officer || this.application.assigned_officer == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
+            }
+        },
+        canLimitedAction: function(){
+            if (this.application.processing_status == 'With Approver'){
+                return this.application && (this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Referral' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_approver || this.application.assigned_approver == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
+            }
+            else{
+                return this.application && (this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Referral' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_officer || this.application.assigned_officer == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
+            }
+        },
+        canSeeSubmission: function(){
+            return this.application && (this.application.processing_status != 'With Assessor (Conditions)' && this.application.processing_status != 'With Approver' && !this.isFinalised)
+        }
+    },
+    methods: {
+        initialiseOrgContactTable: function(){
+            let vm = this;
+            if (vm.application && !vm.contacts_table_initialised){
+                vm.contacts_options.ajax.url = helpers.add_endpoint_json(api_endpoints.organisations,vm.application.applicant.id+'/contacts');
+                vm.contacts_table = $('#'+vm.contacts_table_id).DataTable(vm.contacts_options);
+                vm.contacts_table_initialised = true;
+            }
+        },
+        commaToNewline(s){
+            return s.replace(/[,;]/g, '\n');
+        },
+        proposedDecline: function(){
+            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
+            this.$refs.proposed_decline.isModalOpen = true;
+        },
+        proposedLicence: function(){
+            this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
+            this.$refs.proposed_licence.isModalOpen = true;
+        },
+        issueApplication:function(){
+            this.$refs.proposed_licence.licence = helpers.copyObject(this.application.proposed_issuance_licence);
+            this.$refs.proposed_licence.state = 'final_licence';
+            this.$refs.proposed_licence.isModalOpen = true;
+        },
+        declineApplication:function(){
+            this.$refs.proposed_decline.decline = helpers.copyObject(this.application.applicationdeclineddetails);
+            this.$refs.proposed_decline.isModalOpen = true;
+        },
+        acceptIdRequest: function() {
+            let vm = this;
+            swal({
+                title: "Accept ID Check",
+                text: "Are you sure you want to accept this ID Check?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_id_check')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
+        },
+        updateIdRequest: function() {
+            let vm = this;
+            console.log(vm.application.schema[0].name)
+            console.log(vm.application.schema[0].status)
+            swal({
+                title: "Request Update ID Check",
+                text: "Are you sure you want to request this ID Check update?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/request_id_check')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
+        },
+        acceptCharacterRequest: function() {
+            let vm = this;
+            swal({
+                title: "Accept Character Check",
+                text: "Are you sure you want to accept this Character Check?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_character_check')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
+        },
+        ammendmentRequest: function(){
+            let values = '';
+            $('.deficiency').each((i,d) => {
+                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
+            }); 
+            this.$refs.ammendment_request.ammendment.details = values;
+            this.$refs.ammendment_request.isModalOpen = true;
+        },
+        sendToAssessor: function(){
+            let vm = this;
+            swal({
+                title: "Send Assessor",
+                text: "Are you sure you want to send to assessor?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/send_to_assessor')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
+        },
+        save: function(e) {
+          let vm = this;
+          let formData = new FormData(vm.form);
+          vm.$http.post(vm.application_form_url,formData).then(res=>{
+              swal(
+                'Saved',
+                'Your application has been saved',
+                'success'
+              )
+          },err=>{
+          });
+        },
+        toggleApplication:function(){
+            this.showingApplication = !this.showingApplication;
+        },
+        toggleConditions:function(){
+            this.showingConditions = !this.showingConditions;
+        },
+        updateAssignedOfficerSelect:function(){
+            let vm = this;
+            if (vm.application.processing_status == 'With Approver'){
+                $(vm.$refs.assigned_officer).val(vm.application.assigned_approver);
+                $(vm.$refs.assigned_officer).trigger('change');
+            }
+            else{
+                $(vm.$refs.assigned_officer).val(vm.application.assigned_officer);
+                $(vm.$refs.assigned_officer).trigger('change');
+            }
+        },
+        assignRequestUser: function(){
+            let vm = this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assign_request_user')))
+            .then((response) => {
+                vm.application = response.body;
+                vm.original_application = helpers.copyObject(response.body);
+                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.updateAssignedOfficerSelect();
+            }, (error) => {
+                vm.application = helpers.copyObject(vm.original_application)
+                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.updateAssignedOfficerSelect();
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
+        },
+        refreshFromResponse:function(response){
+            let vm = this;
+            vm.original_application = helpers.copyObject(response.body);
+            vm.application = helpers.copyObject(response.body);
+            vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+            vm.$nextTick(() => {
+                vm.initialiseAssignedOfficerSelect(true);
+                vm.updateAssignedOfficerSelect();
+            });
+        },
+        assignTo: function(){
+            let vm = this;
+            let unassign = true;
+            let data = {};
+            if (vm.processing_status == 'With Approver'){
+                unassign = vm.application.assigned_approver != null && vm.application.assigned_approver != 'undefined' ? false: true;
+                data = {'assessor_id': vm.application.assigned_approver};
+            }
+            else{
+                unassign = vm.application.assigned_officer != null && vm.application.assigned_officer != 'undefined' ? false: true;
+                data = {'assessor_id': vm.application.assigned_officer};
+            }
+            if (!unassign){
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assign_to')),JSON.stringify(data),{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.application = response.body;
+                    vm.original_application = helpers.copyObject(response.body);
+                    vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                    vm.updateAssignedOfficerSelect();
+                }, (error) => {
+                    vm.application = helpers.copyObject(vm.original_application)
+                    vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                    vm.updateAssignedOfficerSelect();
+                    swal(
+                        'Application Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                    )
+                });
+            }
+            else{
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/unassign')))
+                .then((response) => {
+                    vm.application = response.body;
+                    vm.original_application = helpers.copyObject(response.body);
+                    vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                    vm.updateAssignedOfficerSelect();
+                }, (error) => {
+                    vm.application = helpers.copyObject(vm.original_application)
+                    vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                    vm.updateAssignedOfficerSelect();
+                    swal(
+                        'Application Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                    )
+                });
+            }
+        },
+        switchStatus: function(status){
+            let vm = this;
+            let data = {'status': status}
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/switch_status')),JSON.stringify(data),{
+                emulateJSON:true,
+            })
+            .then((response) => {
+                vm.application = response.body;
+                vm.original_application = helpers.copyObject(response.body);
+                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.$nextTick(() => {
+                    vm.initialiseAssignedOfficerSelect(true);
+                    vm.updateAssignedOfficerSelect();
+                });
+            }, (error) => {
+                vm.application = helpers.copyObject(vm.original_application)
+                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
+        },
+        fetchDeparmentUsers: function(){
+            let vm = this;
+            vm.loading.push('Loading Department Users');
+            vm.$http.get(api_endpoints.department_users).then((response) => {
+                vm.department_users = response.body
+                vm.loading.splice('Loading Department Users',1);
+            },(error) => {
+                console.log(error);
+                vm.loading.splice('Loading Department Users',1);
+            })
+        },
+        initialiseAssignedOfficerSelect:function(reinit=false){
+            let vm = this;
+            if (reinit){
+                $(vm.$refs.assigned_officer).data('select2') ? $(vm.$refs.assigned_officer).select2('destroy'): '';
+            }
+            // Assigned officer select
+            $(vm.$refs.assigned_officer).select2({
+                "theme": "bootstrap",
+                allowClear: true,
+                placeholder:"Select Officer"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                if (vm.application.processing_status == 'With Approver'){
+                    vm.application.assigned_approver = selected.val();
+                }
+                else{
+                    vm.application.assigned_officer = selected.val();
+                }
+                vm.assignTo();
+            }).on("select2:unselecting", function(e) {
+                var self = $(this);
+                setTimeout(() => {
+                    self.select2('close');
+                }, 0);
+            }).on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                if (vm.application.processing_status == 'With Approver'){
+                    vm.application.assigned_approver = null;
+                }
+                else{
+                    vm.application.assigned_officer = null;
+                }
+                vm.assignTo();
+            });
+        },
+        initialiseSelects: function(){
+            let vm = this;
+            if (!vm.initialisedSelects){
+                $(vm.$refs.department_users).select2({
+                    "theme": "bootstrap",
+                    allowClear: true,
+                    placeholder:"Select Referral"
+                }).
+                on("select2:select",function (e) {
+                    var selected = $(e.currentTarget);
+                    vm.selected_referral = selected.val();
+                }).
+                on("select2:unselect",function (e) {
+                    var selected = $(e.currentTarget);
+                    vm.selected_referral = '' 
+                });
+                vm.initialiseAssignedOfficerSelect();
+                vm.initialisedSelects = true;
+            }
+        },
+        sendReferral: function(){
+            let vm = this;
+
+            let data = {'email':vm.selected_referral};
+            vm.sendingReferral = true;
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assesor_send_referral')),JSON.stringify(data),{
+                emulateJSON:true
+            }).then((response) => {
+                vm.sendingReferral = false;
+                vm.original_application = helpers.copyObject(response.body);
+                vm.application = response.body;
+                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                swal(
+                    'Referral Sent',
+                    'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
+                    'success'
+                )
+                $(vm.$refs.department_users).val(null).trigger("change");
+                vm.selected_referral = '';
+            }, (error) => {
+                console.log(error);
+                swal(
+                    'Referral Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+                vm.sendingReferral = false;
+            });
+        },
+        remindReferral:function(r){
+            let vm = this;
+            
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/remind')).then(response => {
+                vm.original_application = helpers.copyObject(response.body);
+                vm.application = response.body;
+                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                swal(
+                    'Referral Reminder',
+                    'A reminder has been sent to '+r.referral,
+                    'success'
+                )
+            },
+            error => {
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
+        },
+        resendReferral:function(r){
+            let vm = this;
+            
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/resend')).then(response => {
+                vm.original_application = helpers.copyObject(response.body);
+                vm.application = response.body;
+                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                swal(
+                    'Referral Resent',
+                    'The referral has been resent to '+r.referral,
+                    'success'
+                )
+            },
+            error => {
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
+        },
+        recallReferral:function(r){
+            let vm = this;
+            
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/recall')).then(response => {
+                vm.original_application = helpers.copyObject(response.body);
+                vm.application = response.body;
+                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                swal(
+                    'Referral Recall',
+                    'The referall has been recalled from '+r.referral,
+                    'success'
+                )
+            },
+            error => {
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
+        }
+        
+    },
+    mounted: function() {
+        let vm = this;
+        vm.fetchDeparmentUsers();
+        
+    },
+    updated: function(){
+        let vm = this;
+        if (!vm.panelClickersInitialised){
+            $('.panelClicker[data-toggle="collapse"]').on('click', function () {
+                var chev = $(this).children()[0];
+                window.setTimeout(function () {
+                    $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
+                },100);
+            }); 
+            vm.panelClickersInitialised = true;
+        }
+        this.$nextTick(() => {
+            vm.initialiseOrgContactTable();
+            vm.initialiseSelects();
+            vm.form = document.forms.new_application;
+        });
+    },
+    beforeRouteEnter: function(to, from, next) {
+          Vue.http.get(`/api/application/${to.params.application_id}/internal_application.json`).then(res => {
+              next(vm => {
+                vm.application = res.body;
+                vm.original_application = helpers.copyObject(res.body);
+                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+              });
+            },
+            err => {
+              console.log(err);
+            });
+    },
+    beforeRouteUpdate: function(to, from, next) {
+          Vue.http.get(`/api/application/${to.params.application_id}.json`).then(res => {
+              next(vm => {
+                vm.application = res.body;
+                vm.original_application = helpers.copyObject(res.body);
+                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+              });
+            },
+            err => {
+              console.log(err);
+            });
+    }
+}
+</script>
+<style scoped>
+.top-buffer-s {
+    margin-top: 10px;
+}
+.actionBtn {
+    cursor: pointer;
+}
+.hidePopover {
+    display: none;
+}
+.separator {
+    border: 1px solid;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    width: 100%;
+}
+</style>

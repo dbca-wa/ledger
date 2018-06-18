@@ -58,6 +58,7 @@ coverage.xml
 # Django stuff:
 *.log
 staticfiles/
+staticfiles*
 
 # vim
 *.swp
@@ -89,7 +90,10 @@ media/
 import/
 importo.py
 
+#local uwsgi.ini files
+uwsgi*.ini
 *.djcache
+
 uwsgi.ini
 
 # npm locks

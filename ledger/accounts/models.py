@@ -9,6 +9,7 @@ from django.db import models, IntegrityError
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
+from django.db.models import Q
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.core.exceptions import ValidationError
 
@@ -21,6 +22,8 @@ from datetime import datetime, date
 
 from ledger.accounts.signals import name_changed, post_clean
 from ledger.address.models import UserAddress, Country
+
+
 
 class EmailUserManager(BaseUserManager):
     """A custom Manager for the EmailUser model.
@@ -358,6 +361,97 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         else:
             return -1
 
+    def log_user_action(self, action, request=None):
+        if request:
+            return EmailUserAction.log_action(self, action, request.user)
+        else:
+            pass
+
+
+def query_emailuser_by_args(**kwargs):
+    ORDER_COLUMN_CHOICES = [
+        'title',
+        'first_name',
+        'last_name',
+        'dob',
+        'email',
+        'phone_number',
+        'mobile_number',
+        'fax_number',
+        'character_flagged',
+        'character_comments'
+    ]
+
+    draw = int(kwargs.get('draw', None)[0])
+    length = int(kwargs.get('length', None)[0])
+    start = int(kwargs.get('start', None)[0])
+    search_value = kwargs.get('search[value]', None)[0]
+    order_column = kwargs.get('order[0][column]', None)[0]
+    order = kwargs.get('order[0][dir]', None)[0]
+    order_column = ORDER_COLUMN_CHOICES[int(order_column)]
+    # django orm '-' -> desc
+    if order == 'desc':
+        order_column = '-' + order_column
+
+    queryset = EmailUser.objects.all()
+    total = queryset.count()
+
+    if search_value:
+        queryset = queryset.filter(Q(first_name__icontains=search_value) |
+                                        Q(last_name__icontains=search_value) |
+                                        Q(email__icontains=search_value) |
+                                        Q(phone_number__icontains=search_value) |
+                                        Q(mobile_number__icontains=search_value) |
+                                        Q(fax_number__icontains=search_value))
+
+    count = queryset.count()
+    queryset = queryset.order_by(order_column)[start:start + length]
+
+    return {
+        'items': queryset,
+        'count': count,
+        'total': total,
+        'draw': draw
+    }
+
+
+@python_2_unicode_compatible
+class UserAction(models.Model):
+    who = models.ForeignKey(EmailUser, null=False, blank=False)
+    when = models.DateTimeField(null=False, blank=False, auto_now_add=True)
+    what = models.TextField(blank=False)
+
+    def __str__(self):
+        return "{what} ({who} at {when})".format(
+            what=self.what,
+            who=self.who,
+            when=self.when
+        )
+
+    class Meta:
+        abstract = True
+        app_label = 'accounts'
+
+
+class EmailUserAction(UserAction):
+    ACTION_PERSONAL_DETAILS_UPDATE = "User {} Personal Details Updated"
+    ACTION_CONTACT_DETAILS_UPDATE = "User {} Contact Details Updated"
+    ACTION_POSTAL_ADDRESS_UPDATE = "User {} Postal Address Updated"
+
+    @classmethod
+    def log_action(cls, emailuser, action, user):
+        return cls.objects.create(
+            emailuser=emailuser,
+            who=user,
+            what=str(action)
+        )
+
+    emailuser = models.ForeignKey(EmailUser, related_name='action_logs')
+
+    class Meta:
+        app_label = 'accounts'
+        ordering = ['-when']
+
 
 class EmailUserListener(object):
     """
@@ -571,10 +665,12 @@ class ProfileListener(object):
                 address.oscar_address = oscar_address
                 address.save()
         # Clear out unused addresses
+        # EmailUser can have address that is not linked with profile, hence the exclude
         user = instance.user
         user_addr = Address.objects.filter(user=user)
         for u in user_addr:
-            if not u.profiles.all():
+            if not u.profiles.all() \
+                and not u in (user.postal_address, user.residential_address, user.billing_address):
                 u.oscar_address.delete()
                 u.delete()
 
