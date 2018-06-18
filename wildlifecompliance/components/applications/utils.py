@@ -355,6 +355,9 @@ def get_activity_type_schema(licence_class_data):
         schema_activity=[]
         wl_activity_type_id = item['id']
         activity_type_obj = WildlifeLicenceActivityType.objects.get(id = wl_activity_type_id)
+        item["name"]=activity_type_obj.name
+        item["processing_status"]="draft"
+        item["proposed_decline"]=False
 
         for index1, item1 in enumerate(item['activity']):
             wl_activity_id = item1['id']

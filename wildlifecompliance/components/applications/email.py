@@ -15,22 +15,41 @@ class ReferralSendNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/applications/send_referral_notification.html'
     txt_template = 'wildlifecompliance/emails/applications/send_referral_notification.txt'
 
-def send_referral_email_notification(referral,request,reminder=False):
+
+class ApplicationSubmitNotificationEmail(TemplateEmailBase):
+    subject = 'A new application has been submitted.'
+    html_template = 'wildlifecompliance/emails/send_application_submit_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_application_submit_notification.txt'
+
+
+def send_referral_email_notification(emails,application,request,reminder=False):
     email = ReferralSendNotificationEmail()
     url = request.build_absolute_uri(reverse('internal-referral-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
 
     context = {
-        'application': referral.application,
-        'url': url,
-        'reminder':reminder
+        'application': application
     }
 
-    msg = email.send(referral.referral.email, context=context)
+    msg = email.send(emails, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, referral, sender=sender)
     _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
 
-def _log_application_email(email_message, referral, sender=None):
+
+def send_application_submit_email_notification(group_email,application,request):
+    # An email to internal users notifying about new application is submitted
+    email = ApplicationSubmitNotificationEmail()
+    # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
+    context = {
+        'application': application,
+    }
+
+    msg = email.send(group_email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    # _log_application_email(msg, referral, sender=sender)
+    # _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
+
+def _log_application_email(email_message, application, sender=None):
     from wildlifecompliance.components.applications.models import ApplicationLogEntry
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
         # TODO this will log the plain text body, should we log the html instead
@@ -64,7 +83,7 @@ def _log_application_email(email_message, referral, sender=None):
     kwargs = {
         'subject': subject,
         'text': text,
-        'application': referral.application,
+        'application': application.id,
         'customer': customer,
         'staff': staff,
         'to': to,

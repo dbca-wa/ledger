@@ -17,6 +17,15 @@ class ApplicationDocumentInline(admin.TabularInline):
 class ApplicationTypeAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.ApplicationGroupType)
+class ApplicationGroupTypeAdmin(admin.ModelAdmin):
+    filter_horizontal = ('members',)
+    form = forms.ApplicationGroupTypeAdminForm
+
+    def has_delete_permission(self, request, obj=None):
+        return super(ApplicationGroupTypeAdmin, self).has_delete_permission(request, obj)
+
+
 @admin.register(models.Application)
 class ApplicationAdmin(VersionAdmin):
     inlines =[ApplicationDocumentInline,] 

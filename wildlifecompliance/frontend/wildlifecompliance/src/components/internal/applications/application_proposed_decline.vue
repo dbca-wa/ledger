@@ -9,6 +9,20 @@
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-sm-12">
+                                        <label class="control-label"  for="Name">Select licensed activities for decline </label>
+                                        <div  v-for="item in application_licence_type">
+                                            <div v-for="item1 in item">
+                                                <div  v-if="item1.name">
+                                                    <input type="checkbox" v-model="decline.activity_types">{{item1.name}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12">
                                         <label v-if="processing_status == 'With Approver'" class="control-label"  for="Name">Details</label>
                                         <label v-else class="control-label"  for="Name">Provide Reason for the proposed decline </label>
                                         <textarea style="width: 70%;"class="form-control" name="reason" v-model="decline.reason"></textarea>
@@ -57,6 +71,10 @@ export default {
                 type:String,
                 required: true
             },
+            application_licence_type:{
+                type:Object,
+                required:true
+            }
     },
     data:function () {
         let vm = this;
