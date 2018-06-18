@@ -549,6 +549,7 @@ export default {
           let vm = this;
           let formData = new FormData(vm.form);
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+
               
           },err=>{
           });
@@ -653,6 +654,10 @@ export default {
         switchStatus: function(status){
             let vm = this;
             //vm.save_wo();
+            //let vm = this;
+            let formData = new FormData(vm.form);
+            vm.$http.post(vm.proposal_form_url,formData).then(res=>{ //save Proposal before changing status so that unsaved assessor data is saved.
+            
             let data = {'status': status}
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
                 emulateJSON:true,
@@ -674,6 +679,32 @@ export default {
                     'error'
                 )
             });
+              
+          },err=>{
+          });
+
+
+         /*   let data = {'status': status}
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
+                emulateJSON:true,
+            })
+            .then((response) => {
+                vm.proposal = response.body;
+                vm.original_proposal = helpers.copyObject(response.body);
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.$nextTick(() => {
+                    vm.initialiseAssignedOfficerSelect(true);
+                    vm.updateAssignedOfficerSelect();
+                });
+            }, (error) => {
+                vm.proposal = helpers.copyObject(vm.original_proposal)
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                swal(
+                    'Proposal Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });*/
         },
         fetchDeparmentUsers: function(){
             let vm = this;
