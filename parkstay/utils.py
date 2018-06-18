@@ -633,7 +633,8 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
             cost_total = total_price,
             customer = old_booking.customer,
             override_price=old_booking.override_price,
-            updating_booking = True
+            updating_booking = True,
+            override_checks=True
     )
     # Move all the vehicles to the new booking
     for r in old_booking.regos.all():
