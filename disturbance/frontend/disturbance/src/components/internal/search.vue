@@ -299,7 +299,6 @@ export default {
 
     search_reference: function() {
           let vm = this;
-          console.log(vm.referenceWord);
           if(vm.referenceWord)
           {
             vm.$http.post('/api/search_reference.json',{
