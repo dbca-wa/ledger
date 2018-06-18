@@ -19,12 +19,15 @@ class ProposalAssessorGroupAdminForm(forms.ModelForm):
     def clean(self):
         super(ProposalAssessorGroupAdminForm, self).clean()
         if self.instance and ProposalAssessorGroup.objects.all().exists():
-            original_members = ProposalAssessorGroup.objects.get(id=self.instance.id).members.all()
-            current_members = self.cleaned_data.get('members')
-            for o in original_members:
-                if o not in current_members:
-                    if self.instance.member_is_assigned(o):
-                        raise ValidationError('{} is currently assigned to a proposal(s)'.format(o.email))
+            try:
+                original_members = ProposalAssessorGroup.objects.get(id=self.instance.id).members.all()
+                current_members = self.cleaned_data.get('members')
+                for o in original_members:
+                    if o not in current_members:
+                        if self.instance.member_is_assigned(o):
+                            raise ValidationError('{} is currently assigned to a proposal(s)'.format(o.email))
+            except:
+                pass
 
 
 class ProposalApproverGroupAdminForm(forms.ModelForm):
@@ -41,12 +44,15 @@ class ProposalApproverGroupAdminForm(forms.ModelForm):
     def clean(self):
         super(ProposalApproverGroupAdminForm, self).clean()
         if self.instance:
-            original_members = ProposalApproverGroup.objects.get(id=self.instance.id).members.all()
-            current_members = self.cleaned_data.get('members')
-            for o in original_members:
-                if o not in current_members:
-                    if self.instance.member_is_assigned(o):
-                        raise ValidationError('{} is currently assigned to a proposal(s)'.format(o.email))
+            try:
+                original_members = ProposalApproverGroup.objects.get(id=self.instance.id).members.all()
+                current_members = self.cleaned_data.get('members')
+                for o in original_members:
+                    if o not in current_members:
+                        if self.instance.member_is_assigned(o):
+                            raise ValidationError('{} is currently assigned to a proposal(s)'.format(o.email))
+            except:
+                pass
 
 
 class DisturbanceHelpPageAdminForm(forms.ModelForm):

@@ -68,8 +68,9 @@ class TaggedProposalAssessorGroupActivities(TaggedItemBase):
 class ProposalAssessorGroup(models.Model):
     name = models.CharField(max_length=255)
     members = models.ManyToManyField(EmailUser,blank=True)
-    regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalAssessorGroupRegions,related_name = "+",blank=True)
-    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalAssessorGroupActivities,related_name = "+",blank=True)
+    #regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalAssessorGroupRegions,related_name = "+",blank=True)
+    #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalAssessorGroupActivities,related_name = "+",blank=True)
+    region = models.ForeignKey(Region, null=True, blank=True)
     default = models.BooleanField(default=False)
 
     class Meta:
@@ -85,12 +86,14 @@ class ProposalAssessorGroup(models.Model):
             default = None
 
         if self.pk:
-            #if int(self.pk) != int(default.id):
-            if default and not self.default:
-                raise ValidationError('There can only be one default proposal assessor group')
+            if not self.default and not self.region:
+                raise ValidationError('Only default can have no region set for proposal assessor group. Please specifiy region')
+#            elif default and not self.default:
+#                raise ValidationError('There can only be one default proposal assessor group')
         else:
             if default and self.default:
                 raise ValidationError('There can only be one default proposal assessor group')
+
 
     def member_is_assigned(self,member):
         for p in self.current_proposals:
@@ -102,6 +105,10 @@ class ProposalAssessorGroup(models.Model):
     def current_proposals(self):
         assessable_states = ['with_assessor','with_referral','with_assessor_requirements']
         return Proposal.objects.filter(processing_status__in=assessable_states)
+
+    @property
+    def members_email(self):
+        return [i.email for i in self.members.all()]
 
 class TaggedProposalApproverGroupRegions(TaggedItemBase):
     content_object = models.ForeignKey("ProposalApproverGroup")
@@ -118,8 +125,9 @@ class TaggedProposalApproverGroupActivities(TaggedItemBase):
 class ProposalApproverGroup(models.Model):
     name = models.CharField(max_length=255)
     members = models.ManyToManyField(EmailUser,blank=True)
-    regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalApproverGroupRegions,related_name = "+",blank=True)
-    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalApproverGroupActivities,related_name = "+",blank=True)
+    #regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalApproverGroupRegions,related_name = "+",blank=True)
+    #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalApproverGroupActivities,related_name = "+",blank=True)
+    region = models.ForeignKey(Region, null=True, blank=True)
     default = models.BooleanField(default=False)
 
     class Meta:
@@ -135,9 +143,12 @@ class ProposalApproverGroup(models.Model):
             default = None
 
         if self.pk:
-            if int(self.pk) != int(default.id):
-                if default and self.default:
-                    raise ValidationError('There can only be one default proposal approver group')
+            if not self.default and not self.region:
+                raise ValidationError('Only default can have no region set for proposal assessor group. Please specifiy region')
+
+#            if int(self.pk) != int(default.id):
+#                if default and self.default:
+#                    raise ValidationError('There can only be one default proposal approver group')
         else:
             if default and self.default:
                 raise ValidationError('There can only be one default proposal approver group')
@@ -152,6 +163,10 @@ class ProposalApproverGroup(models.Model):
     def current_proposals(self):
         assessable_states = ['with_approver']
         return Proposal.objects.filter(processing_status__in=assessable_states)
+
+    @property
+    def members_email(self):
+        return [i.email for i in self.members.all()]
 
 class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
