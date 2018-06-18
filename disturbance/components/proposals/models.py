@@ -287,12 +287,13 @@ class Proposal(RevisionedMixin):
     title = models.CharField(max_length=255,null=True,blank=True)
     activity = models.CharField(max_length=255,null=True,blank=True)
     #region = models.CharField(max_length=255,null=True,blank=True)
-    #tenure = models.CharField(max_length=255,null=True,blank=True)
+    tenure = models.CharField(max_length=255,null=True,blank=True)
     #activity = models.ForeignKey(Activity, null=True, blank=True)
     region = models.ForeignKey(Region, null=True, blank=True)
     district = models.ForeignKey(District, null=True, blank=True)
-    tenure = models.ForeignKey(Tenure, null=True, blank=True)
+    #tenure = models.ForeignKey(Tenure, null=True, blank=True)
     application_type = models.ForeignKey(ApplicationType)
+    approval_level = models.CharField('Activity matrix approval level', max_length=255,null=True,blank=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -447,9 +448,9 @@ class Proposal(RevisionedMixin):
             raise exceptions.ProposalNotComplete()
         missing_fields = []
         required_fields = {
-            #'region':'Region/District',
-            #'title': 'Title',
-            #'activity': 'Activity'
+            'region':'Region/District',
+            'title': 'Title',
+            'activity': 'Activity'
         }
         #import ipdb; ipdb.set_trace()
         for k,v in required_fields.items():
@@ -842,7 +843,7 @@ class Proposal(RevisionedMixin):
         from disturbance.components.compliances.models import Compliance, ComplianceUserAction
         for req in self.requirements.all():
             try:
-                if req.due_date >= today:
+                if req.due_date and req.due_date >= today:
                     current_date = req.due_date
                     #create a first Compliance
                     try:
