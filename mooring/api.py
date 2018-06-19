@@ -64,6 +64,7 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     DistrictSerializer,
                                     MooringAreaMapSerializer,
                                     MarineParkMapSerializer,
+                                    MarineParkRegionMapSerializer,
                                     MooringAreaMapFilterSerializer,
                                     MooringAreaSerializer,
                                     MooringAreaDatatableSerializer,
@@ -105,6 +106,7 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     PhoneSerializer,
                                     OracleSerializer,
                                     BookingHistorySerializer
+                             
                                     )
 from mooring.helpers import is_officer, is_customer
 from mooring import reports 
@@ -385,6 +387,12 @@ class MooringAreaMapViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = []
 #    print queryset
 
+class MarineParksRegionMapViewSet(viewsets.ReadOnlyModelViewSet):
+#    queryset = MooringArea.objects.values('park_id__name','park_id__wkb_geometry').annotate(total=Count('park'))
+    queryset = MooringArea.objects.values('park__district__region','park__district__region__name','park__district__region__wkb_geometry').annotate(total=Count('park__district__region'))
+    serializer_class = MarineParkRegionMapSerializer
+    permission_classes = []
+
 class MarineParksMapViewSet(viewsets.ReadOnlyModelViewSet):
     #queryset = District.objects.all()
     queryset = MooringArea.objects.values('park_id__name','park_id__wkb_geometry').annotate(total=Count('park'))
@@ -448,7 +456,7 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
                             Q(range_start__lte=start_date,range_end__gte=start_date)|# filter start date is within period
                             Q(range_start__lte=end_date,range_end__gte=end_date)|# filter end date is within period
                             Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
-                            ,campground=q)
+                            ,mooringarea=q)
             if stay_history:
                 max_days = min([x.max_days for x in stay_history])
             else:
@@ -463,12 +471,15 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
 @require_http_methods(['GET'])
 def search_suggest(request, *args, **kwargs):
     entries = []
-    for x in MooringArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
-        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'MooringArea', 'id': x[0], 'name': x[1]}))
-    for x in MarinePark.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
-        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Marina', 'id': x[0], 'name': x[1]}))
+    for x in MooringArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry','park__name','park__district__region__name'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'MooringArea', 'id': x[0], 'name': x[1]+' - '+x[3]+' - '+x[4]}))
+    for x in MarinePark.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry','zoom_level','district__region__name'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Marina', 'id': x[0], 'name': x[1]+' - '+x[4], 'zoom_level': x[3]}))
     for x in PromoArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1]}))
+    for x in Region.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry','zoom_level'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Region', 'id': x[0], 'name': x[1], 'zoom_level': x[3]}))
+
 
     return HttpResponse(geojson.dumps(geojson.FeatureCollection(entries)), content_type='application/json')
 
@@ -874,7 +885,6 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 pass
         raise serializers.ValidationError('no valid date format found')
 
-
     @detail_route(methods=['get'])
     def available_campsites(self, request, format='json', pk=None):
         try:
@@ -892,6 +902,28 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['get'])
     def available_campsites_booking(self, request, format='json', pk=None):
+        start_date = self.try_parsing_date(request.GET.get('arrival')).date()
+        end_date = self.try_parsing_date(request.GET.get('departure')).date()
+        booking_id = request.GET.get('booking',None)
+
+        #print start_date
+        booking = Booking.objects.get(id=booking_id)
+        print booking
+
+        #booking = Booking.objects.get(id=booking_id)
+        #print "YES"
+        #print queryset 
+        print self.get_object().id
+        #print "OBH"
+        campsite_qs = Mooringsite.objects.filter(mooringarea_id=self.get_object().id)
+#        campsite_qs = Mooringsite.objects.filter(mooringarea_id=4)
+        
+        http_status = status.HTTP_200_OK
+       
+        available = utils.get_available_campsites_list_booking(campsite_qs,request, start_date, end_date,booking)
+        return Response(available,status=http_status)
+
+
         try:
             start_date = self.try_parsing_date(request.GET.get('arrival')).date()
             end_date = self.try_parsing_date(request.GET.get('departure')).date()
@@ -902,15 +934,17 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 booking = Booking.objects.get(id=booking_id)
             except:
                 raise serializers.ValiadationError('The booking could not be retrieved')
-            campsite_qs = Mooringsite.objects.filter(campground_id=self.get_object().id)
+            campsite_qs = Mooringsite.objects.filter(mooringarea_id=self.get_object().id)
             http_status = status.HTTP_200_OK
             available = utils.get_available_campsites_list_booking(campsite_qs,request, start_date, end_date,booking)
-
+            print "HERE"
             return Response(available,status=http_status)
         except ValidationError as e:
+            print e
             print(traceback.print_exc())
             raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
+            print e
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 

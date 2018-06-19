@@ -52,12 +52,35 @@ class Contact(models.Model):
 
 
 class MarinePark(models.Model):
+
+    ZOOM_LEVEL = (
+        (0, 'default'),
+        (1, '1'),
+        (2, '2'),
+        (3, '3'),
+        (4, '4'),
+        (5, '4'),
+        (6, '6'),
+        (7, '7'),
+        (8, '8'),
+        (9, '9'),
+        (10, '10'),
+        (11, '11'),
+        (12, '12'),
+        (13, '13'),
+        (14, '14'),
+        (15, '15'),
+        (16, '16'),
+
+    )
+
     name = models.CharField(max_length=255)
     district = models.ForeignKey('District', null=True, on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
     entry_fee_required = models.BooleanField(default=True)
     oracle_code = models.CharField(max_length=50, null=True,blank=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
+    zoom_level = models.IntegerField(choices=ZOOM_LEVEL,default=-1)
 
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
@@ -90,12 +113,12 @@ class MooringArea(models.Model):
     MOORING_TYPE_CHOICES = (
         (0, 'Bookable Online'),
         (1, 'Not Bookable Online'),
-        (2, 'Other Accomodation'),
+        (2, 'Public'),
         (3, 'Unpublished'),
     )
 
     CAMPGROUND_PRICE_LEVEL_CHOICES = (
-        (0, 'Campground level'),
+        (0, 'Marine Park level'),
         (1, 'Mooringsite Class level'),
         (2, 'Mooringsite level'),
     )
@@ -218,11 +241,11 @@ class MooringArea(models.Model):
         # Get all booking ranges
         try:
             open_ranges = self.booking_ranges.filter(Q(status=0),Q(range_start__lte=period), Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
-        except CampgroundBookingRange.DoesNotExist:
+        except MooringAreaBookingRange.DoesNotExist:
             pass
         try:
             closed_ranges = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
-        except CampgroundBookingRange.DoesNotExist:
+        except MooringAreaBookingRange.DoesNotExist:
             return True if open_ranges else False
 
         if not open_ranges:
@@ -243,22 +266,22 @@ class MooringArea(models.Model):
     def open(self, data):
         if self.active:
             raise ValidationError('This campground is already open.')
-        b = CampgroundBookingRange(**data)
+        b = MooringAreaBookingRange(**data)
         try:
-            within = CampgroundBookingRange.objects.filter(Q(campground=b.campground),Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
+            within = MooringAreaBookingRange.objects.filter(Q(campground=b.campground),Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
                 within.save(skip_validation=True)
 
-        except CampgroundBookingRange.DoesNotExist:
+        except MooringAreaBookingRange.DoesNotExist:
         #if (self.__get_current_closure().range_start <= b.range_start and not self.__get_current_closure().range_end) or (self.__get_current_closure().range_start <= b.range_start <= self.__get_current_closure().range_end):
         #    self.__get_current_closure().delete()
             b.save()
 
     def close(self, data):
-        b = CampgroundBookingRange(**data)
+        b = MooringAreaBookingRange(**data)
         try:
-            within = CampgroundBookingRange.objects.filter(Q(campground=b.campground),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
+            within = MooringAreaBookingRange.objects.filter(Q(campground=b.campground),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
             if within:
                 within.updated_on = timezone.now()
                 within.save(skip_validation=True)
@@ -266,7 +289,7 @@ class MooringArea(models.Model):
                     raise ValidationError('{} campground is already closed.'.format(within.campground.name))
             else:
                 b.save()
-        except CampgroundBookingRange.DoesNotExist:
+        except MooringAreaBookingRange.DoesNotExist:
             b.save()
         except:
             raise
@@ -691,7 +714,7 @@ class MooringsiteStayHistory(StayHistory):
     campsite = models.ForeignKey('Mooringsite', on_delete=models.PROTECT,related_name='stay_history')
 
 class MooringAreaStayHistory(StayHistory):
-    campground = models.ForeignKey('MooringArea', on_delete=models.PROTECT,related_name='stay_history')
+    mooringarea = models.ForeignKey('MooringArea', on_delete=models.PROTECT,related_name='stay_history')
 
 class Feature(models.Model):
     TYPE_CHOICES = (
@@ -709,9 +732,34 @@ class Feature(models.Model):
 
 
 class Region(models.Model):
+
+    ZOOM_LEVEL = (
+        (0, 'default'),
+        (1, '1'),
+        (2, '2'),
+        (3, '3'),
+        (4, '4'),
+        (5, '4'),
+        (6, '6'),
+        (7, '7'),
+        (8, '8'),
+        (9, '9'),
+        (10, '10'),
+        (11, '11'),
+        (12, '12'),
+        (13, '13'),
+        (14, '14'),
+        (15, '15'),
+        (16, '16'),
+
+    )
+
+
     name = models.CharField(max_length=255, unique=True)
     abbreviation = models.CharField(max_length=16, null=True, unique=True)
     ratis_id = models.IntegerField(default=-1)
+    wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
+    zoom_level = models.IntegerField(choices=ZOOM_LEVEL,default=-1)
 
     def __str__(self):
         return self.name
@@ -852,10 +900,12 @@ class MooringsiteRate(models.Model):
         (1, 'Mooringsite Class level'),
         (2, 'Mooringsite level'),
     )
+
     PRICE_MODEL_CHOICES = (
         (0, 'Price per Person'),
         (1, 'Fixed Price'),
     )
+
     campsite = models.ForeignKey('Mooringsite', on_delete=models.PROTECT, related_name='rates')
     rate = models.ForeignKey('Rate', on_delete=models.PROTECT)
     allow_public_holidays = models.BooleanField(default=True)
@@ -1297,6 +1347,7 @@ class BookingVehicleRego(models.Model):
         ('motorbike','Motorcycle'),
         ('concession','Vehicle (concession)')
     )
+
     booking = models.ForeignKey(Booking, related_name = "regos")
     rego = models.CharField(max_length=50)
     type = models.CharField(max_length=10,choices=VEHICLE_CHOICES)

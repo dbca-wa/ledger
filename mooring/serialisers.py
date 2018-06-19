@@ -157,7 +157,7 @@ class MooringAreaMapFeatureSerializer(serializers.HyperlinkedModelSerializer):
 class MooringAreaMapRegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Region
-        fields = ('id', 'name', 'abbreviation')
+        fields = ('id', 'name', 'abbreviation','wkb_geometry')
 
 class MooringAreaMapDistrictSerializer(serializers.HyperlinkedModelSerializer):
     region = MooringAreaMapRegionSerializer(read_only=True)
@@ -204,6 +204,25 @@ class MooringAreaMapSerializer(gis_serializers.GeoFeatureModelSerializer):
  #           'price_hint'
         )
 
+class MarineParkRegionMapSerializer(serializers.Serializer):
+ #   name = MooringAreaMapDistrictSerializer(read_only=True, many=True)
+ #   abbreviation = MooringAreaMapDistrictSerializer(read_only=True)
+#    region =MooringAreaMapDistrictSerializer(read_only=True, many=True)
+#    ratis_id =MooringAreaMapDistrictSerializer(read_only=True, many=True)
+    total = serializers.IntegerField()
+    park__district__region = serializers.IntegerField()
+    park__district__region__name = serializers.CharField()
+    park__district__region__wkb_geometry = PointField()
+
+    class Meta:
+#        model = MooringArea
+#        geo_field = 'park_id__wkb_geometry'
+        fields = (
+            'total',
+            'park__district__region__wkb_geometry',
+            'park__district__region',
+            'park__district__region__name',
+        )
 
 class MarineParkMapSerializer(serializers.Serializer):
  #   name = MooringAreaMapDistrictSerializer(read_only=True, many=True)
@@ -213,6 +232,7 @@ class MarineParkMapSerializer(serializers.Serializer):
     total = serializers.IntegerField()
     park_id__name =  serializers.CharField()
     park_id__wkb_geometry = PointField()
+    #park__district__region__name = serializers.CharField()
 
     class Meta:
 #        model = MooringArea 
@@ -268,6 +288,19 @@ class MooringAreaDatatableSerializer(serializers.ModelSerializer):
 
     def get_park(self,obj):
         return obj.park.name
+
+class MooringAreaSerializer1(serializers.ModelSerializer):
+    address = serializers.JSONField()
+    class Meta:
+        model = MooringArea
+        fields = ('address'
+#           'url',
+#            'id',
+#            'site_type',
+#            'mooring_type',
+            #'name',
+        )
+
 
 
 class MooringAreaSerializer(serializers.ModelSerializer):
@@ -351,7 +384,7 @@ class MarinaSerializer(serializers.HyperlinkedModelSerializer):
     mooringareas = MooringAreaSerializer(many=True)
     class Meta:
         model = MarinePark 
-        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'mooringareas','entry_fee_required')
+        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'entry_fee_required','mooringareas')
 
 class MooringsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
@@ -393,7 +426,7 @@ class MooringsiteSerialiser(serializers.ModelSerializer):
     name = serializers.CharField(default='default',required=False)
     class Meta:
         model = Mooringsite
-        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tent','campervan','caravan','min_people','max_people','description',)
+        fields = ('id','mooringarea', 'name', 'type','mooringsite_class','price','features','wkb_geometry','campground_open','active','current_closure','can_add_rate','tent','campervan','caravan','min_people','max_people','description',)
 
     def __init__(self, *args, **kwargs):
         try:
@@ -521,7 +554,6 @@ class RateDetailSerializer(serializers.Serializer):
     reason = serializers.IntegerField()
     details = serializers.CharField(required=False,allow_blank=True)
     campsite = serializers.IntegerField(required=False)
-
 
     def validate_rate(self, value):
         if value:

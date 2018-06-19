@@ -272,11 +272,13 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     print "MOORING SIRE"
     print campsites_qs.first()
     # Get the current stay history
+    #print MooringAreaStayHistory.objects.all()
+    print campsites_qs.first().mooringarea
     stay_history = MooringAreaStayHistory.objects.filter(
                     Q(range_start__lte=start_date,range_end__gte=start_date)|# filter start date is within period
                     Q(range_start__lte=end_date,range_end__gte=end_date)|# filter end date is within period
                     Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
-                    ,campground=campsites_qs.first().mooringarea
+                    ,mooringarea=campsites_qs.first().mooringarea
                     )
     print "DID I GET HIS"
     print stay_history 

@@ -5,7 +5,7 @@
             <div class="small-12 medium-3 large-6 columns search-params">
                 <div class="row">
                     <div class="small-12 columns">
-                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for campgrounds, parks, addresses..."/></label>
+                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for mooring's..."/></label>
                     </div>
                 </div>
                 <div class="row">
@@ -15,7 +15,7 @@
                     <div class="small-12 medium-12 large-4 columns">
                         <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-4 columns" style='display:none'>
                         <label>
                             Guests <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
                         </label>
@@ -27,7 +27,8 @@
                                 <div class="small-6 columns">
                                     <input type="number" id="numAdults" name="num_adults" v-model="numAdults" min="0" max="16"/></label>
                                 </div>
-                            </div><div class="row">
+                            </div>
+                            <div class="row">
                                 <div class="small-6 columns">
                                     <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
 					- Seniors Card
@@ -41,20 +42,20 @@
                                 </div><div class="small-6 columns">
                                     <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
                                 </div>
-                            </div><div class="row">
+                            </div>
+                            <div class="row">
                                 <div class="small-6 columns">
                                     <label for="num_children" class="text-right">Children (ages 6-15)<label>
-                                </div><div class="small-6 columns">
+                                </div>
+                                <div class="small-6 columns">
                                     <input type="number" id="numChildren" name="num_children" v-model="numChildren" min="0" max="16"/></label>
                                 </div>
                             </div>
-                        </div>
+                       </div>
                        </div>
                      <div class="small-12 medium-12 large-4 columns">
                         <label>Vessel Size (meters) <input id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
                       </div>
-
-                    
                     <div class="small-12 medium-12 large-12 columns">
                         <label><input type="checkbox" v-model="bookableOnly"/> Show bookable moorings only</label>
                     </div>
@@ -65,26 +66,26 @@
                 </div>
                 <div class="row">
                     <div class="small-12 medium-12 large-12 columns">
-                        <label>Select equipment</label>
+                        <label>Mooring</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
                         <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Rental Mooring (available)</label>
+                        <label><input type="radio" name="gear_type" value="rental-available" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Rental (available)</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Rental Mooring (not available)</label>
+                        <label><input type="radio" name="gear_type" value="rental-notavailable" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Rental (not available)</label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="tent" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC2"></i> Public Mooring (not bookable)</label>
+                        <label><input type="radio" name="gear_type" value="public-notbookable" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Public (not bookable)</label>
                     </div>
-
                 </div>
                 <div class="row"><div class="small-12 columns">
                     <hr class="search"/>
                 </div>
-                </div><div class="row">
+                </div>
+                <div class="row" style='display:none'>
                     <div class="small-12 medium-12 large-12 columns">
                         <label>Select features</label>
                     </div>
@@ -137,20 +138,20 @@
         <template v-if="extentFeatures.length > 0">
             <paginate name="filterResults" class="resultList" :list="extentFeatures" :per="9">
                 <div class="row">
-                    <div class="small-12 medium-4 large-4 columns" v-for="f in paginated('filterResults')">
+                    <div class="small-12 medium-4 large-4 columns" v-for="f in paginated('filterResults')" v-if="f.vessel_size_limit >= vesselSize">
                         <div class="row">
                             <div class="small-12 columns">
                                 <span class="searchTitle">{{ f.name }}</span>
                             </div>
-                            <div class="small-12 medium-12 large-12 columns" v-if="f.images && f.images[0] && f.images[0].image">
-                                <img class="thumbnail" v-bind:src="f.images[0].image"/>
+                            <div class="small-12 medium-12 large-12 columns" >
+                                <img class="thumbnail" src="/static/exploreparks/mooring_photo_scaled.png"/>
                             </div>
                             <div class="small-12 medium-9 large-9 columns">
                                 <div v-html="f.description"/>
                                 <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
-                                <p v-if="f.props.vessel_size_limit && Number(f.props.vessel_size_limit)"><i><small>Vessel Size Limit: ${{ f.props.vessel_size_limit }} </small></i></p>
+                                <p ><i><small>Vessel Size Limit: {{ f.vessel_size_limit }} </small></i></p>
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
-                                <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+                                <a v-if="f.mooring_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
                             </div>
                         </div>
                     </div>
@@ -165,7 +166,7 @@
         <template v-else>
             <div class="row align-center">
                 <div class="small-12 medium-12 large-12 columns">
-                    <h2 class="text-center">There are no campgrounds found matching your search criteria. Please change your search or click <a href="https://exploreparks.dbca.wa.gov.au/know/park-stay-search-tips">here</a> for more information.</h2>
+                    <h2 class="text-center">There are no marine parks found matching your search criteria. Please change your search query.</h2>
                 </div>
             </div>
         </template>
@@ -180,7 +181,7 @@
 
 @font-face {
     font-family: "DPaWSymbols";
-    src: url("./assets/campicon.woff") format("woff");
+    src: url("./assets/boating.woff") format("woff");
 }
 
 .symb {
@@ -267,6 +268,10 @@
 
 .symb.MAINS:before {
     content: "t";
+}
+
+.symb.RC20:before {
+    content: "v";
 }
 
 .f6inject {
@@ -520,7 +525,12 @@ export default {
             selectedFeature: null,
             current_map_scale: 1950001,
             anchorPins: null,
-            anchorGroups: null, 
+            anchorGroups: {},
+            anchorPinsActive: [],
+            vesselSize: 0,
+            groupPinLevelChange: true,
+            anchorPinLevelChange: true,
+            mooring_map_data: null,
         }
     },
     computed: {
@@ -608,9 +618,16 @@ export default {
                 var view = this.olmap.getView();
                 // zoom slightly closer in for campgrounds
                 var resolution = vm.resolutions[10];
-                if (target['properties']['type'] == 'Campground') {
-                    resolution = vm.resolutions[12];
+                if (target['properties']['type'] == 'MooringArea') {
+                    resolution = vm.resolutions[14];
                 }
+                if ('zoom_level' in target['properties']) {
+                        var zoom_level = target['properties']['zoom_level'];
+			if (zoom_level > 0) {
+			     resolution = vm.resolutions[target['properties']['zoom_level']];
+			}
+		}
+
                 // pan to the spot, zoom slightly closer in for campgrounds
                 view.animate({
                     center: ol.proj.fromLonLat(target['coordinates']),
@@ -713,15 +730,19 @@ export default {
         updateViewport: function(runNow) {
             var vm = this;
             var updateViewportFunc = function() {
-
                 // this object is going to be hammered by vue.js introspection, strip openlayers stuff
-                console.log("LOAD VM");
-                console.log(vm.extent + vm.groundFilter);
-                console.log("LOAD END");
+                // console.log("LOAD VP");
+                // console.log(vm.extent + vm.groundFilter);
+                // console.log("LOAD END VP");
+                // console.log(vm.groundsSource);
+                // console.log(vm.extent);
+                // console.log('NEXT');
+               
                 vm.extentFeatures = vm.groundsSource.getFeaturesInExtent(vm.extent).filter(vm.groundFilter).map(function (el) {
-                     console.log("GET THA PROPS");
+                    // console.log("GET THA PROPS");
+                    // alert('yes');
                     var props = el.getProperties(); 
-                    console.log("Did I get the Properties");
+                    // console.log("Did I get the Properties");
                     props.style = undefined;
                     props.geometry = props.geometry.getCoordinates();
                     props.distance = Math.sqrt(Math.pow(props.geometry[0]-vm.center[0], 2) + Math.pow(props.geometry[1]-vm.center[1], 2));
@@ -729,7 +750,7 @@ export default {
                     return props;
                 }).sort(function (a, b) {
                     /* distance from map center sort */
-                       console.log("MAYBE I AM HERE");
+                       // console.log("MAYBE I AM HERE");
                     if (a.distance < b.distance) {
                         return -1;
                     }
@@ -749,19 +770,20 @@ export default {
                     }
                     return 0; */
                 });
-                
+                // console.log('extentFeature'); 
+                // console.log(vm.extentFeatures);
             };
-            console.log("AM  I RUNNING");
-            console.log(runNow);
+            // console.log("AM  I RUNNING");
+            // console.log(runNow);
             if (runNow) {
                 updateViewportFunc();
             } else {
-                console.log('RUNNING 2');
+                // console.log('RUNNING 2');
                 if (!vm._updateViewport) {
                     vm._updateViewport = debounce(function() {
                         updateViewportFunc();
                     }, 100);
-                    console.log('RUNNING 3');
+                    //console.log('RUNNING 3');
                 }
                 vm._updateViewport();
             }
@@ -778,12 +800,77 @@ export default {
             // this.reload();
         },
         reload: debounce(function () {
-         //   this.groundsSource.loadSource();
+              this.groundsSource.loadSource();
+              this.buildmarkers();
          //   this.refreshPopup();
          //   console.log("RELOAD");
          //   console.log(this);
         }, 250),
+        removePinGroups: function() {
+                
+               console.log('removePinGroups');
+               var layerRemoved = false;
+               var map = this.olmap;
+               var refArray = map.getLayers().getArray().slice();
+               refArray.forEach(function(layer2) {
+                       if (layer2 != null) {
+                       var layer = layer2.I;
+                       if (layer != null) {
+                           // map.removeLayer(layer2);
+                           if (layer.hasOwnProperty("markerGroup")) {
+                                if (layer.markerGroup == 'circle') {
+                                      // console.log('CIRCLE');
+                                      // console.log(layer2);
+                                      map.removeLayer(layer2);
+                                      layerRemoved = true;
+                                }
+                          }
+                       }
+                      }
+                }); 
+                if (layerRemoved == true) {
+                    // We do this because when we call map.removeLayer it causes the layer 
+                    // to go out of sync resulting in pins not being removed as foreach loop is 
+                    // changed.  This loop ensure all pins have been removed
+
+                    console.log("LOOPING"); 
+	            this.removePinGroups();
+		}
+                return layerRemoved; 
+	},
+        removePinAnchors: function() {
+               console.log('removePinAnchors');
+               var layerRemoved = false;
+               var map = this.olmap;
+               var refArray = map.getLayers().getArray().slice();
+               refArray.forEach(function(layer2) {
+                       if (layer2 != null) {
+                       var layer = layer2.I;
+                       if (layer != null) {
+                           // map.removeLayer(layer2);
+                           if (layer.hasOwnProperty("markerGroup")) {
+                                if (layer.markerGroup == 'anchor') {
+                                      // console.log('Anchor');
+                                      // console.log(layer2);
+                                      map.removeLayer(layer2);
+                                      layerRemoved = true;
+                                }
+                          }
+                       }
+                      }
+               });
+               if (layerRemoved == true) {
+                    // We do this because when we call map.removeLayer it causes the layer
+                    // to go out of sync resulting in pins not being removed as foreach loop is
+                    // changed.  This loop ensure all pins have been removed
+
+                   console.log("LOOPING");
+                   this.removePinAnchors();
+               }
+               return layerRemoved;
+        },
         updateFilter: function() {
+            // console.log('updateFilter');
             var vm = this;
             // make a lookup table of campground features to filter on
             var legit = new Set();
@@ -794,16 +881,13 @@ export default {
                     });
                 }
             };
-
-            // this.filterList.forEach(filterCb);
-            // this.extraFilterList.forEach(filterCb);
-
-            console.log("EXTRA");
+            this.filterList.forEach(filterCb);
+            this.extraFilterList.forEach(filterCb);
             this.groundsFilter.clear();
             this.groundsData.forEach(function (el) {
                 // first pass filter against the list of IDs returned by search
-                
-                var campgroundType = el.get('campground_type');
+                // console.log('groundDATTA1'); 
+                var campgroundType = el.get('mooring_type');
                 switch (campgroundType) {
                     case 0:
                     if (!vm.sitesOnline) {
@@ -823,7 +907,6 @@ export default {
                     default:
                     break;
                 }
-                
                 if (vm.groundsIds.has(el.getId())) {
                     if (legit.size) { // if we have a feature filter list
                         // check that all parameters are present
@@ -842,85 +925,29 @@ export default {
                     }
                 }
             });
-            console.log("SEND DATA TO updateViewPort");
+            // console.log("SEND DATA TO updateViewPort");
             this.updateViewport(true);
         },
         buildmarkers: function() {
           console.log("we have markers");
-          console.log(this.current_map_scale);
           var vm = this;
           var scale = Math.floor(this.current_map_scale);
           var map = this.olmap;
 
-        // console.log("SCALE");
-        // console.log(scale);
-
- //  map.getOverlays().clear();
-//   map.getLayers().clear();
-   // vm.loadMap(); 
-               map.getLayers().forEach(function (layer2) {
-                       if (layer2 != null) {
-                       var layer = layer2.I;
-                       console.log("M:"+layer.markerGroup);
-                       console.log("A:"+layer.hasOwnProperty("markerGroup"));
-                       console.log("B:"+layer2.hasOwnProperty("markerGroup"));
-                       console.log(layer2);
-
-                       if (layer != null) {
-                           if (layer.hasOwnProperty("markerGroup")) {
-                                map.removeLayer(layer2);
-                                if (layer.markerGroup == 'circle') {
-//                                    map.removeLayer(layer2);
-                                    // setTimeout(function(layer2) { map.removeLayer(layer2) }, 50);
-                                }
-                                if (layer.markerGroup == 'anchor') {
-  //                                console.log(layer2);
-  //                                  map.removeLayer(layer2);
-                                    // setTimeout(function(layer2) { map.removeLayer(layer2) }, 50);
-                                }
-                          }
-                       }
-                }
-
-              });
-
         if (scale >= 0 && scale <= 1300000) {
+            
+            if (vm.groupPinLevelChange == true) { 
+                this.removePinGroups(); 
+            } 
+            vm.groupPinLevelChange = false;
+            vm.anchorPinLevelChange = true;
 
-            console.log('anchors scales:'+scale);
-              
-            if (vm.anchorPins == null) {   
-            $.ajax({
-               url: vm.parkstayUrl+'/api/mooring_map/?format=json',
-               dataType: 'json',
-               async: true,
-    	       success: function(response, stat, xhr) {
-               vm.anchorPins = response;          
-               map.getLayers().forEach(function (layer2) {  
-                       if (layer2 != null) { 
-                       var layer = layer2.I;
-                       console.log("M:"+layer.markerGroup);
-                       if (layer != null) {
-                           // map.removeLayer(layer2);
-                           if (layer.hasOwnProperty("markerGroup")) {
-                                if (layer.markerGroup == 'circle') {
-                                      map.removeLayer(layer2);
-//                                    setTimeout("map.removeLayer("+layer2+")", 50);
-//                                    setTimeout(function(layer2) { map.removeLayer(layer2) }, 50);
-                                }
-                                if (layer.markerGroup == 'anchor') {
-                                      map.removeLayer(layer2);
-//                                    map.removeLayer(layer2); 
-//                                    setTimeout(function(layer2) { map.removeLayer(layer2) }, 50); 
-                                }
-                          }
-                       }
-		}
-
-              });
-             }
-	     });
-
+            if (vm.anchorPins == null) {  
+                 var response = this.mooring_map_data;
+                 vm.anchorPins = response; 
 	     }
+
+             map.updateSize();
              var response = vm.anchorPins; 
              var pin_count = 0;
              for (var x in response) {
@@ -942,116 +969,83 @@ export default {
                                       }
 
                                       if (show_marker == true) {
-                                      pin_count =  pin_count + 1;
-                                      if (response[x][m]['properties']['mooring_type'] == 0) { 
-                                           map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
-//                                            vm.updateFilter();
-				      } 
-                                      if (response[x][m]['properties']['mooring_type'] == 1) {
-					   map.addLayer(vm.buildMarkerNotBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
-//                                            vm.updateFilter();
-				      }
+                                                var array_search = vm.anchorPinsActive.indexOf(response[x][m]['id']);
+  				                if (array_search > 0) {
+				                } else {
+
+		                                      pin_count =  pin_count + 1;
+                		                      if (response[x][m]['properties']['mooring_type'] == 0) { 
+                                		           map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+		                                           vm.updateFilter();
+						      } 
+                                		      if (response[x][m]['properties']['mooring_type'] == 1) {
+							   map.addLayer(vm.buildMarkerNotBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+                        		                   vm.updateFilter();
+						      }
+
+                                                      if (response[x][m]['properties']['mooring_type'] == 2) {
+                                                           map.addLayer(vm.buildMarkerNotBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+                                                           vm.updateFilter();
+                                                      }
+
+						}
                                       }
                                       
                                    }
 		   	      }
 			}
-			//console.log(map);
              }
-             console.log('PIN COUNT');
-             console.log(pin_count);
-        //   }
-       // });
-
       } else if (scale >= 1300001) {
-         console.log("marker group scales:"+scale);
+          console.log("marker group scales:"+scale);
 	      var center = map.getView().getCenter();
               if (center) {
-                	console.log(center[0]);
 	                var latLon = ol.proj.transform([center[0],center[1]], 'EPSG:3857', 'EPSG:4326');
-        	        //          var latLon = ol.proj.transform([center[0],center[1]], 'EPSG:3857', 'EPSG:4326');
-                	console.log(latLon);
 	      }
+              if (vm.anchorPinLevelChange == true) { 
+                   this.removePinAnchors();
+	      }
+              vm.groupPinLevelChange = true;
+              vm.anchorPinLevelChange = false;
 
-                     map.getLayers().forEach(function (layer2) {
-                       if (layer2 != null) {
-                       var layer = layer2.I;
-                       console.log("M:"+layer.markerGroup);
-                       if (layer != null) {
-                           if (layer.hasOwnProperty("markerGroup")) {
-                                if (layer.markerGroup == 'anchor') {
-                                  map.removeLayer(layer2);
-                                }
-                           }
-                        }
-                        }
-                      });
-
-        if (vm.anchorGroups == null) {
-
-        $.ajax({
-            url: vm.parkstayUrl+'/api/marine_parks_map/?format=json',
-            dataType: 'json',
-            async: true,
-            success: function (response, stat, xhr) {
-                   vm.anchorGroups = response;
-                   vm.groundsFilter.clear();
-                    //vectorSource.clear();
-                   console.log("MARINE PARK");
+       var response = this.mooring_map_data;
+       vm.anchorGroups = {};
+       var vessel_size = $('#vesselSize').val();
+            var mooring = response['features'];
+            for (var m in mooring) {
+                 var mooring_vessel_size = response['features'][m]['properties']['vessel_size_limit'];
+                 if (mooring_vessel_size >= vessel_size) { 
+                 if (vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] == null) { 
+                      vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] = {};
+                      vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = 1;
+                      vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['name'] = response['features'][m]['properties']['park']['district']['region']['name'];
+                      vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['geometry'] = response['features'][m]['properties']['park']['district']['region']['wkb_geometry']['coordinates'];
+   		 } else {
+			vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] + 1;
+		 }
+                 }
             }
-	});
-        } 
-        var response = vm.anchorGroups;
-//                     map.getLayers().forEach(function (layer2) {
-//                       if (layer2 != null) {
-//                       var layer = layer2.I;
-//                       console.log("M:"+layer.markerGroup);
-//                       if (layer != null) {
-//                           if (layer.hasOwnProperty("markerGroup")) {
-//                                if (layer.markerGroup == 'anchor') {
-//                                  map.removeLayer(layer2);
-//                                }
-//                           }
-//                        }
-//			}
-//	              });
 
-                   for (var x in response) {
-                        var marinepark = response[x];
-			var longitude = marinepark['park_id__wkb_geometry']['longitude'];
-                        var latitude = marinepark['park_id__wkb_geometry']['latitude'];
-                        var total = marinepark['total'];
-                        var name = marinepark['park_id__name']; 
-                        map.addLayer(vm.buildMarkerGroup(parseFloat(longitude),parseFloat(latitude),total,name));
 
-                   }
+         for (var g in vm.anchorGroups) { 
+                var longitude = vm.anchorGroups[g]['geometry'][0];
+                var latitude = vm.anchorGroups[g]['geometry'][1];
 
-                   map.getLayers().forEach(function (layer2) {
-                       if (layer2 != null) {
-                       var layer = layer2.I;
-                       console.log("M:"+layer.markerGroup);
-                       if (layer != null) {
-                           if (layer.hasOwnProperty("markerGroup")) {
-                                if (layer.markerGroup == 'anchor') {
-                                  map.removeLayer(layer2);
-                                }
-                           }
-                        }
-                        }
-                   });
+                var total = vm.anchorGroups[g]['total'];
+                var name = vm.anchorGroups[g]['name'];
+                map.addLayer(vm.buildMarkerGroup(parseFloat(longitude),parseFloat(latitude),total,name));
+	 }
 
-            // }
-     // });
-        console.log('anchors groups');
      } else {
-        console.log('somehting else');
+        // console.log('somehting else');
         scale = Math.round(scale);
      }
 //        document.getElementById('scale').innerHTML = "Scale = 1 : " + scale;
      },
      buildMarkerBookable: function(lat,lon,props,name,marker_id) {
-
-                var iconFeature = new ol.Feature({
+                //this.anchorPinsActive.push(marker_id);
+                //console.log('PIN ARRAY');
+                //console.log(this.anchorPinsActive);
+            var iconFeature = new ol.Feature({
                   marker_group: 'mooring_marker',
                   geometry: new ol.geom.Point(ol.proj.transform([lat, lon], 'EPSG:4326', 'EPSG:3857')),
                   name: name,
@@ -1059,9 +1053,9 @@ export default {
                   rainfall: 500,
                   marker_id: marker_id,
                   props: props
-                });
+            });
 
-                var iconStyle = new ol.style.Style({
+            var iconStyle = new ol.style.Style({
                   image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
                   imgSize: [32, 32],
                   snapToPixel: true,
@@ -1070,7 +1064,7 @@ export default {
                   anchorYUnits: 'fraction',
                   opacity: 0.95,
                   src: require('assets/map_pins/pin_orange.png')
-                 }))
+                 })),
             });
 
             iconFeature.setStyle(iconStyle);
@@ -1079,7 +1073,7 @@ export default {
                 features: [iconFeature]
             });
 
-            console.log(vectorSource);
+            // console.log(vectorSource);
             var vectorLayer = new ol.layer.Vector({
                canDelete: "yes",
                markerGroup: "anchor",
@@ -1130,25 +1124,25 @@ export default {
     },
     buildMarkerGroup:function(lat,lon,text, name) {
 
-               console.log("Marker Group");
-               var iconFeature = new ol.Feature({
+              // console.log("Marker Group");
+              var iconFeature = new ol.Feature({
                   marker_group: 'group_marker',
                   geometry: new ol.geom.Point(ol.proj.transform([lat, lon], 'EPSG:4326', 'EPSG:3857')),
                   name: name,
                   population: 4000,
                   rainfall: 500
-               });
+              });
 
-               var icon = require('assets/map_pins/geo_group_red.png');
-               if (text > 30) {
-                        icon = require('assets/map_pins/geo_group2.png');
-               } else if (text > 10) {
-                        icon = require('assets/map_pins/geo_group_orange.png');
-               } else {
-                        icon = require('assets/map_pins/geo_group_red.png');
-               }
+              var icon = require('assets/map_pins/geo_group_red.png');
+              if (text > 30) {
+                       icon = require('assets/map_pins/geo_group2.png');
+              } else if (text > 10) {
+                       icon = require('assets/map_pins/geo_group_orange.png');
+              } else {
+                       icon = require('assets/map_pins/geo_group_red.png');
+              }
 
-               var iconStyle = new ol.style.Style({
+              var iconStyle = new ol.style.Style({
                         image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
                           anchor: [0.5, 24],
                           anchorXUnits: 'fraction',
@@ -1168,26 +1162,24 @@ export default {
                         //            width: 3.5
                         //          })
                         })
-               });
+              });
 
-               iconFeature.setStyle(iconStyle);
+              iconFeature.setStyle(iconStyle);
 
-               var vectorSource = new ol.source.Vector({
-                   features: [iconFeature]
-               });
+              var vectorSource = new ol.source.Vector({
+                  features: [iconFeature]
+              });
 
-               var vectorLayer = new ol.layer.Vector({
+              var vectorLayer = new ol.layer.Vector({
                    canDelete: "yes",
                    markerGroup: "circle",
                    source: vectorSource
-               });
-
-
+              });
               return vectorLayer;
       },
       loadMap: function() {
 
-var vm = this;
+        var vm = this;
 
         console.log('Loading map...');
         var nowTemp = new Date();
@@ -1195,7 +1187,6 @@ var vm = this;
 
         this.arrivalEl = $('#dateArrival');
         this.departureEl = $('#dateDeparture');
-
 
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
@@ -1333,6 +1324,21 @@ var vm = this;
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
 
+
+        // console.log("GROUND FILTER");
+        // console.log(vm.groundsFilter);
+
+        $.ajax({
+            url: vm.parkstayUrl+'/api/mooring_map/?format=json',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+                var features = vm.geojson.readFeatures(response);
+                vm.groundsData.clear();
+                vm.groundsData.extend(features);
+                vm.groundsSource.loadSource();
+            }
+        });
+
         this.groundsSource = new ol.source.Vector({
             features: vm.groundsFilter
         });
@@ -1341,7 +1347,7 @@ var vm = this;
             var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
-
+            // console.log('ARR DEPP');
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
                 isCustom = true;
                 var arrival = vm.arrivalDateString;
@@ -1358,7 +1364,8 @@ var vm = this;
                 params.num_infants = vm.numInfants;
                 params.gear_type = vm.gearType;
             }
-
+            // console.log('BASEEE');
+            // console.log(urlBase);
             $.ajax({
                 url: urlBase+$.param(params),
                 success: function (response, stat, xhr) {
@@ -1376,37 +1383,38 @@ var vm = this;
             source: this.groundsSource,
             style: function (feature) {
                 var style = feature.get('style');
-                if (!style) {
-                    var icon = vm.sitesInPersonIcon;
-                    var campgroundType = feature.get('campground_type');
-                    switch (campgroundType) {
-                        case 0:
-                        icon = vm.sitesOnlineIcon;
-                        break;
-                        case 2:
-                        icon = vm.sitesAltIcon;
-                        break;
-                        default:
-                        break;
-                    }
-                    style = new ol.style.Style({
-                        image: new ol.style.Icon({
-                            src: icon,
-                            imgSize: [32, 32],
-                            snapToPixel: true,
-                            anchor: [0.5, 1.0],
-                            anchorXUnits: 'fraction',
-                            anchorYUnits: 'fraction'
-                        }),
-                        zIndex: -feature.getGeometry().getCoordinates()[1]
-                    });
-                    feature.set('style', style);
-                }
+                //if (!style) {
+                //    var icon = vm.sitesInPersonIcon;
+                //    var campgroundType = feature.get('mooring_type');
+                //    switch (campgroundType) {
+                //        case 0:
+                //        icon = vm.sitesOnlineIcon;
+                //       break;
+                //        case 2:
+                //        icon = vm.sitesAltIcon;
+                //        break;
+                //        default:
+                //        break;
+                //    }
+                //    style = new ol.style.Style({
+                //        image: new ol.style.Icon({
+                //            src: icon,
+                //            imgSize: [32, 32],
+                //            snapToPixel: true,
+                //            anchor: [0.5, 1.0],
+                //            anchorXUnits: 'fraction',
+                //            anchorYUnits: 'fraction'
+                //        }),
+                //       zIndex: -feature.getGeometry().getCoordinates()[1]
+                //    });
+                //   feature.set('style', style);
+                //}
                 //console.log(style);
                 return style;
             }
         });
-       // Marker Popup Code
+
+        // Marker Popup Code
         $('#mapPopupClose').on('click', function(ev) {
             // console.log(ev);
             $('#mapPopup').hide();
@@ -1469,9 +1477,7 @@ var vm = this;
             overlays: [this.popup]
         });
 
-
       }
-
 
     },
     mounted: function() {
@@ -1623,27 +1629,35 @@ var vm = this;
         this.groundsData = new ol.Collection();
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
-//        $.ajax({
-//            url: vm.parkstayUrl+'/api/mooring_map/?format=json',
-//            dataType: 'json',
-//            success: function (response, stat, xhr) {
-//                var features = vm.geojson.readFeatures(response);
- //           //   vm.groundsData.clear();
-//            //   vm.groundsData.extend(features);
-//           //    vm.groundsSource.loadSource();
-//            }
-//        });
+        $.ajax({
+            url: vm.parkstayUrl+'/api/mooring_map/?format=json',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+               vm.mooring_map_data = response;
+               var features = vm.geojson.readFeatures(response);
+               //console.log('Ground Data');
+               // console.log(features);
+               vm.groundsData.clear();
+               vm.groundsData.extend(features);
+               vm.groundsSource.loadSource();
+               vm.buildmarkers();
+ 
+               // console.log(vm.groundsSource);
+            }
+        });
 
         this.groundsSource = new ol.source.Vector({
             features: vm.groundsFilter   
         });
-        
+
+        console.log('Ground Source'); 
         this.groundsSource.loadSource = function (onSuccess) {
             var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
-
+            // console.log("GS2");
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
+                // console.log('GG');
                 isCustom = true;
                 var arrival = vm.arrivalDateString;
                 if (arrival) {
@@ -1659,50 +1673,52 @@ var vm = this;
                 params.num_infants = vm.numInfants;
                 params.gear_type = vm.gearType;
             }
-
+            // console.log(urlBase);
             $.ajax({
                 url: urlBase+$.param(params),
                 success: function (response, stat, xhr) {
+                    // console.log('LOADED groundsID');
                     vm.groundsIds.clear();
                     response.forEach(function(el) {
+                        // console.log("groundsIds"+el.id);
                         vm.groundsIds.add(el.id);
                     });
                     vm.updateFilter();
                 },
                 dataType: 'json'
             });
-        };
-        this.grounds = new ol.layer.Vector({
-            source: this.groundsSource,
+       };
+       this.grounds = new ol.layer.Vector({
+           source: this.groundsSource,
             style: function (feature) {
-                var style = feature.get('style');
-                if (!style) {
-                    var icon = vm.sitesInPersonIcon;
-                    var campgroundType = feature.get('campground_type');
-                    switch (campgroundType) {
-                        case 0:
-                        icon = vm.sitesOnlineIcon;
-                        break;
-                        case 2:
-                        icon = vm.sitesAltIcon;
-                        break;
-                        default:
-                        break;
-                    }
-                    style = new ol.style.Style({
-                        image: new ol.style.Icon({
-                            src: icon,
-                            imgSize: [32, 32],
-                            snapToPixel: true,
-                            anchor: [0.5, 1.0],
-                            anchorXUnits: 'fraction',
-                            anchorYUnits: 'fraction'
-                        }),
-                        zIndex: -feature.getGeometry().getCoordinates()[1]
-                    });
-                    feature.set('style', style);
-                }
-                //console.log(style);
+             var style = feature.get('style');
+             //   if (!style) {
+             //       var icon = vm.sitesInPersonIcon;
+             //       var campgroundType = feature.get('mooring_type');
+             //       switch (campgroundType) {
+             //          case 0:
+             //           icon = vm.sitesOnlineIcon;
+             //           break;
+             //           case 2:
+             //           icon = vm.sitesAltIcon;
+             //           break;
+             //           default:
+             //          break;
+             //      }
+             //      style = new ol.style.Style({
+             //           image: new ol.style.Icon({
+             //               src: icon,
+             //               imgSize: [32, 32],
+             //               snapToPixel: true,
+             //               anchor: [0.5, 1.0],
+             //             anchorXUnits: 'fraction',
+             //               anchorYUnits: 'fraction'
+             //           }),
+             //           zIndex: -feature.getGeometry().getCoordinates()[1]
+             //      });
+             //      feature.set('style', style);
+             //   }
+             //   //console.log(style);
                 return style;
             }
         });
@@ -1783,6 +1799,7 @@ var vm = this;
             vm.posFeature.setGeometry(coords ? new ol.geom.Point(coords) : null);
         });
 
+
         // JASON ADDED
         var map = this.olmap;
 
@@ -1803,15 +1820,18 @@ var vm = this;
                // console.log(scale);
                //console.log(vm);
                vm.current_map_scale = scale_res;
-               setTimeout(function() { console.log("Current Scale"); console.log(scale_res + ':'+vm.current_map_scale); if (scale_res == vm.current_map_scale) { console.log("LOADED"); console.log(scale_res + ':'+vm.current_map_scale); vm.buildmarkers(); }}, 400);
+               setTimeout(function() { if (scale_res == vm.current_map_scale) { vm.buildmarkers(); vm.updateViewport(); }}, 400);
                // vm.buildmarkers();
                //   gs_map.reloadMarkers(map);
         });
 
         $('#vesselSize').blur(function() { 
-              console.log('VESSELL CHANGE');
+               console.log('VESSELL CHANGE');
                // vm.olmap.zoomOut();
                // vm.olmap.zoomIn();
+               vm.vesselSize = this.value;
+               vm.removePinAnchors();
+               vm.removePinGroups();
 	       vm.buildmarkers();
 	});
  
@@ -1820,18 +1840,24 @@ var vm = this;
             if (ev.dragging) {
                 return;
             }
-            var result = ev.map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
-                $('#map').attr('title', feature.get('name'));
-                return true;
-            }, {
-                layerFilter: function (layer) {
-                    return layer === vm.grounds;
-                }
-            }) === true;
+            var result = map.forEachFeatureAtPixel(ev.pixel, function(feature, layer) {
+               $('#map').attr('title', feature.get('name'));
+               return feature;
+            });
+            if (result) {
+                    console.log($('#map').hasClass('click'));
+                    if ($('#map').hasClass('click')) { 
+                    } else {
+			$('#map').addClass('click', result);
+		    }
+	    } else {
+                   $('#map').removeClass('click', result);
+            }
             if (!result) {
                 $('#map').removeAttr('title');
             }
-            $('#map').toggleClass('click', result);
+         
+ 
         });
 
 
@@ -1859,19 +1885,19 @@ var vm = this;
             if (properties.marker_group == 'mooring_marker') {
 
                 $('#mapPopupName').html(properties.props.name);
-                console.log("PROPERTIES");
-                console.log(properties);
-                console.log(properties.name);
-                console.log(properties.marker_id);
+                // console.log("PROPERTIES");
+                // console.log(properties);
+                // console.log(properties.name);
+                // console.log(properties.marker_id);
 
                 if (properties.props.mooring_type == 0) { 
                    $('#mapPopupBook').show();
                    $("#mapPopupImage").show();
                    $("#mapPopupImage").attr('src',  '/static/exploreparks/mooring_photo_scaled.png');
-                    vessel_size_popup
-                   console.log("VESSEL SIZE"+properties['vessel_size_limit']+':'+properties);
-                   console.log(properties);
-                   console.log(properties.props.vessel_size_limit);
+                   // vessel_size_popup
+                   // console.log("VESSEL SIZE"+properties['vessel_size_limit']+':'+properties);
+                   // console.log(properties);
+                   // console.log(properties.props.vessel_size_limit);
                    $("#vessel_size_popup").html(properties.props.vessel_size_limit);
                    $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
                 } else {
@@ -1904,6 +1930,8 @@ var vm = this;
              $(element).hide();
  //            $(element).popover('destroy');
           }
+     //      this.buildmarkers();
+
         });
 
 
@@ -1951,11 +1979,10 @@ var vm = this;
 
         // hook to update the visible feature list on viewport change
         this.olmap.getView().on('propertychange', function(ev) {
-//            vm.updateViewport();
+            vm.updateViewport();
             vm.buildmarkers();
         });
-
-	//        this.reload();
+	this.reload();
     }
 };
 </script>

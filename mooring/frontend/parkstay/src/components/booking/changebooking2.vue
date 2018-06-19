@@ -315,7 +315,7 @@ export default {
             vm.booking.parkEntry.vehicles = entries;
             return entries;
         },
-        onlineCampgrounds(){
+        onlineCampgrounds() {
             return this.campgrounds.filter(c => c.campground_type === 0);
         },
         ...mapGetters({
@@ -350,14 +350,14 @@ export default {
                     }
                 });
             }
-            if (this.initialised){
+            if (this.initialised) {
             }
             vm.fetchSites();
             vm.updatePrices();
         },
         selected_departure: function() {
             let vm = this;
-            if (this.initialised){
+            if (this.initialised) {
             }
             vm.fetchSites();
             vm.updatePrices();
@@ -410,11 +410,11 @@ export default {
                 }
             }
         },
-        generateBookingPrice:function () {
+        generateBookingPrice:function() {
             let vm =this;
             vm.booking.price = 0;
-            if (vm.park.entry_fee_required){
-                vm.fetchParkPrices(function(){
+            if (vm.park.entry_fee_required) {
+                vm.fetchParkPrices(function() {
                     $.each(vm.priceHistory,function (i,price) {
                         for (var guest in vm.booking.guests) {
                             switch(guest){
@@ -440,7 +440,7 @@ export default {
             } else {
                 $.each(vm.priceHistory,function (i,price) {
                     for (var guest in vm.booking.guests) {
-                        switch(guest){
+                        switch(guest) {
                             case 'adults':
                             vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['adult']);
                             break;
@@ -462,16 +462,19 @@ export default {
         },
         fetchSites: function() {
             let vm = this;
-            if (!vm.fetchingSites){
+            if (!vm.fetchingSites) {
                 if (vm.selected_arrival && vm.selected_departure) {
                     vm.fetchingSites = true;
                     vm.loading.push('fetching campsites');
-                    vm.$http.get(api_endpoints.available_campsites_booking(vm.booking.campground, vm.booking.arrival, vm.booking.departure,vm.booking.id)).then((response) => {
+                    console.log('FETCHSITES');
+                    console.log(vm.booking.campground);
+                    console.log(vm.booking.mooringarea);
+                    vm.$http.get(api_endpoints.available_campsites_booking(vm.booking.mooringarea, vm.booking.arrival, vm.booking.departure,vm.booking.id)).then((response) => {
                         vm.fetchingSites = false;
                         vm.campsites = response.body;
                         if (vm.campsites.length > 0) {
                             let c_lookup = vm.campsites.find(c => parseInt(c.id) === parseInt(vm.selected_campsite));
-                            if (c_lookup == null || c_lookup == undefined){
+                            if (c_lookup == null || c_lookup == undefined) {
                                 vm.selected_campsite = vm.campsites[0].id;
                             }
                         }
@@ -503,7 +506,11 @@ export default {
             console.log("FETCHPARK");
             console.log(vm);
             vm.loading.push('fetching park');
-            vm.$http.get(api_endpoints.park(vm.campground.park)).then((response) => {
+            console.log('FETch Park');
+            console.log(vm.campground.park);
+            console.log(vm.mooringarea);
+            //vm.campground.park = vm.mooringarea;
+            vm.$http.get(api_endpoints.park(vm.campground)).then((response) => {
                 vm.park = response.body;
                 vm.loading.splice('fetching park details', 1);
             }, (error) => {
@@ -614,7 +621,7 @@ export default {
                 (i != vm.guestsPicker.length - 1) ? (g.amount > 0) ? text += g.amount + " " + g.name + ",  ": "": (g.amount > 0) ? text += g.amount + " " + g.name + " " : "";
             });
             vm.guestsText = text.replace(/,\s*$/, "");
-            if(vm.initialised){
+            if(vm.initialised) {
                 vm.generateBookingPrice();
             }
         },
@@ -670,7 +677,7 @@ export default {
             }
 
         },
-        updateNow(){
+        updateNow() {
             let vm = this;
             let booking = {};
             // Deal with booking vehicles
@@ -772,7 +779,6 @@ export default {
                 showErrors: function(errorMap, errorList) {
                     $.each(this.validElements(), function(index, element) {
                         var $element = $(element);
-
                         $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
                     });
 
@@ -825,9 +831,7 @@ export default {
                     if (found) {
                         break;
                     }
-
                 }
-
             }
             vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
             vm.updateParkEntryPrices();
@@ -845,11 +849,13 @@ export default {
             vm.selected_arrival = vm.booking.arrival;
             vm.selected_departure = vm.booking.departure;
             // set the campground
-            console.log('MOo LOG');
-            console.log(vm.booking.mooringarea);
-            console.log(vm.campgrounds);
-            console.log(vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.mooringarea)));
-            vm.campground = vm.booking.mooringarea ? vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.mooringarea)) : null;
+            console.log('MOO LOG');
+ //           console.log(vm.booking.mooringarea);
+//            console.log(vm.campgrounds);
+//            console.log(vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.mooringarea)));
+//            console.log(vm.campgrounds.park);
+            // vm.campground = vm.booking.mooringarea ? vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.mooringarea)) : null;
+            vm.campground = vm.booking.mooringarea;
             // fetch park details
             vm.fetchPark();
             // fetch the sites
@@ -876,7 +882,7 @@ export default {
             };
             $.each(vm.booking.regos,(i,v) => {
                 vm.parkEntryPicker.map((vp) => {
-                    if (vp.id == v.type){
+                    if (vp.id == v.type) {
                         vp.rego = v.rego;
                         vp.entry_fee = v.entry_fee;
                         vm.addVehicleCount(vp)

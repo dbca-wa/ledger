@@ -121,7 +121,15 @@ class OpenReason(ReasonAdmin):
 class OutstandingBookingRecipient(admin.ModelAdmin):
     pass
 
+@admin.register(models.Region)
+class Region(admin.GeoModelAdmin):
+    list_display = ('name',)
+    ordering = ('name',)
+    search_fields = ('name',)
+#    list_filter = ('mooring_type','site_type')
+    openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
+
 admin.site.register(models.Rate)
-admin.site.register(models.Region)
+#admin.site.register(models.Region)
 admin.site.register(models.District)
 admin.site.register(models.PromoArea)

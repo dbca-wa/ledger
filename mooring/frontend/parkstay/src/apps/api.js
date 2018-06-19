@@ -1,6 +1,6 @@
 
 module.exports = {
-    status_history:function(id){
+    status_history:function(id) {
         return process.env.PARKSTAY_URL + "/api/mooring-areas/" + id + "/status_history.json?closures=True";
     },
     regions:process.env.PARKSTAY_URL + "/api/regions.json",

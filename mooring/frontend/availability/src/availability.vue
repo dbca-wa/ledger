@@ -124,7 +124,7 @@
                     </div>
                 </div>
             </div>
-            <div v-if="!useAdminApi" class="columns small-6 medium-6 large-3">
+            <div v-if="!useAdminApi" class="columns small-6 medium-6 large-3" style='display:none;'>
                 <label>Equipment
                     <select name="gear_type" v-model="gearType" @change="update()">
                         <option value="tent" v-if="gearTotals.tent">Tent</option>
@@ -138,7 +138,7 @@
             <table class="hover">
                 <thead>
                     <tr>
-                        <th class="site">Mooring &nbsp;<a class="float-right" target="_blank" :href="map" v-if="map">View Map</a> </th>
+                        <th class="site">Mooring &nbsp;<a class="float-right" target="_blank" :href="map" v-if="map" style='display: none;'>View Map</a> </th>
                         <th class="book">Book</th>
                         <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
                     </tr>
