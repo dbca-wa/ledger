@@ -111,7 +111,7 @@
                     </div>  
                     <div class="row"> 
                         <div class="col-sm-12">
-                            <div v-show="booking.campsite_classes.length > 1">
+                            <div v-show="booking.campsite_classes.length > 0">
                                 <div class="column table-scroll">
                                     <table class="hover table table-striped table-bordered dt-responsive nowrap"  cellspacing="0" width="100%" name="campsite-type" v-model="selected_campsite_class">
                                         <thead>
