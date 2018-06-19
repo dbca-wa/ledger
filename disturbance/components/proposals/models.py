@@ -21,6 +21,7 @@ from disturbance.components.main.models import CommunicationsLogEntry, UserActio
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
+from disturbance.components.proposals.email import send_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification
 import copy
 
 
@@ -67,9 +68,10 @@ class TaggedProposalAssessorGroupActivities(TaggedItemBase):
 
 class ProposalAssessorGroup(models.Model):
     name = models.CharField(max_length=255)
-    members = models.ManyToManyField(EmailUser,blank=True)
+    #members = models.ManyToManyField(EmailUser,blank=True)
     #regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalAssessorGroupRegions,related_name = "+",blank=True)
     #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalAssessorGroupActivities,related_name = "+",blank=True)
+    members = models.ManyToManyField(EmailUser)
     region = models.ForeignKey(Region, null=True, blank=True)
     default = models.BooleanField(default=False)
 
@@ -93,7 +95,6 @@ class ProposalAssessorGroup(models.Model):
         else:
             if default and self.default:
                 raise ValidationError('There can only be one default proposal assessor group')
-
 
     def member_is_assigned(self,member):
         for p in self.current_proposals:
@@ -124,9 +125,10 @@ class TaggedProposalApproverGroupActivities(TaggedItemBase):
 
 class ProposalApproverGroup(models.Model):
     name = models.CharField(max_length=255)
-    members = models.ManyToManyField(EmailUser,blank=True)
+    #members = models.ManyToManyField(EmailUser,blank=True)
     #regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalApproverGroupRegions,related_name = "+",blank=True)
     #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalApproverGroupActivities,related_name = "+",blank=True)
+    members = models.ManyToManyField(EmailUser)
     region = models.ForeignKey(Region, null=True, blank=True)
     default = models.BooleanField(default=False)
 
@@ -427,12 +429,13 @@ class Proposal(RevisionedMixin):
         return qs
 
     def __assessor_group(self):
+        #import ipdb; ipdb.set_trace()
         # TODO get list of assessor groups based on region and activity
         if self.region and self.activity:
             try:
                 check_group = ProposalAssessorGroup.objects.filter(
-                    activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list
+                    #activities__name__in=[self.activity],
+                    region__name__in=self.regions_list
                 ).distinct()
                 if check_group:
                     return check_group[0]
@@ -447,8 +450,8 @@ class Proposal(RevisionedMixin):
         if self.region and self.activity:
             try:
                 check_group = ProposalApproverGroup.objects.filter(
-                    activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list
+                    #activities__name__in=[self.activity],
+                    region__name__in=self.regions_list
                 ).distinct()
                 if check_group:
                     return check_group[0]
@@ -473,6 +476,33 @@ class Proposal(RevisionedMixin):
             if not val:
                 missing_fields.append(v)
         return missing_fields
+
+    @property
+    def assessor_recipients(self):
+        recipients = []
+        try:
+            recipients = ProposalAssessorGroup.objects.get(region=self.region).members_email
+        finally:
+            if len(recipients) == 0:
+                recipients = ProposalAssessorGroup.objects.get(default=True).members_email
+
+        #if self.submitter.email not in recipients:
+        #    recipients.append(self.submitter.email)
+        return recipients
+
+    @property
+    def approver_recipients(self):
+        recipients = []
+        try:
+            recipients = ProposalApproverGroup.objects.get(region=self.region).members_email
+        finally:
+            if len(recipients) == 0:
+                recipients = ProposalApproverGroup.objects.get(default=True).members_email
+
+        #if self.submitter.email not in recipients:
+        #    recipients.append(self.submitter.email)
+        return recipients
+
 
     def can_assess(self,user):
         if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
@@ -525,6 +555,8 @@ class Proposal(RevisionedMixin):
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 # Create a log entry for the organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+
+                send_submit_email_notification(request, self)
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
@@ -662,9 +694,10 @@ class Proposal(RevisionedMixin):
                 if self.processing_status != 'with_assessor':
                     raise ValidationError('You cannot propose to decline if it is not with assessor')
 
+                reason = details.get('reason')
                 ProposalDeclinedDetails.objects.update_or_create(
                     proposal = self,
-                    defaults={'officer':request.user,'reason':details.get('reason'),'cc_email':details.get('cc_email',None)}
+                    defaults={'officer': request.user, 'reason': reason, 'cc_email': details.get('cc_email',None)}
                 )
                 self.proposed_decline_status = True
                 self.move_to_status(request,'with_approver')
@@ -672,6 +705,8 @@ class Proposal(RevisionedMixin):
                 self.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 # Log entry for organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+
+                send_approver_decline_email_notification(reason, request, self)
             except:
                 raise
 
@@ -718,6 +753,8 @@ class Proposal(RevisionedMixin):
                 self.log_user_action(ProposalUserAction.ACTION_PROPOSED_APPROVAL.format(self.id),request)
                 # Log entry for organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_PROPOSED_APPROVAL.format(self.id),request)
+
+                send_approver_approve_email_notification(request, self)
             except:
                 raise
 
