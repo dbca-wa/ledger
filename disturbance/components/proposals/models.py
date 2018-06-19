@@ -21,6 +21,7 @@ from disturbance.components.main.models import CommunicationsLogEntry, UserActio
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
+from disturbance.components.proposals.email import send_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification
 import copy
 
 
@@ -67,9 +68,11 @@ class TaggedProposalAssessorGroupActivities(TaggedItemBase):
 
 class ProposalAssessorGroup(models.Model):
     name = models.CharField(max_length=255)
-    members = models.ManyToManyField(EmailUser,blank=True)
-    regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalAssessorGroupRegions,related_name = "+",blank=True)
-    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalAssessorGroupActivities,related_name = "+",blank=True)
+    #members = models.ManyToManyField(EmailUser,blank=True)
+    #regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalAssessorGroupRegions,related_name = "+",blank=True)
+    #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalAssessorGroupActivities,related_name = "+",blank=True)
+    members = models.ManyToManyField(EmailUser)
+    region = models.ForeignKey(Region, null=True, blank=True)
     default = models.BooleanField(default=False)
 
     class Meta:
@@ -85,9 +88,10 @@ class ProposalAssessorGroup(models.Model):
             default = None
 
         if self.pk:
-            #if int(self.pk) != int(default.id):
-            if default and not self.default:
-                raise ValidationError('There can only be one default proposal assessor group')
+            if not self.default and not self.region:
+                raise ValidationError('Only default can have no region set for proposal assessor group. Please specifiy region')
+#            elif default and not self.default:
+#                raise ValidationError('There can only be one default proposal assessor group')
         else:
             if default and self.default:
                 raise ValidationError('There can only be one default proposal assessor group')
@@ -103,6 +107,10 @@ class ProposalAssessorGroup(models.Model):
         assessable_states = ['with_assessor','with_referral','with_assessor_requirements']
         return Proposal.objects.filter(processing_status__in=assessable_states)
 
+    @property
+    def members_email(self):
+        return [i.email for i in self.members.all()]
+
 class TaggedProposalApproverGroupRegions(TaggedItemBase):
     content_object = models.ForeignKey("ProposalApproverGroup")
 
@@ -117,9 +125,11 @@ class TaggedProposalApproverGroupActivities(TaggedItemBase):
 
 class ProposalApproverGroup(models.Model):
     name = models.CharField(max_length=255)
-    members = models.ManyToManyField(EmailUser,blank=True)
-    regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalApproverGroupRegions,related_name = "+",blank=True)
-    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalApproverGroupActivities,related_name = "+",blank=True)
+    #members = models.ManyToManyField(EmailUser,blank=True)
+    #regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalApproverGroupRegions,related_name = "+",blank=True)
+    #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalApproverGroupActivities,related_name = "+",blank=True)
+    members = models.ManyToManyField(EmailUser)
+    region = models.ForeignKey(Region, null=True, blank=True)
     default = models.BooleanField(default=False)
 
     class Meta:
@@ -135,9 +145,12 @@ class ProposalApproverGroup(models.Model):
             default = None
 
         if self.pk:
-            if int(self.pk) != int(default.id):
-                if default and self.default:
-                    raise ValidationError('There can only be one default proposal approver group')
+            if not self.default and not self.region:
+                raise ValidationError('Only default can have no region set for proposal assessor group. Please specifiy region')
+
+#            if int(self.pk) != int(default.id):
+#                if default and self.default:
+#                    raise ValidationError('There can only be one default proposal approver group')
         else:
             if default and self.default:
                 raise ValidationError('There can only be one default proposal approver group')
@@ -152,6 +165,10 @@ class ProposalApproverGroup(models.Model):
     def current_proposals(self):
         assessable_states = ['with_approver']
         return Proposal.objects.filter(processing_status__in=assessable_states)
+
+    @property
+    def members_email(self):
+        return [i.email for i in self.members.all()]
 
 class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
@@ -287,12 +304,13 @@ class Proposal(RevisionedMixin):
     title = models.CharField(max_length=255,null=True,blank=True)
     activity = models.CharField(max_length=255,null=True,blank=True)
     #region = models.CharField(max_length=255,null=True,blank=True)
-    #tenure = models.CharField(max_length=255,null=True,blank=True)
+    tenure = models.CharField(max_length=255,null=True,blank=True)
     #activity = models.ForeignKey(Activity, null=True, blank=True)
     region = models.ForeignKey(Region, null=True, blank=True)
     district = models.ForeignKey(District, null=True, blank=True)
-    tenure = models.ForeignKey(Tenure, null=True, blank=True)
+    #tenure = models.ForeignKey(Tenure, null=True, blank=True)
     application_type = models.ForeignKey(ApplicationType)
+    approval_level = models.CharField('Activity matrix approval level', max_length=255,null=True,blank=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -411,12 +429,13 @@ class Proposal(RevisionedMixin):
         return qs
 
     def __assessor_group(self):
+        #import ipdb; ipdb.set_trace()
         # TODO get list of assessor groups based on region and activity
         if self.region and self.activity:
             try:
                 check_group = ProposalAssessorGroup.objects.filter(
-                    activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list
+                    #activities__name__in=[self.activity],
+                    region__name__in=self.regions_list
                 ).distinct()
                 if check_group:
                     return check_group[0]
@@ -431,8 +450,8 @@ class Proposal(RevisionedMixin):
         if self.region and self.activity:
             try:
                 check_group = ProposalApproverGroup.objects.filter(
-                    activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list
+                    #activities__name__in=[self.activity],
+                    region__name__in=self.regions_list
                 ).distinct()
                 if check_group:
                     return check_group[0]
@@ -447,9 +466,9 @@ class Proposal(RevisionedMixin):
             raise exceptions.ProposalNotComplete()
         missing_fields = []
         required_fields = {
-            #'region':'Region/District',
-            #'title': 'Title',
-            #'activity': 'Activity'
+            'region':'Region/District',
+            'title': 'Title',
+            'activity': 'Activity'
         }
         #import ipdb; ipdb.set_trace()
         for k,v in required_fields.items():
@@ -457,6 +476,33 @@ class Proposal(RevisionedMixin):
             if not val:
                 missing_fields.append(v)
         return missing_fields
+
+    @property
+    def assessor_recipients(self):
+        recipients = []
+        try:
+            recipients = ProposalAssessorGroup.objects.get(region=self.region).members_email
+        finally:
+            if len(recipients) == 0:
+                recipients = ProposalAssessorGroup.objects.get(default=True).members_email
+
+        #if self.submitter.email not in recipients:
+        #    recipients.append(self.submitter.email)
+        return recipients
+
+    @property
+    def approver_recipients(self):
+        recipients = []
+        try:
+            recipients = ProposalApproverGroup.objects.get(region=self.region).members_email
+        finally:
+            if len(recipients) == 0:
+                recipients = ProposalApproverGroup.objects.get(default=True).members_email
+
+        #if self.submitter.email not in recipients:
+        #    recipients.append(self.submitter.email)
+        return recipients
+
 
     def can_assess(self,user):
         if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
@@ -509,6 +555,8 @@ class Proposal(RevisionedMixin):
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 # Create a log entry for the organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+
+                send_submit_email_notification(request, self)
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
@@ -646,9 +694,10 @@ class Proposal(RevisionedMixin):
                 if self.processing_status != 'with_assessor':
                     raise ValidationError('You cannot propose to decline if it is not with assessor')
 
+                reason = details.get('reason')
                 ProposalDeclinedDetails.objects.update_or_create(
                     proposal = self,
-                    defaults={'officer':request.user,'reason':details.get('reason'),'cc_email':details.get('cc_email',None)}
+                    defaults={'officer': request.user, 'reason': reason, 'cc_email': details.get('cc_email',None)}
                 )
                 self.proposed_decline_status = True
                 self.move_to_status(request,'with_approver')
@@ -656,6 +705,8 @@ class Proposal(RevisionedMixin):
                 self.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 # Log entry for organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+
+                send_approver_decline_email_notification(reason, request, self)
             except:
                 raise
 
@@ -702,6 +753,8 @@ class Proposal(RevisionedMixin):
                 self.log_user_action(ProposalUserAction.ACTION_PROPOSED_APPROVAL.format(self.id),request)
                 # Log entry for organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_PROPOSED_APPROVAL.format(self.id),request)
+
+                send_approver_approve_email_notification(request, self)
             except:
                 raise
 
@@ -842,7 +895,7 @@ class Proposal(RevisionedMixin):
         from disturbance.components.compliances.models import Compliance, ComplianceUserAction
         for req in self.requirements.all():
             try:
-                if req.due_date >= today:
+                if req.due_date and req.due_date >= today:
                     current_date = req.due_date
                     #create a first Compliance
                     try:

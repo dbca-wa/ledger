@@ -29,7 +29,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from disturbance.components.proposals.utils import save_proponent_data,save_assessor_data
 from disturbance.components.proposals.models import searchKeyWords, search_reference
-from disturbance.utils import missing_required_fields
+from disturbance.utils import missing_required_fields, search_tenure
 
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -278,6 +278,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance.submit(request,self)
             #serializer = self.get_serializer(instance)
             #return Response(serializer.data)
+            instance.tenure = search_tenure(instance)
+            instance.save()
             return redirect(reverse('external'))
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -645,6 +647,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             qs_proposal_type = ProposalType.objects.all().order_by('name', '-version').distinct('name')
             proposal_type = qs_proposal_type.get(name=application_name)
 
+
             data = {
                 #'schema': qs_proposal_type.order_by('-version').first().schema,
                 'schema': proposal_type.schema,
@@ -654,6 +657,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'region': region,
                 'district': district,
                 'activity': activity,
+                'approval_level': approval_level,
                 #'tenure': tenure,
                 'data': [
                     {
@@ -666,7 +670,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
                             'Sub-activity level 1': sub_activity1,
                             'Sub-activity level 2': sub_activity2,
                             'Management area': category,
-                            'Approval Level': approval_level,
                         }]
                     }
 
