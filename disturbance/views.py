@@ -61,6 +61,21 @@ class DisturbanceRoutingView(TemplateView):
         kwargs['form'] = LoginForm
         return super(DisturbanceRoutingView, self).get(*args, **kwargs)
 
+class InternalProposalView(DetailView):
+    #template_name = 'disturbance/index.html'
+    model = Proposal
+    template_name = 'disturbance/dash/index.html'
+
+    def get(self, *args, **kwargs):
+        if self.request.user.is_authenticated():
+            if is_officer(self.request.user) or is_departmentUser(self.request.user):
+                #return redirect('internal-proposal-detail')
+                return super(InternalProposalView, self).get(*args, **kwargs)
+            return redirect('external-proposal-detail')
+        kwargs['form'] = LoginForm
+        return super(DisturbanceRoutingDetailView, self).get(*args, **kwargs)
+
+
 @login_required(login_url='ds_home')
 def first_time(request):
     context = {}

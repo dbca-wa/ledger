@@ -30,6 +30,21 @@ class AmendmentRequestSendNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/proposals/send_amendment_notification.html'
     txt_template = 'disturbance/emails/proposals/send_amendment_notification.txt'
 
+class SubmitSendNotificationEmail(TemplateEmailBase):
+    subject = 'A new Proposal has been submitted.'
+    html_template = 'disturbance/emails/proposals/send_submit_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_submit_notification.txt'
+
+class ApproverDeclineSendNotificationEmail(TemplateEmailBase):
+    subject = 'A new Proposal has been declined.'
+    html_template = 'disturbance/emails/proposals/send_approver_decline_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_approver_decline_notification.txt'
+
+class ApproverApproveSendNotificationEmail(TemplateEmailBase):
+    subject = 'A new Proposal has been approved.'
+    html_template = 'disturbance/emails/proposals/send_approver_approve_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_approver_approve_notification.txt'
+
 def send_referral_email_notification(referral,request,reminder=False):
     email = ReferralSendNotificationEmail()
     url = request.build_absolute_uri(reverse('internal-referral-detail',kwargs={'proposal_pk':referral.proposal.id,'referral_pk':referral.id}))
@@ -62,6 +77,48 @@ def send_amendment_email_notification(amendment_request, request, proposal):
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
 
+def send_submit_email_notification(request, proposal):
+    email = SubmitSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    context = {
+        'proposal': proposal,
+        'url': url
+    }
+
+    msg = email.send(proposal.assessor_recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
+def send_approver_decline_email_notification(reason, request, proposal):
+    email = ApproverDeclineSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    context = {
+        'proposal': proposal,
+        'reason': reason,
+        'url': url
+    }
+
+    msg = email.send(proposal.approver_recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
+def send_approver_approve_email_notification(request, proposal):
+    email = ApproverApproveSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    context = {
+        'start_date' : proposal.proposed_issuance_approval.get('start_date'),
+        'expiry_date' : proposal.proposed_issuance_approval.get('expiry_date'),
+        'details': proposal.proposed_issuance_approval.get('details'),
+        'proposal': proposal,
+        'url': url
+    }
+
+    msg = email.send(proposal.approver_recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
 
 def send_proposal_decline_email_notification(proposal,request,proposal_decline):
     email = ProposalDeclineSendNotificationEmail()
