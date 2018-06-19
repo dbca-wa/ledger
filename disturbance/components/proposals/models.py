@@ -429,7 +429,6 @@ class Proposal(RevisionedMixin):
         return qs
 
     def __assessor_group(self):
-        #import ipdb; ipdb.set_trace()
         # TODO get list of assessor groups based on region and activity
         if self.region and self.activity:
             try:
@@ -480,11 +479,11 @@ class Proposal(RevisionedMixin):
     @property
     def assessor_recipients(self):
         recipients = []
+        #import ipdb; ipdb.set_trace()
         try:
             recipients = ProposalAssessorGroup.objects.get(region=self.region).members_email
-        finally:
-            if len(recipients) == 0:
-                recipients = ProposalAssessorGroup.objects.get(default=True).members_email
+        except:
+            recipients = ProposalAssessorGroup.objects.get(default=True).members_email
 
         #if self.submitter.email not in recipients:
         #    recipients.append(self.submitter.email)
@@ -495,9 +494,8 @@ class Proposal(RevisionedMixin):
         recipients = []
         try:
             recipients = ProposalApproverGroup.objects.get(region=self.region).members_email
-        finally:
-            if len(recipients) == 0:
-                recipients = ProposalApproverGroup.objects.get(default=True).members_email
+        except:
+            recipients = ProposalApproverGroup.objects.get(default=True).members_email
 
         #if self.submitter.email not in recipients:
         #    recipients.append(self.submitter.email)

@@ -89,6 +89,7 @@ export default {
     },
     proposal_submit_url: function() {
       return (this.proposal) ? `/api/proposal/${this.proposal.id}/submit.json` : '';
+      //return this.submit();
     },
   
    
