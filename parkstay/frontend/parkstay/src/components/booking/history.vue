@@ -37,7 +37,7 @@
                             <span><strong>Campground</strong> : {{booking.campground_name}}</span>
                         </div>
                         <div class="col-sm-8">
-                            <span><strong>Camp Site (Type)</strong> : {{booking.campground_site_type}}</span>
+                            <label>Camp Site (Type): {{CampSiteType}} </label>
                         </div>
                     </div>
                     <div class="row" style="margin-top:10px;">
@@ -87,7 +87,8 @@ export default {
         return {
             isModalOpen:false,
             booking: {
-                guests: {}
+                guests: {},
+                campground_site_type:""
             },
             dtHeaders:["Change Date","Arrival","Departure","Campground","Camp Site","Updated By","Details"],
             dtOptions:{
@@ -194,6 +195,21 @@ export default {
         }
     },
     computed: {
+        CampSiteType: function(){
+            var results = {};
+            for (var i = 0; i < this.booking.campground_site_type.length; i++) {
+            if (results[this.booking.campground_site_type[i].name] == undefined) {
+                results[this.booking.campground_site_type[i].name] = 0;
+            }
+            results[this.booking.campground_site_type[i].name] += 1;
+            }
+            var resultList = [];
+            for (var index in results) {
+            resultList.push(`${index}`);
+            }
+            var resultString = resultList.join(", ");
+            return resultString;
+        }        
     },
     watch:{
         booking_id(){

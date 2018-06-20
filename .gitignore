@@ -88,3 +88,9 @@ media/
 #parkstay import ignores
 import/
 importo.py
+
+*.djcache
+uwsgi.ini
+
+# npm locks
+*-lock.json

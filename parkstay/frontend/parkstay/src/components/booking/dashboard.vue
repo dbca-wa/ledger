@@ -219,24 +219,22 @@ export default {
           {
             data: "campground_site_type",
             mRender: function(data, type, full) {
-              var test = "";
               if (data.length == 1) {
-                //var max_length = 15;
-                //var name = (test.length > max_length) ? test.substring(0,max_length-1)+'...' : data;
-                var name = data[0].type;
-                var column = "<td>" + name + "</td>";
-                return column;
+                var max_length = 15;
+                var name = (data[0].type.length > max_length) ? data[0].type.substring(0,max_length-1)+'...' : data[0].type;
+                var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
+                return column.replace('__NAME__', data[0].type);
               } else if (data.length > 1) {
                 var results = {};
                 for (var i = 0; i < data.length; i++) {
-                  if (results[data[i].type] == undefined) {
-                    results[data[i].type] = 0;
+                  if (results[data[i].name] == undefined) {
+                    results[data[i].name] = 0;
                   }
-                  results[data[i].type] += 1;
+                  results[data[i].name] += 1;
                 }
                 var resultList = [];
                 for (var index in results) {
-                  resultList.push(`${results[index]}x ${index}`);
+                  resultList.push(`${index}`);
                 }
                 var resultString = resultList.join(", ");
 
@@ -637,7 +635,7 @@ export default {
           ];
           fields.splice(4, 0, "Email");
           fields.splice(5, 0, "Phone");
-          fields.splice(9, 0, "Amount Due");
+          fields.splice(9, 0, "Booking Total");
           fields.splice(10, 0, "Amount Paid");
           fields.splice(22, 0, "Booking Type");
           fields.splice(23, 0, "Override Reason");
@@ -678,7 +676,19 @@ export default {
                   bk[field] = booking.id;
                   break;
                 case 7:
-                  bk[field] = booking.campground_site_type;
+                  var results = {};
+                  for (var i = 0; i < booking.campground_site_type.length; i++) {
+                    if (results[booking.campground_site_type[i].name] == undefined) {
+                      results[booking.campground_site_type[i].name] = 0;
+                    }
+                    results[booking.campground_site_type[i].name] += 1;
+                  }
+                  var resultList = [];
+                  for (var index in results) {
+                    resultList.push(`${index}`);
+                  }
+                  var resultString = resultList.join(", ");
+                  bk[field] = resultString;
                   break;
                 case 8:
                   bk[field] = booking.status;

@@ -1,0 +1,10 @@
+[
+    {
+        "model": "disturbance.proposalapprovergroup",
+        "fields":
+        {
+            "name":"Default Group",
+            "default": true
+        }
+    }
+]
