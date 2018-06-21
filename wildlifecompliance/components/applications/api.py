@@ -406,6 +406,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = PropedDeclineSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
+            # print(serializer.validated_data)
             instance.proposed_decline(request,serializer.validated_data)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 

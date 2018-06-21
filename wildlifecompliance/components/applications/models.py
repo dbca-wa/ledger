@@ -590,17 +590,32 @@ class Application(RevisionedMixin):
     def proposed_decline(self,request,details):
         with transaction.atomic():
             try:
-                if not self.can_assess(request.user):
-                    raise exceptions.ApplicationNotAuthorized()
-                if self.processing_status != 'with_assessor':
-                    raise ValidationError('You cannot propose to decline if it is not with assessor')
-
+                # if not self.can_assess(request.user):
+                #     raise exceptions.ApplicationNotAuthorized()
+                # if self.processing_status != 'with_assessor':
+                #     raise ValidationError('You cannot propose to decline if it is not with assessor')
+                activity_type=details.get('activity_type')
+                print(activity_type)
                 ApplicationDeclinedDetails.objects.update_or_create(
                     application = self,
-                    defaults={'officer':request.user,'reason':details.get('reason'),'cc_email':details.get('cc_email',None)}
+                    officer=request.user,
+                    reason=details.get('reason'),
+                    cc_email=details.get('cc_email',None),
+                    activity_type=details.get('activity_type')
                 )
-                self.proposed_decline_status = True
-                self.move_to_status(request,'with_approver')
+                # self.proposed_decline_status = True
+                # self.move_to_status(request,'with_approver')
+                for item in activity_type :
+                    print(item)
+                    for activity_type in  self.licence_type_data['activity_type']:
+                        # print(activity_type["id"])
+                        # print(details.get('activity_type'))
+                        if activity_type["id"]==item:
+                            print('Hello')
+                            activity_type["proposed_decline"]=True
+                            print(activity_type["proposed_decline"])
+                            self.save()
+
                 # Log application action
                 self.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 # Log entry for organisation
@@ -807,6 +822,7 @@ class ApplicationDeclinedDetails(models.Model):
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
+    activity_type=JSONField(blank=True, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'

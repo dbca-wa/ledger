@@ -358,3 +358,4 @@ class ProposedLicenceSerializer(serializers.Serializer):
 class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False)
+    activity_type=serializers.ListField(child=serializers.IntegerField())
