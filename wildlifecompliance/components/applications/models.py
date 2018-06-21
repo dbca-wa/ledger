@@ -202,6 +202,7 @@ class Application(RevisionedMixin):
                                  ('approved', 'Approved'),
                                  ('declined', 'Declined'),
                                  ('discarded', 'Discarded'),
+                                 ('under_review', 'Under Review'),
                                  )
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
