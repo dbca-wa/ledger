@@ -13,7 +13,6 @@
                     <div class="panel-body collapse in" :id="pBody">
                         <form class="form-horizontal" name="personal_form" method="post">
                             <div class="col-sm-12">
-                                <div class="form-group">
                                     <div class="radio">
                                         <label>
                                         <input type="radio"  name="behalf_of_org" v-model="behalf_of"  value="other"> On behalf of yourself
@@ -27,8 +26,6 @@
                                           <input  type="radio"  name="behalf_of_org" v-model="behalf_of"  :value="org.id" > On behalf of {{org.name}} (as a Consultant)
                                         </label>
                                     </div>
-                                    
-                                </div>
                             </div>
                            
                             <div class="col-sm-12">

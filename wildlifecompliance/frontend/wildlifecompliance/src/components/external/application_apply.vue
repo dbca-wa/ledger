@@ -12,27 +12,31 @@
                     </div>
                     <div class="panel-body collapse in" :id="pBody">
                         <form class="form-horizontal" name="orgForm" method="post">
-
-                          <div class="form-group">
-                            <label for="" class="col-sm-5 control-label">Do you want to</label>
-                            <div class="col-sm-4">
-                                
-                                <label class="radio-inline">
-                                  <input :disabled="hasOrgs" type="radio" name="select_licence" v-model="licence_select" value="New_licence" > apply for a new licence?
-                                </label>
-                                <label class="radio-inline">
-                                  <input type="radio" name="select_licence" v-model="licence_select" value="New_activity"> apply for a new licensed activity on your licence?
-                                </label>
-                                 <label class="radio-inline">
-                                  <input type="radio" name="select_licence" v-model="licence_select" value="Amend_activity"> amend one or more licensed activities on your licence?
-                                </label>
-                                <label class="radio-inline">
-                                  <input type="radio" name="select_licence" v-model="licence_select" value="Renew_activity"> renew one or more licensed activities on your licence?
-                                </label>
+                            <div class="col-sm-12">
+                                <div class="row">
+                                    <label class="col-sm-4">Do you want to:</label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                      <input :disabled="hasOrgs" type="radio" name="select_licence" v-model="licence_select" value="New_licence" > apply for a new licence?
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                      <input type="radio" name="select_licence" v-model="licence_select" value="New_activity"> apply for a new licensed activity on your licence?
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                     <label>
+                                      <input type="radio" name="select_licence" v-model="licence_select" value="Amend_activity"> amend one or more licensed activities on your licence?
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                      <input type="radio" name="select_licence" v-model="licence_select" value="Renew_activity"> renew one or more licensed activities on your licence?
+                                    </label>
+                                </div>
                             </div>
-                          </div>
-
-                            
                             <div class="col-sm-12">
                                 <button  @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
                             </div>
