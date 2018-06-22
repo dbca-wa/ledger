@@ -524,7 +524,7 @@ class BookingSerializer(serializers.ModelSerializer):
 class RateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Rate
-        fields = ('url','id','adult','concession','child','infant','name')
+        fields = ('url','id','mooring','adult','concession','child','infant','name')
 
 class MooringsiteRateSerializer(serializers.ModelSerializer):
     date_start = serializers.DateField(format='%d/%m/%Y')

@@ -62,7 +62,7 @@
                                     <li>{{ error }}</li>
                                 {% endfor %}
                                 {% for vehicle in vehicles %}{% for field, error in vehicle.errors.items %}
-                                    <li><b>Vehicle {{ forloop.counter }} ({{ field }}):</b> {{ error }}</li>
+                                    <li><b>Vessel {{ forloop.counter }} ({{ field }}):</b> {{ error }}</li>
                                 {% endfor %}{% endfor %}
                                 </ul>
                             </div>
@@ -70,12 +70,12 @@
                             <h3 class="text-primary">Booking for</h3>
                         </div>
                         <div class="col-md-2">
-                              <img alt="campground"  class="img-thumbnail img-responsive" src="{{ booking.campground.first_image.image.url }}">
+                              <img alt="campground"  class="img-thumbnail img-responsive" src="{{ booking.campground.first_image.image.url }}" style='display:none'>
                               <p class="pricing" v-cloak >
                             {% verbatim %}
                                   <strong>${{ perDayFee|formatMoney(2) }}</strong>
                             {% endverbatim %}
-                                  <br> <span class="text-muted">Per night</span>
+                                  <br> <span class="text-muted">Per day</span>
                               </p>
                         </div>
                         <div class="col-md-10">
@@ -107,25 +107,25 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="form-group" style='display:none'>
                                         <label class="col-sm-4 control-label pull-left required">{{ form.num_adult.label_tag }} </label>
                                         <div class="col-sm-8">
                                                 {{ form.num_adult }}
                                         </div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="form-group" style='display:none'>
                                         <label class="col-sm-4 control-label pull-left required">{{ form.num_concession.label_tag }} </label>
                                         <div class="col-sm-8">
                                                 {{ form.num_concession }}
                                         </div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="form-group" style='display:none' >
                                         <label class="col-sm-4 control-label pull-left required">{{ form.num_child.label_tag }} </label>
                                         <div class="col-sm-8">
                                                 {{ form.num_child }}
                                         </div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="form-group" style='display:none'>
                                         <label class="col-sm-4 control-label pull-left required">{{ form.num_infant.label_tag }} </label>
                                         <div class="col-sm-8">
                                                 {{ form.num_infant }}
@@ -220,7 +220,7 @@
                 <div class="well">
                     <div class="row">
                         <div class="col-lg-12">
-                            <h3 class="text-primary">Vehicles</h3>
+                            <h3 class="text-primary">Vessels</h3>
                             <p v-if="pricing.vehicle"><b><a href="{{EXPLORE_PARKS_ENTRY_FEES}}" target="_blank">Entry fees</a> are required for each vehicle entering this park.</b></p>
                             <p v-else>No entry fees are required for this park.</p>
                         </div>
@@ -231,8 +231,8 @@
                     <div class="row" v-cloak>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Number of vehicles:
-                                    <input class="form-control" name="form-TOTAL_FORMS" max="8" min="0" value="1" v-model="vehicleCount" v-on:change="updateVehicles" type="number"/>
+                                <label>Number of vessels:
+                                    <input class="form-control" name="form-TOTAL_FORMS" max="8" min="1" value="1" v-model="vehicleCount" v-on:change="updateVehicles" type="number"/>
                                     <input id="id_form-INITIAL_FORMS" name="form-INITIAL_FORMS" type="hidden" value="1" />
                                     <input id="id_form-MIN_NUM_FORMS" name="form-MIN_NUM_FORMS" type="hidden" value="0" />
                                     <input id="id_form-MAX_NUM_FORMS" name="form-MAX_NUM_FORMS" type="hidden" value="8" />
@@ -243,9 +243,7 @@
                     <div class="row form-group" v-for="(vehicle, index) in vehicles">
                         <div class="col-md-4">
                             <select v-on:change="calculateTotal" v-bind:name="'form-'+Number(index).toString()+'-vehicle_type'" class="form-control" v-model="vehicle[0]">
-                                <option value="0">Vehicle</option>
-                                <option value="1">Vehicle (concession)</option>
-                                <option value="2">Motorcycle</option>
+                                <option value="0">Vessel</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -329,6 +327,7 @@
             expiry: moment('{{ expiry|escapejs }}'),
             timer: {{ timer }},
             pricing: {
+                mooring: {{ pricing.mooring }},
                 adult: {{ pricing.adult }},
                 concession: {{ pricing.concession }},
                 child: {{ pricing.child }},
@@ -418,11 +417,12 @@
                 vm.total = 0;
 
                 // add per-person fees
-                vm.total += (parseInt(form.num_adult.value) || 0)*vm.pricing.adult;
-                vm.total += (parseInt(form.num_concession.value) || 0)*vm.pricing.concession;
-                vm.total += (parseInt(form.num_child.value) || 0)*vm.pricing.child;
-                vm.total += (parseInt(form.num_infant.value) || 0)*vm.pricing.infant;
-
+                // vm.total += (parseInt(form.num_adult.value) || 0)*vm.pricing.adult;
+                // vm.total += (parseInt(form.num_concession.value) || 0)*vm.pricing.concession;
+                // vm.total += (parseInt(form.num_child.value) || 0)*vm.pricing.child;
+                // vm.total += (parseInt(form.num_infant.value) || 0)*vm.pricing.infant;
+                
+                vm.total += vm.pricing.mooring;
                 // generate per night rate the ugly way
                 // (price can vary based on date, so this is an approximate measure)
                 vm.perDayFee = vm.total/{{ booking.num_days }};

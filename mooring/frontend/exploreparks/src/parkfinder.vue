@@ -22,7 +22,7 @@
                         <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
                             <div class="row">
                                 <div class="small-6 columns">
-                                    <label for="num_adults" class="text-right">Adults (non-concessions)<label>
+                                    <label for="num_adults" class="text-right">path:::Adults (non-concessions)<label>
                                 </div>
                                 <div class="small-6 columns">
                                     <input type="number" id="numAdults" name="num_adults" v-model="numAdults" min="0" max="16"/></label>

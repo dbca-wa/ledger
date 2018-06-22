@@ -1026,7 +1026,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         # fetch rate map
         rates = {
             siteid: {
-                date: num_adult*info['adult']+num_concession*info['concession']+num_child*info['child']+num_infant*info['infant']
+                #date: num_adult*info['adult']+num_concession*info['concession']+num_child*info['child']+num_infant*info['infant']
+                 date: info['mooring']
                 for date, info in dates.items()
             } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
         }
@@ -1073,8 +1074,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     rates_map[s.campsite_class.pk] = rates[s.pk]
 
                 class_sites_map[s.campsite_class.pk].add(s.pk)
-
-
+            print "RATE MAP"
+            print rates_map
             # make an entry under sites for each campsite class
             for c in classes:
                 rate = rates_map[c[1]]
@@ -1163,13 +1164,17 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         # don't group by class, list individual sites
         else:
             sites_qs = sites_qs.order_by('name')
-
+            print "s.pk"
+            print rates
+            print sites_qs 
             # from our campsite queryset, generate a digest for each site
             sites_map = OrderedDict([(s.name, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
             bookings_map = {}
-
+            print sites_map
             # make an entry under sites for each site
             for k, v in sites_map.items():
+                print "RATE MAP 32"
+                print v
                 site = {
                     'name': k,
                     'id': v[0],

@@ -4,7 +4,7 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <h3 class="panel-title">Personal Details <small>Provide your personal details</small>
+                    <h3 class="panel-title">ooPersonal Details <small>Provide your personal details</small>
                         <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>

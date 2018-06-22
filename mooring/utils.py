@@ -8,10 +8,12 @@ from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
 from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
@@ -310,6 +312,7 @@ def get_visit_rates(campsites_qs, start_date, end_date):
     results = {
         site.pk: {
             start_date+timedelta(days=i): {
+                'mooring':  Decimal('0.00'),
                 'adult': Decimal('0.00'),
                 'child': Decimal('0.00'),
                 'concession': Decimal('0.00'),
@@ -330,6 +333,7 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         start = max(start_date, rate.date_start)
         end = min(end_date, rate.date_end) if rate.date_end else end_date
         for i in range((end-start).days):
+            results[rate.campsite.pk][start+timedelta(days=i)]['mooring'] = rate.rate.mooring
             results[rate.campsite.pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
             results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
             results[rate.campsite.pk][start+timedelta(days=i)]['child'] = rate.rate.child
@@ -345,6 +349,7 @@ def get_visit_rates(campsites_qs, start_date, end_date):
             start = start_date
             end = rate.date_start
             for i in range((end-start).days):
+                results[site_pk][start+timedelta(days=i)]['mooring'] = rate.rate.mooring
                 results[site_pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
                 results[site_pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
                 results[site_pk][start+timedelta(days=i)]['child'] = rate.rate.child
@@ -462,19 +467,30 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     for rates in daily_rates:
         for c in rates:
             if c['rate']['campsite'] not in rate_list.keys():
-                rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
+                rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'mooring': c['rate']['mooring'] ,'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
             else:
                 if c['rate']['id'] not in rate_list[c['rate']['campsite']].keys():
-                    rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
+                    rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'mooring': c['rate']['mooring'], 'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
                 else:
                     rate_list[c['rate']['campsite']][c['rate']['id']]['end'] = c['date']
     # Get Guest Details
+    #guests = {}
+    #for k,v in booking.details.items():
+    #    if 'num_' in k:
+    #        guests[k.split('num_')[1]] = v
+    ##### Above is for poeple quantity (mooring are not based on people.. based on vessels)
+
+    # guess is used as the quantity items for the check out basket.
     guests = {}
-    for k,v in booking.details.items():
-        if 'num_' in k:
-            guests[k.split('num_')[1]] = v
+    guests['mooring'] = 1
+    print "GUESTS" 
+    print guests.items()
     for k,v in guests.items():
         if int(v) > 0:
+            print "VVVV"
+            print v
+            print "RATE_LIST"
+            print rate_list
             for c,p in rate_list.items():
                 for i,r in p.items():
                     price = Decimal(0)
@@ -515,7 +531,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                     price =  park_entry_rate[k]
                     regos = ', '.join([x[0] for x in v.values_list('rego')])
                     invoice_lines.append({
-                        'ledger_description': 'Marina entry fee - {}'.format(k),
+                        'ledger_description': 'Mooring fee - {}'.format(k),
                         'quantity': v.count(),
                         'price_incl_tax': price,
                         'oracle_code': booking.mooringarea.park.oracle_code
@@ -774,7 +790,46 @@ def create_or_update_booking(request,booking_details,updating=False):
         booking.save()
     return booking
 
+
 def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
+    basket_params = {
+        'products': lines,
+        'vouchers': vouchers,
+        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'custom_basket': True,
+    }
+    basket, basket_hash = create_basket_session(request, basket_params)
+
+    checkout_params = {
+        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'fallback_url': request.build_absolute_uri('/'),
+        'return_url': request.build_absolute_uri(reverse('public_booking_success')),
+        'return_preload_url': request.build_absolute_uri(reverse('public_booking_success')),
+        'force_redirect': True,
+        'proxy': True if internal else False,
+        'invoice_text': invoice_text,
+    }
+    if not internal:
+        checkout_params['check_url'] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
+    if internal or request.user.is_anonymous():
+        checkout_params['basket_owner'] = booking.customer.id
+    create_checkout_session(request, checkout_params)
+
+    if internal:
+        response = place_order_submission(request)
+    else:
+        response = HttpResponseRedirect(reverse('checkout:index'))
+        # inject the current basket into the redirect response cookies
+        # or else, anonymous users will be directionless
+        response.set_cookie(
+            settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
+            max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
+            secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
+        )
+    
+    return response
+
+def iiicheckout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
     JSON_REQUEST_HEADER_PARAMS = {
         "Content-Type": "application/json",
         "Accept": "application/json",

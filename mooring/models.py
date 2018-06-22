@@ -872,6 +872,7 @@ class MooringsiteBooking(models.Model):
 
 
 class Rate(models.Model):
+    mooring = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
     adult = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
     concession = models.DecimalField(max_digits=8, decimal_places=2, default='6.60')
     child = models.DecimalField(max_digits=8, decimal_places=2, default='2.20')

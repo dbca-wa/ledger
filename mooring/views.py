@@ -111,18 +111,21 @@ def abort_booking_view(request, *args, **kwargs):
         change_id = request.GET.get('change_id',None)
         change_to = None
         booking = utils.get_session_booking(request.session)
+        print "ABORT MADE IT"
         if change_ratis:
+            print "CR"
             try:
                 c_id = MooringArea.objects.get(ratis_id=change_ratis).id
             except:
-                c_id = booking.campground.id
+                c_id = booking.mooringarea.id
         elif change_id:
+            print "CI"
             try:
                 c_id = MooringArea.objects.get(id=change_id).id
             except:
-                c_id = booking.campground.id
+                c_id = booking.mooringarea.id
         else:
-            c_id = booking.campground.id
+            c_id = booking.mooringarea.id
         # only ever delete a booking object if it's marked as temporary
         if booking.booking_type == 3:
             booking.delete()
@@ -131,8 +134,9 @@ def abort_booking_view(request, *args, **kwargs):
             # Redirect to the availability screen
             return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
         else:
+            print "REDIRECT TO PARK STAY"
             # Redirect to explore parks
-            return redirect(settings.EXPLORE_PARKS_URL+'/park-stay')
+            return redirect(settings.EXPLORE_PARKS_URL+'/map')
     except Exception as e:
         pass
     return redirect('public_make_booking')
@@ -148,6 +152,7 @@ class MakeBookingsView(TemplateView):
         campsite = booking.campsites.all()[0].campsite if booking else None
         entry_fees = MarinaEntryRate.objects.filter(Q(period_start__lte = booking.arrival), Q(period_end__gt=booking.arrival)|Q(period_end__isnull=True)).order_by('-period_start').first() if (booking and campsite.mooringarea.park.entry_fee_required) else None
         pricing = {
+            'mooring': Decimal('0.00'),
             'adult': Decimal('0.00'),
             'concession': Decimal('0.00'),
             'child': Decimal('0.00'),
@@ -159,6 +164,7 @@ class MakeBookingsView(TemplateView):
 
         if booking:
             pricing_list = utils.get_visit_rates(Mooringsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
+            pricing['mooring'] = sum([x['mooring'] for x in pricing_list.values()])
             pricing['adult'] = sum([x['adult'] for x in pricing_list.values()])
             pricing['concession'] = sum([x['concession'] for x in pricing_list.values()])
             pricing['child'] = sum([x['child'] for x in pricing_list.values()])
@@ -253,10 +259,10 @@ class MakeBookingsView(TemplateView):
         try:
             lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
         except Exception as e:
-            form.add_error(None, '{} Please contact Marinas and Visitors services with this error message, the campground/campsite and the time of the request.'.format(str(e)))
+            form.add_error(None, '{} Please contact Marine Park and Visitors services with this error message and the time of the request.'.format(str(e)))
             return self.render_page(request, booking, form, vehicles, show_errors=True)
             
-        #print(lines)
+        print(lines)
         total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
 
         # get the customer object
@@ -293,17 +299,17 @@ class MakeBookingsView(TemplateView):
         
         logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id))
 
-        response = utils.checkout(request, booking, lines, invoice_text=reservation)
-        result =  HttpResponse(
-            content=response.content,
-            status=response.status_code,
-            content_type=response.headers['Content-Type'],
-        )
+        result = utils.checkout(request, booking, lines, invoice_text=reservation)
+#        result =  HttpResponse(
+#            content=response.content,
+#            status=response.status_code,
+#            content_type=response.headers['Content-Type'],
+#        )
 
         # if we're anonymous add the basket cookie to the current session
-        if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
-            basket_cookie = response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN]
-            result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_cookie)
+        #if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
+        #    basket_cookie = response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN]
+        #    result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_cookie)
         
         return result
 

@@ -84,7 +84,7 @@
                     <input id="date-departure" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
-            <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns">
+            <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns" style='display:none'>
                 <label>
                     Guests 
                     <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
@@ -97,7 +97,7 @@
                             <input type="number" id="numAdults" name="num_adults" @change="update()" v-model="numAdults" min="0" max="16"/>
                         </div>
                     </div><div class="row">
-                        <div class="small-6 columns">
+                        <div class="small-6 columns" >
                             <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
 - Seniors Card
 - Age Pension
@@ -454,7 +454,7 @@ export default {
                     vm.updateURL();
                     var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
                 }
-                console.log('AJAX '+url);
+                
                 $.ajax({
                     url: url,
                     dataType: 'json',

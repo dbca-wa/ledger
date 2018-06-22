@@ -122,7 +122,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -135,7 +134,7 @@
                             <div class="col-lg-6">
                                 <div class="row">
                                     <div class="col-lg-12">
-                                        <h3 class="text-primary">Personal Details</h3>
+                                        <h3 class="text-primary">iiPersonal Details</h3>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -353,7 +352,7 @@ export default {
             guestsPicker:[
                 {
                     id:"adult",
-                    name:"Adults (no concession)",
+                    name:"iiiiij Adults (no concession)",
                     amount:2,
                     description: ""
                 },
