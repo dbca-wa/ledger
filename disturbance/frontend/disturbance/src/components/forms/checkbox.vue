@@ -3,7 +3,17 @@
         <div class="form-group">
             <div class="checkbox">
                 <label :id="id">
-                    <input :disabled="readonly" ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" :required="isRequired"/>
+                    <input @onclick="isClickable" ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" :required="isRequired"/>
+
+                    <!-- necessary because forms do not send disabled checkbox's -->
+                    <!--
+                    <div v-if="readonly">
+                        <input :disabled="readonly" ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" :required="isRequired"/>
+                    </div>
+                    <div v-else>
+                        <input onclick="this.checked=!this.checked;" ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" :required="isRequired"/>
+                    </div>
+                    -->
                     {{ label }}
                 <template v-if="help_text">
                   <HelpText :help_text="help_text" />
@@ -24,6 +34,14 @@ export default {
     },
     options: function() {
       return JSON.stringify(this.conditions);
+    },
+    isClickable: function() {
+      return (this.checked=!this.checked);
+    }
+  },
+  methods: {
+    isClickable: function() {
+      return (this.checked=!this.checked);
     }
   },
   mounted:function () {
