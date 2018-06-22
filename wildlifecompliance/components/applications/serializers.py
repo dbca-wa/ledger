@@ -15,6 +15,7 @@ from wildlifecompliance.components.organisations.models import (
                             )
 from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer 
+from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
 from rest_framework import serializers
 
 class ApplicationTypeSerializer(serializers.ModelSerializer):
@@ -57,6 +58,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'review_status',
                 #'hard_copy',
                 'applicant',
+                'org_applicant',
                 'proxy_applicant',
                 'submitter',
                 'assigned_officer',
@@ -96,7 +98,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
 class DTApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
-    applicant = serializers.CharField(source='applicant.organisation.name')
+    applicant = serializers.CharField(read_only=True)
+    org_applicant = serializers.CharField(source='org_applicant.organisation.name')
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)

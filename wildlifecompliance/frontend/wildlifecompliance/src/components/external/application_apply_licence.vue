@@ -59,7 +59,7 @@
                                 
                             </div>
                             <div class="col-sm-12">
-                                <button :disabled="behalf_of == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                                <button :disabled="behalf_of == '' && yourself == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
                             </div>
                         </form>
                     </div>
@@ -81,7 +81,8 @@ export default {
     let vm = this;
     return {
         licence_select : this.$route.params.licence_select,
-        behalf_of : this.$route.params.org_select,
+        behalf_of_org : this.$route.params.org_select,
+        yourself : this.$route.params.yourself,
         "application": null,
         agent: {},
         activity_type :{
@@ -188,15 +189,18 @@ export default {
                 }
             }
         }
-        data.applicant=vm.behalf_of
+        data.org_applicant=vm.behalf_of_org
         data.licence_class_data=vm.licence_class
+        console.log(' ---- application apply licence createApplication() ---- ');
+        console.log(data);
         vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
+              console.log(res.body);
               vm.application = res.body;
               vm.$router.push({
                   name:"draft_application",
                   params:{application_id:vm.application.id}
               });
-              console.log(request)
+              console.log(request);
           },
           err => {
             console.log(err);
