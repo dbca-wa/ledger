@@ -15,12 +15,12 @@
                         <form class="form-horizontal" name="personal_form" method="post">
                           
                             <div class="col-sm-12">
-                                <div class = row>  
+                                <div class="row">
                                 <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
                                 </div>
                               
                                 
-                                
+                                <div class="margin-left-20">
                                 <div v-for="(category,index) in licence_classes" class="radio">
                                     <div class ="row">
                                         <div class="col-sm-9" >  
@@ -28,12 +28,12 @@
                                              
                                             <div class="row">
 
-                                                
-                                                <div  v-if="category.checked" class="col-sm-9"> 
 
-                                                    <div v-for="(type,index1) in category.activity_type" class="checkbox">
-                                                        <input type="checkbox" ref="selected_activity_type" name ="activity_type" :value="type.id" :id = "type.id" v-model="category.activity_type[index1].selected" @click="handleActivityTypeCheckboxChange(index,index1)"> {{type.name}} 
-                                                        
+                                                <div  v-if="category.checked" class="col-sm-9">
+
+                                                    <div v-for="(type,index1) in category.activity_type" class="checkbox margin-left-20">
+                                                        <input type="checkbox" ref="selected_activity_type" name ="activity_type" :value="type.id" :id = "type.id" v-model="category.activity_type[index1].selected" @click="handleActivityTypeCheckboxChange(index,index1)"> {{type.name}}
+
                                                         <div v-if="type.selected">
                                                             <div v-for="(activity,index2) in type.activity" class="checkbox">
                                                                 
@@ -52,6 +52,7 @@
                                             </div>
                                         </div>
                                     </div> 
+                                </div>
                                 </div>
 
                                 
@@ -220,4 +221,7 @@ export default {
 </script>
 
 <style lang="css">
+div.margin-left-20 {
+    margin-left: 20px;
+}
 </style>
