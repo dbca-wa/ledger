@@ -61,6 +61,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'region',
                 'district',
                 'tenure',
+                'assessor_data',
                 'data',
                 'schema',
                 'customer_status',
@@ -264,7 +265,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     assessor_data = serializers.SerializerMethodField()
     latest_referrals = ProposalReferralSerializer(many=True)
     allowed_assessors = EmailUserSerializer(many=True)
-
+    approval_level_document = serializers.SerializerMethodField()
     application_type = serializers.CharField(source='application_type.name', read_only=True)
     region = serializers.CharField(source='region.name', read_only=True)
     district = serializers.CharField(source='district.name', read_only=True)
@@ -277,6 +278,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'application_type',
                 'activity',
                 'approval_level',
+                'approval_level_document',
                 'region',
                 'district',
                 'tenure',
@@ -319,6 +321,12 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'proposal_type'
                 )
         read_only_fields=('documents','requirements')
+
+    def get_approval_level_document(self,obj):
+        if obj.approval_level_document is not None:
+            return [obj.approval_level_document.name,obj.approval_level_document._file.url]  
+        else:
+            return obj.approval_level_document
 
     def get_assessor_mode(self,obj):
         # TODO check if the proposal has been accepted or declined
