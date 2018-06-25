@@ -193,6 +193,7 @@ export default {
         data.licence_class_data=vm.licence_class
         console.log(' ---- application apply licence createApplication() ---- ');
         console.log(data);
+        console.log(JSON.stringify(data));
         vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
               console.log(res.body);
               vm.application = res.body;

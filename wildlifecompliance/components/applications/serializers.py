@@ -139,7 +139,7 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
                 'processing_status',
                 'review_status',
                 #'hard_copy',
-                'applicant',
+                'org_applicant',
                 'proxy_applicant',
                 'submitter',
                 'assigned_officer',
