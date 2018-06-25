@@ -26,8 +26,10 @@
                             <div class="col-sm-12">
                                     <template v-if="!isFinalised">
                                         <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
+                                        
+                                    <div v-if="isApprovalLevel">    
                                         <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
-                                        <span v-if="!readonly">
+                                        <span>
                                         <a @click="removeFile()" class="fa fa-trash-o" title="Remove file" style="cursor: pointer; color:red;"></a>
                                         </span></p>
                                         <div v-else>
@@ -38,8 +40,10 @@
                                             </span>
                                             <!--<span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName()}}</span>-->
                                             </span>
-                                        </p>
+                                            </p>
                                         </div>
+
+                                    </div>
                                     </template>                                    
                             </div>
                         </div> 
@@ -122,7 +126,10 @@ export default {
         },
         isFinalised: function(){
             return this.proposal.processing_status == 'Approved' || this.proposal.processing_status == 'Declined';
-        }
+        },
+        isApprovalLevel:function(){
+            return this.proposal.approval_level != null ? true : false;
+        },
     },
     methods:{
         readFile: function() {
