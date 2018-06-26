@@ -512,7 +512,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 'schema':schema_data,
                 'submitter': request.user.id,
                 'licence_type_data':licence_class_data,
-                'org_applicant': request.data.get('org_applicant')
+                'org_applicant': org_applicant
             }
             serializer = SaveApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)

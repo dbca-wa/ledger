@@ -43,7 +43,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
     character_check_status = serializers.SerializerMethodField(read_only=True)
-    org_applicant = OrganisationSerializer()
 
     class Meta:
         model = Application
@@ -125,7 +124,6 @@ class ActivityTypeserializer(serializers.ModelSerializer):
 class SaveApplicationSerializer(BaseApplicationSerializer):
     assessor_data = serializers.JSONField(required=False)
     # licence_activity_type=ActivityTypeserializer(many=True,read_only =True)
-    org_applicant = serializers.IntegerField() #TODO: need to fix this, broken
 
     class Meta:
         model = Application
