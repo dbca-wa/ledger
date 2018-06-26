@@ -291,6 +291,31 @@
                         <div class="row">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
+                                    <h3 class="panel-title">Identification
+                                        <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="detailsBody">
+                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                        </a>
+                                    </h3>
+                                </div>
+                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse in" :id="identificationBody">
+                                </div>
+                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse in" :id="identificationBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Identification</label>
+                                            <div class="col-sm-6">
+                                                <img width="100%" name="applicantIdentification" :src="application.submitter.identification">
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
                                     <h3 class="panel-title">Address Details
                                         <a class="panelClicker" :href="'#'+addressBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="addressBody">
                                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
@@ -383,19 +408,19 @@
                                       <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Phone (work)</label>
                                         <div class="col-sm-6">
-                                            <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.submitter.phone_number">
+                                            <input disabled type="text" class="form-control" name="applicantPhoneNumber" placeholder="" v-model="application.submitter.phone_number">
                                         </div>
                                       </div>
                                       <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Mobile</label>
                                         <div class="col-sm-6">
-                                            <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.submitter.mobile_number">
+                                            <input disabled type="text" class="form-control" name="applicantMobileNumber" placeholder="" v-model="application.submitter.mobile_number">
                                         </div>
                                       </div>
                                       <div class="form-group">
                                         <label for="" class="col-sm-3 control-label" >Email</label>
                                         <div class="col-sm-6">
-                                            <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="application.submitter.email">
+                                            <input disabled type="text" class="form-control" name="applicantEmail" placeholder="" v-model="application.submitter.email">
                                         </div>
                                       </div>
                                   </form>
@@ -509,6 +534,7 @@ export default {
             applicantTab: 'applicantTab'+vm._uid,
             applicationTab: 'applicationTab'+vm._uid,
             detailsBody: 'detailsBody'+vm._uid,
+            identificationBody: 'identificationBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
             contactsBody: 'contactsBody'+vm._uid,
             checksBody: 'checksBody'+vm._uid,

@@ -39,7 +39,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
         fields = ('id','email','first_name','last_name','title','organisation')
 
 
-class EmailUserWithAddressSerializer(serializers.ModelSerializer):
+class EmailUserAppViewSerializer(serializers.ModelSerializer):
     residential_address = UserAddressSerializer()
 
     class Meta:
@@ -52,6 +52,7 @@ class EmailUserWithAddressSerializer(serializers.ModelSerializer):
                   'title',
                   'organisation',
                   'residential_address',
+                  'identification',
                   'email',
                   'phone_number',
                   'mobile_number',)
@@ -211,7 +212,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     id_check_status = serializers.SerializerMethodField(read_only=True)
     character_check_status = serializers.SerializerMethodField(read_only=True)
     #submitter = serializers.CharField(source='submitter.get_full_name')
-    submitter = EmailUserWithAddressSerializer()
+    submitter = EmailUserAppViewSerializer()
     applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
     #
     assessor_mode = serializers.SerializerMethodField()
