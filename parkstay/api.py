@@ -874,6 +874,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 s = CampsiteClassSerializer(CampsiteClass.objects.get(id=k),context={'request':request},method='get').data
                 s['campsites'] = [c.id for c in v]
                 available_serializers.append(s)
+            available_serializers.sort(key=lambda x: x['name'])
             data = available_serializers
 
             return Response(data,status=http_status)
@@ -1640,7 +1641,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                         for item in first_campsite_list:
                             campground_site_type.append ({
                                 "name": '{}'.format(item.name if item else ""),
-                                "type": '{}'.format(item.type if item.type else "")
+                                "type": '{}'.format(item.type if item.type else ""),
+                                "campground_type": item.campground.site_type,
                                 })
                         bk['campground_site_type'] = campground_site_type
                 else:

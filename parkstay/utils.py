@@ -361,7 +361,7 @@ def get_available_campsitetypes(campground_id,start_date,end_date,_list=True):
             available_campsiteclasses = []
         else:
             available_campsiteclasses = {}
-
+        
         for _class in cg.campsite_classes:
             sites_qs =  Campsite.objects.filter(
                             campground=campground_id,
@@ -402,7 +402,7 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
         if ('booked' not in av):
             if ('closed' not in av):
                 available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
-
+                available.sort(key=lambda x: x['name'])
     return available
 
 def get_available_campsites_list_booking(campsite_qs,request, start_date, end_date,booking):

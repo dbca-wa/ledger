@@ -196,16 +196,22 @@ export default {
     },
     computed: {
         CampSiteType: function(){
-            var results = {};
-            for (var i = 0; i < this.booking.campground_site_type.length; i++) {
-            if (results[this.booking.campground_site_type[i].name] == undefined) {
-                results[this.booking.campground_site_type[i].name] = 0;
-            }
-            results[this.booking.campground_site_type[i].name] += 1;
-            }
+            var typeCondensed = {};
             var resultList = [];
-            for (var index in results) {
-            resultList.push(`${index}`);
+            for (var i = 0; i < this.booking.campground_site_type.length; i++) {
+            if (this.booking.campground_site_type[i].campground_type === 0) {
+                resultList.push(this.booking.campground_site_type[i].name);
+                continue;
+            }
+            if (typeCondensed[this.booking.campground_site_type[i].type] == undefined) {
+                typeCondensed[this.booking.campground_site_type[i].type] = 0;
+            }            
+            typeCondensed[this.booking.campground_site_type[i].type] += 1;
+            }
+            for (var index in typeCondensed) {
+            var count = typeCondensed[index];
+            var site_type = index.split(':', 1)[0];
+            resultList.push(`${count}x ${site_type}`);
             }
             var resultString = resultList.join(", ");
             return resultString;
