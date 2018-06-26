@@ -172,7 +172,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         user_orgs = [org.id for org in request.user.wildlifecompliance_organisations.all()];
         qs = []
         qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
-        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
+        qs.extend(list(self.get_queryset().filter(org_applicant__id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         queryset = list(set(qs))
         serializer = DTApplicationSerializer(queryset, many=True)
         return Response(serializer.data)
@@ -188,8 +188,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def submit(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            print(' ------ submit application api ------ ')
+            print(instance)
             instance.submit(request,self)
             serializer = self.get_serializer(instance)
+            print(serializer.data)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -406,6 +409,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = PropedDeclineSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
+            # print(serializer.validated_data)
             instance.proposed_decline(request,serializer.validated_data)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 
@@ -503,12 +507,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             app_data = self.request.data
             licence_class_data=app_data.pop('licence_class_data')
             schema_data=get_activity_type_schema(licence_class_data)
-            applicant=request.data.get('applicant')
+            org_applicant=request.data.get('org_applicant')
             data = {
                 'schema':schema_data,
                 'submitter': request.user.id,
                 'licence_type_data':licence_class_data,
-                'applicant': request.data.get('applicant')
+                'org_applicant': org_applicant
             }
             serializer = SaveApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)

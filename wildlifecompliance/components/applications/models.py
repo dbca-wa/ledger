@@ -20,10 +20,9 @@ from wildlifecompliance import exceptions
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
-from wildlifecompliance.components.applications.email import send_referral_email_notification
+from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification
 from wildlifecompliance.ordered_model import OrderedModel
-
-
+# from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
 
 
 def update_application_doc_filename(instance, filename):
@@ -52,6 +51,25 @@ class TaggedApplicationAssessorGroupActivities(TaggedItemBase):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+class ApplicationGroupType(models.Model):
+    name= models.CharField(max_length=255)
+    licence_class=models.ForeignKey('wildlifecompliance.WildlifeLicenceClass')
+    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType')
+    members=models.ManyToManyField(EmailUser,blank=True)
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def member_is_assigned(self,member):
+        # for p in self.current_applications:
+        #     if p.assigned_officer == member:
+        #         return True
+        # return False
+        return False
+
+# class applicatio_dummy_group(models.Model):
+#     name= models.CharField(max_length=255)
+#     licence_class=models.ForeignKey('wildlifecompliance.components.WildlifeLicenceClass')
 
 class ApplicationAssessorGroup(models.Model):
     name = models.CharField(max_length=255)
@@ -184,6 +202,7 @@ class Application(RevisionedMixin):
                                  ('approved', 'Approved'),
                                  ('declined', 'Declined'),
                                  ('discarded', 'Discarded'),
+                                 ('under_review', 'Under Review'),
                                  )
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
@@ -218,12 +237,12 @@ class Application(RevisionedMixin):
 
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
-    applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='applications')
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateField(blank=True, null=True)
 
+    org_applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='org_applications')
     proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='wildlifecompliance_proxy')
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='wildlifecompliance_applications')
 
@@ -264,6 +283,15 @@ class Application(RevisionedMixin):
     @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
+
+    @property
+    def applicant(self):
+        if self.org_applicant:
+            return self.org_applicant.organisation.name
+        elif self.proxy_applicant:
+            return "{} {}".format(self.proxy_applicant.first_name, self.proxy_applicant.last_name)
+        else:
+            return "{} {}".format(self.submitter.first_name, self.submitter.last_name)
 
     @property
     def is_assigned(self):
@@ -406,15 +434,29 @@ class Application(RevisionedMixin):
                 # if missing_fields:
                 #     error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
                 #     raise exceptions.ApplicationMissingFields(detail=error_text)
+                
+                for activity_type in  self.licence_type_data['activity_type']:
+                    activity_type["processing_status"]="With Officer"
                 self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
                 self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
+                # # print(type(select_group))
+                # print(select_group.members.all())
+                # print(select_group)
+
                 self.save()
                 # Create a log entry for the application
                 self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
-                # Create a log entry for the organisation
-                self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                # Create a log entry for the applicant (submitter, organisation or proxy)
+                if self.org_applicant:
+                    self.org_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                elif self.proxy_applicant:
+                    self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                else:
+                    self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                send_application_submit_email_notification(select_group.members.all(),self,request)
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
 
@@ -562,17 +604,32 @@ class Application(RevisionedMixin):
     def proposed_decline(self,request,details):
         with transaction.atomic():
             try:
-                if not self.can_assess(request.user):
-                    raise exceptions.ApplicationNotAuthorized()
-                if self.processing_status != 'with_assessor':
-                    raise ValidationError('You cannot propose to decline if it is not with assessor')
-
+                # if not self.can_assess(request.user):
+                #     raise exceptions.ApplicationNotAuthorized()
+                # if self.processing_status != 'with_assessor':
+                #     raise ValidationError('You cannot propose to decline if it is not with assessor')
+                activity_type=details.get('activity_type')
+                print(activity_type)
                 ApplicationDeclinedDetails.objects.update_or_create(
                     application = self,
-                    defaults={'officer':request.user,'reason':details.get('reason'),'cc_email':details.get('cc_email',None)}
+                    officer=request.user,
+                    reason=details.get('reason'),
+                    cc_email=details.get('cc_email',None),
+                    activity_type=details.get('activity_type')
                 )
-                self.proposed_decline_status = True
-                self.move_to_status(request,'with_approver')
+                # self.proposed_decline_status = True
+                # self.move_to_status(request,'with_approver')
+                for item in activity_type :
+                    print(item)
+                    for activity_type in  self.licence_type_data['activity_type']:
+                        # print(activity_type["id"])
+                        # print(details.get('activity_type'))
+                        if activity_type["id"]==item:
+                            print('Hello')
+                            activity_type["proposed_decline"]=True
+                            print(activity_type["proposed_decline"])
+                            self.save()
+
                 # Log application action
                 self.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 # Log entry for organisation
@@ -779,6 +836,7 @@ class ApplicationDeclinedDetails(models.Model):
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
+    activity_type=JSONField(blank=True, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'

@@ -125,6 +125,8 @@ def addToInterface(date,oracle_codes,system,override):
                 amount = D(0.0), 
                 customer_name = system.system_name,
                 description = system.percentage_account_code,
+                source = system.source,
+                method = system.method,
                 comments = '{} GST/{}'.format(system.percentage_account_code,date),
                 status = 'NEW',
                 status_date = today
@@ -148,6 +150,8 @@ def addToInterface(date,oracle_codes,system,override):
                         amount = remainder_amount,
                         customer_name = system.system_name,
                         description = k,
+                        source = system.source,
+                        method = system.method,
                         comments = '{} GST/{}'.format(k,date),
                         status = 'NEW',
                         status_date = today
@@ -160,6 +164,8 @@ def addToInterface(date,oracle_codes,system,override):
                         amount = v,
                         customer_name = system.system_name,
                         description = k,
+                        source = system.source,
+                        method = system.method,
                         comments = '{} GST/{}'.format(k,date),
                         status = 'NEW',
                         status_date = today

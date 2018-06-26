@@ -67,7 +67,9 @@ export default {
     },
     submit: function(){
         let vm = this;
-        
+        console.log(' SUBMIT VM FORM ');
+        let formData = new FormData(vm.form);
+        console.log(formData);
         swal({
             title: "Submit Application",
             text: "Are you sure you want to submit this application?",

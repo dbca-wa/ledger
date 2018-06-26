@@ -40,7 +40,7 @@
                                 <select class="form-control"  v-show="campsites.length < 1" >
                                     <option selected value="">Loading...</option>
                                 </select>
-                                <select class="form-control" name="campsite" v-if="campsites.length > 0" v-model="booking.campsites[0]" >
+                                <select class="form-control" name="campsite" v-if="campsites.length > 0" v-model="booking.campsites">
                                     <option value="">Select Campsite</option>
                                     <option v-for="campsite in campsites" :value="campsite.id">{{campsite.name}}</option>
                                 </select>
@@ -96,7 +96,7 @@ export default {
             return this.booking.campground;
         },
         selectedCampsite: function(){
-            return this.booking.campsites[0];
+            return this.booking.campsites;
         },
         showError: function() {
             var vm = this;
