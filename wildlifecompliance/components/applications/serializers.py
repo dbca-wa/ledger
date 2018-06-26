@@ -16,6 +16,7 @@ from wildlifecompliance.components.organisations.models import (
 from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer 
 from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
+from wildlifecompliance.components.users.serializers import UserAddressSerializer
 from rest_framework import serializers
 
 class ApplicationTypeSerializer(serializers.ModelSerializer):
@@ -36,6 +37,24 @@ class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
+
+
+class EmailUserWithAddressSerializer(serializers.ModelSerializer):
+    residential_address = UserAddressSerializer()
+
+    class Meta:
+        model = EmailUser
+        fields = ('id',
+                  'email',
+                  'first_name',
+                  'last_name',
+                  'dob',
+                  'title',
+                  'organisation',
+                  'residential_address',
+                  'email',
+                  'phone_number',
+                  'mobile_number',)
 
  
 
@@ -191,7 +210,8 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     customer_status = serializers.SerializerMethodField(read_only=True)
     id_check_status = serializers.SerializerMethodField(read_only=True)
     character_check_status = serializers.SerializerMethodField(read_only=True)
-    submitter = serializers.CharField(source='submitter.get_full_name')
+    #submitter = serializers.CharField(source='submitter.get_full_name')
+    submitter = EmailUserWithAddressSerializer()
     applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
     #
     assessor_mode = serializers.SerializerMethodField()
