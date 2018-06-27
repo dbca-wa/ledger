@@ -10,7 +10,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('disturbance', '0007_auto_20180618_1557'),
+        ('disturbance', '0008_auto_20180619_1626'),
     ]
 
     operations = [
@@ -19,14 +19,4 @@ class Migration(migrations.Migration):
             name='approval_level_document',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='approval_level_document', to='disturbance.ProposalDocument'),
         ),
-        migrations.AlterField(
-            model_name='proposalapprovergroup',
-            name='members',
-            field=models.ManyToManyField(to=settings.AUTH_USER_MODEL),
-        ),
-        migrations.AlterField(
-            model_name='proposalassessorgroup',
-            name='members',
-            field=models.ManyToManyField(to=settings.AUTH_USER_MODEL),
-        ), 
     ]
