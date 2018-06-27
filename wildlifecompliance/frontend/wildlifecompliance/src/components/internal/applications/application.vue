@@ -292,19 +292,19 @@
                             <div class="panel panel-default">
                                 <div class="panel-heading">
                                     <h3 class="panel-title">Identification
-                                        <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="detailsBody">
-                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                        <a class="panelClicker" :href="'#'+identificationBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="identificationBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                                         </a>
                                     </h3>
                                 </div>
-                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse in" :id="identificationBody">
+                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse" :id="identificationBody">
                                 </div>
-                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse in" :id="identificationBody">
+                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="identificationBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Identification</label>
-                                            <div class="col-sm-6">
-                                                <img width="100%" name="applicantIdentification" :src="application.submitter.identification">
+                                            <div class="col-sm-8">
+                                                <img width="100%" name="applicantIdentification" v-bind:src="application.submitter.identification.file" />
                                             </div>
                                           </div>
                                       </form>
