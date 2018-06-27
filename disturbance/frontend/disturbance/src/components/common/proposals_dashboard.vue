@@ -143,6 +143,9 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
+                dom: 'Bfrtip',
+                buttons:[
+                'excel', 'csv', ],
                 columns: [
                     {
                         data: "id",
@@ -274,6 +277,9 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
+                dom: 'Bfrtip',
+                buttons:[
+                'excel', 'csv', ],
                 columns: [
                     {
                         data: "id",
