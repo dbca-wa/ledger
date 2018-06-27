@@ -13,7 +13,7 @@
 
 <script>
 export default {
-    props:["type","name","value", "id", "help_text","label","readonly"]
+    props:["type","name","value", "id", "label","readonly"]
 }
 </script>
 

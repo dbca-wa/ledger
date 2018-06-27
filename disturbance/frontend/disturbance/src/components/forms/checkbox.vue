@@ -8,6 +8,10 @@
                 <template v-if="help_text">
                   <HelpText :help_text="help_text" />
                 </template>
+                <template v-if="help_text_url">
+                  <HelpTextUrl :help_text_url="help_text_url" />
+                </template>
+
             </div>
         </div>
     </div>
@@ -15,9 +19,10 @@
 
 <script>
 import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
-  props: ['name', 'label', 'value', 'id', 'help_text', 'conditions', "handleChange","readonly", "isRequired"],
-  components: {HelpText},
+  props: ['name', 'label', 'value', 'id', 'help_text', 'help_text_url', 'conditions', "handleChange","readonly", "isRequired"],
+  components: {HelpText, HelpTextUrl},
   data: function() {
     let vm = this;
     return {
