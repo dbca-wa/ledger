@@ -9,6 +9,15 @@
             <template v-if="help_text_assessor && assessorMode">
                 <HelpText :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
             </template> 
+
+            <template v-if="help_text_url">
+                <HelpTextUrl :help_text_url="help_text_url" />
+            </template>
+            <template v-if="help_text_assessor_url && assessorMode">
+                <HelpTextUrl :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
+            </template> 
+
+
             <template v-if="assessorMode && !assessor_readonly">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>

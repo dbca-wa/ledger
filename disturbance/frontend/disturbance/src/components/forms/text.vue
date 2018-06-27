@@ -8,6 +8,15 @@
             <template v-if="help_text_assessor && assessorMode">
                 <HelpText :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
             </template> 
+
+            <template v-if="help_text_url">
+                <HelpTextUrl :help_text_url="help_text_url" />
+            </template>
+            <template v-if="help_text_assessor_url && assessorMode">
+                <HelpTextUrl :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
+            </template> 
+
+
             <template v-if="assessorMode && !assessor_readonly">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
@@ -24,9 +33,10 @@
 <script>
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
-    props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly"],
-    components: {Comment, HelpText},
+    props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly", "help_text_url", "help_text_assessor_url"],
+    components: {Comment, HelpText, HelpTextUrl},
     data(){
         let vm = this;
         return {

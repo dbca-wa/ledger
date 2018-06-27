@@ -35,6 +35,11 @@ class SubmitSendNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/proposals/send_submit_notification.html'
     txt_template = 'disturbance/emails/proposals/send_submit_notification.txt'
 
+class ExternalSubmitSendNotificationEmail(TemplateEmailBase):
+    subject = 'A new Proposal has been submitted.'
+    html_template = 'disturbance/emails/proposals/send_external_submit_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_external_submit_notification.txt'
+
 class ApproverDeclineSendNotificationEmail(TemplateEmailBase):
     subject = 'A new Proposal has been declined.'
     html_template = 'disturbance/emails/proposals/send_approver_decline_notification.html'
@@ -89,6 +94,21 @@ def send_submit_email_notification(request, proposal):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
+def send_external_submit_email_notification(request, proposal):
+    email = ExternalSubmitSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    context = {
+        'proposal': proposal,
+        'submitter': proposal.submitter.get_full_name(),
+        'url': url
+    }
+
+    msg = email.send(proposal.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
 
 def send_approver_decline_email_notification(reason, request, proposal):
     email = ApproverDeclineSendNotificationEmail()

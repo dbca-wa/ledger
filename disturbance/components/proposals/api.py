@@ -93,9 +93,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if is_internal(user): #user.is_authenticated():
+        if is_internal(self.request): #user.is_authenticated():
             return Proposal.objects.all()
-        elif is_customer(user):
+        elif is_customer(self.request):
             user_orgs = [org.id for org in user.disturbance_organisations.all()]
             queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             return queryset

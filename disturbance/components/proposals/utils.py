@@ -18,7 +18,9 @@ def create_data_from_form(schema, post_data, file_data, post_data_index=None,spe
         comment_fields_search = CommentDataSearch()
     try:
         for item in schema:
+            #import ipdb; ipdb.set_trace()
             data.update(_create_data_from_item(item, post_data, file_data, 0, ''))
+            #_create_data_from_item(item, post_data, file_data, 0, '')
             special_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
             if assessor_data:
                 assessor_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
@@ -46,9 +48,11 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     else:
         raise Exception('Missing name in item %s' % item['label'])
 
+    #import ipdb; ipdb.set_trace()
     if 'children' not in item:
         if item['type'] in ['checkbox' 'declaration']:
             #item_data[item['name']] = post_data[item['name']]
+            #import ipdb; ipdb.set_trace()
             item_data[item['name']] = extended_item_name in post_data
         elif item['type'] == 'file':
             if extended_item_name in file_data:
@@ -68,6 +72,7 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
         if 'repetition' in item:
             item_data = generate_item_data(extended_item_name,item,item_data,post_data,file_data,len(post_data[item['name']]),suffix)
         else:
+            #import ipdb; ipdb.set_trace()
             item_data = generate_item_data(extended_item_name, item, item_data, post_data, file_data,1,suffix)
 
 
@@ -76,11 +81,13 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
             for child in item['conditions'][condition]:
                 item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
 
+    #import ipdb; ipdb.set_trace()
     return item_data
 
 def generate_item_data(item_name,item,item_data,post_data,file_data,repetition,suffix):
     item_data_list = []
     for rep in xrange(0, repetition):
+        #import ipdb; ipdb.set_trace()
         child_data = {}
         for child_item in item.get('children'):
             child_data.update(_create_data_from_item(child_item, post_data, file_data, 0,
