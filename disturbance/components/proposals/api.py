@@ -28,7 +28,7 @@ from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from disturbance.components.proposals.utils import save_proponent_data,save_assessor_data
-from disturbance.components.proposals.models import searchKeyWords, search_reference
+from disturbance.components.proposals.models import searchKeyWords, search_reference, ProposalUserAction
 from disturbance.utils import missing_required_fields, search_tenure
 
 from django.urls import reverse
@@ -447,6 +447,25 @@ class ProposalViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
+    def approval_level_document(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance = instance.assing_approval_level_document(request)
+            serializer = InternalProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
     def final_approval(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -603,6 +622,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 #
 #            return redirect(reverse('external'))
 #        except serializers.ValidationError:
+
 #            print(traceback.print_exc())
 #            raise
 #        except ValidationError as e:

@@ -40,6 +40,7 @@
                         <!-- <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/> -->
                         <input type="submit" class="btn btn-primary" value="Submit"/>
                         <!-- hidden 'save_and_continue_btn' used to allow File (file.vue component) to trigger save -->
+                        <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                       </p>                      
                     </div>
                     <div v-else class="container">
@@ -68,6 +69,7 @@ export default {
       "loading": [],
       form: null,
       amendment_request: [],
+      //isDataSaved: false,
       proposal_readonly: true,
       hasAmendmentRequest: false,
       newText: "",
@@ -99,6 +101,7 @@ export default {
     save: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
+      console.log(formData);
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{
           swal(
             'Saved',
@@ -143,6 +146,20 @@ export default {
       return newText;
 
     },
+
+    leaving: function(e) {
+      let vm = this;
+      var dialogText = 'You have some unsaved changes.';
+      if (!vm.proposal_readonly){
+        e.returnValue = dialogText;
+        return dialogText;
+      }
+      else{
+        return null;
+      }
+
+    },
+    
 
     highlight_missing_fields: function(missing_fields){
         for (var i = 0; i < missing_fields.length; i++) {
@@ -243,8 +260,11 @@ export default {
   mounted: function() {
     let vm = this;
     vm.form = document.forms.new_proposal;
-    
+    window.addEventListener('beforeunload', vm.leaving);
+    window.addEventListener('onblur', vm.leaving);
   },
+  
+
   beforeRouteEnter: function(to, from, next) {
     if (to.params.proposal_id) {
       let vm = this;
@@ -261,7 +281,7 @@ export default {
                       vm.setAmendmentData(res.body);
                   
                 },
-              err => {
+              err => { 
                         console.log(err);
                   });
               });

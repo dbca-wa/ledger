@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import os
 import datetime
 from django.db import models,transaction
 from django.dispatch import receiver
@@ -311,6 +312,7 @@ class Proposal(RevisionedMixin):
     #tenure = models.ForeignKey(Tenure, null=True, blank=True)
     application_type = models.ForeignKey(ApplicationType)
     approval_level = models.CharField('Activity matrix approval level', max_length=255,null=True,blank=True)
+    approval_level_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='approval_level_document')
 
     class Meta:
         app_label = 'disturbance'
@@ -626,6 +628,32 @@ class Proposal(RevisionedMixin):
                         self.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
                         # Create a log entry for the organisation
                         self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
+            except:
+                raise 
+
+    def assing_approval_level_document(self, request):
+        with transaction.atomic():
+            try:
+                if request.data['approval_level_document'] != 'null':
+                    try:
+                        document = self.documents.get(input_name=str(request.data['approval_level_document']))
+                    except ProposalDocument.DoesNotExist:
+                        document = self.documents.get_or_create(input_name=str(request.data['approval_level_document']))[0]
+                    document.name = str(request.data['approval_level_document'])   
+                    if document._file and os.path.isfile(document._file.path):
+                        os.remove(document._file.path)
+                    document._file = request.data['approval_level_document']
+                    document.save()
+                    d=ProposalDocument.objects.get(id=document.id)
+                    self.approval_level_document = d
+                else:
+                    self.approval_level_document = None
+                self.save()
+                #instance.save()
+                self.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
+                # Create a log entry for the organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)            
+                return self
             except:
                 raise
 
@@ -1144,6 +1172,7 @@ class ProposalUserAction(UserAction):
     ACTION_UPDATE_APPROVAL_ = "Update Approval for proposal {}"
     ACTION_EXPIRED_APPROVAL_ = "Expire Approval for proposal {}"
     ACTION_DISCARD_PROPOSAL = "Discard proposal {}"
+    ACTION_APPROVAL_LEVEL_DOCUMENT = "Assign Approval level document {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"

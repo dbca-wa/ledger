@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import os
 
 from django.db import models
 from django.dispatch import receiver
@@ -180,7 +181,8 @@ class Document(models.Model):
 
     @property
     def path(self):
-        return self.file.path
+        #return self.file.path
+        return self._file.path
 
     @property
     def filename(self):
