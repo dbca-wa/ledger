@@ -66,6 +66,7 @@ class LicenceClassSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'short_name',
             'class_status',
             'activity_type'
             
