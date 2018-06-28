@@ -108,8 +108,8 @@ class DefaultActivityType(models.Model):
         verbose_name = 'Licenced category - licenced activity mapping'
         verbose_name_plural = 'Licenced category - licenced activity mappings'
 
-    # def __str__(self):
-    #     return self.licence_class
+    def __str__(self):
+        return '{} - {}'.format(self.licence_class,self.activity_type)
     
 
 class DefaultActivity(models.Model):
@@ -122,8 +122,8 @@ class DefaultActivity(models.Model):
         verbose_name = 'Licenced activity - purpose mapping'
         verbose_name_plural = 'Licenced activity - purpose mappings'
 
-    # def __str__(self):
-    #     return self.category
+    def __str__(self):
+        return '{} - {}'.format(self.activity_type,self.activity)
 
 
 class WildlifeLicence(models.Model):
