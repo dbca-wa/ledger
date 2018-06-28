@@ -97,6 +97,14 @@ class WildlifeLicenceClass(LicenceType):
         verbose_name = 'Licence category'
         verbose_name_plural = 'Licence categories'
 
+    @property
+    # override LicenceType display_name to display name first instead of short_name
+    def display_name(self):
+        result = self.name or self.short_name
+        if self.replaced_by is None:
+            return result
+        else:
+            return '{} (V{})'.format(result, self.version)
 
 class DefaultActivityType(models.Model):
     activity_type = models.ForeignKey(WildlifeLicenceActivityType)
