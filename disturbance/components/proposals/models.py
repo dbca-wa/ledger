@@ -977,7 +977,9 @@ class Proposal(RevisionedMixin):
                 previous_proposal = Proposal.objects.get(id=self.id)
                 proposal = clone_proposal_with_status_reset(previous_proposal)
                 proposal.proposal_type = 'renewal'
-                proposal.schema = ProposalType.objects.first().schema
+                #proposal.schema = ProposalType.objects.first().schema
+                ptype = ProposalType.objects.filter(name=proposal.application_type).latest('version')
+                proposal.schema = ptype.schema
                 proposal.submitter = request.user
                 proposal.previous_application = self
                 # Create a log entry for the proposal
@@ -1006,7 +1008,9 @@ class Proposal(RevisionedMixin):
                 previous_proposal = Proposal.objects.get(id=self.id)
                 proposal = clone_proposal_with_status_reset(previous_proposal)
                 proposal.proposal_type = 'amendment'
-                proposal.schema = ProposalType.objects.first().schema
+                #proposal.schema = ProposalType.objects.first().schema
+                ptype = ProposalType.objects.filter(name=proposal.application_type).latest('version')
+                proposal.schema = ptype.schema
                 proposal.submitter = request.user
                 proposal.previous_application = self
                 # Create a log entry for the proposal
