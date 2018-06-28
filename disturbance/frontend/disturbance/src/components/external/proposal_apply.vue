@@ -76,7 +76,7 @@
                                 <label for="" class="control-label" >Proposal Type</label>
                                 <div class="col-sm-12">
                                     <div class="form-group">
-                                        <select v-model="selected_application_id" @change="chainedSelectAppType(selected_application_id)">
+                                        <select class="form-control" style="width:40%" v-model="selected_application_id" @change="chainedSelectAppType(selected_application_id)">
 											<option value="" selected disabled>Select proposal type</option>
                                             <option v-for="application_type in application_types" :value="application_type.value">
                                                 {{ application_type.text }}
@@ -90,7 +90,7 @@
                                 <label for="" class="control-label" >Region</label>
                                 <div class="col-sm-12">
                                     <div class="form-group">
-                                        <select v-model="selected_region" @change="chainedSelectDistricts(selected_region)">
+                                        <select v-model="selected_region" class="form-control" style="width:40%" @change="chainedSelectDistricts(selected_region)">
 											<option value="" selected disabled>Select region</option>
                                             <option v-for="region in regions" :value="region.value">
                                                 {{ region.text }}
@@ -104,7 +104,7 @@
                                 <label for="" class="control-label" >District</label>
                                 <div class="col-sm-12">
                                     <div class="form-group">
-                                        <select  v-model="selected_district">
+                                        <select  v-model="selected_district" class="form-control" style="width:40%">
 											<option value="" selected disabled>Select district</option>
                                             <option v-for="district in districts" :value="district.value">
                                                 {{ district.text }}
@@ -119,7 +119,7 @@
 									<label for="" class="control-label" >Activity Type</label>
 									<div class="col-sm-12">
 										<div class="form-group">
-											<select v-model="selected_activity" @change="chainedSelectSubActivities1(selected_activity)">
+											<select v-model="selected_activity" @change="chainedSelectSubActivities1(selected_activity)" class="form-control" style="width:40%">
 												<option value="" selected disabled>Select activity</option>
 												<option v-for="activity in activities" :value="activity.value">
 													{{ activity.text }}
@@ -133,7 +133,7 @@
 									<label for="" class="control-label" >Sub Activity 1</label>
 									<div class="col-sm-12">
 										<div class="form-group">
-											<select v-model="selected_sub_activity1" @change="chainedSelectSubActivities2(selected_sub_activity1)">
+											<select v-model="selected_sub_activity1" @change="chainedSelectSubActivities2(selected_sub_activity1)" class="form-control" style="width:40%">
 												<option value="" selected disabled>Select sub_activity 1</option>
 												<option v-for="sub_activity1 in sub_activities1" :value="sub_activity1.value">
 													{{ sub_activity1.text }}
@@ -147,7 +147,7 @@
 									<label for="" class="control-label" >Sub Activity 2</label>
 									<div class="col-sm-12">
 										<div class="form-group">
-											<select v-model="selected_sub_activity2" @change="chainedSelectCategories(selected_sub_activity2)">
+											<select v-model="selected_sub_activity2" @change="chainedSelectCategories(selected_sub_activity2)" class="form-control" style="width:40%">
 												<option value="" selected disabled>Select sub_activity 2</option>
 												<option v-for="sub_activity2 in sub_activities2" :value="sub_activity2.value">
 													{{ sub_activity2.text }}
@@ -161,7 +161,7 @@
 									<label for="" class="control-label" >Category</label>
 									<div class="col-sm-12">
 										<div class="form-group">
-											<select v-model="selected_category" @change="get_approval_level(selected_category)">
+											<select v-model="selected_category" @change="get_approval_level(selected_category)" class="form-control" style="width:40%">
 												<option value="" selected disabled>Select category</option>
 												<option v-for="category in categories" :value="category.value" :name="category.approval">
 													{{ category.text }}

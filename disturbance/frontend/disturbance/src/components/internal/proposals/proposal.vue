@@ -658,6 +658,7 @@ export default {
             let vm = this;
             //vm.save_wo();
             //let vm = this;
+            if(vm.proposal.processing_status == 'With Assessor' && status == 'with_assessor_requirements'){
             let formData = new FormData(vm.form);
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{ //save Proposal before changing status so that unsaved assessor data is saved.
             
@@ -685,9 +686,12 @@ export default {
               
           },err=>{
           });
+        }
+
+        else{
 
 
-         /*   let data = {'status': status}
+         let data = {'status': status}
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
                 emulateJSON:true,
             })
@@ -707,7 +711,8 @@ export default {
                     helpers.apiVueResourceError(error),
                     'error'
                 )
-            });*/
+            });
+            }
         },
         fetchDeparmentUsers: function(){
             let vm = this;
