@@ -5,7 +5,7 @@ import zlib
 
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.contrib.postgres.fields import JSONField
-from django.db import models, IntegrityError
+from django.db import models, IntegrityError, transaction
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
@@ -309,6 +309,13 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             return self.first_name.split(' ')[0]
         return self.email
 
+    def upload_identification(self, request):
+        with transaction.atomic():
+            document = Document(file=request.data.dict()['identification'])
+            document.save()
+            self.identification = document
+            self.save()
+
     dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"
     dummy_email_suffix_len = len(dummy_email_suffix)
 
@@ -437,6 +444,7 @@ class EmailUserAction(UserAction):
     ACTION_PERSONAL_DETAILS_UPDATE = "User {} Personal Details Updated"
     ACTION_CONTACT_DETAILS_UPDATE = "User {} Contact Details Updated"
     ACTION_POSTAL_ADDRESS_UPDATE = "User {} Postal Address Updated"
+    ACTION_ID_UPDATE = "User {} Identification Updated"
 
     @classmethod
     def log_action(cls, emailuser, action, user):

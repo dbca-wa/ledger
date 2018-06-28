@@ -1,5 +1,5 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,Address,Document
 from wildlifecompliance.components.applications.models import (
                                     ApplicationType,
                                     Application,
@@ -16,6 +16,7 @@ from wildlifecompliance.components.organisations.models import (
 from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer 
 from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
+from wildlifecompliance.components.users.serializers import UserAddressSerializer,DocumentSerializer
 from rest_framework import serializers
 
 class ApplicationTypeSerializer(serializers.ModelSerializer):
@@ -36,6 +37,26 @@ class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
+
+
+class EmailUserAppViewSerializer(serializers.ModelSerializer):
+    residential_address = UserAddressSerializer()
+    identification = DocumentSerializer()
+
+    class Meta:
+        model = EmailUser
+        fields = ('id',
+                  'email',
+                  'first_name',
+                  'last_name',
+                  'dob',
+                  'title',
+                  'organisation',
+                  'residential_address',
+                  'identification',
+                  'email',
+                  'phone_number',
+                  'mobile_number',)
 
  
 
@@ -191,7 +212,8 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     customer_status = serializers.SerializerMethodField(read_only=True)
     id_check_status = serializers.SerializerMethodField(read_only=True)
     character_check_status = serializers.SerializerMethodField(read_only=True)
-    submitter = serializers.CharField(source='submitter.get_full_name')
+    #submitter = serializers.CharField(source='submitter.get_full_name')
+    submitter = EmailUserAppViewSerializer()
     applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
     #
     assessor_mode = serializers.SerializerMethodField()
