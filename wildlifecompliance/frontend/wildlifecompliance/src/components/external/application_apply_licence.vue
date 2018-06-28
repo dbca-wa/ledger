@@ -35,9 +35,9 @@
                                                         <input type="checkbox" ref="selected_activity_type" name ="activity_type" :value="type.id" :id = "type.id" v-model="category.activity_type[index1].selected" @click="handleActivityTypeCheckboxChange(index,index1)"> {{type.short_name}}
 
                                                         <div v-if="type.selected">
-                                                            <div v-for="(activity,index2) in type.activity" class="checkbox">
+                                                            <div v-for="(activity,index2) in type.activity" class="checkbox activity-inline">
                                                                 
-                                                                <div class ="col-sm-6">
+                                                                <div class ="col-sm-12">
                                                                     <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected">{{activity.name}}
                                                                 </div>
 
@@ -228,5 +228,8 @@ export default {
 <style lang="css">
 div.margin-left-20 {
     margin-left: 20px;
+}
+div.activity-inline {
+    display: inline-block;
 }
 </style>
