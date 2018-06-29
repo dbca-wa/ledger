@@ -544,11 +544,7 @@ export default {
                 emulateJSON:true,
                 })
                 .then((response) => {
-                    swal(
-                        'Reissue',
-                        'Your approval has been reissued',
-                        'success'
-                    )
+                    
                     vm.$router.push({
                     name:"internal-proposal",
                     params:{proposal_id:proposal_id}

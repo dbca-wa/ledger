@@ -459,8 +459,36 @@ export default {
         },
         sendReferral: function(){
             let vm = this;
+            let formData = new FormData(vm.form); //save data before completing referral
+            vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+                let data = {'email':vm.selected_referral};
+                vm.sendingReferral = true;
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,(vm.referral.id+'/send_referral')),JSON.stringify(data),{
+                emulateJSON:true
+                }).then((response) => {
+                vm.sendingReferral = false;
+                vm.referral = response.body;
+                vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
+                swal(
+                    'Referral Sent',
+                    'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
+                    'success'
+                )
+             }, (error) => {
+                console.log(error);
+                swal(
+                    'Referral Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+                vm.sendingReferral = false;
+                });
+            
+             
+             },err=>{
+             });
 
-            let data = {'email':vm.selected_referral};
+            /*let data = {'email':vm.selected_referral};
             vm.sendingReferral = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,(vm.referral.id+'/send_referral')),JSON.stringify(data),{
                 emulateJSON:true
@@ -481,7 +509,7 @@ export default {
                     'error'
                 )
                 vm.sendingReferral = false;
-            });
+            }); */
             
         },
         completeReferral:function(){
@@ -494,7 +522,10 @@ export default {
                 showCancelButton: true,
                 confirmButtonText: 'Submit'
             }).then(() => { 
-                vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
+                let formData = new FormData(vm.form);
+                vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+                    
+                    vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
                     vm.referral = res.body;
                     vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
                 },
@@ -505,6 +536,23 @@ export default {
                         'error'
                     )
                 });
+                
+                 },err=>{
+                 });
+
+               /* vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
+                    vm.referral = res.body;
+                    vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
+                },
+                error => {
+                    swal(
+                        'Referral Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                    )
+                }); */
+
+
             },(error) => {
             });
         }
