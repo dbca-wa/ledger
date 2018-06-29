@@ -52,6 +52,9 @@ export default {
                     "dataSrc": ''
                 },
                 order: [],
+                dom: 'Bfrtip',
+                buttons:[
+                'excel', 'csv', ], //'copy'
                 columns: [
                     {
                         data: "requirement",
@@ -59,7 +62,7 @@ export default {
                         'render': function (value) {
                             var ellipsis = '...',
                                 truncated = _.truncate(value, {
-                                    length: 50,
+                                    length: 25,
                                     omission: ellipsis,
                                     separator: ' '
                                 }),

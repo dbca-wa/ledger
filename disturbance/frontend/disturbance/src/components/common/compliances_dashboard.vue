@@ -60,7 +60,7 @@ a<template id="proposal_dashboard">
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-lg-12">
+                        <div class="col-lg-12" style="margin-top:25px;">
                             <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
                         </div>
                     </div>
@@ -137,6 +137,9 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
+                dom: 'Bfrtip',
+                buttons:[
+                'excel', 'csv', ],
                 columns: [
                     {
                         data: "id",

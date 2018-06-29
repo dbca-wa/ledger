@@ -37,7 +37,7 @@
                         <!-- <input type="submit" class="btn btn-primary" value="Save and Exit"/> -->
                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                        <!-- <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/> -->
+                        <!--<input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/> -->
                         <input type="submit" class="btn btn-primary" value="Submit"/>
                         <!-- hidden 'save_and_continue_btn' used to allow File (file.vue component) to trigger save -->
                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
@@ -72,6 +72,7 @@ export default {
       //isDataSaved: false,
       proposal_readonly: true,
       hasAmendmentRequest: false,
+      submitting: false,
       newText: "",
       pBody: 'pBody',
     }
@@ -150,7 +151,7 @@ export default {
     leaving: function(e) {
       let vm = this;
       var dialogText = 'You have some unsaved changes.';
-      if (!vm.proposal_readonly){
+      if (!vm.proposal_readonly && !vm.submitting){
         e.returnValue = dialogText;
         return dialogText;
       }
@@ -171,6 +172,7 @@ export default {
 
     submit: function(){
         let vm = this;
+        vm.submitting = true;
 
         swal({
             title: "Submit Proposal",

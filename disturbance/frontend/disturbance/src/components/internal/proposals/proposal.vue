@@ -659,6 +659,7 @@ export default {
             let vm = this;
             //vm.save_wo();
             //let vm = this;
+            if(vm.proposal.processing_status == 'With Assessor' && status == 'with_assessor_requirements'){
             let formData = new FormData(vm.form);
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{ //save Proposal before changing status so that unsaved assessor data is saved.
             
@@ -686,9 +687,12 @@ export default {
               
           },err=>{
           });
+        }
+
+        else{
 
 
-         /*   let data = {'status': status}
+         let data = {'status': status}
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
                 emulateJSON:true,
             })
@@ -708,7 +712,8 @@ export default {
                     helpers.apiVueResourceError(error),
                     'error'
                 )
-            });*/
+            });
+            }
         },
         fetchDeparmentUsers: function(){
             let vm = this;
@@ -779,8 +784,9 @@ export default {
         },
         sendReferral: function(){
             let vm = this;
-            vm.save_wo();
-
+            //vm.save_wo();
+            let formData = new FormData(vm.form);
+          vm.$http.post(vm.proposal_form_url,formData).then(res=>{
             let data = {'email':vm.selected_referral};
             vm.sendingReferral = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
@@ -806,6 +812,36 @@ export default {
                 )
                 vm.sendingReferral = false;
             });
+              
+          },err=>{
+          });
+        
+
+          /*  let data = {'email':vm.selected_referral};
+            vm.sendingReferral = true;
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
+                emulateJSON:true
+            }).then((response) => {
+                vm.sendingReferral = false;
+                vm.original_proposal = helpers.copyObject(response.body);
+                vm.proposal = response.body;
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                swal(
+                    'Referral Sent',
+                    'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
+                    'success'
+                )
+                $(vm.$refs.department_users).val(null).trigger("change");
+                vm.selected_referral = '';
+            }, (error) => {
+                console.log(error);
+                swal(
+                    'Referral Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+                vm.sendingReferral = false;
+            }); */
         },
         remindReferral:function(r){
             let vm = this;
