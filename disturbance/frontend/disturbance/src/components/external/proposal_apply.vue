@@ -31,7 +31,7 @@
                                         -->
                                     </div>
                                     <div v-else>
-                                        <p style="color:blue"> You cannot add a New Disturbance because you do not have an associated Organisation. First add an Organisation. </p>
+                                        <p style="color:red"> You cannot add a New Disturbance because you do not have an associated Organisation. First add an Organisation. </p>
                                     </div>
                                 </div>
                             </div>
