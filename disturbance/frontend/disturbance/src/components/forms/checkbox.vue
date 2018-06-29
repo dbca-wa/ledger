@@ -3,11 +3,15 @@
         <div class="form-group">
             <div class="checkbox">
                 <label :id="id">
-                    <input :disabled="readonly" ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" :required="isRequired"/>
-                    {{ label }}
+                <input :onclick="isClickable" ref="Checkbox" :name="name" type="checkbox" data-parsley-required :data-conditions="options" @change="handleChange" :checked="isChecked" :required="isRequired"/>
+                {{ label }}
                 <template v-if="help_text">
                   <HelpText :help_text="help_text" />
                 </template>
+                <template v-if="help_text_url">
+                  <HelpTextUrl :help_text_url="help_text_url" />
+                </template>
+
             </div>
         </div>
     </div>
@@ -15,9 +19,16 @@
 
 <script>
 import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
-  props: ['name', 'label', 'value', 'id', 'help_text', 'conditions', "handleChange","readonly", "isRequired"],
-  components: {HelpText},
+  props: ['name', 'label', 'value', 'id', 'help_text', 'help_text_url', 'conditions', "handleChange","readonly", "isRequired"],
+  components: {HelpText, HelpTextUrl},
+  data: function() {
+    let vm = this;
+    return {
+      isClickable: "return true;",
+	}
+  },
   computed: {
     isChecked: function() {
       return (this.value == 'on');
@@ -33,18 +44,13 @@ export default {
           var e = document.createEvent('HTMLEvents');
           e.initEvent('change', true, true);
 
-          var disabledStatus = input.disabled;
-          try {
-              /* Firefox will not fire events for disabled widgets, so (temporarily) enabling them */
-              if(disabledStatus) {
-                  input.disabled = false;
-              }
-              input.dispatchEvent(e);
-          } finally {
-              if(disabledStatus) {
-                  input.disabled = true;
-              }
-          }
+          /* replacing input.disabled with onclick because disabled checkbox does NOT get posted with form on submit */
+          if(vm.readonly) {
+              vm.isClickable = "return false;";
+          } else {
+              vm.isClickable = "return true;";
+		  }
+          input.dispatchEvent(e);
       }
   }
 }

@@ -48,11 +48,10 @@ class ApprovalViewSet(viewsets.ModelViewSet):
     serializer_class = ApprovalSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        if is_internal(user):
+        if is_internal(self.request):
             return Approval.objects.all()
-        elif is_customer(user):
-            user_orgs = [org.id for org in user.disturbance_organisations.all()]
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in self.request.user.disturbance_organisations.all()]
             queryset =  Approval.objects.filter(applicant_id__in = user_orgs)
             return queryset
         return Approval.objects.none()

@@ -412,8 +412,6 @@ class DTReferralSerializer(serializers.ModelSerializer):
             'id',
             'region',
             'activity',
-            'tenure',
-            'approval_level',
             'title',
             'applicant',
             'submitter',

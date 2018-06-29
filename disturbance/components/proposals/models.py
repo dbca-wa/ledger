@@ -22,7 +22,7 @@ from disturbance.components.main.models import CommunicationsLogEntry, UserActio
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
-from disturbance.components.proposals.email import send_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification
+from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification
 import copy
 
 
@@ -431,7 +431,6 @@ class Proposal(RevisionedMixin):
         return qs
 
     def __assessor_group(self):
-        #import ipdb; ipdb.set_trace()
         # TODO get list of assessor groups based on region and activity
         if self.region and self.activity:
             try:
@@ -469,8 +468,8 @@ class Proposal(RevisionedMixin):
         missing_fields = []
         required_fields = {
             'region':'Region/District',
-            'title': 'Title',
-            'activity': 'Activity'
+        #    'title': 'Title',
+        #    'activity': 'Activity'
         }
         #import ipdb; ipdb.set_trace()
         for k,v in required_fields.items():
@@ -482,6 +481,7 @@ class Proposal(RevisionedMixin):
     @property
     def assessor_recipients(self):
         recipients = []
+        #import ipdb; ipdb.set_trace()
         try:
             recipients = ProposalAssessorGroup.objects.get(region=self.region).members_email
         except:
@@ -557,6 +557,7 @@ class Proposal(RevisionedMixin):
                 self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
 
                 send_submit_email_notification(request, self)
+                send_external_submit_email_notification(request, self)
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 

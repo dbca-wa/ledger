@@ -51,12 +51,11 @@ class ComplianceViewSet(viewsets.ModelViewSet):
     queryset = Compliance.objects.none()
 
     def get_queryset(self):
-        user = self.request.user
-        if is_internal(user):
+        if is_internal(self.request):
             return Compliance.objects.all()
-        elif is_customer(user):
-            user_orgs = [org.id for org in user.disturbance_organisations.all()]
-            queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = user) )
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in self.request.user.disturbance_organisations.all()]
+            queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) )
             return queryset
         return Compliance.objects.none()
 

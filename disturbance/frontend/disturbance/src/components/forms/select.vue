@@ -3,15 +3,20 @@
         <div class="form-group">
             <label :id="id">{{ label }}</label>
 
-       
             <template v-if="help_text">
-                
                 <HelpText :help_text="help_text" />
             </template>
             <template v-if="help_text_assessor && assessorMode">
-                
                 <HelpText  :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
             </template> 
+
+            <template v-if="help_text_url">
+                <HelpText :help_text_url="help_text_url" />
+            </template>
+            <template v-if="help_text_assessor_url && assessorMode">
+                <HelpTextUrl  :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
+            </template> 
+
 
             <template v-if="assessorMode && !assessor_readonly">
                 <template v-if="!showingComment">
@@ -62,6 +67,7 @@ require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
     props:{
         'name':String,
@@ -70,6 +76,8 @@ export default {
         'isRequired': String,
         'help_text':String,
         'help_text_assessor':String,
+        'help_text_url':String,
+        'help_text_assessor_url':String,
         "value":[String,Array],
         "comment_value": String,
         "assessor_readonly": Boolean,
@@ -103,7 +111,7 @@ export default {
             return JSON.stringify(this.conditions);
         },
     },
-    components: { Comment, HelpText, },
+    components: { Comment, HelpText, HelpTextUrl,},
     methods:{
         toggleComment(){
             this.showingComment = ! this.showingComment;

@@ -16,20 +16,26 @@
 
                             <div class="col-sm-12">
                                 <div class="form-group">
-                                    <div v-for="org in profile.disturbance_organisations" class="radio">
-                                        <label>
-                                          <input type="radio" name="behalf_of_org" v-model="behalf_of"  :value="org.id"> On behalf of {{org.name}}
-                                        </label>
+                                    <div v-if="profile.disturbance_organisations.length > 0">
+                                        <div v-for="org in profile.disturbance_organisations" class="radio">
+                                            <label>
+                                              <input type="radio" name="behalf_of_org" v-model="behalf_of"  :value="org.id"> On behalf of {{org.name}}
+                                            </label>
+                                        </div>
+                                        <!--
+                                        <div class="radio">
+                                            <label class="radio-inline">
+                                              <input type="radio" name="behalf_of_org" v-model="behalf_of"  value="other" > On behalf of an organisation (as an authorised agent)
+                                            </label>
+                                        </div>
+                                        -->
                                     </div>
-                                    <!--
-                                    <div class="radio">
-                                        <label class="radio-inline">
-                                          <input type="radio" name="behalf_of_org" v-model="behalf_of"  value="other" > On behalf of an organisation (as an authorised agent)
-                                        </label>
+                                    <div v-else>
+                                        <p style="color:red"> You cannot add a New Disturbance because you do not have an associated Organisation. First add an Organisation. </p>
                                     </div>
-                                    -->
                                 </div>
                             </div>
+                            <!--
                             <div v-if="behalf_of == 'other'" class="col-sm-12">
                                 <div class="row">
                                     <div class="form-group col-sm-5">
@@ -60,10 +66,11 @@
                                     </div>
                                 </div>
                             </div>
+                            -->
                         </div>
                     </div>
 
-                    <div class="panel panel-default">
+                    <div v-if="behalf_of != ''" class="panel panel-default">
                         <div class="panel-heading">
                             <h3 class="panel-title">Apply for
                                 <a :href="'#'+pBody2" data-toggle="collapse"  data-parent="#userInfo2" expanded="true" :aria-controls="pBody2">

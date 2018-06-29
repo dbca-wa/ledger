@@ -4,12 +4,17 @@
             <label :id="id">{{ label }}</label>
             
             <template v-if="help_text">
-                
                 <HelpText :help_text="help_text" />
             </template>
             <template v-if="help_text_assessor && assessorMode">
-                
                 <HelpText  :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
+            </template> 
+
+            <template v-if="help_text_url">
+                <HelpTextUrl :help_text_url="help_text_url" />
+            </template>
+            <template v-if="help_text_assessor_url && assessorMode">
+                <HelpTextUrl :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
             </template> 
 
 
@@ -36,14 +41,15 @@ import moment from 'moment'
 import datetimepicker from 'datetimepicker'
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
-    props: ['name', 'label', 'id', 'readonly', 'help_text', 'help_text_assessor', 'assessorMode', 'value', 'conditions', "handleChange","comment_value","assessor_readonly", "isRequired"],
+    props: ['name', 'label', 'id', 'readonly', 'help_text', 'help_text_assessor', 'assessorMode', 'value', 'conditions', "handleChange","comment_value","assessor_readonly", "isRequired", 'help_text_url', 'help_text_assessor_url'],
     data(){
         return {
             showingComment: false
         }
     },
-    components: {Comment, HelpText},
+    components: {Comment, HelpText, HelpTextUrl},
     computed: {
         isChecked: function() {
         //TODO return value from database

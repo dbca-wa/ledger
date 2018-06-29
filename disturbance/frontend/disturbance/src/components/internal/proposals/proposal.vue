@@ -34,10 +34,10 @@
             </div>
 
 
+            <!--
             <div class="row" v-if="canSeeSubmission">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                       <!--History {{proposal.get_history}}-->
                        History
                     </div>
                                     <table class="table small-table">
@@ -52,6 +52,7 @@
                                     </table>
                 </div>
             </div>
+            -->
 
             <div class="row">
                 <div class="panel panel-default">
