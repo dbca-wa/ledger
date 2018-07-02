@@ -160,7 +160,7 @@
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
                                         </div> -->
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -232,6 +232,7 @@
                     <ul class="nav nav-tabs">
                         <li class="active"><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
                         <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
+                        <li><a data-toggle="tab" :href="'#'+sendToAssessorTab">Send to Assessor</a></li>
                     </ul>
                     <div class="tab-content">
                     <div :id="applicantTab" class="tab-pane fade in active">
@@ -394,7 +395,65 @@
                             </form>
                         </div>
                     </div>
+                    
+
                 </div>
+                <div :id="sendToAssessorTab" class="tab-pane fade">
+                    <div class="col-md-12">
+                        <div>
+                        <div v-for="item in application.licence_type_data">
+                            <ul class="nav nav-tabs" >
+                                <li v-for="item1 in item"><a v-if="item1.name" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}</a></li>
+                            </ul>
+                            <div  class="tab-content">
+                                <!-- <div id="1" class="tab-pane fade ">
+                                            <p><strong>Hello</strong></p>
+                                </div> -->
+                                        <div v-for="(item1,index) in item" v-if="item1.name && index==0" :id="item1.id" class="tab-pane fade active in">
+                                            <div class="col-md-12">
+                                                <div class="row">
+                                                    <div class="panel panel-default">
+                                                        <div class="panel-heading">
+                                                            <h3 class="panel-title">Send to Assessor
+                                                                <a class="panelClicker" :href="'#'+assessorsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="assessorsBody">
+                                                                    <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                                                </a>
+                                                            </h3>
+                                                        </div>
+                                                        <div class="panel-body panel-collapse collapse" :id="assessorsBody">
+
+                                                           
+                                                                    <div class="row">
+                                                                       <div class="col-sm-offset-2 col-sm-8">
+                                                                                <label class="control-label pull-left"  for="Name">Assessor Group</label>
+                                                                                <select class="form-control" name="assessorGroup">
+                                                                                    <option value="All">All</option>
+                                                                                </select>
+                                                                                send
+                                                                        </div>
+                                                                            
+                                                                    </div>
+
+                                                                    
+                                                                
+                                                            <!-- <table ref="contacts_datatable" :id="contacts_table_id" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
+                                                            </table> -->
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div v-for="(item1,index) in item" v-if="item1.name && index!=0" :id="item1.id" class="tab-pane fade">
+                                            <p><strong>{{item1.name}}</strong></p>
+                                        </div>
+                                        
+                            
+                            </div> 
+                        </div>          
+                        </div>
+                    </div>
+                    </div>
+
             </div>
         </div>
 
@@ -431,10 +490,13 @@ export default {
         return {
             applicantTab: 'applicantTab'+vm._uid,
             applicationTab: 'applicationTab'+vm._uid,
+            sendToAssessorTab: 'sendToAssessorTab'+vm._uid,
             detailsBody: 'detailsBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
             contactsBody: 'contactsBody'+vm._uid,
             checksBody: 'checksBody'+vm._uid,
+            assessorsBody:'assessorsBody'+vm._uid,
+            isSendingToAssessor: false,
             "application": null,
             "original_application": null,
             "loading": [],
@@ -484,6 +546,35 @@ export default {
                   processing: true
             },
             contacts_table: null,
+            assessor_headers:["Assessor Group","Date Sent","Status","Action"],
+            assessor_options:{
+                 language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                ajax: {
+                    "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/contacts'),
+                    "dataSrc": ''
+                },
+                columns: [
+                    {data:'assessor_group'},
+                    {data:'date_last_reminded'},
+                    {data:'status'},
+                    {
+                        mRender:function (data,type,full) {
+                            let links = '';
+                            let name = full.first_name + ' ' + full.last_name;
+                            if (full.user_status =='Draft' ){
+                                links +=  `<a data-email='${full.email}' data-name='${name}' data-id='${full.id}' class="remove-contact">Remove</a><br/>`;
+                                
+                            }
+                            return links;
+                        }
+                    }
+                  ],
+                  processing: true
+                
+            },
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             comms_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/comms_log'),
             comms_add_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/add_comms_log'),
@@ -810,6 +901,7 @@ export default {
         },
         switchStatus: function(status){
             let vm = this;
+            vm.isSendingToAssessor = !vm.isSendingToAssessor;
             let data = {'status': status}
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/switch_status')),JSON.stringify(data),{
                 emulateJSON:true,
@@ -835,6 +927,17 @@ export default {
         fetchDeparmentUsers: function(){
             let vm = this;
             vm.loading.push('Loading Department Users');
+            vm.$http.get(api_endpoints.department_users).then((response) => {
+                vm.department_users = response.body
+                vm.loading.splice('Loading Department Users',1);
+            },(error) => {
+                console.log(error);
+                vm.loading.splice('Loading Department Users',1);
+            })
+        },
+        fetchAssessorGroup: function(){
+            let vm = this;
+            vm.loading.push('Fetching assessor group');
             vm.$http.get(api_endpoints.department_users).then((response) => {
                 vm.department_users = response.body
                 vm.loading.splice('Loading Department Users',1);
@@ -996,6 +1099,7 @@ export default {
     mounted: function() {
         let vm = this;
         vm.fetchDeparmentUsers();
+        vm.fetchAssessorGroup();
         
     },
     updated: function(){

@@ -53,7 +53,11 @@ class TaggedApplicationAssessorGroupActivities(TaggedItemBase):
         app_label = 'wildlifecompliance'
 
 class ApplicationGroupType(models.Model):
-    name= models.CharField(max_length=255)
+    NAME_CHOICES = (
+        ('officer', 'Officer'),
+        ('assessor', 'Assessor'),
+    )
+    name= models.CharField('Group Type', max_length=40, choices=NAME_CHOICES,default=NAME_CHOICES[0][0])
     licence_class=models.ForeignKey('wildlifecompliance.WildlifeLicenceClass')
     licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType')
     members=models.ManyToManyField(EmailUser,blank=True)
@@ -398,7 +402,7 @@ class Application(RevisionedMixin):
             return False
 
     def has_assessor_mode(self,user):
-        status_without_assessor = ['with_approver','approved','declined']
+        status_without_assessor = ['With Officer','With Assessor']
         if self.processing_status in status_without_assessor: 
             return False
         else:
@@ -810,6 +814,9 @@ class Assessment(ApplicationRequest):
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     date_last_reminded = models.DateField(null=True, blank=True)
     #conditions = models.ManyToManyField('Condition', through='AssessmentCondition')
+    assessor_group=models.ForeignKey(ApplicationGroupType,null=False,default=1)
+    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
+
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)
 

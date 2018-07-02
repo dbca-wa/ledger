@@ -8,7 +8,9 @@ from wildlifecompliance.components.applications.models import (
                                     Referral,
                                     ApplicationCondition,
                                     ApplicationStandardCondition,
-                                    ApplicationDeclinedDetails
+                                    ApplicationDeclinedDetails,
+                                    Assessment,
+                                    ApplicationGroupType
                                 )
 from wildlifecompliance.components.organisations.models import (
                                 Organisation
@@ -36,7 +38,17 @@ class EmailUserSerializer(serializers.ModelSerializer):
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
 
- 
+class AssessmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Assessment
+        fields=('assessor_group','date_last_reminded','status')
+
+class ApplicationGroupTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=ApplicationGroupType
+        fields=('id','name','licence_class')
+
+
 
 class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
@@ -244,6 +256,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         return {
             'assessor_mode': True,
             # 'has_assessor_mode': obj.has_assessor_mode(user),
+            'has_assessor_mode': True,
             # 'assessor_can_assess': obj.can_assess(user), 
             'assessor_level': 'assessor'
         }
