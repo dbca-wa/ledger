@@ -136,7 +136,7 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
-                dom: 'Bfrtip',
+                dom: 'lBfrtip',
                 buttons:[
                 'excel', 'csv', ],
                 columns: [

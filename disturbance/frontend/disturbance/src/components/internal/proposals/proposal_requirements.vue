@@ -52,7 +52,7 @@ export default {
                     "dataSrc": ''
                 },
                 order: [],
-                dom: 'Bfrtip',
+                dom: 'lBfrtip',
                 buttons:[
                 'excel', 'csv', ], //'copy'
                 columns: [
@@ -288,4 +288,7 @@ export default {
 }
 </script>
 <style scoped>
+.dataTables_wrapper .dt-buttons{
+    float: right;
+}
 </style>
