@@ -61,7 +61,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'region',
                 'district',
                 'tenure',
-                'assessor_data',
+                #'assessor_data',
                 'data',
                 'schema',
                 'customer_status',
@@ -134,12 +134,14 @@ class ListProposalSerializer(BaseProposalSerializer):
     region = serializers.CharField(source='region.name', read_only=True)
     district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
+    assessor_process = serializers.SerializerMethodField(read_only=True)
+
 
     class Meta:
         model = Proposal
         fields = (
                 'id',
-                'application_type',
+                'application_type',                
                 'activity',
                 'approval_level',
                 'title',
@@ -164,10 +166,22 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'lodgement_number',
                 'lodgement_sequence',
                 'can_officer_process',
+                'assessor_process',
                 'allowed_assessors',
                 'proposal_type'
                 )
-
+    def get_assessor_process(self,obj):
+        # Check if currently logged in user has access to process the proposal
+        request = self.context['request']
+        user = request.user
+        if obj.can_officer_process:
+            if obj.assigned_officer:
+                if obj.assigned_officer == user:
+                    return True
+            else:
+                if user in obj.allowed_assessors:
+                    return True            
+        return False
 
 class ProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
