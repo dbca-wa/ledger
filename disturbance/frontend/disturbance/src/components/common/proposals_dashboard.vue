@@ -143,9 +143,9 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
-                dom: 'Bfrtip',
+                dom: 'lBfrtip',
                 buttons:[
-                'excel', 'csv', ],
+                'excel', 'csv',],
                 columns: [
                     {
                         data: "id",
@@ -277,7 +277,7 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
-                dom: 'Bfrtip',
+                dom: 'lBfrtip',
                 buttons:[
                 'excel', 'csv', ],
                 columns: [
@@ -645,4 +645,7 @@ export default {
 }
 </script>
 <style scoped>
+.dt-buttons{
+    float: right;
+}
 </style>

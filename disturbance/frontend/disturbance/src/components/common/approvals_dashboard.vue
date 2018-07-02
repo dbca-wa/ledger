@@ -136,7 +136,7 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
-                dom: 'Bfrtip',
+                dom: 'lBfrtip',
                 buttons:[
                 'excel', 'csv', ],
                 columns: [
@@ -544,11 +544,7 @@ export default {
                 emulateJSON:true,
                 })
                 .then((response) => {
-                    swal(
-                        'Reissue',
-                        'Your approval has been reissued',
-                        'success'
-                    )
+                    
                     vm.$router.push({
                     name:"internal-proposal",
                     params:{proposal_id:proposal_id}

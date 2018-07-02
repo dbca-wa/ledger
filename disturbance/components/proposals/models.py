@@ -776,6 +776,8 @@ class Proposal(RevisionedMixin):
                 }
                 self.proposed_decline_status = False
                 self.move_to_status(request,'with_approver')
+                self.assigned_officer = None
+                self.save()
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_PROPOSED_APPROVAL.format(self.id),request)
                 # Log entry for organisation
