@@ -65,7 +65,7 @@ class Approval(models.Model):
 #    title = models.CharField(max_length=255)
     renewal_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='renewal_document')
     renewal_sent = models.BooleanField(default=False)
-    issue_date = models.DateField()
+    issue_date = models.DateTimeField()
     original_issue_date = models.DateField(auto_now_add=True)
     start_date = models.DateField()
     expiry_date = models.DateField()
