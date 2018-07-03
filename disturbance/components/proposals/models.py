@@ -837,6 +837,27 @@ class Proposal(RevisionedMixin):
                             if created:
                                 previous_approval.replaced_by = approval
                                 previous_approval.save()
+                    elif self.proposal_type == 'amendment':
+                        if self.previous_application:
+                            previous_approval = self.previous_application.approval
+                            approval,created = Approval.objects.update_or_create(
+                                current_proposal = checking_proposal,
+                                defaults = {
+                                    #'activity' : self.activity,
+                                    #'region' : self.region,
+                                    #'tenure' : self.tenure,
+                                    #'title' : self.title,
+                                    'issue_date' : timezone.now(),
+                                    'expiry_date' : details.get('expiry_date'),
+                                    'start_date' : details.get('start_date'),
+                                    'applicant' : self.applicant,
+                                    'lodgement_number': previous_approval.lodgement_number
+                                    #'extracted_fields' = JSONField(blank=True, null=True)
+                                }
+                            )
+                            if created:
+                                previous_approval.replaced_by = approval
+                                previous_approval.save()
                     else:
                         approval,created = Approval.objects.update_or_create(
                             current_proposal = checking_proposal,
@@ -856,6 +877,11 @@ class Proposal(RevisionedMixin):
                     #self.generate_compliances(approval, request)
                     from disturbance.components.compliances.models import Compliance, ComplianceUserAction
                     if created:
+                        if self.proposal_type == 'amendment':
+                            approval_compliances = Compliance.objects.filter(approval= previous_approval, proposal = self.previous_application, processing_status='future')
+                            if approval_compliances:
+                                for c in approval_compliances:
+                                    c.delete()  
                         # Log creation
                         # Generate the document
                         approval.generate_doc()
@@ -1006,7 +1032,7 @@ class Proposal(RevisionedMixin):
                 }
                 proposal=Proposal.objects.get(**amend_conditions)
                 if proposal.customer_status=='under_review':
-                    raise ValidationError('A renewal for this licence has already been lodged and is awaiting review.')
+                    raise ValidationError('An amendment for this licence has already been lodged and is awaiting review.')
             except Proposal.DoesNotExist:
                 previous_proposal = Proposal.objects.get(id=self.id)
                 proposal = clone_proposal_with_status_reset(previous_proposal)
@@ -1016,6 +1042,13 @@ class Proposal(RevisionedMixin):
                 proposal.schema = ptype.schema
                 proposal.submitter = request.user
                 proposal.previous_application = self
+                #copy all the requirements from the previous proposal
+                req=self.requirements.all()
+                if req:
+                    for r in req:
+                        r.proposal = proposal
+                        r.id = None
+                        r.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_AMEND_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation

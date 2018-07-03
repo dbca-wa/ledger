@@ -17,7 +17,8 @@ class Command(BaseCommand):
         compare_date = timedelta(days=14) + today
 
         for c in Compliance.objects.filter(processing_status = 'future'):
-            if(c.due_date<= compare_date<= c.approval.expiry_date) and c.approval.status=='current':
+            #if(c.due_date<= compare_date<= c.approval.expiry_date) and c.approval.status=='current':
+            if(c.due_date<= compare_date) and (c.due_date<= c.approval.expiry_date) and c.approval.status=='current':
                 try:
                     c.processing_status='due'
                     c.customer_status='due'

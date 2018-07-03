@@ -109,7 +109,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
         #serializer = DTProposalSerializer(queryset, many=True)
         #import ipdb; ipdb.set_trace()
         #serializer = DTProposalSerializer(self.get_queryset(), many=True)
-        serializer = ListProposalSerializer(self.get_queryset(), many=True)
+        serializer = ListProposalSerializer(self.get_queryset(), context={'request':request}, many=True)
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])
@@ -230,7 +230,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def user_list(self, request, *args, **kwargs):
         qs = self.get_queryset().exclude(processing_status='discarded')
         #serializer = DTProposalSerializer(qs, many=True)
-        serializer = ListProposalSerializer(qs, many=True)
+        serializer = ListProposalSerializer(qs,context={'request':request}, many=True)
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])

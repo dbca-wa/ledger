@@ -151,10 +151,10 @@ export default {
                     {data: "activity"},
                     {data: "title"},
                     {
-                        data: "approval",
-                        mRender:function (data,type,full) {
+                        data: "approval_lodgement_number",
+                       /* mRender:function (data,type,full) {
                             return `A${data}`;
-                        }
+                        }*/
                     },
                     {data: "holder"},
                     {data: "processing_status",
