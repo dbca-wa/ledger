@@ -25,9 +25,11 @@ export default {
   components: {HelpText, HelpTextUrl},
   data: function() {
     let vm = this;
-    return {
-      isClickable: "return true;",
-	}
+    if(vm.readonly) {
+      return { isClickable: "return false;" }
+    } else {
+      return { isClickable: "return true;" }
+    }
   },
   computed: {
     isChecked: function() {
