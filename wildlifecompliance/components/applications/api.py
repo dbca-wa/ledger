@@ -38,7 +38,8 @@ from wildlifecompliance.components.applications.models import (
     ApplicationDocument,
     Referral,
     ApplicationCondition,
-    ApplicationStandardCondition
+    ApplicationStandardCondition,
+    Assessment
 )
 from wildlifecompliance.components.applications.serializers import (
     SendReferralSerializer,
@@ -56,6 +57,7 @@ from wildlifecompliance.components.applications.serializers import (
     ApplicationStandardConditionSerializer,
     ProposedLicenceSerializer,
     PropedDeclineSerializer,
+    AssessmentSerializer
     
 )
 
@@ -710,3 +712,28 @@ class ApplicationStandardConditionViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(text__icontains=search)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+class AssessmentViewSet(viewsets.ModelViewSet):
+    queryset = Assessment.objects.all()
+    serializer_class = AssessmentSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset() 
+        app_id = request.GET.get('app_id',None)
+        queryset = queryset.filter(application=app_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+class AssessorGroupViewSet(viewsets.ModelViewSet):
+    queryset = ApplicationAssessorGroup.objects.all()
+    serializer_class = ApplicationGroupTypeSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset() 
+        qs = self.get_queryset().filter(requester=request.user, status='with_assessor')
+        queryset = queryset.filter(application=app_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+       
+
