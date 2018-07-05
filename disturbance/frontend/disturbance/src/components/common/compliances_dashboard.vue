@@ -144,7 +144,8 @@ export default {
                     {
                         data: "id",
                         mRender:function (data,type,full) {
-                            return `C${data}`;
+                            //return `C${data}`;
+                            return full.reference;
                         }
                     },
                     {data: "regions"},
