@@ -967,7 +967,8 @@ export default {
                     vm.loading.splice('processing booking',1);
                     var frame = $('#invoice_frame');
                     frame[0].src = '/ledger/payments/invoice/'+response.body.invoices[0];
-                    vm.isModalOpen=true;
+                    vm.isModalOpen=false;
+                    vm.$router.push({name:"booking-dashboard"});
                 },(error)=>{
                     let error_str = helpers.apiVueResourceError(error);
                     vm.$store.dispatch("updateAlert",{
