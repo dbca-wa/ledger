@@ -1,6 +1,6 @@
 <template lang="html">
     <div class="container" >
-        <form :action="proposal_submit_url" method="post" name="new_proposal" enctype="multipart/form-data">
+        <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
           <div v-if="!proposal_readonly">
             <div v-if="hasAmendmentRequest" class="row" style="color:red;">
                 <div class="col-lg-12 pull-right">
@@ -25,7 +25,7 @@
             <!--
             <label for="region-label">Region(*)</label>
             <input type="text" name="region-text"class="form-control" disabled="true">
-            -->        
+            -->
             <Proposal v-if="proposal" :proposal="proposal" id="proposalStart">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
@@ -33,24 +33,25 @@
                   <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                   <div class="navbar-inner">
                     <div v-if="!proposal.readonly" class="container">
-                      <p class="pull-right" style="margin-top:5px;">                       
+                      <p class="pull-right" style="margin-top:5px;">
                         <!-- <input type="submit" class="btn btn-primary" value="Save and Exit"/> -->
                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                        <!-- <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/> -->
-                        <input type="submit" class="btn btn-primary" value="Submit"/>
+                        <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                        <!-- <input type="submit" class="btn btn-primary" value="Submit"/> -->
+
                         <!-- hidden 'save_and_continue_btn' used to allow File (file.vue component) to trigger save -->
                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
-                      </p>                      
+                      </p>
                     </div>
                     <div v-else class="container">
                       <p class="pull-right" style="margin-top:5px;">
                         <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
-                      </p>                      
-                    </div>                    
+                      </p>
+                    </div>
                   </div>
-                </div>                
-            </Proposal>           
+                </div>
+            </Proposal>
         </form>
     </div>
 </template>
@@ -93,9 +94,7 @@ export default {
       return (this.proposal) ? `/api/proposal/${this.proposal.id}/submit.json` : '';
       //return this.submit();
     },
-  
-   
-    
+
   },
   methods: {
     save: function(e) {
@@ -171,6 +170,22 @@ export default {
 
     submit: function(){
         let vm = this;
+        $('input[type=text]:hidden, input[type=textarea]:hidden, input[type=checkbox]:hidden, input[type=radio]:hidden, input[type=file]:hidden').prop('required', null);
+        //$("input:hidden").prop('required',null);
+
+        var required_fields = $('input[type=text]:required, input[type=textarea]:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required');
+        //var emptyFields = $(':required').filter(function() {
+        var emptyFields = required_fields.filter(function() {
+            console.log('missing: ' + this.type + ' ' + this.name)
+            return $(this).val() === "";
+        }).length;
+
+        if (emptyFields === 0) {
+            $('#form').submit();
+        } else {
+            $('#error').show();
+            return false;
+        }
 
         swal({
             title: "Submit Proposal",
