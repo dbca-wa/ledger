@@ -152,7 +152,7 @@
                                             <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor_conditions')">Send to Assessor</button><br/>
                                         </div> -->
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary" @click.prevent="switchStatus('with_assessor')">Send to Assessor</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary">Send to Assessor</button><br/>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -426,10 +426,14 @@
                                                                     <div class="row">
                                                                        <div class="col-sm-offset-2 col-sm-8">
                                                                                 <label class="control-label pull-left"  for="Name">Assessor Group</label>
-                                                                                <select class="form-control" name="assessorGroup">
-                                                                                    <option value="All">All</option>
+                                                                                <select class="form-control" v-model="selectedAssessor">
+                                                                                    <option v-for="assessor in assessorGroup" :id="assessor.id" 
+                                                                                    :value="assessor">{{assessor.name}}</option>
                                                                                 </select>
-                                                                                send
+                                                                        </div> 
+                                                                        <div class="col-sm-2">
+                                                                            <a style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor()"> send</a>
+
                                                                         </div>
                                                                             
                                                                     </div>
@@ -463,6 +467,7 @@
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
         <AmmendmentRequest ref="ammendment_request" :application_id="application.id"></AmmendmentRequest>
+        <SendToAssessor ref="send_to_assessor" :application_id="application.id" ></SendToAssessor>
         <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" @refreshFromResponse="refreshFromResponse"/>
     </div>
 </template>
@@ -471,6 +476,7 @@ import Application from '../../form.vue'
 import Vue from 'vue'
 import ProposedDecline from './application_proposed_decline.vue'
 import AmmendmentRequest from './ammendment_request.vue'
+import SendToAssessor from './application_send_assessor.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Conditions from './application_conditions.vue'
 import ProposedLicence from './proposed_issuance.vue'
@@ -497,6 +503,8 @@ export default {
             checksBody: 'checksBody'+vm._uid,
             assessorsBody:'assessorsBody'+vm._uid,
             isSendingToAssessor: false,
+            assessorGroup:{},
+            "selectedAssessor":{},
             "application": null,
             "original_application": null,
             "loading": [],
@@ -553,7 +561,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/contacts'),
+                    "url": helpers.add_endpoint_json(api_endpoints.assessor_group,vm.$route.params.org_id),
                     "dataSrc": ''
                 },
                 columns: [
@@ -588,6 +596,7 @@ export default {
         datatable,
         ProposedDecline,
         AmmendmentRequest,
+        SendToAssessor,
         Conditions,
         ProposedLicence,
         LicenceScreen,
@@ -680,6 +689,44 @@ export default {
             this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
+        sendtoAssessor: function(e){
+        	let vm=this;
+        	this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id
+        	this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.name
+        	this.$refs.send_to_assessor.isModalOpen=true;
+        	console.log(vm.selectedAssessor)
+        	console.log(vm.selectedAssessor.name)
+        	console.log(vm.selectedAssessor.id)
+        	// $(vm.$refs.assessorGroup).on('select2:select', function (e) {
+
+        	// var selected = e.params.data;
+         //    console.log('inside');
+
+         //    console.log(selected.val());
+        	// })
+        	// console.log('after')
+
+            // let vm = this;
+            // swal({
+            //     title: "Send Assessor",
+            //     text: "Are you sure you want to send to assessor?",
+            //     type: "question",
+            //     showCancelButton: true,
+            //     confirmButtonText: 'Accept'
+            // }).then((result) => {
+            //     if (result.value) {
+            //         vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/send_to_assessor')))
+            //         .then((response) => {
+            //             console.log(response);
+            //             vm.application = response.body;
+            //         }, (error) => {
+            //             console.log(error);
+            //         });
+            //     }
+            // },(error) => {
+
+            // });
+        },
         proposedLicence: function(){
             this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
             this.$refs.proposed_licence.isModalOpen = true;
@@ -769,28 +816,7 @@ export default {
             this.$refs.ammendment_request.ammendment.details = values;
             this.$refs.ammendment_request.isModalOpen = true;
         },
-        sendToAssessor: function(){
-            let vm = this;
-            swal({
-                title: "Send Assessor",
-                text: "Are you sure you want to send to assessor?",
-                type: "question",
-                showCancelButton: true,
-                confirmButtonText: 'Accept'
-            }).then((result) => {
-                if (result.value) {
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/send_to_assessor')))
-                    .then((response) => {
-                        console.log(response);
-                        vm.application = response.body;
-                    }, (error) => {
-                        console.log(error);
-                    });
-                }
-            },(error) => {
-
-            });
-        },
+        
         save: function(e) {
           let vm = this;
           let formData = new FormData(vm.form);
@@ -938,12 +964,13 @@ export default {
         fetchAssessorGroup: function(){
             let vm = this;
             vm.loading.push('Fetching assessor group');
-            vm.$http.get(api_endpoints.department_users).then((response) => {
-                vm.department_users = response.body
-                vm.loading.splice('Loading Department Users',1);
+            vm.$http.get(api_endpoints.assessor_group).then((response) => {
+                vm.assessorGroup = response.body
+                console.log('this is assessor group')
+                console.log(vm.assessorGroup)
             },(error) => {
                 console.log(error);
-                vm.loading.splice('Loading Department Users',1);
+                // console.log(response.body)
             })
         },
         initialiseAssignedOfficerSelect:function(reinit=false){
