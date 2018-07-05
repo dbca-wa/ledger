@@ -1030,17 +1030,17 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         # update the per-site availability
                         classes_map[key]['breakdown'][s.name][offset][0] = False
-                        classes_map[key]['breakdown'][s.name][offset][1] = 'Booked' if (stat == 'booked') else 'Unavailable'
+                        classes_map[key]['breakdown'][s.name][offset][1] = stat if show_all else 'Unavailable'
 
                         # update the class availability status
                         book_offset = 0 if (stat == 'booked') else 1
                         classes_map[key]['availability'][offset][3][book_offset] += 1
                         if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Fully Booked'
+                            classes_map[key]['availability'][offset][1] = 'Fully Booked' 
                         elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Unavailable'
+                            classes_map[key]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
                         elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
-                            classes_map[key]['availability'][offset][1] = 'Partially Booked'
+                            classes_map[key]['availability'][offset][1] = 'Partially Booked' if show_all else 'Unavailable'
                         else:
                             classes_map[key]['availability'][offset][1] = 'Partially Unavailable'
 
@@ -1111,9 +1111,9 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         bookings_map[s.name]['availability'][offset][0] = False
                         if stat == 'closed':
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                            bookings_map[s.name]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
                         elif stat == 'booked':
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                            bookings_map[s.name]['availability'][offset][1] = 'Booked' if show_all else 'Unavailable'
                         else:
                             bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
 
