@@ -5,10 +5,12 @@ module.exports = {
     organisation_access_group_members: '/api/organisation_access_group_members',
     users: '/api/users',
     profile: '/api/profile',
+    assessor_group:'/api/assessor_group',
     emailidentities: '/api/emailidentities',
     profiles: '/api/profiles',
     my_profiles: '/api/my_profiles',
     department_users: '/api/department_users',
+    assessment:'/api/assessment.json',
     is_new_user: '/api/is_new_user',
     user_profile_completed: '/api/user_profile_completed',
     //other
@@ -25,3 +27,4 @@ module.exports = {
     }
 
 }
+

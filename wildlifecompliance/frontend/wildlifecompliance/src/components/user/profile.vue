@@ -62,16 +62,14 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <i v-if="showCompletion && profile.personal_details" class="fa fa-check fa-2x pull-left" style="color:green"></i>
-                    <i v-else-if="showCompletion && !profile.personal_details" class="fa fa-times fa-2x pull-left" style="color:red"></i>
                     <h3 class="panel-title">Identification <small>Upload your photo ID</small>
-                        <a class="panelClicker" :href="'#'+idBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="idBody">
+                        <a class="panelClicker" :href="'#'+idBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="idBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
                     </h3>
                   </div>
                   <div class="panel-body collapse" :id="idBody">
-                      <form class="form-horizontal" name="personal_form" method="post">
+                      <form class="form-horizontal" name="id_form" method="post">
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Identification</label>
                             <div class="col-sm-6">
