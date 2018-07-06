@@ -39,6 +39,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
+    proposal_type = serializers.SerializerMethodField()
     allowed_assessors = EmailUserSerializer(many=True)
 
     get_history = serializers.ReadOnlyField()
@@ -105,6 +106,9 @@ class BaseProposalSerializer(serializers.ModelSerializer):
 
     def get_customer_status(self,obj):
         return obj.get_customer_status_display()
+
+    def get_proposal_type(self,obj):
+        return obj.get_proposal_type_display()
 
 
 

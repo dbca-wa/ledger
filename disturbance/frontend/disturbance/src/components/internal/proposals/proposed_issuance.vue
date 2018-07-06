@@ -135,7 +135,7 @@ export default {
             return this.processing_status == 'With Approver' ? 'Issue Approval' : 'Propose to issue approval';
         },
         is_amendment: function(){
-            return this.proposal_type == 'amendment' ? true : false;
+            return this.proposal_type == 'Amendment' ? true : false;
         },
         
 
