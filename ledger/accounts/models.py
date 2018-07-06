@@ -446,6 +446,12 @@ class EmailUserAction(UserAction):
     ACTION_POSTAL_ADDRESS_UPDATE = "User {} Postal Address Updated"
     ACTION_ID_UPDATE = "User {} Identification Updated"
 
+    emailuser = models.ForeignKey(EmailUser, related_name='action_logs')
+
+    class Meta:
+        app_label = 'accounts'
+        ordering = ['-when']
+
     @classmethod
     def log_action(cls, emailuser, action, user):
         return cls.objects.create(
@@ -453,12 +459,6 @@ class EmailUserAction(UserAction):
             who=user,
             what=str(action)
         )
-
-    emailuser = models.ForeignKey(EmailUser, related_name='action_logs')
-
-    class Meta:
-        app_label = 'accounts'
-        ordering = ['-when']
 
 
 class EmailUserListener(object):
@@ -573,9 +573,14 @@ class Organisation(models.Model):
     name = models.CharField(max_length=128, unique=True)
     abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
     # TODO: business logic related to identification file upload/changes.
-    identification = models.FileField(upload_to='uploads/%Y/%m/%d', null=True, blank=True)
+    identification = models.FileField(upload_to='%Y/%m/%d', null=True, blank=True)
     postal_address = models.ForeignKey('OrganisationAddress', related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
     billing_address = models.ForeignKey('OrganisationAddress', related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
+
+    def upload_identification(self, request):
+        with transaction.atomic():
+            self.identification = request.data.dict()['identification']
+            self.save()
 
     def __str__(self):
         return self.name

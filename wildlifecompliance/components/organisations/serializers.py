@@ -54,6 +54,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
     address = OrganisationAddressSerializer(read_only=True)
     pins = serializers.SerializerMethodField(read_only=True)
     delegates = DelegateSerializer(many=True, read_only=True)
+    organisation = LedgerOrganisationSerializer()
 
     class Meta:
         model = Organisation
@@ -63,6 +64,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
             'abn',
             'address',
             'email',
+            'organisation',
             'phone_number',
             'pins',
             'delegates'
