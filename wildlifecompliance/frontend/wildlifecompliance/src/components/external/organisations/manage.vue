@@ -566,7 +566,7 @@ export default {
                     vm.uploadedID = null;
                     swal({
                         title: 'Upload ID',
-                        html: 'Your ID has been successfully uploaded.',
+                        html: 'The organisation ID has been successfully uploaded.',
                         type: 'success',
                     }).then(() => {
                         window.location.reload(true);
@@ -580,7 +580,7 @@ export default {
                     }
                     swal({
                         title: 'Upload ID',
-                        html: 'There was an error uploading your ID.<br/>' + error_msg,
+                        html: 'There was an error uploading the organisation ID.<br/>' + error_msg,
                         type: 'error'
                     });
                 });
