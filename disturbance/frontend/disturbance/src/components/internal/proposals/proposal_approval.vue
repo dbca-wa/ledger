@@ -160,7 +160,8 @@ export default {
                 emulateJSON:true
             }).then(res=>{
                 vm.proposal = res.body;
-                
+                vm.$emit('refreshFromResponse',res);
+
                 },err=>{
                 swal(
                     'Submit Error',

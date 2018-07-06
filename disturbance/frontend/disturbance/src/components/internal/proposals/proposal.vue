@@ -225,7 +225,7 @@
         <div class="col-md-8">
             <div class="row">
                 <template v-if="proposal.processing_status == 'With Approver' || isFinalised">
-                    <ApprovalScreen :proposal="proposal"/>
+                    <ApprovalScreen :proposal="proposal" @refreshFromResponse="refreshFromResponse"/>
                 </template>
                 <template v-if="proposal.processing_status == 'With Assessor (Requirements)' || ((proposal.processing_status == 'With Approver' || isFinalised) && showingRequirements)">
                     <Requirements :proposal="proposal"/>
@@ -451,6 +451,7 @@ export default {
         }
     },
     watch: {
+
     },
     computed: {
         contactsURL: function(){
@@ -521,6 +522,7 @@ export default {
         issueProposal:function(){
             this.$refs.proposed_approval.approval = helpers.copyObject(this.proposal.proposed_issuance_approval);
             this.$refs.proposed_approval.state = 'final_approval';
+            this.$refs.proposed_approval.isApprovalLevelDocument = this.isApprovalLevelDocument;
             this.$refs.proposed_approval.isModalOpen = true;
         },
         declineProposal:function(){
