@@ -4,5 +4,6 @@ module.exports = {
     users: '/api/users',
     countries: 'https://restcountries.eu/rest/v1/?fullText=true',
     profile: '/api/profile',
-    profiles: '/api/profiles'
+    profiles: '/api/profiles',
+    application_assessment:'/api/assessment.json'
 }

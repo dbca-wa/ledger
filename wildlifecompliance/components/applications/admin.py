@@ -21,6 +21,11 @@ class ApplicationTypeAdmin(admin.ModelAdmin):
 class ApplicationDeclinedDetails(admin.ModelAdmin):
     pass
 
+@admin.register(models.Assessment)
+class Assessment(admin.ModelAdmin):
+    pass
+
+
 @admin.register(models.ApplicationGroupType)
 class ApplicationGroupTypeAdmin(admin.ModelAdmin):
     filter_horizontal = ('members',)

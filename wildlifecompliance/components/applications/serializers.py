@@ -64,6 +64,11 @@ class AssessmentSerializer(serializers.ModelSerializer):
         model=Assessment
         fields=('assessor_group','date_last_reminded','status')
 
+class SaveAssessmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Assessment
+        fields=('assessor_group','application','text')
+
 class ApplicationGroupTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model=ApplicationGroupType

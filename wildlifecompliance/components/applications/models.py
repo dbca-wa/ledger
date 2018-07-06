@@ -489,13 +489,13 @@ class Application(RevisionedMixin):
             # Create a log entry for the organisation
             self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)    
 
-    def send_to_assessor(self,request):
-            self.processing_status = 'with_assessor'
-            self.save()
-            # Create a log entry for the application
-            self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
-            # Create a log entry for the organisation
-            self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)        
+    # def send_to_assessor(self,request):
+    #         self.processing_status = 'with_assessor'
+    #         self.save()
+    #         # Create a log entry for the application
+    #         self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
+    #         # Create a log entry for the organisation
+    #         self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)        
 
 
     def send_referral(self,request,referral_email):
@@ -641,6 +641,35 @@ class Application(RevisionedMixin):
             except:
                 raise
 
+    def send_to_assessor(self,request):
+        with transaction.atomic():
+            try:
+                # activity_type=details.get('activity_type')
+                # print(activity_type)
+                Assessment.objects.update_or_create(
+                    application = self,
+                    officer=request.user,
+                    reason=request.data.get('reason'),
+                    cc_email=details.get('cc_email',None),
+                    activity_type=details.get('activity_type')
+                )
+                # for item in activity_type :
+                #     print(item)
+                #     for activity_type in  self.licence_type_data['activity_type']:
+                #         # print(activity_type["id"])
+                #         # print(details.get('activity_type'))
+                #         if activity_type["id"]==item:
+                #             print('Hello')
+                #             activity_type["proposed_decline"]=True
+                #             print(activity_type["proposed_decline"])
+                #             self.save()
+
+                # Log application action
+                self.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+            except:
+                raise
     def final_decline(self,request,details):
         with transaction.atomic():
             try:
@@ -830,7 +859,8 @@ class Assessment(ApplicationRequest):
     date_last_reminded = models.DateField(null=True, blank=True)
     #conditions = models.ManyToManyField('Condition', through='AssessmentCondition')
     assessor_group=models.ForeignKey(ApplicationGroupType,null=False,default=1)
-    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
+    # licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
+    activity_type= JSONField(blank=True, null=True)
 
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)
@@ -838,6 +868,32 @@ class Assessment(ApplicationRequest):
     class Meta:
         app_label = 'wildlifecompliance'
 
+    def generate_assessment(self,request):
+        with transaction.atomic():
+            try:
+                    # if not self.proposal.can_assess(request.user):
+                    #     raise exceptions.ProposalNotAuthorized()
+                    # if self.status == 'requested':
+                    #     proposal = self.proposal
+                    #     if proposal.processing_status != 'draft':
+                    #         proposal.processing_status = 'draft'
+                    #         proposal.customer_status = 'draft'
+                    #         proposal.save()
+                self.officer=request.user
+                self.date_last_reminded=datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                self.save()
+
+
+                # # Create a log entry for the proposal
+                # proposal.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+                # # Create a log entry for the organisation
+                # proposal.applicant.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+
+                # # send email
+                # send_amendment_email_notification(self,request, proposal)
+
+            except:
+                raise
 class ApplicationDeclinedDetails(models.Model):
     application = models.OneToOneField(Application)
     officer = models.ForeignKey(EmailUser, null=False)
