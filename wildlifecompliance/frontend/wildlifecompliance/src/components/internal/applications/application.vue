@@ -437,6 +437,9 @@
                                                                         </div>
                                                                             
                                                                     </div>
+                                                                    <div class="row">
+                                                                    	<datatable ref="assessor_datatable" id="application_assessor_datatable" :dtOptions="assessors_options" :dtHeaders="assessors_headers"/>
+                                                                    </div>
 
                                                                     
                                                                 
@@ -554,31 +557,20 @@ export default {
                   processing: true
             },
             contacts_table: null,
-            assessor_headers:["Assessor Group","Date Sent","Status","Action"],
-            assessor_options:{
+            assessors_headers:["Assessor Group","Date Sent","Status"],
+            assessors_options:{
                  language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.assessor_group,vm.$route.params.org_id),
+                    "url": helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/assessment_details'),
                     "dataSrc": ''
                 },
                 columns: [
                     {data:'assessor_group'},
                     {data:'date_last_reminded'},
-                    {data:'status'},
-                    {
-                        mRender:function (data,type,full) {
-                            let links = '';
-                            let name = full.first_name + ' ' + full.last_name;
-                            if (full.user_status =='Draft' ){
-                                links +=  `<a data-email='${full.email}' data-name='${name}' data-id='${full.id}' class="remove-contact">Remove</a><br/>`;
-                                
-                            }
-                            return links;
-                        }
-                    }
+                    {data:'status'}
                   ],
                   processing: true
                 

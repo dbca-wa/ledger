@@ -545,6 +545,14 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+            
+    @detail_route(methods=['GET',])
+    def assessment_details(self, request, *args, **kwargs):
+        # queryset = self.get_queryset() 
+        instance = self.get_object()
+        queryset =  Assessment.objects.filter(application=instance.id)
+        serializer = AssessmentSerializer(queryset,many=True)
+        return Response(serializer.data)
 
 class ReferralViewSet(viewsets.ModelViewSet):
     queryset = Referral.objects.all()
@@ -715,12 +723,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     queryset = Assessment.objects.all()
     serializer_class = AssessmentSerializer
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset() 
-        app_id = request.GET.get('app_id',None)
-        queryset = queryset.filter(application=app_id)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+    
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
