@@ -496,10 +496,16 @@
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                                     <input type='hidden' name="application_id" :value="1" />
-                                    <div v-if="hasAssessorMode" class="row" style="margin-bottom:20px;">
-                                      <div class="col-lg-12 pull-right">
-                                        <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
-                                      </div>
+                                    <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
+                                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                                            <div class="navbar-inner">
+                                                <div class="container">
+                                                    <p class="pull-right" style="margin-top:5px;">
+                                                        <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </Application>
                             </form>
