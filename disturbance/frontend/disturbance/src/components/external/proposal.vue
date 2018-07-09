@@ -172,22 +172,75 @@ export default {
 
     submit: function(){
         let vm = this;
-        $('input[type=text]:hidden, input[type=textarea]:hidden, input[type=checkbox]:hidden, input[type=radio]:hidden, input[type=file]:hidden').prop('required', null);
+        $('input[type=text]:hidden, textarea:hidden, input[type=checkbox]:hidden, input[type=radio]:hidden, input[type=file]:hidden').prop('required', null);
         //$("input:hidden").prop('required',null);
 
-        var required_fields = $('input[type=text]:required, input[type=textarea]:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required');
+        var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required');
         //var emptyFields = $(':required').filter(function() {
+        /*
         var emptyFields = required_fields.filter(function() {
             console.log('missing: ' + this.type + ' ' + this.name)
             return $(this).val() === "";
         }).length;
+        */
 
+        required_fields.each(function() {
+            console.log('type: ' + this.type + ' ' + this.name)
+            if (this.type == 'radio') {
+                //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
+                if (!$("input[name="+this.name+"]").is(':checked')) {
+                     console.log('radio not checked: ' + this.type + ' ' + this.name)
+                } else {
+                     console.log('radio is checked: ' + this.type + ' ' + this.name)
+                }
+            }
+
+            if (this.type == 'checkbox') {
+                //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
+                if ($("[class="+this.classList['value']+"]:checked").length == 0) {
+                     console.log('checkbox not checked: ' + this.type + ' ' + this.name)
+                } else {
+                     console.log('checkbox is checked: ' + this.type + ' ' + this.name)
+                }
+            }
+
+            if (this.type == 'file') {
+                if (this.files.length == 0) {
+                     console.log('file not uploaded: ' + this.type + ' ' + this.name)
+                } else {
+                     console.log('file is uploaded: ' + this.type + ' ' + this.name)
+                }
+            }
+
+            if (this.type == 'text') {
+                if (this.value == '') {
+                     console.log('text not provided: ' + this.type + ' ' + this.name)
+                } else {
+                     console.log('text is provided: ' + this.type + ' ' + this.name)
+                }
+            }
+
+            if (this.type == 'textarea') {
+                if (this.value == '') {
+                     console.log('textarea not provided: ' + this.type + ' ' + this.name)
+                } else {
+                     console.log('textarea is provided: ' + this.type + ' ' + this.name)
+                }
+            }
+
+
+
+
+        });
+
+        /*
         if (emptyFields === 0) {
             $('#form').submit();
         } else {
             $('#error').show();
             return false;
         }
+        */
 
         vm.submitting = true;
 
