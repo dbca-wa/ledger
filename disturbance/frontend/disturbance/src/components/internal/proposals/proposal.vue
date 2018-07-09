@@ -330,7 +330,8 @@
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
-                                    <div class="navbar navbar-fixed-bottom" v-if="hasAssessorMode" style="background-color: #f5f5f5 ">
+                                    <div class="row" style="margin-bottom: 50px">
+                                    <div class="navbar navbar-fixed-bottom" v-if="hasAssessorMode" style="background-color: #f5f5f5;">
                                         <div class="navbar-inner">
                                             <div v-if="hasAssessorMode" class="container">
                                             <p class="pull-right">                       
@@ -339,6 +340,7 @@
                                             </div>                   
                                         </div>
                                     </div>      
+                                    </div>
 
                                 </Proposal>
                             </form>

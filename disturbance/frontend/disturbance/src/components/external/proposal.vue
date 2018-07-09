@@ -30,6 +30,7 @@
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
+                <div class="row" style="margin-bottom: 50px">
                   <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                   <div class="navbar-inner">
                     <div v-if="!proposal.readonly" class="container">
@@ -49,7 +50,10 @@
                       </p>                      
                     </div>                    
                   </div>
-                </div>                
+                </div>  
+
+                </div>
+
             </Proposal>           
         </form>
     </div>
