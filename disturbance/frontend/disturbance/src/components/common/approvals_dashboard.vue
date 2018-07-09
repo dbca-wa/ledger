@@ -60,7 +60,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-lg-12">
+                        <div class="col-lg-12" style="margin-top:25px;">
                             <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
                         </div>
                     </div>
@@ -136,6 +136,9 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
+                dom: 'lBfrtip',
+                buttons:[
+                'excel', 'csv', ],
                 columns: [
                     {
                         data: "id",
@@ -541,11 +544,7 @@ export default {
                 emulateJSON:true,
                 })
                 .then((response) => {
-                    swal(
-                        'Reissue',
-                        'Your approval has been reissued',
-                        'success'
-                    )
+                    
                     vm.$router.push({
                     name:"internal-proposal",
                     params:{proposal_id:proposal_id}

@@ -143,6 +143,9 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
+                dom: 'lBfrtip',
+                buttons:[
+                'excel', 'csv',],
                 columns: [
                     {
                         data: "id",
@@ -191,7 +194,8 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if(vm.check_assessor(full) && full.can_officer_process){
+                                /*if(vm.check_assessor(full) && full.can_officer_process)*/
+                                if(full.assessor_process){
                                     
                                     links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;
                                 
@@ -274,6 +278,9 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
+                dom: 'lBfrtip',
+                buttons:[
+                'excel', 'csv', ],
                 columns: [
                     {
                         data: "id",
@@ -323,7 +330,8 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if(vm.check_assessor(full) && full.can_officer_process){   
+                                /*if(vm.check_assessor(full) && full.can_officer_process)*/
+                                if(full.assessor_process){   
                                         links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;    
                             }
                                 else{
@@ -639,4 +647,7 @@ export default {
 }
 </script>
 <style scoped>
+.dt-buttons{
+    float: right;
+}
 </style>

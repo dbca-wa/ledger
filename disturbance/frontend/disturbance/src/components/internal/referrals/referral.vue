@@ -212,11 +212,21 @@
                                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                 <input type='hidden' name="proposal_id" :value="1" />
-                                <div v-if="!proposal.can_user_edit" class="row" style="margin-bottom:20px;">
+                                <!--<div v-if="!proposal.can_user_edit" class="row" style="margin-bottom:20px;">
                                   <div class="col-lg-12 pull-right" v-if="!isFinalised">
                                     <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
-                                  </div>
-                                </div>
+                                  </div> 
+                                </div>-->
+                                <div class="navbar navbar-fixed-bottom" v-if="!proposal.can_user_edit && !isFinalised" style="background-color: #f5f5f5 ">
+                                        <div class="navbar-inner">
+                                            <div v-if="!isFinalised" class="container">
+                                            <p class="pull-right">                       
+                                            <button class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="save()">Save Changes</button>
+                                            </p>                      
+                                            </div>                   
+                                        </div>
+                                </div>      
+
                             </Proposal>
                         </form>
                     </div>
@@ -449,8 +459,36 @@ export default {
         },
         sendReferral: function(){
             let vm = this;
+            let formData = new FormData(vm.form); //save data before completing referral
+            vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+                let data = {'email':vm.selected_referral};
+                vm.sendingReferral = true;
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,(vm.referral.id+'/send_referral')),JSON.stringify(data),{
+                emulateJSON:true
+                }).then((response) => {
+                vm.sendingReferral = false;
+                vm.referral = response.body;
+                vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
+                swal(
+                    'Referral Sent',
+                    'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
+                    'success'
+                )
+             }, (error) => {
+                console.log(error);
+                swal(
+                    'Referral Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+                vm.sendingReferral = false;
+                });
+            
+             
+             },err=>{
+             });
 
-            let data = {'email':vm.selected_referral};
+            /*let data = {'email':vm.selected_referral};
             vm.sendingReferral = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,(vm.referral.id+'/send_referral')),JSON.stringify(data),{
                 emulateJSON:true
@@ -471,7 +509,7 @@ export default {
                     'error'
                 )
                 vm.sendingReferral = false;
-            });
+            }); */
             
         },
         completeReferral:function(){
@@ -484,7 +522,10 @@ export default {
                 showCancelButton: true,
                 confirmButtonText: 'Submit'
             }).then(() => { 
-                vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
+                let formData = new FormData(vm.form);
+                vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+                    
+                    vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
                     vm.referral = res.body;
                     vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
                 },
@@ -495,6 +536,23 @@ export default {
                         'error'
                     )
                 });
+                
+                 },err=>{
+                 });
+
+               /* vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
+                    vm.referral = res.body;
+                    vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
+                },
+                error => {
+                    swal(
+                        'Referral Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                    )
+                }); */
+
+
             },(error) => {
             });
         }

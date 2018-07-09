@@ -65,7 +65,7 @@ class Approval(models.Model):
 #    title = models.CharField(max_length=255)
     renewal_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='renewal_document')
     renewal_sent = models.BooleanField(default=False)
-    issue_date = models.DateField()
+    issue_date = models.DateTimeField()
     original_issue_date = models.DateField(auto_now_add=True)
     start_date = models.DateField()
     expiry_date = models.DateField()
@@ -335,9 +335,9 @@ class ApprovalLogEntry(CommunicationsLogEntry):
         super(ApprovalLogEntry, self).save(**kwargs)
 
 class ApprovalLogDocument(Document):
-    #log_entry = models.ForeignKey('ApprovalLogEntry',related_name='apdocuments')
-    approval = models.ForeignKey(Approval, related_name='comms_logs1')
-    #_file = models.FileField(upload_to=update_approval_comms_log_filename)
+    log_entry = models.ForeignKey('ApprovalLogEntry',related_name='documents', null=True,)
+    #approval = models.ForeignKey(Approval, related_name='comms_logs1')
+    _file = models.FileField(upload_to=update_approval_comms_log_filename, null=True)
     #_file = models.FileField(upload_to=update_approval_doc_filename)
 
     class Meta:

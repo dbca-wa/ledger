@@ -52,6 +52,9 @@ export default {
                     "dataSrc": ''
                 },
                 order: [],
+                dom: 'lBfrtip',
+                buttons:[
+                'excel', 'csv', ], //'copy'
                 columns: [
                     {
                         data: "requirement",
@@ -59,7 +62,7 @@ export default {
                         'render': function (value) {
                             var ellipsis = '...',
                                 truncated = _.truncate(value, {
-                                    length: 50,
+                                    length: 25,
                                     omission: ellipsis,
                                     separator: ' '
                                 }),
@@ -285,4 +288,7 @@ export default {
 }
 </script>
 <style scoped>
+.dataTables_wrapper .dt-buttons{
+    float: right;
+}
 </style>

@@ -37,6 +37,7 @@
                         <!-- <input type="submit" class="btn btn-primary" value="Save and Exit"/> -->
                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+
                         <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
                         <!-- <input type="submit" class="btn btn-primary" value="Submit"/> -->
 
@@ -73,6 +74,7 @@ export default {
       //isDataSaved: false,
       proposal_readonly: true,
       hasAmendmentRequest: false,
+      submitting: false,
       newText: "",
       pBody: 'pBody',
     }
@@ -149,7 +151,7 @@ export default {
     leaving: function(e) {
       let vm = this;
       var dialogText = 'You have some unsaved changes.';
-      if (!vm.proposal_readonly){
+      if (!vm.proposal_readonly && !vm.submitting){
         e.returnValue = dialogText;
         return dialogText;
       }
@@ -186,6 +188,8 @@ export default {
             $('#error').show();
             return false;
         }
+
+        vm.submitting = true;
 
         swal({
             title: "Submit Proposal",

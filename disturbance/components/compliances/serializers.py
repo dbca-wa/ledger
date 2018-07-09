@@ -23,6 +23,7 @@ class ComplianceSerializer(serializers.ModelSerializer):
     allowed_assessors = EmailUserSerializer(many=True)
     assigned_to = serializers.CharField(source='assigned_to.get_full_name')
     requirement = serializers.CharField(source='requirement.requirement')
+    approval_lodgement_number = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -47,12 +48,16 @@ class ComplianceSerializer(serializers.ModelSerializer):
             'lodgement_date',
             'submitter',
             'allowed_assessors',
-            'lodgement_date'
+            'lodgement_date',
+            'approval_lodgement_number'
 
         )
 
     def get_documents(self,obj):
         return [[d.name,d._file.url] for d in obj.documents.all()]
+
+    def get_approval_lodgement_number(self,obj):
+        return obj.approval.lodgement_number
 
 class SaveComplianceSerializer(serializers.ModelSerializer):
     class Meta:

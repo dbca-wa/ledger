@@ -155,7 +155,6 @@ module.exports = {
                 break;
             case 'radiobuttons':
                 var value = null;
-                var isRequired = c.isRequired;
                 if(data !== null && data !== undefined) {
                   value = ( data )? data : null ;
                 }
@@ -169,10 +168,8 @@ module.exports = {
                             <CommentRadioCheckBox assessor_readonly={assessor_visibility} name={c.name} comment_value={comment_val} assessorMode={assessorMode} label={c.label}/>
                             {c.options.map(op =>{
                                 return(
-                                    <Radio name={c.name} label={op.label} value={op.value} id={id1} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly} isRequired={isRequired}/>
+                                    <Radio name={c.name} label={op.label} value={op.value} isRequired={op.isRequired} id={id1} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly}/>
                                 )
-                                console.log('isRequired ' + isRequired);
-                                isRequired=null;
                             })}
                             <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data} id={id2} readonly={readonly} isRequired={c.isRequired}/>
                     </div>

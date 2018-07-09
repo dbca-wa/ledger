@@ -95,7 +95,7 @@ export default {
                         data:"when",
                         orderable: false,
                         mRender:function(data,type,full){
-                            return moment(data).format(vm.dateFormat)
+                            return moment(data).format(vm.DATE_TIME_FORMAT)
                         }
                     },
                 ]
@@ -238,7 +238,7 @@ export default {
                 title: 'Communications Log',
                 container: 'body',
                 placement: 'right',
-                trigger: "focus",
+                trigger: "click",
                 template: `<div class="popover ${popover_name}" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>`,
             }).on('inserted.bs.popover', function () {
                 table = $('#'+commsLogId).DataTable(datatable_options);
@@ -298,7 +298,7 @@ export default {
                 title: 'Action Log',
                 container: 'body',
                 placement: 'right',
-                trigger: "focus",
+                trigger: "click",
                 template: `<div class="popover ${popover_name}" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>`,
             }).on('inserted.bs.popover', function () {
                 table = $('#'+actionLogId).DataTable(datatable_options);
