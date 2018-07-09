@@ -10,7 +10,8 @@ from wildlifecompliance.components.applications.models import (
                                     ApplicationStandardCondition,
                                     ApplicationDeclinedDetails,
                                     Assessment,
-                                    ApplicationGroupType
+                                    ApplicationGroupType,
+                                    AmendmentRequest
                                 )
 from wildlifecompliance.components.organisations.models import (
                                 Organisation
@@ -38,20 +39,36 @@ class EmailUserSerializer(serializers.ModelSerializer):
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
 
+class ApplicationGroupTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=ApplicationGroupType
+        fields=('id','name','licence_class')
+
 class AssessmentSerializer(serializers.ModelSerializer):
+    assessor_group = ApplicationGroupTypeSerializer(read_only=True)
+    status = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model=Assessment
         fields=('assessor_group','date_last_reminded','status')
+
+    def get_status(self,obj):
+        return obj.get_status_display()
 
 class SaveAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model=Assessment
         fields=('assessor_group','application','text')
 
-class ApplicationGroupTypeSerializer(serializers.ModelSerializer):
+class AmendmentRequestSerializer(serializers.ModelSerializer):
+    reason = serializers.SerializerMethodField()
+
     class Meta:
-        model=ApplicationGroupType
-        fields=('id','name','licence_class')
+        model = AmendmentRequest
+        fields = '__all__'
+
+    def get_reason (self,obj):
+        return obj.get_reason_display()
 
 
 

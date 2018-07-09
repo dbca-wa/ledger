@@ -469,7 +469,7 @@
         </div>
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
-        <AmmendmentRequest ref="ammendment_request" :application_id="application.id"></AmmendmentRequest>
+        <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
         <SendToAssessor ref="send_to_assessor" :application_id="application.id" ></SendToAssessor>
         <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" @refreshFromResponse="refreshFromResponse"/>
     </div>
@@ -557,7 +557,7 @@ export default {
                   processing: true
             },
             contacts_table: null,
-            assessors_headers:["Assessor Group","Date Sent","Status"],
+            assessors_headers:["Assessor Group","Date Sent","Status","Action"],
             assessors_options:{
                  language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -568,9 +568,21 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
-                    {data:'assessor_group'},
+                    {data:'assessor_group.name'},
                     {data:'date_last_reminded'},
-                    {data:'status'}
+                    {data:'status'},
+                    {
+                        mRender:function (data,type,full) {
+                            let links = '';
+                                if(full.status == 'Completed'){
+                                    links +=  `<a>Resend</a>`;
+                                    
+                                } else if(full.status == 'Awaiting Assessment'){
+                                    links +=  `<a>Remind</a>`;
+                                    // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
+                                } 
+                            return links;
+                        }}
                   ],
                   processing: true
                 
@@ -802,10 +814,18 @@ export default {
         },
         ammendmentRequest: function(){
             let values = '';
+            // var selected = $("#tabs-section").tabs( "option", "selected" );
+			var selectedTabTitle = $("#tabs-section li.active");
+			console.log($(selectedTabTitle))
+			console.log($(selectedTabTitle).text())
+
             $('.deficiency').each((i,d) => {
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
+                // console.log($(d))
             }); 
-            this.$refs.ammendment_request.ammendment.details = values;
+            
+            this.$refs.ammendment_request.amendment.activity_type.text = values;
+            this.$refs.ammendment_request.amendment.activity_type.id = $(selectedTabTitle).text();
             this.$refs.ammendment_request.isModalOpen = true;
         },
         
