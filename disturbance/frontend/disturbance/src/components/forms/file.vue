@@ -2,7 +2,7 @@
     <div>
         <div class="form-group">
 
-            <label :id="id">{{label}}</label>
+            <label :id="id" :num_files="files.length">{{label}}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>

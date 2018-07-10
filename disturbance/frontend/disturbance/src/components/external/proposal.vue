@@ -27,12 +27,14 @@
             <input type="text" name="region-text"class="form-control" disabled="true">
             -->
 
-            <p v-if="missing_fields.length">
+            <div id="error" v-if="missing_fields.length > 0" style="margin: 10px; padding: 5px; color: red; border:1px solid red;">
                 <b>Please correct the following error(s):</b>
                 <ul>
-                    <li v-for="error in missing_fields">{{ error  }}</li>
-                </ul>
-            </p>
+                    <li v-for="error in missing_fields">
+                        {{ error.label }}
+                    </li>
+                    </ul>
+            </div>
 
             <Proposal v-if="proposal" :proposal="proposal" id="proposalStart">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
@@ -167,60 +169,74 @@ export default {
       else{
         return null;
       }
-
     },
     
-
-    highlight_missing_fields: function(missing_fields){
-        for (var i = 0; i < missing_fields.length; i++) {
-            //$("#id_" + missing_fields[i].name).css("color", 'red');
-            var name = missing_fields[i].name.split('.').slice(-1)[0];
-            $("#id_" + name).css("color", 'red');
+    highlight_missing_fields: function(){
+        let vm = this;
+        for (var missing_field of vm.missing_fields) {
+            $("#" + missing_field.id).css("color", 'red');
         }
     },
 
     validate: function(){
         let vm = this;
-        vm.missing_fields = [];
-        $('input[type=text]:hidden, textarea:hidden, input[type=checkbox]:hidden, input[type=radio]:hidden, input[type=file]:hidden').prop('required', null);
-        var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required');
 
+        // reset default colour
+        for (var field of vm.missing_fields) {
+            $("#" + field.id).css("color", '#515151');
+        }
+        vm.missing_fields = [];
+
+        // get all required fields, that are not hidden in the DOM
+        //var hidden_fields = $('input[type=text]:hidden, textarea:hidden, input[type=checkbox]:hidden, input[type=radio]:hidden, input[type=file]:hidden');
+        //hidden_fields.prop('required', null);
+        var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required').not(':hidden');
+
+        // loop through all (non-hidden) required fields, and check data has been entered
         required_fields.each(function() {
-            console.log('type: ' + this.type + ' ' + this.name)
+            //console.log('type: ' + this.type + ' ' + this.name)
+            var id = 'id_' + this.name
             if (this.type == 'radio') {
                 //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
                 if (!$("input[name="+this.name+"]").is(':checked')) {
-                     console.log('radio not checked: ' + this.type + ' ' + this.name)
-                    vm.missing_fields.push({name:this.name, label:this.value});
+                    var text = $('#'+id).text()
+                    console.log('radio not checked: ' + this.type + ' ' + text)
+                    vm.missing_fields.push({id: id, label: text});
                 }
             }
 
             if (this.type == 'checkbox') {
                 //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
+                var id = 'id_' + this.classList['value']
                 if ($("[class="+this.classList['value']+"]:checked").length == 0) {
-                     console.log('checkbox not checked: ' + this.type + ' ' + this.name)
-                    vm.missing_fields.push({name:this.name, label:this.value});
+                    var text = $('#'+id).text()
+                    console.log('checkbox not checked: ' + this.type + ' ' + text)
+                    vm.missing_fields.push({id: id, label: text});
                 }
             }
 
             if (this.type == 'file') {
-                if (this.files.length == 0) {
-                     console.log('file not uploaded: ' + this.type + ' ' + this.name)
-                    vm.missing_fields.push({name:this.name, label:this.value});
+                var num_files = $('#'+id).attr('num_files')
+                if (num_files == "0") {
+                    var text = $('#'+id).text()
+                    console.log('file not uploaded: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({id: id, label: text});
                 }
             }
 
             if (this.type == 'text') {
                 if (this.value == '') {
-                     console.log('text not provided: ' + this.type + ' ' + this.name)
-                    vm.missing_fields.push({name:this.name, label:this.value});
+                    var text = $('#'+id).text()
+                    console.log('text not provided: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({id: id, label: text});
                 }
             }
 
             if (this.type == 'textarea') {
                 if (this.value == '') {
-                     console.log('textarea not provided: ' + this.type + ' ' + this.name)
-                    vm.missing_fields.push({name:this.name, label:this.value});
+                    var text = $('#'+id).text()
+                    console.log('textarea not provided: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({id: id, label: text});
                 }
             }
 
@@ -241,7 +257,19 @@ export default {
 
     submit: function(){
         let vm = this;
+        /*
         var num_missing_fields = vm.validate()
+        if (num_missing_fields > 0) {
+            vm.highlight_missing_fields()
+            //$('#error').show();
+            $('html, body').animate({
+                scrollTop: $("#error").offset().top
+            }, 1);
+            return false;
+        }
+        */
+
+        // remove the confirm prompt when navigating away from window
         vm.submitting = true;
 
         swal({

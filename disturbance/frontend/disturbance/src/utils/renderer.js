@@ -160,7 +160,7 @@ module.exports = {
                 }
                 _elements.push(
                     <div class="form-group">
-                        <label>{c.label}</label>
+                        <label id={id}>{c.label}</label>
                             <HelpText help_text={help_text}/>
                             <HelpText help_text={help_text_assessor} assessorMode={assessorMode} isForAssessor={true}/>
                             <HelpTextUrl help_text_url={help_text_url}/>
@@ -181,7 +181,7 @@ module.exports = {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
                 _elements.push(
-                    <Group label={c.label} name={c.name} help_text={help_text} help_text_url={help_text_url} isRemovable={true}>
+                    <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true}>
                         {c.children.map(c=>{
                             return (
                                 <div>
