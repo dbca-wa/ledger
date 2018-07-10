@@ -57,6 +57,12 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="form-group" v-if="campground.site_type == 0">
+                                        <label class="control-label" >Maximum Number of Vehicles</label>
+                                        <input type="number" name="max_vehicles" class="form-control"  v-model="campsite.max_vehicles" required :disabled="selected_campsite_class_url() != ''"/>
+                                    </div>
+                                </div>
                             </div>
                             <div class="row">
                               <div class="col-sm-6">
@@ -64,7 +70,6 @@
                               </div>
                               <div class="col-sm-6">
                                   <div class="row">
-
                                       <div class="form-group">
                                           <div class="col-sm-6 col-xs-8">
                                               <button @click.prevent="addCampsite" type="button" v-show="createCampsite" class="btn btn-primary btn-create">Create</button>
@@ -80,7 +85,6 @@
                                               <button type="button" v-show="!createCampsite" style="margin-right:5px" @click="updateCampsite" class="btn btn-primary">Update</button>
                                               <button type="button" class="btn btn-default pull-right" @click="goBack">Back</button>
                                           </div>
-
                                       </div>
                                   </div>
                               </div>
@@ -170,6 +174,7 @@ export default {
                 caravan:false,
                 min_people: '',
                 max_people:'',
+                max_vehicles:''
             },
             campsite_classes: [],
             ph_options: {
@@ -253,6 +258,7 @@ export default {
                         vm.campsite.max_people = sel_class.max_people;
                         vm.campsite.min_people= sel_class.min_people;
                         vm.campsite.description = sel_class.description;
+                        vm.campsite.max_vehicles = sel_class.max_vehicles;
                         vm.$refs.descriptionEditor.updateContent(vm.campsite.description);
                     }
 

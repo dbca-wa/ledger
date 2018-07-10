@@ -369,7 +369,7 @@ class CampsiteSerialiser(serializers.ModelSerializer):
     name = serializers.CharField(default='default',required=False)
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure', 'current_closure_id', 'can_add_rate','tent','campervan','caravan','min_people','max_people','description',)
+        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure', 'current_closure_id', 'can_add_rate','tent','campervan','caravan','min_people','max_people','description','max_vehicles')
 
     def __init__(self, *args, **kwargs):
         try:
@@ -444,7 +444,7 @@ class BookingSerializer(serializers.ModelSerializer):
     regos = BookingRegoSerializer(many=True,read_only=True)
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','override_price','override_reason','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','override_price','override_reason','override_reason_info','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
         read_only_fields = ('vehicle_payment_status','refund_status','campground_name','campground_region','campground_site_type')
 
 

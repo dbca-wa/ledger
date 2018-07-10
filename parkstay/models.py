@@ -500,6 +500,7 @@ class Campsite(models.Model):
     caravan = models.BooleanField(default=False)
     min_people = models.SmallIntegerField(default=1)
     max_people = models.SmallIntegerField(default=12)
+    max_vehicles = models.PositiveIntegerField(default=1)
     description = models.TextField(null=True)
 
     def __str__(self):
@@ -882,6 +883,7 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     override_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
     override_reason = models.ForeignKey('DiscountReason', null=True, blank=True)
+    override_reason_info = models.TextField(blank=True, null=True)
     overridden_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True, related_name='overridden_bookings')
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
@@ -1089,12 +1091,7 @@ class Booking(models.Model):
 
         if amount == 0:
             return 'unpaid'
-        # if self.cost_total < amount:
-        #     return 'over_paid'
-        # elif self.cost_total > amount:
-        #     return 'partially_paid'
-        # else:return "paid"
-
+            
         if self.override_price:
             if self.override_price < amount:
                 return 'over_paid'

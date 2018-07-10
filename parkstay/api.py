@@ -1622,6 +1622,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['lastname'] = booking.details.get('last_name','')
                 if  booking.override_reason:                        
                     bk['override_reason'] = booking.override_reason.text
+                if booking.override_reason_info:
+                    bk['override_reason_info'] = booking.override_reason_info
                 if booking.override_price:
                     discount = booking.discount
                 if not booking.paid:
@@ -1686,6 +1688,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             regos = request.data['regos']
             override_price = serializer.validated_data.get('override_price', None)
             override_reason = serializer.validated_data.get('override_reason', None)
+            override_reason_info = serializer.validated_data.get('override_reason_info', None)
             overridden_by = None if (override_price is None) else request.user
             try:
                 emailUser = request.data['customer']
@@ -1717,6 +1720,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'cost_total' : costs['total'],
                 'override_price' : override_price,
                 'override_reason' : override_reason,
+                'override_reason_info' : override_reason_info,
                 'overridden_by': overridden_by,
                 'customer' : customer,
                 'first_name': emailUser['first_name'],
