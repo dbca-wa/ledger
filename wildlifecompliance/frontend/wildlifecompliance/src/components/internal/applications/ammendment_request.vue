@@ -6,18 +6,23 @@
                     <form class="form-horizontal" name="amendForm">
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <label class="control-label"  for="Name">Select licensed activities for amendment </label>
-                                        <div  v-for="item in application_licence_type">
-                                            <div v-for="item1 in item">
-                                                <div  v-if="item1.name && !item1.proposed_decline">
-                                                    <input type="checkbox" :value ="item1.id" :id="item1.id" v-model="amendment.activity_type.id">{{item1.name}}
-                                                </div>
+                            <div class="row">
+                                <label class="control-label">Request Amendment for the application</label>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-offset-2 col-sm-8">
+
+                                    <label class="control-label"  for="Name">Licensed activity to amend </label>
+                                    <div  v-for="item in application_licence_type">
+                                        <div v-for="item1 in item">
+                                            <div  v-if="item1.name==amendment.activity_type_name && item1.processing_status=='With Officer'" >
+                                                <input type="text" disabled class="form-control" :id="item1.id" :value="item1.name" v-model="amendment.activity_type_name">
+                                                
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
@@ -32,7 +37,7 @@
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
                                         <label class="control-label pull-left"  for="Name">Details</label>
-                                        <textarea class="form-control" name="name" v-model="amendment.activity_type.text"></textarea>
+                                        <textarea class="form-control" name="name" v-model="amendment.text">{{amendment.text}}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -74,7 +79,9 @@ export default {
             reason:'',
             amendingApplication: false,
             application: vm.application_id ,
-            activity_type:[]
+            text:null,
+            licence_activity_type:null,
+            activity_type_name:null
             },
             reason_choices: {},
             errors: false,
@@ -123,6 +130,14 @@ export default {
         sendData:function(){
             let vm = this;
             vm.errors = false;
+            for(var activity_type_index=0, len2=vm.application_licence_type.activity_type.length; activity_type_index<len2; activity_type_index++){
+                if (vm.application_licence_type.activity_type[activity_type_index].name==vm.amendment.activity_type_name){
+                    console.log(vm.application_licence_type.activity_type[activity_type_index].id)
+                    vm.amendment.licence_activity_type=vm.application_licence_type.activity_type[activity_type_index].id
+
+                }
+            }
+
             let amendment = JSON.parse(JSON.stringify(vm.amendment));
             vm.$http.post('/api/amendment.json',JSON.stringify(amendment),{
                         emulateJSON:true,

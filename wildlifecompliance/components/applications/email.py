@@ -66,22 +66,10 @@ def send_application_amendment_notification(amendment,application,request):
         'url': url
     }
 
-    msg = email.send(proposal.submitter.email, context=context)
+    msg = email.send(application.submitter.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    _log_proposal_email(msg, proposal, sender=sender)
-    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+    _log_application_email(msg, application, sender=sender)
 
-
-
-    # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
-    context = {
-        'application': application,
-    }
-
-    msg = email.send(group_email, context=context)
-    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    # _log_application_email(msg, referral, sender=sender)
-    # _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
 
 def _log_application_email(email_message, application, sender=None):
     from wildlifecompliance.components.applications.models import ApplicationLogEntry
@@ -106,18 +94,18 @@ def _log_application_email(email_message, application, sender=None):
     else:
         text = smart_text(email_message)
         subject = ''
-        to = application.applicant.email
+        to = application.submitter.email
         fromm = smart_text(sender) if sender else SYSTEM_NAME
         all_ccs = ''
 
-    customer = referral.referral
+    customer = application.submitter
 
     staff = sender
 
     kwargs = {
         'subject': subject,
         'text': text,
-        'application': application.id,
+        'application': application,
         'customer': customer,
         'staff': staff,
         'to': to,

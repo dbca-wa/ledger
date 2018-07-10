@@ -20,7 +20,7 @@ from wildlifecompliance import exceptions
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
-from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification
+from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification,send_application_amendment_notification
 from wildlifecompliance.ordered_model import OrderedModel
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
 
@@ -838,7 +838,7 @@ class AmendmentRequest(ApplicationRequest):
                       ('other', 'Other'))
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
-    activity_type= JSONField(blank=True, null=True)
+    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -846,21 +846,31 @@ class AmendmentRequest(ApplicationRequest):
     def generate_amendment(self,request):
         with transaction.atomic():
             try:
+                # print(type(self.application))
 
                  # This is to change the status of licence activity type
-                application= Application.objects.get(id=self.application)
-                for activity_type in  application.licence_type_data['activity_type']:
-                    if activity_type["id"] in self.activity_type:
-                        activity_type["processing_status"]="Draft"
+                # application= Application.objects.get(id=self.application)
+                # print(type(self.application.licence_type_data))
+                print(self.application.licence_type_data['activity_type'])
+
+                for item in  self.application.licence_type_data['activity_type']:
+                    print(self.licence_activity_type.id)
+                    print(item["id"])
+                    print((self.licence_activity_type.id==item["id"]))
+                    # print(activity_type["name"])
+                    if self.licence_activity_type.id==item["id"] :
+                        item["processing_status"]="Draft"
+                        print(item["processing_status"])
+                        self.save()
               
                 
                 # Create a log entry for the proposal
-                proposal.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+                self.application.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
                 # Create a log entry for the organisation
-                proposal.applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+                self.application.applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
 
                 # send email
-                send_amendment_email_notification(self,request,application)
+                send_application_amendment_notification(self,self.application,request)
 
                 self.save()
             except:

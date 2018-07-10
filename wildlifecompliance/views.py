@@ -10,9 +10,12 @@ from datetime import datetime, timedelta
 
 from wildlifecompliance.helpers import is_officer, is_departmentUser
 from wildlifecompliance.forms import *
-from wildlifecompliance.components.applications.models import Referral
+from wildlifecompliance.components.applications.models import Referral,Application
 from wildlifecompliance.components.applications.mixins import ReferralOwnerMixin
 
+class ExternalApplicationView(DetailView):
+    model = Application
+    template_name = 'wildlifecompliance/dash/index.html'
 
 class InternalView(UserPassesTestMixin, TemplateView):
     template_name = 'wildlifecompliance/dash/index.html'
