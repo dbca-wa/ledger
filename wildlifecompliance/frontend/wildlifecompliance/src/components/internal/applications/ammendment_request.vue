@@ -1,17 +1,34 @@
 <template lang="html">
-    <div id="internal-application-ammend">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Ammendment Request" large>
+    <div id="internal-application-amend">
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Amendment Request" large>
             <div class="container-fluid">
                 <div class="row">
-                    <form class="form-horizontal" name="ammedForm">
+                    <form class="form-horizontal" name="amendForm">
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
+                            <div class="row">
+                                <label class="control-label">Request Amendment for the application</label>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-offset-2 col-sm-8">
+
+                                    <label class="control-label"  for="Name">Licensed activity to amend </label>
+                                    <div  v-for="item in application_licence_type">
+                                        <div v-for="item1 in item">
+                                            <div  v-if="item1.name==amendment.activity_type_name && item1.processing_status=='With Officer'" >
+                                                <input type="text" disabled class="form-control" :id="item1.id" :value="item1.name" v-model="amendment.activity_type_name">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
                                         <label class="control-label pull-left"  for="Name">Reason</label>
-                                        <select class="form-control" name="reason" v-model="ammendment.details">
-                                            <option value="All">All</option>
+                                        <select class="form-control" name="reason" ref="reason" v-model="amendment.reason">
+                                            <option v-for="item in reason_choices" :value="item.key">{{item.value}}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -20,7 +37,7 @@
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
                                         <label class="control-label pull-left"  for="Name">Details</label>
-                                        <textarea class="form-control" name="name" v-model="ammendment.details"></textarea>
+                                        <textarea class="form-control" name="name" v-model="amendment.text">{{amendment.text}}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -34,12 +51,12 @@
 
 <script>
 //import $ from 'jquery'
+import Vue from 'vue'
 import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
-import api_endpoints from '../api'
-import {helpers} from "@/utils/hooks.js"
+import {helpers, api_endpoints} from "@/utils/hooks.js"
 export default {
-    name:'Add-Organisation-Contact',
+    name:'amendment-request',
     components:{
         modal,
         alert
@@ -48,17 +65,28 @@ export default {
             application_id:{
                 type:Number,
             },
+            application_licence_type:{
+                type:Object,
+                required:true
+            }
     },
     data:function () {
         let vm = this;
         return {
             isModalOpen:false,
             form:null,
-            ammendment: {},
+            amendment: {
+            reason:'',
+            amendingApplication: false,
+            application: vm.application_id ,
+            text:null,
+            licence_activity_type:null,
+            activity_type_name:null
+            },
+            reason_choices: {},
             errors: false,
             errorString: '',
-            successString: '',
-            success:false,
+            validation_form: null,
         }
     },
     computed: {
@@ -75,15 +103,26 @@ export default {
             }
         },
         cancel:function () {
+            let vm = this;
+            vm.close();
         },
         close:function () {
             this.isModalOpen = false;
-            this.contact = {};
+            this.amendment = {
+                reason: '',
+                application: this.application_id
+            };
+            this.errors = false;
+            $(this.$refs.reason).val(null).trigger('change');
+            $('.has-error').removeClass('has-error');
+            
+            this.validation_form.resetForm();
         },
-        fetchContact: function(id){
+        fetchAmendmentChoices: function(){
             let vm = this;
-            vm.$http.get(api_endpoints.contact(id)).then((response) => {
-                vm.contact = response.body; vm.isModalOpen = true;
+            vm.$http.get('/api/amendment_request_reason_choices.json').then((response) => {
+                vm.reason_choices = response.body;
+                
             },(error) => {
                 console.log(error);
             } );
@@ -91,58 +130,56 @@ export default {
         sendData:function(){
             let vm = this;
             vm.errors = false;
-            //vm.$parent.loading.push('processing contact');
-            if (vm.contact.id){
-                let contact = vm.contact;
-                vm.$http.put(api_endpoints.organisation_contacts(contact.id),JSON.stringify(contact),{
+            for(var activity_type_index=0, len2=vm.application_licence_type.activity_type.length; activity_type_index<len2; activity_type_index++){
+                if (vm.application_licence_type.activity_type[activity_type_index].name==vm.amendment.activity_type_name){
+                    console.log(vm.application_licence_type.activity_type[activity_type_index].id)
+                    vm.amendment.licence_activity_type=vm.application_licence_type.activity_type[activity_type_index].id
+
+                }
+            }
+
+            let amendment = JSON.parse(JSON.stringify(vm.amendment));
+            vm.$http.post('/api/amendment.json',JSON.stringify(amendment),{
                         emulateJSON:true,
                     }).then((response)=>{
                         //vm.$parent.loading.splice('processing contact',1);
+                        swal(
+                             'Sent',
+                             'An email has been sent to applicant with the request to amend this Application',
+                             'success'
+                        );
+                        vm.amendingApplication = true;
                         vm.close();
+                        //vm.$emit('refreshFromResponse',response);
+                        Vue.http.get(`/api/application/${vm.application_id}/internal_application.json`).then((response)=>
+                        {
+                            vm.$emit('refreshFromResponse',response);
+                            
+                        },(error)=>{
+                            console.log(error);
+                        });
+                        vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
+                     
                     },(error)=>{
                         console.log(error);
                         vm.errors = true;
                         vm.errorString = helpers.apiVueResourceError(error);
-                        //vm.$parent.loading.splice('processing contact',1);
-                    });
-            } else {
-                let contact = JSON.parse(JSON.stringify(vm.contact));
-                contact.organisation = vm.org_id;
-                vm.$http.post(api_endpoints.organisation_contacts,JSON.stringify(contact),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        //vm.$parent.loading.splice('processing contact',1);
-                        vm.close();
-                        vm.$parent.addedContact();
-                    },(error)=>{
-                        console.log(error);
-                        vm.errors = true;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                        //vm.$parent.loading.splice('processing contact',1);
+                        vm.amendingApplication = true;
+                        
                     });
                 
-            }
         },
         addFormValidations: function() {
             let vm = this;
-            $(vm.form).validate({
+            vm.validation_form = $(vm.form).validate({
                 rules: {
-                    arrival:"required",
-                    departure:"required",
-                    campground:"required",
-                    campsite:{
-                        required: {
-                            depends: function(el){
-                                return vm.campsites.length > 0;
-                            }
-                        }
-                    }
+                    reason: "required"
+                    
+                     
                 },
-                messages: {
-                    arrival:"field is required",
-                    departure:"field is required",
-                    campground:"field is required",
-                    campsite:"field is required"
+                messages: {              
+                    reason: "field is required",
+                                         
                 },
                 showErrors: function(errorMap, errorList) {
                     $.each(this.validElements(), function(index, element) {
@@ -165,14 +202,33 @@ export default {
             });
        },
        eventListerners:function () {
-           let vm = this;
+            let vm = this;
+            
+            // Intialise select2
+            $(vm.$refs.reason).select2({
+                "theme": "bootstrap",
+                allowClear: true,
+                placeholder:"Select Reason"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.amendment.reason = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.amendment.reason = selected.val();
+            });
        }
    },
    mounted:function () {
        let vm =this;
-       vm.form = document.forms.addContactForm;
+       vm.form = document.forms.amendForm;
+       vm.fetchAmendmentChoices();
        vm.addFormValidations();
-       //console.log(validate);
+       this.$nextTick(()=>{  
+            vm.eventListerners();
+        });
+    //console.log(validate);
    }
 }
 </script>
