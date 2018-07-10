@@ -147,11 +147,11 @@
                     <tr>
                         <th class="site">Campsite&nbsp;<a class="float-right" target="_blank" :href="map" v-if="map">View Map</a> </th>
                         <th class="book">Book</th>
-                        <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
+                        <th class="date" v-for="(d, index) in days" v-bind:key="index">{{ getDateString(arrivalDate, d-1) }}</th>
                     </tr>
                 </thead>
-                <tbody><template v-for="site in sites" v-if="useAdminApi || site.gearType[gearType]">
-                    <tr>
+                <tbody><template v-for="(site, index) in sites" v-if="useAdminApi || site.gearType[gearType]">
+                    <tr v-bind:key="index">
                         <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
                             <template v-if="site.price">
@@ -163,12 +163,12 @@
                                 <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
                             </template>
                         </td>
-                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                        <td class="date" v-for="(day, siteAvailabilityIndex) in site.availability" v-bind:key="siteAvailabilityIndex" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
                     </tr>
-                    <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
+                    <template v-if="site.showBreakdown"><tr v-for="(line, breakIndex) in site.breakdown" v-bind:key="breakIndex" class="breakdown">
                         <td class="site">Site: {{ line.name }}</td>
                         <td></td>
-                        <td class="date" v-for="day in line.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                        <td class="date" v-for="(day, availabilityIndex) in line.availability" v-bind:key="availabilityIndex" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
                     </tr></template>
                 </template></tbody>
             </table>
@@ -271,36 +271,14 @@ import $ from 'jquery';
 var nowTemp = new Date();
 var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
-var siteType = {
-    NOBOOKINGS: 0,
-    ONLINE: 1,
-    PHONE: 2,
-    OTHER: 3
-};
 
 function getQueryParam(name, fallback) {
-    name = name.replace(/[\[\]]/g, "\\$&");
+    name = name.replace(/[[\]]/g, "\\$&");
     var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
     var results = regex.exec(window.location.href);
     if (!results) return fallback;
     if (!results[2]) return fallback;
     return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
-
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie != '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
 }
 
 export default {
@@ -458,13 +436,14 @@ export default {
                         num_infant: vm.numInfants
                     };
 
+                var url = '';
                 if (parseInt(vm.parkstayGroundRatisId) > 0){
-                    var url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param(params);
+                    url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param(params);
                 } else if (vm.useAdminApi) {
-                    var url = vm.parkstayUrl + '/api/availability_admin/'+ vm.parkstayGroundId +'/?'+$.param(params);
-                } else{
+                    url = vm.parkstayUrl + '/api/availability_admin/'+ vm.parkstayGroundId +'/?'+$.param(params);
+                } else {
                     vm.updateURL();
-                    var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
+                    url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
                 }
                 console.log('AJAX '+url);
                 $.ajax({
