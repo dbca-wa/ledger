@@ -21,6 +21,11 @@ class ApplicationSubmitNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/send_application_submit_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_submit_notification.txt'
 
+class ApplicationAmendmentRequestNotificationEmail(TemplateEmailBase):
+    subject = 'An amendment has been requested for your application.'
+    html_template = 'wildlifecompliance/emails/send_application_amendment_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_application_amendment_notification.txt'
+
 
 def send_referral_email_notification(emails,application,request,reminder=False):
     email = ReferralSendNotificationEmail()
@@ -39,6 +44,35 @@ def send_referral_email_notification(emails,application,request,reminder=False):
 def send_application_submit_email_notification(group_email,application,request):
     # An email to internal users notifying about new application is submitted
     email = ApplicationSubmitNotificationEmail()
+    # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
+    context = {
+        'application': application,
+    }
+
+    msg = email.send(group_email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    # _log_application_email(msg, referral, sender=sender)
+    # _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
+
+def send_application_amendment_notification(amendment,application,request):
+    # An email to internal users notifying about new application is submitted
+    email = ApplicationAmendmentRequestNotificationEmail()
+    reason = amendment.get_reason_display()
+    url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
+    context = {
+        'application': application,
+        'reason': reason,
+        'amendment_details': amendment.text,
+        'url': url
+    }
+
+    msg = email.send(proposal.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
+
+
     # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
     context = {
         'application': application,

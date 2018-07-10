@@ -11,6 +11,7 @@ module.exports = {
     my_profiles: '/api/my_profiles',
     department_users: '/api/department_users',
     assessment:'/api/assessment.json',
+    amendment:'/api/amendment.json',
     is_new_user: '/api/is_new_user',
     user_profile_completed: '/api/user_profile_completed',
     //other

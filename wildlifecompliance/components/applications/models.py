@@ -629,7 +629,6 @@ class Application(RevisionedMixin):
                         # print(activity_type["id"])
                         # print(details.get('activity_type'))
                         if activity_type["id"]==item:
-                            print('Hello')
                             activity_type["proposed_decline"]=True
                             print(activity_type["proposed_decline"])
                             self.save()
@@ -670,6 +669,13 @@ class Application(RevisionedMixin):
                 self.applicant.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
             except:
                 raise
+
+    @property
+    def amendment_requests(self):
+        qs =AmendmentRequest.objects.filter(proposal = self)
+        return qs
+
+
     def final_decline(self,request,details):
         with transaction.atomic():
             try:
@@ -847,13 +853,37 @@ class AmendmentRequest(ApplicationRequest):
                       ('other', 'Other'))
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
+    activity_type= JSONField(blank=True, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
 
+    def generate_amendment(self,request):
+        with transaction.atomic():
+            try:
+
+                 # This is to change the status of licence activity type
+                application= Application.objects.get(id=self.application)
+                for activity_type in  application.licence_type_data['activity_type']:
+                    if activity_type["id"] in self.activity_type:
+                        activity_type["processing_status"]="Draft"
+              
+                
+                # Create a log entry for the proposal
+                proposal.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+                # Create a log entry for the organisation
+                proposal.applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+
+                # send email
+                send_amendment_email_notification(self,request,application)
+
+                self.save()
+            except:
+                raise
+
 class Assessment(ApplicationRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'),
-                      ('assessment_expired', 'Assessment Period Expired'))
+                      ('completed', 'Completed'))
     assigned_assessor = models.ForeignKey(EmailUser, blank=True, null=True)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     date_last_reminded = models.DateField(null=True, blank=True)
@@ -871,14 +901,18 @@ class Assessment(ApplicationRequest):
     def generate_assessment(self,request):
         with transaction.atomic():
             try:
-                    # if not self.proposal.can_assess(request.user):
-                    #     raise exceptions.ProposalNotAuthorized()
-                    # if self.status == 'requested':
-                    #     proposal = self.proposal
-                    #     if proposal.processing_status != 'draft':
-                    #         proposal.processing_status = 'draft'
-                    #         proposal.customer_status = 'draft'
-                    #         proposal.save()
+                # This is to change the status of licence activity type
+                # activity_type= Application.objects.get(id=self.application)
+                #  for item in activity_type :
+                #     print(item)
+                #     for activity_type in  self.licence_type_data['activity_type']:
+                #         # print(activity_type["id"])
+                #         # print(details.get('activity_type'))
+                #         if activity_type["id"]==item:
+                #             activity_type["proposed_decline"]=True
+                #             print(activity_type["proposed_decline"])
+                #             self.save()
+
                 self.officer=request.user
                 self.date_last_reminded=datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.save()
@@ -891,6 +925,11 @@ class Assessment(ApplicationRequest):
 
                 # # send email
                 # send_amendment_email_notification(self,request, proposal)
+                 # Create a log entry for the application
+                self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                # Create a log entry for the organisation
+                self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                send_application_submit_email_notification(select_group.members.all(),self,request)
 
             except:
                 raise
