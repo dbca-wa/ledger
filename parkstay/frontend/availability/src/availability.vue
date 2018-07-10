@@ -1,7 +1,14 @@
 <template>
     <div id="sites-cal" class="f6inject">
         <a name="makebooking" />
-        <div class="row" v-if="status == 'offline'">
+        <div class="row" v-if="status == 'ajaxerror'">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="callout alert">
+                    Sorry, there was a problem connecting to Park Stay for availability information. Please try again later.
+                </div>
+            </div>
+        </div>
+        <div class="row" v-else-if="status == 'offline'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
                     Sorry, this campground doesn't yet support online bookings. Please visit the <a href="https://parks.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
@@ -258,6 +265,7 @@ import 'foundation-sites';
 import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
+import $ from 'jquery';
 
 
 var nowTemp = new Date();
@@ -277,7 +285,7 @@ function getQueryParam(name, fallback) {
     if (!results) return fallback;
     if (!results[2]) return fallback;
     return decodeURIComponent(results[2].replace(/\+/g, " "));
-};
+}
 
 function getCookie(name) {
     var cookieValue = null;
@@ -293,23 +301,22 @@ function getCookie(name) {
         }
     }
     return cookieValue;
-};
+}
 
 export default {
-    el: '#availability',
     data: function () {
         return {
             name: '',
             arrivalDate: moment.utc(getQueryParam('arrival', moment.utc(now).format('YYYY/MM/DD')), 'YYYY/MM/DD'),
+            arrivalData: null,
             departureDate:  moment.utc(getQueryParam('departure', moment.utc(now).add(5, 'days').format('YYYY/MM/DD')), 'YYYY/MM/DD'),
-            parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
-            useAdminApi: global.useAdminApi || false,
+            departureData: null,
             // order of preference:
             // - GET parameter 'site_id'
             // - global JS var 'parkstayGroundId'
             // - '1'
-            parkstayGroundId: parseInt(getQueryParam('site_id', global.parkstayGroundId || '1')),
-            parkstayGroundRatisId: parseInt(getQueryParam('parkstay_site_id', '0')),
+            parkstayGroundId: parseInt(getQueryParam('site_id', 0)),
+            parkstayGroundRatisId: parseInt(getQueryParam('parkstay_site_id', 0)),
             days: 5,
             numAdults: parseInt(getQueryParam('num_adult', 2)),
             numChildren: parseInt(getQueryParam('num_children', 0)),
@@ -334,6 +341,11 @@ export default {
             ongoing_booking_id: null,
             showSecondErrorLine: true,
         };
+    },
+    props: {
+        siteId: Number,
+        parkstayUrl: String,
+        useAdminApi: Boolean,
     },
     computed: {
         numPeople: {
@@ -502,6 +514,10 @@ export default {
                         }
                     },
                     error: function(xhr, stat, err) {
+                        if ((xhr.status >= 400) || !xhr.hasOwnProperty('responseJSON') ) {
+                            vm.status = 'ajaxerror';
+                            return;
+                        }
                         vm.showSecondErrorLine = true;
                         var max_error = 'Maximum number of people exceeded for the selected campsite';
                         var min_error = 'Number of people is less than the minimum allowed for the selected campsite';
@@ -511,8 +527,7 @@ export default {
                         else if (xhr.responseJSON.hasOwnProperty('error') && (xhr.responseJSON.error == max_error || xhr.responseJSON.error == min_error)){
                             vm.status = 'offline';
                             vm.showSecondErrorLine = false;
-                        }
-                        else{
+                        } else {
                             vm.status = 'offline';
                         }
                     }
