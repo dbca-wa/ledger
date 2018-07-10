@@ -949,8 +949,9 @@ export default {
                 // console.log($(d))
             }); 
             
-            this.$refs.ammendment_request.amendment.activity_type.text = values;
-            this.$refs.ammendment_request.amendment.activity_type.id = $(selectedTabTitle).text();
+            this.$refs.ammendment_request.amendment.text = values;
+            this.$refs.ammendment_request.amendment.activity_type_name = $(selectedTabTitle).text();
+            
             this.$refs.ammendment_request.isModalOpen = true;
         },
         
