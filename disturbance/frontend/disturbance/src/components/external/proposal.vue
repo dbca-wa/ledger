@@ -26,6 +26,14 @@
             <label for="region-label">Region(*)</label>
             <input type="text" name="region-text"class="form-control" disabled="true">
             -->
+
+            <p v-if="missing_fields.length">
+                <b>Please correct the following error(s):</b>
+                <ul>
+                    <li v-for="error in missing_fields">{{ error  }}</li>
+                </ul>
+            </p>
+
             <Proposal v-if="proposal" :proposal="proposal" id="proposalStart">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
@@ -77,6 +85,7 @@ export default {
       submitting: false,
       newText: "",
       pBody: 'pBody',
+      missing_fields: [],
     }
   },
   components: {
@@ -170,19 +179,11 @@ export default {
         }
     },
 
-    submit: function(){
+    validate: function(){
         let vm = this;
+        vm.missing_fields = [];
         $('input[type=text]:hidden, textarea:hidden, input[type=checkbox]:hidden, input[type=radio]:hidden, input[type=file]:hidden').prop('required', null);
-        //$("input:hidden").prop('required',null);
-
         var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required');
-        //var emptyFields = $(':required').filter(function() {
-        /*
-        var emptyFields = required_fields.filter(function() {
-            console.log('missing: ' + this.type + ' ' + this.name)
-            return $(this).val() === "";
-        }).length;
-        */
 
         required_fields.each(function() {
             console.log('type: ' + this.type + ' ' + this.name)
@@ -190,8 +191,7 @@ export default {
                 //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
                 if (!$("input[name="+this.name+"]").is(':checked')) {
                      console.log('radio not checked: ' + this.type + ' ' + this.name)
-                } else {
-                     console.log('radio is checked: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({name:this.name, label:this.value});
                 }
             }
 
@@ -199,39 +199,34 @@ export default {
                 //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
                 if ($("[class="+this.classList['value']+"]:checked").length == 0) {
                      console.log('checkbox not checked: ' + this.type + ' ' + this.name)
-                } else {
-                     console.log('checkbox is checked: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({name:this.name, label:this.value});
                 }
             }
 
             if (this.type == 'file') {
                 if (this.files.length == 0) {
                      console.log('file not uploaded: ' + this.type + ' ' + this.name)
-                } else {
-                     console.log('file is uploaded: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({name:this.name, label:this.value});
                 }
             }
 
             if (this.type == 'text') {
                 if (this.value == '') {
                      console.log('text not provided: ' + this.type + ' ' + this.name)
-                } else {
-                     console.log('text is provided: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({name:this.name, label:this.value});
                 }
             }
 
             if (this.type == 'textarea') {
                 if (this.value == '') {
                      console.log('textarea not provided: ' + this.type + ' ' + this.name)
-                } else {
-                     console.log('textarea is provided: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({name:this.name, label:this.value});
                 }
             }
 
-
-
-
         });
+
+        return vm.missing_fields.length
 
         /*
         if (emptyFields === 0) {
@@ -241,7 +236,12 @@ export default {
             return false;
         }
         */
+    },
 
+
+    submit: function(){
+        let vm = this;
+        var num_missing_fields = vm.validate()
         vm.submitting = true;
 
         swal({
