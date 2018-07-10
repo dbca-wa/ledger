@@ -1,0 +1,21 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Application {{ application.lodgement_number }} has been reviewed and requires an amendment before approval.
+
+    {% if reason %}
+        <p>
+            <span>Amendment Reason: {{ reason }}</span>
+        </p>
+    {% endif %}
+
+    {% if amendment_details %}
+        <p><span> Amendment details: <br> {{ amendment_details }}</span></p>
+    {% endif %}
+    <p>
+    You can access this Application using the following link:
+    </p>
+    {{url}}
+
+
+{%  endblock %}

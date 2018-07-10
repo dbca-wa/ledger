@@ -21,6 +21,7 @@ router.register(r'organisations',org_api.OrganisationViewSet)
 router.register(r'application',application_api.ApplicationViewSet)
 router.register(r'referrals',application_api.ReferralViewSet)
 router.register(r'assessment',application_api.AssessmentViewSet)
+router.register(r'amendment',application_api.AmendmentRequestViewSet)
 router.register(r'assessor_group',application_api.AssessorGroupViewSet)
 router.register(r'licences',licence_api.LicenceViewSet)
 router.register(r'licences_class',licence_api.LicenceClassViewSet)
@@ -41,6 +42,7 @@ api_patterns = [
     url(r'^api/user_profile_completed$', users_api.UserProfileCompleted.as_view(), name='get-user-profile-completed'),
     url(r'^api/department_users$', users_api.DepartmentUserList.as_view(), name='department-users-list'),
     url(r'^api/application_type$', application_api.GetApplicationType.as_view(), name='get-application-type'),
+    url(r'^api/amendment_request_reason_choices',application_api.AmendmentRequestReasonChoicesView.as_view(),name='amendment_request_reason_choices'),
     url(r'^api/empty_list$', application_api.GetEmptyList.as_view(), name='get-empty-list'),
     url(r'^api/organisation_access_group_members',org_api.OrganisationAccessGroupMembers.as_view(),name='organisation-access-group-members'),
     url(r'^api/',include(router.urls))

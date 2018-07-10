@@ -40,7 +40,8 @@ from wildlifecompliance.components.applications.models import (
     ApplicationCondition,
     ApplicationStandardCondition,
     Assessment,
-    ApplicationGroupType
+    ApplicationGroupType,
+    AmendmentRequest
 )
 from wildlifecompliance.components.applications.serializers import (
     SendReferralSerializer,
@@ -60,7 +61,8 @@ from wildlifecompliance.components.applications.serializers import (
     PropedDeclineSerializer,
     AssessmentSerializer,
     ApplicationGroupTypeSerializer,
-    SaveAssessmentSerializer
+    SaveAssessmentSerializer,
+    AmendmentRequestSerializer
     
 )
 
@@ -90,6 +92,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset() 
         serializer = DTApplicationSerializer(queryset, many=True)
         return Response(serializer.data)
+
 
     @detail_route(methods=['GET',])
     def action_log(self, request, *args, **kwargs):
@@ -428,6 +431,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+
     @detail_route(methods=['POST',])
     def final_decline(self, request, *args, **kwargs):
         try:
@@ -548,6 +552,14 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def assessment_details(self, request, *args, **kwargs):
+        # queryset = self.get_queryset() 
+        instance = self.get_object()
+        queryset =  Assessment.objects.filter(application=instance.id)
+        serializer = AssessmentSerializer(queryset,many=True)
+        return Response(serializer.data)
 
 class ReferralViewSet(viewsets.ModelViewSet):
     queryset = Referral.objects.all()
@@ -718,12 +730,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     queryset = Assessment.objects.all()
     serializer_class = AssessmentSerializer
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset() 
-        app_id = request.GET.get('app_id',None)
-        queryset = queryset.filter(application=app_id)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+    
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
@@ -757,6 +764,46 @@ class AssessorGroupViewSet(viewsets.ModelViewSet):
             # serializer = self.get_serializer(qs, many=True)
         print(qs)
         return qs
+
+class AmendmentRequestViewSet(viewsets.ModelViewSet):
+    queryset = AmendmentRequest.objects.all()
+    serializer_class = AmendmentRequestSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            # print(request.data)
+            serializer = self.get_serializer(data= request.data)
+            serializer.is_valid(raise_exception = True)
+            instance = serializer.save()
+            instance.generate_amendment(request)
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+class AmendmentRequestReasonChoicesView(views.APIView):
+
+    renderer_classes = [JSONRenderer,]
+    def get(self,request, format=None):
+        choices_list = []
+        choices = AmendmentRequest.REASON_CHOICES
+        if choices:
+            for c in choices:
+                choices_list.append({'key': c[0],'value': c[1]})
+
+        return Response(choices_list)
+
+    
 
     
 

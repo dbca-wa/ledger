@@ -17,6 +17,10 @@ class ApplicationDocumentInline(admin.TabularInline):
 class ApplicationTypeAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.AmendmentRequest)
+class AmendmentRequestAdmin(admin.ModelAdmin):
+    pass
+
 @admin.register(models.ApplicationDeclinedDetails)
 class ApplicationDeclinedDetails(admin.ModelAdmin):
     pass
