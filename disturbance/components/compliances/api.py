@@ -90,7 +90,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
                 instance.submit(request)
                 serializer = self.get_serializer(instance)              
                 # Save the files
-                for f in request.FILES:
+                '''for f in request.FILES:
                     document = instance.documents.create()
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]
