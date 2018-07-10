@@ -45,8 +45,11 @@ def send_application_submit_email_notification(group_email,application,request):
     # An email to internal users notifying about new application is submitted
     email = ApplicationSubmitNotificationEmail()
     # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
+    url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk': application.id}))
+
     context = {
         'application': application,
+        'url': url
     }
 
     msg = email.send(group_email, context=context)

@@ -23,8 +23,8 @@ class CheckoutProductSerializer(serializers.Serializer):
 class CheckoutCustomProductSerializer(serializers.Serializer):
     ledger_description = serializers.CharField()
     quantity = serializers.IntegerField(min_value=1,default=1)
-    price_excl_tax = serializers.DecimalField(max_digits=8, decimal_places=2, default=0)
-    price_incl_tax = serializers.DecimalField(max_digits=8, decimal_places=2, default=0)
+    price_excl_tax = serializers.DecimalField(max_digits=22, decimal_places=12, default=0)
+    price_incl_tax = serializers.DecimalField(max_digits=12, decimal_places=2, default=0)
 
 
 class VoucherSerializer(serializers.Serializer):

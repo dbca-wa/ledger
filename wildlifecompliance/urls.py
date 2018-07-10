@@ -64,6 +64,11 @@ urlpatterns = [
     url(r'^application/$', application_views.ApplicationView.as_view(), name='application'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
     url('^healthcheck/', views.HealthCheckView.as_view(), name='health_check'),
+
+    #following url is defined so that to include url path when sending application emails to users
+    url(r'^internal/application/(?P<application_pk>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-application-detail'),
+
 ] + ledger_patterns
 
 if settings.DEBUG:  # Serve media locally in development.

@@ -5,7 +5,7 @@ import zlib
 
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.contrib.postgres.fields import JSONField
-from django.db import models, IntegrityError
+from django.db import models, IntegrityError, transaction
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
@@ -309,6 +309,13 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             return self.first_name.split(' ')[0]
         return self.email
 
+    def upload_identification(self, request):
+        with transaction.atomic():
+            document = Document(file=request.data.dict()['identification'])
+            document.save()
+            self.identification = document
+            self.save()
+
     dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"
     dummy_email_suffix_len = len(dummy_email_suffix)
 
@@ -437,6 +444,13 @@ class EmailUserAction(UserAction):
     ACTION_PERSONAL_DETAILS_UPDATE = "User {} Personal Details Updated"
     ACTION_CONTACT_DETAILS_UPDATE = "User {} Contact Details Updated"
     ACTION_POSTAL_ADDRESS_UPDATE = "User {} Postal Address Updated"
+    ACTION_ID_UPDATE = "User {} Identification Updated"
+
+    emailuser = models.ForeignKey(EmailUser, related_name='action_logs')
+
+    class Meta:
+        app_label = 'accounts'
+        ordering = ['-when']
 
     @classmethod
     def log_action(cls, emailuser, action, user):
@@ -445,12 +459,6 @@ class EmailUserAction(UserAction):
             who=user,
             what=str(action)
         )
-
-    emailuser = models.ForeignKey(EmailUser, related_name='action_logs')
-
-    class Meta:
-        app_label = 'accounts'
-        ordering = ['-when']
 
 
 class EmailUserListener(object):
@@ -565,9 +573,14 @@ class Organisation(models.Model):
     name = models.CharField(max_length=128, unique=True)
     abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
     # TODO: business logic related to identification file upload/changes.
-    identification = models.FileField(upload_to='uploads/%Y/%m/%d', null=True, blank=True)
+    identification = models.FileField(upload_to='%Y/%m/%d', null=True, blank=True)
     postal_address = models.ForeignKey('OrganisationAddress', related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
     billing_address = models.ForeignKey('OrganisationAddress', related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
+
+    def upload_identification(self, request):
+        with transaction.atomic():
+            self.identification = request.data.dict()['identification']
+            self.save()
 
     def __str__(self):
         return self.name

@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.utils.encoding import smart_text
 
-from wildlifelicensing.apps.emails.emails import TemplateEmailBase, host_reverse
+from wildlifelicensing.apps.emails.emails import TemplateEmailBase, host_reverse, pdf_host_reverse
 from wildlifelicensing.apps.applications.models import ApplicationLogEntry, IDRequest, ReturnsRequest, AmendmentRequest
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
@@ -33,9 +33,7 @@ class ApplicationAmendmentRequestedEmail(TemplateEmailBase):
 def send_amendment_requested_email(amendment_request, request):
     application = amendment_request.application
     email = ApplicationAmendmentRequestedEmail()
-    url = request.build_absolute_uri(
-        reverse('wl_applications:edit_application', args=[application.pk])
-    )
+    url = pdf_host_reverse('wl_applications:edit_application', args=[application.pk])
 
     context = {
         'amendment_request': amendment_request,
@@ -174,9 +172,7 @@ class ApplicationIDUpdateRequestedEmail(TemplateEmailBase):
 def send_id_update_request_email(id_request, request):
     application = id_request.application
     email = ApplicationIDUpdateRequestedEmail()
-    url = request.build_absolute_uri(
-        reverse('wl_main:identification')
-    )
+    url = pdf_host_reverse('wl_main:identification')
 
     if id_request.reason:
         id_request.reason = dict(IDRequest.REASON_CHOICES)[id_request.reason]
@@ -204,9 +200,7 @@ class ApplicationReturnsRequestedEmail(TemplateEmailBase):
 def send_returns_request_email(returns_request, request):
     application = returns_request.application
     email = ApplicationReturnsRequestedEmail()
-    url = request.build_absolute_uri(
-        reverse('wl_dashboard:home')
-    )
+    url = pdf_host_reverse('wl_dashboard:home')
 
     if returns_request.reason:
         returns_request.reason = dict(ReturnsRequest.REASON_CHOICES)[returns_request.reason]

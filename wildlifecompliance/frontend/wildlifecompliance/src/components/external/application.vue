@@ -5,17 +5,30 @@
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                 <input type='hidden' name="application_id" :value="1" />
-                <div v-if="!application.readonly" class="row" style="margin-bottom:20px;">
-                  <div class="col-lg-12 pull-right">
-                        <input type="submit" class="btn btn-primary" value="Save and Exit"/>
-                        <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                        <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
-                  </div>
+                <div v-if="!application.readonly" class="row" style="margin-bottom:50px;">
+                    <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                        <div class="navbar-inner">
+                            <div class="container">
+                                <p class="pull-right" style="margin-top:5px;">
+                                    <input type="submit" class="btn btn-primary" value="Save and Exit"/>
+                                    <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                                    <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div v-else class="row" style="margin-bottom:20px;">
-                  <div class="col-lg-12 pull-right">
-                    <router-link class="btn btn-primary" :to="{name: 'external-applications-dash'}">Back to Dashboard</router-link>
-                  </div>
+
+                <div v-else class="row" style="margin-bottom:50px;">
+                    <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                        <div class="navbar-inner">
+                            <div class="container">
+                                <p class="pull-right" style="margin-top:5px;">
+                                    <router-link class="btn btn-primary" :to="{name: 'external-applications-dash'}">Back to Dashboard</router-link>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </Application>
         </form>
@@ -67,7 +80,9 @@ export default {
     },
     submit: function(){
         let vm = this;
-        
+        console.log(' SUBMIT VM FORM ');
+        let formData = new FormData(vm.form);
+        console.log(formData);
         swal({
             title: "Submit Application",
             text: "Are you sure you want to submit this application?",

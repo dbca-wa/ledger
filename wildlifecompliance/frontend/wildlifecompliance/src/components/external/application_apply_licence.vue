@@ -15,29 +15,29 @@
                         <form class="form-horizontal" name="personal_form" method="post">
                           
                             <div class="col-sm-12">
-                                <div class = row>  
+                                <div class="row">
                                 <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
                                 </div>
                               
                                 
-                                
+                                <div class="margin-left-20">
                                 <div v-for="(category,index) in licence_classes" class="radio">
                                     <div class ="row">
                                         <div class="col-sm-9" >  
-                                            <input type="radio"  :id="category.id" name="licence_category" v-model="licence_classes.id"  :value="category.id" @change="handleRadioChange($event,index)"> {{category.name}} 
+                                            <input type="radio"  :id="category.id" name="licence_category" v-model="licence_classes.id"  :value="category.id" @change="handleRadioChange($event,index)"> {{category.short_name}}
                                              
                                             <div class="row">
 
-                                                
-                                                <div  v-if="category.checked" class="col-sm-9"> 
 
-                                                    <div v-for="(type,index1) in category.activity_type" class="checkbox">
-                                                        <input type="checkbox" ref="selected_activity_type" name ="activity_type" :value="type.id" :id = "type.id" v-model="category.activity_type[index1].selected" @click="handleActivityTypeCheckboxChange(index,index1)"> {{type.name}} 
-                                                        
+                                                <div  v-if="category.checked" class="col-sm-9">
+
+                                                    <div v-for="(type,index1) in category.activity_type" class="checkbox margin-left-20">
+                                                        <input type="checkbox" ref="selected_activity_type" name ="activity_type" :value="type.id" :id = "type.id" v-model="category.activity_type[index1].selected" @click="handleActivityTypeCheckboxChange(index,index1)"> {{type.short_name}}
+
                                                         <div v-if="type.selected">
-                                                            <div v-for="(activity,index2) in type.activity" class="checkbox">
+                                                            <div v-for="(activity,index2) in type.activity" class="checkbox activity-clear-left">
                                                                 
-                                                                <div class ="col-sm-6">
+                                                                <div class ="col-sm-12">
                                                                     <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected">{{activity.name}}
                                                                 </div>
 
@@ -53,12 +53,13 @@
                                         </div>
                                     </div> 
                                 </div>
+                                </div>
 
                                 
                                 
                             </div>
                             <div class="col-sm-12">
-                                <button :disabled="behalf_of == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                                <button :disabled="behalf_of == '' && yourself == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
                             </div>
                         </form>
                     </div>
@@ -80,7 +81,8 @@ export default {
     let vm = this;
     return {
         licence_select : this.$route.params.licence_select,
-        behalf_of : this.$route.params.org_select,
+        behalf_of_org : this.$route.params.org_select,
+        yourself : this.$route.params.yourself,
         "application": null,
         agent: {},
         activity_type :{
@@ -187,15 +189,19 @@ export default {
                 }
             }
         }
-        data.applicant=vm.behalf_of
+        data.org_applicant=vm.behalf_of_org
         data.licence_class_data=vm.licence_class
+        console.log(' ---- application apply licence createApplication() ---- ');
+        console.log(data);
+        console.log(JSON.stringify(data));
         vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
+              console.log(res.body);
               vm.application = res.body;
               vm.$router.push({
                   name:"draft_application",
                   params:{application_id:vm.application.id}
               });
-              console.log(request)
+              console.log(request);
           },
           err => {
             console.log(err);
@@ -220,4 +226,10 @@ export default {
 </script>
 
 <style lang="css">
+div.margin-left-20 {
+    margin-left: 20px;
+}
+div.activity-clear-left {
+    clear: left;
+}
 </style>

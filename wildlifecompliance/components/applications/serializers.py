@@ -1,5 +1,5 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,Address,Document
 from wildlifecompliance.components.applications.models import (
                                     ApplicationType,
                                     Application,
@@ -18,6 +18,8 @@ from wildlifecompliance.components.organisations.models import (
                             )
 from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer 
+from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
+from wildlifecompliance.components.users.serializers import UserAddressSerializer,DocumentSerializer
 from rest_framework import serializers
 
 class ApplicationTypeSerializer(serializers.ModelSerializer):
@@ -38,6 +40,25 @@ class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
+
+class EmailUserAppViewSerializer(serializers.ModelSerializer):
+    residential_address = UserAddressSerializer()
+    identification = DocumentSerializer()
+
+    class Meta:
+        model = EmailUser
+        fields = ('id',
+                  'email',
+                  'first_name',
+                  'last_name',
+                  'dob',
+                  'title',
+                  'organisation',
+                  'residential_address',
+                  'identification',
+                  'email',
+                  'phone_number',
+                  'mobile_number',)
 
 class ApplicationGroupTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,12 +91,11 @@ class AmendmentRequestSerializer(serializers.ModelSerializer):
     def get_reason (self,obj):
         return obj.get_reason_display()
 
-
-
 class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
     character_check_status = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Application
         fields = (
@@ -91,6 +111,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'review_status',
                 #'hard_copy',
                 'applicant',
+                'org_applicant',
                 'proxy_applicant',
                 'submitter',
                 'assigned_officer',
@@ -130,7 +151,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
 class DTApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
-    applicant = serializers.CharField(source='applicant.organisation.name')
+    applicant = serializers.CharField(read_only=True)
+    org_applicant = serializers.CharField(source='org_applicant.organisation.name')
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
@@ -170,7 +192,7 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
                 'processing_status',
                 'review_status',
                 #'hard_copy',
-                'applicant',
+                'org_applicant',
                 'proxy_applicant',
                 'submitter',
                 'assigned_officer',
@@ -214,13 +236,15 @@ class ApplicationDeclinedDetailsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class InternalApplicationSerializer(BaseApplicationSerializer):
-    applicant = ApplicantSerializer()
+    applicant = serializers.CharField(read_only=True)
+    org_applicant = OrganisationSerializer()
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
     id_check_status = serializers.SerializerMethodField(read_only=True)
     character_check_status = serializers.SerializerMethodField(read_only=True)
-    submitter = serializers.CharField(source='submitter.get_full_name')
+    #submitter = serializers.CharField(source='submitter.get_full_name')
+    submitter = EmailUserAppViewSerializer()
     applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
     #
     assessor_mode = serializers.SerializerMethodField()
@@ -246,6 +270,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                 'licence_type_data',
                 #'hard_copy',
                 'applicant',
+                'org_applicant',
                 'proxy_applicant',
                 'submitter',
                 'assigned_officer',
