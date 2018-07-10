@@ -42,6 +42,9 @@ class ReferralView(ReferralOwnerMixin, DetailView):
     model = Referral
     template_name = 'wildlifecompliance/dash/index.html'
 
+class ApplicationView(ReferralOwnerMixin,DetailView):
+    model=Application
+    template_name='wildlifecompliance/dash/index.html'
 
 class WildlifeComplianceRoutingView(TemplateView):
     template_name = 'wildlifecompliance/index.html'
