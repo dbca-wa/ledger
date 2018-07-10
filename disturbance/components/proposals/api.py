@@ -734,8 +734,9 @@ class ReferralViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated():
-            queryset =  Referral.objects.filter(referral=user)
+        if user.is_authenticated() and is_internal(self.request):
+            #queryset =  Referral.objects.filter(referral=user)
+            queryset =  Referral.objects.all()
             return queryset
         return Referral.objects.none()
 
