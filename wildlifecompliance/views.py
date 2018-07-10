@@ -10,11 +10,7 @@ from datetime import datetime, timedelta
 
 from wildlifecompliance.helpers import is_officer, is_departmentUser
 from wildlifecompliance.forms import *
-<<<<<<< HEAD
 from wildlifecompliance.components.applications.models import Application, Referral
-=======
-from wildlifecompliance.components.applications.models import Referral,Application
->>>>>>> 3beb9b066373e34444a478caca42b68f36185d7f
 from wildlifecompliance.components.applications.mixins import ReferralOwnerMixin
 
 class ExternalApplicationView(DetailView):
