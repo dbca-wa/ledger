@@ -204,7 +204,9 @@ export default {
         }
         data.org_applicant=vm.behalf_of_org
         data.licence_class_data=vm.licence_class
+        data.application_fee=vm.application_fee
         console.log(' ---- application apply licence createApplication() ---- ');
+        console.log(vm.application_fee)
         console.log(data);
         console.log(JSON.stringify(data));
         vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {

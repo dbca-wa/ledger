@@ -124,7 +124,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'can_user_view',
                 'documents_url',
                 'id_check_status',
-                'character_check_status'
+                'character_check_status',
+                'application_fee'
                 )
         read_only_fields=('documents',)
     
