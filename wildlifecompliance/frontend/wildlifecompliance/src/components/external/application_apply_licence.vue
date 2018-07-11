@@ -17,8 +17,9 @@
                             <div class="col-sm-12">
                                 <div class="row">
                                 <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
+                                <div class="pull-right"><strong>Estimated application fee: {{application_fee | toCurrency}}</strong></div>
                                 </div>
-                              
+
                                 
                                 <div class="margin-left-20">
                                 <div v-for="(category,index) in licence_classes" class="radio">
@@ -111,12 +112,24 @@ export default {
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
+        application_fee: 35,
     }
   },
   components: {
   },
-  
-  
+  filters: {
+    toCurrency: function(value) {
+        if (typeof value !== "number") {
+            return value;
+        }
+        var formatter = new Intl.NumberFormat('en-AU', {
+            style: 'currency',
+            currency: 'AUD',
+            minimumFractionDigits: 2
+        });
+        return formatter.format(value);
+    },
+  },
   methods: {
     submit: function() {
         let vm = this;
