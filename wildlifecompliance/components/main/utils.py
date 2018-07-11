@@ -6,7 +6,7 @@ from django.core.cache import cache
 
 def retrieve_department_users():
     try:
-        res = requests.get('{}/api/users?minimal'.format(settings.CMS_URL), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
+        res = requests.get('{}/api/users/fast/?compact'.format(settings.EXT_USER_API_ROOT_URL), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
         res.raise_for_status()
         cache.set('department_users',json.loads(res.content).get('objects'),10800)
     except:
@@ -14,7 +14,7 @@ def retrieve_department_users():
 
 def get_department_user(email):
     try:
-        res = requests.get('{}/api/users?email={}'.format(settings.CMS_URL,email), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
+        res = requests.get('{}/api/users?email={}'.format(settings.EXT_USER_API_ROOT_URL,email), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
         res.raise_for_status()
         data = json.loads(res.content).get('objects')
         if len(data) > 0:

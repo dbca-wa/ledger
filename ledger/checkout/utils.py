@@ -248,7 +248,7 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
 def calculate_excl_gst(amount):
     result = D(100.0)/ D(100 + settings.LEDGER_GST) * D(amount)
-    return result.quantize(D('0.01'), ROUND_HALF_DOWN)
+    return result
 
 
 def createBasket(product_list, owner, system, vouchers=None, force_flush=True):

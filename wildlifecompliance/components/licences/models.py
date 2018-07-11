@@ -33,12 +33,15 @@ class LicenceDocument(Document):
 
 class WildlifeLicenceActivity(models.Model):
     name = models.CharField(max_length = 100)
+    short_name = models.CharField(max_length=30, blank=True, null=True)
     schema=JSONField(default=list)
     
     # application_schema = JSONField(blank=True, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
+        verbose_name = 'Licence purpose'
+        verbose_name_plural = 'Licence purposes'
 
     def __str__(self):
         return self.name
@@ -64,6 +67,8 @@ class WildlifeLicenceActivityType(models.Model):
     # default_period = models.PositiveIntegerField('Default Licence Period (days)', blank = True, null = True)
     class Meta:
         app_label = 'wildlifecompliance'
+        verbose_name = 'Licenced activity'
+        verbose_name_plural = 'Licenced activities'
 
     def __str__(self):
         return self.name
@@ -90,7 +95,17 @@ class WildlifeLicenceClass(LicenceType):
     activity_type = models.ManyToManyField(WildlifeLicenceActivityType, blank= True,through='DefaultActivityType',related_name='wildlifecompliance_activitytypes')
     class Meta:
         app_label = 'wildlifecompliance'
+        verbose_name = 'Licence category'
+        verbose_name_plural = 'Licence categories'
 
+    @property
+    # override LicenceType display_name to display name first instead of short_name
+    def display_name(self):
+        result = self.name or self.short_name
+        if self.replaced_by is None:
+            return result
+        else:
+            return '{} (V{})'.format(result, self.version)
 
 class DefaultActivityType(models.Model):
     activity_type = models.ForeignKey(WildlifeLicenceActivityType)
@@ -99,9 +114,11 @@ class DefaultActivityType(models.Model):
     class Meta:
         unique_together = (('licence_class','activity_type'))
         app_label = 'wildlifecompliance'
+        verbose_name = 'Licenced category - licenced activity mapping'
+        verbose_name_plural = 'Licenced category - licenced activity mappings'
 
-    # def __str__(self):
-    #     return self.licence_class
+    def __str__(self):
+        return '{} - {}'.format(self.licence_class,self.activity_type)
     
 
 class DefaultActivity(models.Model):
@@ -111,9 +128,11 @@ class DefaultActivity(models.Model):
     class Meta:
         unique_together = (('activity_type','activity'))
         app_label = 'wildlifecompliance'
+        verbose_name = 'Licenced activity - purpose mapping'
+        verbose_name_plural = 'Licenced activity - purpose mappings'
 
-    # def __str__(self):
-    #     return self.category
+    def __str__(self):
+        return '{} - {}'.format(self.activity_type,self.activity)
 
 
 class WildlifeLicence(models.Model):

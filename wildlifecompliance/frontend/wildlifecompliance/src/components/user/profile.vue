@@ -21,8 +21,6 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <i v-if="showCompletion && profile.personal_details" class="fa fa-check fa-2x pull-left" style="color:green"></i>
-                    <i v-else-if="showCompletion && !profile.personal_details" class="fa fa-times fa-2x pull-left" style="color:red"></i>
                     <h3 class="panel-title">Personal Details <small>Provide your personal details</small>
                         <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
@@ -53,6 +51,40 @@
                             <div class="col-sm-12">
                                 <button v-if="!updatingPersonal" class="pull-right btn btn-primary" @click.prevent="updatePersonal()">Update</button>
                                 <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Identification <small>Upload your photo ID</small>
+                        <a class="panelClicker" :href="'#'+idBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="idBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse" :id="idBody">
+                      <form class="form-horizontal" name="id_form" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-3 control-label">Identification</label>
+                            <div class="col-sm-6">
+                                <img v-if="profile.identification" width="100%" name="identification" v-bind:src="profile.identification.file" />
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <div class="col-sm-12">
+                                <!-- output order in reverse due to pull-right at runtime -->
+                                <button v-if="!uploadingID" class="pull-right btn btn-primary" @click.prevent="uploadID()">Upload</button>
+                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Uploading</button>
+                                <span class="pull-right" style="margin-left:10px;margin-top:10px;margin-right:10px">{{uploadedIDFileName}}</span>
+                                <span class="btn btn-primary btn-file pull-right">
+                                    Select ID to Upload<input type="file" ref="uploadedID" @change="readFileID()"/>
+                                </span>
                             </div>
                           </div>
                        </form>
@@ -350,6 +382,7 @@ export default {
         return {
             adBody: 'adBody'+vm._uid,
             pBody: 'pBody'+vm._uid,
+            idBody: 'idBody'+vm._uid,
             cBody: 'cBody'+vm._uid,
             oBody: 'oBody'+vm._uid,
             profile: {
@@ -370,11 +403,14 @@ export default {
             loading: [],
             registeringOrg: false,
             validatingPins: false,
+            uploadingID: false,
             checkingDetails: false,
             addingCompany: false,
             managesOrg: 'No',
             managesOrgConsultant: 'No',
             uploadedFile: null,
+            uploadedID: null,
+            updatingPersonal: false,
             updatingPersonal: false,
             updatingAddress: false,
             updatingContact: false,
@@ -417,6 +453,9 @@ export default {
         uploadedFileName: function() {
             return this.uploadedFile != null ? this.uploadedFile.name: '';
         },
+        uploadedIDFileName: function() {
+            return this.uploadedID != null ? this.uploadedID.name: '';
+        },
         showCompletion: function() {
             return this.$route.name == 'first-time'
         },
@@ -438,6 +477,20 @@ export default {
                 _file = input.files[0];
             }
             vm.uploadedFile = _file;
+        },
+        readFileID: function() {
+            let vm = this;
+            let _file = null;
+            var input = $(vm.$refs.uploadedID)[0];
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.readAsDataURL(input.files[0]);
+                reader.onload = function(e) {
+                    _file = e.target.result;
+                };
+                _file = input.files[0];
+            }
+            vm.uploadedID = _file;
         },
         addCompany: function (){
             this.newOrg.push = {
@@ -694,6 +747,48 @@ export default {
             }, (error) => {
                 vm.validatingPins = false;
             });
+        },
+        uploadID: function() {
+            let vm = this;
+            console.log('uploading id');
+            vm.uploadingID = true;
+            let data = new FormData();
+            data.append('identification', vm.uploadedID);
+            console.log(data);
+            if (vm.uploadedID == null){
+                vm.uploadingID = false;
+                swal({
+                        title: 'Upload ID',
+                        html: 'Please select a file to upload.',
+                        type: 'error'
+                });
+            } else {
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/upload_id')),data,{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.uploadingID = false;
+                    vm.uploadedID = null;
+                    swal({
+                        title: 'Upload ID',
+                        html: 'Your ID has been successfully uploaded.',
+                        type: 'success',
+                    }).then(() => {
+                        window.location.reload(true);
+                    });
+                }, (error) => {
+                    console.log(error);
+                    vm.uploadingID = false;
+                    let error_msg = '<br/>';
+                    for (var key in error.body) {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                    swal({
+                        title: 'Upload ID',
+                        html: 'There was an error uploading your ID.<br/>' + error_msg,
+                        type: 'error'
+                    });
+                });
+            }
         },
         orgRequest: function() {
             let vm = this;

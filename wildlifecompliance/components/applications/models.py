@@ -94,7 +94,7 @@ class ApplicationAssessorGroup(models.Model):
         except ApplicationAssessorGroup.DoesNotExist:
             default = None
 
-        if self.pk:
+        if default and self.pk:
             if int(self.pk) != int(default.id):
                 if default and self.default:
                     raise ValidationError('There can only be one default application assessor group')
@@ -144,7 +144,7 @@ class ApplicationApproverGroup(models.Model):
         except ApplicationApproverGroup.DoesNotExist:
             default = None
 
-        if self.pk:
+        if default and self.pk:
             if int(self.pk) != int(default.id):
                 if default and self.default:
                     raise ValidationError('There can only be one default application approver group')
@@ -206,6 +206,7 @@ class Application(RevisionedMixin):
                                  ('approved', 'Approved'),
                                  ('declined', 'Declined'),
                                  ('discarded', 'Discarded'),
+                                 ('under_review', 'Under Review'),
                                  )
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
@@ -240,12 +241,12 @@ class Application(RevisionedMixin):
 
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[0][0])
-    applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='applications')
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateField(blank=True, null=True)
 
+    org_applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='org_applications')
     proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='wildlifecompliance_proxy')
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='wildlifecompliance_applications')
 
@@ -286,6 +287,15 @@ class Application(RevisionedMixin):
     @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
+
+    @property
+    def applicant(self):
+        if self.org_applicant:
+            return self.org_applicant.organisation.name
+        elif self.proxy_applicant:
+            return "{} {}".format(self.proxy_applicant.first_name, self.proxy_applicant.last_name)
+        else:
+            return "{} {}".format(self.submitter.first_name, self.submitter.last_name)
 
     @property
     def is_assigned(self):
@@ -443,8 +453,13 @@ class Application(RevisionedMixin):
                 self.save()
                 # Create a log entry for the application
                 self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
-                # Create a log entry for the organisation
-                self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                # Create a log entry for the applicant (submitter, organisation or proxy)
+                if self.org_applicant:
+                    self.org_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                elif self.proxy_applicant:
+                    self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                else:
+                    self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 send_application_submit_email_notification(select_group.members.all(),self,request)
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
@@ -846,32 +861,18 @@ class AmendmentRequest(ApplicationRequest):
     def generate_amendment(self,request):
         with transaction.atomic():
             try:
-                # print(type(self.application))
-
-                 # This is to change the status of licence activity type
-                # application= Application.objects.get(id=self.application)
-                # print(type(self.application.licence_type_data))
-                print(self.application.licence_type_data['activity_type'])
-
+                # This is to change the status of licence activity type
                 for item in  self.application.licence_type_data['activity_type']:
-                    print(self.licence_activity_type.id)
-                    print(item["id"])
-                    print((self.licence_activity_type.id==item["id"]))
-                    # print(activity_type["name"])
                     if self.licence_activity_type.id==item["id"] :
                         item["processing_status"]="Draft"
-                        print(item["processing_status"])
-                        self.save()
-              
-                
-                # Create a log entry for the proposal
-                self.application.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
-                # Create a log entry for the organisation
-                self.application.applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+                        # self.application.save()
 
+                self.application.save()
+                
+                # Create a log entry for the application
+                self.application.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
                 # send email
                 send_application_amendment_notification(self,self.application,request)
-
                 self.save()
             except:
                 raise

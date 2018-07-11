@@ -1578,7 +1578,6 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['start'] = start
 
             sql += ';'
-            #print(sql)
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");
@@ -1621,6 +1620,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['lastname'] = booking.details.get('last_name','')
                 if  booking.override_reason:                        
                     bk['override_reason'] = booking.override_reason.text
+                if booking.override_price:
+                    discount = booking.discount
                 if not booking.paid:
                     bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
                 if booking.customer:
@@ -1760,7 +1761,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             }
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)
-
             return Response(serializer.data, status=http_status)
 
         except serializers.ValidationError:
@@ -1875,7 +1875,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['GET'])
     def history(self, request, *args, **kwargs):
-        http_status = status.HTTP_200_OK
+        http_status = status.HTTP_200_OK              
         try:
             history = self.get_object().history.all()
             data = BookingHistorySerializer(history,many=True).data
@@ -1908,7 +1908,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
                 rate = Rate.objects.get_or_create(adult=rate_serializer.validated_data['adult'],concession=rate_serializer.validated_data['concession'],child=rate_serializer.validated_data['child'])[0]
-            print(rate_serializer.validated_data)
             if rate:
                 data = {
                     'rate': rate.id,
@@ -2125,7 +2124,6 @@ class BulkPricingView(generics.CreateAPIView):
             http_status = status.HTTP_200_OK
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            print(serializer.validated_data)
 
             rate_id = serializer.data.get('rate',None)
             if rate_id:

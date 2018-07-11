@@ -535,7 +535,13 @@ class OrganisationAction(UserAction):
     ACTION_CONTACT_DECLINE = "Declined contact {}"
     ACTION_MAKE_CONTACT_SUSPEND = "Suspended contact {}"
     ACTION_MAKE_CONTACT_REINSTATE = "REINSTATED contact {}"
+    ACTION_ID_UPDATE = "Organisation {} Identification Updated"
 
+    organisation = models.ForeignKey(Organisation,related_name='action_logs')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        ordering = ['-when']
 
     @classmethod
     def log_action(cls, organisation, action, user):
@@ -544,12 +550,6 @@ class OrganisationAction(UserAction):
             who=user,
             what=str(action)
         )
-
-    organisation = models.ForeignKey(Organisation,related_name='action_logs')
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-        ordering = ['-when']
     
 class OrganisationLogEntry(CommunicationsLogEntry):
     organisation = models.ForeignKey(Organisation, related_name='comms_logs')

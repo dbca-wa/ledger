@@ -13,7 +13,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Submitted by</strong><br/>
-                                {{ application.submitter }}
+                                {{ application.submitter.first_name }} {{ application.submitter.last_name }}
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Lodged on</strong><br/>
@@ -247,18 +247,73 @@
                                         </a>
                                     </h3> 
                                 </div>
-                                <div class="panel-body panel-collapse collapse in" :id="detailsBody">
+                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse in" :id="detailsBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Name</label>
                                             <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.applicant.name">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.org_applicant.name">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label" >ABN/ACN</label>
                                             <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="application.applicant.abn">
+                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="application.org_applicant.abn">
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse in" :id="detailsBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Given Name(s)</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.submitter.first_name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Surname</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.submitter.last_name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Date of Birth</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="application.submitter.dob">
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Identification
+                                        <a class="panelClicker" :href="'#'+identificationBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="identificationBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                        </a>
+                                    </h3>
+                                </div>
+                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Identification</label>
+                                            <div class="col-sm-8">
+                                                <img width="100%" name="applicantIdentification" v-bind:src="application.org_applicant.organisation.identification" />
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Identification</label>
+                                            <div class="col-sm-8">
+                                                <img width="100%" name="applicantIdentification" v-bind:src="application.submitter.identification.file" />
                                             </div>
                                           </div>
                                       </form>
@@ -276,34 +331,66 @@
                                         </a>
                                     </h3> 
                                 </div>
-                                <div class="panel-body panel-collapse collapse" :id="addressBody">
+                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse" :id="addressBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
                                             <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="street" placeholder="" v-model="application.applicant.address.line1">
+                                                <input disabled type="text" class="form-control" name="street" placeholder="" v-model="application.org_applicant.address.line1">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                                             <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="application.applicant.address.locality">
+                                                <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="application.org_applicant.address.locality">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">State</label>
                                             <div class="col-sm-2">
-                                                <input disabled type="text" class="form-control" name="country" placeholder="" v-model="application.applicant.address.state">
+                                                <input disabled type="text" class="form-control" name="country" placeholder="" v-model="application.org_applicant.address.state">
                                             </div>
                                             <label for="" class="col-sm-2 control-label">Postcode</label>
                                             <div class="col-sm-2">
-                                                <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="application.applicant.address.postcode">
+                                                <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="application.org_applicant.address.postcode">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label" >Country</label>
                                             <div class="col-sm-4">
-                                                <input disabled type="text" class="form-control" name="country" v-model="application.applicant.address.country"/>
+                                                <input disabled type="text" class="form-control" name="country" v-model="application.org_applicant.address.country"/>
+                                            </div>
+                                          </div>
+                                       </form>
+                                </div>
+                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="addressBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Street</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="street" placeholder="" v-model="application.submitter.residential_address.line1">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="application.submitter.residential_address.locality">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">State</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="country" placeholder="" v-model="application.submitter.residential_address.state">
+                                            </div>
+                                            <label for="" class="col-sm-2 control-label">Postcode</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="application.submitter.residential_address.postcode">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Country</label>
+                                            <div class="col-sm-4">
+                                                <input disabled type="text" class="form-control" name="country" v-model="application.submitter.residential_address.country"/>
                                             </div>
                                           </div>
                                        </form>
@@ -321,10 +408,33 @@
                                         </a>
                                     </h3>
                                 </div>
-                                <div class="panel-body panel-collapse collapse" :id="contactsBody">
+                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse" :id="contactsBody">
                                     <table ref="contacts_datatable" :id="contacts_table_id" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
                                     </table>
                                 </div>
+                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="contactsBody">
+                                  <form class="form-horizontal">
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantPhoneNumber" placeholder="" v-model="application.submitter.phone_number">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Mobile</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantMobileNumber" placeholder="" v-model="application.submitter.mobile_number">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Email</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantEmail" placeholder="" v-model="application.submitter.email">
+                                        </div>
+                                      </div>
+                                  </form>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -386,10 +496,16 @@
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                                     <input type='hidden' name="application_id" :value="1" />
-                                    <div v-if="hasAssessorMode" class="row" style="margin-bottom:20px;">
-                                      <div class="col-lg-12 pull-right">
-                                        <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
-                                      </div>
+                                    <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
+                                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                                            <div class="navbar-inner">
+                                                <div class="container">
+                                                    <p class="pull-right" style="margin-top:5px;">
+                                                        <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </Application>
                             </form>
@@ -501,6 +617,7 @@ export default {
             applicationTab: 'applicationTab'+vm._uid,
             sendToAssessorTab: 'sendToAssessorTab'+vm._uid,
             detailsBody: 'detailsBody'+vm._uid,
+            identificationBody: 'identificationBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
             contactsBody: 'contactsBody'+vm._uid,
             checksBody: 'checksBody'+vm._uid,
@@ -615,9 +732,17 @@ export default {
     watch: {
     },
     computed: {
-
         contactsURL: function(){
-            return this.application!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.application.applicant.id+'/contacts') : '';
+            return this.application!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.application.org_applicant.id+'/contacts') : '';
+        },
+        applicantType: function(){
+            if (this.application.org_applicant){
+                return 'org';
+            } else if (this.application.proxy_applicant){
+                return 'proxy';
+            } else {
+                return 'submitter';
+            }
         },
         isLoading: function() {
           return this.loading.length > 0
@@ -681,7 +806,7 @@ export default {
         initialiseOrgContactTable: function(){
             let vm = this;
             if (vm.application && !vm.contacts_table_initialised){
-                vm.contacts_options.ajax.url = helpers.add_endpoint_json(api_endpoints.organisations,vm.application.applicant.id+'/contacts');
+                vm.contacts_options.ajax.url = helpers.add_endpoint_json(api_endpoints.organisations,vm.application.org_applicant.id+'/contacts');
                 vm.contacts_table = $('#'+vm.contacts_table_id).DataTable(vm.contacts_options);
                 vm.contacts_table_initialised = true;
             }
@@ -865,11 +990,11 @@ export default {
             .then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);
-                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                 vm.updateAssignedOfficerSelect();
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                 vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
@@ -882,7 +1007,7 @@ export default {
             let vm = this;
             vm.original_application = helpers.copyObject(response.body);
             vm.application = helpers.copyObject(response.body);
-            vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+            vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
             vm.$nextTick(() => {
                 vm.initialiseAssignedOfficerSelect(true);
                 vm.updateAssignedOfficerSelect();
@@ -906,11 +1031,11 @@ export default {
                 }).then((response) => {
                     vm.application = response.body;
                     vm.original_application = helpers.copyObject(response.body);
-                    vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                     vm.updateAssignedOfficerSelect();
                 }, (error) => {
                     vm.application = helpers.copyObject(vm.original_application)
-                    vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                     vm.updateAssignedOfficerSelect();
                     swal(
                         'Application Error',
@@ -924,11 +1049,11 @@ export default {
                 .then((response) => {
                     vm.application = response.body;
                     vm.original_application = helpers.copyObject(response.body);
-                    vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                     vm.updateAssignedOfficerSelect();
                 }, (error) => {
                     vm.application = helpers.copyObject(vm.original_application)
-                    vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                     vm.updateAssignedOfficerSelect();
                     swal(
                         'Application Error',
@@ -948,14 +1073,14 @@ export default {
             .then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);
-                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                 vm.$nextTick(() => {
                     vm.initialiseAssignedOfficerSelect(true);
                     vm.updateAssignedOfficerSelect();
                 });
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                 swal(
                     'Application Error',
                     helpers.apiVueResourceError(error),
@@ -1053,7 +1178,7 @@ export default {
                 vm.sendingReferral = false;
                 vm.original_application = helpers.copyObject(response.body);
                 vm.application = response.body;
-                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                 swal(
                     'Referral Sent',
                     'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
@@ -1077,7 +1202,7 @@ export default {
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/remind')).then(response => {
                 vm.original_application = helpers.copyObject(response.body);
                 vm.application = response.body;
-                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                 swal(
                     'Referral Reminder',
                     'A reminder has been sent to '+r.referral,
@@ -1098,7 +1223,7 @@ export default {
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/resend')).then(response => {
                 vm.original_application = helpers.copyObject(response.body);
                 vm.application = response.body;
-                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                 swal(
                     'Referral Resent',
                     'The referral has been resent to '+r.referral,
@@ -1119,7 +1244,7 @@ export default {
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/recall')).then(response => {
                 vm.original_application = helpers.copyObject(response.body);
                 vm.application = response.body;
-                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
                 swal(
                     'Referral Recall',
                     'The referall has been recalled from '+r.referral,
@@ -1164,7 +1289,7 @@ export default {
               next(vm => {
                 vm.application = res.body;
                 vm.original_application = helpers.copyObject(res.body);
-                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
               });
             },
             err => {
@@ -1176,7 +1301,7 @@ export default {
               next(vm => {
                 vm.application = res.body;
                 vm.original_application = helpers.copyObject(res.body);
-                vm.application.applicant.address = vm.application.applicant.address != null ? vm.application.applicant.address : {};
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
               });
             },
             err => {

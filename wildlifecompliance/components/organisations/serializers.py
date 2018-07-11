@@ -54,6 +54,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
     address = OrganisationAddressSerializer(read_only=True)
     pins = serializers.SerializerMethodField(read_only=True)
     delegates = DelegateSerializer(many=True, read_only=True)
+    organisation = LedgerOrganisationSerializer()
 
     class Meta:
         model = Organisation
@@ -63,18 +64,22 @@ class OrganisationSerializer(serializers.ModelSerializer):
             'abn',
             'address',
             'email',
+            'organisation',
             'phone_number',
             'pins',
             'delegates'
         )
 
     def get_pins(self, obj):
-        user = self.context['request'].user
-        # Check if the request user is among the first five delegates in the organisation
-        if can_manage_org(obj, user):
-            return {'one': obj.admin_pin_one, 'two': obj.admin_pin_two, 'three': obj.user_pin_one,
-                    'four': obj.user_pin_two}
-        else:
+        try:
+            user = self.context['request'].user
+            # Check if the request user is among the first five delegates in the organisation
+            if can_manage_org(obj, user):
+                return {'one': obj.admin_pin_one, 'two': obj.admin_pin_two, 'three': obj.user_pin_one,
+                        'four': obj.user_pin_two}
+            else:
+                return None
+        except KeyError:
             return None
 
 

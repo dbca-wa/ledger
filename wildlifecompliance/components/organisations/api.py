@@ -33,6 +33,7 @@ from wildlifecompliance.components.organisations.models import  (
                                     OrganisationContact,
                                     OrganisationAccessGroup,
                                     OrganisationRequestLogEntry,
+                                    OrganisationAction,
                                 )
 
 from wildlifecompliance.components.organisations.serializers import (   
@@ -458,7 +459,29 @@ class OrganisationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-    
+
+    @detail_route(methods=['POST',])
+    def upload_id(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.organisation.upload_identification(request)
+            with transaction.atomic():
+                instance.save()
+                instance.log_user_action(OrganisationAction.ACTION_ID_UPDATE.format(
+                '{} ({})'.format(instance.name, instance.abn)), request)
+            serializer = OrganisationSerializer(instance, partial=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
 class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     queryset = OrganisationRequest.objects.all()
     serializer_class = OrganisationRequestSerializer

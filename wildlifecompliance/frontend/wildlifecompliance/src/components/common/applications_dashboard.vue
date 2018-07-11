@@ -119,7 +119,7 @@ export default {
             application_licence_types : [],
             application_submitters: [],
             application_status: [],
-            application_ex_headers:["Number","Licence Category","Activity Type","Type","Submiter","Applicant","Status","Lodged on","Action"],
+            application_ex_headers:["Number","Licence Category","Activity Type","Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
                 autoWidth: false,
                 language: {
@@ -243,7 +243,7 @@ export default {
                     });
                 }
             },
-            application_headers:["Number","Licence Category","Activity Type","Type","Submiter","Applicant","Status","Lodged on","Action"],
+            application_headers:["Number","Licence Category","Activity Type","Type","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action"],
             application_options:{
                 autoWidth: false,
                 language: {

@@ -76,18 +76,20 @@
                         <div class="col-sm-12">
                             <div v-show="booking.campsites.length > 0" >
                                 <div class="column table-scroll">
-                                    <table class="hover table table-striped table-bordered dt-responsive nowrap"  cellspacing="0" width="100%"  name="campsite" v-model="selected_campsite">
+                                    <table class="hover table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%"  name="campsite" v-model="selected_campsite">
                                         <thead>
                                             <tr>
-                                                <th class="site">Campsite</th>
-                                                <th class="numBook">Sites to book</th>
+                                                <th class="form-group">Campsite</th>
+                                                <th >Sites to book
+                                                    <input class="checkbox" type="checkbox" id="selectAll"  v-model="selectAll"> 
+                                                </th>
                                             </tr>
                                         </thead>
                                             <tbody><template v-for="campsite in booking.campsites">
                                                 <tr>
-                                                    <td class="site"> {{campsite.name}} - {{campsite.type}}</td>
-                                                    <td class="numBook">
-                                                        <input type="checkbox" v-model="campsite.is_selected" @change="updatePrices()">
+                                                    <td class="form-group"> {{campsite.name}} - {{campsite.type}}</td>
+                                                    <td>
+                                                        <input class="checkbox" type="checkbox" :value="campsite.id" v-model="multibook_selected" @change="updatePrices()" number>
                                                     </td>                                              
                                                 </tr></template>
                                             </tbody>
@@ -121,7 +123,7 @@
                                         </thead>
                                         <tbody><template v-for="c in booking.campsite_classes">
                                             <tr>
-                                                <td class="site"> {{c.name}} <span v-if="c.class"> - {{ classes[c.class] }}</span></td>
+                                                <td class="site"> {{c.name}} </td>
                                                 <td class="book"> {{ c.campsites.length }} available </td>
                                                 <td class="numBook">
                                                     <input type="number" min="1" v-bind:max="c.campsites.length" name="campsite-type" class="form-control" v-model="c.selected_campsite_class" @change="updatePrices()">
@@ -282,20 +284,19 @@
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="form-group">
-                                        <div class="checkbox">
-                                            <label><input type="checkbox" v-model="checked"/>Override price charged</label>
-                                        </div>
-                                        <div class="input-group" v-if="checked">
-                                        <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
-                                        <input type="text" class="form-control" :placeholder="0|formatMoney(2)" v-model="booking.override_price">
+                                        <input type="checkbox" name="overrideCharge" class="form control" v-model="overrideCharge"/>
+                                        <label for="OverrideCharge">Override price charged </label>
+                                        <div class="input-group" v-if="overrideCharge">
+                                            <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>
+                                            <input type="text" class="form-control" name="overridePrice" :placeholder="0|formatMoney(2)" v-model="booking.override_price">
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-lg-12">
-                                    <div class="form-group" v-if="checked">
-                                        <reason type="discount" v-model="booking.override_reason" ref="reason" ></reason>
+                                    <div class="form-group" v-if="overrideCharge">
+                                        <reason type="discount" name="overrideReason" v-model="booking.override_reason" ref="reason" required="true"></reason>
                                     </div>
                                 </div>
                             </div>
@@ -347,7 +348,7 @@ export default {
     data:function () {
         let vm =this;
         return {
-            checked: false,
+            overrideCharge: false,
             isModalOpen:false,
             bookingForm:null,
             countries:[],
@@ -474,7 +475,8 @@ export default {
             booking_types:{
                 CAMPSITE: "campsite",
                 CLASS:"class"
-            }
+            },
+			multibook_selected:[]
         };
     },
     components:{
@@ -492,23 +494,38 @@ export default {
             vm.booking.parkEntry.vehicles = entries;
             return entries;
         },
+        selectAll:{
+            get: function () {
+				let vm = this;
+                return vm.booking.campsites ? vm.multibook_selected.length == vm.booking.campsites.length : false;
+            },
+            set: function (value) {
+				let vm = this;
+                var selected = [];
+
+                if (value) {
+                    vm.booking.campsites.forEach(function (campsite) {
+                        selected.push(campsite.id);
+                    });
+                }
+
+                vm.multibook_selected = selected;
+				vm.updatePrices();
+            }
+        },
         selected_campsites: function () {
             let vm = this;
+            var results = [];
             if (vm.booking_type == vm.booking_types.CAMPSITE) {
-                return vm.booking.campsites.filter(function (el) {
-                    return el.is_selected;
-                }).map(function (el) {
-                    return el.id
-                });
-            }else{
-                var results = [];
+				results = vm.multibook_selected;
+            } else {
                 vm.booking.campsite_classes.forEach(function (el) {
                     for (var i=0; i<el.selected_campsite_class; i++) {
                         results.push(el.campsites[i]);
                     }
                 });
-                return results;
             }
+            return results;
         }
     },
     filters: {
@@ -572,7 +589,6 @@ export default {
         updatePrices:function () {
             let vm = this;
             vm.booking.price = 0;
-            console.log(vm.selected_campsites)
             var campsite_ids = vm.selected_campsites;
             if (vm.selected_campsite) {
                 if (vm.booking.arrival && vm.booking.departure) {
@@ -975,7 +991,7 @@ export default {
         },
         isFormValid:function () {
             let vm =this;
-            return (vm.validateParkEntry() && $(vm.bookingForm).valid());
+            return (vm.validateParkEntry() && vm.overrideChargeReason() && $(vm.bookingForm).valid());
         },
         validateParkEntry:function () {
             let vm = this;
@@ -984,6 +1000,15 @@ export default {
             }, 0);
 
             return (validRegos == vm.parkEntryVehicles.length);
+        },
+        overrideChargeReason:function () {
+            let vm = this;
+            if(vm.overrideCharge){
+                if(vm.booking.override_price != null && vm.booking.override_reason == "") {                   
+                    return false;
+                } 
+            }
+            return true;
         },
         addFormValidations: function() {
             $(this.bookingForm).validate({
