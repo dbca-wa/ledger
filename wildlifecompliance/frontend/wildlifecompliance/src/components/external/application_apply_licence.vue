@@ -39,7 +39,7 @@
                                                             <div v-for="(activity,index2) in type.activity" class="checkbox activity-clear-left">
                                                                 
                                                                 <div class ="col-sm-12">
-                                                                    <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected">{{activity.name}}
+                                                                    <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected" @click="handleActivityCheckboxChange(index,index1,index2,$event)">{{activity.name}} ({{activity.base_fee}})
                                                                 </div>
 
                                                             </div>
@@ -112,7 +112,7 @@ export default {
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
-        application_fee: 1135.33,
+        application_fee: 0,
     }
   },
   components: {
@@ -144,7 +144,8 @@ export default {
                         if (vm.licence_classes[i].activity_type[activity_type_index].selected){
                             vm.licence_classes[i].activity_type[activity_type_index].selected=false;
                             for(var activity_index=0, len2=vm.licence_classes[i].activity_type[activity_type_index].activity.length; activity_index<len2; activity_index++){
-
+                                vm.licence_classes[i].activity_type[activity_type_index].activity[activity_index].selected = false;
+                                vm.application_fee = 0;
                             }    
                         }
                 }
@@ -152,7 +153,7 @@ export default {
             }
 
         }
-        console.log("This is the value to pass on",vm.licence_class_selected)
+        console.log("This is the value to pass on",vm.licence_class);
 
     },
     handleActivityTypeCheckboxChange:function(index,index1){
@@ -161,7 +162,16 @@ export default {
         if(vm.licence_classes[index].activity_type[index1].selected){
             for(var activity_index=0, len2=vm.licence_classes[index].activity_type[index1].activity.length; activity_index<len2; activity_index++){
                          vm.licence_classes[index].activity_type[index1].activity[activity_index].selected= false;
-                            }    
+                            }
+        }
+    },
+    handleActivityCheckboxChange:function(index,index1,index2,event){
+        let vm = this
+        var activity = vm.licence_classes[index].activity_type[index1].activity[index2]
+        if(event.target.checked){
+            vm.application_fee += Number(activity.base_fee);
+        } else {
+            vm.application_fee -= Number(activity.base_fee);
         }
     },
     createApplication:function () {
@@ -203,7 +213,6 @@ export default {
                   name:"draft_application",
                   params:{application_id:vm.application.id}
               });
-              console.log(request);
           },
           err => {
             console.log(err);
