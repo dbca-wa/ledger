@@ -20,7 +20,7 @@ from wildlifecompliance import exceptions
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
-from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification,send_application_amendment_notification
+from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification,send_application_amendment_notification,send_assessment_email_notification
 from wildlifecompliance.ordered_model import OrderedModel
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
 
@@ -898,34 +898,27 @@ class Assessment(ApplicationRequest):
         with transaction.atomic():
             try:
                 # This is to change the status of licence activity type
-                # activity_type= Application.objects.get(id=self.application)
-                #  for item in activity_type :
-                #     print(item)
-                #     for activity_type in  self.licence_type_data['activity_type']:
-                #         # print(activity_type["id"])
-                #         # print(details.get('activity_type'))
-                #         if activity_type["id"]==item:
-                #             activity_type["proposed_decline"]=True
-                #             print(activity_type["proposed_decline"])
-                #             self.save()
-
+                for item in  self.application.licence_type_data['activity_type']:
+                    if request.data.get('activity_type') == item["id"]:
+                        item["processing_status"]="With Officer"
+                        self.application.save()
+                        self.save()
+                self.activity_type=request.data.get('activity_type')
                 self.officer=request.user
                 self.date_last_reminded=datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.save()
 
-
-                # # Create a log entry for the proposal
-                # proposal.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+                # select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
+                select_group = self.assessor_group.members.all()
+                print(select_group)
+               
+                # Create a log entry for the application
+                self.application.log_user_action(ApplicationUserAction.ACTION_SEND_FOR_ASSESSMENT_TO_.format(self.assessor_group.name),request)
+                # send email
+                send_assessment_email_notification(select_group,self,request)
                 # # Create a log entry for the organisation
-                # proposal.applicant.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
-
-                # # send email
-                # send_amendment_email_notification(self,request, proposal)
-                 # Create a log entry for the application
-                self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
-                # Create a log entry for the organisation
-                self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
-                send_application_submit_email_notification(select_group.members.all(),self,request)
+                # self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                # send_application_submit_email_notification(select_group.members.all(),self,request)
 
             except:
                 raise
@@ -987,7 +980,7 @@ class ApplicationUserAction(UserAction):
     ACTION_ACCEPT_REVIEW = 'Accept review'
     ACTION_RESET_REVIEW = "Reset review"
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
-    ACTION_SEND_FOR_ASSESSMENT_TO_ = "Send for assessment to {}"
+    ACTION_SEND_FOR_ASSESSMENT_TO_ = "Sent for assessment to {}"
     ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
     ACTION_DECLINE = "Decline application {}"
     ACTION_ENTER_CONDITIONS = "Enter condition"
