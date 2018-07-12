@@ -290,9 +290,13 @@
                             </div>
                             <div class="row">
                                 <div class="col-lg-12">
-                                    <div class="form-group" v-if="overrideCharge">
+                                    <div class="form-group" v-if="overrideCharge">               
                                         <reason type="discount" name="overrideReason" v-model="booking.override_reason" :required="overrideCharge"></reason>
-                                    </div>
+                                    </div>                                   
+                                    <div class="form-group" v-if="overrideCharge">
+                                        <label class="control-label" >Override reason detail:</label>
+                                        <textarea id="reason_details" class="form-control" v-model="booking.override_reason_info"/>
+                                    </div>									
                                 </div>
                             </div>
                         </div>
@@ -373,6 +377,7 @@ export default {
                 price:"0",
                 override_price:"0",
                 override_reason:"",
+                override_reason_info:"",
                 parkEntry:{
                     vehicles:0,
                 },
@@ -945,6 +950,7 @@ export default {
                     },
                     override_price:vm.booking.override_price,
                     override_reason:vm.booking.override_reason,
+                    override_reason_info:vm.booking.override_reason_info,
                     customer:{
                         email:vm.booking.email,
                         first_name:vm.booking.firstname,

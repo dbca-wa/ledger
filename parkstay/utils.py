@@ -95,7 +95,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     return booking
 
 
-def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, cost_total=0, override_price=None, override_reason=None, overridden_by=None, customer=None, updating_booking=False, override_checks=False):
+def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, cost_total=0, override_price=None, override_reason=None, override_reason_info=None, overridden_by=None, customer=None, updating_booking=False, override_checks=False):
     """Create a new temporary booking in the system for a set of specific campsites."""
 
     # the CampsiteBooking table runs the risk of a race condition,
@@ -139,6 +139,7 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
                         cost_total = cost_total,
                         override_price = Decimal(override_price) if (override_price is not None) else None,
                         override_reason = override_reason,
+                        override_reason_info = override_reason_info,
                         overridden_by = overridden_by,
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
                         campground=campsite_qs[0].campground,
@@ -418,9 +419,6 @@ def get_available_campsites_list_booking(campsite_qs,request, start_date, end_da
         if ('booked' not in av or camp in booking.campsite_id_list):
             if ('closed' not in av):
                 available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
-
-    #complete = [CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0]]
-
     return available
 
 def get_campsite_current_rate(request,campsite_id,start_date,end_date):
@@ -577,13 +575,13 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                 else:
                     price =  Decimal(park_entry_rate[k]) * v.count()
                     total_price += price
-    
+                    
     # Create line item for Override price
     if booking.override_price is not None:
         if booking.override_reason is not None:
             reason = booking.override_reason
             invoice_lines.append({
-                'ledger_description': '{}'.format(reason.text),
+                'ledger_description': '{} - {}'.format(reason.text, booking.override_reason_info),
                 'quantity': 1,
                 'price_incl_tax': str(total_price - booking.discount),
                 'oracle_code': booking.campground.oracle_code
@@ -837,6 +835,7 @@ def create_or_update_booking(request,booking_details,updating=False,override_che
             cost_total=booking_details['cost_total'],
             override_price=booking_details['override_price'],
             override_reason=booking_details['override_reason'],
+            override_reason_info=booking_details['override_reason_info'],
             overridden_by=booking_details['overridden_by'],
             customer=booking_details['customer'],
             override_checks=override_checks
