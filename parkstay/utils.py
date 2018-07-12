@@ -658,10 +658,8 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
                 invoice = h.url.split('invoice=', 1)[1]
                 break
     
-    internal_create_booking_invoice(booking, invoice)
-
-    # Get the new invoice
-    new_invoice = booking.invoices.first()
+    # create the new invoice
+    new_invoice = internal_create_booking_invoice(booking, invoice)
 
     # Check if the booking is a legacy booking and doesn't have an invoice
     if old_booking.legacy_id and old_booking.invoices.count() < 1:
