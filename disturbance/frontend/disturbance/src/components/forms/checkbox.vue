@@ -59,4 +59,7 @@ export default {
 </script>
 
 <style lang="css">
+    input {
+        box-shadow:none;
+    }
 </style>
