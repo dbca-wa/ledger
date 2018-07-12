@@ -112,23 +112,10 @@ export default {
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
-        application_fee: 35,
+        application_fee: 1135.33,
     }
   },
   components: {
-  },
-  filters: {
-    toCurrency: function(value) {
-        if (typeof value !== "number") {
-            return value;
-        }
-        var formatter = new Intl.NumberFormat('en-AU', {
-            style: 'currency',
-            currency: 'AUD',
-            minimumFractionDigits: 2
-        });
-        return formatter.format(value);
-    },
   },
   methods: {
     submit: function() {

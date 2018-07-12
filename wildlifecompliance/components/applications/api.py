@@ -515,11 +515,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             licence_class_data=app_data.pop('licence_class_data')
             schema_data=get_activity_type_schema(licence_class_data)
             org_applicant=request.data.get('org_applicant')
+            application_fee=request.data.get('application_fee')
             data = {
                 'schema':schema_data,
                 'submitter': request.user.id,
                 'licence_type_data':licence_class_data,
-                'org_applicant': org_applicant
+                'org_applicant': org_applicant,
+                'application_fee': application_fee
             }
             serializer = SaveApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
