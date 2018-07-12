@@ -88,6 +88,7 @@ export default {
       newText: "",
       pBody: 'pBody',
       missing_fields: [],
+      site_url: (api_endpoints.site_url.endsWith("/")) ? (api_endpoints.site_url): (api_endpoints.site_url + "/"),
     }
   },
   components: {
@@ -257,19 +258,17 @@ export default {
 
     submit: function(){
         let vm = this;
-        /*
+
         var num_missing_fields = vm.validate()
         if (num_missing_fields > 0) {
             vm.highlight_missing_fields()
-            //$('#error').show();
             $('html, body').animate({
                 scrollTop: $("#error").offset().top
             }, 1);
             return false;
         }
-        */
 
-        // remove the confirm prompt when navigating away from window
+        // remove the confirm prompt when navigating away from window (on button 'Submit' click)
         vm.submitting = true;
 
         swal({

@@ -2,6 +2,7 @@
     <div>
         <div class="form-group">
 
+            <!-- using num_files to determine if files have been uploaded for this question/label (used in disturbance/frontend/disturbance/src/components/external/proposal.vue) -->
             <label :id="id" :num_files="files.length">{{label}}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
