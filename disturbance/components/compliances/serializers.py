@@ -54,7 +54,7 @@ class ComplianceSerializer(serializers.ModelSerializer):
         )
 
     def get_documents(self,obj):
-        return [[d.name,d._file.url] for d in obj.documents.all()]
+        return [[d.name,d._file.url, d.id] for d in obj.documents.all()]
 
     def get_approval_lodgement_number(self,obj):
         return obj.approval.lodgement_number
