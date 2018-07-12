@@ -2,8 +2,8 @@
     <div class="top-buffer bottom-buffer">
         <div class="panel panel-default">
             <div class="panel-body">
-                <h4 class="inline">{{label}} 
-                    <!--<i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>--></h4>
+                <h4 :id="id" class="inline">{{label}}</h4>
+                    <!--<i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>-->
                 <template v-if="help_text">
                     <HelpText :help_text="help_text" /> 
                 </template>
@@ -33,7 +33,7 @@ import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 export default {
     name:"group",
-    props:["label","name","help_text", "help_text_url", "isRemovable","isPreviewMode"],
+    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode"],
     data:function () {
         return{
             isExpanded:true

@@ -1,6 +1,6 @@
 <template lang="html">
     <div class="container" >
-        <form :action="proposal_submit_url" method="post" name="new_proposal" enctype="multipart/form-data">
+        <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
           <div v-if="!proposal_readonly">
             <div v-if="hasAmendmentRequest" class="row" style="color:red;">
                 <div class="col-lg-12 pull-right">
@@ -25,7 +25,17 @@
             <!--
             <label for="region-label">Region(*)</label>
             <input type="text" name="region-text"class="form-control" disabled="true">
-            -->        
+            -->
+
+            <div id="error" v-if="missing_fields.length > 0" style="margin: 10px; padding: 5px; color: red; border:1px solid red;">
+                <b>Please correct the following error(s):</b>
+                <ul>
+                    <li v-for="error in missing_fields">
+                        {{ error.label }}
+                    </li>
+                    </ul>
+            </div>
+
             <Proposal v-if="proposal" :proposal="proposal" id="proposalStart">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
@@ -33,24 +43,26 @@
                   <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                   <div class="navbar-inner">
                     <div v-if="!proposal.readonly" class="container">
-                      <p class="pull-right" style="margin-top:5px;">                       
+                      <p class="pull-right" style="margin-top:5px;">
                         <!-- <input type="submit" class="btn btn-primary" value="Save and Exit"/> -->
                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                        <!--<input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/> -->
-                        <input type="submit" class="btn btn-primary" value="Submit"/>
+
+                        <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                        <!-- <input type="submit" class="btn btn-primary" value="Submit"/> -->
+
                         <!-- hidden 'save_and_continue_btn' used to allow File (file.vue component) to trigger save -->
                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
-                      </p>                      
+                      </p>
                     </div>
                     <div v-else class="container">
                       <p class="pull-right" style="margin-top:5px;">
                         <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
-                      </p>                      
-                    </div>                    
+                      </p>
+                    </div>
                   </div>
-                </div>                
-            </Proposal>           
+                </div>
+            </Proposal>
         </form>
     </div>
 </template>
@@ -75,6 +87,8 @@ export default {
       submitting: false,
       newText: "",
       pBody: 'pBody',
+      missing_fields: [],
+      site_url: (api_endpoints.site_url.endsWith("/")) ? (api_endpoints.site_url): (api_endpoints.site_url + "/"),
     }
   },
   components: {
@@ -94,9 +108,7 @@ export default {
       return (this.proposal) ? `/api/proposal/${this.proposal.id}/submit.json` : '';
       //return this.submit();
     },
-  
-   
-    
+
   },
   methods: {
     save: function(e) {
@@ -158,20 +170,105 @@ export default {
       else{
         return null;
       }
-
     },
     
-
-    highlight_missing_fields: function(missing_fields){
-        for (var i = 0; i < missing_fields.length; i++) {
-            //$("#id_" + missing_fields[i].name).css("color", 'red');
-            var name = missing_fields[i].name.split('.').slice(-1)[0];
-            $("#id_" + name).css("color", 'red');
+    highlight_missing_fields: function(){
+        let vm = this;
+        for (var missing_field of vm.missing_fields) {
+            $("#" + missing_field.id).css("color", 'red');
         }
     },
 
+    validate: function(){
+        let vm = this;
+
+        // reset default colour
+        for (var field of vm.missing_fields) {
+            $("#" + field.id).css("color", '#515151');
+        }
+        vm.missing_fields = [];
+
+        // get all required fields, that are not hidden in the DOM
+        //var hidden_fields = $('input[type=text]:hidden, textarea:hidden, input[type=checkbox]:hidden, input[type=radio]:hidden, input[type=file]:hidden');
+        //hidden_fields.prop('required', null);
+        var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required').not(':hidden');
+
+        // loop through all (non-hidden) required fields, and check data has been entered
+        required_fields.each(function() {
+            //console.log('type: ' + this.type + ' ' + this.name)
+            var id = 'id_' + this.name
+            if (this.type == 'radio') {
+                //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
+                if (!$("input[name="+this.name+"]").is(':checked')) {
+                    var text = $('#'+id).text()
+                    console.log('radio not checked: ' + this.type + ' ' + text)
+                    vm.missing_fields.push({id: id, label: text});
+                }
+            }
+
+            if (this.type == 'checkbox') {
+                //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
+                var id = 'id_' + this.classList['value']
+                if ($("[class="+this.classList['value']+"]:checked").length == 0) {
+                    var text = $('#'+id).text()
+                    console.log('checkbox not checked: ' + this.type + ' ' + text)
+                    vm.missing_fields.push({id: id, label: text});
+                }
+            }
+
+            if (this.type == 'file') {
+                var num_files = $('#'+id).attr('num_files')
+                if (num_files == "0") {
+                    var text = $('#'+id).text()
+                    console.log('file not uploaded: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({id: id, label: text});
+                }
+            }
+
+            if (this.type == 'text') {
+                if (this.value == '') {
+                    var text = $('#'+id).text()
+                    console.log('text not provided: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({id: id, label: text});
+                }
+            }
+
+            if (this.type == 'textarea') {
+                if (this.value == '') {
+                    var text = $('#'+id).text()
+                    console.log('textarea not provided: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({id: id, label: text});
+                }
+            }
+
+        });
+
+        return vm.missing_fields.length
+
+        /*
+        if (emptyFields === 0) {
+            $('#form').submit();
+        } else {
+            $('#error').show();
+            return false;
+        }
+        */
+    },
+
+
     submit: function(){
         let vm = this;
+
+        var num_missing_fields = vm.validate()
+        if (num_missing_fields > 0) {
+            vm.highlight_missing_fields()
+            $('html, body').animate({
+                scrollTop: $("#error").offset().top
+            }, 1);
+            return false;
+        }
+
+        // remove the confirm prompt when navigating away from window (on button 'Submit' click)
         vm.submitting = true;
 
         swal({
