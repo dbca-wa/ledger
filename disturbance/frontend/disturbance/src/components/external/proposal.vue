@@ -28,12 +28,12 @@
             -->
 
             <div id="error" v-if="missing_fields.length > 0" style="margin: 10px; padding: 5px; color: red; border:1px solid red;">
-                <b>Please correct the following error(s):</b>
+                <b>Please answer the following mandatory question(s):</b>
                 <ul>
                     <li v-for="error in missing_fields">
                         {{ error.label }}
                     </li>
-                    </ul>
+                </ul>
             </div>
 
             <Proposal v-if="proposal" :proposal="proposal" id="proposalStart">
@@ -88,7 +88,6 @@ export default {
       newText: "",
       pBody: 'pBody',
       missing_fields: [],
-      site_url: (api_endpoints.site_url.endsWith("/")) ? (api_endpoints.site_url): (api_endpoints.site_url + "/"),
     }
   },
   components: {
@@ -240,6 +239,26 @@ export default {
                     vm.missing_fields.push({id: id, label: text});
                 }
             }
+
+            /*
+            if (this.type == 'select') {
+                if (this.value == '') {
+                    var text = $('#'+id).text()
+                    console.log('select not provided: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({id: id, label: text});
+                }
+            }
+
+            if (this.type == 'multi-select') {
+                if (this.value == '') {
+                    var text = $('#'+id).text()
+                    console.log('multi-select not provided: ' + this.type + ' ' + this.name)
+                    vm.missing_fields.push({id: id, label: text});
+                }
+            }
+            */
+
+
 
         });
 
