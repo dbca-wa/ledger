@@ -118,6 +118,7 @@ export default {
     },
     save_exit: function(e) {
       let vm = this;
+      this.submitting = true;
       this.save(e);
 
       // redirect back to dashboard
