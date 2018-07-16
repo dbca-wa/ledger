@@ -49,7 +49,7 @@ class Compliance(models.Model):
     assigned_to = models.ForeignKey(EmailUser,related_name='disturbance_compliance_assignments',null=True,blank=True)
     #requirement = models.TextField(null=True,blank=True)
     requirement = models.ForeignKey(ProposalRequirement, blank=True, null=True, related_name='compliance_requirement')
-    lodgement_date = models.DateField(blank=True, null=True)
+    lodgement_date = models.DateTimeField(blank=True, null=True)
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_compliances')
 
 
@@ -114,10 +114,21 @@ class Compliance(models.Model):
                             for q in qs:    
                                 q.status = 'amended'
                                 q.save()
-                self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()   
+                #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                self.lodgement_date = timezone.now()
                 self.save() 
             except:
                 raise
+
+    def delete_document(self, request, document):
+        with transaction.atomic():
+            try:
+                if document:
+                    doc = self.documents.get(id=document[2])
+                    doc.delete()
+                return self
+            except:
+                raise ValidationError('Document not found')
 
 
     def assign_to(self, user,request):

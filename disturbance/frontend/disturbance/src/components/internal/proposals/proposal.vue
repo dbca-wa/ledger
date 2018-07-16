@@ -2,6 +2,7 @@
     <div v-if="proposal" class="container" id="internalProposal">
       <div class="row">
         <h3>Proposal: {{ proposal.lodgement_number }}</h3>
+        <h4>Proposal Type: {{proposal.proposal_type }}</h4>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             <div class="row" v-if="canSeeSubmission">
@@ -225,7 +226,7 @@
         <div class="col-md-8">
             <div class="row">
                 <template v-if="proposal.processing_status == 'With Approver' || isFinalised">
-                    <ApprovalScreen :proposal="proposal"/>
+                    <ApprovalScreen :proposal="proposal" @refreshFromResponse="refreshFromResponse"/>
                 </template>
                 <template v-if="proposal.processing_status == 'With Assessor (Requirements)' || ((proposal.processing_status == 'With Approver' || isFinalised) && showingRequirements)">
                     <Requirements :proposal="proposal"/>
@@ -329,7 +330,8 @@
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
-                                    <div class="navbar navbar-fixed-bottom" v-if="hasAssessorMode" style="background-color: #f5f5f5 ">
+                                    <div class="row" style="margin-bottom: 50px">
+                                    <div class="navbar navbar-fixed-bottom" v-if="hasAssessorMode" style="background-color: #f5f5f5;">
                                         <div class="navbar-inner">
                                             <div v-if="hasAssessorMode" class="container">
                                             <p class="pull-right">                       
@@ -338,6 +340,7 @@
                                             </div>                   
                                         </div>
                                     </div>      
+                                    </div>
 
                                 </Proposal>
                             </form>
@@ -451,6 +454,7 @@ export default {
         }
     },
     watch: {
+
     },
     computed: {
         contactsURL: function(){
@@ -521,6 +525,7 @@ export default {
         issueProposal:function(){
             this.$refs.proposed_approval.approval = helpers.copyObject(this.proposal.proposed_issuance_approval);
             this.$refs.proposed_approval.state = 'final_approval';
+            this.$refs.proposed_approval.isApprovalLevelDocument = this.isApprovalLevelDocument;
             this.$refs.proposed_approval.isModalOpen = true;
         },
         declineProposal:function(){

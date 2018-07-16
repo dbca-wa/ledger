@@ -64,13 +64,17 @@
 
                                 <div class="row">
                                         
-                                            <div v-if="isFinalised && hasDocuments" class="form-group">
+                                            <!--<div v-if="isFinalised && hasDocuments" class="form-group"> -->
+                                            <div v-if="hasDocuments" class="form-group">
                                              <div class="col-sm-3 control-label pull-left" >  
                                              <label  for="Name">Documents:</label>
                                              </div> 
                                              <div class="col-sm-6">
                                                 <div class="row" v-for="d in compliance.documents">
-                                                    <a :href="d[1]" target="_blank" class="control-label pull-left">{{d[0]}}</a>
+                                                    <a :href="d[1]" target="_blank" class="control-label pull-left">{{d[0]   }}</a>
+                                                    <span v-if="!isFinalised">
+                                                        <a @click="delete_document(d)" class="fa fa-trash-o control-label" title="Remove file" style="cursor: pointer; color:red;"></a>
+                                                    </span>
                                                 </div>
                                             </div>
                                             </div>
@@ -87,10 +91,10 @@
                                         <template v-for="(f,i) in files">
                                             <div :class="'row top-buffer file-row-'+i">
                                                 <div class="col-sm-4">
-                                                    <span v-if="f.file == null" class="btn btn-info btn-file pull-left">
+                                                    <span v-if="f.file == null" class="btn btn-info btn-file pull-left" style="margin-bottom: 5px">
                                                         Atttach File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>
                                                     </span>
-                                                    <span v-else class="btn btn-info btn-file pull-left">
+                                                    <span v-else class="btn btn-info btn-file pull-left" style="margin-bottom: 5px">
                                                         Update File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>
                                                     </span>
                                                 </div>
@@ -283,8 +287,24 @@ export default {
       this.amendment_request = amendment_request;
       
       if (amendment_request.length > 0)
-        this.hasAmendmentRequest = true;
-        
+        this.hasAmendmentRequest = true;    
+    },
+
+    delete_document: function(doc){
+        let vm= this;
+        let data = {'document': doc}
+        if(doc)
+        {
+          vm.$http.post(helpers.add_endpoint_json(api_endpoints.compliances,vm.compliance.id+'/delete_document'),JSON.stringify(data),{
+                emulateJSON:true
+                }).then((response)=>{
+                    vm.refreshFromResponse(response);                   
+                    vm.compliance = response.body;       
+                },(error)=>{
+                    vm.errors = true;
+                    vm.errorString = helpers.apiVueResourceError(error);
+                });              
+        }
     },
 
 
@@ -313,8 +333,7 @@ export default {
                     vm.errors = true;
                     vm.addingCompliance = false;
                     vm.errorString = helpers.apiVueResourceError(error);
-                });
-            
+                });     
     },
 
     refreshFromResponse:function(response){
@@ -329,15 +348,13 @@ export default {
   mounted: function () {
     let vm = this;
     vm.form = document.forms.complianceForm;
-    vm.addFormValidations();  
-    
+    vm.addFormValidations();     
   },
 
  beforeRouteEnter: function(to, from, next){
     Vue.http.get(helpers.add_endpoint_json(api_endpoints.compliances,to.params.compliance_id)).then((response) => {
         next(vm => {
-            vm.compliance = response.body           
-          
+            vm.compliance = response.body 
             if ( vm.compliance.customer_status == "Under Review" || vm.compliance.customer_status == "Approved" ) { vm.isFinalised = true }
             if (vm.compliance && vm.compliance.documents){ vm.hasDocuments = true}
 
@@ -347,8 +364,6 @@ export default {
               err => {
                         console.log(err);
                   });
-
-
         })
     },(error) => {
         console.log(error);
