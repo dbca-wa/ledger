@@ -189,7 +189,8 @@
                     </div>
 
                     <div class="col-sm-12">
-                        <button :disabled="isDisabled()" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                        <button v-if="!creatingProposal" :disabled="isDisabled()" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                        <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Creating</button>
                     </div>
                   </div>
                 </form>
@@ -237,6 +238,7 @@ export default {
         sub_activities2: [],
         categories: [],
         approval_level: '',
+        creatingProposal: false,
         display_region_selectbox: false,
         display_activity_matrix_selectbox: false,
     }
@@ -283,6 +285,7 @@ export default {
 	},
     createProposal:function () {
         let vm = this;
+        vm.creatingProposal = true;
 		vm.$http.post('/api/proposal.json',{
 			behalf_of: vm.behalf_of,
 			application: vm.selected_application_id,
@@ -300,6 +303,7 @@ export default {
 			    name:"draft_proposal",
 				params:{proposal_id:vm.proposal.id}
 			});
+            vm.creatingProposal = false;
 		},
 		err => {
 			console.log(err);
