@@ -90,7 +90,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
                 instance.submit(request)
                 serializer = self.get_serializer(instance)              
                 # Save the files
-                for f in request.FILES:
+                '''for f in request.FILES:
                     document = instance.documents.create()
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]
@@ -120,6 +120,24 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         except ValidationError as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def delete_document(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            doc=request.data.get('document')
+            instance.delete_document(request, doc)
+            serializer = ComplianceSerializer(instance)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))

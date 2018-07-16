@@ -144,7 +144,8 @@ export default {
                     {
                         data: "id",
                         mRender:function (data,type,full) {
-                            return `C${data}`;
+                            //return `C${data}`;
+                            return full.reference;
                         }
                     },
                     {data: "regions"},
@@ -169,7 +170,9 @@ export default {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
-                    {data: "assigned_to"},
+                    {data: "assigned_to",
+                       // visible: false
+                    },
                     {
                         mRender:function (data,type,full) {
                             let links = '';
@@ -403,6 +406,11 @@ export default {
             vm.addEventListeners();
             vm.initialiseSearch();
         });
+        if(vm.is_external){
+            var column = vm.$refs.proposal_datatable.vmDataTable.columns(8); //Hide 'Assigned To column for external'
+            column.visible(false);
+        }
+        
     }
 }
 </script>
