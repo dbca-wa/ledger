@@ -276,11 +276,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.submit(request,self)
-            #serializer = self.get_serializer(instance)
-            #return Response(serializer.data)
             instance.tenure = search_tenure(instance)
             instance.save()
-            return redirect(reverse('external'))
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+            #return redirect(reverse('external'))
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

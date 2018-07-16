@@ -6,11 +6,11 @@ from django.contrib.admin import actions
 
 @admin.register(models.Organisation)
 class OrganisationAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['organisation','pin_one', 'pin_two']
 
 @admin.register(models.OrganisationRequest)
 class OrganisationRequestAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['name','requester', 'abn', 'status']
 
 @admin.register(models.OrganisationAccessGroup)
 class OrganisationAccessGroupAdmin(admin.ModelAdmin):

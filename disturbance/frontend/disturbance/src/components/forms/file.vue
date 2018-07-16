@@ -2,7 +2,8 @@
     <div>
         <div class="form-group">
 
-            <label :id="id">{{label}}</label>
+            <!-- using num_files to determine if files have been uploaded for this question/label (used in disturbance/frontend/disturbance/src/components/external/proposal.vue) -->
+            <label :id="id" :num_files="files.length">{{label}}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
@@ -148,4 +149,7 @@ export default {
 </script>
 
 <style lang="css">
+    input {
+        box-shadow:none;
+    }
 </style>
