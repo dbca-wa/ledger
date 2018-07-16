@@ -57,7 +57,8 @@ def send_referral_email_notification(referral,request,reminder=False):
     context = {
         'proposal': referral.proposal,
         'url': url,
-        'reminder':reminder
+        'reminder':reminder,
+        'comments': referral.text
     }
 
     msg = email.send(referral.referral.email, context=context)
