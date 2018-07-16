@@ -180,7 +180,18 @@ export default {
               {data: "number"},
               {data:"type"},
               {data: "applicant"},
-              {data: "text.value"},
+              {//data: "text.value"
+                data: "text",
+                mRender: function (data,type,full) {
+                  if(data.value){
+                    return data.value;
+                  }
+                  else
+                  {
+                    return data;
+                  }
+                }
+              },
               {
                 data: "id",
                   mRender:function (data,type,full) {
