@@ -561,7 +561,7 @@ class Proposal(RevisionedMixin):
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
-    def send_referral(self,request,referral_email):
+    def send_referral(self,request,referral_email,referral_text):
         with transaction.atomic():
             try:
                 if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral':
@@ -592,7 +592,8 @@ class Proposal(RevisionedMixin):
                         referral = Referral.objects.create(
                             proposal = self,
                             referral=user,
-                            sent_by=request.user
+                            sent_by=request.user,
+                            text=referral_text
                         )
                     # Create a log entry for the proposal
                     self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
@@ -1269,6 +1270,7 @@ class Referral(models.Model):
     sent_from = models.SmallIntegerField(choices=SENT_CHOICES,default=SENT_CHOICES[0][0])
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[0][0])
+    text = models.TextField(blank=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -1331,7 +1333,7 @@ class Referral(models.Model):
             except:
                 raise
 
-    def send_referral(self,request,referral_email):
+    def send_referral(self,request,referral_email,referral_text):
         with transaction.atomic():
             try:
                 if self.proposal.processing_status == 'with_referral':
@@ -1366,7 +1368,8 @@ class Referral(models.Model):
                             proposal = self.proposal,
                             referral=user,
                             sent_by=request.user,
-                            sent_from=2
+                            sent_from=2,
+                            text=referral_text
                         )
                     # Create a log entry for the proposal
                     self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)

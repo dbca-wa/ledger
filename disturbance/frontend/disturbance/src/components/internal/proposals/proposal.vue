@@ -79,6 +79,8 @@
                                         </select>
                                         <template v-if='!sendingReferral'>
                                             <template v-if="selected_referral">
+                                                <label class="control-label pull-left"  for="Name">Comments</label>
+                                                <textarea class="form-control" name="name" v-model="referral_text"></textarea>
                                                 <a v-if="canLimitedAction" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
                                             </template>
                                         </template>
@@ -384,6 +386,7 @@ export default {
             "original_proposal": null,
             "loading": [],
             selected_referral: '',
+            referral_text: '',
             form: null,
             members: [],
             department_users : [],
@@ -446,7 +449,7 @@ export default {
         ProposedApproval,
         ApprovalScreen,
         CommsLogs,
-        MoreReferrals
+        MoreReferrals,
     },
     filters: {
         formatDate: function(data){
@@ -792,7 +795,8 @@ export default {
             //vm.save_wo();
             let formData = new FormData(vm.form);
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
-            let data = {'email':vm.selected_referral};
+            
+            let data = {'email':vm.selected_referral, 'text': vm.referral_text};
             vm.sendingReferral = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
                 emulateJSON:true
@@ -808,6 +812,7 @@ export default {
                 )
                 $(vm.$refs.department_users).val(null).trigger("change");
                 vm.selected_referral = '';
+                vm.referral_text = '';
             }, (error) => {
                 console.log(error);
                 swal(
@@ -817,10 +822,13 @@ export default {
                 )
                 vm.sendingReferral = false;
             });
+
               
           },err=>{
           });
-        
+         
+        //this.$refs.referral_comment.selected_referral = vm.selected_referral;           
+        //this.$refs.referral_comment.isModalOpen = true;
 
           /*  let data = {'email':vm.selected_referral};
             vm.sendingReferral = true;

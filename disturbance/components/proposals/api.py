@@ -534,7 +534,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = SendReferralSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            instance.send_referral(request,serializer.validated_data['email'])
+            #text=serializer.validated_data['text']
+            #instance.send_referral(request,serializer.validated_data['email'])
+            instance.send_referral(request,serializer.validated_data['email'], serializer.validated_data['text'])
             serializer = InternalProposalSerializer(instance,context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -835,7 +837,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = SendReferralSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            instance.send_referral(request,serializer.validated_data['email'])
+            instance.send_referral(request,serializer.validated_data['email'],serializer.validated_data['text'])
             serializer = self.get_serializer(instance, context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:

@@ -5,6 +5,7 @@
         <p>This is a reminder for a referral for Proposal <strong>P{{proposal.id}}</strong> that has been sent to you:</p>
     {% else %}
         <p>A referral for Proposal <strong>P{{proposal.id}}</strong> has been sent to you:</p>
+        <p>Comments: {{comments}}</p>
     {% endif %}
     <p>You can access this referral using the following link:</p>
     <a href="{{url}}">Access Referral</a>
