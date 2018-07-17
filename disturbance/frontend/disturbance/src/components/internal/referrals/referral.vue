@@ -54,7 +54,9 @@
                                         <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                     </select>
                                     <template v-if='!sendingReferral'>
-                                        <template v-if="selected_referral">
+                                        <template v-if="selected_referral && !isFinalised && !proposal.can_user_edit && referral.sent_from == 1">
+                                            <label class="control-label pull-left"  for="Name">Comments</label>
+                                            <textarea class="form-control" name="name" v-model="referral_text"></textarea>
                                             <a v-if="!isFinalised && !proposal.can_user_edit && referral.sent_from == 1" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
                                         </template>
                                     </template>
@@ -260,6 +262,7 @@ export default {
             referral: null,
             "loading": [],
             selected_referral: '',
+            referral_text: '',
             sendingReferral: false,
             form: null,
             members: [],
@@ -461,7 +464,7 @@ export default {
             let vm = this;
             let formData = new FormData(vm.form); //save data before completing referral
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{
-                let data = {'email':vm.selected_referral};
+                let data = {'email':vm.selected_referral, 'text': vm.referral_text};
                 vm.sendingReferral = true;
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,(vm.referral.id+'/send_referral')),JSON.stringify(data),{
                 emulateJSON:true
