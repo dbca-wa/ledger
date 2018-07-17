@@ -3,6 +3,7 @@ from ledger.settings_base import *
 
 ROOT_URLCONF = 'disturbance.urls'
 SITE_ID = 1
+DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
 
 INSTALLED_APPS += [
     'bootstrap3',
@@ -19,8 +20,6 @@ INSTALLED_APPS += [
     'reset_migrations',
     'ckeditor',
 ]
-
-SITE_ID = 1
 
 # maximum number of days allowed for a booking
 WSGI_APPLICATION = 'disturbance.wsgi.application'

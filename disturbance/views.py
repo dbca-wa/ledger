@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 
 from datetime import datetime, timedelta
 
-from disturbance.helpers import is_officer, is_departmentUser
+from disturbance.helpers import is_officer, is_internal
 from disturbance.forms import *
 from disturbance.components.proposals.models import Referral, Proposal, HelpPage
 from disturbance.components.compliances.models import Compliance
@@ -21,7 +21,7 @@ class InternalView(UserPassesTestMixin, TemplateView):
     template_name = 'disturbance/dash/index.html'
 
     def test_func(self):
-        return is_officer(self.request)
+        return is_internal(self.request)
 
     def get_context_data(self, **kwargs):
         context = super(InternalView, self).get_context_data(**kwargs)
@@ -33,7 +33,6 @@ class ExternalView(LoginRequiredMixin, TemplateView):
     template_name = 'disturbance/dash/index.html'
 
     def get_context_data(self, **kwargs):
-        #import ipdb; ipdb.set_trace()
         context = super(ExternalView, self).get_context_data(**kwargs)
         context['dev'] = settings.DEV_STATIC
         context['dev_url'] = settings.DEV_STATIC_URL
@@ -56,7 +55,7 @@ class DisturbanceRoutingView(TemplateView):
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
-            if is_officer(self.request) or is_departmentUser(self.request):
+            if is_internal(self.request):
                 return redirect('internal')
             return redirect('external')
         kwargs['form'] = LoginForm
@@ -69,7 +68,7 @@ class InternalProposalView(DetailView):
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
-            if is_officer(self.request) or is_departmentUser(self.request):
+            if is_internal(self.request):
                 #return redirect('internal-proposal-detail')
                 return super(InternalProposalView, self).get(*args, **kwargs)
             return redirect('external-proposal-detail')
@@ -114,9 +113,8 @@ class HelpView(LoginRequiredMixin, TemplateView):
 
         if self.request.user.is_authenticated():
             application_type = kwargs.get('application_type', None) 
-            #import ipdb; ipdb.set_trace()
             if kwargs.get('help_type', None)=='assessor':
-                if is_officer(self.request) or is_departmentUser(self.request):
+                if is_internal(self.request):
                     qs = HelpPage.objects.filter(application_type__name__icontains=application_type, help_type=HelpPage.HELP_TEXT_INTERNAL).order_by('-version')
                     context['help'] = qs.first()
 #                else:
@@ -132,7 +130,6 @@ class ManagementCommandsView(LoginRequiredMixin, TemplateView):
     template_name = 'disturbance/mgt-commands.html'
 
     def post(self, request):
-        #import ipdb; ipdb.set_trace()
         data = {}
         command_script = request.POST.get('script', None)
         if command_script:
@@ -141,32 +138,5 @@ class ManagementCommandsView(LoginRequiredMixin, TemplateView):
             data.update({command_script: 'true'})
 
         return render(request, self.template_name, data)
-
-class MyCustomView(LoginRequiredMixin, TemplateView):
-    #template_name = 'admin/myapp/views/my_custom_template.html'
-    template_name = 'disturbance/mgt_cmds_changelist.html'
-
-    def get(self, request):
-        data = {'test': 'test',
-        #'opts': MyCustomView._meta,
-
-        'change': True,
-        'is_popup': False,
-        'save_as': False,
-        'has_delete_permission': False,
-        'has_add_permission': False,
-        'has_change_permission': False}
-
-        return render(request, self.template_name, data)
-
-    def get_context_data(self, **kwargs):
-        context = super(MyCustomView, self).get_context_data(**kwargs)
-        #import ipdb; ipdb.set_trace()
-        #context['help'] = HelpPage.objects.all().first()
-        return context
-
-    def post(self, request):
-      # Do something
-      pass
 
 
