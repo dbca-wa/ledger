@@ -1,8 +1,9 @@
 {%  extends 'disturbance/emails/base_email.html' %}
 
 {%  block content %}
-	Your Proposal {{ proposal.lodgement_number }} has been approved.
+	Your Proposal {{ proposal.lodgement_number }} has been proposed for approval.
 
+    {% comment %}
     {% if proposal.proposed_issuance_approval %}
         <p>
         	<span>Approved: </span>
@@ -11,6 +12,7 @@
         <p>Expiry date: {{ expiry_date }}</p>
         <p>Details: {{ details }}</p>
     {% endif %}
+    {% endcomment %}
 
     <p>
     You can access this Proposal using the following link:

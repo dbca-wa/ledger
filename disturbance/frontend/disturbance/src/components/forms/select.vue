@@ -168,4 +168,8 @@ export default {
 .select2-container {
   width: 100% !important;
 }
+
+input {
+    box-shadow:none;
+}
 </style>

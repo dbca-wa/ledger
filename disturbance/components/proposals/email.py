@@ -46,7 +46,7 @@ class ApproverDeclineSendNotificationEmail(TemplateEmailBase):
     txt_template = 'disturbance/emails/proposals/send_approver_decline_notification.txt'
 
 class ApproverApproveSendNotificationEmail(TemplateEmailBase):
-    subject = 'A new Proposal has been approved.'
+    subject = 'A new Proposal has been proposed for approval.'
     html_template = 'disturbance/emails/proposals/send_approver_approve_notification.html'
     txt_template = 'disturbance/emails/proposals/send_approver_approve_notification.txt'
 

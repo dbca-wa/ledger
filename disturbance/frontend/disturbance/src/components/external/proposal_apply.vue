@@ -80,11 +80,11 @@
                         </div>
                         <div class="panel-body collapse in" :id="pBody2">
                             <div>
-                                <label for="" class="control-label" >Proposal Type</label>
+                                <label for="" class="control-label" >Proposal Type * <a :href="proposal_type_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
                                 <div class="col-sm-12">
                                     <div class="form-group">
                                         <select class="form-control" style="width:40%" v-model="selected_application_id" @change="chainedSelectAppType(selected_application_id)">
-											<option value="" selected disabled>Select proposal type</option>
+											<option value="" selected disabled>Select proposal type*</option>
                                             <option v-for="application_type in application_types" :value="application_type.value">
                                                 {{ application_type.text }}
                                             </option>
@@ -94,7 +94,7 @@
                             </div>
 
                             <div v-if="display_region_selectbox">
-                                <label for="" class="control-label" >Region</label>
+                                <label for="" class="control-label" >Region * <a :href="region_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a> </label>
                                 <div class="col-sm-12">
                                     <div class="form-group">
                                         <select v-model="selected_region" class="form-control" style="width:40%" @change="chainedSelectDistricts(selected_region)">
@@ -108,7 +108,7 @@
                             </div> 
 
                             <div v-if="display_region_selectbox && selected_region">
-                                <label for="" class="control-label" >District</label>
+                                <label for="" class="control-label" style="font-weight: normal;">District <a :href="district_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
                                 <div class="col-sm-12">
                                     <div class="form-group">
                                         <select  v-model="selected_district" class="form-control" style="width:40%">
@@ -123,7 +123,7 @@
 
                             <div v-if="display_activity_matrix_selectbox">
 								<div v-if="activities.length > 0">
-									<label for="" class="control-label" >Activity Type</label>
+									<label for="" class="control-label" >Activity Type * <a :href="activity_type_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
 									<div class="col-sm-12">
 										<div class="form-group">
 											<select v-model="selected_activity" @change="chainedSelectSubActivities1(selected_activity)" class="form-control" style="width:40%">
@@ -137,7 +137,7 @@
 								</div>
 
 								<div v-if="sub_activities1.length > 0">
-									<label for="" class="control-label" >Sub Activity 1</label>
+									<label for="" class="control-label" >Sub Activity 1 * <a :href="sub_activity_1_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
 									<div class="col-sm-12">
 										<div class="form-group">
 											<select v-model="selected_sub_activity1" @change="chainedSelectSubActivities2(selected_sub_activity1)" class="form-control" style="width:40%">
@@ -151,7 +151,7 @@
 								</div>
 
 								<div v-if="sub_activities2.length > 0">
-									<label for="" class="control-label" >Sub Activity 2</label>
+									<label for="" class="control-label" >Sub Activity 2 * <a :href="sub_activity_2_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
 									<div class="col-sm-12">
 										<div class="form-group">
 											<select v-model="selected_sub_activity2" @change="chainedSelectCategories(selected_sub_activity2)" class="form-control" style="width:40%">
@@ -165,7 +165,7 @@
 								</div>
 
 								<div v-if="categories.length > 0">
-									<label for="" class="control-label" >Category</label>
+									<label for="" class="control-label" >Category * <a :href="category_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
 									<div class="col-sm-12">
 										<div class="form-group">
 											<select v-model="selected_category" @change="get_approval_level(selected_category)" class="form-control" style="width:40%">
@@ -241,6 +241,7 @@ export default {
         creatingProposal: false,
         display_region_selectbox: false,
         display_activity_matrix_selectbox: false,
+        site_url: (api_endpoints.site_url.endsWith("/")) ? (api_endpoints.site_url): (api_endpoints.site_url + "/"),
     }
   },
   components: {
@@ -258,7 +259,29 @@ export default {
     },
     manyDistricts: function() {
       return this.districts.length > 1;
+    },
+    proposal_type_help_url: function() {
+      return this.site_url + "help/disturbance/user/#apply_proposal_type"
+    },
+    region_help_url: function() {
+      return this.site_url + "help/disturbance/user/#apply_region"
+    },
+    district_help_url: function() {
+      return this.site_url + "help/disturbance/user/#apply_district"
+    },
+    activity_type_help_url: function() {
+      return this.site_url + "help/disturbance/user/#apply_activity_type"
+    },
+    sub_activity_1_help_url: function() {
+      return this.site_url + "help/disturbance/user/#apply_sub_activity_1"
+    },
+    sub_activity_2_help_url: function() {
+      return this.site_url + "help/disturbance/user/#apply_sub_activity_2"
+    },
+    category_help_url: function() {
+      return this.site_url + "help/disturbance/user/#apply_category"
     }
+
   },
   methods: {
     submit: function() {
@@ -312,9 +335,8 @@ export default {
     isDisabled: function() {
         let vm = this;
         if (vm.selected_application_name == 'Disturbance') {
-            //if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_activity == '' || vm.selected_tenure == ''){
-            //if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_tenure == '' || vm.approval_level == ''){
-            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_district == '' || vm.approval_level == ''){
+            //if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_district == '' || vm.approval_level == ''){
+            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.approval_level == ''){
 	    		return true;
             }
         } else {
