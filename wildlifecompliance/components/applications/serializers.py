@@ -107,6 +107,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'data',
                 'schema',
                 'licence_type_data',
+                'licence_type_name',
                 'customer_status',
                 'processing_status',
                 'review_status',
@@ -207,6 +208,7 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
                 'can_user_view',
                 # 'licence_category',
                 'licence_type_data',
+                'licence_type_name',
                 'application_fee'
                 )
         read_only_fields=('documents','conditions')

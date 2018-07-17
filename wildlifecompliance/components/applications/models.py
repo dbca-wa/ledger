@@ -235,6 +235,7 @@ class Application(RevisionedMixin):
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
     licence_type_data = JSONField(blank=True, null=True)
+    licence_type_name = models.CharField(max_length=255,null=True,blank=True)
     schema = JSONField(blank=False, null=False)
     proposed_issuance_licence = JSONField(blank=True, null=True)
     #hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
