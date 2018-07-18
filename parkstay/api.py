@@ -872,6 +872,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 s = CampsiteClassSerializer(CampsiteClass.objects.get(id=k),context={'request':request},method='get').data
                 s['campsites'] = [c.id for c in v]
                 available_serializers.append(s)
+            available_serializers.sort(key=lambda x: x['name'])
             data = available_serializers
 
             return Response(data,status=http_status)
@@ -1027,17 +1028,17 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         # update the per-site availability
                         classes_map[key]['breakdown'][s.name][offset][0] = False
-                        classes_map[key]['breakdown'][s.name][offset][1] = 'Booked' if (stat == 'booked') else 'Unavailable'
+                        classes_map[key]['breakdown'][s.name][offset][1] = stat if show_all else 'Unavailable'
 
                         # update the class availability status
                         book_offset = 0 if (stat == 'booked') else 1
                         classes_map[key]['availability'][offset][3][book_offset] += 1
                         if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Fully Booked'
+                            classes_map[key]['availability'][offset][1] = 'Fully Booked' 
                         elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Unavailable'
+                            classes_map[key]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
                         elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
-                            classes_map[key]['availability'][offset][1] = 'Partially Booked'
+                            classes_map[key]['availability'][offset][1] = 'Partially Booked' if show_all else 'Unavailable'
                         else:
                             classes_map[key]['availability'][offset][1] = 'Partially Unavailable'
 
@@ -1108,9 +1109,9 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         bookings_map[s.name]['availability'][offset][0] = False
                         if stat == 'closed':
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                            bookings_map[s.name]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
                         elif stat == 'booked':
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                            bookings_map[s.name]['availability'][offset][1] = 'Booked' if show_all else 'Unavailable'
                         else:
                             bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
 
@@ -1618,6 +1619,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['lastname'] = booking.details.get('last_name','')
                 if  booking.override_reason:                        
                     bk['override_reason'] = booking.override_reason.text
+                if booking.override_reason_info:
+                    bk['override_reason_info'] = booking.override_reason_info
                 if booking.override_price:
                     discount = booking.discount
                 if not booking.paid:
@@ -1638,7 +1641,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                         for item in first_campsite_list:
                             campground_site_type.append ({
                                 "name": '{}'.format(item.name if item else ""),
-                                "type": '{}'.format(item.type if item.type else "")
+                                "type": '{}'.format(item.type if item.type else ""),
+                                "campground_type": item.campground.site_type,
                                 })
                         bk['campground_site_type'] = campground_site_type
                 else:
@@ -1681,6 +1685,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             regos = request.data['regos']
             override_price = serializer.validated_data.get('override_price', None)
             override_reason = serializer.validated_data.get('override_reason', None)
+            override_reason_info = serializer.validated_data.get('override_reason_info', None)
             overridden_by = None if (override_price is None) else request.user
             try:
                 emailUser = request.data['customer']
@@ -1712,6 +1717,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'cost_total' : costs['total'],
                 'override_price' : override_price,
                 'override_reason' : override_reason,
+                'override_reason_info' : override_reason_info,
                 'overridden_by': overridden_by,
                 'customer' : customer,
                 'first_name': emailUser['first_name'],

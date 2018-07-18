@@ -111,7 +111,7 @@
                     </div>  
                     <div class="row"> 
                         <div class="col-sm-12">
-                            <div v-show="booking.campsite_classes.length > 1">
+                            <div v-show="booking.campsite_classes.length > 0">
                                 <div class="column table-scroll">
                                     <table class="hover table table-striped table-bordered dt-responsive nowrap"  cellspacing="0" width="100%" name="campsite-type" v-model="selected_campsite_class">
                                         <thead>
@@ -203,18 +203,13 @@
                                     <input type="text" name="phone" class="form-control" v-model="booking.phone">
                                   </div>
                               </div>
-                              <div class="col-md-6" v-if="!park.entry_fee_required">
-                                  <div class="form-group">
-                                    <label for="Vehicle Registration">Vehicle Registration</label>
-                                    <input type="text" name="vehicle" class="form-control" v-model="booking.vehicle">
-                                  </div>
-                              </div>
                             </div>
                             </div>
-                            <div class="col-lg-6" v-if="park.entry_fee_required">
+                            <div class="col-lg-6">
                                 <div class="row">
-                                    <div class="col-lg-12" v-if="park.entry_fee_required">
-                                        <h3 class="text-primary">Park Entry Fees <small>(${{parkPrices.vehicle|formatMoney(2)}}/per vehicle)</small></h3>
+                                    <div class="col-lg-12">
+                                        <h3 class="text-primary" v-if="park.entry_fee_required">Park Entry Fees <small>(${{parkPrices.vehicle|formatMoney(2)}}/per vehicle)</small></h3>
+                                        <h3 class="text-primary" v-else>Vehicle Details</h3>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -222,7 +217,7 @@
                                       <div class="form-group">
                                           <label for="vehicles" class="required">Number of Vehicles</label>
                                           <div class="dropdown guests">
-                                              <input type="number" min="0" max="10" name="vehicles" class="form-control dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" readonly="true" v-model="booking.parkEntry.vehicles" @change="updatePrices()">
+                                              <input type="number" min="0" max="10" name="vehicles" class="form-control dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" readonly="true" v-model="booking.parkEntry.vehicles">
                                               <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
                                                   <li v-for="park_entry in parkEntryPicker">
                                                       <div class="row">
@@ -249,17 +244,17 @@
                                   <div class="col-md-6">
                                       <div class="form-group">
                                         <label class="required">{{v.description}}</label>
-                                        <input type="text" class="form-control" required="required" v-model="v.rego" @change="validateRego">
+                                        <input type="text" class="form-control" name="vehicleRego" required="required" v-model="v.rego" @change="validateRego">
                                       </div>
                                   </div>
                                   <div class="col-md-6">
-                                      <div class="form-group">
+                                      <div class="form-group" v-if="park.entry_fee_required">
                                         <label>Entry fee</label>
-                                        <input type="checkbox" class="form-control" required="required" v-model="v.entry_fee" @change="updatePrices()">
+                                        <input type="checkbox" class="form-control" v-model="v.entry_fee" @change="updatePrices()">
                                       </div>
                                   </div>
                                 </div>
-                                <p><b>NOTE:</b> A vehicle entry fee is not required for the holder of a valid Park Pass.</p>
+                                <p v-if="park.entry_fee_required"><b>NOTE:</b> A vehicle entry fee is not required for the holder of a valid Park Pass.</p>
                             </div>
                         </div>
                     </div>
@@ -295,9 +290,13 @@
                             </div>
                             <div class="row">
                                 <div class="col-lg-12">
+                                    <div class="form-group" v-if="overrideCharge">               
+                                        <reason type="discount" name="overrideReason" v-model="booking.override_reason" :required="overrideCharge"></reason>
+                                    </div>                                   
                                     <div class="form-group" v-if="overrideCharge">
-                                        <reason type="discount" name="overrideReason" v-model="booking.override_reason" ref="reason" required="true"></reason>
-                                    </div>
+                                        <label class="control-label" >Override reason detail:</label>
+                                        <textarea id="reason_details" class="form-control" v-model="booking.override_reason_info"/>
+                                    </div>									
                                 </div>
                             </div>
                         </div>
@@ -378,6 +377,7 @@ export default {
                 price:"0",
                 override_price:"0",
                 override_reason:"",
+                override_reason_info:"",
                 parkEntry:{
                     vehicles:0,
                 },
@@ -727,7 +727,7 @@ export default {
                 vm.booking.departure = "";
                 var selected_date =  e.date.clone();//Object.assign({},e.date);
                 var minDate = selected_date.clone().add(1,'days');
-                var maxDate = minDate.clone().add(28,'days');
+                var maxDate = minDate.clone().add(180,'days');
                 vm.departurePicker.data("DateTimePicker").maxDate(maxDate);
                 vm.departurePicker.data("DateTimePicker").minDate(minDate);
                 vm.departurePicker.data("DateTimePicker").date(null);
@@ -950,6 +950,7 @@ export default {
                     },
                     override_price:vm.booking.override_price,
                     override_reason:vm.booking.override_reason,
+                    override_reason_info:vm.booking.override_reason_info,
                     customer:{
                         email:vm.booking.email,
                         first_name:vm.booking.firstname,
@@ -972,7 +973,8 @@ export default {
                     vm.loading.splice('processing booking',1);
                     var frame = $('#invoice_frame');
                     frame[0].src = '/ledger/payments/invoice/'+response.body.invoices[0];
-                    vm.isModalOpen=true;
+                    vm.isModalOpen=false;
+                    vm.$router.push({name:"booking-dashboard"});
                 },(error)=>{
                     let error_str = helpers.apiVueResourceError(error);
                     vm.$store.dispatch("updateAlert",{
@@ -991,7 +993,7 @@ export default {
         },
         isFormValid:function () {
             let vm =this;
-            return (vm.validateParkEntry() && vm.overrideChargeReason() && $(vm.bookingForm).valid());
+            return ($(vm.bookingForm).valid());
         },
         validateParkEntry:function () {
             let vm = this;
@@ -1011,7 +1013,8 @@ export default {
             return true;
         },
         addFormValidations: function() {
-            $(this.bookingForm).validate({
+            let vm=this;
+            $(vm.bookingForm).validate({
                 rules: {
                     arrival: "required",
                     departure: "required",
@@ -1026,10 +1029,26 @@ export default {
                     phone: "required",
                     postcode: "required",
                     country: "required",
-                    price_level: "required"
+                    price_level: "required",
+                    open_reason: "required",
+                    vehicleRego: {
+                        required:{
+                            depends: function(el){
+                                return vm.validateParkEntry;
+                            }
+                        }
+                    },
+                    overrideReason:{
+                        required:{
+                            depends: function(el){
+                                return vm.overrideChargeReason;
+                            }
+                        }
+                    }
                 },
                 messages: {
-                    firstname: "fill in all details",
+                    firstname: "Fill in all details",
+                    vehicleRego: "Fill vehicle details",
                 },
                 showErrors: function(errorMap, errorList) {
                     $.each(this.validElements(), function(index, element) {
@@ -1057,7 +1076,11 @@ export default {
             if( park_entry.amount < 10 && count < 10){
                 park_entry.amount = (park_entry.amount < 10)?park_entry.amount+= 1:park_entry.amount;
                 vm.booking.parkEntry.vehicles++;
-                vm.parkEntryVehicles.push(JSON.parse(JSON.stringify(park_entry)));
+                var new_entry = JSON.parse(JSON.stringify(park_entry));
+                if (!vm.entry_fee_required) {
+                    new_entry.entry_fee = false;
+                }                
+                vm.parkEntryVehicles.push(new_entry);
             }
             vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
             vm.updateParkEntryPrices();
