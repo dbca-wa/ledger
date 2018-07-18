@@ -1574,8 +1574,6 @@ class MarinaAreaListener(object):
              MooringAreaBookingRange.objects.create(campground=instance,range_start=datetime.now().date(),status=0)
         else:
             pass
-            #print "INSTAN"
-            #print instance
             #if original_instance.price_level != instance.price_level:
                 # Get all campsites
             #    today = datetime.now().date()

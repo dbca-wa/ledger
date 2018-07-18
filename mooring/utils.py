@@ -154,7 +154,6 @@ def get_open_marinas(campsites_qs, start_date, end_date):
     if start_date < today:
         return set()
 
-#   print campsites_qs
     # remove from the campsite list any entries with bookings
     campsites_qs = campsites_qs.exclude(
         mooringsitebooking__date__range=(start_date, end_date-timedelta(days=1))
@@ -271,19 +270,13 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         if start_date > stop:
             for i in range((end_date-stop_mark).days):
                 results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
-    print "MOORING SIRE"
-    print campsites_qs.first()
     # Get the current stay history
-    #print MooringAreaStayHistory.objects.all()
-    print campsites_qs.first().mooringarea
     stay_history = MooringAreaStayHistory.objects.filter(
                     Q(range_start__lte=start_date,range_end__gte=start_date)|# filter start date is within period
                     Q(range_start__lte=end_date,range_end__gte=end_date)|# filter end date is within period
                     Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
                     ,mooringarea=campsites_qs.first().mooringarea
                     )
-    print "DID I GET HIS"
-    print stay_history 
     if stay_history:
         max_days = min([x.max_days for x in stay_history])
     else:
@@ -483,14 +476,8 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     # guess is used as the quantity items for the check out basket.
     guests = {}
     guests['mooring'] = 1
-    print "GUESTS" 
-    print guests.items()
     for k,v in guests.items():
         if int(v) > 0:
-            print "VVVV"
-            print v
-            print "RATE_LIST"
-            print rate_list
             for c,p in rate_list.items():
                 for i,r in p.items():
                     price = Decimal(0)
@@ -849,7 +836,6 @@ def iiicheckout(request, booking, lines, invoice_text=None, vouchers=[], interna
             "vouchers": vouchers,
         }
 
-        print " AM I GETTING HERE"
         if not internal:
             parameters["check_url"] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
         if internal or request.user.is_anonymous():

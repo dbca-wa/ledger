@@ -386,7 +386,6 @@ class MooringAreaMapViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MooringArea.objects.exclude(mooring_type=3)
     serializer_class = MooringAreaMapSerializer
     permission_classes = []
-#    print queryset
 
 class MarineParksRegionMapViewSet(viewsets.ReadOnlyModelViewSet):
 #    queryset = MooringArea.objects.values('park_id__name','park_id__wkb_geometry').annotate(total=Count('park'))
@@ -835,9 +834,6 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):
-        # JASON HERE
-        print MooringAreaPriceHistory.objects.filter(id=self.get_object().id).order_by('-date_start')
-
         try:
             http_status = status.HTTP_200_OK
             price_history = MooringAreaPriceHistory.objects.filter(id=self.get_object().id).order_by('-date_start')
