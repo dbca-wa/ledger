@@ -1,7 +1,7 @@
 {
   "name": "availability",
   "version": "1.0.0",
-  "description": "Availability selector for Parkstay",
+  "description": "Availability selector for Mooring",
   "author": "ASI <asi@dpaw.wa.gov.au>",
   "private": true,
   "scripts": {

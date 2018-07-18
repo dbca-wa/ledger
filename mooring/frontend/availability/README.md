@@ -1,6 +1,6 @@
 # availability
 
-> Availability selector for Parkstay
+> Availability selector for Mooring 
 
 ## Build Setup
 

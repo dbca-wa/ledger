@@ -130,7 +130,7 @@ class MooringArea(models.Model):
     )
 
     name = models.CharField(max_length=255, null=True)
-    park = models.ForeignKey('MarinePark', on_delete=models.PROTECT, related_name='marina')
+    park = models.ForeignKey('MarinePark', on_delete=models.PROTECT, related_name='marineparks')
     ratis_id = models.IntegerField(default=-1)
     contact = models.ForeignKey('Contact', on_delete=models.PROTECT, blank=True, null=True)
     mooring_type = models.SmallIntegerField(choices=MOORING_TYPE_CHOICES, default=3)
@@ -388,7 +388,7 @@ class MooringAreaImage(models.Model):
         if not self.pk:
             self.image = self.createImage(base64.b64encode(self.image.read()))
         else:
-            orig = CampgroundImage.objects.get(pk=self.pk)
+            orig = MooringAreaImage.objects.get(pk=self.pk)
             if orig.image:
                 if orig.checksum != self.checksum:
                     if os.path.isfile(orig.image.path):
@@ -397,14 +397,14 @@ class MooringAreaImage(models.Model):
                 else:
                     pass
 
-        super(CampgroundImage,self).save(*args,**kwargs)
+        super(MooringAreaImage,self).save(*args,**kwargs)
 
     def delete(self, *args, **kwargs):
         try:
             os.remove(self.image)
         except:
             pass
-        super(CampgroundImage,self).delete(*args,**kwargs)
+        super(MooringAreaImage,self).delete(*args,**kwargs)
 
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
@@ -897,9 +897,9 @@ class MooringsiteRate(models.Model):
     )
 
     UPDATE_LEVEL_CHOICES = (
-        (0, 'Campground level'),
-        (1, 'Mooringsite Class level'),
-        (2, 'Mooringsite level'),
+        (0, 'Mooring level'),
+        (1, 'Mooring site Class level'),
+        (2, 'Mooring site level'),
     )
 
     PRICE_MODEL_CHOICES = (
@@ -1459,20 +1459,20 @@ class ViewPriceHistory(models.Model):
 class MooringAreaPriceHistory(ViewPriceHistory):
     class Meta:
         managed = False
-        db_table = 'mooring_campground_pricehistory_v'
+        db_table = 'mooring_mooringarea_pricehistory_v'
         ordering = ['-date_start',]
 
 class MooringsiteClassPriceHistory(ViewPriceHistory):
     class Meta:
         managed = False
-        db_table = 'mooring_campsiteclass_pricehistory_v'
+        db_table = 'mooring_mooringsiteclass_pricehistory_v'
         ordering = ['-date_start',]
 
 # LISTENERS
 # ======================================
 class MooringAreaBookingRangeListener(object):
     """
-    Event listener for CampgroundBookingRange
+    Event listener for MooringAreaBookingRange 
     """
 
     @staticmethod
@@ -1492,7 +1492,7 @@ class MooringAreaBookingRangeListener(object):
                 for w in within:
                     w.range_end = instance.range_start
                     w.save(skip_validation=True)
-            except CampgroundBookingRange.DoesNotExist:
+            except MooringAreaBookingRange.DoesNotExist:
                 pass
         if instance.status == 0 and not instance.range_end:
             try:
@@ -1527,9 +1527,9 @@ class MooringAreaBookingRangeListener(object):
         elif instance.status != 0 and not instance.range_end:
             try:
                 if instance.range_start >= today:
-                    CampgroundBookingRange.objects.create(campground=instance.campground,range_start=instance.range_start,status=0)
+                    MooringAreaBookingRange.objects.create(campground=instance.campground,range_start=instance.range_start,status=0)
                 else:
-                    CampgroundBookingRange.objects.create(campsite=instance.campground,range_start=today,status=0)
+                    MooringAreaBookingRange.objects.create(campsite=instance.campground,range_start=today,status=0)
             except:
                 pass
         cache.delete('campgrounds_dt')
@@ -1543,10 +1543,10 @@ class MooringAreaBookingRangeListener(object):
 
         # Check if its a closure and has an end date to create new opening range
         if instance.status != 0 and instance.range_end:
-            another_open = CampgroundBookingRange.objects.filter(campground=instance.campground,range_start=datetime.now().date()+timedelta(days=1),status=0)
+            another_open = MooringAreaBookingRange.objects.filter(campground=instance.campground,range_start=datetime.now().date()+timedelta(days=1),status=0)
             if not another_open:
                 try:
-                    CampgroundBookingRange.objects.create(campground=instance.campground,range_start=instance.range_end+timedelta(days=1),status=0)
+                    MooringAreaBookingRange.objects.create(campground=instance.campground,range_start=instance.range_end+timedelta(days=1),status=0)
                 except BookingRangeWithinException as e:
                     pass
 

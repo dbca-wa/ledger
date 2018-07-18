@@ -1,6 +1,6 @@
 # exploreparks
 
-> Parkstay modules for Explore Parks
+> Modules for Explore Moorings 
 
 ## Build Setup
 

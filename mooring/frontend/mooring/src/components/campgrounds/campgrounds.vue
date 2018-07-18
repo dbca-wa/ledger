@@ -57,8 +57,8 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group pull-right">
-                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Marine Park</a>
-                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Marine Park</a>
+                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Mooring</a>
+                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Mooring</a>
                                 </div>
                             </div>
                         </form>

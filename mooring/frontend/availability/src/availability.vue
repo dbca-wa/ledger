@@ -413,7 +413,7 @@ export default {
                 error: function(xhr, stat, err) {
                     console.log('POST error');
                     //console.log(xhr);
-                    vm.errorMsg = (xhr.responseJSON && xhr.responseJSON.msg) ? xhr.responseJSON.msg : '"'+err+'" response when communicating with Parkstay.';
+                    vm.errorMsg = (xhr.responseJSON && xhr.responseJSON.msg) ? xhr.responseJSON.msg : '"'+err+'" response when communicating with Mooring.';
                     vm.update();
                 }
             });

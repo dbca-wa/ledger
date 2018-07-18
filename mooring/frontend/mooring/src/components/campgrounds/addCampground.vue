@@ -6,7 +6,7 @@
             <h4 class="panel-title">
                 <a role="button" data-toggle="collapse" href="#applications-collapse"
                    aria-expanded="false" aria-controls="applications-collapse">
-                    <h3>Add Campground</h3>
+                    <h3>Add Mooring</h3>
                 </a>
             </h4>
         </div>

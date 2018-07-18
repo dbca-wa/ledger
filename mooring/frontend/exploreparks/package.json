@@ -1,7 +1,7 @@
 {
   "name": "exploreparks",
   "version": "1.0.0",
-  "description": "Parkstay modules for Explore Parks",
+  "description": "Modules for Explore Moorings ",
   "author": "ASI <asi@dpaw.wa.gov.au>",
   "private": true,
   "scripts": {

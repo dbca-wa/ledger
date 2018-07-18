@@ -31,7 +31,7 @@
             <h4 class="panel-title">
                 <a role="button" data-toggle="collapse" href="#campsites"
                    aria-expanded="false" aria-controls="collapseOne">
-                    <h3>Camp Sites</h3>
+                    <h3>Mooring Sites</h3>
                 </a>
             </h4>
         </div>
@@ -42,8 +42,8 @@
                   <div class="row">
                      <div class="well">
                         <div class="col-sm-offset-8 col-sm-4">
-                            <button @click="showBulkCloseCampsites = true" class="btn btn-primary pull-right table_btn" >Close Campsites</button> 
-                            <router-link :to="{name:'add_campsite',params:{id:campground_id}}" class="btn btn-primary pull-right table_btn" style="margin-right: 1em;">Add Campsite</router-link>
+                            <button @click="showBulkCloseCampsites = true" class="btn btn-primary pull-right table_btn" >Close Mooring Sites</button> 
+                            <router-link :to="{name:'add_campsite',params:{id:campground_id}}" class="btn btn-primary pull-right table_btn" style="margin-right: 1em;">Add Mooring site</router-link>
                         </div>
                         <datatable ref="cg_campsites_dt" :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
                      </div>
@@ -191,7 +191,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
             },
-            title: 'Campground',
+            title: 'Mooring',
             cs_options: {
                 responsive: true,
                 processing: true,
@@ -369,7 +369,8 @@ export default {
             let vm =this;
             $.ajax({
                 url: api_endpoints.campground(vm.$route.params.id),
-                dataType: 'json',
+                dataType: 'json', 
+                async: true,
                 success: function(data, stat, xhr) {
                     vm.campground = data;
                     vm.fetchCampsites();

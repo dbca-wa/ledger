@@ -10,11 +10,12 @@ class MooringsiteClassAdmin(admin.ModelAdmin):
     list_filter = ('name',)
 
 @admin.register(models.MarinePark)
-class MarinaAdmin(admin.ModelAdmin):
+class MarinaAdmin(admin.GeoModelAdmin):
     list_display = ('name','district')
     ordering = ('name',)
     list_filter = ('district',)
     search_fields = ('name',)
+    openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
 
 @admin.register(models.MooringArea)
 class MooringAreaAdmin(admin.GeoModelAdmin):
@@ -29,11 +30,12 @@ class MooringAreaGroupAdmin(admin.ModelAdmin):
     filter_horizontal = ('members','campgrounds')
 
 @admin.register(models.Mooringsite)
-class MooringsiteAdmin(admin.ModelAdmin):
+class MooringsiteAdmin(admin.GeoModelAdmin):
     list_display = ('name','mooringarea',)
     ordering = ('name',)
     list_filter = ('mooringarea',)
     search_fields = ('name',)
+    openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
 
 @admin.register(models.Feature)
 class FeatureAdmin(admin.ModelAdmin):

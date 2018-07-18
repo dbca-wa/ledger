@@ -111,15 +111,12 @@ def abort_booking_view(request, *args, **kwargs):
         change_id = request.GET.get('change_id',None)
         change_to = None
         booking = utils.get_session_booking(request.session)
-        print "ABORT MADE IT"
         if change_ratis:
-            print "CR"
             try:
                 c_id = MooringArea.objects.get(ratis_id=change_ratis).id
             except:
                 c_id = booking.mooringarea.id
         elif change_id:
-            print "CI"
             try:
                 c_id = MooringArea.objects.get(id=change_id).id
             except:
@@ -134,7 +131,6 @@ def abort_booking_view(request, *args, **kwargs):
             # Redirect to the availability screen
             return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
         else:
-            print "REDIRECT TO PARK STAY"
             # Redirect to explore parks
             return redirect(settings.EXPLORE_PARKS_URL+'/map')
     except Exception as e:

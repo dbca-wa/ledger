@@ -13,6 +13,7 @@ from mooring.models import (MooringAreaPriceHistory,
                                 MooringAreaBookingRange,
                                 Mooringsite,
                                 MooringArea,
+                                MooringAreaGroup,
                                 MarinePark,
                                 PromoArea,
                                 Feature,
@@ -289,24 +290,20 @@ class MooringAreaDatatableSerializer(serializers.ModelSerializer):
     def get_park(self,obj):
         return obj.park.name
 
-class MooringAreaSerializer1(serializers.ModelSerializer):
-    address = serializers.JSONField()
-    class Meta:
-        model = MooringArea
-        fields = ('address'
-#           'url',
-#            'id',
-#            'site_type',
-#            'mooring_type',
-            #'name',
+class MooringAreaGroupSerializer(serializers.ModelSerializer):
+   class Meta:
+        model = MooringAreaGroup
+        fields = ('id',
+                  'name',
+                  'members',
+                  'campgrounds'
         )
-
-
 
 class MooringAreaSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
-    images = MooringAreaImageSerializer(many=True,required=False)
+    images = MooringAreaImageSerializer(read_only=True, many=True,required=False)
     mooring_map = serializers.FileField(read_only=True,required=False,allow_empty_file=True)
+    mooring_group = MooringAreaGroupSerializer(read_only=True, many=True,required=False) 
 
     class Meta:
         model = MooringArea
@@ -339,7 +336,8 @@ class MooringAreaSerializer(serializers.ModelSerializer):
             'max_advance_booking',
             'oracle_code',
             'mooring_map',
-            'additional_info'
+            'additional_info',
+            'mooring_group'
         )
 
     def get_site_type(self, obj):
@@ -357,7 +355,8 @@ class MooringAreaSerializer(serializers.ModelSerializer):
         return dict(MooringArea.CAMPGROUND_PRICE_LEVEL_CHOICES).get(obj.price_level)
 
     def get_campground_type(self, obj):
-        return dict(MooringArea.MOORING_TYPE_CHOICES).get(obj.campground_type)
+#        return dict(MooringArea.MOORING_TYPE_CHOICES).get(obj.campground_type)
+        return dict(MooringArea.MOORING_TYPE_CHOICES).get(obj.mooring_type)
 
     def __init__(self, *args, **kwargs):
         try:
@@ -381,10 +380,10 @@ class MooringAreaSerializer(serializers.ModelSerializer):
 
 class MarinaSerializer(serializers.HyperlinkedModelSerializer):
     district = DistrictSerializer()
-    mooringareas = MooringAreaSerializer(many=True)
+    marineparks = MooringAreaSerializer(many=True)
     class Meta:
         model = MarinePark 
-        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'entry_fee_required','mooringareas')
+        fields = ('id','district', 'url', 'name', 'entry_fee_required', 'entry_fee_required','marineparks')
 
 class MooringsiteStayHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False)
@@ -410,7 +409,7 @@ class MooringAreaStayHistorySerializer(serializers.ModelSerializer):
     range_end = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'],required=False)
     class Meta:
         model = MooringAreaStayHistory
-        fields = ('id','created','range_start','range_end','min_days','max_days','min_dba','max_dba','reason','details','campground','editable')
+        fields = ('id','created','range_start','range_end','min_days','max_days','min_dba','max_dba','reason','details','mooringarea','editable')
         read_only_fields =('editable',)
 
     def __init__(self, *args, **kwargs):
@@ -803,20 +802,21 @@ class PhoneSerializer(serializers.ModelSerializer):
         return obj
 
 
-class ContactSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EmailUser
-        fields = (
-            'id',
-            'email',
-            'phone_number',
-            'mobile_number',
-        )
-
-    def validate(self, obj):
-        if not obj.get('phone_number') and not obj.get('mobile_number'):
-            raise serializers.ValidationError('You must provide a mobile/phone number')
-        return obj
+#class ContactSerializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = EmailUser
+#        fields = (
+#            'id',
+#            'email',
+#            'phone_number',
+#            'mobile_number',
+#            'name',
+#        )
+#
+#    def validate(self, obj):
+#        if not obj.get('phone_number') and not obj.get('mobile_number'):
+#            raise serializers.ValidationError('You must provide a mobile/phone number')
+#        return obj
 
 class OracleSerializer(serializers.Serializer):
     date = serializers.DateField(input_formats=['%d/%m/%Y','%Y-%m-%d'])

@@ -55,7 +55,8 @@ from mooring.models import (MooringArea,
                                 PriceReason,
                                 MaximumStayReason,
                                 MarinaEntryRate,
-                                BookingVehicleRego
+                                BookingVehicleRego,
+                                MooringAreaGroup
                                 )
 
 from mooring.serialisers import (  MooringsiteBookingSerialiser,
@@ -105,8 +106,8 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     PersonalSerializer,
                                     PhoneSerializer,
                                     OracleSerializer,
-                                    BookingHistorySerializer
-                             
+                                    BookingHistorySerializer,
+                                    MooringAreaGroupSerializer
                                     )
 from mooring.helpers import is_officer, is_customer
 from mooring import reports 
@@ -487,7 +488,6 @@ def search_suggest(request, *args, **kwargs):
 class MooringAreaViewSet(viewsets.ModelViewSet):
     queryset = MooringArea.objects.all()
     serializer_class = MooringAreaSerializer
-
     @list_route(methods=['GET',])
     @renderer_classes((JSONRenderer,))
     def datatable_list(self,request,format=None):
@@ -502,12 +502,11 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
 
     @renderer_classes((JSONRenderer,))
     def list(self, request, format=None):
-
-        queryset = cache.get('campgrounds')
+        queryset = cache.get('mooringareas')
         formatted = bool(request.GET.get("formatted", False))
         if queryset is None:
             queryset = self.get_queryset()
-            cache.set('campgrounds',queryset,3600)
+            cache.set('mooringareas',queryset,3600)
         qs = [c for c in queryset.all() if can_view_campground(request.user,c)]
         serializer = self.get_serializer(qs, formatted=formatted, many=True, method='get')
         data = serializer.data
@@ -516,6 +515,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         formatted = bool(request.GET.get("formatted", False))
+        instance.mooring_group =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],campgrounds__in=[instance.id,])
         serializer = self.get_serializer(instance, formatted=formatted, method='get')
         return Response(serializer.data)
 
@@ -593,25 +593,21 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                             'campground':instance.id
                         }
                         existing_image_serializers.append(ExistingMooringAreaImageSerializer(data=data))
-
                 # Dealing with existing images
                 images_id_list = []
                 for image_serializer in existing_image_serializers:
                     image_serializer.is_valid(raise_exception=True)
                     images_id_list.append(image_serializer.validated_data['id'])
-
                 #Get current object images and check if any has been removed
                 for img in current_images:
                     if img.id not in images_id_list:
                         img.delete()
-
                 # Creating new Images
                 if image_serializers:
                     for image_serializer in image_serializers:
                         image_serializer.initial_data["campground"] = instance.id
                         image_serializer.initial_data["image"] = ContentFile(base64.b64decode(self.strip_b64_header(image_serializer.initial_data["image"])))
                         image_serializer.initial_data["image"].name = 'uploaded'
-
                     for image_serializer in image_serializers:
                         image_serializer.is_valid(raise_exception=True)
 
@@ -620,7 +616,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             else:
                 if current_images:
                     current_images.delete()
-
+            print serializer
             self.perform_update(serializer)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -801,6 +797,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['get'])
     def status_history(self, request, format='json', pk=None):
+        
         try:
             http_status = status.HTTP_200_OK
             # Check what status is required
@@ -838,9 +835,13 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):
+        # JASON HERE
+        print MooringAreaPriceHistory.objects.filter(id=self.get_object().id).order_by('-date_start')
+
         try:
             http_status = status.HTTP_200_OK
             price_history = MooringAreaPriceHistory.objects.filter(id=self.get_object().id).order_by('-date_start')
+            
             serializer = MooringAreaPriceHistorySerializer(price_history,many=True,context={'request':request})
             res = serializer.data
 
@@ -854,6 +855,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['get'])
     def stay_history(self, request, format='json', pk=None):
+        
         try:
             http_status = status.HTTP_200_OK
             start = request.GET.get("start",False)
@@ -906,17 +908,9 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
         end_date = self.try_parsing_date(request.GET.get('departure')).date()
         booking_id = request.GET.get('booking',None)
 
-        #print start_date
         booking = Booking.objects.get(id=booking_id)
-        print booking
-
-        #booking = Booking.objects.get(id=booking_id)
-        #print "YES"
-        #print queryset 
-        print self.get_object().id
-        #print "OBH"
         campsite_qs = Mooringsite.objects.filter(mooringarea_id=self.get_object().id)
-#        campsite_qs = Mooringsite.objects.filter(mooringarea_id=4)
+#       campsite_qs = Mooringsite.objects.filter(mooringarea_id=4)
         
         http_status = status.HTTP_200_OK
        
@@ -937,14 +931,11 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             campsite_qs = Mooringsite.objects.filter(mooringarea_id=self.get_object().id)
             http_status = status.HTTP_200_OK
             available = utils.get_available_campsites_list_booking(campsite_qs,request, start_date, end_date,booking)
-            print "HERE"
             return Response(available,status=http_status)
         except ValidationError as e:
-            print e
             print(traceback.print_exc())
             raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
-            print e
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
@@ -1074,8 +1065,6 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     rates_map[s.campsite_class.pk] = rates[s.pk]
 
                 class_sites_map[s.campsite_class.pk].add(s.pk)
-            print "RATE MAP"
-            print rates_map
             # make an entry under sites for each campsite class
             for c in classes:
                 rate = rates_map[c[1]]
@@ -1164,17 +1153,11 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         # don't group by class, list individual sites
         else:
             sites_qs = sites_qs.order_by('name')
-            print "s.pk"
-            print rates
-            print sites_qs 
             # from our campsite queryset, generate a digest for each site
             sites_map = OrderedDict([(s.name, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
             bookings_map = {}
-            print sites_map
             # make an entry under sites for each site
             for k, v in sites_map.items():
-                print "RATE MAP 32"
-                print v
                 site = {
                     'name': k,
                     'id': v[0],
@@ -1349,9 +1332,12 @@ class MarinaViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         data = cache.get('parks')
+        data = None
         if data is None:
             queryset = self.get_queryset()
             serializer = self.get_serializer(queryset, many=True)
+            print "SERIAL"
+            print serializer
             data = serializer.data
             cache.set('parks',data,3600)
         return Response(data)
@@ -1395,7 +1381,7 @@ class MarinaViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
             serializer =  MarinaEntryRateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save();
+            serializer.save()
             res = serializer.data
             return Response(res,status=http_status)
         except serializers.ValidationError:
@@ -1414,6 +1400,10 @@ class MarinaEntryRateViewSet(viewsets.ModelViewSet):
 class RegionViewSet(viewsets.ModelViewSet):
     queryset = Region.objects.all()
     serializer_class = RegionSerializer
+
+class MooringGroup(viewsets.ModelViewSet):
+    queryset = MooringAreaGroup.objects.all()
+    serializer_class = MooringAreaGroupSerializer 
 
 class MooringsiteClassViewSet(viewsets.ModelViewSet):
     queryset = MooringsiteClass.objects.all()
@@ -1951,7 +1941,6 @@ class BookingViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET'])
     def history(self, request, *args, **kwargs):
         http_status = status.HTTP_200_OK
-        print "HISTORY OOKING"
         try:
             history = self.get_object().history.all()
             data = BookingHistorySerializer(history,many=True).data

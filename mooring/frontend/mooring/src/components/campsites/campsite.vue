@@ -6,13 +6,13 @@
                <form name="campsiteForm">
                    <div class="panel panel-primary">
     					<div class="panel-heading">
-    						<h3 class="panel-title">Campsite Details</h3>
+    						<h3 class="panel-title">Mooring site Details</h3>
     					</div>
     					<div class="panel-body" v-show="!isLoading">
                             <div class="row">
     							<div class="col-md-6">
     								<div class="form-group">
-    									<label class="control-label" >Camp Site Type</label>
+    									<label class="control-label" >Mooring Site Type</label>
     									<select class="form-control" v-show="!campsite_classes.length > 0" >
     										<option>Loading...</option>
     									</select>
@@ -24,7 +24,7 @@
     							</div>
     							<div v-show="showName" class="col-md-6">
     								<div class="form-group">
-    									<label class="control-label" >Camp Site Name</label>
+    									<label class="control-label" >Mooring Site Name</label>
     									<input type="text" name="name" class="form-control"  v-model="campsite.name" required/>
     								</div>
     							</div>
