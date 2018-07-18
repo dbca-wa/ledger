@@ -51,6 +51,10 @@ class ExternalComplianceView(DetailView):
     model = Compliance
     template_name = 'disturbance/dash/index.html'
 
+class InternalComplianceView(DetailView):
+    model = Compliance
+    template_name = 'disturbance/dash/index.html'
+
 class DisturbanceRoutingView(TemplateView):
     template_name = 'disturbance/index.html'
 

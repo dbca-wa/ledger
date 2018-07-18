@@ -11,6 +11,16 @@ from ledger.accounts.models import EmailUser
 logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = 'VIA Automated Message'
+class ComplianceExternalSubmitSendNotificationEmail(TemplateEmailBase):
+    subject = 'Your Compliance with requirements has been submitted.'
+    html_template = 'disturbance/emails/send_external_submit_notification.html'
+    txt_template = 'disturbance/emails/send_external_submit_notification.txt'
+
+class ComplianceSubmitSendNotificationEmail(TemplateEmailBase):
+    subject = 'A new Compliance has been submitted.'
+    html_template = 'disturbance/emails/send_submit_notification.html'
+    txt_template = 'disturbance/emails/send_submit_notification.txt'
+
 class ComplianceAcceptNotificationEmail(TemplateEmailBase):
     subject = 'Your Compliance with requirements has been accepted.'
     html_template = 'disturbance/emails/compliance_accept_notification.html'
@@ -72,6 +82,33 @@ def send_compliance_accept_email_notification(compliance,request):
         'compliance': compliance
     }    
     msg = email.send(compliance.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_compliance_email(msg, compliance, sender=sender)
+    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
+
+def send_external_submit_email_notification(request, compliance):
+    email = ComplianceExternalSubmitSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
+    context = {
+        'compliance': compliance,
+        'submitter': compliance.submitter.get_full_name(),
+        'url': url
+    }
+
+    msg = email.send(compliance.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_compliance_email(msg, compliance, sender=sender)
+    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
+
+def send_submit_email_notification(request, compliance):
+    email = ComplianceSubmitSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-compliance-detail',kwargs={'compliance_pk': compliance.id}))
+    context = {
+        'compliance': compliance,
+        'url': url
+    }
+
+    msg = email.send(compliance.proposal.assessor_recipients, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_compliance_email(msg, compliance, sender=sender)
     _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)

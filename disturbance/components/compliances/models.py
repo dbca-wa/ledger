@@ -23,7 +23,9 @@ from disturbance.components.proposals.models import ProposalRequirement
 from disturbance.components.compliances.email import (
                         send_compliance_accept_email_notification,
                         send_amendment_email_notification,
-                        send_reminder_email_notification)
+                        send_reminder_email_notification,
+                        send_external_submit_email_notification,
+                        send_submit_email_notification)
 
 class Compliance(models.Model):
 
@@ -116,7 +118,10 @@ class Compliance(models.Model):
                                 q.save()
                 #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.lodgement_date = timezone.now()
-                self.save() 
+                self.save()
+                self.log_user_action(ComplianceUserAction.ACTION_SUBMIT_REQUEST.format(self.id),request)
+                send_external_submit_email_notification(request,self) 
+                send_submit_email_notification(request,self)
             except:
                 raise
 
