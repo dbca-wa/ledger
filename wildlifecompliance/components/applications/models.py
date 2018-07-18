@@ -19,7 +19,7 @@ from wildlifecompliance import exceptions
 
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
-from wildlifecompliance.components.main.utils import get_department_user
+from wildlifecompliance.components.main.utils import get_department_user, checkout
 from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification,send_application_amendment_notification
 from wildlifecompliance.ordered_model import OrderedModel
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
@@ -464,6 +464,10 @@ class Application(RevisionedMixin):
                 else:
                     self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 send_application_submit_email_notification(select_group.members.all(),self,request)
+
+                # send to checkout if application_fee > 0
+                if self.application_fee > 0:
+                    checkout(request, self)
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
 

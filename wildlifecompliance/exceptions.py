@@ -26,3 +26,5 @@ class ApplicationMissingFields(APIException):
     default_detail = 'The application has missing required fields'
     default_code = 'application_missing_fields'
 
+class BindApplicationException(Exception):
+    pass

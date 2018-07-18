@@ -13,7 +13,8 @@
                                     <span style="margin-right: 5px;"><strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong></span>
                                     <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="application.application_fee == 0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-else type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                 </p>
                             </div>
                         </div>
@@ -81,12 +82,20 @@ export default {
     },
     submit: function(){
         let vm = this;
-        console.log(' SUBMIT VM FORM ');
+        console.log(' SUBMIT VM FORM and CHECKOUT ');
         let formData = new FormData(vm.form);
         console.log(formData);
+
+        let swal_title = 'Submit Application'
+        let swal_text = 'Are you sure you want to submit this application?'
+        if (vm.application.application_fee > 0) {
+            swal_title = 'Submit Application and Checkout'
+            swal_text = 'Are you sure you want to submit this application and proceed to checkout??'
+        }
+
         swal({
-            title: "Submit Application",
-            text: "Are you sure you want to submit this application?",
+            title: swal_title,
+            text: swal_text,
             type: "question",
             showCancelButton: true,
             confirmButtonText: 'Submit'
