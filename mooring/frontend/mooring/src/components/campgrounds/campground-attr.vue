@@ -42,7 +42,7 @@
 										</div>
 									</div>
 									<div class="row">
-										<div class="col-md-6">
+										<div class="col-md-4">
 											<div class="form-group ">
 												<label class="control-label" >Mooring Type</label>
 												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.mooring_type">
@@ -53,7 +53,7 @@
 												</select>
 											</div>
 										</div>
-										<div class="col-md-6">
+										<div class="col-md-4">
 											<div class="form-group ">
 												<label class="control-label" >Booking Configuration</label>
 												<select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
@@ -63,8 +63,18 @@
 												</select>
 											</div>
 										</div>
+
+                                                                                <div class="col-md-4">
+                                                                                        <div class="form-group ">
+                                                                                                <label class="control-label" >Mooring Group (Permissions)</label>
+                                                                                                <select class="form-control" v-model="campground.mooring_group" id='mooring_groups' name='mooring_groups' multiple>
+                                                                                                      <option v-for="m in mooring_groups" :value="m.id" >{{m.name}}</option>
+                                                                                                </select>
+                                                                                        </div>
+                                                                                </div>
+
 									</div>
-                                    <imagePicker :images="campground.images"></imagePicker>
+				                                        <imagePicker :images="campground.images"></imagePicker>
 
 									<div class="row" style="margin-top: 40px;">
 										<div class="col-lg-12">
@@ -252,6 +262,8 @@ export default {
             showUpdate: false,
             isLoading: false,
             contacts:[],
+            mooring_groups: [],
+            MooringGroups: [{ id: 1, name: 'Principal' }, { id: 2, name: 'Dessert' }, { id: 3, name: 'Drink' }],
         }
     },
     props: {
@@ -316,8 +328,10 @@ export default {
             }
         },
 		...mapGetters([
-          'parks'
+          'parks',
+          'mooring_groups'
         ]),
+ 
     },
     watch: {
         campground: {
@@ -429,9 +443,21 @@ export default {
         },
         loadParks: function() {
             var vm = this;
-			if (vm.parks.length == 0) {
+   	    if (vm.parks.length == 0) {
                 vm.$store.dispatch("fetchParks");
             }
+        },
+        loadMooringGroups: function() {
+            let vm =this;
+            $.ajax({
+                url: api_endpoints.mooring_groups,
+                dataType: 'json',
+                async: false,
+                success: function(data, stat, xhr) {
+                    vm.mooring_groups = data;
+                }
+            });
+
         },
         loadFeatures: function() {
             var vm = this;
@@ -544,6 +570,11 @@ export default {
         vm.loadParks();
         vm.loadFeatures();
         vm.fetchCampground();
+        vm.loadMooringGroups();
+
+        console.log('LOG');
+        console.log(vm.mooring_groups);
+        console.log(vm);
         vm.editor = new Editor('#editor', {
             modules: {
                 toolbar: true

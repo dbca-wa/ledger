@@ -303,7 +303,7 @@ class MooringAreaSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
     images = MooringAreaImageSerializer(read_only=True, many=True,required=False)
     mooring_map = serializers.FileField(read_only=True,required=False,allow_empty_file=True)
-    mooring_group = MooringAreaGroupSerializer(read_only=True, many=True,required=False) 
+    mooring_group = serializers.PrimaryKeyRelatedField(many=True, required=False, read_only=True) 
 
     class Meta:
         model = MooringArea
@@ -339,6 +339,7 @@ class MooringAreaSerializer(serializers.ModelSerializer):
             'additional_info',
             'mooring_group'
         )
+        read_only_fields = ('mooring_group',)
 
     def get_site_type(self, obj):
         return dict(MooringArea.SITE_TYPE_CHOICES).get(obj.site_type)
@@ -380,7 +381,7 @@ class MooringAreaSerializer(serializers.ModelSerializer):
 
 class MarinaSerializer(serializers.HyperlinkedModelSerializer):
     district = DistrictSerializer()
-    marineparks = MooringAreaSerializer(many=True)
+    #marineparks = MooringAreaSerializer(many=True)
     class Meta:
         model = MarinePark 
         fields = ('id','district', 'url', 'name', 'entry_fee_required', 'entry_fee_required','marineparks')

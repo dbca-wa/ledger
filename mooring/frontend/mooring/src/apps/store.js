@@ -16,6 +16,7 @@ var store = new Vuex.Store({
         regions:[],
         parks:[],
         districts:[],
+        mooring_groups: [],
         campgrounds:[],
         campsite_classes:[],
         show_loader: false,
@@ -47,6 +48,10 @@ var store = new Vuex.Store({
         SET_LOADER_TEXT(state,val){
             state.app_loader_text = val;
         },
+        SETMOORINGGROUP(state, mooring_groups) {
+            state.mooring_groups = mooring_groups;
+        },
+
     },
     actions: {
         updateAlert(context,payload) {
@@ -60,6 +65,11 @@ var store = new Vuex.Store({
         fetchParks(context) {
             $.get(api_endpoints.parks,function(data){
                 context.commit('SETPARKS',data);
+            });
+        },
+        fetchMooringGroups(context) {
+            $.get(api_endpoints.mooring_groups,function(data){
+                context.commit('SETMOORINGGROUP',data);
             });
         },
         fetchDistricts(context) {

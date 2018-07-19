@@ -6,6 +6,7 @@ module.exports = {
     regions:process.env.PARKSTAY_URL + "/api/regions.json",
     parks:process.env.PARKSTAY_URL + "/api/parks.json",
     districts:process.env.PARKSTAY_URL + "/api/districts.json",
+    mooring_groups: process.env.PARKSTAY_URL + "/api/mooring_groups.json",
     park_price_history:function (id) {
        return process.env.PARKSTAY_URL + "/api/parks/price_history.json";
     },

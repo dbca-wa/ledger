@@ -528,11 +528,14 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
         try:
             images_data = None
             http_status = status.HTTP_200_OK
+
             if "images" in request.data:
                 images_data = request.data.pop("images")
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             instance =serializer.save()
+            instance.mooring_group = None
+            
             # Get and Validate campground images
             initial_image_serializers = [MooringAreaImageSerializer(data=image) for image in images_data] if images_data else []
             image_serializers = []
@@ -555,6 +558,23 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                     for image_serializer in image_serializers:
                         image_serializer.save()
 
+            if "mooring_group" in request.data:
+                mooring_group = request.data.pop("mooring_group")
+                mg = MooringAreaGroup.objects.all()
+                for i in mg:
+                    # i.campgrounds.clear()
+                    if i.id in mooring_group:
+                        m_all = i.campgrounds.all()
+                        if instance.id in m_all:
+                            pass
+                        else:
+                            i.campgrounds.add(instance)
+                    else:
+                        m_all = i.campgrounds.all()
+                        for b in m_all:
+                           if instance.id == b.id:
+                              i.campgrounds.remove(b)
+
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -566,10 +586,31 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def update(self, request, *args, **kwargs):
+        #= MooringAreaSerializer
         try:
             images_data = None
             http_status = status.HTTP_200_OK
             instance = self.get_object()
+            post = request.data
+            instance.mooring_group = None
+            if "mooring_group" in request.data:
+                mooring_group = request.data.pop("mooring_group")
+#                mg = MooringAreaGroup.objects.filter(id__in=mooring_group)
+                mg = MooringAreaGroup.objects.all()
+                for i in mg:
+                    # i.campgrounds.clear()
+                    if i.id in mooring_group:
+                        m_all = i.campgrounds.all()
+                        if instance.id in m_all:
+                            pass
+                        else:
+                            i.campgrounds.add(instance)
+                    else:
+                        m_all = i.campgrounds.all()
+                        for b in m_all:
+                           if instance.id == b.id:
+                              i.campgrounds.remove(b)
+                 
             if "images" in request.data:
                 images_data = request.data.pop("images")
             serializer = self.get_serializer(instance,data=request.data,partial=True)
@@ -615,7 +656,6 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             else:
                 if current_images:
                     current_images.delete()
-            print serializer
             self.perform_update(serializer)
             return Response(serializer.data)
         except serializers.ValidationError:
