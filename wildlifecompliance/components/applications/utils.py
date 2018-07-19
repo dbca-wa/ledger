@@ -76,7 +76,7 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     if 'conditions' in item:
         for condition in item['conditions'].keys():
             for child in item['conditions'][condition]:
-                print(child)
+                #print(child)
                 item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
 
     return item_data
@@ -86,7 +86,7 @@ def generate_item_data(item_name,item,item_data,post_data,file_data,repetition,s
     for rep in xrange(0, repetition):
         child_data = {}
         for child_item in item.get('children'):
-            print(child_item)
+            #print(child_item)
             child_data.update(_create_data_from_item(child_item, post_data, file_data, 0,
                                                      '{}-{}'.format(suffix, rep)))
         item_data_list.append(child_data)
@@ -365,8 +365,8 @@ def get_activity_type_schema(licence_class_data):
             schema_activity = schema_activity + activity_obj.schema
 
         update_schema_name(schema_activity,index)
-        for item in schema_activity:
-            print(item['name'])
+        # for item in schema_activity:
+        #     print(item['name'])
             
         schema_tab.append({"type":"tab",
                   "id":activity_type_obj.id,
