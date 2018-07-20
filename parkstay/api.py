@@ -364,12 +364,10 @@ class CampgroundStayHistoryViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
-
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campground.objects.exclude(campground_type=3).annotate(Min('campsites__rates__rate__adult'))
     serializer_class = CampgroundMapSerializer
     permission_classes = []
-
 
 class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campground.objects.exclude(campground_type=3)
