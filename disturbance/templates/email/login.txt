@@ -4,4 +4,4 @@ Click this link to sign in: {{ login_url }}
 
 Best regards,
 
-Values Impact Assessment Customer Portal
+Values Impact Assessment Section

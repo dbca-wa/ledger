@@ -239,32 +239,49 @@ class CompRequest(models.Model):
     class Meta:
         app_label = 'disturbance'
 
+
 class ComplianceAmendmentStatus(models.Model):
-    status = models.CharField('Status', max_length=30)
+    status = models.CharField('Status', max_length=125)
 
     class Meta:
         app_label = 'disturbance'
 
 
 class ComplianceAmendmentReason(models.Model):
-    reason = models.CharField('Reason', max_length=30)
+    reason = models.CharField('Reason', max_length=125)
 
     class Meta:
         app_label = 'disturbance'
 
 
 class ComplianceAmendmentRequest(CompRequest):
-    """
-    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
-    REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
-                      ('missing_information', 'There was missing information'),
-                      ('other', 'Other'))
+#    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+#    REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
+#                      ('missing_information', 'There was missing information'),
+#                      ('other', 'Other'))
+
+    try:
+        # model requires some choices if ComplianceAmendmentStatus does not yet exist or is empty
+        STATUS_CHOICES = list(ComplianceAmendmentStatus.objects.values_list('id', 'status'))
+        if not STATUS_CHOICES:
+            STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+    except:
+        STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+
+    try:
+        # model requires some choices if ComplianceAmendmentReason does not yet exist or is empty
+        REASON_CHOICES = list(ComplianceAmendmentReason.objects.values_list('id', 'reason'))
+        if not REASON_CHOICES:
+            REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
+                              ('missing_information', 'There was missing information'),
+                              ('other', 'Other'))
+    except:
+        REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
+                          ('missing_information', 'There was missing information'),
+                          ('other', 'Other'))
+
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
-    """
-
-    status = models.ForeignKey(ComplianceAmendmentStatus)
-    reason = models.ForeignKey(ComplianceAmendmentReason)
 
     class Meta:
         app_label = 'disturbance'
