@@ -214,9 +214,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
             print(' ---- checkout_result ---- ')
             print(checkout_result)
-            return checkout_result
+            # return checkout_result
 
-            # return Response(serializer.data)
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

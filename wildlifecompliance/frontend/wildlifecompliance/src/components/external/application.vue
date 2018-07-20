@@ -103,23 +103,23 @@ export default {
         }).then((result) => {
             if (result.value) {
                 let formData = new FormData(vm.form);
-                form.submit();
-//                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
-//                    vm.application = res.body;
-//                    console.log(res.body);
-//                    console.log(res);
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
+                    vm.application = res.body;
+                    console.log(res.body);
+                    console.log(res);
+                    window.location.href = "/ledger/checkout/checkout/payment-details/";
 //                    vm.$router.push('/ledger/checkout/checkout/payment-details/');
 //                    vm.$router.push({
 //                        name: 'submit_application',
 //                        params: { application: vm.application}
 //                    });
-//                },err=>{
-//                    swal(
-//                        'Submit Error',
-//                        helpers.apiVueResourceError(err),
-//                        'error'
-//                    )
-//                });
+                },err=>{
+                    swal(
+                        'Submit Error',
+                        helpers.apiVueResourceError(err),
+                        'error'
+                    )
+                });
             }
         },(error) => {
         });
