@@ -78,7 +78,7 @@ class ApprovalCancellationSerializer(serializers.Serializer):
     
 class ApprovalSuspensionSerializer(serializers.Serializer):
     from_date = serializers.DateField(input_formats=['%d/%m/%Y'])
-    to_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    to_date = serializers.DateField(input_formats=['%d/%m/%Y'], required=False, allow_null=True)
     suspension_details = serializers.CharField()
     
 class ApprovalSurrenderSerializer(serializers.Serializer):

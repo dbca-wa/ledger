@@ -249,9 +249,13 @@ class Approval(models.Model):
                     raise ValidationError('You do not have access to suspend this approval')
                 if not self.can_reissue and self.can_action:
                     raise ValidationError('You cannot suspend approval if it is not current or suspended')
+                if details.get('to_date'): 
+                    to_date= details.get('to_date').strftime('%d/%m/%Y') 
+                else:
+                    to_date=''
                 self.suspension_details = {
                     'from_date' : details.get('from_date').strftime('%d/%m/%Y'),
-                    'to_date' : details.get('to_date').strftime('%d/%m/%Y'),
+                    'to_date' : to_date,
                     'details': details.get('suspension_details'),
                 }
                 today = timezone.now().date()
