@@ -118,6 +118,10 @@ class Approval(models.Model):
         return self.status == 'current' or self.status == 'suspended'
 
     @property
+    def can_reinstate(self):
+        return (self.status == 'cancelled' or self.status == 'suspended' or self.status == 'surrendered') and self.can_action
+
+    @property
     def allowed_assessors(self):
         return self.current_proposal.allowed_assessors
 
@@ -274,13 +278,23 @@ class Approval(models.Model):
             try:
                 if not request.user in self.allowed_assessors:
                     raise ValidationError('You do not have access to reinstate this approval')
-                if not self.status == 'suspended':
+                if not self.can_reinstate:
+                #if not self.status == 'suspended':
                     raise ValidationError('You cannot reinstate approval at this stage')
                 today = timezone.now().date()
-                if not self.status == 'suspended' and self.expiry_date >= today:
+                if not self.can_reinstate and self.expiry_date>= today:
+                #if not self.status == 'suspended' and self.expiry_date >= today:
                     raise ValidationError('You cannot reinstate approval at this stage')
+                if self.status == 'cancelled':
+                    self.cancellation_details =  ''
+                    self.cancellation_date = None
+                if self.status == 'surrendered':
+                    self.surrender_details = {}
+                if self.status == 'suspended':
+                    self.suspension_details = {}
+
                 self.status = 'current'
-                self.suspension_details = {}
+                #self.suspension_details = {}
                 self.save()
                 send_approval_reinstate_email_notification(self, request)
                 # Log approval action
