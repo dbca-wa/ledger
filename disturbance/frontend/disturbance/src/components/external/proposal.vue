@@ -284,8 +284,9 @@ export default {
         var num_missing_fields = vm.validate()
         if (num_missing_fields > 0) {
             vm.highlight_missing_fields()
+            var top = ($('#error').offset() || { "top": NaN }).top;
             $('html, body').animate({
-                scrollTop: $("#error").offset().top
+                scrollTop: top
             }, 1);
             return false;
         }
