@@ -73,7 +73,6 @@ def send_organisation_request_accept_email_notification(org_request,organisation
     _log_org_request_email(msg, org_request, sender=sender)
     _log_org_email(msg, organisation, org_request.requester, sender=sender)
 
-<<<<<<< HEAD
 def send_org_access_group_request_accept_email_notification(org_request, request, recipient_list):
     email = OrganisationAccessGroupRequestAcceptNotificationEmail()
     context = {
