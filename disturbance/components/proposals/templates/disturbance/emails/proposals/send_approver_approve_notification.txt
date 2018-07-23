@@ -1,7 +1,7 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-	Your Proposal {{ proposal.lodgement_number }} has been proposed for approval.
+    The Proposal {{ proposal.lodgement_number }} has been assessed and is ready for issue or decline.
 
     <p>
     You can access this Proposal using the following link:

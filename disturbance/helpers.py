@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from ledger.accounts.models import EmailUser
+from django.conf import settings
 
 
 def belongs_to(user, group_name):
@@ -13,20 +14,25 @@ def belongs_to(user, group_name):
 
 def is_model_backend(request):
     # Return True if user logged in via single sign-on (i.e. an internal)
-    #import ipdb; ipdb.set_trace()
     return 'ModelBackend' in request.session.get('_auth_user_backend')
 
 def is_email_auth_backend(request):
     # Return True if user logged in via social_auth (i.e. an external user signing in with a login-token)
-    #import ipdb; ipdb.set_trace()
     return 'EmailAuth' in request.session.get('_auth_user_backend')
 
 def is_officer(request):
     return request.user.is_authenticated() and is_model_backend(request) and (belongs_to(request.user, 'Disturbance Officers') or request.user.is_superuser)
 
 def in_dbca_domain(request):
-    domain = request.user.email.split('@')[1]
-    return domain == 'dpaw.wa.gov.au' or domain == 'dbca.wa.gov.au'
+    user = request.user
+    domain = user.email.split('@')[1]
+    if domain in settings.DEPT_DOMAINS:
+        if not user.is_staff:
+            # hack to reset department user to is_staff==True, if the user logged in externally (external departmentUser login defaults to is_staff=False)
+            user.is_staff = True
+            user.save()
+        return True
+    return False
 
 def is_departmentUser(request):
     return request.user.is_authenticated() and is_model_backend(request) and in_dbca_domain(request)
