@@ -78,6 +78,7 @@ def send_org_access_group_request_accept_email_notification(org_request, request
     context = {
         'name': request.data.get('name'),
         'abn': request.data.get('abn'),
+        'url': request.build_absolute_uri('/internal/organisations/access/{}'.format(org_request.id)),
     }
 
     msg = email.send(recipient_list, context=context)

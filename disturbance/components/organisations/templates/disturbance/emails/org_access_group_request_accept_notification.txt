@@ -7,4 +7,9 @@
 
     ABN : {{ request.abn}}
 
+    <p>
+    You can access this Organisation Request using the following link:
+    </p>
+    <a href="{{url}}">Access Organisation Request</a>
+
 {%  endblock %}
