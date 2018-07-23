@@ -15,6 +15,11 @@ class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/organisation_request_accept_notification.html'
     txt_template = 'disturbance/emails/organisation_request_accept_notification.txt'
 
+class OrganisationAccessGroupRequestAcceptNotificationEmail(TemplateEmailBase):
+    subject = 'New organisation request has been submitted.'
+    html_template = 'disturbance/emails/org_access_group_request_accept_notification.html'
+    txt_template = 'disturbance/emails/org_access_group_request_accept_notification.txt'
+
 class OrganisationRequestDeclineNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation request has been declined.'
     html_template = 'disturbance/emails/organisation_request_decline_notification.html'
@@ -67,6 +72,22 @@ def send_organisation_request_accept_email_notification(org_request,organisation
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_request_email(msg, org_request, sender=sender)
     _log_org_email(msg, organisation, org_request.requester, sender=sender)
+
+<<<<<<< HEAD
+def send_org_access_group_request_accept_email_notification(org_request, request, recipient_list):
+    email = OrganisationAccessGroupRequestAcceptNotificationEmail()
+    context = {
+        'name': request.data.get('name'),
+        'abn': request.data.get('abn'),
+    }
+
+    msg = email.send(recipient_list, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_request_email(msg, org_request, sender=sender)
+
+    # commenting out because Organisation does not yet exist - only OrganisationRequest exists
+    #_log_org_email(msg, organisation, org_request.requester, sender=sender) 
+
 
 def send_organisation_request_decline_email_notification(org_request,request):
     email = OrganisationRequestDeclineNotificationEmail()

@@ -1,0 +1,10 @@
+{%  extends 'disturbance/emails/base_email.txt' %}
+
+{%  block content %}
+    A new organisation request has been submitted:
+
+    Organisation : {{ request.name }}
+
+    ABN : {{ request.abn}}
+
+{%  endblock %}

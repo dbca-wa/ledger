@@ -1,0 +1,7 @@
+{%  extends 'disturbance/emails/base_email.html' %}
+
+{%  block content %}
+    <p>A new organisation request has been submitted:</p>
+    <p><strong>Organisation : {{ name }}</strong></p>
+    <p><strong>ABN : {{ abn }}</strong></p>
+{%  endblock %}
