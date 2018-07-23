@@ -922,6 +922,23 @@ class Assessment(ApplicationRequest):
 
             except:
                 raise
+
+
+    def remind_assessment(self,request):
+        with transaction.atomic():
+            try:
+                # select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
+                select_group = self.assessor_group.members.all()
+                # send email
+                send_assessment_reminder_email(select_group,self,request)
+                assessment.date_last_reminded = date.today()
+                self.save()
+                # Create a log entry for the application
+                self.application.log_user_action(ApplicationUserAction.ACTION_SEND_ASSESSMENT_REMINDER_TO_.format(self.assessor_group.name),request)
+                
+
+            except:
+                raise
 class ApplicationDeclinedDetails(models.Model):
     application = models.OneToOneField(Application)
     officer = models.ForeignKey(EmailUser, null=False)
