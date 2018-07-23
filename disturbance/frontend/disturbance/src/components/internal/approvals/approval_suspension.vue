@@ -171,7 +171,7 @@ export default {
             let vm = this;
             vm.validation_form = $(vm.form).validate({
                 rules: {
-                    to_date:"required",                    
+                    from_date:"required",                    
                     suspension_details:"required",
                 },
                 messages: {

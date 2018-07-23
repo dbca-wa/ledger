@@ -1,8 +1,7 @@
 {%  extends 'disturbance/emails/base_email.html' %}
 
 {%  block content %}
-	The Proposal {{ proposal.lodgement_number }} has been reviewed and has been declined.
-
+	Your Proposal {{ proposal.lodgement_number }} has been reviewed and has been proposed to decline.
     {% if reason %}
         <p>
         	<span>Declined Reason: {{ reason }}</span>

@@ -345,7 +345,7 @@ def create_approval_doc(approval,proposal, copied_to_permit):
     approval_buffer = BytesIO()
 
     _create_approval(approval_buffer, approval, proposal, copied_to_permit)
-    filename = 'approval-{}.pdf'.format(approval.id)
+    filename = 'approval-{}.pdf'.format(approval.lodgement_number)
     document = ApprovalDocument.objects.create(approval=approval,name=filename)
     document._file.save(filename, File(approval_buffer), save=True)
 

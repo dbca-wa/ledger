@@ -13,6 +13,7 @@ from disturbance.components.main.models import UserAction,CommunicationsLogEntry
 from disturbance.components.organisations.utils import random_generator
 from disturbance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
+                        send_organisation_request_decline_email_notification,
                         send_organisation_link_email_notification,
                         send_organisation_unlink_email_notification,
                         send_org_access_group_request_accept_email_notification,
@@ -325,6 +326,7 @@ class OrganisationRequest(models.Model):
                 request = self
             )
             self.log_user_action(OrganisationRequestUserAction.ACTION_DECLINE_REQUEST,request)
+            send_organisation_request_decline_email_notification(self,request)
 
     def log_user_action(self, action, request):
         return OrganisationRequestUserAction.log_action(self, action, request.user)
