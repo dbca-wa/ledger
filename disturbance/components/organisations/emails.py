@@ -68,7 +68,7 @@ def send_organisation_request_accept_email_notification(org_request,organisation
     _log_org_request_email(msg, org_request, sender=sender)
     _log_org_email(msg, organisation, org_request.requester, sender=sender)
 
-def send_organisation_request_decline_email_notification(org_request,organisation,request):
+def send_organisation_request_decline_email_notification(org_request,request):
     email = OrganisationRequestDeclineNotificationEmail()
 
     context = {
@@ -78,7 +78,7 @@ def send_organisation_request_decline_email_notification(org_request,organisatio
     msg = email.send(org_request.requester.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_request_email(msg, org_request, sender=sender)
-    _log_org_email(msg, organisation, org_request.requester, sender=sender)
+    #_log_org_email(msg, organisation, org_request.requester, sender=sender)
 
 def _log_org_request_email(email_message, request, sender=None):
     from disturbance.components.organisations.models import OrganisationRequestLogEntry

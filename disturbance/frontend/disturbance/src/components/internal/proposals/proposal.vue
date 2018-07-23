@@ -210,7 +210,8 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-sm-12" v-if="!proposal.proposed_decline_status">
+                                        <!-- v-if="!proposal.proposed_decline_status" -->
+                                        <div class="col-sm-12" >
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="issueProposal()">Issue</button><br/>
                                         </div>
                                         <div class="col-sm-12">
@@ -526,7 +527,8 @@ export default {
             this.$refs.proposed_approval.isModalOpen = true;
         },
         issueProposal:function(){
-            this.$refs.proposed_approval.approval = helpers.copyObject(this.proposal.proposed_issuance_approval);
+            //this.$refs.proposed_approval.approval = helpers.copyObject(this.proposal.proposed_issuance_approval);
+            this.$refs.proposed_approval.approval = this.proposal.proposed_issuance_approval != null ? helpers.copyObject(this.proposal.proposed_issuance_approval) : {};
             this.$refs.proposed_approval.state = 'final_approval';
             this.$refs.proposed_approval.isApprovalLevelDocument = this.isApprovalLevelDocument;
             this.$refs.proposed_approval.isModalOpen = true;

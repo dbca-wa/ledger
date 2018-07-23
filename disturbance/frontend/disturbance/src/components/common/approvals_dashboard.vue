@@ -232,7 +232,7 @@ export default {
                                     if(full.status == 'Current' && full.can_action){
                                         links +=  `<a href='#${full.id}' data-suspend-approval='${full.id}'>Suspend</a><br/>`;
                                     }
-                                    if(full.status== 'Suspended' && full.can_action)
+                                    if(full.can_reinstate)
                                     {
                                         links +=  `<a href='#${full.id}' data-reinstate-approval='${full.id}'>Reinstate</a><br/>`;
                                     }

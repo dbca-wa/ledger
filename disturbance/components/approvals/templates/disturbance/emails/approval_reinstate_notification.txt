@@ -3,7 +3,7 @@
 {%  block content %}
     Your Approval has been reinstate:
 
-    Approval : {{ approval.reference}}
+    Approval : {{ approval.lodgement_number}}
 
    
 {%  endblock %}

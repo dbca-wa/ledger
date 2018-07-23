@@ -68,7 +68,8 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'set_to_surrender',
             'set_to_suspend',
             'can_renew',
-            'can_amend'
+            'can_amend',
+            'can_reinstate'
         )
 
 class ApprovalCancellationSerializer(serializers.Serializer):
@@ -77,7 +78,7 @@ class ApprovalCancellationSerializer(serializers.Serializer):
     
 class ApprovalSuspensionSerializer(serializers.Serializer):
     from_date = serializers.DateField(input_formats=['%d/%m/%Y'])
-    to_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    to_date = serializers.DateField(input_formats=['%d/%m/%Y'], required=False, allow_null=True)
     suspension_details = serializers.CharField()
     
 class ApprovalSurrenderSerializer(serializers.Serializer):
