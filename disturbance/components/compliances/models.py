@@ -19,7 +19,7 @@ from ledger.licence.models import  Licence
 from disturbance import exceptions
 from disturbance.components.organisations.models import Organisation
 from disturbance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
-from disturbance.components.proposals.models import ProposalRequirement
+from disturbance.components.proposals.models import ProposalRequirement, AmendmentReason
 from disturbance.components.compliances.email import (
                         send_compliance_accept_email_notification,
                         send_amendment_email_notification,
@@ -245,45 +245,19 @@ class CompRequest(models.Model):
         app_label = 'disturbance'
 
 
-class ComplianceAmendmentStatus(models.Model):
-    status = models.CharField('Status', max_length=125)
-
-    class Meta:
-        app_label = 'disturbance'
-
-
-class ComplianceAmendmentReason(models.Model):
-    reason = models.CharField('Reason', max_length=125)
-
-    class Meta:
-        app_label = 'disturbance'
-
-
 class ComplianceAmendmentRequest(CompRequest):
-#    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
-#    REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
-#                      ('missing_information', 'There was missing information'),
-#                      ('other', 'Other'))
-
+    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
     try:
-        # model requires some choices if ComplianceAmendmentStatus does not yet exist or is empty
-        STATUS_CHOICES = list(ComplianceAmendmentStatus.objects.values_list('id', 'status'))
-        if not STATUS_CHOICES:
-            STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
-    except:
-        STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
-
-    try:
-        # model requires some choices if ComplianceAmendmentReason does not yet exist or is empty
-        REASON_CHOICES = list(ComplianceAmendmentReason.objects.values_list('id', 'reason'))
+        # model requires some choices if AmendmentReason does not yet exist or is empty
+        REASON_CHOICES = list(AmendmentReason.objects.values_list('id', 'reason'))
         if not REASON_CHOICES:
-            REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
-                              ('missing_information', 'There was missing information'),
-                              ('other', 'Other'))
+            REASON_CHOICES = ((0, 'The information provided was insufficient'),
+                              (1, 'There was missing information'),
+                              (2, 'Other'))
     except:
-        REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
-                          ('missing_information', 'There was missing information'),
-                          ('other', 'Other'))
+        REASON_CHOICES = ((0, 'The information provided was insufficient'),
+                          (1, 'There was missing information'),
+                          (2, 'Other'))
 
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
