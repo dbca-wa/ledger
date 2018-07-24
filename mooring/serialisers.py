@@ -337,7 +337,8 @@ class MooringAreaSerializer(serializers.ModelSerializer):
             'oracle_code',
             'mooring_map',
             'additional_info',
-            'mooring_group'
+            'mooring_group',
+            'vessel_size_limit'
         )
         read_only_fields = ('mooring_group',)
 

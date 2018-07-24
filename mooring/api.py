@@ -1372,8 +1372,8 @@ class MarinaViewSet(viewsets.ModelViewSet):
         if data is None:
             queryset = self.get_queryset()
             serializer = self.get_serializer(queryset, many=True)
-            print "SERIAL"
-            print serializer
+            #print "SERIAL"
+            #print serializer
             data = serializer.data
             cache.set('parks',data,3600)
         return Response(data)
