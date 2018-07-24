@@ -121,7 +121,15 @@
                     </div>
                 </div>
             </div>
+
         {% endblock %}
+
+		{% if maintenance_datetime %}
+		    <div class="alert alert-danger">
+		    	<strong>Notice!</strong> System will be going down for maintenance at {{ maintenance_datetime }}
+		    </div>
+        {% endif %}
+
         {% block content %}
         {% endblock %}
         {% block modals %}

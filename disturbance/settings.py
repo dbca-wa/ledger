@@ -64,7 +64,7 @@ DEV_STATIC = env('DEV_STATIC',False)
 DEV_STATIC_URL = env('DEV_STATIC_URL')
 if DEV_STATIC and not DEV_STATIC_URL:
     raise ImproperlyConfigured('If running in DEV_STATIC, DEV_STATIC_URL has to be set')
-DATA_UPLOAD_MAX_NUMBER_FIELDS = None 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # Department details
 VIA_EMAIL = env('VIA_EMAIL','via@dbca.wa.gov.au')
