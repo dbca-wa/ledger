@@ -150,11 +150,17 @@ class SystemMaintenance(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     start_date = models.DateTimeField()
-    duration = models.DurationField()
+    end_date = models.DateTimeField()
+
+    def duration(self):
+        """ Duration of system maintenance (in mins) """
+        return int( (self.end_date - self.start_date).total_seconds()/60.) if self.end_date and self.start_date else ''
+        #return (datetime.now(tz=tz) - self.start_date).total_seconds()/60.
+    duration.short_description = 'Duration (mins)'
 
     class Meta:
         app_label = 'disturbance'
 
     def __str__(self):
-        return 'System Maintenance: {} ({}) - starting {}, duration {}'.format(self.name, self.description, self.start_date, self.duration)
+        return 'System Maintenance: {} ({}) - starting {}, ending {}'.format(self.name, self.description, self.start_date, self.end_date)
 

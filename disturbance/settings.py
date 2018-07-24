@@ -4,6 +4,8 @@ from ledger.settings_base import *
 ROOT_URLCONF = 'disturbance.urls'
 SITE_ID = 1
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
+SUPERVISOR_STOP_CMD = env('SUPERVISOR_STOP_CMD')
+SYSTEM_MAINTENANCE_WARNING = env('SYSTEM_MAINTENANCE_WARNING', 24) # hours
 
 INSTALLED_APPS += [
     'bootstrap3',

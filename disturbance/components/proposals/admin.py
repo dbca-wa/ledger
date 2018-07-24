@@ -100,7 +100,8 @@ class ActivityMatrixAdmin(admin.ModelAdmin):
 
 @admin.register(SystemMaintenance)
 class SystemMaintenanceAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description', 'start_date', 'duration']
+    list_display = ['name', 'description', 'start_date', 'end_date', 'duration']
     ordering = ('start_date',)
+    readonly_fields = ('duration',)
 
 

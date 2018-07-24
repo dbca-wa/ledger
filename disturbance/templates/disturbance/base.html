@@ -4,6 +4,7 @@
 
 {% load users %}
 {% is_internal as is_internal_login %}
+{% system_maintenance_due as system_maintenance_due %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -124,9 +125,9 @@
 
         {% endblock %}
 
-		{% if maintenance_datetime %}
-		    <div class="alert alert-danger">
-		    	<strong>Notice!</strong> System will be going down for maintenance at {{ maintenance_datetime }}
+		{% if system_maintenance_due %}
+		    <div class="alert alert-warning">
+		    	<strong>Notice!</strong> System will be down for maintenance between {{ system_maintenance_due }}
 		    </div>
         {% endif %}
 
