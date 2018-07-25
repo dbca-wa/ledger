@@ -29,8 +29,8 @@ def is_model_backend(context):
 def system_maintenance_due():
     """ Returns True (actually a time str), if within <timedelta hours> of system maintenance due datetime """
     tz = pytz.timezone(settings.TIME_ZONE)
-    now = timezone.now() # returns UTC time
-    qs = SystemMaintenance.objects.filter(start_date__gte=now)
+    now = timezone.now()  # returns UTC time
+    qs = SystemMaintenance.objects.filter(start_date__gte=now - timedelta(minutes=1))
     if qs:
         obj = qs.earliest('start_date')
         if now >= obj.start_date - timedelta(hours=settings.SYSTEM_MAINTENANCE_WARNING) and now <= obj.start_date + timedelta(minutes=1):
@@ -42,8 +42,8 @@ def system_maintenance_due():
 @register.simple_tag()
 def system_maintenance_can_start():
     """ Returns True if current datetime is within 1 minute past scheduled start_date """
-    now = timezone.now()
-    qs = SystemMaintenance.objects.filter(start_date__gte=now)
+    now = timezone.now() # returns UTC time
+    qs = SystemMaintenance.objects.filter(start_date__gte=now - timedelta(minutes=1))
     if qs:
         obj = qs.earliest('start_date')
         if now >= obj.start_date and now <= obj.start_date + timedelta(minutes=1):

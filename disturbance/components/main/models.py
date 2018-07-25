@@ -61,6 +61,7 @@ class ActivityMatrix(models.Model):
     class Meta:
         app_label = 'disturbance'
         unique_together = ('name', 'version')
+        verbose_name_plural = "Activity Matrices"
 
     def __str__(self):
         return '{} - v{}'.format(self.name, self.version)
@@ -160,6 +161,7 @@ class SystemMaintenance(models.Model):
 
     class Meta:
         app_label = 'disturbance'
+        verbose_name_plural = "System Maintenance"
 
     def __str__(self):
         return 'System Maintenance: {} ({}) - starting {}, ending {}'.format(self.name, self.description, self.start_date, self.end_date)

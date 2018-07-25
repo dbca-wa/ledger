@@ -103,5 +103,6 @@ class SystemMaintenanceAdmin(admin.ModelAdmin):
     list_display = ['name', 'description', 'start_date', 'end_date', 'duration']
     ordering = ('start_date',)
     readonly_fields = ('duration',)
+    form = forms.SystemMaintenanceAdminForm
 
 
