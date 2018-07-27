@@ -240,11 +240,11 @@
                                       </div>
                                   </div>
                                 </div>
-                                <div class="row" v-for="v in parkEntryVehicles">
+                                <div class="row" v-for="(v, index) in parkEntryVehicles">
                                   <div class="col-md-6">
                                       <div class="form-group">
                                         <label class="required">{{v.description}}</label>
-                                        <input type="text" class="form-control" name="vehicleRego" required="required" v-model="v.rego" @change="validateRego">
+                                        <input type="text" class="form-control" v-bind:name="'vehicleRego_'+index" required="required" v-model="v.rego" @change="validateRego">
                                       </div>
                                   </div>
                                   <div class="col-md-6">
@@ -995,13 +995,12 @@ export default {
             let vm =this;
             return ($(vm.bookingForm).valid());
         },
-        validateParkEntry:function () {
+        noDuplicateRego: function(source) {
             let vm = this;
-            var validRegos = vm.parkEntryVehicles.reduce(function (acc, el) {
-                return acc + (el.rego ? 1 : 0);
-            }, 0);
-
-            return (validRegos == vm.parkEntryVehicles.length);
+            var listRego = vm.parkEntryVehicles.filter(function(el){
+                return el.rego == source.value;
+            }); 
+            return listRego.length <= 1;
         },
         overrideChargeReason:function () {
             let vm = this;
@@ -1014,7 +1013,7 @@ export default {
         },
         addFormValidations: function() {
             let vm=this;
-            $(vm.bookingForm).validate({
+            var options = {
                 rules: {
                     arrival: "required",
                     departure: "required",
@@ -1030,25 +1029,17 @@ export default {
                     postcode: "required",
                     country: "required",
                     price_level: "required",
-                    open_reason: "required",
-                    vehicleRego: {
-                        required:{
-                            depends: function(el){
-                                return vm.validateParkEntry;
-                            }
-                        }
-                    },
+                    open_reason: "required", 
                     overrideReason:{
                         required:{
                             depends: function(el){
-                                return vm.overrideChargeReason;
+                                return vm.overrideChargeReason(el);
                             }
                         }
                     }
                 },
                 messages: {
                     firstname: "Fill in all details",
-                    vehicleRego: "Fill vehicle details",
                 },
                 showErrors: function(errorMap, errorList) {
                     $.each(this.validElements(), function(index, element) {
@@ -1068,7 +1059,23 @@ export default {
                             .parents('.form-group').addClass('has-error');
                     }
                 }
+            };
+            for (var i =0; i<vm.booking.parkEntry.vehicles; i++) {
+                options.rules['vehicleRego_'+i] = {
+                    required: true,
+                    noDuplicateRego: true
+                };
+                options.messages['vehicleRego_'+i] = {
+                    required: 'Fill in vehicle details',
+                    noDuplicateRego: 'Rego must be a unique set'
+                };
+            }
+            var form = $(vm.bookingForm);
+            form.data('validator', null);
+            $.validator.addMethod('noDuplicateRego', function (value, el){
+                return vm.noDuplicateRego(el);
             });
+            form.validate(options);
         },
         addVehicleCount:function (park_entry) {
             let vm = this;
@@ -1085,6 +1092,7 @@ export default {
             vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
             vm.updateParkEntryPrices();
             vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+            vm.addFormValidations();
         },
         removeVehicleCount:function (park_entry) {
             let vm = this;
@@ -1109,6 +1117,7 @@ export default {
             vm.booking.price = vm.booking.price - vm.booking.entryFees.entry_fee;
             vm.updateParkEntryPrices();
             vm.booking.price = vm.booking.price + vm.booking.entryFees.entry_fee;
+            vm.addFormValidations();
         },
     },
     mounted:function () {
@@ -1116,8 +1125,8 @@ export default {
         vm.bookingForm = document.forms.bookingForm;
         vm.fetchCampground();
         vm.fetchCountries();
-        vm.addFormValidations();
         vm.generateGuestCountText();
+        vm.addFormValidations();
     }
 }
 </script>
