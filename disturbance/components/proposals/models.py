@@ -1270,7 +1270,9 @@ class Referral(models.Model):
     sent_from = models.SmallIntegerField(choices=SENT_CHOICES,default=SENT_CHOICES[0][0])
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[0][0])
-    text = models.TextField(blank=True)
+    text = models.TextField(blank=True) #Assessor text
+    referral_text = models.TextField(blank=True)
+
 
     class Meta:
         app_label = 'disturbance'
@@ -1319,12 +1321,13 @@ class Referral(models.Model):
             # send email
             send_referral_email_notification(self,request)
 
-    def complete(self,request):
+    def complete(self,request, referral_comment):
         with transaction.atomic():
             try:
                 if request.user != self.referral:
                     raise exceptions.ReferralNotAuthorized()
                 self.processing_status = 'completed'
+                self.referral_text = referral_comment
                 self.save()
                 # TODO Log proposal action
                 self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)

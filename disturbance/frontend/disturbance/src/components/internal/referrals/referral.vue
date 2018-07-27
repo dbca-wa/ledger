@@ -93,6 +93,8 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-12">
+                                        <label class="control-label pull-left"  for="Name">Comments</label>
+                                        <textarea class="form-control" name="name" v-model="referral_comment"></textarea>
                                         <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="completeReferral">Complete Referral</button>
                                     </div>
                                 </div>
@@ -263,6 +265,7 @@ export default {
             "loading": [],
             selected_referral: '',
             referral_text: '',
+            referral_comment: '',
             sendingReferral: false,
             form: null,
             members: [],
@@ -517,6 +520,7 @@ export default {
         },
         completeReferral:function(){
             let vm = this;
+            let data = {'referral_comment': vm.referral_comment};
             
             swal({
                 title: "Complete Referral",
@@ -528,7 +532,9 @@ export default {
                 let formData = new FormData(vm.form);
                 vm.$http.post(vm.proposal_form_url,formData).then(res=>{
                     
-                    vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete'),JSON.stringify(data),{
+                emulateJSON:true
+                }).then(res => {
                     vm.referral = res.body;
                     vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
                 },
