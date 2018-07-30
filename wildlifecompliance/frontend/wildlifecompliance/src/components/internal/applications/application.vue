@@ -519,7 +519,7 @@
                         <div>
                         <div v-for="item in application.licence_type_data">
                             <ul class="nav nav-tabs" id="assessortabs">
-                                <li v-for="item1 in item"><a v-if="item1.name" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                                <li v-for="(item1,index) in item"><a v-if="item1.name" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
                             </ul>
                             
                         </div>          
@@ -555,7 +555,7 @@
                                                         </div>
                                                     </div>
                                                     <div class="row">
-                                                    	<datatable ref="assessorDatatable" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options" :dtHeaders="assessors_headers" :selected_assesment_index="index"/>
+                                                    	<datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options" :dtHeaders="assessors_headers" />
                                                     </div>
                                         </div>
                                     </div>
@@ -624,7 +624,7 @@ export default {
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             application_assessor_datatable:vm._uid+'assessment-table',
-            selected_assessment_index:0,
+            selected_assesment_index:0,
             contacts_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -683,6 +683,7 @@ export default {
                                     
                                 } else if(full.status == 'Awaiting Assessment'){
                                     links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>`;
+                                    // links +=  `<button data-assessmentid='${full.id}' @click.prevent="assessment_remind()">Remind</button>`;
                                     // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
                                 } 
                             return links;
@@ -790,11 +791,95 @@ export default {
         }
     },
     methods: {
+        // assessment_remind: function(){
+        //     let vm= this;
+        //     console.log("hello world")
+        //     console.log(index)
+        // },
     	eventListeners: function(){
             let vm = this;
             console.log('indisde eventlistner');
-            console.log(vm.$refs)
-            console.log(vm.$refs.assessorDatatable)
+            // console.log(vm.$refs)
+            console.log(vm.$refs.assessorDatatable[0].vmDatatTable)
+            // console.log(vm.selected_assesment_index)
+            
+            // console.log($(selectedTabTitle).text())
+
+            // console.log(vm.application.licence_type_data.activity_type)
+            // console.log(vm.application.licence_type_data.activity_type.length)
+            // var index= parseInt($el.dataset.index)
+            console.log("this is the index")
+            // console.log(index)
+
+            for(var i=0;i<vm.application.licence_type_data.activity_type.length;i++){
+                console.log(i)
+                vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_remind',(e) => {
+                console.log('inside click')
+                var selectedTabTitle = $("#assessortabs li.active");
+                console.log(selectedTabTitle)
+                console.log(vm.selected_assesment_index)
+                
+                e.preventDefault();
+
+                let assessment_id = $(e.target).data('assessmentid');
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
+                    console.log('successful')
+                        //vm.$parent.loading.splice('processing contact',1);
+                        swal(
+                             'Sent',
+                             'An email has been sent to applicant with the request to amend this Proposal',
+                             'success'
+                        );
+                        // vm.assessingApplication = true;
+                        // vm.close();
+                        //vm.$emit('refreshFromResponse',response);
+                        // Vue.http.get(`/api/proposal/${vm.proposal_id}/internal_proposal.json`).then((response)=>
+                        // {
+                        //     vm.$emit('refreshFromResponse',response);
+                            
+                        // },(error)=>{
+                        //     console.log(error);
+                        // });
+                        // vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
+                     
+                    },(error)=>{
+                        console.log(error);
+                        vm.errors = true;
+                        vm.errorString = helpers.apiVueResourceError(error);
+                        
+                        
+                    });
+
+                      swal({
+                    title: "Relink User",
+                    text: "Are you sure you want to Relink ",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
+                        }).then((response) => {
+                            swal({
+                                title: 'Relink User',
+                                text: 'You have successfully relinked ' + name + '.',
+                                type: 'success',
+                                confirmButtonText: 'Okay'
+                            }).then(() => {
+                                vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
+                        }, (error) => {
+                            swal('Relink User','There was an error relink')
+                        });
+                    }
+                },(error) => {
+                });
+
+
+            });
+
+            }
+            // FOr end
             
             vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_remind',(e) => {
                 console.log('inside click')
