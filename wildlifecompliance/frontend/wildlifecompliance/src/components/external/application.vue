@@ -107,12 +107,14 @@ export default {
                     vm.application = res.body;
                     console.log(res.body);
                     console.log(res);
-                    window.location.href = "/ledger/checkout/checkout/payment-details/";
-//                    vm.$router.push('/ledger/checkout/checkout/payment-details/');
-//                    vm.$router.push({
-//                        name: 'submit_application',
-//                        params: { application: vm.application}
-//                    });
+                    if (vm.application.application_fee > 0) {
+                        window.location.href = "/ledger/checkout/checkout/payment-details/";
+                    } else {
+                      vm.$router.push({
+                            name: 'submit_application',
+                            params: { application: vm.application}
+                        });
+                    }
                 },err=>{
                     swal(
                         'Submit Error',

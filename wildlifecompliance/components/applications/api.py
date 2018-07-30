@@ -211,9 +211,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 application_submission = u'Application submitted by {} confirmation WC{}'.format(
                     u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
                 checkout_result = checkout(request, instance, invoice_text=application_submission)
-
-            print(' ---- checkout_result ---- ')
-            print(checkout_result)
+                print(' ---- checkout_result ---- ')
+                print(checkout_result)
             # return checkout_result
 
             return Response(serializer.data)
