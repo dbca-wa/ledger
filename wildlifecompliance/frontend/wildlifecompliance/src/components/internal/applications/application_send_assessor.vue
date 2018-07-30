@@ -55,7 +55,8 @@ export default {
             assessment: {
                 assessor_group_name:null,
                 assessor_group:null,
-                application:vm.application_id
+                application:vm.application_id,
+                activity_type:[]
             },
             assessor_group:null,
             assessingApplication:false,
@@ -95,6 +96,7 @@ export default {
         sendData:function(){
             let vm = this;
             vm.errors = false;
+            console.log(JSON.stringify(vm.assessment))
             let assessment = JSON.parse(JSON.stringify(vm.assessment));
             vm.$http.post('/api/assessment.json',JSON.stringify(assessment),{
                         emulateJSON:true,

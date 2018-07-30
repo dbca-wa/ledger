@@ -10,8 +10,12 @@ from datetime import datetime, timedelta
 
 from wildlifecompliance.helpers import is_officer, is_departmentUser
 from wildlifecompliance.forms import *
-from wildlifecompliance.components.applications.models import Application, Referral
+from wildlifecompliance.components.applications.models import Referral,Application
 from wildlifecompliance.components.applications.mixins import ReferralOwnerMixin
+from wildlifecompliance.components.main import utils
+from wildlifecompliance.exceptions import BindApplicationException
+
+
 
 class ExternalApplicationView(DetailView):
     model = Application
@@ -42,9 +46,34 @@ class ReferralView(ReferralOwnerMixin, DetailView):
     model = Referral
     template_name = 'wildlifecompliance/dash/index.html'
 
-class ApplicationView(ReferralOwnerMixin, DetailView):
-    model = Application
+class ApplicationView(ReferralOwnerMixin,DetailView):
+    model=Application
+    template_name='wildlifecompliance/dash/index.html'
+
+class ApplicationSuccessView(TemplateView):
     template_name = 'wildlifecompliance/dash/index.html'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            application = utils.get_session_application(request.session)
+            invoice_ref = request.GET.get('invoice')
+
+            try:
+                utils.bind_application_to_invoice(request, application, invoice_ref)
+            except BindApplicationException:
+                return redirect('application')
+
+        except Exception as e:
+            if ('wc_last_application' in request.session) and Application.objects.filter(
+                    id=request.session['wc_last_application']).exists():
+                application = Application.objects.get(id=request.session['wc_last_application'])
+            else:
+                return redirect('wc_home')
+
+        context = {
+            'application': application
+        }
+        return render(request, self.template_name, context)
 
 class WildlifeComplianceRoutingView(TemplateView):
     template_name = 'wildlifecompliance/index.html'

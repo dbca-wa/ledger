@@ -17,8 +17,9 @@
                             <div class="col-sm-12">
                                 <div class="row">
                                 <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
+                                <div class="pull-right"><strong>Estimated application fee: {{application_fee | toCurrency}}</strong></div>
                                 </div>
-                              
+
                                 
                                 <div class="margin-left-20">
                                 <div v-for="(category,index) in licence_classes" class="radio">
@@ -38,7 +39,7 @@
                                                             <div v-for="(activity,index2) in type.activity" class="checkbox activity-clear-left">
                                                                 
                                                                 <div class ="col-sm-12">
-                                                                    <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected">{{activity.name}}
+                                                                    <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected" @click="handleActivityCheckboxChange(index,index1,index2,$event)">{{activity.name}} ({{activity.base_fee}})
                                                                 </div>
 
                                                             </div>
@@ -108,15 +109,15 @@ export default {
             id:null,
             activity_type:[]
         },
+        licence_type_name: '',
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
+        application_fee: 0,
     }
   },
   components: {
   },
-  
-  
   methods: {
     submit: function() {
         let vm = this;
@@ -144,7 +145,8 @@ export default {
                         if (vm.licence_classes[i].activity_type[activity_type_index].selected){
                             vm.licence_classes[i].activity_type[activity_type_index].selected=false;
                             for(var activity_index=0, len2=vm.licence_classes[i].activity_type[activity_type_index].activity.length; activity_index<len2; activity_index++){
-
+                                vm.licence_classes[i].activity_type[activity_type_index].activity[activity_index].selected = false;
+                                vm.application_fee = 0;
                             }    
                         }
                 }
@@ -152,7 +154,7 @@ export default {
             }
 
         }
-        console.log("This is the value to pass on",vm.licence_class_selected)
+        console.log("This is the value to pass on",vm.licence_class);
 
     },
     handleActivityTypeCheckboxChange:function(index,index1){
@@ -161,38 +163,74 @@ export default {
         if(vm.licence_classes[index].activity_type[index1].selected){
             for(var activity_index=0, len2=vm.licence_classes[index].activity_type[index1].activity.length; activity_index<len2; activity_index++){
                          vm.licence_classes[index].activity_type[index1].activity[activity_index].selected= false;
-                            }    
+                            }
+        }
+    },
+    handleActivityCheckboxChange:function(index,index1,index2,event){
+        let vm = this
+        var activity = vm.licence_classes[index].activity_type[index1].activity[index2]
+        if(event.target.checked){
+            vm.application_fee += Number(activity.base_fee);
+        } else {
+            vm.application_fee -= Number(activity.base_fee);
         }
     },
     createApplication:function () {
         let vm = this;
+        // clear out licence class
+        vm.licence_class = {
+            id:null,
+            activity_type:[]
+        }
         let index=0
+        let count_activity_types = 0
+        let count_activities = 0
         let data = new FormData()
+        vm.licence_type_name = ''
         for(var i=0,_len=vm.licence_classes.length;i<_len;i++){
         	console.log('length of licence_classes',_len)
+            // loop through level 1 and find selected
             if(vm.licence_classes[i].checked){
                 vm.licence_class.id=vm.licence_classes[i].id
-
+                vm.licence_type_name += vm.licence_classes[i].name + ' - '
+                // loop through level 2 and find selected
                 for(var j=0,_len1=vm.licence_classes[i].activity_type.length;j<_len1;j++){
                 	console.log('length of activity type',_len1)
+                    count_activities = 0
                     if(vm.licence_classes[i].activity_type[j].selected){
+                        if(count_activity_types !=0 && count_activity_types<_len1){
+                            vm.licence_type_name += ', '
+                        }
                         // console.log("activity type selected",vm.licence_classes[i].activity_type[j].id)
                         vm.licence_class.activity_type.push({id:vm.licence_classes[i].activity_type[j].id})
                         vm.licence_class.activity_type[index].activity=[]
+                        vm.licence_type_name += vm.licence_classes[i].activity_type[j].short_name + ' ('
+                        // loop through level 3 and find selected
                         for(var k=0,_len2=vm.licence_classes[i].activity_type[j].activity.length;k<_len2;k++){
                             if(vm.licence_classes[i].activity_type[j].activity[k].selected){
+                                if(count_activities!=0 && count_activities<_len2){
+                                    vm.licence_type_name += ', '
+                                }
                             	vm.licence_class.activity_type[index].activity.push({id:vm.licence_classes[i].activity_type[j].activity[k].id})
+                                vm.licence_type_name += vm.licence_classes[i].activity_type[j].activity[k].name
+                                count_activities++;
                         	}
                         }
+                        vm.licence_type_name += ')'
                         index++;
+                        count_activity_types++;
                     }
                 }
             }
         }
         data.org_applicant=vm.behalf_of_org
         data.licence_class_data=vm.licence_class
+        data.licence_type_name=vm.licence_type_name
+        data.application_fee=vm.application_fee
         console.log(' ---- application apply licence createApplication() ---- ');
-        console.log(data);
+        console.log(vm.application_fee)
+        console.log(data.licence_type_name);
+        console.log(' ==== licence class data ==== ')
         console.log(JSON.stringify(data));
         vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
               console.log(res.body);
@@ -201,7 +239,6 @@ export default {
                   name:"draft_application",
                   params:{application_id:vm.application.id}
               });
-              console.log(request);
           },
           err => {
             console.log(err);

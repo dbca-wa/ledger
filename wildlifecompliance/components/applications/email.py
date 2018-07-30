@@ -26,6 +26,46 @@ class ApplicationAmendmentRequestNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/send_application_amendment_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_amendment_notification.txt'
 
+class ApplicationAssessmentRequestedEmail(TemplateEmailBase):
+    subject = 'Wildlife licensing assessment required'
+    html_template = 'wildlifecompliance/emails/send_application_assessment_request_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_application_assessment_request_notification.txt'
+
+class ApplicationAssessmentReminderEmail(TemplateEmailBase):
+    subject = 'Wildlife licensing assessment reminder'
+    html_template = 'wildlifecompliance/emails/send_application_assessment_remind_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_application_assessment_remind_notification.txt'
+
+
+def send_assessment_reminder_email(assessment, request=None):
+    application = assessment.application
+
+    email = ApplicationAssessmentReminderEmail()
+    url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk': application.id}))
+    context = {
+        'url': url
+    }
+    msg = email.send(select_group, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
+
+
+
+    
+def send_assessment_email_notification(select_group,assessment, request):
+    application = assessment.application
+
+    email = ApplicationAssessmentRequestedEmail()
+    url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk': application.id}))
+    context = {
+        'url': url
+    }
+    msg = email.send(select_group, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
+
+
+
 
 def send_referral_email_notification(emails,application,request,reminder=False):
     email = ReferralSendNotificationEmail()
