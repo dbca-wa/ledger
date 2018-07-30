@@ -18,7 +18,6 @@ def create_data_from_form(schema, post_data, file_data, post_data_index=None,spe
         comment_fields_search = CommentDataSearch()
     try:
         for item in schema:
-            #import ipdb; ipdb.set_trace()
             data.update(_create_data_from_item(item, post_data, file_data, 0, ''))
             #_create_data_from_item(item, post_data, file_data, 0, '')
             special_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
@@ -56,7 +55,8 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
             item_data[item['name']] = extended_item_name in post_data
         elif item['type'] == 'file':
             if extended_item_name in file_data:
-                item_data[item['name']] = str(file_data.get(extended_item_name))
+                #item_data[item['name']] = str(file_data.get(extended_item_name))
+                item_data[item['name']] = ','.join([i.name for i in file_data.getlist(extended_item_name)])
                 # TODO save the file here
             elif extended_item_name + '-existing' in post_data and len(post_data[extended_item_name + '-existing']) > 0:
                 item_data[item['name']] = post_data.get(extended_item_name + '-existing')
@@ -312,16 +312,20 @@ def save_proponent_data(instance,request,viewset):
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
             # Save Documents
-            for f in request.FILES:
+            #for f in request.FILES:
+            section = request.FILES.keys()[0] if request.FILES.keys() else ''
+            for f in request.FILES.getlist(section):
                 try:
                     #document = instance.documents.get(name=str(request.FILES[f]))
-                    document = instance.documents.get(input_name=f)
+                    document = instance.documents.get(input_name=f, name=f.name)
                 except ProposalDocument.DoesNotExist:
-                    document = instance.documents.get_or_create(input_name=f)[0]
-                document.name = str(request.FILES[f])
+                    document = instance.documents.get_or_create(input_name=f, name=f.name)[0]
+                #document.name = str(request.FILES[f])
+                document.name = f.name
                 if document._file and os.path.isfile(document._file.path):
                     os.remove(document._file.path)
-                document._file = request.FILES[f]
+                #document._file = request.FILES[f]
+                document._file = f
                 document.save()
             # End Save Documents
         except:

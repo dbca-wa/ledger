@@ -29,9 +29,9 @@
             <div v-if="files">
                 <div v-for="v in files">
                     <p>
-                        File: <a :href="docsUrl+v" target="_blank">{{v}}</a> &nbsp;
+                        File: <a :href="docsUrl+v.name" target="_blank">{{v.name}}</a> &nbsp;
                         <span v-if="!readonly">
-                            <a @click="removeImage(v)" class="fa fa-trash-o" title="Remove file" :filename="v" style="cursor: pointer; color:red;"></a>
+                            <a @click="removeImage(v.name)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
                     </p>
                     <input :name="name+'-existing'" type="hidden" :value="value"/>
@@ -39,6 +39,8 @@
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/><br/>
+                <!-- <input name="Section0-14[]" type="file" id="Section0-14" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired" multiple/><br/> -->
+                <!-- <input name="Section0-14[]" type="file" id="Section0-14" accept="image/*,application/pdf,text/csv,application/msword" multiple=""/><br/> -->
             </div>
 
         </div>
@@ -77,7 +79,7 @@ export default {
         },
         isRepeatable:Boolean,
         readonly:Boolean,
-        docsUrl: String
+        docsUrl: String,
     },
     components: {Comment, HelpText},
     data:function(){
@@ -99,9 +101,6 @@ export default {
             this.showingComment = ! this.showingComment;
         },
         handleChange:function (e) {
-            if (e.target.files.length > 0) {
-                this.upload_file(e)
-            }
             if (this.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
@@ -116,13 +115,25 @@ export default {
                         this.repeat+=1;
                     }
                 }
+                //$(e.target).hide();
+                $(e.target).css({ 'display': 'none', 'visibility': 'hidden' });
+                $(e.target).find('br').remove();
+
+
+            } else {
+                this.files = [];
+            }
+            this.files.push(e.target.files[0]);
+
+            if (e.target.files.length > 0) {
+                this.upload_file(e)
             }
         },
         upload_file: function(e) {
             let vm = this;
-            var filename = e.target.files[0].name;
+            //var filename = e.target.files[0].name;
             $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
-            this.files = [e.target.files[0].name];
+            //this.files = [e.target.files[0].name];
         },
         removeImage: function (filename) {
             let vm = this;
@@ -141,7 +152,15 @@ export default {
     mounted:function () {
         let vm = this;
         if (vm.value) {
-            vm.files = (Array.isArray(vm.value))? vm.value : [vm.value];
+            //vm.files = (Array.isArray(vm.value))? vm.value : [vm.value];
+            if (Array.isArray(vm.value)) {
+                vm.value;
+            } else {
+                var file_names = vm.value.replace(/ /g,'_').split(",")
+                vm.files = file_names.map(function( file_name ) { 
+                      return {name: file_name}; 
+                });
+            }
         }
     }
 }
