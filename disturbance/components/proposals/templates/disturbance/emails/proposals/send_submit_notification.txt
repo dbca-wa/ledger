@@ -1,11 +1,16 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Proposal {{ proposal.lodgement_number }} has been submitted.
+    The Proposal {{ proposal.lodgement_number }} has been submitted and can be assessed.
 
-    <p>
+    
+	Region: {{proposal.region}}
+	Activity: {{proposal.activity}}
+	
+
+   
     You can access this Proposal using the following link:
-    </p>
+  
     {{url}}
 
 
