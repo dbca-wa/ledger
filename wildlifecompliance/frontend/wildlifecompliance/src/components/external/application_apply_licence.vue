@@ -177,6 +177,11 @@ export default {
     },
     createApplication:function () {
         let vm = this;
+        // clear out licence class
+        vm.licence_class = {
+            id:null,
+            activity_type:[]
+        }
         let index=0
         let count_activity_types = 0
         let count_activities = 0
@@ -192,20 +197,20 @@ export default {
                 for(var j=0,_len1=vm.licence_classes[i].activity_type.length;j<_len1;j++){
                 	console.log('length of activity type',_len1)
                     count_activities = 0
-                    if(count_activity_types !=0 && count_activity_types<_len1){
-                        vm.licence_type_name += ', '
-                    }
                     if(vm.licence_classes[i].activity_type[j].selected){
+                        if(count_activity_types !=0 && count_activity_types<_len1){
+                            vm.licence_type_name += ', '
+                        }
                         // console.log("activity type selected",vm.licence_classes[i].activity_type[j].id)
                         vm.licence_class.activity_type.push({id:vm.licence_classes[i].activity_type[j].id})
                         vm.licence_class.activity_type[index].activity=[]
                         vm.licence_type_name += vm.licence_classes[i].activity_type[j].short_name + ' ('
                         // loop through level 3 and find selected
                         for(var k=0,_len2=vm.licence_classes[i].activity_type[j].activity.length;k<_len2;k++){
-                            if(count_activities!=0 && count_activities<_len2){
-                                vm.licence_type_name += ', '
-                            }
                             if(vm.licence_classes[i].activity_type[j].activity[k].selected){
+                                if(count_activities!=0 && count_activities<_len2){
+                                    vm.licence_type_name += ', '
+                                }
                             	vm.licence_class.activity_type[index].activity.push({id:vm.licence_classes[i].activity_type[j].activity[k].id})
                                 vm.licence_type_name += vm.licence_classes[i].activity_type[j].activity[k].name
                                 count_activities++;
@@ -224,9 +229,9 @@ export default {
         data.application_fee=vm.application_fee
         console.log(' ---- application apply licence createApplication() ---- ');
         console.log(vm.application_fee)
-        console.log(data);
+        console.log(data.licence_type_name);
+        console.log(' ==== licence class data ==== ')
         console.log(JSON.stringify(data));
-        console.log(vm.licence_type_name);
         vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
               console.log(res.body);
               vm.application = res.body;

@@ -82,6 +82,7 @@ export default {
     },
     submit: function(){
         let vm = this;
+        let form = document.forms.new_application;
         console.log(' SUBMIT VM FORM and CHECKOUT ');
         let formData = new FormData(vm.form);
         console.log(formData);
@@ -90,7 +91,7 @@ export default {
         let swal_text = 'Are you sure you want to submit this application?'
         if (vm.application.application_fee > 0) {
             swal_title = 'Submit Application and Checkout'
-            swal_text = 'Are you sure you want to submit this application and proceed to checkout??'
+            swal_text = 'Are you sure you want to submit this application and proceed to checkout?'
         }
 
         swal({
@@ -104,10 +105,16 @@ export default {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
-                    vm.$router.push({
-                        name: 'submit_application',
-                        params: { application: vm.application}
-                    });
+                    console.log(res.body);
+                    console.log(res);
+                    if (vm.application.application_fee > 0) {
+                        window.location.href = "/ledger/checkout/checkout/payment-details/";
+                    } else {
+                      vm.$router.push({
+                            name: 'submit_application',
+                            params: { application: vm.application}
+                        });
+                    }
                 },err=>{
                     swal(
                         'Submit Error',

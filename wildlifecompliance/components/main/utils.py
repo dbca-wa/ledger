@@ -3,6 +3,7 @@ import json
 from django.conf import settings
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
 
 def retrieve_department_users():
@@ -46,15 +47,21 @@ def checkout(request, application, lines=[], invoice_text=None, vouchers=[], int
         'fallback_url': request.build_absolute_uri('/'),
         'return_url': request.build_absolute_uri(reverse('external-application-success')),
         'return_preload_url': request.build_absolute_uri(reverse('external-application-success')),
+        # 'fallback_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
+        # 'return_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
+        # 'return_preload_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
         'force_redirect': True,
         'proxy': True if internal else False,
         'invoice_text': invoice_text,
     }
-    if not internal:
-        checkout_params['check_url'] = request.build_absolute_uri(
-            '/api/applications/{}/application_checkout_status.json'.format(application.id))
-    if internal or request.user.is_anonymous():
-        checkout_params['basket_owner'] = application.submitter.id
+    # if not internal:
+    #     checkout_params['check_url'] = request.build_absolute_uri(
+    #         '/api/applications/{}/application_checkout_status.json'.format(application.id))
+    # if internal or request.user.is_anonymous():
+    #     checkout_params['basket_owner'] = application.submitter.id
+    # checkout_params['check_url'] = 'http://google.com/'
+    print(' -------- main utils > checkout > checkout_params ---------- ')
+    print(checkout_params)
     create_checkout_session(request, checkout_params)
 
     if internal:

@@ -3,13 +3,14 @@ from __future__ import unicode_literals
 import json
 import datetime
 from django.db import models,transaction
-from django.dispatch import receiver
 from django.db.models.signals import pre_delete
-from django.utils.encoding import python_2_unicode_compatible
-from django.core.exceptions import ValidationError
+from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
-from django.utils import timezone
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
+
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -19,7 +20,7 @@ from wildlifecompliance import exceptions
 
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
-from wildlifecompliance.components.main.utils import get_department_user, checkout
+from wildlifecompliance.components.main.utils import get_department_user
 from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification,send_application_amendment_notification
 from wildlifecompliance.ordered_model import OrderedModel
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
@@ -454,6 +455,7 @@ class Application(RevisionedMixin):
                 # print(select_group)
 
                 self.save()
+
                 # Create a log entry for the application
                 self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 # Create a log entry for the applicant (submitter, organisation or proxy)
@@ -465,9 +467,6 @@ class Application(RevisionedMixin):
                     self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 send_application_submit_email_notification(select_group.members.all(),self,request)
 
-                # send to checkout if application_fee > 0
-                if self.application_fee > 0:
-                    checkout(request, self)
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
 

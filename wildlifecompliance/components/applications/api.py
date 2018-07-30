@@ -32,6 +32,7 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_type_schema
 from wildlifecompliance.components.main.models import Document
+from wildlifecompliance.components.main.utils import checkout
 from wildlifecompliance.components.applications.models import (
     ApplicationType,
     Application,
@@ -196,11 +197,24 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def submit(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            print(' ------ submit application api ------ ')
-            print(instance)
+            # print(' ------ submit application api ------ ')
+            # print(instance)
             instance.submit(request,self)
             serializer = self.get_serializer(instance)
-            print(serializer.data)
+            print(instance.submitter.first_name)
+            print(instance.submitter.last_name)
+            print(instance.id)
+            print(instance.application_fee)
+            # raise Exception
+            # send to checkout if application_fee > 0
+            if instance.application_fee > 0:
+                application_submission = u'Application submitted by {} confirmation WC{}'.format(
+                    u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
+                checkout_result = checkout(request, instance, invoice_text=application_submission)
+                print(' ---- checkout_result ---- ')
+                print(checkout_result)
+            # return checkout_result
+
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -564,6 +578,37 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         queryset =  Assessment.objects.filter(application=instance.id)
         serializer = AssessmentSerializer(queryset,many=True)
         return Response(serializer.data)
+
+    @detail_route(permission_classes=[],methods=['GET'])
+    def application_checkout_status(self, request, *args, **kwargs):
+        from django.utils import timezone
+        http_status = status.HTTP_200_OK
+        try:
+            instance = self.get_object()
+            response = {
+                'status': 'rejected',
+                'error': ''
+            }
+            # # Check the type of booking
+            # if instance.booking_type != 3:
+            #    response['error'] = 'This booking has already been paid for'
+            #    return Response(response,status=status.HTTP_200_OK)
+            # # Check if the time for the booking has elapsed
+            # if instance.expiry_time <= timezone.now():
+            #     response['error'] = 'This booking has expired'
+            #     return Response(response,status=status.HTTP_200_OK)
+            #if all is well
+            response['status'] = 'approved'
+            return Response(response,status=status.HTTP_200_OK)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 class ReferralViewSet(viewsets.ModelViewSet):
     queryset = Referral.objects.all()
