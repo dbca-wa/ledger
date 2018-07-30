@@ -108,17 +108,7 @@
                                                 </template>
                                                 <template v-else>
                                                     <small v-if="canLimitedAction"><a @click.prevent="resendReferral(r)" href="#">Resend</a></small>
-
-                                                    <small v-if="canLimitedAction && !showingReferralComment"><a @click.prevent="toggleReferralComment()" href="#">Show Comment</a></small>
-                                                    <small v-if="canLimitedAction && showingReferralComment"><a @click.prevent="toggleReferralComment()" href="#">Hide Comment</a></small>
-
-                                                    <template v-if="showingReferralComment">
-                                                    <label class="control-label pull-left"  for="Name">Comments</label>
-                                                    <textarea class="form-control" name="name" v-model="r.referral_text"></textarea>
-                                                    </template>
-
                                                 </template>
-
                                             </td>
                                         </tr>
                                     </table>
@@ -408,7 +398,6 @@ export default {
             initialisedSelects: false,
             showingProposal:false,
             showingRequirements:false,
-            showingReferralComment:false,
             state_options: ['requirements','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             contacts_options:{
@@ -588,9 +577,6 @@ export default {
         },
         toggleRequirements:function(){
             this.showingRequirements = !this.showingRequirements;
-        },
-        toggleReferralComment:function(){
-            this.showingReferralComment = !this.showingReferralComment;
         },
         updateAssignedOfficerSelect:function(){
             let vm = this;
