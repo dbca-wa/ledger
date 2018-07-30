@@ -181,7 +181,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         user_orgs = [org.id for org in request.user.wildlifecompliance_organisations.all()];
         qs = []
         qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
-        qs.extend(list(self.get_queryset().filter(org_applicant__id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
+        qs.extend(list(self.get_queryset().filter(org_applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         queryset = list(set(qs))
         serializer = DTApplicationSerializer(queryset, many=True)
         return Response(serializer.data)
@@ -214,7 +214,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 print(' ---- checkout_result ---- ')
                 print(checkout_result)
             # return checkout_result
-
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -779,11 +778,10 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     queryset = Assessment.objects.all()
     serializer_class = AssessmentSerializer
 
-    
-
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
         try:
+            print(request.data)
             serializer = SaveAssessmentSerializer(data=request.data)
             serializer.is_valid(raise_exception = True)
             instance = serializer.save()
@@ -799,6 +797,23 @@ class AssessmentViewSet(viewsets.ModelViewSet):
             else:
                 print e
                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def remind_assessment(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.remind_assessment(request)
+            serializer = InternalApplicationSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))

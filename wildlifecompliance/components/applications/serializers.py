@@ -71,7 +71,7 @@ class AssessmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model=Assessment
-        fields=('assessor_group','date_last_reminded','status')
+        fields=('id','application','assessor_group','date_last_reminded','status')
 
     def get_status(self,obj):
         return obj.get_status_display()

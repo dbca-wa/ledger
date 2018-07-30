@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 from wildlifecompliance.helpers import is_officer, is_departmentUser
 from wildlifecompliance.forms import *
-from wildlifecompliance.components.applications.models import Application, Referral
+from wildlifecompliance.components.applications.models import Referral,Application
 from wildlifecompliance.components.applications.mixins import ReferralOwnerMixin
 from wildlifecompliance.components.main import utils
 from wildlifecompliance.exceptions import BindApplicationException
@@ -46,9 +46,9 @@ class ReferralView(ReferralOwnerMixin, DetailView):
     model = Referral
     template_name = 'wildlifecompliance/dash/index.html'
 
-class ApplicationView(ReferralOwnerMixin, DetailView):
-    model = Application
-    template_name = 'wildlifecompliance/dash/index.html'
+class ApplicationView(ReferralOwnerMixin,DetailView):
+    model=Application
+    template_name='wildlifecompliance/dash/index.html'
 
 class ApplicationSuccessView(TemplateView):
     template_name = 'wildlifecompliance/dash/index.html'
