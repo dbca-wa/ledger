@@ -95,6 +95,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
     character_check_status = serializers.SerializerMethodField(read_only=True)
+    application_fee = serializers.DecimalField(max_digits=8, decimal_places=2, coerce_to_string=False)
 
     class Meta:
         model = Application
@@ -106,6 +107,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'data',
                 'schema',
                 'licence_type_data',
+                'licence_type_name',
                 'customer_status',
                 'processing_status',
                 'review_status',
@@ -124,7 +126,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'can_user_view',
                 'documents_url',
                 'id_check_status',
-                'character_check_status'
+                'character_check_status',
+                'application_fee'
                 )
         read_only_fields=('documents',)
     
@@ -204,7 +207,9 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
                 'can_user_edit',
                 'can_user_view',
                 # 'licence_category',
-                'licence_type_data'
+                'licence_type_data',
+                'licence_type_name',
+                'application_fee'
                 )
         read_only_fields=('documents','conditions')
 

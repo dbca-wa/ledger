@@ -68,6 +68,7 @@ urlpatterns = [
     #following url is defined so that to include url path when sending application emails to users
     url(r'^internal/application/(?P<application_pk>\d+)/$', views.ApplicationView.as_view(),
         name='internal-application-detail'),
+    url(r'^external/application/submit/', views.ApplicationSuccessView.as_view(), name='external-application-success'),
 
 ] + ledger_patterns
 

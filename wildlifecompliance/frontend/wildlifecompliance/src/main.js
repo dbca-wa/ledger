@@ -27,6 +27,17 @@ Vue.http.interceptors.push( function ( request, next ) {
   next();
 } );
 
+Vue.filter('toCurrency', function(value) {
+                if (typeof value !== "number") {
+                    return value;
+                }
+                var formatter = new Intl.NumberFormat('en-AU', {
+                    style: 'currency',
+                    currency: 'AUD',
+                    minimumFractionDigits: 2
+                });
+                return formatter.format(value);
+            });
 
 /* eslint-disable no-new */
 new Vue( {
