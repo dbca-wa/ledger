@@ -112,6 +112,9 @@
                                             </td>
                                         </tr>
                                     </table>
+                                    <template>
+                                            
+                                    </template>
                                     <MoreReferrals @refreshFromResponse="refreshFromResponse" :proposal="proposal" :canAction="canLimitedAction" :isFinalised="isFinalised"/>
                                 </div>
                                 <div class="col-sm-12">

@@ -438,7 +438,8 @@ class DTReferralSerializer(serializers.ModelSerializer):
             'can_be_processed',
             'referral',
             'proposal_lodgement_date',
-            'proposal_lodgement_number'
+            'proposal_lodgement_number',
+            'referral_text'
         )
 
     def get_submitter(self,obj):
