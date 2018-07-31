@@ -24,6 +24,8 @@ def create_basket_session(request, parameters):
     custom = serializer.validated_data.get('custom_basket')
     # validate product list
     if custom:
+        print(' --- custom basket --- ')
+        print(serializer.initial_data.get('products'))
         product_serializer = serializers.CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'), many=True)
     else:
         product_serializer = serializers.CheckoutProductSerializer(data=serializer.initial_data.get('products'), many=True)

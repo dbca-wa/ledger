@@ -3,13 +3,14 @@ from __future__ import unicode_literals
 import json
 import datetime
 from django.db import models,transaction
-from django.dispatch import receiver
 from django.db.models.signals import pre_delete
-from django.utils.encoding import python_2_unicode_compatible
-from django.core.exceptions import ValidationError
+from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
-from django.utils import timezone
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
+
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -235,6 +236,7 @@ class Application(RevisionedMixin):
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
     licence_type_data = JSONField(blank=True, null=True)
+    licence_type_name = models.CharField(max_length=255,null=True,blank=True)
     schema = JSONField(blank=False, null=False)
     proposed_issuance_licence = JSONField(blank=True, null=True)
     #hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
@@ -273,6 +275,8 @@ class Application(RevisionedMixin):
     region = models.CharField(max_length=255,null=True,blank=True)
     title = models.CharField(max_length=255,null=True,blank=True)
     tenure = models.CharField(max_length=255,null=True,blank=True)
+
+    application_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
 
     # licence_class = models.ForeignKey('wildlifecompliance.WildlifeLicenceClass',blank=True,null=True)
     # licence_activity_type= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',blank=True,null=True)
@@ -451,6 +455,7 @@ class Application(RevisionedMixin):
                 # print(select_group)
 
                 self.save()
+
                 # Create a log entry for the application
                 self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 # Create a log entry for the applicant (submitter, organisation or proxy)
@@ -461,6 +466,7 @@ class Application(RevisionedMixin):
                 else:
                     self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 send_application_submit_email_notification(select_group.members.all(),self,request)
+
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
 
