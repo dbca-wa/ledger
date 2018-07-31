@@ -174,17 +174,14 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'allowed_assessors',
                 'proposal_type'
                 )
+
     def get_assessor_process(self,obj):
         # Check if currently logged in user has access to process the proposal
         request = self.context['request']
         user = request.user
         if obj.can_officer_process:
-            if obj.assigned_officer:
-                if obj.assigned_officer == user:
-                    return True
-            else:
-                if user in obj.allowed_assessors:
-                    return True            
+            if (obj.assigned_officer and obj.assigned_officer == user) or (user in obj.allowed_assessors):
+                return True
         return False
 
 class ProposalSerializer(BaseProposalSerializer):
