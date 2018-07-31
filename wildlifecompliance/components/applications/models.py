@@ -65,6 +65,9 @@ class ApplicationGroupType(models.Model):
     class Meta:
         app_label = 'wildlifecompliance'
 
+    def __str__(self):
+        return '{} - {}, {} ({} members)'.format(self.name, self.licence_class, self.licence_activity_type, self.members.count())
+
     def member_is_assigned(self,member):
         # for p in self.current_applications:
         #     if p.assigned_officer == member:
