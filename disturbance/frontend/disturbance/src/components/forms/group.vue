@@ -2,7 +2,7 @@
     <div class="top-buffer bottom-buffer">
         <div class="panel panel-default">
             <div class="panel-body">
-                <h4 :id="id" class="inline">{{label}}</h4>
+                <label :id="id" class="inline">{{label}}</label>
                     <!--<i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>-->
                 <template v-if="help_text">
                     <HelpText :help_text="help_text" /> 

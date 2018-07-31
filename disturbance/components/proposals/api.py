@@ -274,7 +274,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
-            #import ipdb; ipdb.set_trace()
+            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.submit(request,self)
             instance.tenure = search_tenure(instance)
@@ -293,6 +293,30 @@ class ProposalViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def update_files(self, request, *args, **kwargs):
+        try:
+            import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            instance.update(request,self)
+            instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+            #return redirect(reverse('external'))
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
     @detail_route(methods=['GET',])
     def assign_request_user(self, request, *args, **kwargs):

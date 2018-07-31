@@ -51,9 +51,9 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     if 'children' not in item:
         if item['type'] in ['checkbox' 'declaration']:
             #item_data[item['name']] = post_data[item['name']]
-            #import ipdb; ipdb.set_trace()
             item_data[item['name']] = extended_item_name in post_data
         elif item['type'] == 'file':
+            import ipdb; ipdb.set_trace()
             if extended_item_name in file_data:
                 #item_data[item['name']] = str(file_data.get(extended_item_name))
                 item_data[item['name']] = ','.join([i.name for i in file_data.getlist(extended_item_name)])

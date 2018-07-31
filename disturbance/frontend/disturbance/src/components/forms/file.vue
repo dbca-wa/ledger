@@ -31,14 +31,16 @@
                     <p>
                         File: <a :href="docsUrl+v.name" target="_blank">{{v.name}}</a> &nbsp;
                         <span v-if="!readonly">
-                            <a @click="removeImage(v.name)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
+                            <!-- <a @click="removeImage(v.name)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a> -->
+                            <a @click="delete_file(v.name)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
                     </p>
                     <input :name="name+'-existing'" type="hidden" :value="value"/>
                 </div>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
-                <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/><br/>
+                
+                <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/>
                 <!-- <input name="Section0-14[]" type="file" id="Section0-14" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired" multiple/><br/> -->
                 <!-- <input name="Section0-14[]" type="file" id="Section0-14" accept="image/*,application/pdf,text/csv,application/msword" multiple=""/><br/> -->
             </div>
@@ -49,6 +51,11 @@
 </template>
 
 <script>
+import {
+  api_endpoints,
+  helpers
+}
+from '@/utils/hooks'
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 export default {
@@ -96,7 +103,28 @@ export default {
     //    }
     //},
 
+    computed: {
+        csrf_token: function() {
+            return helpers.getCookie('csrftoken')
+        },
+        proposal_update_url: function() {
+          //return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/update.json` : '';
+          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/update_files.json` : '';
+          //return this.submit();
+        }
+    },
+
     methods:{
+
+        save_files: function(e) {
+            let vm = this;
+            //let formData = new FormData(vm.form);
+            var formData = new FormData($('form')[0]);
+            formData.append(vm.name, vm.files);
+            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+            vm.$http.post(vm.proposal_update_url,formData);
+        },
+
         toggleComment(){
             this.showingComment = ! this.showingComment;
         },
@@ -116,7 +144,9 @@ export default {
                     }
                 }
                 //$(e.target).hide();
-                $(e.target).css({ 'display': 'none', 'visibility': 'hidden' });
+                //$(e.target).css({ 'display': 'none', 'visibility': 'hidden' });
+                //$(e.target).css({ 'visibility': 'hidden' });
+                //$(e.target).css({ 'display': 'none'});
                 $(e.target).find('br').remove();
 
 
@@ -146,6 +176,16 @@ export default {
                     $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
                 });
             }
+        },
+        delete_file: function (filename) {
+            let vm = this;
+
+            for (var idx in this.files) { 
+                if (this.files[idx].name==filename){ 
+                    this.files.pop(this.files[idx]) 
+                } 
+            }
+            vm.save_files();
         }
 
     },
