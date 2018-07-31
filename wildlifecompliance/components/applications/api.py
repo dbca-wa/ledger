@@ -175,6 +175,24 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET',])
+    def amendment_request(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.amendment_requests
+            qs = qs.filter(status = 'requested')
+            serializer = AmendmentRequestSerializer(qs,many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
         user_orgs = [org.id for org in request.user.wildlifecompliance_organisations.all()];
@@ -773,7 +791,7 @@ class AssessorGroupViewSet(viewsets.ModelViewSet):
 
     renderer_classes = [JSONRenderer,]
     def get(self, request, *args, **kwargs):
-        qs = self.get_queryset().filter(name='assessor')
+        qs = self.get_queryset().filter(name='Assessor')
             # serializer = self.get_serializer(qs, many=True)
         print(qs)
         return qs

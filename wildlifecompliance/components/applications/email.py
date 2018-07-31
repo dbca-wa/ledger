@@ -53,14 +53,16 @@ def send_assessment_reminder_email(assessment, request=None):
 
     
 def send_assessment_email_notification(select_group,assessment, request):
+    email_group=[]
     application = assessment.application
-
     email = ApplicationAssessmentRequestedEmail()
     url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk': application.id}))
     context = {
         'url': url
     }
-    msg = email.send(select_group, context=context)
+   
+    email_group=[item.email for item in select_group]
+    msg = email.send(email_group, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
 

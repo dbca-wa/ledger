@@ -672,7 +672,7 @@ class Application(RevisionedMixin):
 
     @property
     def amendment_requests(self):
-        qs =AmendmentRequest.objects.filter(proposal = self)
+        qs =AmendmentRequest.objects.filter(application = self)
         return qs
 
 
@@ -895,6 +895,7 @@ class Assessment(ApplicationRequest):
         app_label = 'wildlifecompliance'
 
     def generate_assessment(self,request):
+        email_group=[]
         with transaction.atomic():
             try:
                 # This is to change the status of licence activity type
@@ -908,10 +909,8 @@ class Assessment(ApplicationRequest):
                 self.date_last_reminded=datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.save()
 
-                # select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
                 select_group = self.assessor_group.members.all()
-                print(select_group)
-               
+                
                 # Create a log entry for the application
                 self.application.log_user_action(ApplicationUserAction.ACTION_SEND_FOR_ASSESSMENT_TO_.format(self.assessor_group.name),request)
                 # send email
