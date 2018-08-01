@@ -513,8 +513,18 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
+        print request.GET.get("formatted", False)
         formatted = bool(request.GET.get("formatted", False))
         instance.mooring_group =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],campgrounds__in=[instance.id,])
+        if Mooringsite.objects.filter(mooringarea__id=instance.id).exists():
+           pass
+        else:
+           mooringsite_class = MooringsiteClass.objects.all().first()    
+           Mooringsite.objects.create(mooringarea=instance, 
+                                      name=instance.name, 
+                                      mooring_site_class=mooringsite_class,
+                                      description=None)
+
         serializer = self.get_serializer(instance, formatted=formatted, method='get')
         return Response(serializer.data)
 
@@ -535,7 +545,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance =serializer.save()
             instance.mooring_group = None
-            
+        
             # Get and Validate campground images
             initial_image_serializers = [MooringAreaImageSerializer(data=image) for image in images_data] if images_data else []
             image_serializers = []
@@ -574,6 +584,15 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                         for b in m_all:
                            if instance.id == b.id:
                               i.campgrounds.remove(b)
+
+            if Mooringsite.objects.filter(mooringarea__id=instance.id).exists():
+                pass
+            else:
+                mooringsite_class = MooringsiteClass.objects.all().first()
+                Mooringsite.objects.create(mooringarea=instance,
+                                      name=instance.name,
+                                      mooringsite_class=mooringsite_class,
+                                      description=None)
 
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -1061,7 +1080,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # fetch availability map
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
-        
+        print "AVAIL"
+        print availability 
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,

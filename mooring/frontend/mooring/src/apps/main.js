@@ -109,7 +109,7 @@ const routes = [
                             {
                                 path: '/',
                                 name: 'cg_main',
-                                component: Campgrounds,
+                                component: Campgrounds, 
                             },
                             {
                                 path:':id',

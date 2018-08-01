@@ -26,7 +26,7 @@
             </div>
          </div>
       </div>
-      <div class="panel panel-default" id="applications" style="margin-top:50px;">
+      <div class="panel panel-default" id="applications" style="margin-top:50px; display:none;">
         <div class="panel-heading" role="tab" id="applications-heading">
             <h4 class="panel-title">
                 <a role="button" data-toggle="collapse" href="#campsites"
