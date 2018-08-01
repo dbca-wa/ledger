@@ -101,7 +101,7 @@ const routes = [
                         component: AddCampground
                     },
                     {
-                        path:'campgrounds',
+                        path:'moorings',
                         component: {
                             render (c) { return c('router-view') }
                         },
@@ -109,7 +109,7 @@ const routes = [
                             {
                                 path: '/',
                                 name: 'cg_main',
-                                component: Campgrounds, 
+                                component: Campgrounds,
                             },
                             {
                                 path:':id',
@@ -127,7 +127,36 @@ const routes = [
                                 component:Campsite
                             },
                         ]
-                    },{
+                    },
+//                    {
+//                        path:'campgrounds',
+//                        component: {
+//                            render (c) { return c('router-view') }
+//                        },
+//                        children:[
+//                            {
+//                                path: '/',
+//                                name: 'cg_main',
+//                                component: Campgrounds, 
+//                            },
+//                            {
+//                                path:':id',
+//                                name:'cg_detail',
+//                                component: Campground,
+//                            },
+//                            {
+//                                path:':id/campsites/add',
+//                                name:'add_campsite',
+//                                component:Campsite
+//                            },
+//                            {
+//                                path:':id/campsites/:campsite_id',
+//                                name:'view_campsite',
+//                                component:Campsite
+//                            },
+//                        ]
+//                    },
+                      {
                         path:'bookings',
                         /*component: {
                             render (c) { return c('router-view') }

@@ -485,15 +485,17 @@ def search_suggest(request, *args, **kwargs):
 
 
 class MooringAreaViewSet(viewsets.ModelViewSet):
-    queryset = MooringArea.objects.all()
+    from django.db.models import Value, ManyToManyField
+    queryset = MooringArea.objects.all().annotate(mooring_group=Value(None,output_field=ManyToManyField(MooringAreaGroup,blank=True)))
     serializer_class = MooringAreaSerializer
+
     @list_route(methods=['GET',])
     @renderer_classes((JSONRenderer,))
     def datatable_list(self,request,format=None):
-        queryset = cache.get('campgrounds_dt')
+        queryset = cache.get('moorings_dt')
         if queryset is None:
             queryset = self.get_queryset()
-            cache.set('campgrounds_dt',queryset,3600)
+            cache.set('moorings_dt',queryset,3600)
         qs = [c for c in queryset.all() if can_view_campground(request.user,c)]
         serializer = MooringAreaDatatableSerializer(qs,many=True)
         data = serializer.data
@@ -506,6 +508,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
         if queryset is None:
             queryset = self.get_queryset()
             cache.set('mooringareas',queryset,3600)
+        queryset = self.get_queryset()
         qs = [c for c in queryset.all() if can_view_campground(request.user,c)]
         serializer = self.get_serializer(qs, formatted=formatted, many=True, method='get')
         data = serializer.data
@@ -524,7 +527,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                                       name=instance.name, 
                                       mooring_site_class=mooringsite_class,
                                       description=None)
-
+       
         serializer = self.get_serializer(instance, formatted=formatted, method='get')
         return Response(serializer.data)
 
