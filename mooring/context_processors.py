@@ -4,7 +4,7 @@ def mooring_url(request):
     return {
         'EXPLORE_PARKS_SEARCH': '{}/map'.format(settings.EXPLORE_PARKS_URL),
         'EXPLORE_PARKS_CONTACT': '{}/contact-us'.format(settings.EXPLORE_PARKS_URL),
-        'EXPLORE_PARKS_CONSERVE': '{}/know/conserving-our-mooringgs'.format(settings.EXPLORE_PARKS_URL),
+        'EXPLORE_PARKS_CONSERVE': '{}/know/conserving-our-moorings'.format(settings.EXPLORE_PARKS_URL)
         'EXPLORE_PARKS_PEAK_PERIODS': '{}/know/when-visit'.format(settings.EXPLORE_PARKS_URL),
         'EXPLORE_PARKS_ENTRY_FEES': '{}/know/entry-fees'.format(settings.EXPLORE_PARKS_URL),
         'EXPLORE_PARKS_TERMS': '{}/know/online-mooring-site-booking-terms-and-conditions'.format(settings.EXPLORE_PARKS_URL),
