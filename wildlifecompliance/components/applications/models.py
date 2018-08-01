@@ -21,7 +21,7 @@ from wildlifecompliance import exceptions
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
-from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification,send_application_amendment_notification,send_assessment_email_notification
+from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification,send_application_amendment_notification,send_assessment_email_notification,send_assessment_reminder_email
 from wildlifecompliance.ordered_model import OrderedModel
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
 
@@ -681,7 +681,7 @@ class Application(RevisionedMixin):
 
     @property
     def amendment_requests(self):
-        qs =AmendmentRequest.objects.filter(proposal = self)
+        qs =AmendmentRequest.objects.filter(application = self)
         return qs
 
 
@@ -904,6 +904,7 @@ class Assessment(ApplicationRequest):
         app_label = 'wildlifecompliance'
 
     def generate_assessment(self,request):
+        email_group=[]
         with transaction.atomic():
             try:
                 # This is to change the status of licence activity type
@@ -917,10 +918,8 @@ class Assessment(ApplicationRequest):
                 self.date_last_reminded=datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.save()
 
-                # select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
                 select_group = self.assessor_group.members.all()
-                print(select_group)
-               
+                
                 # Create a log entry for the application
                 self.application.log_user_action(ApplicationUserAction.ACTION_SEND_FOR_ASSESSMENT_TO_.format(self.assessor_group.name),request)
                 # send email

@@ -1,6 +1,29 @@
 <template lang="html">
     <div class="container" >
         <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
+          <!-- <div v-if="!application_readonly"> -->
+          <div class="row" style="color:red;">
+                <div class="col-lg-12 pull-right">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="color:red;">An amendment has been requested for this Application
+                          <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
+                                <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                          </a>
+                        </h3>
+                      </div>
+                      <div class="panel-body collapse in" :id="pBody">
+                        {{amendment_request}}{{hasAmendmentRequest}}
+                        <div v-for="a in amendment_request">
+                          <p>Reason: {{a.reason}}</p>
+                          <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <!-- </div> -->
+              <div class="row">
             <Application v-if="application" :application="application">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(application)" />
@@ -33,6 +56,7 @@
                     </div>
                 </div>
             </Application>
+          </div>
         </form>
     </div>
 </template>
@@ -50,6 +74,10 @@ export default {
       "application": null,
       "loading": [],
       form: null,
+      hasAmendmentRequest: false,
+      amendment_request: [],
+      application_readonly: true,
+      pBody: 'pBody',
     }
   },
   components: {
@@ -79,6 +107,18 @@ export default {
       },err=>{
 
       });
+    },
+    setAmendmentData: function(amendment_request){
+      let vm= this;
+      vm.amendment_request = amendment_request;
+
+      if (amendment_request.length > 0){
+        vm.hasAmendmentRequest = true;
+      }
+        
+    },
+    setdata: function(readonly){
+      this.application_readonly = readonly;
     },
     submit: function(){
         let vm = this;
@@ -130,6 +170,7 @@ export default {
   mounted: function() {
     let vm = this;
     vm.form = document.forms.new_application;
+
   },
   beforeRouteEnter: function(to, from, next) {
     if (to.params.application_id) {
@@ -138,6 +179,17 @@ export default {
             vm.loading.push('fetching application')
             vm.application = res.body;
             vm.loading.splice('fetching application', 1);
+            vm.setdata(vm.application.readonly);
+
+            Vue.http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/amendment_request')).then((res) => {
+                     
+                      vm.setAmendmentData(res.body);
+
+                },
+              err => { 
+                        console.log(err);
+                  });
+
           });
         },
         err => {
