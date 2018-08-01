@@ -32,6 +32,7 @@ class Assessment(admin.ModelAdmin):
 
 @admin.register(models.ApplicationGroupType)
 class ApplicationGroupTypeAdmin(admin.ModelAdmin):
+    list_display = ['name','display_name']
     filter_horizontal = ('members',)
     form = forms.ApplicationGroupTypeAdminForm
 

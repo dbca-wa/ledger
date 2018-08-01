@@ -63,7 +63,7 @@ class EmailUserAppViewSerializer(serializers.ModelSerializer):
 class ApplicationGroupTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model=ApplicationGroupType
-        fields=('id','name','licence_class')
+        fields=('id','name','display_name','licence_class')
 
 class AssessmentSerializer(serializers.ModelSerializer):
     assessor_group = ApplicationGroupTypeSerializer(read_only=True)
@@ -71,7 +71,7 @@ class AssessmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model=Assessment
-        fields=('id','application','assessor_group','date_last_reminded','status')
+        fields=('id','application','assessor_group','date_last_reminded','status','licence_activity_type')
 
     def get_status(self,obj):
         return obj.get_status_display()
@@ -79,7 +79,7 @@ class AssessmentSerializer(serializers.ModelSerializer):
 class SaveAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model=Assessment
-        fields=('assessor_group','application','text')
+        fields=('assessor_group','application','text','licence_activity_type')
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
     reason = serializers.SerializerMethodField()
