@@ -79,6 +79,16 @@ def checkout(request, application, lines=[], invoice_text=None, vouchers=[], int
     return response
 
 
+def internal_create_application_invoice(application, reference):
+    from wildlifecompliance.components.applications.models import ApplicationInvoice
+    try:
+        Invoice.objects.get(reference=reference)
+    except Invoice.DoesNotExist:
+        raise Exception("There was a problem attaching an invoice for this application")
+    app_inv = ApplicationInvoice.objects.create(application=application,invoice_reference=reference)
+    return app_inv
+
+
 def bind_application_to_invoice(request, application, invoice_ref):
     try:
         inv = Invoice.objects.get(reference=invoice_ref)

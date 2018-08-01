@@ -816,7 +816,28 @@ class Application(RevisionedMixin):
                         processing_status='future',
                         licence=licence
                     )
-                    #TODO add logging for return 
+                    #TODO add logging for return
+
+class ApplicationInvoice(models.Model):
+    application = models.ForeignKey(Application, related_name='invoices')
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return 'Application {} : Invoice #{}'.format(self.id,self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False
 
 class ApplicationLogDocument(Document):
     log_entry = models.ForeignKey('ApplicationLogEntry',related_name='documents')
