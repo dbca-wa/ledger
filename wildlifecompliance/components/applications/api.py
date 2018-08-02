@@ -228,7 +228,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             if instance.application_fee > 0:
                 application_submission = u'Application submitted by {} confirmation WC{}'.format(
                     u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
+                print(' --- set session application --- ')
+                print(request.session)
                 set_session_application(request.session, instance)
+                print(request.session)
                 checkout_result = checkout(request, instance, invoice_text=application_submission)
                 print(' ---- checkout_result ---- ')
                 print(checkout_result)

@@ -33,23 +33,27 @@ class ApplicationSuccessView(TemplateView):
     template_name = 'wildlifecompliance/templates/wildlifecompliance/application_success.html'
 
     def get(self, request, *args, **kwargs):
+        print('application success view')
         try:
+            print(get_session_application(request.session))
             application = get_session_application(request.session)
-            invoice_ref = request.GET.get('invoice')
-            print('application success view')
             print('application')
             print(application)
+            invoice_ref = request.GET.get('invoice')
             print('invoice_ref')
             print(invoice_ref)
             try:
                 bind_application_to_invoice(request, application, invoice_ref)
-            except BindApplicationException:
+            except BindApplicationException as e:
+                print(e)
+                traceback.print_exc
                 delete_session_application(request.session)
                 return redirect('home')
-
         except Exception as e:
-                delete_session_application(request.session)
-                return redirect('home')
+            print(e)
+            traceback.print_exc
+            delete_session_application(request.session)
+            return redirect('home')
 
         context = {
             'application': application
