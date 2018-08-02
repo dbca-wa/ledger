@@ -873,7 +873,7 @@ class AmendmentRequest(ApplicationRequest):
                     if self.licence_activity_type.id==item["id"] :
                         item["processing_status"]="Draft"
                         # self.application.save()
-
+                self.application.customer_status='amendment_required'        
                 self.application.save()
                 
                 # Create a log entry for the application
