@@ -29,18 +29,18 @@ from disturbance.components.compliances.email import (
 
 class Compliance(models.Model):
 
-    PROCESSING_STATUS_CHOICES = (('due', 'Due'), 
-                                 ('future', 'Future'), 
+    PROCESSING_STATUS_CHOICES = (('due', 'Due'),
+                                 ('future', 'Future'),
                                  ('with_assessor', 'With Assessor'),
                                  ('approved', 'Approved'),
                                  )
 
-    CUSTOMER_STATUS_CHOICES = (('due', 'Due'), 
-                                 ('future', 'Future'), 
+    CUSTOMER_STATUS_CHOICES = (('due', 'Due'),
+                                 ('future', 'Future'),
                                  ('with_assessor', 'Under Review'),
                                  ('approved', 'Approved'),
                                  )
-    
+
 
     proposal = models.ForeignKey('disturbance.Proposal',related_name='compliances')
     approval = models.ForeignKey('disturbance.Approval',related_name='compliances')
@@ -90,7 +90,7 @@ class Compliance(models.Model):
         return self.customer_status == 'with_assessor' or self.customer_status == 'approved'
 
 
-    @property        
+    @property
     def amendment_requests(self):
         qs =ComplianceAmendmentRequest.objects.filter(compliance = self)
         return qs
@@ -98,7 +98,7 @@ class Compliance(models.Model):
 
     def submit(self,request):
         with transaction.atomic():
-            try:               
+            try:
                 if self.processing_status == 'future' or 'due':
                     self.processing_status = 'with_assessor'
                     self.customer_status = 'with_assessor'
@@ -113,7 +113,7 @@ class Compliance(models.Model):
                     if (self.amendment_requests):
                         qs = self.amendment_requests.filter(status = "requested")
                         if (qs):
-                            for q in qs:    
+                            for q in qs:
                                 q.status = 'amended'
                                 q.save()
                 #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
@@ -144,7 +144,7 @@ class Compliance(models.Model):
 
     def unassign(self,request):
         with transaction.atomic():
-            self.assigned_to = None 
+            self.assigned_to = None
             self.save()
             self.log_user_action(ComplianceUserAction.ACTION_UNASSIGN,request)
 
@@ -167,7 +167,7 @@ class Compliance(models.Model):
                         ComplianceUserAction.log_action(self,ComplianceUserAction.ACTION_CONCLUDE_REQUEST.format(self.id),user)
             except:
                 raise
-                        
+
 
     def log_user_action(self, action, request):
         return ComplianceUserAction.log_action(self, action, request.user)
@@ -244,11 +244,47 @@ class CompRequest(models.Model):
     class Meta:
         app_label = 'disturbance'
 
+
+class ComplianceAmendmentStatus(models.Model):
+    status = models.CharField('Status', max_length=125)
+
+    class Meta:
+        app_label = 'disturbance'
+
+
+class ComplianceAmendmentReason(models.Model):
+    reason = models.CharField('Reason', max_length=125)
+
+    class Meta:
+        app_label = 'disturbance'
+
+
 class ComplianceAmendmentRequest(CompRequest):
-    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
-    REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
-                      ('missing_information', 'There was missing information'),
-                      ('other', 'Other'))
+#    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+#    REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
+#                      ('missing_information', 'There was missing information'),
+#                      ('other', 'Other'))
+
+    try:
+        # model requires some choices if ComplianceAmendmentStatus does not yet exist or is empty
+        STATUS_CHOICES = list(ComplianceAmendmentStatus.objects.values_list('id', 'status'))
+        if not STATUS_CHOICES:
+            STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+    except:
+        STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+
+    try:
+        # model requires some choices if ComplianceAmendmentReason does not yet exist or is empty
+        REASON_CHOICES = list(ComplianceAmendmentReason.objects.values_list('id', 'reason'))
+        if not REASON_CHOICES:
+            REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
+                              ('missing_information', 'There was missing information'),
+                              ('other', 'Other'))
+    except:
+        REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
+                          ('missing_information', 'There was missing information'),
+                          ('other', 'Other'))
+
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
 

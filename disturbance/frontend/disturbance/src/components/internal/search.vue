@@ -80,7 +80,9 @@
                     <div class="row">
                       <div class="col-lg-12">
                           <ul class="list-inline" style="display: inline; width: auto;">                          
-                              <li class="list-inline-item" v-for="(item,i) in searchKeywords"><button @click.prevent="" class="btn btn-light" style="margin-top:5px; margin-bottom: 5px">{{item}}<a href="" @click.prevent="removeKeyword(i)"><span class="glyphicon glyphicon-remove "></span></a></button></li>
+                              <li class="list-inline-item" v-for="(item,i) in searchKeywords">
+                                <button @click.prevent="" class="btn btn-light" style="margin-top:5px; margin-bottom: 5px">{{item}}</button><a href="" @click.prevent="removeKeyword(i)"><span class="glyphicon glyphicon-remove "></span></a>
+                              </li>
                           </ul>
                       </div>
                     </div>

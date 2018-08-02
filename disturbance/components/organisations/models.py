@@ -16,6 +16,7 @@ from disturbance.components.organisations.emails import (
                         send_organisation_request_decline_email_notification,
                         send_organisation_link_email_notification,
                         send_organisation_unlink_email_notification,
+                        send_org_access_group_request_accept_email_notification,
             )
 
 @python_2_unicode_compatible
@@ -295,7 +296,13 @@ class OrganisationRequest(models.Model):
         
         )
         # send email to requester
-        send_organisation_request_accept_email_notification(self,org,request)
+        send_organisation_request_accept_email_notification(self, org, request)
+
+    def send_org_access_group_request_notification(self,request):
+        # user submits a new organisation request
+        # send email to organisation access group
+        org_access_recipients = [i.email for i in OrganisationAccessGroup.objects.last().all_members]
+        send_org_access_group_request_accept_email_notification(self, request, org_access_recipients)
 
     def assign_to(self, user,request):
         with transaction.atomic():

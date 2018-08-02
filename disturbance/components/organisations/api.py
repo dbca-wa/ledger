@@ -35,7 +35,7 @@ from disturbance.components.organisations.models import  (
                                     OrganisationRequestLogEntry,
                                 )
 
-from disturbance.components.organisations .serializers import (   
+from disturbance.components.organisations.serializers import (   
                                         OrganisationSerializer,
                                         OrganisationAddressSerializer,
                                         DetailsSerializer,
@@ -54,6 +54,7 @@ from disturbance.components.organisations .serializers import (
 from disturbance.components.proposals.serializers import (
                                         DTProposalSerializer,
                                     )
+from disturbance.components.organisations.emails import send_org_access_group_request_accept_email_notification
 
 class OrganisationViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
@@ -476,6 +477,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             serializer.validated_data['requester'] = request.user
             with transaction.atomic():
                 instance = serializer.save()
+                instance.send_org_access_group_request_notification(request)
                 instance.log_user_action(OrganisationRequestUserAction.ACTION_LODGE_REQUEST.format(instance.id),request)
             return Response(serializer.data)
         except serializers.ValidationError:
