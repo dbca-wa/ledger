@@ -32,7 +32,7 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_type_schema
 from wildlifecompliance.components.main.models import Document
-from wildlifecompliance.components.main.utils import checkout
+from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.components.applications.models import (
     ApplicationType,
     Application,
@@ -228,12 +228,14 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             if instance.application_fee > 0:
                 application_submission = u'Application submitted by {} confirmation WC{}'.format(
                     u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
+                set_session_application(request.session, instance)
                 checkout_result = checkout(request, instance, invoice_text=application_submission)
                 print(' ---- checkout_result ---- ')
                 print(checkout_result)
             # return checkout_result
             return Response(serializer.data)
         except serializers.ValidationError:
+            delete_session_application(request.session)
             print(traceback.print_exc())
             raise
         except ValidationError as e:
@@ -242,6 +244,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             else:
                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
+            delete_session_application(request.session)
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 

@@ -45,8 +45,8 @@ def checkout(request, application, lines=[], invoice_text=None, vouchers=[], int
     checkout_params = {
         'system': settings.WC_PAYMENT_SYSTEM_ID,
         'fallback_url': request.build_absolute_uri('/'),
-        'return_url': request.build_absolute_uri(reverse('external-application-success')),
-        'return_preload_url': request.build_absolute_uri(reverse('external-application-success')),
+        'return_url': request.build_absolute_uri(reverse('external-application-success-invoice')),
+        'return_preload_url': request.build_absolute_uri(reverse('external-application-success-invoice')),
         # 'fallback_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
         # 'return_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
         # 'return_preload_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
@@ -88,6 +88,26 @@ def internal_create_application_invoice(application, reference):
     app_inv = ApplicationInvoice.objects.create(application=application,invoice_reference=reference)
     return app_inv
 
+def set_session_application(session, application):
+    session['wc_application'] = application.id
+    session.modified = True
+
+
+def get_session_application(session):
+    if 'wc_application' in session:
+        application_id = session['wc_application']
+    else:
+        raise Exception('Application not in Session')
+
+    try:
+        return Application.objects.get(id=application_id)
+    except Application.DoesNotExist:
+        raise Exception('Application not found for application_id {}'.format(application_id))
+
+def delete_session_application(session):
+    if 'wc_application' in session:
+        del session['wc_application']
+        session.modified = True
 
 def bind_application_to_invoice(request, application, invoice_ref):
     try:
