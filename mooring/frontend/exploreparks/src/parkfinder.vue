@@ -181,7 +181,7 @@
 
 @font-face {
     font-family: "DPaWSymbols";
-    src: url("./assets/boating.woff") format("woff");
+    src: url("assets/boating.woff") format("woff");
 }
 
 .symb {
