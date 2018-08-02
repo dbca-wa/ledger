@@ -1,5 +1,6 @@
 import requests
 import json
+import logging
 from django.conf import settings
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
@@ -92,11 +93,13 @@ def internal_create_application_invoice(application, reference):
     return app_inv
 
 def set_session_application(session, application):
+    print('setting session application')
     session['wc_application'] = application.id
     session.modified = True
 
 
 def get_session_application(session):
+    print('getting session application')
     from wildlifecompliance.components.applications.models import Application
     if 'wc_application' in session:
         application_id = session['wc_application']
@@ -109,11 +112,14 @@ def get_session_application(session):
         raise Exception('Application not found for application_id {}'.format(application_id))
 
 def delete_session_application(session):
+    print('deleting session application')
     if 'wc_application' in session:
         del session['wc_application']
         session.modified = True
 
 def bind_application_to_invoice(request, application, invoice_ref):
+    from wildlifecompliance.components.applications.models import ApplicationInvoice
+    logger = logging.getLogger('application_checkout')
     try:
         inv = Invoice.objects.get(reference=invoice_ref)
     except Invoice.DoesNotExist:

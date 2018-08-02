@@ -6,6 +6,7 @@ from wildlifecompliance.components.applications.utils import create_data_from_fo
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.utils import get_session_application, delete_session_application, bind_application_to_invoice
 import json,traceback
+from wildlifecompliance.exceptions import BindApplicationException
 
 class ApplicationView(TemplateView):
     template_name = 'wildlifecompliance/application.html'
@@ -62,3 +63,4 @@ class ApplicationSuccessView(TemplateView):
         print(context)
         delete_session_application(request.session)
         return render(request, self.template_name, context)
+
