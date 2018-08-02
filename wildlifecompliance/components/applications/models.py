@@ -444,12 +444,21 @@ class Application(RevisionedMixin):
                 #     error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
                 #     raise exceptions.ApplicationMissingFields(detail=error_text)
                 
-                for activity_type in  self.licence_type_data['activity_type']:
-                    activity_type["processing_status"]="With Officer"
+                # for activity_type in  self.licence_type_data['activity_type']:
+                #     activity_type["processing_status"]="With Officer"
                 self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
                 self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                if (self.amendment_requests):
+                    qs = self.amendment_requests.filter(status = "requested")
+                    if (qs):
+                        for q in qs:    
+                            q.status = 'amended'
+                            for activity_type in  self.licence_type_data['activity_type']:
+                                if q.licence_activity_type==activity_type["id"]:
+                                    activity_type["processing_status"]="Draft"
+                            q.save()
                 select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
                 # # print(type(select_group))
                 # print(select_group.members.all())

@@ -81,8 +81,15 @@ class SaveAssessmentSerializer(serializers.ModelSerializer):
         model=Assessment
         fields=('assessor_group','application','text','licence_activity_type')
 
+class ActivityTypeserializer(serializers.ModelSerializer):
+    class Meta:
+        model= WildlifeLicenceActivityType
+        fields=('id','name','short_name')
+        
+
 class AmendmentRequestSerializer(serializers.ModelSerializer):
     reason = serializers.SerializerMethodField()
+    licence_activity_type=ActivityTypeserializer(read_only=True)
 
     class Meta:
         model = AmendmentRequest
@@ -170,10 +177,7 @@ class ApplicationSerializer(BaseApplicationSerializer):
     def get_readonly(self,obj):
         return obj.can_user_view 
 
-class ActivityTypeserializer(serializers.ModelSerializer):
-    class Meta:
-        model= WildlifeLicenceActivityType
-        fields=('id')
+
 
 
 class SaveApplicationSerializer(BaseApplicationSerializer):

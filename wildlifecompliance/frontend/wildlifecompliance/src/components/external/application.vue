@@ -14,6 +14,7 @@
                       </div>
                       <div class="panel-body collapse in" :id="pBody">
                         <div v-for="a in amendment_request">
+                          <p>Activity Type:{{a.licence_activity_type.name}}</p>
                           <p>Reason: {{a.reason}}</p>
                           <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
                       </div>
