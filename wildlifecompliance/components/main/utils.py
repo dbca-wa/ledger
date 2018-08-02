@@ -5,6 +5,9 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
+from ledger.payments.models import Invoice
+from wildlifecompliance.exceptions import BindApplicationException
+
 
 def retrieve_department_users():
     try:
@@ -94,6 +97,7 @@ def set_session_application(session, application):
 
 
 def get_session_application(session):
+    from wildlifecompliance.components.applications.models import Application
     if 'wc_application' in session:
         application_id = session['wc_application']
     else:
