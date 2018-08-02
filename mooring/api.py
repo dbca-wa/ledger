@@ -516,7 +516,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        print request.GET.get("formatted", False)
+        #print request.GET.get("formatted", False)
         formatted = bool(request.GET.get("formatted", False))
         instance.mooring_group =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],campgrounds__in=[instance.id,])
         if Mooringsite.objects.filter(mooringarea__id=instance.id).exists():
@@ -1083,8 +1083,6 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # fetch availability map
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
-        print "AVAIL"
-        print availability 
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,
