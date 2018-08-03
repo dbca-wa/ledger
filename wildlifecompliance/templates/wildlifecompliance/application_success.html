@@ -1,21 +1,10 @@
-{% extends 'wildlifecompliance/templates/wildlifecompliance/base.html' %}
+{% extends 'wildlifecompliance/base.html' %}
 {% load static %}
-{% load forms %}
 {% block content %}
     <div class="container">
         <div class="well">
-            <div class="row"><div class="col-sm-12">
-                <h2>Success!</h2>
-                <p>A confirmation email has been sent to {{ application.submitter.email }}. </p>
-            </div></div>
-        </div>
-    </div>
-
-<template lang="html">
-    <div class="container" >
-        <div class="row">
-            <div class="col-sm-12">
-                <div class="row">
+            <div class="row">
+                <div class="col-sm-12">
                     <div v-if="application && application.id" class="col-sm-offset-3 col-sm-6 borderDecoration">
                         <strong>Your application has been successfully submitted.</strong>
                         <br/>
@@ -26,7 +15,7 @@
                             </tr>
                             <tr>
                                 <td><strong>Date/Time:</strong></td>
-                                <td><strong> {{application.lodgement_date|formatDate}}</strong></td>
+                                <td><strong> {{application.lodgement_date}}</strong></td>
                             </tr>
                         </table>
                         <router-link :to="{name:'external-applications-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
@@ -39,5 +28,4 @@
             </div>
         </div>
     </div>
-</template>
 {% endblock %}

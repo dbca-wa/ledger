@@ -31,7 +31,7 @@ class ApplicationView(TemplateView):
 
 
 class ApplicationSuccessView(TemplateView):
-    template_name = 'wildlifecompliance/templates/wildlifecompliance/application_success.html'
+    template_name = 'wildlifecompliance/application_success.html'
 
     def get(self, request, *args, **kwargs):
         print('application success view')
