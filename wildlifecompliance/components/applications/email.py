@@ -21,6 +21,11 @@ class ApplicationSubmitNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/send_application_submit_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_submit_notification.txt'
 
+class AmendmentSubmitNotificationEmail(TemplateEmailBase):
+    subject = 'A amendment has been submitted.'
+    html_template = 'wildlifecompliance/emails/send_amendment_submit_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_amendment_submit_notification.txt'
+
 class ApplicationAmendmentRequestNotificationEmail(TemplateEmailBase):
     subject = 'An amendment has been requested for your application.'
     html_template = 'wildlifecompliance/emails/send_application_amendment_notification.html'
@@ -94,11 +99,28 @@ def send_application_submit_email_notification(group_email,application,request):
         'application': application,
         'url': url
     }
-
-    msg = email.send(group_email, context=context)
+    email_group=[item.email for item in group_email]
+    msg = email.send(email_group, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    # _log_application_email(msg, referral, sender=sender)
+    _log_application_email(msg, application, sender=sender)
     # _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
+
+def send_amendment_submit_email_notification(group_email,application,request):
+    # An email to internal users notifying about new application is submitted
+    email = AmendmentSubmitNotificationEmail()
+    # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
+    url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk': application.id}))
+
+    context = {
+        'application': application,
+        'url': url
+    }
+    email_group=[item.email for item in group_email]
+    msg = email.send(email_group, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
+    # _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
+
 
 def send_application_amendment_notification(amendment,application,request):
     # An email to internal users notifying about new application is submitted

@@ -21,7 +21,14 @@ from wildlifecompliance import exceptions
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
-from wildlifecompliance.components.applications.email import send_referral_email_notification,send_application_submit_email_notification,send_application_amendment_notification,send_assessment_email_notification,send_assessment_reminder_email
+from wildlifecompliance.components.applications.email import (
+    send_referral_email_notification,
+    send_application_submit_email_notification,
+    send_application_amendment_notification,
+    send_assessment_email_notification,
+    send_assessment_reminder_email,
+    send_amendment_submit_email_notification
+    )
 from wildlifecompliance.ordered_model import OrderedModel
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
 
@@ -447,38 +454,49 @@ class Application(RevisionedMixin):
                 #     error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
                 #     raise exceptions.ApplicationMissingFields(detail=error_text)
                 
-                # for activity_type in  self.licence_type_data['activity_type']:
-                #     activity_type["processing_status"]="With Officer"
+                
                 self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
                 self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                # if amendment is submitted change the status of only particular activity type 
+                # else if the new application is submitted change the status of all the activity types
                 if (self.amendment_requests):
                     qs = self.amendment_requests.filter(status = "requested")
                     if (qs):
                         for q in qs:    
                             q.status = 'amended'
-                            for activity_type in  self.licence_type_data['activity_type']:
-                                if q.licence_activity_type==activity_type["id"]:
-                                    activity_type["processing_status"]="Draft"
+                            print('before for')
+                            for activity_type in self.licence_type_data['activity_type']:
+                                print('inside for')
+                                print(q.licence_activity_type.id)
+                                print(activity_type["id"])
+                                if q.licence_activity_type.id==activity_type["id"]:
+                                    activity_type["processing_status"]="With Officer"
                             q.save()
-                select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
-                # # print(type(select_group))
-                # print(select_group.members.all())
-                # print(select_group)
-
+                else:
+                    for activity_type in  self.licence_type_data['activity_type']:
+                        activity_type["processing_status"]="With Officer"
                 self.save()
 
-                # Create a log entry for the application
-                self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
-                # Create a log entry for the applicant (submitter, organisation or proxy)
-                if self.org_applicant:
-                    self.org_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
-                elif self.proxy_applicant:
-                    self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
+
+                
+
+                if self.amendment_requests:
+                    self.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(self.id),request)
+                    send_amendment_submit_email_notification(select_group.members.all(),self,request)
                 else:
-                    self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
-                send_application_submit_email_notification(select_group.members.all(),self,request)
+                    # Create a log entry for the application
+                    self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                    # Create a log entry for the applicant (submitter, organisation or proxy)
+                    if self.org_applicant:
+                        self.org_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                    elif self.proxy_applicant:
+                        self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                    else:
+                        self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                    send_application_submit_email_notification(select_group.members.all(),self,request)
 
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
@@ -1059,6 +1077,7 @@ class ApplicationUserAction(UserAction):
     ACTION_ACCEPT_REVIEW = 'Accept review'
     ACTION_RESET_REVIEW = "Reset review"
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
+    ACTION_ID_REQUEST_AMENDMENTS_SUBMIT="Amendment submitted by {}"
     ACTION_SEND_FOR_ASSESSMENT_TO_ = "Sent for assessment to {}"
     ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
     ACTION_ASSESSMENT_RECALLED="Assessment recalled"
