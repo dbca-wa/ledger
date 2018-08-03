@@ -39,10 +39,13 @@ class ApplicationGroupTypeAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return super(ApplicationGroupTypeAdmin, self).has_delete_permission(request, obj)
 
+class ApplicationInvoiceInline(admin.TabularInline):
+    model = models.ApplicationInvoice
+    extra = 0
 
 @admin.register(models.Application)
 class ApplicationAdmin(VersionAdmin):
-    inlines =[ApplicationDocumentInline,] 
+    inlines =[ApplicationDocumentInline,ApplicationInvoiceInline]
 
 @admin.register(models.ApplicationAssessorGroup)
 class ApplicationAssessorGroupAdmin(admin.ModelAdmin):

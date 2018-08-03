@@ -50,31 +50,6 @@ class ApplicationView(ReferralOwnerMixin,DetailView):
     model=Application
     template_name='wildlifecompliance/dash/index.html'
 
-class ApplicationSuccessView(TemplateView):
-    template_name = 'wildlifecompliance/dash/index.html'
-
-    def get(self, request, *args, **kwargs):
-        try:
-            application = utils.get_session_application(request.session)
-            invoice_ref = request.GET.get('invoice')
-
-            try:
-                utils.bind_application_to_invoice(request, application, invoice_ref)
-            except BindApplicationException:
-                return redirect('application')
-
-        except Exception as e:
-            if ('wc_last_application' in request.session) and Application.objects.filter(
-                    id=request.session['wc_last_application']).exists():
-                application = Application.objects.get(id=request.session['wc_last_application'])
-            else:
-                return redirect('wc_home')
-
-        context = {
-            'application': application
-        }
-        return render(request, self.template_name, context)
-
 class WildlifeComplianceRoutingView(TemplateView):
     template_name = 'wildlifecompliance/index.html'
 

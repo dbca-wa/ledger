@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from rest_framework import routers
 
 from wildlifecompliance import views
+from wildlifecompliance.components.applications.views import ApplicationSuccessView
 from wildlifecompliance.admin import wildlifecompliance_admin_site
 
 from wildlifecompliance.components.applications import views as application_views
@@ -55,8 +56,8 @@ urlpatterns = [
     url(r'^$', views.WildlifeComplianceRoutingView.as_view(), name='wc_home'),
     url(r'^internal/', views.InternalView.as_view(), name='internal'),
     url(r'^internal/application/(?P<application_pk>\d+)/referral/(?P<referral_pk>\d+)/$', views.ReferralView.as_view(), name='internal-referral-detail'),
-    url(r'^external/application/(?P<application_pk>\d+)/$', views.ExternalApplicationView.as_view(), name='external-application-detail'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),
+    url(r'^external/application/(?P<application_pk>\d+)/$', views.ExternalApplicationView.as_view(), name='external-application-detail'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
     url(r'^profiles/', views.ExternalView.as_view(), name='manage-profiles'),
@@ -68,7 +69,7 @@ urlpatterns = [
     #following url is defined so that to include url path when sending application emails to users
     url(r'^internal/application/(?P<application_pk>\d+)/$', views.ApplicationView.as_view(),
         name='internal-application-detail'),
-    url(r'^external/application/submit/', views.ApplicationSuccessView.as_view(), name='external-application-success'),
+    url(r'^application_submit/submit_with_invoice/', ApplicationSuccessView.as_view(), name='external-application-success-invoice'),
 
 ] + ledger_patterns
 

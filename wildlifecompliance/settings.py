@@ -53,6 +53,20 @@ CACHES = {
         'LOCATION': os.path.join(BASE_DIR, 'wildlifecompliance', 'cache'),
     }
 }
+
+# Additional logging for wildlifecompliance
+LOGGING['handlers']['application_checkout'] = {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'wildlifecompliance_application_checkout.log'),
+            'formatter': 'verbose',
+            'maxBytes': 5242880
+        }
+LOGGING['loggers']['application_checkout'] = {
+            'handlers': ['application_checkout'],
+            'level': 'INFO'
+        }
+
 STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'wildlifecompliance', 'static')))
 DEV_STATIC = env('DEV_STATIC',False)
 DEV_STATIC_URL = env('DEV_STATIC_URL')

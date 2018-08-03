@@ -73,6 +73,9 @@ class ApplicationGroupType(models.Model):
     class Meta:
         app_label = 'wildlifecompliance'
 
+    def __str__(self):
+        return '{} - {}, {} ({} members)'.format(self.name, self.licence_class, self.licence_activity_type, self.members.count())
+
     def member_is_assigned(self,member):
         # for p in self.current_applications:
         #     if p.assigned_officer == member:
@@ -463,8 +466,12 @@ class Application(RevisionedMixin):
                     if (qs):
                         for q in qs:    
                             q.status = 'amended'
+                            print('before for')
                             for activity_type in self.licence_type_data['activity_type']:
-                                if q.licence_activity_type==activity_type["id"]:
+                                print('inside for')
+                                print(q.licence_activity_type.id)
+                                print(activity_type["id"])
+                                if q.licence_activity_type.id==activity_type["id"]:
                                     activity_type["processing_status"]="With Officer"
                             q.save()
                 else:
@@ -837,7 +844,28 @@ class Application(RevisionedMixin):
                         processing_status='future',
                         licence=licence
                     )
-                    #TODO add logging for return 
+                    #TODO add logging for return
+
+class ApplicationInvoice(models.Model):
+    application = models.ForeignKey(Application, related_name='invoices')
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return 'Application {} : Invoice #{}'.format(self.id,self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False
 
 class ApplicationLogDocument(Document):
     log_entry = models.ForeignKey('ApplicationLogEntry',related_name='documents')
