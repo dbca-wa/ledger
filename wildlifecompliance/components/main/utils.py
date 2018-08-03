@@ -50,7 +50,7 @@ def checkout(request, application, lines=[], invoice_text=None, vouchers=[], int
         'system': settings.WC_PAYMENT_SYSTEM_ID,
         'fallback_url': request.build_absolute_uri('/'),
         'return_url': request.build_absolute_uri(reverse('external-application-success-invoice')),
-        'return_preload_url': request.build_absolute_uri(reverse('external-application-success-invoice')),
+        'return_preload_url': request.build_absolute_uri('/'),
         # 'fallback_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
         # 'return_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
         # 'return_preload_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
