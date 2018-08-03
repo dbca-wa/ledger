@@ -525,7 +525,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
            mooringsite_class = MooringsiteClass.objects.all().first()    
            Mooringsite.objects.create(mooringarea=instance, 
                                       name=instance.name, 
-                                      mooring_site_class=mooringsite_class,
+                                      mooringsite_class=mooringsite_class,
                                       description=None)
        
         serializer = self.get_serializer(instance, formatted=formatted, method='get')

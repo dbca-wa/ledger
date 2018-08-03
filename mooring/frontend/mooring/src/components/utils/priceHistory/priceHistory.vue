@@ -10,7 +10,7 @@
             <button v-show="showAddBtn" @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
         </div>
         <datatable ref="history_dt" :dtHeaders ="dt_headers" :dtOptions="dt_options" id="ph_table"></datatable>
-     </div>
+    </div>
     <confirmbox id="deleteHistory" :options="deleteHistoryPrompt"></confirmbox>
 </div>
 </template>
@@ -174,7 +174,7 @@ export default {
                     vm.$refs.history_dt.vmDataTable.ajax.reload();
                 });
             }
-            else{
+            else {
                 url = api_endpoints.campsiterate_detail(data);
                 $.ajax({
                      beforeSend: function(xhrObj) {
@@ -217,7 +217,9 @@ export default {
             this.sendData(this.getAddURL(),'POST',JSON.stringify(this.price));
         },
         updateHistory: function() {
-            if (this.level == 'campsite'){
+            console.log('UPDATE HIST');
+            var vm=this;
+            if (this.level == 'campsite') {
                 this.price.campsite = this.object_id;
                 this.sendData(this.getEditURL(),'PUT',JSON.stringify(vm.price));
             }

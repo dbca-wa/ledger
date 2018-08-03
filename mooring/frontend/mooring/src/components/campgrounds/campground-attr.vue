@@ -187,13 +187,13 @@
 									</div>
 									<div class="row" style="margin-top: 40px;">
 										<div class="col-sm-8">
-											<div class="form-group">
+											<div class="form-group" style='display:none;'>
 												<div class="col-sm-4 col-md-3 col-lg-2">
 													<label style="line-height: 2.5;">Price set at: </label>
 												</div>
 												<div class="col-sm-8 col-md-9 col-lg-10">
 													<select id="price_level" name="price_level" class="form-control" v-model="campground.price_level">
-														<option v-for="level in priceSet" :value="level.val">{{ level.name }}</option>
+ 														<option value="0" selected>Mooring level</option>
 													</select>
 												</div>
 											</div>

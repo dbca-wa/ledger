@@ -879,7 +879,8 @@ class Rate(models.Model):
     infant = models.DecimalField(max_digits=8, decimal_places=2, default='0')
 
     def __str__(self):
-        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
+        return 'Mooring: ${} '.format(self.mooring,)
+        #return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
 
     class Meta:
         unique_together = (('adult', 'concession', 'child', 'infant'),)
@@ -888,7 +889,8 @@ class Rate(models.Model):
     # =================================
     @property
     def name(self):
-        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
+        return 'Mooring: ${} '.format(self.mooring,)
+        #return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
 
 class MooringsiteRate(models.Model):
     RATE_TYPE_CHOICES = (
