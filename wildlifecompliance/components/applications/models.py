@@ -479,9 +479,8 @@ class Application(RevisionedMixin):
                         activity_type["processing_status"]="With Officer"
                 self.save()
 
-                select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
-
-                
+                #TODO: need to filter this out to only set select_group to the officer group for the licence_type_data id
+                select_groups = ApplicationGroupType.objects.filter(licence_class=self.licence_type_data["id"])
 
                 if self.amendment_requests:
                     self.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(self.id),request)
@@ -496,7 +495,8 @@ class Application(RevisionedMixin):
                         self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                     else:
                         self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
-                    send_application_submit_email_notification(select_group.members.all(),self,request)
+                    for group in select_groups:
+                        send_application_submit_email_notification(group.members.all(),self,request)
 
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
