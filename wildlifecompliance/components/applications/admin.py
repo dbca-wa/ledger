@@ -32,16 +32,20 @@ class Assessment(admin.ModelAdmin):
 
 @admin.register(models.ApplicationGroupType)
 class ApplicationGroupTypeAdmin(admin.ModelAdmin):
+    list_display = ['name','display_name']
     filter_horizontal = ('members',)
     form = forms.ApplicationGroupTypeAdminForm
 
     def has_delete_permission(self, request, obj=None):
         return super(ApplicationGroupTypeAdmin, self).has_delete_permission(request, obj)
 
+class ApplicationInvoiceInline(admin.TabularInline):
+    model = models.ApplicationInvoice
+    extra = 0
 
 @admin.register(models.Application)
 class ApplicationAdmin(VersionAdmin):
-    inlines =[ApplicationDocumentInline,] 
+    inlines =[ApplicationDocumentInline,ApplicationInvoiceInline]
 
 @admin.register(models.ApplicationAssessorGroup)
 class ApplicationAssessorGroupAdmin(admin.ModelAdmin):

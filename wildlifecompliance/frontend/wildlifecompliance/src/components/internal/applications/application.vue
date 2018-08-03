@@ -141,37 +141,29 @@
                             <!-- <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAction">
                                 <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'"> -->
                               <div class="col-sm-12 top-buffer-s" >
-                                <template>
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <strong>Action</strong><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <!-- <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor_conditions')">Send to Assessor</button><br/>
-                                        </div> -->
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary">Send to Assessor</button><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <!-- <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="ammendmentRequest()">Request Ammendment</button><br/>
-                                        </div> -->
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <!-- <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="proposedDecline()">Propose Decline</button>
-                                        </div> -->
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
-                                        </div>
-                                    </div>
-                                </template>
+                                        <template>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <strong>Action</strong><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary">Send to Assessor</button><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    
                                 <!-- <template v-else-if="application.processing_status == 'With Assessor (Conditions)'">
                                     <div class="row">
                                         <div class="col-sm-12">
@@ -519,7 +511,7 @@
                         <div>
                         <div v-for="item in application.licence_type_data">
                             <ul class="nav nav-tabs" id="assessortabs">
-                                <li v-for="item1 in item"><a v-if="item1.name" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                                <li v-for="(item1,index) in item"><a v-if="item1.name" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
                             </ul>
                             
                         </div>          
@@ -547,7 +539,7 @@
                                                                 <label class="control-label pull-left"  for="Name">Assessor Group</label>
                                                                 <select class="form-control" v-model="selectedAssessor">
                                                                     <option v-for="assessor in assessorGroup" :id="assessor.id" 
-                                                                    :value="assessor">{{assessor.name}}</option>
+                                                                    :value="assessor" v-if="application.licence_type_data.id == assessor.licence_class">{{assessor.display_name}}</option>
                                                                 </select>
                                                         </div> 
                                                         <div class="col-sm-2">
@@ -555,7 +547,7 @@
                                                         </div>
                                                     </div>
                                                     <div class="row">
-                                                    	<datatable ref="assessorDatatable" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options" :dtHeaders="assessors_headers" :selected_assesment_index="index"/>
+                                                    	<datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options" :dtHeaders="assessors_headers" />
                                                     </div>
                                         </div>
                                     </div>
@@ -624,7 +616,7 @@ export default {
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             application_assessor_datatable:vm._uid+'assessment-table',
-            selected_assessment_index:0,
+            selected_assesment_index:0,
             contacts_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -661,7 +653,7 @@ export default {
                   processing: true
             },
             contacts_table: null,
-            assessors_headers:["Assessor Group","Date Sent","Status","Action"],
+            assessors_headers:["id","licence ctivity type","Assessor Group","Date Sent","Status","Action"],
             assessors_options:{
                  language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -672,6 +664,8 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
+                    {data:'id'},
+                    {data:'licence_activity_type'},
                     {data:'assessor_group.name'},
                     {data:'date_last_reminded'},
                     {data:'status'},
@@ -679,10 +673,11 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                                 if(full.status == 'Completed'){
-                                    links +=  `<a>Resend</a>`;
+                                    links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a>`;
                                     
                                 } else if(full.status == 'Awaiting Assessment'){
                                     links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>`;
+                                    links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</button>`;
                                     // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
                                 } 
                             return links;
@@ -790,75 +785,82 @@ export default {
         }
     },
     methods: {
+        
     	eventListeners: function(){
             let vm = this;
-            console.log('indisde eventlistner');
-            console.log(vm.$refs)
-            console.log(vm.$refs.assessorDatatable)
-            
+            console.log(vm.$refs.assessorDatatable[0].vmDatatTable)
+
             vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_remind',(e) => {
-                console.log('inside click')
-                console.log(vm.selectedAssessor)
+            console.log("inside assessment remind")
+            e.preventDefault();
 
-                console.log(vm.$refs.assessorDatatable[vm.selected_assessment_index])
-                e.preventDefault();
-
-                let assessment_id = $(e.target).data('assessmentid');
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
-                    console.log('successful')
-                        //vm.$parent.loading.splice('processing contact',1);
-                        swal(
-                             'Sent',
-                             'An email has been sent to applicant with the request to amend this Proposal',
-                             'success'
-                        );
-                        // vm.assessingApplication = true;
-                        // vm.close();
-                        //vm.$emit('refreshFromResponse',response);
-                        // Vue.http.get(`/api/proposal/${vm.proposal_id}/internal_proposal.json`).then((response)=>
-                        // {
-                        //     vm.$emit('refreshFromResponse',response);
-                            
-                        // },(error)=>{
-                        //     console.log(error);
-                        // });
-                        // vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
-                     
-                    },(error)=>{
-                        console.log(error);
-                        vm.errors = true;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                        
-                        
-                    });
-
-                      swal({
-                    title: "Relink User",
-                    text: "Are you sure you want to Relink ",
-                    showCancelButton: true,
-                    confirmButtonText: 'Accept'
-                }).then((result) => {
-                    if (result.value) {
-                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
-                        }).then((response) => {
-                            swal({
-                                title: 'Relink User',
-                                text: 'You have successfully relinked ' + name + '.',
-                                type: 'success',
-                                confirmButtonText: 'Okay'
-                            }).then(() => {
-                                vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
-                            },(error) => {
-                            });
-                        }, (error) => {
-                            swal('Relink User','There was an error relink')
-                        });
-                    }
-                },(error) => {
+            let assessment_id = $(e.target).data('assessmentid');
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
+                console.log('successful')
+                    //vm.$parent.loading.splice('processing contact',1);
+                    swal(
+                         'Sent',
+                         'An email has been sent to assessor with the request to assess this Proposal',
+                         'success'
+                    );
+                    
+                 
+                },(error)=>{
+                    console.log(error);
+                    vm.errors = true;
+                    vm.errorString = helpers.apiVueResourceError(error);
+                    
+                    
                 });
-
-
             });
+
+            vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_resend',(e) => {
+            e.preventDefault();
+
+            let assessment_id = $(e.target).data('assessmentid');
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/resend_assessment'))).then((response)=>{
+                console.log('successful')
+                    //vm.$parent.loading.splice('processing contact',1);
+                    swal(
+                         'Sent',
+                         'An email has been sent to assessor with the request to assess this Proposal',
+                         'success'
+                    );
+                    
+                 
+                },(error)=>{
+                    console.log(error);
+                    vm.errors = true;
+                    vm.errorString = helpers.apiVueResourceError(error);
+                    
+                    
+                });
+            });
+
+            vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_recall',(e) => {
+            console.log("inside assessment remind")
+            e.preventDefault();
+
+            let assessment_id = $(e.target).data('assessmentid');
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/recall_assessment'))).then((response)=>{
+                console.log('successful')
+                    //vm.$parent.loading.splice('processing contact',1);
+                    swal(
+                         'Success',
+                         'An assessment has been recalled',
+                         'success'
+                    );
+                    
+                 
+                },(error)=>{
+                    console.log(error);
+                    vm.errors = true;
+                    vm.errorString = helpers.apiVueResourceError(error);
+                    
+                    
+                });
+            });
+
         },
         initialiseOrgContactTable: function(){
             let vm = this;
@@ -880,44 +882,11 @@ export default {
         	// var selectedTabTitle = $("#tabs-section li.active");
 			// console.log($(selectedTabTitle))
 			// console.log($(selectedTabTitle).text())
-			console.log($(item1))
-			this.$refs.send_to_assessor.assessment.activity_type=item1
+			// console.log($(item1))
+			this.$refs.send_to_assessor.assessment.licence_activity_type=item1
         	this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id
         	this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.name
         	this.$refs.send_to_assessor.isModalOpen=true;
-
-        	// console.log(vm.selectedAssessor)
-        	// console.log(vm.selectedAssessor.name)
-        	// console.log(vm.selectedAssessor.id)
-        	// $(vm.$refs.assessorGroup).on('select2:select', function (e) {
-
-        	// var selected = e.params.data;
-         //    console.log('inside');
-
-         //    console.log(selected.val());
-        	// })
-        	// console.log('after')
-
-            // let vm = this;
-            // swal({
-            //     title: "Send Assessor",
-            //     text: "Are you sure you want to send to assessor?",
-            //     type: "question",
-            //     showCancelButton: true,
-            //     confirmButtonText: 'Accept'
-            // }).then((result) => {
-            //     if (result.value) {
-            //         vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/send_to_assessor')))
-            //         .then((response) => {
-            //             console.log(response);
-            //             vm.application = response.body;
-            //         }, (error) => {
-            //             console.log(error);
-            //         });
-            //     }
-            // },(error) => {
-
-            // });
         },
         proposedLicence: function(){
             this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
