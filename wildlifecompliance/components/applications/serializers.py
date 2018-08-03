@@ -85,9 +85,19 @@ class ActivityTypeserializer(serializers.ModelSerializer):
     class Meta:
         model= WildlifeLicenceActivityType
         fields=('id','name','short_name')
-        
+
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
+    reason = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AmendmentRequest
+        fields = '__all__'
+
+    def get_reason (self,obj):
+        return obj.get_reason_display()
+
+class ExternalAmendmentRequestSerializer(serializers.ModelSerializer):
     reason = serializers.SerializerMethodField()
     licence_activity_type=ActivityTypeserializer(read_only=True)
 

@@ -19,7 +19,7 @@ class ApplicationTypeAdmin(admin.ModelAdmin):
 
 @admin.register(models.AmendmentRequest)
 class AmendmentRequestAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['application','licence_activity_type']
 
 @admin.register(models.ApplicationDeclinedDetails)
 class ApplicationDeclinedDetails(admin.ModelAdmin):

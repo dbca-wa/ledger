@@ -62,7 +62,8 @@ from wildlifecompliance.components.applications.serializers import (
     AssessmentSerializer,
     ApplicationGroupTypeSerializer,
     SaveAssessmentSerializer,
-    AmendmentRequestSerializer
+    AmendmentRequestSerializer,
+    ExternalAmendmentRequestSerializer
     
 )
 
@@ -181,7 +182,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.amendment_requests
             qs = qs.filter(status = 'requested')
-            serializer = AmendmentRequestSerializer(qs,many=True)
+            serializer = ExternalAmendmentRequestSerializer(qs,many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
