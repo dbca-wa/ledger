@@ -59,6 +59,7 @@ class ApplicationGroupType(models.Model):
         ('assessor', 'Assessor'),
     )
     name= models.CharField('Group Type', max_length=40, choices=NAME_CHOICES,default=NAME_CHOICES[0][0])
+    display_name=models.CharField('Display Group Name',max_length=40)
     licence_class=models.ForeignKey('wildlifecompliance.WildlifeLicenceClass')
     licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType')
     members=models.ManyToManyField(EmailUser,blank=True)
@@ -446,12 +447,21 @@ class Application(RevisionedMixin):
                 #     error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
                 #     raise exceptions.ApplicationMissingFields(detail=error_text)
                 
-                for activity_type in  self.licence_type_data['activity_type']:
-                    activity_type["processing_status"]="With Officer"
+                # for activity_type in  self.licence_type_data['activity_type']:
+                #     activity_type["processing_status"]="With Officer"
                 self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
                 self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                if (self.amendment_requests):
+                    qs = self.amendment_requests.filter(status = "requested")
+                    if (qs):
+                        for q in qs:    
+                            q.status = 'amended'
+                            for activity_type in  self.licence_type_data['activity_type']:
+                                if q.licence_activity_type==activity_type["id"]:
+                                    activity_type["processing_status"]="Draft"
+                            q.save()
                 select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
                 # # print(type(select_group))
                 # print(select_group.members.all())
@@ -896,7 +906,7 @@ class AmendmentRequest(ApplicationRequest):
                     if self.licence_activity_type.id==item["id"] :
                         item["processing_status"]="Draft"
                         # self.application.save()
-
+                self.application.customer_status='amendment_required'        
                 self.application.save()
                 
                 # Create a log entry for the application
@@ -909,15 +919,13 @@ class AmendmentRequest(ApplicationRequest):
 
 class Assessment(ApplicationRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'),
-                      ('completed', 'Completed'))
+                      ('completed', 'Completed'),('recalled','Recalled'))
     assigned_assessor = models.ForeignKey(EmailUser, blank=True, null=True)
     status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     date_last_reminded = models.DateField(null=True, blank=True)
-    #conditions = models.ManyToManyField('Condition', through='AssessmentCondition')
     assessor_group=models.ForeignKey(ApplicationGroupType,null=False,default=1)
-    # licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
     activity_type= JSONField(blank=True, null=True)
-
+    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)
 
@@ -930,25 +938,20 @@ class Assessment(ApplicationRequest):
             try:
                 # This is to change the status of licence activity type
                 for item in  self.application.licence_type_data['activity_type']:
-                    if request.data.get('activity_type') == item["id"]:
-                        item["processing_status"]="With Officer"
+                    if request.data.get('licence_activity_type') == item["id"]:
+                        item["processing_status"]="With Assessor"
                         self.application.save()
-                        self.save()
-                self.activity_type=request.data.get('activity_type')
+                        # self.save()
                 self.officer=request.user
                 self.date_last_reminded=datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.save()
 
                 select_group = self.assessor_group.members.all()
-                
+
                 # Create a log entry for the application
                 self.application.log_user_action(ApplicationUserAction.ACTION_SEND_FOR_ASSESSMENT_TO_.format(self.assessor_group.name),request)
                 # send email
                 send_assessment_email_notification(select_group,self,request)
-                # # Create a log entry for the organisation
-                # self.applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
-                # send_application_submit_email_notification(select_group.members.all(),self,request)
-
             except:
                 raise
 
@@ -960,14 +963,44 @@ class Assessment(ApplicationRequest):
                 select_group = self.assessor_group.members.all()
                 # send email
                 send_assessment_reminder_email(select_group,self,request)
-                assessment.date_last_reminded = date.today()
+                self.date_last_reminded = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.save()
                 # Create a log entry for the application
                 self.application.log_user_action(ApplicationUserAction.ACTION_SEND_ASSESSMENT_REMINDER_TO_.format(self.assessor_group.name),request)
-                
-
             except:
                 raise
+
+    def recall_assessment(self,request):
+        with transaction.atomic():
+            try:
+                self.status="recalled"
+                print(self.__dict__)
+                for item in  self.application.licence_type_data['activity_type']:
+                    print(self.licence_activity_type)
+                    if self.licence_activity_type_id==item["id"] :
+                        item["processing_status"]="With Officer"
+                        self.application.save()
+                self.save()
+                # Create a log entry for the application
+                self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RECALLED,request)
+            except:
+                raise
+
+    def resend_assessment(self,request):
+        with transaction.atomic():
+            try:
+                self.status="awaiting_assessment"
+                for item in  self.application.licence_type_data['activity_type']:
+                    print(self.licence_activity_type)
+                    if self.licence_activity_type_id==item["id"] :
+                        item["processing_status"]="With Assessor"
+                        self.application.save()
+                self.save()
+                # Create a log entry for the application
+                self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RESENT,request)
+            except:
+                raise
+
 class ApplicationDeclinedDetails(models.Model):
     application = models.OneToOneField(Application)
     officer = models.ForeignKey(EmailUser, null=False)
@@ -1028,6 +1061,8 @@ class ApplicationUserAction(UserAction):
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
     ACTION_SEND_FOR_ASSESSMENT_TO_ = "Sent for assessment to {}"
     ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
+    ACTION_ASSESSMENT_RECALLED="Assessment recalled"
+    ACTION_ASSESSMENT_RESENT="Assessment Resent"
     ACTION_DECLINE = "Decline application {}"
     ACTION_ENTER_CONDITIONS = "Enter condition"
     ACTION_CREATE_CONDITION_ = "Create condition {}"

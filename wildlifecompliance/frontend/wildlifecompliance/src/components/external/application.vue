@@ -1,8 +1,8 @@
 <template lang="html">
     <div class="container" >
         <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
-          <!-- <div v-if="!application_readonly"> -->
-          <div class="row" style="color:red;">
+          <div v-if="!application_readonly">
+          <div v-if="hasAmendmentRequest" class="row" style="color:red;">
                 <div class="col-lg-12 pull-right">
                   <div class="panel panel-default">
                     <div class="panel-heading">
@@ -13,8 +13,8 @@
                         </h3>
                       </div>
                       <div class="panel-body collapse in" :id="pBody">
-                        {{amendment_request}}{{hasAmendmentRequest}}
                         <div v-for="a in amendment_request">
+                          <p>Activity Type:{{a.licence_activity_type.name}}</p>
                           <p>Reason: {{a.reason}}</p>
                           <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
                       </div>
@@ -22,7 +22,7 @@
                   </div>
                 </div>
               </div>
-            <!-- </div> -->
+            </div>
               <div class="row">
             <Application v-if="application" :application="application">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
@@ -33,7 +33,7 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <span style="margin-right: 5px;"><strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong></span>
+                                    <span v-if="application.application_fee != 0"style="margin-right: 5px;"><strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong></span>
                                     <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                                     <input v-if="application.application_fee == 0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
@@ -120,20 +120,22 @@ export default {
     setdata: function(readonly){
       this.application_readonly = readonly;
     },
+    splitText: function(aText){
+      let newText = '';
+      newText = aText.split("\n");
+      return newText;
+    },
     submit: function(){
         let vm = this;
-        let form = document.forms.new_application;
-        console.log(' SUBMIT VM FORM and CHECKOUT ');
+        console.log('SUBMIT VM FORM and CHECKOUT');
         let formData = new FormData(vm.form);
         console.log(formData);
-
         let swal_title = 'Submit Application'
         let swal_text = 'Are you sure you want to submit this application?'
         if (vm.application.application_fee > 0) {
             swal_title = 'Submit Application and Checkout'
             swal_text = 'Are you sure you want to submit this application and proceed to checkout?'
         }
-
         swal({
             title: swal_title,
             text: swal_text,
@@ -145,12 +147,10 @@ export default {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
-                    console.log(res.body);
-                    console.log(res);
                     if (vm.application.application_fee > 0) {
                         window.location.href = "/ledger/checkout/checkout/payment-details/";
                     } else {
-                      vm.$router.push({
+                        vm.$router.push({
                             name: 'submit_application',
                             params: { application: vm.application}
                         });
@@ -182,13 +182,12 @@ export default {
             vm.setdata(vm.application.readonly);
 
             Vue.http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/amendment_request')).then((res) => {
-                     
-                      vm.setAmendmentData(res.body);
-
-                },
-              err => { 
-                        console.log(err);
-                  });
+                console.log(res.body)
+                vm.setAmendmentData(res.body);
+            },
+            err => {
+                console.log(err);
+            });
 
           });
         },

@@ -215,8 +215,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def submit(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            # print(' ------ submit application api ------ ')
-            # print(instance)
             instance.submit(request,self)
             serializer = self.get_serializer(instance)
             print(instance.submitter.first_name)
@@ -550,15 +548,15 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             
             app_data = self.request.data
             licence_class_data=app_data.pop('licence_class_data')
-            licence_type_name=app_data.pop('licence_type_name')
+            licence_type_name = app_data.pop('licence_type_name')
             schema_data=get_activity_type_schema(licence_class_data)
             org_applicant=request.data.get('org_applicant')
-            application_fee=request.data.get('application_fee')
+            application_fee = request.data.get('application_fee')
             data = {
                 'schema':schema_data,
                 'submitter': request.user.id,
                 'licence_type_data':licence_class_data,
-                'licence_type_name':licence_type_name,
+                'licence_type_name': licence_type_name,
                 'org_applicant': org_applicant,
                 'application_fee': application_fee
             }
@@ -830,7 +828,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.remind_assessment(request)
-            serializer = InternalApplicationSerializer(instance,context={'request':request})
+            serializer = self.get_serializer(instance)
             return Response(serializer.data) 
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -841,6 +839,41 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def recall_assessment(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.recall_assessment(request)
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def resend_assessment(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.resend_assessment(request)
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 class AssessorGroupViewSet(viewsets.ModelViewSet):
     queryset = ApplicationGroupType.objects.all()
