@@ -5,20 +5,20 @@
         <div class="well">
             <div class="row">
                 <div class="col-sm-12">
-                    <div v-if="application && application.id" class="col-sm-offset-3 col-sm-6 borderDecoration">
+                    <div class="col-sm-offset-3 col-sm-6 borderDecoration">
                         <strong>Your application has been successfully submitted.</strong>
                         <br/>
                         <table>
                             <tr>
                                 <td><strong>Application:</strong></td>
-                                <td><strong>{{application.id}}</strong></td>
+                                <td><strong> {{application.id}}</strong></td>
                             </tr>
                             <tr>
                                 <td><strong>Date/Time:</strong></td>
                                 <td><strong> {{application.lodgement_date}}</strong></td>
                             </tr>
                         </table>
-                        <router-link :to="{name:'external'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
+                        <a href="{% url 'external' %}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</a>
                     </div>
                 </div>
             </div>
