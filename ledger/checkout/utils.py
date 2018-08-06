@@ -1,4 +1,4 @@
-from decimal import Decimal as D, ROUND_HALF_DOWN
+from decimal import Decimal as D, getcontext
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -247,7 +247,9 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
 
 def calculate_excl_gst(amount):
-    result = D(100.0)/ D(100 + settings.LEDGER_GST) * D(amount)
+    TWELVEPLACES = D(10) ** -12
+    getcontext().prec = 22
+    result = (D(100.0) / D(100 + settings.LEDGER_GST) * D(amount)).quantize(TWELVEPLACES)
     return result
 
 
