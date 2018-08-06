@@ -479,8 +479,8 @@ class Application(RevisionedMixin):
                         activity_type["processing_status"]="With Officer"
                 self.save()
 
-                officer_groups = ApplicationGroupType.objects.filter(licence_class=self.licence_type_data["id"],name='officer')
-                assessor_groups = ApplicationGroupType.objects.filter(licence_class=self.licence_type_data["id"],name='assessor')
+                officer_groups = ApplicationGroupType.objects.filter(licence_class=self.licence_type_data["id"],name__icontains='officer')
+                assessor_groups = ApplicationGroupType.objects.filter(licence_class=self.licence_type_data["id"],name__icontains='assessor')
                 
                 print(self.amendment_requests)
                 if self.amendment_requests:
