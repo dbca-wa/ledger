@@ -478,15 +478,17 @@ class Application(RevisionedMixin):
                     for activity_type in  self.licence_type_data['activity_type']:
                         activity_type["processing_status"]="With Officer"
                 self.save()
-
-                select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
+                
+                select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"],name='officer')
 
                 
-
+                print(self.amendment_requests)
                 if self.amendment_requests:
+                    print("insid if")
                     self.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(self.id),request)
                     send_amendment_submit_email_notification(select_group.members.all(),self,request)
                 else:
+                    print("inside else")
                     # Create a log entry for the application
                     self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                     # Create a log entry for the applicant (submitter, organisation or proxy)
@@ -582,10 +584,10 @@ class Application(RevisionedMixin):
     def assign_officer(self,request,officer):
         with transaction.atomic():
             try:
-                if not self.can_assess(request.user):
-                    raise exceptions.ApplicationNotAuthorized() 
-                if not self.can_assess(officer):
-                    raise ValidationError('The selected person is not authorised to be assigned to this application')
+                # if not self.can_assess(request.user):
+                #     raise exceptions.ApplicationNotAuthorized() 
+                # if not self.can_assess(officer):
+                #     raise ValidationError('The selected person is not authorised to be assigned to this application')
                 if self.processing_status == 'with_approver':
                     if officer != self.assigned_approver:
                         self.assigned_approver = officer
@@ -601,7 +603,7 @@ class Application(RevisionedMixin):
                         # Create a log entry for the application
                         self.log_user_action(ApplicationUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
                         # Create a log entry for the organisation
-                        self.applicant.log_user_action(ApplicationUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
+                        # self.applicant.log_user_action(ApplicationUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
             except:
                 raise
 
