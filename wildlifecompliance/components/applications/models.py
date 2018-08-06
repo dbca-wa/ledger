@@ -480,13 +480,12 @@ class Application(RevisionedMixin):
                 self.save()
 
                 officer_groups = ApplicationGroupType.objects.filter(licence_class=self.licence_type_data["id"],name__icontains='officer')
-                assessor_groups = ApplicationGroupType.objects.filter(licence_class=self.licence_type_data["id"],name__icontains='assessor')
-                
+
                 print(self.amendment_requests)
                 if self.amendment_requests:
                     print("insid if")
                     self.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(self.id),request)
-                    for group in assessor_groups:
+                    for group in officer_groups:
                         send_amendment_submit_email_notification(group.members.all(),self,request)
                 else:
                     print("inside else")
