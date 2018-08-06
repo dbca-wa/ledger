@@ -98,3 +98,6 @@ uwsgi.ini
 
 # npm locks
 *-lock.json
+
+# wildlifecompliance static temporary while in dev
+wildlifecompliance/static/

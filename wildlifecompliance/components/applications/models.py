@@ -478,15 +478,15 @@ class Application(RevisionedMixin):
                     for activity_type in  self.licence_type_data['activity_type']:
                         activity_type["processing_status"]="With Officer"
                 self.save()
-                
-                select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"],name='officer')
 
-                
+                officer_groups = ApplicationGroupType.objects.filter(licence_class=self.licence_type_data["id"],name__icontains='officer')
+
                 print(self.amendment_requests)
                 if self.amendment_requests:
                     print("insid if")
                     self.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(self.id),request)
-                    send_amendment_submit_email_notification(select_group.members.all(),self,request)
+                    for group in officer_groups:
+                        send_amendment_submit_email_notification(group.members.all(),self,request)
                 else:
                     print("inside else")
                     # Create a log entry for the application
@@ -498,7 +498,8 @@ class Application(RevisionedMixin):
                         self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                     else:
                         self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
-                    send_application_submit_email_notification(select_group.members.all(),self,request)
+                    for group in officer_groups:
+                        send_application_submit_email_notification(group.members.all(),self,request)
 
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
