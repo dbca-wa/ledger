@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, calculate_excl_gst
 from ledger.payments.models import Invoice
 from wildlifecompliance.exceptions import BindApplicationException
 
@@ -36,6 +36,7 @@ def checkout(request, application, lines=[], invoice_text=None, vouchers=[], int
                 'ledger_description': '{}'.format(application.licence_type_name),
                 'quantity': 1,
                 'price_incl_tax': str(application.application_fee),
+                'price_excl_tax': str(calculate_excl_gst(application.application_fee)),
                 'oracle_code': ''
     })
     basket_params = {
