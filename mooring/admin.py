@@ -19,7 +19,7 @@ class MarinaAdmin(admin.GeoModelAdmin):
 
 @admin.register(models.MooringArea)
 class MooringAreaAdmin(admin.GeoModelAdmin):
-    list_display = ('name','park','promo_area','mooring_type','site_type','max_advance_booking')
+    list_display = ('name','park','promo_area','mooring_type','max_advance_booking')
     ordering = ('name',)
     search_fields = ('name',)
     list_filter = ('mooring_type','site_type')
@@ -27,7 +27,7 @@ class MooringAreaAdmin(admin.GeoModelAdmin):
 
 @admin.register(models.MooringAreaGroup)
 class MooringAreaGroupAdmin(admin.ModelAdmin):
-    filter_horizontal = ('members','campgrounds')
+    filter_horizontal = ('members','moorings')
 
 @admin.register(models.Mooringsite)
 class MooringsiteAdmin(admin.GeoModelAdmin):

@@ -518,7 +518,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         #print request.GET.get("formatted", False)
         formatted = bool(request.GET.get("formatted", False))
-        instance.mooring_group =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],campgrounds__in=[instance.id,])
+        instance.mooring_group =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],moorings__in=[instance.id,])
         if Mooringsite.objects.filter(mooringarea__id=instance.id).exists():
            pass
         else:
@@ -577,16 +577,16 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 for i in mg:
                     # i.campgrounds.clear()
                     if i.id in mooring_group:
-                        m_all = i.campgrounds.all()
+                        m_all = i.moorings.all()
                         if instance.id in m_all:
                             pass
                         else:
-                            i.campgrounds.add(instance)
+                            i.moorings.add(instance)
                     else:
-                        m_all = i.campgrounds.all()
+                        m_all = i.moorings.all()
                         for b in m_all:
                            if instance.id == b.id:
-                              i.campgrounds.remove(b)
+                              i.moorings.remove(b)
 
             if Mooringsite.objects.filter(mooringarea__id=instance.id).exists():
                 pass
@@ -622,16 +622,16 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 for i in mg:
                     # i.campgrounds.clear()
                     if i.id in mooring_group:
-                        m_all = i.campgrounds.all()
+                        m_all = i.moorings.all()
                         if instance.id in m_all:
                             pass
                         else:
-                            i.campgrounds.add(instance)
+                            i.moorings.add(instance)
                     else:
-                        m_all = i.campgrounds.all()
+                        m_all = i.moorings.all()
                         for b in m_all:
                            if instance.id == b.id:
-                              i.campgrounds.remove(b)
+                              i.moorings.remove(b)
                  
             if "images" in request.data:
                 images_data = request.data.pop("images")

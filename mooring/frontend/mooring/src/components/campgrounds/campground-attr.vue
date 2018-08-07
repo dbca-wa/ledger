@@ -49,7 +49,7 @@
 
 									</div>
 									<div class="row">
-										<div class="col-md-4">
+										<div class="col-md-6">
 											<div class="form-group ">
 												<label class="control-label" >Mooring Type</label>
 												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.mooring_type">
@@ -60,17 +60,17 @@
 												</select>
 											</div>
 										</div>
-										<div class="col-md-4">
-											<div class="form-group ">
+										<div class="col-md-0">
+											<div class="form-group " style='display:none'>
 												<label class="control-label" >Booking Configuration</label>
 												<select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
-													<option value="0">Bookable per site</option>
-													<option value="1">Bookable per site type</option>
+													<option value="0" selected >Bookable per site</option>
+													<option value="1" >Bookable per site type</option>
 													<option value="2">Bookable per site type (hide site number)</option>
 												</select>
 											</div>
 										</div>
-                                                                                <div class="col-md-4">
+                                                                                <div class="col-md-6">
                                                                                         <div class="form-group ">
                                                                                                 <label class="control-label" >Mooring Group (Permissions)</label>
                                                                                                 <select class="form-control" v-model="campground.mooring_group" id='mooring_groups' name='mooring_groups' multiple>

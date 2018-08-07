@@ -58,11 +58,11 @@
                             <div class="col-md-4">
                                 <div class="form-group pull-right">
                                     <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Mooring</a>
-                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Mooring</a>
+                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Moorings</a>
                                 </div>
                             </div>
                         </form>
-                        <datatable :dtHeaders="['Mooring Area','Status','Region','District','Park','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
+                        <datatable :dtHeaders="['Mooring','Status','Region','District','Park','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
                     </div>
                 </div>
             </div>

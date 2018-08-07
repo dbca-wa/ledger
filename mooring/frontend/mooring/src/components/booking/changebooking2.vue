@@ -44,7 +44,7 @@
                                         </div>
                                         <div class="form-group" v-if="booking.campground != null || booking.campground != ''">
                                             <div class="col-md-4">
-                                                <label class="control-label pull-left required"  for="Dates">Camp Site: </label>
+                                                <label class="control-label pull-left required"  for="Dates">Mooring Site: </label>
                                             </div>
                                             <div class="col-md-8" v-if="campsites.length > 0">
                                                 <select class="form-control" name="campground" v-model="selected_campsite">

@@ -15,7 +15,7 @@
           <div class="row">
             <div class="col-md-4">
                 <div class="form-group">
-                  <label for="">Mooring Area</label>
+                  <label for="">Mooring</label>
                   <select v-show="isLoading" class="form-control" >
                       <option value="">Loading...</option>
                   </select>
