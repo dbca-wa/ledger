@@ -1,14 +1,14 @@
 <template lang="html">
     <div id="bulk-close">
-        <modal okText="Close Campgrounds" @ok="closeCampgrounds()" :force="true">
-            <h4 slot="title">Bulk Close Campgrounds</h4>
+        <modal okText="Close Moorings" @ok="closeCampgrounds()" :force="true">
+            <h4 slot="title">Bulk Close Moorings</h4>
             <div class="body">
                 <alert :show="false" type="danger">{{errorString}}</alert>
                 <form name="closeForm" class="form-horizontal">
                     <div class="row">
                         <div class="form-group">
                             <div class="col-md-4">
-                                <label for="Campgrounds">Campgrounds</label>
+                                <label for="Moorings">Moorings</label>
                             </div>
                             <div class="col-md-8">
                                 <select  class="form-control" id="bc-campgrounds" name="campgrounds" placeholder="" multiple v-model="selected_campgrounds">
@@ -147,7 +147,7 @@ export default {
                 $('#bc-campgrounds').select2({
                     theme: 'bootstrap',
                     allowClear: true,
-                    placeholder: "Select Campgrounds",
+                    placeholder: "Select Moorings",
                     tags:false,
                 }).
                 on("select2:select",function (e) {

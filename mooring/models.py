@@ -118,15 +118,15 @@ class MooringArea(models.Model):
     )
 
     CAMPGROUND_PRICE_LEVEL_CHOICES = (
-        (0, 'Marine Park level'),
-        (1, 'Mooringsite Class level'),
-        (2, 'Mooringsite level'),
+        (0, 'Mooring level'),
+#        (1, 'Mooringsite Class level'),
+#        (2, 'Mooringsite level'),
     )
 
     SITE_TYPE_CHOICES = (
         (0, 'Bookable Per Site'),
-        (1, 'Bookable Per Site Type'),
-        (2, 'Bookable Per Site Type (hide site number)'),
+        #(1, 'Bookable Per Site Type'),
+        #(2, 'Bookable Per Site Type (hide site number)'),
     )
 
     name = models.CharField(max_length=255, null=True)
@@ -171,6 +171,8 @@ class MooringArea(models.Model):
 
     class Meta:
         unique_together = (('name', 'park'),)
+        verbose_name = 'Mooring'
+        verbose_name_plural = 'Moorings'
 
     # Properties
     # =======================================
@@ -339,10 +341,15 @@ def campground_image_path(instance, filename):
 class MooringAreaGroup(models.Model):
     name = models.CharField(max_length=100)
     members = models.ManyToManyField(EmailUser,blank=True)
-    campgrounds = models.ManyToManyField(MooringArea,blank=True)
+#    campgrounds = models.ManyToManyField(MooringArea,blank=True)
+    moorings = models.ManyToManyField(MooringArea,blank=True)
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = 'Mooring Group'
+        verbose_name_plural = 'Mooring Groups'
 
 class MooringAreaImage(models.Model):
     image = models.ImageField(max_length=255, upload_to=campground_image_path)
@@ -879,7 +886,8 @@ class Rate(models.Model):
     infant = models.DecimalField(max_digits=8, decimal_places=2, default='0')
 
     def __str__(self):
-        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
+        return 'Mooring: ${} '.format(self.mooring,)
+        #return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
 
     class Meta:
         unique_together = (('adult', 'concession', 'child', 'infant'),)
@@ -888,7 +896,8 @@ class Rate(models.Model):
     # =================================
     @property
     def name(self):
-        return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
+        return 'Mooring: ${} '.format(self.mooring,)
+        #return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
 
 class MooringsiteRate(models.Model):
     RATE_TYPE_CHOICES = (

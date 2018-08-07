@@ -20,6 +20,17 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
+                        <label>Mooring: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input :readonly="selected_rate != ''" name="mooring"  v-model="priceHistory.mooring" type='text' class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" style='display: none'>
+                <div class="form-group">
+                    <div class="col-md-2">
                         <label>Adult Price: </label>
                     </div>
                     <div class="col-md-4">
@@ -27,7 +38,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row" style='display: none'>
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Concession Price: </label>
@@ -37,7 +48,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row" style='display: none'>
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Child Price: </label>
@@ -47,7 +58,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row" style='display: none'>
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Infant Price: </label>
@@ -141,6 +152,7 @@ module.exports = {
                 $.each(vm.rates, function(i, rate) {
                     if (rate.id== vm.selected_rate){
                         vm.priceHistory.rate = rate.id;
+                        vm.priceHistory.mooring = rate.mooring;
                         vm.priceHistory.adult = rate.adult;
                         vm.priceHistory.concession = rate.concession;
                         vm.priceHistory.child = rate.child;

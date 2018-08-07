@@ -34,17 +34,17 @@
                                         </div>
                                         <div class="form-group">
                                             <div class="col-md-4">
-                                                <label class="control-label pull-left required"  for="Dates">Campground: </label>
+                                                <label class="control-label pull-left required"  for="Dates">Mooring: </label>
                                             </div>
                                             <div class="col-md-8">
-                                                <select @change="updateCampground" class="form-control" name="campground" v-model="booking.campground">
+                                                <select @change="updateCampground" class="form-control" name="campground" v-model="booking.mooringarea" readonly="true">
                                                     <option v-for="c in onlineCampgrounds" :value="c.id">{{c.name}}</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div class="form-group" v-if="booking.campground != null || booking.campground != ''">
                                             <div class="col-md-4">
-                                                <label class="control-label pull-left required"  for="Dates">Camp Site: </label>
+                                                <label class="control-label pull-left required"  for="Dates">Mooring Site: </label>
                                             </div>
                                             <div class="col-md-8" v-if="campsites.length > 0">
                                                 <select class="form-control" name="campground" v-model="selected_campsite">
@@ -92,7 +92,7 @@
                                       <div class="form-group">
                                           <label for="vehicles" class="required col-md-4">Number of Vehicles</label>
                                           <div class="dropdown guests col-md-8">
-                                              <input type="number" min="0" max="10" name="vehicles" class="form-control dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" readonly="true" v-model="booking.parkEntry.vehicles">
+                                              <input type="number" min="1" max="1" name="vehicles" class="form-control dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" readonly="true" v-model="booking.parkEntry.vehicles">
                                               <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
                                                   <li v-for="park_entry in parkEntryPicker">
                                                       <div class="row">
@@ -316,7 +316,11 @@ export default {
             return entries;
         },
         onlineCampgrounds() {
-            return this.campgrounds.filter(c => c.campground_type === 0);
+            console.log("onlineCampgrounds");
+            console.log(this.campgrounds);
+            console.log(this.mooringarea);
+            return this.campgrounds;
+//            return this.campgrounds.filter(c => c.campground_type === 0);
         },
         ...mapGetters({
             campgrounds: 'campgrounds'
@@ -850,6 +854,9 @@ export default {
             vm.selected_departure = vm.booking.departure;
             // set the campground
             console.log('MOO LOG');
+            console.log(vm);
+            console.log(this.campgrounds); 
+//            console.log(this.campgrounds.filter(c => c.campground_type === 0));
  //           console.log(vm.booking.mooringarea);
 //            console.log(vm.campgrounds);
 //            console.log(vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.mooringarea)));

@@ -296,7 +296,7 @@ class MooringAreaGroupSerializer(serializers.ModelSerializer):
         fields = ('id',
                   'name',
                   'members',
-                  'campgrounds'
+                  'moorings'
         )
 
 class MooringAreaSerializer(serializers.ModelSerializer):
