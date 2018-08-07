@@ -980,6 +980,11 @@ class Assessment(ApplicationRequest):
     def remind_assessment(self,request):
         with transaction.atomic():
             try:
+
+                print('inside model')
+                print(self)
+                print(self.status)
+                print(self.id)
                 # select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
                 select_group = self.assessor_group.members.all()
                 # send email
