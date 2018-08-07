@@ -750,9 +750,9 @@ class ReferralViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
-        #qs = self.get_queryset().filter(referral=request.user)
-        #serializer = DTReferralSerializer(qs, many=True)
-        serializer = DTReferralSerializer(self.get_queryset(), many=True)
+        qs = self.get_queryset().filter(referral=request.user)
+        serializer = DTReferralSerializer(qs, many=True)
+        #serializer = DTReferralSerializer(self.get_queryset(), many=True)
         return Response(serializer.data)
 
     @list_route(methods=['GET',])

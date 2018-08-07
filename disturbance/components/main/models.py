@@ -150,9 +150,11 @@ class CommunicationsLogEntry(models.Model):
     TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'), ('mail', 'Mail'), ('person', 'In Person')]
     DEFAULT_TYPE = TYPE_CHOICES[0][0]
 
-    to = models.CharField(max_length=200, blank=True, verbose_name="To")
+    #to = models.CharField(max_length=200, blank=True, verbose_name="To")
+    to = models.TextField(blank=True, verbose_name="To")
     fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
-    cc = models.CharField(max_length=200, blank=True, verbose_name="cc")
+    #cc = models.CharField(max_length=200, blank=True, verbose_name="cc")
+    cc = models.TextField(blank=True, verbose_name="cc")
 
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
     reference = models.CharField(max_length=100, blank=True)
@@ -173,7 +175,7 @@ class Document(models.Model):
                             verbose_name='name', help_text='')
     description = models.TextField(blank=True,
                                    verbose_name='description', help_text='')
-    uploaded_date = models.DateTimeField(auto_now_add=True)
+    uploaded_date = models.DateTimeField(auto_now_add=True) 
 
     class Meta:
         app_label = 'disturbance'
