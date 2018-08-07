@@ -108,22 +108,11 @@ export default {
             return helpers.getCookie('csrftoken')
         },
         proposal_update_url: function() {
-          //return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/update.json` : '';
           return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/update_files.json` : '';
-          //return this.submit();
         }
     },
 
     methods:{
-
-        save_files: function(e) {
-            let vm = this;
-            //let formData = new FormData(vm.form);
-            var formData = new FormData($('form')[0]);
-            formData.append(vm.name, vm.files);
-            formData.append('csrfmiddlewaretoken', vm.csrf_token);
-            vm.$http.post(vm.proposal_update_url,formData);
-        },
 
         toggleComment(){
             this.showingComment = ! this.showingComment;
@@ -143,12 +132,7 @@ export default {
                         this.repeat+=1;
                     }
                 }
-                //$(e.target).hide();
-                //$(e.target).css({ 'display': 'none', 'visibility': 'hidden' });
-                //$(e.target).css({ 'visibility': 'hidden' });
-                //$(e.target).css({ 'display': 'none'});
-                $(e.target).find('br').remove();
-
+                $(e.target).css({ 'display': 'none'});
 
             } else {
                 this.files = [];
@@ -158,13 +142,17 @@ export default {
             if (e.target.files.length > 0) {
                 this.upload_file(e)
             }
+
+            if (!this.isRepeatable) {
+				// reset value of 'Choose File' button
+				$(e.target).val('');
+			}
         },
         upload_file: function(e) {
             let vm = this;
-            //var filename = e.target.files[0].name;
             $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
-            //this.files = [e.target.files[0].name];
         },
+        /*
         removeImage: function (filename) {
             let vm = this;
             //var filename = e.target.getAttribute('filename');
@@ -177,15 +165,29 @@ export default {
                 });
             }
         },
+		*/
         delete_file: function (filename) {
             let vm = this;
 
-            for (var idx in this.files) { 
-                if (this.files[idx].name==filename){ 
-                    this.files.pop(this.files[idx]) 
-                } 
+            var file_names = [] /* file names of remaining */
+            for (var idx in vm.files) { 
+                if (vm.files[idx].name==filename){ 
+                    // pop filename from array
+                    //this.files = vm.files.filter(function(item) { return item !== filename })
+                } else {
+                    file_names.push(this.files[idx].name)
+                }
+
             }
-            vm.save_files();
+
+            var formData = new FormData();
+            formData.append('proposal_id', vm.proposal_id);
+            formData.append(vm.name, file_names.join());
+            formData.append(vm.name + '_' + 'delete_file', filename);
+            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+            vm.$http.post(vm.proposal_update_url,formData).then(function(){
+            	vm.files = vm.files.filter(function(item) { return item.name !== filename }); // pop filename from array
+			});
         }
 
     },

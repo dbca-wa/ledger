@@ -53,8 +53,28 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
             #item_data[item['name']] = post_data[item['name']]
             item_data[item['name']] = extended_item_name in post_data
         elif item['type'] == 'file':
-            import ipdb; ipdb.set_trace()
-            if extended_item_name in file_data:
+            #import ipdb; ipdb.set_trace()
+            if extended_item_name + '_delete_file' in post_data:
+                # Delete one file
+                try:
+                    #import ipdb; ipdb.set_trace()
+                    delete_filename = post_data[extended_item_name + '_delete_file']
+                    keep_filenames = post_data[extended_item_name] # files to keep
+                    proposal_id = post_data['proposal_id'] # files to keep
+                    item_data[item['name']] = keep_filenames
+                    
+                    document = ProposalDocument.objects.filter(proposal_id=proposal_id, input_name=extended_item_name, name=delete_filename)
+                    if document and document[0]._file and os.path.isfile(document[0]._file.path):
+						document.delete()
+						if not ProposalDocument.objects.filter(proposal_id=proposal_id, name=delete_filename):
+							# make sure there are no other sections with the same file attached
+                        	os.remove(document[0]._file.path)
+
+                except:
+                    #import ipdb; ipdb.set_trace()
+                    pass
+
+            elif extended_item_name in file_data:
                 #item_data[item['name']] = str(file_data.get(extended_item_name))
                 item_data[item['name']] = ','.join([i.name for i in file_data.getlist(extended_item_name)])
                 # TODO save the file here
@@ -313,20 +333,25 @@ def save_proponent_data(instance,request,viewset):
             viewset.perform_update(serializer)
             # Save Documents
             #for f in request.FILES:
-            section = request.FILES.keys()[0] if request.FILES.keys() else ''
-            for f in request.FILES.getlist(section):
-                try:
-                    #document = instance.documents.get(name=str(request.FILES[f]))
-                    document = instance.documents.get(input_name=f, name=f.name)
-                except ProposalDocument.DoesNotExist:
-                    document = instance.documents.get_or_create(input_name=f, name=f.name)[0]
-                #document.name = str(request.FILES[f])
-                document.name = f.name
-                if document._file and os.path.isfile(document._file.path):
-                    os.remove(document._file.path)
-                #document._file = request.FILES[f]
-                document._file = f
-                document.save()
+            #import ipdb; ipdb.set_trace()
+            #section = request.FILES.keys()[0] if request.FILES.keys() else ''
+
+            for section in request.FILES.keys():
+				for f in request.FILES.getlist(section):
+					try:
+						#document = instance.documents.get(name=str(request.FILES[f]))
+						#document = instance.documents.get(input_name=f, name=f.name)
+						document = instance.documents.get(input_name=section, name=f.name)
+					except ProposalDocument.DoesNotExist:
+						#document = instance.documents.get_or_create(input_name=f, name=f.name)[0]
+						document = instance.documents.get_or_create(input_name=section, name=f.name)[0]
+					#document.name = str(request.FILES[f])
+					document.name = f.name
+					if document._file and os.path.isfile(document._file.path):
+						os.remove(document._file.path)
+					#document._file = request.FILES[f]
+					document._file = f
+					document.save()
             # End Save Documents
         except:
             raise
