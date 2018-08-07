@@ -59,7 +59,7 @@ def send_assessment_reminder_email(select_group,assessment, request=None):
 
     
 def send_assessment_email_notification(select_group,assessment, request):
-    email_group=[]
+    
     application = assessment.application
     email = ApplicationAssessmentRequestedEmail()
     url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk': application.id}))
