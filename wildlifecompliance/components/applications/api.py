@@ -597,7 +597,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def assessment_details(self, request, *args, **kwargs):
         # queryset = self.get_queryset() 
         instance = self.get_object()
-        queryset =  Assessment.objects.filter(application=instance.id)
+        queryset =  Assessment.objects.filter(application=instance.id).exclude(status='recalled')
         serializer = AssessmentSerializer(queryset,many=True)
         return Response(serializer.data)
 

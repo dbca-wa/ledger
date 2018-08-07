@@ -166,7 +166,7 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="sendtoAssessor()">Send to Assessor</button><br/>
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Send to Assessor</button><br/>
                                                 </div>
                                             </div>
                                             <div class="row">
@@ -738,7 +738,7 @@ export default {
                   processing: true
             },
             contacts_table: null,
-            assessors_headers:["id","licence ctivity type","Assessor Group","Date Sent","Status","Action"],
+            assessors_headers:["Assessor Group","Date Sent","Status","Action"],
             assessors_options:{
                  language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -749,8 +749,6 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
-                    {data:'id'},
-                    {data:'licence_activity_type'},
                     {data:'assessor_group.name'},
                     {data:'date_last_reminded'},
                     {data:'status'},
@@ -887,8 +885,10 @@ export default {
                          'Sent',
                          'An email has been sent to assessor with the request to assess this Proposal',
                          'success'
-                    );
-                    
+                    ).then(() => {
+                                vm.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
                  
                 },(error)=>{
                     console.log(error);
@@ -910,7 +910,10 @@ export default {
                          'Sent',
                          'An email has been sent to assessor with the request to assess this Proposal',
                          'success'
-                    );
+                    ).then(() => {
+                                vm.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
                     
                  
                 },(error)=>{
@@ -934,7 +937,10 @@ export default {
                          'Success',
                          'An assessment has been recalled',
                          'success'
-                    );
+                    ).then(() => {
+                                vm.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
                     
                  
                 },(error)=>{
@@ -1072,7 +1078,7 @@ export default {
             this.$refs.ammendment_request.isModalOpen = true;
         },
 
-        sendtoAssessor:function(){
+        togglesendtoAssessor:function(){
             let vm=this;
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
