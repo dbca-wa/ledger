@@ -150,7 +150,7 @@ export default {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
-                    if (vm.application.application_fee > 0) {
+                    if (requiresCheckout) {
                         window.location.href = "/ledger/checkout/checkout/payment-details/";
                     } else {
                         vm.$router.push({
