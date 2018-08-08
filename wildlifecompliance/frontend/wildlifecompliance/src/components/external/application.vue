@@ -78,6 +78,7 @@ export default {
       amendment_request: [],
       application_readonly: true,
       pBody: 'pBody',
+      application_customer_status_onload: '',
     }
   },
   components: {
@@ -94,7 +95,7 @@ export default {
       return (this.application) ? `/api/application/${this.application.id}/draft.json` : '';
     },
     requiresCheckout: function() {
-        return this.application.application_fee > 0 && this.application.customer_status == 'Draft'
+        return this.application.application_fee > 0 && this.application_customer_status_onload == 'Draft'
     }
   },
   methods: {
@@ -135,7 +136,7 @@ export default {
         console.log(formData);
         let swal_title = 'Submit Application'
         let swal_text = 'Are you sure you want to submit this application?'
-        if (vm.application.application_fee > 0) {
+        if (vm.requiresCheckout) {
             swal_title = 'Submit Application and Checkout'
             swal_text = 'Are you sure you want to submit this application and proceed to checkout?'
         }
@@ -150,7 +151,7 @@ export default {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
-                    if (requiresCheckout) {
+                    if (vm.requiresCheckout) {
                         window.location.href = "/ledger/checkout/checkout/payment-details/";
                     } else {
                         vm.$router.push({
@@ -197,6 +198,7 @@ export default {
         err => {
           console.log(err);
         });
+        vm.application_customer_status_onload = vm.application.customer_status;
     }
     else {
       Vue.http.post('/api/application.json').then(res => {
