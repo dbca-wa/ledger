@@ -100,4 +100,4 @@ uwsgi.ini
 *-lock.json
 
 # wildlifecompliance static temporary while in dev
-wildlifecompliance/static/
+wildlifecompliance/static/wildlifecompliance_vue/

@@ -33,10 +33,10 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <span v-if="application.application_fee != 0"style="margin-right: 5px;"><strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong></span>
+                                    <span v-if="requiresCheckout"style="margin-right: 5px;"><strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong></span>
                                     <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="application.application_fee == 0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="!requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
                                     <input v-else type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                 </p>
                             </div>
@@ -92,6 +92,9 @@ export default {
     },
     application_form_url: function() {
       return (this.application) ? `/api/application/${this.application.id}/draft.json` : '';
+    },
+    requiresCheckout: function() {
+        return this.application.application_fee > 0 && this.application.customer_status == 'Draft'
     }
   },
   methods: {
