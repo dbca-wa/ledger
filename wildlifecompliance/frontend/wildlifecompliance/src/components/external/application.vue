@@ -33,10 +33,10 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <span v-if="application.application_fee != 0"style="margin-right: 5px;"><strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong></span>
+                                    <span v-if="requiresCheckout"style="margin-right: 5px;"><strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong></span>
                                     <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="application.application_fee == 0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="!requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
                                     <input v-else type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                 </p>
                             </div>
@@ -78,6 +78,7 @@ export default {
       amendment_request: [],
       application_readonly: true,
       pBody: 'pBody',
+      application_customer_status_onload: '',
     }
   },
   components: {
@@ -92,6 +93,9 @@ export default {
     },
     application_form_url: function() {
       return (this.application) ? `/api/application/${this.application.id}/draft.json` : '';
+    },
+    requiresCheckout: function() {
+        return this.application.application_fee > 0 && this.application_customer_status_onload == 'Draft'
     }
   },
   methods: {
@@ -132,7 +136,7 @@ export default {
         console.log(formData);
         let swal_title = 'Submit Application'
         let swal_text = 'Are you sure you want to submit this application?'
-        if (vm.application.application_fee > 0) {
+        if (vm.requiresCheckout) {
             swal_title = 'Submit Application and Checkout'
             swal_text = 'Are you sure you want to submit this application and proceed to checkout?'
         }
@@ -147,7 +151,7 @@ export default {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
-                    if (vm.application.application_fee > 0) {
+                    if (vm.requiresCheckout) {
                         window.location.href = "/ledger/checkout/checkout/payment-details/";
                     } else {
                         vm.$router.push({
@@ -189,6 +193,7 @@ export default {
                 console.log(err);
             });
 
+            vm.application_customer_status_onload = vm.application.customer_status;
           });
         },
         err => {

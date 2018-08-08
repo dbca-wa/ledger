@@ -262,14 +262,14 @@
                 <template v-if="isSendingToAssessor">
                     <div v-for="item in application.licence_type_data">
                             <ul class="nav nav-tabs" id="assessortabs">
-                                <li v-for="(item1,index) in item"><a v-if="item1.name" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                                <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
                             </ul>
                             
                         </div>         
                         
                     <div  class="tab-content">
                     <div v-for="item in application.licence_type_data">
-                            <div v-for="(item1,index) in item" v-if="item1.name" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
                                 <div class="col-md-12">
                                         <div class="panel panel-default">
                                             <div class="panel-heading">
@@ -307,7 +307,6 @@
                     <ul class="nav nav-tabs">
                         <li class="active"><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
                         <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
-                        <li><a data-toggle="tab" :href="'#'+sendToAssessorTab">Send to Assessor</a></li>
                     </ul>
                     <div class="tab-content">
                     <div :id="applicantTab" class="tab-pane fade in active">
@@ -589,55 +588,8 @@
                     
 
                 </div>
-                <div :id="sendToAssessorTab" class="tab-pane fade">
-                    <div class="col-md-12">
-                        <div>
-                        <div v-for="item in application.licence_type_data">
-                            <ul class="nav nav-tabs" id="assessortabs">
-                                <li v-for="(item1,index) in item"><a v-if="item1.name" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
-                            </ul>
-                            
-                        </div>          
-                        </div>
-                    </div>
-                    </div>
-
-            </div>
+                
         </div>
-        <div  class="tab-content">
-                <div v-for="item in application.licence_type_data">
-                        <div v-for="(item1,index) in item" v-if="item1.name" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
-                            <div class="col-md-12">
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                            <h3 class="panel-title">Send to Assessor
-                                                <a class="panelClicker" :href="`#${item1.id}`+assessorsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="assessorsBody">
-                                                    <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                                </a>
-                                            </h3>
-                                        </div>
-                                        <div class="panel-body panel-collapse collapse" :id="`${item1.id}`+assessorsBody">
-                                                    <div class="row">
-                                                       <div class="col-sm-offset-2 col-sm-8">
-                                                                <label class="control-label pull-left"  for="Name">Assessor Group</label>
-                                                                <select class="form-control" v-model="selectedAssessor">
-                                                                    <option v-for="assessor in assessorGroup" :id="assessor.id" 
-                                                                    :value="assessor" v-if="application.licence_type_data.id == assessor.licence_class">{{assessor.display_name}}</option>
-                                                                </select>
-                                                        </div> 
-                                                        <div class="col-sm-2">
-                                                            <a style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)"> send</a>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                    	<datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options" :dtHeaders="assessors_headers" />
-                                                    </div>
-                                        </div>
-                                    </div>
-                            </div>
-                        </div>
-           		</div>
-        </div> 
 
     </template>
         </div>
