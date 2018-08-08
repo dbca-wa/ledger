@@ -47,13 +47,13 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     else:
         raise Exception('Missing name in item %s' % item['label'])
 
-    #import ipdb; ipdb.set_trace()
+    import ipdb; ipdb.set_trace()
     if 'children' not in item:
         if item['type'] in ['checkbox' 'declaration']:
             #item_data[item['name']] = post_data[item['name']]
             item_data[item['name']] = extended_item_name in post_data
         elif item['type'] == 'file':
-            #import ipdb; ipdb.set_trace()
+            import ipdb; ipdb.set_trace()
             if extended_item_name + '_delete_file' in post_data:
                 # Delete one file
                 try:
@@ -65,10 +65,10 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
                     
                     document = ProposalDocument.objects.filter(proposal_id=proposal_id, input_name=extended_item_name, name=delete_filename)
                     if document and document[0]._file and os.path.isfile(document[0]._file.path):
-						document.delete()
-						if not ProposalDocument.objects.filter(proposal_id=proposal_id, name=delete_filename):
-							# make sure there are no other sections with the same file attached
+                        if not ProposalDocument.objects.filter(proposal_id=proposal_id, name=delete_filename):
+                            # make sure there are no other sections with the same file attached
                         	os.remove(document[0]._file.path)
+                        document[0].delete()
 
                 except:
                     #import ipdb; ipdb.set_trace()
@@ -80,8 +80,8 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
                 # TODO save the file here
             elif extended_item_name + '-existing' in post_data and len(post_data[extended_item_name + '-existing']) > 0:
                 item_data[item['name']] = post_data.get(extended_item_name + '-existing')
-            else:
-                item_data[item['name']] = ''
+            #else:
+            #    item_data[item['name']] = ''
         else:
             if extended_item_name in post_data:
                 if item['type'] == 'multi-select':

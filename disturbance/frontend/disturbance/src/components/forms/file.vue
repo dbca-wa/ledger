@@ -37,6 +37,8 @@
                     </p>
                     <input :name="name+'-existing'" type="hidden" :value="value"/>
                 </div>
+                <!--<span v-if="show_spinner"><i class="fa fa-circle-o-notch fa-spin fa-fw"></i></span>-->
+                <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 
@@ -93,7 +95,8 @@ export default {
         return {
             repeat:1,
             files:[],
-            showingComment: false
+            showingComment: false,
+            show_spinner: false
         }
     },
 
@@ -144,7 +147,7 @@ export default {
             }
 
             if (!this.isRepeatable) {
-				// reset value of 'Choose File' button
+				/* reset value of 'Choose File' button to null, for non-repeatable file upload buttons */
 				$(e.target).val('');
 			}
         },
@@ -168,6 +171,7 @@ export default {
 		*/
         delete_file: function (filename) {
             let vm = this;
+            vm.show_spinner = true;
 
             var file_names = [] /* file names of remaining */
             for (var idx in vm.files) { 
@@ -185,9 +189,17 @@ export default {
             formData.append(vm.name, file_names.join());
             formData.append(vm.name + '_' + 'delete_file', filename);
             formData.append('csrfmiddlewaretoken', vm.csrf_token);
-            vm.$http.post(vm.proposal_update_url,formData).then(function(){
-            	vm.files = vm.files.filter(function(item) { return item.name !== filename }); // pop filename from array
-			});
+            vm.$http.post(vm.proposal_update_url,formData)
+                .then(function(){
+                    vm.files = vm.files.filter(function(item) { return item.name !== filename }); // pop filename from array
+                    vm.show_spinner = false;
+                });
+
+            /*
+            vm.$http.post(vm.proposal_update_url,formData);
+            vm.files = vm.files.filter(function(item) { return item.name !== filename }); // pop filename from array
+            vm.show_spinner = false;
+            */
         }
 
     },
