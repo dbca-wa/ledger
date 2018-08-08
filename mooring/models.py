@@ -119,13 +119,13 @@ class MooringArea(models.Model):
 
     CAMPGROUND_PRICE_LEVEL_CHOICES = (
         (0, 'Mooring level'),
-#        (1, 'Mooringsite Class level'),
+        (1, 'Mooringsite Class level'),
 #        (2, 'Mooringsite level'),
     )
 
     SITE_TYPE_CHOICES = (
         (0, 'Bookable Per Site'),
-        #(1, 'Bookable Per Site Type'),
+       (1, 'Bookable Per Site Type'),
         #(2, 'Bookable Per Site Type (hide site number)'),
     )
 
@@ -1238,7 +1238,7 @@ class Booking(models.Model):
 
     def _generate_history(self,user=None):
         campsites = list(set([x.campsite.name for x in self.campsites.all()]))
-        vehicles = [{'rego':x.rego,'type':x.type,'entry_fee':x.entry_fee,'park_entry_fee':x.park_entry_fee} for x in self.regos.all()]
+        vessels = [{'rego':x.rego,'type':x.type,'entry_fee':x.entry_fee,'park_entry_fee':x.park_entry_fee} for x in self.regos.all()]
         BookingHistory.objects.create(
             booking = self,
             updated_by=user,
@@ -1249,7 +1249,7 @@ class Booking(models.Model):
             confirmation_sent = self.confirmation_sent,
             campground = self.mooringarea.name,
             campsites = campsites,
-            vehicles = vehicles,
+            vessels = vessels,
             invoice=self.active_invoice
         )
     
@@ -1309,7 +1309,7 @@ class Booking(models.Model):
                 payment_dict.append(data)
         else:
             pass
-
+        print payment_dict
         return payment_dict
 
 class BookingHistory(models.Model):
@@ -1322,7 +1322,7 @@ class BookingHistory(models.Model):
     confirmation_sent = models.BooleanField()
     campground = models.CharField(max_length=100)
     campsites = JSONField()
-    vehicles = JSONField()
+    vessels = JSONField()
     updated_by = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True)
     invoice=models.ForeignKey(Invoice,null=True,blank=True)
 
@@ -1353,9 +1353,10 @@ class BookingInvoice(models.Model):
 class BookingVehicleRego(models.Model):
     """docstring for BookingVehicleRego."""
     VEHICLE_CHOICES = (
-        ('vehicle','Vehicle'),
-        ('motorbike','Motorcycle'),
-        ('concession','Vehicle (concession)')
+#        ('vehicle','Vehicle'),
+        ('vessel','Vessel'),
+#        ('motorbike','Motorcycle'),
+#        ('concession','Vehicle (concession)')
     )
 
     booking = models.ForeignKey(Booking, related_name = "regos")

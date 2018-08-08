@@ -1355,6 +1355,7 @@ def create_booking(request, *args, **kwargs):
 @require_http_methods(['GET'])
 def get_confirmation(request, *args, **kwargs):
     # fetch booking for ID
+    print "get_confirmation"
     booking_id = kwargs.get('booking_id', None)
     if (booking_id is None):
         return HttpResponse('Booking ID not specified', status=400)
@@ -1649,7 +1650,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 join mooring_district on mooring_marinepark.district_id = mooring_district.id\
                 full outer join accounts_emailuser on mooring_booking.customer_id = accounts_emailuser.id\
                 join mooring_region on mooring_district.region_id = mooring_region.id\
-                left outer join mooring_mooringareagroup_campgrounds cg on cg.mooringarea_id = mooring_booking.mooringarea_id\
+                left outer join mooring_mooringareagroup_moorings cg on cg.mooringarea_id = mooring_booking.mooringarea_id\
                 full outer join mooring_mooringareagroup_members cm on cm.mooringareagroup_id = cg.mooringareagroup_id'
 
             #sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
@@ -1870,17 +1871,20 @@ class BookingViewSet(viewsets.ModelViewSet):
             start_date = datetime.strptime(request.data['arrival'],'%d/%m/%Y').date()
             end_date = datetime.strptime(request.data['departure'],'%d/%m/%Y').date()
             guests = request.data['guests']
-
+            print "UPDATE"
+            print request.data
+            print instance
             booking_details = {
                 'campsites':request.data['campsites'],
                 'start_date' : start_date,
-                'campground' : request.data['campground'],
+                'mooringarea' : request.data['mooringarea'],
                 'end_date' : end_date,
                 'num_adult' : guests['adults'],
                 'num_concession' : guests['concession'],
                 'num_child' : guests['children'],
                 'num_infant' : guests['infants'],
             }
+            
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)
 

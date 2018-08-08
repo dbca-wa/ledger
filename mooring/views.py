@@ -153,6 +153,7 @@ class MakeBookingsView(TemplateView):
             'concession': Decimal('0.00'),
             'child': Decimal('0.00'),
             'infant': Decimal('0.00'),
+            'vessel': entry_fees.vessel if entry_fees else Decimal('0.00'),
             'vehicle': entry_fees.vehicle if entry_fees else Decimal('0.00'),
             'vehicle_conc': entry_fees.concession if entry_fees else Decimal('0.00'),
             'motorcycle': entry_fees.motorbike if entry_fees else Decimal('0.00')
@@ -231,7 +232,7 @@ class MakeBookingsView(TemplateView):
         booking.details['num_infant'] = form.cleaned_data.get('num_infant')
 
         # update vehicle registrations from form
-        VEHICLE_CHOICES = {'0': 'vehicle', '1': 'concession', '2': 'motorbike'}
+        VEHICLE_CHOICES = {'0': 'vessel', '1': 'concession', '2': 'motorbike'}
         BookingVehicleRego.objects.filter(booking=booking).delete()
         for vehicle in vehicles:
             BookingVehicleRego.objects.create(
