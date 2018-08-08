@@ -193,12 +193,12 @@ export default {
                 console.log(err);
             });
 
+            vm.application_customer_status_onload = vm.application.customer_status;
           });
         },
         err => {
           console.log(err);
         });
-        vm.application_customer_status_onload = vm.application.customer_status;
     }
     else {
       Vue.http.post('/api/application.json').then(res => {
