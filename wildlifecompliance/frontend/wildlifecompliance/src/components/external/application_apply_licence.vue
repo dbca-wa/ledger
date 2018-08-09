@@ -180,6 +180,7 @@ export default {
         // clear out licence class
         vm.licence_class = {
             id:null,
+            name:null,
             activity_type:[]
         }
         let index=0
@@ -192,6 +193,7 @@ export default {
             // loop through level 1 and find selected
             if(vm.licence_classes[i].checked){
                 vm.licence_class.id=vm.licence_classes[i].id
+                vm.licence_class.name=vm.licence_classes[i].short_name
                 vm.licence_type_name += vm.licence_classes[i].name + ' - '
                 // loop through level 2 and find selected
                 for(var j=0,_len1=vm.licence_classes[i].activity_type.length;j<_len1;j++){
@@ -202,7 +204,7 @@ export default {
                             vm.licence_type_name += ', '
                         }
                         // console.log("activity type selected",vm.licence_classes[i].activity_type[j].id)
-                        vm.licence_class.activity_type.push({id:vm.licence_classes[i].activity_type[j].id})
+                        vm.licence_class.activity_type.push({id:vm.licence_classes[i].activity_type[j].id,name:vm.licence_classes[i].activity_type[j].short_name})
                         vm.licence_class.activity_type[index].activity=[]
                         vm.licence_type_name += vm.licence_classes[i].activity_type[j].short_name + ' ('
                         // loop through level 3 and find selected
@@ -211,7 +213,7 @@ export default {
                                 if(count_activities!=0 && count_activities<_len2){
                                     vm.licence_type_name += ', '
                                 }
-                            	vm.licence_class.activity_type[index].activity.push({id:vm.licence_classes[i].activity_type[j].activity[k].id})
+                            	vm.licence_class.activity_type[index].activity.push({id:vm.licence_classes[i].activity_type[j].activity[k].id,name:vm.licence_classes[i].activity_type[j].activity[k].name})
                                 vm.licence_type_name += vm.licence_classes[i].activity_type[j].activity[k].name
                                 count_activities++;
                         	}
