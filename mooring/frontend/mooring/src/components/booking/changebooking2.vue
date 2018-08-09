@@ -37,7 +37,7 @@
                                                 <label class="control-label pull-left required"  for="Dates">Mooring: </label>
                                             </div>
                                             <div class="col-md-8">
-                                                <select @change="updateCampground" class="form-control" name="campground" v-model="booking.mooringarea" readonly="true">
+                                                <select @change="updateCampground" class="form-control" name="campground" v-model="booking.mooringarea" >
                                                     <option v-for="c in onlineCampgrounds" :value="c.id">{{c.name}}</option>
                                                 </select>
                                             </div>
@@ -219,6 +219,7 @@ export default {
             loading: [],
             guestsText: "",
             campground: null,
+            mooringarea: null,
             guestsPicker: [{
                     id: "adults",
                     name: "Adults (no concession)",
@@ -250,7 +251,7 @@ export default {
                     name: "Vehicle",
                     amount: 0,
                     price: 0,
-                    description: "Vehicle Registration",
+                    description: "Registration",
                     rego: "",
                     entry_fee: true
                 },
@@ -379,6 +380,7 @@ export default {
             let vm = this;
             console.log('SETTING CAMPGROUND');
             vm.campground = vm.booking.mooringarea ? vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.mooringarea)) : null;
+            vm.mooringarea = vm.booking.mooringarea ? vm.campgrounds.find(c => parseInt(c.id) === parseInt(vm.booking.mooringarea)) : null;
             console.log('AM I'+vm.campground);
             vm.fetchSites();
         },
@@ -720,7 +722,8 @@ export default {
                 booking.departure = vm.booking.departure;
                 booking.guests = vm.booking.guests;
                 booking.campsites = [vm.selected_campsite];
-                booking.campground = vm.booking.campground
+                booking.campground = vm.booking.campground; 
+                booking.mooringarea = vm.booking.mooringarea;
                 // Hide the alert
                 vm.$store.dispatch("updateAlert", {
                     visible: false,

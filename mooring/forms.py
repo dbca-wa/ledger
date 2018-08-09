@@ -6,14 +6,14 @@ class LoginForm(forms.Form):
     email = forms.EmailField(max_length=254)
 
 VEHICLE_TYPES = (
-    ('0', 'Vehicle'),
-    ('1', 'Vehicle (concession)'),
-    ('2', 'Motorcycle')
+    ('0', 'Vessel'),
+#    ('1', 'Vehicle (concession)'),
+#    ('2', 'Motorcycle')
 )
 
 class VehicleInfoForm(forms.Form):
-    vehicle_rego = forms.CharField(label="Vehicle Registration", widget=forms.TextInput(attrs={'required':True}))
-    vehicle_type = forms.ChoiceField(label="Vehicle Type", choices=VEHICLE_TYPES)
+    vehicle_rego = forms.CharField(label="Vessel Registration", widget=forms.TextInput(attrs={'required':True}))
+    vehicle_type = forms.ChoiceField(label="Vessel Type", choices=VEHICLE_TYPES)
     entry_fee = forms.BooleanField(required=False, label="Entry fee")
 
 VehicleInfoFormset = forms.formset_factory(VehicleInfoForm, extra=1, max_num=8)

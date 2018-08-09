@@ -507,6 +507,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                 raise Exception('A marine park entry Oracle code has not been set for the park that the mooringarea belongs to.')
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
+            'vessel' : vehicles.filter(entry_fee=True, type='vessel'),
             'vehicle': vehicles.filter(entry_fee=True, type='vehicle'),
             'motorbike': vehicles.filter(entry_fee=True, type='motorbike'),
             'concession': vehicles.filter(entry_fee=True, type='concession')
@@ -635,16 +636,15 @@ def update_booking(request,old_booking,booking_details):
                 departure =booking_details['end_date'],
                 details = new_details,
                 customer=old_booking.customer,
-                campground = MooringArea.objects.get(id=booking_details['campground']))
+                mooringarea = MooringArea.objects.get(id=booking_details['mooringarea']))
             # Check that the departure is not less than the arrival
             if booking.departure < booking.arrival:
                 raise Exception('The departure date cannot be before the arrival date')
             today = datetime.now().date()
             if today > old_booking.departure:
                 raise ValidationError('You cannot change a booking past the departure date.')
-
             # Check if it is the same campground
-            if old_booking.campground.id == booking.campground.id:
+            if old_booking.mooringarea.id == booking.mooringarea.id:
                 same_campground = True
             # Check if dates are the same
             if (old_booking.arrival == booking.arrival) and (old_booking.departure == booking.departure):
@@ -661,7 +661,9 @@ def update_booking(request,old_booking,booking_details):
 
             # Add history
             new_history = old_booking._generate_history(user=request.user)
-
+            print "BOOKING"
+#            print old_booking._generate_history()
+            print new_history
             if request.data.get('entryFees').get('regos'):
                 new_regos = request.data['entryFees'].pop('regos')
                 sent_regos = [r['rego'] for r in new_regos]
@@ -704,7 +706,8 @@ def update_booking(request,old_booking,booking_details):
                     current_regos.delete()
 
             if same_campsites and same_dates and same_vehicles and same_details:
-                new_history.delete()
+                if new_history is not None:
+                   new_history.delete()
                 return old_booking
 
             # Check difference of dates in booking
@@ -932,5 +935,5 @@ def daterange(start_date, end_date):
 
 
 def oracle_integration(date,override):
-    system = '0019'
+    system = '0516'
     oracle_codes = oracle_parser(date,system,'Marinastay',override=override)

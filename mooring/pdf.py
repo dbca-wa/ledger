@@ -129,12 +129,12 @@ def create_confirmation(confirmation_buffer, booking):
     
 
     table_data = []
-    table_data.append([Paragraph('Campground', styles['BoldLeft']), Paragraph('{}, {}'.format(booking.mooringarea.name, booking.mooringarea.park.name), styles['BoldLeft'])])
+    table_data.append([Paragraph('Mooring', styles['BoldLeft']), Paragraph('{}, {}'.format(booking.mooringarea.name, booking.mooringarea.park.name), styles['BoldLeft'])])
     campsite = u'{}'.format(booking.first_campsite.type) if booking.mooringarea.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
-    table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
+#   table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
     
     table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph(booking.stay_dates, styles['Left'])])
-    table_data.append([Paragraph('Number of guests', styles['BoldLeft']), Paragraph(booking.stay_guests, styles['Left'])])
+#    table_data.append([Paragraph('Number of guests', styles['BoldLeft']), Paragraph(booking.stay_guests, styles['Left'])])
     table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} {} ({})'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''), booking.customer.email if booking.customer else None), styles['Left'])])
     table_data.append([Paragraph('Booking confirmation number', styles['BoldLeft']), Paragraph(booking.confirmation_number, styles['Left'])])
 
@@ -152,9 +152,9 @@ def create_confirmation(confirmation_buffer, booking):
             vehicle_data.append(data)
             
         vehicles = Table(vehicle_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
-        table_data.append([Paragraph('Vehicles', styles['BoldLeft']), vehicles])
+        table_data.append([Paragraph('Vessel', styles['BoldLeft']), vehicles])
     else:
-        table_data.append([Paragraph('Vehicles', styles['BoldLeft']), Paragraph('No vehicles', styles['Left'])])
+        table_data.append([Paragraph('Vessel', styles['BoldLeft']), Paragraph('No vessel', styles['Left'])])
         
     if booking.mooringarea.additional_info:        
         table_data.append([Paragraph('Additional confirmation information', styles['BoldLeft']), Paragraph(booking.mooringarea.additional_info, styles['Left'])])
