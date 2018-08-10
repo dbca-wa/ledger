@@ -182,10 +182,14 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     def get_activity_type_names(self, obj):
         activity_type=[]
         for item in obj.licence_type_data["activity_type"]:
-            activity_type.append( item["name"])
-        return activity_type
-        # return obj.licence_type_data["id"]
+           if "short_name" in item:
+            activity_type.append(item["short_name"])
+           else:
+            activity_type.append(item["name"])
 
+        return activity_type
+
+       
 class DTApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)

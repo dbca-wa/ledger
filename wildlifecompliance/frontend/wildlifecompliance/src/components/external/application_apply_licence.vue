@@ -194,6 +194,7 @@ export default {
             if(vm.licence_classes[i].checked){
                 vm.licence_class.id=vm.licence_classes[i].id
                 vm.licence_class.name=vm.licence_classes[i].short_name
+                vm.licence_class.short_name=vm.licence_classes[i].short_name
                 vm.licence_type_name += vm.licence_classes[i].name + ' - '
                 // loop through level 2 and find selected
                 for(var j=0,_len1=vm.licence_classes[i].activity_type.length;j<_len1;j++){
@@ -204,7 +205,7 @@ export default {
                             vm.licence_type_name += ', '
                         }
                         // console.log("activity type selected",vm.licence_classes[i].activity_type[j].id)
-                        vm.licence_class.activity_type.push({id:vm.licence_classes[i].activity_type[j].id,name:vm.licence_classes[i].activity_type[j].short_name})
+                        vm.licence_class.activity_type.push({id:vm.licence_classes[i].activity_type[j].id,name:vm.licence_classes[i].activity_type[j].short_name,short_name:vm.licence_classes[i].activity_type[j].short_name})
                         vm.licence_class.activity_type[index].activity=[]
                         vm.licence_type_name += vm.licence_classes[i].activity_type[j].short_name + ' ('
                         // loop through level 3 and find selected
@@ -232,6 +233,7 @@ export default {
         console.log(' ---- application apply licence createApplication() ---- ');
         console.log(vm.application_fee)
         console.log(data.licence_type_name);
+        console.log(data.licence_class)
         console.log(' ==== licence class data ==== ')
         console.log(JSON.stringify(data));
         vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
