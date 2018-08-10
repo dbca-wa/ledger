@@ -32,13 +32,6 @@ def get_department_user(email):
 
 
 def checkout(request, application, lines=[], invoice_text=None, vouchers=[], internal=False):
-    lines.append({
-                'ledger_description': '{}'.format(application.licence_type_name),
-                'quantity': 1,
-                'price_incl_tax': str(application.application_fee),
-                'price_excl_tax': str(calculate_excl_gst(application.application_fee)),
-                'oracle_code': ''
-    })
     basket_params = {
         'products': lines,
         'vouchers': vouchers,
@@ -52,19 +45,10 @@ def checkout(request, application, lines=[], invoice_text=None, vouchers=[], int
         'fallback_url': request.build_absolute_uri('/'),
         'return_url': request.build_absolute_uri(reverse('external-application-success-invoice')),
         'return_preload_url': request.build_absolute_uri('/'),
-        # 'fallback_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
-        # 'return_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
-        # 'return_preload_url': 'https://wildlifecompliance-uat.dpaw.wa.gov.au',
         'force_redirect': True,
         'proxy': True if internal else False,
         'invoice_text': invoice_text,
     }
-    # if not internal:
-    #     checkout_params['check_url'] = request.build_absolute_uri(
-    #         '/api/applications/{}/application_checkout_status.json'.format(application.id))
-    # if internal or request.user.is_anonymous():
-    #     checkout_params['basket_owner'] = application.submitter.id
-    # checkout_params['check_url'] = 'http://google.com/'
     print(' -------- main utils > checkout > checkout_params ---------- ')
     print(checkout_params)
     create_checkout_session(request, checkout_params)
