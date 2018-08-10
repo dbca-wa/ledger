@@ -534,7 +534,7 @@
                                     <div class="col-sm-4">
                                         <button v-if="isIdNotChecked" class="btn btn-primary" @click.prevent="updateIdRequest()">Request Update</button>
                                         <button v-if="isIdCheckUpdated" disabled class="btn btn-light">Request updated</button>
-                                        <button v-if="isIdCheckAccepted || isIdCheckRequested"  class="btn btn-primary">Reset</button>
+                                        <button v-if="isIdCheckAccepted || isIdCheckRequested"  class="btn btn-primary" @click.prevent="resetIdRequest()">Reset</button>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -955,6 +955,28 @@ export default {
             }).then((result) => {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_id_check')))
+                    .then((response) => {
+                        console.log(response);
+                        vm.application = response.body;
+                    }, (error) => {
+                        console.log(error);
+                    });
+                }
+            },(error) => {
+
+            });
+        },
+        resetIdRequest: function() {
+            let vm = this;
+            swal({
+                title: "Reset ID Check",
+                text: "Are you sure you want to reset this ID Check?",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Accept'
+            }).then((result) => {
+                if (result.value) {
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/reset_id_check')))
                     .then((response) => {
                         console.log(response);
                         vm.application = response.body;
