@@ -101,6 +101,40 @@ class ProposalViewSet(viewsets.ModelViewSet):
             return queryset
         return Proposal.objects.none()
 
+    @detail_route(methods=['GET',])
+    def get_documents(self, request, *args, **kwargs):
+        """ eg. /api/proposal/293/get_documents/?input_name=1 """
+        try:
+            instance = self.get_object()
+            if 'input_name' in request.GET:
+                return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=request.GET.get('input_name'))] )
+            return Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.all()] )
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def delete_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            if 'document_id' in request.GET:
+                instance.documents.get(id=document_id).delete()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+            #return redirect(reverse('external'))
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 
     def list(self, request, *args, **kwargs):

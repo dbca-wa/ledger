@@ -37,6 +37,13 @@
                     </p>
                     <input :name="name+'-existing'" type="hidden" :value="value"/>
                 </div>
+                
+                <div v-for="v in documents">
+                    <p>
+                        Doc: <a href="" target="_blank">{{v.file}}</a> &nbsp;
+                    </p>
+                </div>
+
                 <!--<span v-if="show_spinner"><i class="fa fa-circle-o-notch fa-spin fa-fw"></i></span>-->
                 <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
             </div>
@@ -89,6 +96,7 @@ export default {
         isRepeatable:Boolean,
         readonly:Boolean,
         docsUrl: String,
+        document_id: String,
     },
     components: {Comment, HelpText},
     data:function(){
@@ -96,7 +104,8 @@ export default {
             repeat:1,
             files:[],
             showingComment: false,
-            show_spinner: false
+            show_spinner: false,
+            documents:[],
         }
     },
 
@@ -112,7 +121,15 @@ export default {
         },
         proposal_update_url: function() {
           return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/update_files.json` : '';
+        },
+        proposal_section_docs: function() {
+          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/get_documents?input_name=${this.name}` : '';
+        },
+        proposal_delete_doc: function() {
+          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/delete_document?document_id=${this.document_id}` : '';
         }
+
+
     },
 
     methods:{
@@ -200,11 +217,23 @@ export default {
             vm.files = vm.files.filter(function(item) { return item.name !== filename }); // pop filename from array
             vm.show_spinner = false;
             */
+        },
+
+        get_documents: function() {
+            let vm = this;
+            vm.$http.get(vm.proposal_section_docs)
+                .then(res=>{
+                    vm.documents = res.body;
+                    console.log(vm.documents);
+                },err=>{
+                });
+
         }
 
     },
     mounted:function () {
         let vm = this;
+        vm.documents = vm.get_documents();
         if (vm.value) {
             //vm.files = (Array.isArray(vm.value))? vm.value : [vm.value];
             if (Array.isArray(vm.value)) {
