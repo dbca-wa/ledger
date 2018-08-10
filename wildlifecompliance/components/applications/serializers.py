@@ -113,6 +113,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     documents_url = serializers.SerializerMethodField()
     character_check_status = serializers.SerializerMethodField(read_only=True)
     application_fee = serializers.DecimalField(max_digits=8, decimal_places=2, coerce_to_string=False)
+    class_name = serializers.SerializerMethodField(read_only=True)
+    activity_type_names = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -144,7 +146,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'documents_url',
                 'id_check_status',
                 'character_check_status',
-                'application_fee'
+                'application_fee',
+                'class_name',
+                'activity_type_names'
                 )
         read_only_fields=('documents',)
     
@@ -169,6 +173,23 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     def get_customer_status(self,obj):
         return obj.get_customer_status_display()
 
+    def get_class_name(self, obj):
+        for item in obj.licence_type_data:
+            if item == "name":
+                return obj.licence_type_data["name"]
+        return obj.licence_type_data["id"]
+
+    def get_activity_type_names(self, obj):
+        activity_type=[]
+        for item in obj.licence_type_data["activity_type"]:
+           if "short_name" in item:
+            activity_type.append(item["short_name"])
+           else:
+            activity_type.append(item["name"])
+
+        return activity_type
+
+       
 class DTApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
