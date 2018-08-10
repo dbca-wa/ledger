@@ -160,7 +160,7 @@
                         <form class="form-horizontal" action="index.html" method="post">
                              <div class="col-sm-6 row">
                                 <div class="form-group">
-                                    <label for="" class="col-sm-6 control-label"> Organistaion User Pin Code 1:</label>
+                                    <label for="" class="col-sm-6 control-label"> Organisation User Pin Code 1:</label>
                                     <div class="col-sm-6">
                                         <label class="control-label">{{org.pins.three}}</label>
                                     </div>
