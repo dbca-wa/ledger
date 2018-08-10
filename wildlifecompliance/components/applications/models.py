@@ -517,8 +517,13 @@ class Application(RevisionedMixin):
             self.save()
             # Create a log entry for the application
             self.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
-            # Create a log entry for the organisation
-            self.applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
+            # Create a log entry for the applicant (submitter, organisation or proxy)
+            if self.org_applicant:
+                self.org_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            elif self.proxy_applicant:
+                self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+            else:
+                self.applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
 
 
     def accept_character_check(self,request):

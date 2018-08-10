@@ -17,7 +17,7 @@
                             <div class="col-sm-12">
                                 <div class="row">
                                 <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
-                                <div class="pull-right"><strong>Estimated application fee: {{application_fee | toCurrency}}</strong></div>
+                                <div class="pull-right" style="font-size: 18px;"><strong>Estimated fee: {{application_fee | toCurrency}}</strong></div>
                                 </div>
 
                                 
@@ -180,6 +180,7 @@ export default {
         // clear out licence class
         vm.licence_class = {
             id:null,
+            name:null,
             activity_type:[]
         }
         let index=0
@@ -192,6 +193,8 @@ export default {
             // loop through level 1 and find selected
             if(vm.licence_classes[i].checked){
                 vm.licence_class.id=vm.licence_classes[i].id
+                vm.licence_class.name=vm.licence_classes[i].short_name
+                vm.licence_class.short_name=vm.licence_classes[i].short_name
                 vm.licence_type_name += vm.licence_classes[i].name + ' - '
                 // loop through level 2 and find selected
                 for(var j=0,_len1=vm.licence_classes[i].activity_type.length;j<_len1;j++){
@@ -202,7 +205,7 @@ export default {
                             vm.licence_type_name += ', '
                         }
                         // console.log("activity type selected",vm.licence_classes[i].activity_type[j].id)
-                        vm.licence_class.activity_type.push({id:vm.licence_classes[i].activity_type[j].id})
+                        vm.licence_class.activity_type.push({id:vm.licence_classes[i].activity_type[j].id,name:vm.licence_classes[i].activity_type[j].short_name,short_name:vm.licence_classes[i].activity_type[j].short_name})
                         vm.licence_class.activity_type[index].activity=[]
                         vm.licence_type_name += vm.licence_classes[i].activity_type[j].short_name + ' ('
                         // loop through level 3 and find selected
@@ -211,7 +214,7 @@ export default {
                                 if(count_activities!=0 && count_activities<_len2){
                                     vm.licence_type_name += ', '
                                 }
-                            	vm.licence_class.activity_type[index].activity.push({id:vm.licence_classes[i].activity_type[j].activity[k].id})
+                            	vm.licence_class.activity_type[index].activity.push({id:vm.licence_classes[i].activity_type[j].activity[k].id,name:vm.licence_classes[i].activity_type[j].activity[k].name})
                                 vm.licence_type_name += vm.licence_classes[i].activity_type[j].activity[k].name
                                 count_activities++;
                         	}
@@ -230,6 +233,7 @@ export default {
         console.log(' ---- application apply licence createApplication() ---- ');
         console.log(vm.application_fee)
         console.log(data.licence_type_name);
+        console.log(data.licence_class)
         console.log(' ==== licence class data ==== ')
         console.log(JSON.stringify(data));
         vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {

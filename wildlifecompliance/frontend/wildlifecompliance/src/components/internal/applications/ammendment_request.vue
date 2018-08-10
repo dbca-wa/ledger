@@ -103,14 +103,25 @@ export default {
             }
         },
         cancel:function () {
-            let vm = this;
-            vm.close();
+            // let vm = this;
+            // vm.close();
+            this.isModalOpen = false;
+            this.amendment = {
+                reason: '',
+                application: this.application_id,
+                text:null,
+                licence_activity_type:null,
+                activity_type_name:null
+            };
         },
         close:function () {
             this.isModalOpen = false;
             this.amendment = {
                 reason: '',
-                application: this.application_id
+                application: this.application_id,
+                text:null,
+                licence_activity_type:null,
+                activity_type_name:null
             };
             this.errors = false;
             $(this.$refs.reason).val(null).trigger('change');
@@ -126,6 +137,8 @@ export default {
             },(error) => {
                 console.log(error);
             } );
+            console.log('this is amendment object')
+            console.log(vm.amendment)
         },
         sendData:function(){
             let vm = this;
