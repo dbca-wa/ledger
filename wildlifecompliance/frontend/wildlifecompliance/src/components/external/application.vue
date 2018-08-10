@@ -33,7 +33,7 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <span v-if="requiresCheckout"style="margin-right: 5px;"><strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong></span>
+                                    <span v-if="requiresCheckout"style="margin-right: 5px; font-size: 18px;"><strong>Estimated fee: {{application.application_fee | toCurrency}}</strong></span>
                                     <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                                     <input v-if="!requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>

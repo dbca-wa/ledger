@@ -17,7 +17,7 @@
                             <div class="col-sm-12">
                                 <div class="row">
                                 <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
-                                <div class="pull-right"><strong>Estimated application fee: {{application_fee | toCurrency}}</strong></div>
+                                <div class="pull-right" style="font-size: 18px;"><strong>Estimated fee: {{application_fee | toCurrency}}</strong></div>
                                 </div>
 
                                 
