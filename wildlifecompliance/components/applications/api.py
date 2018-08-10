@@ -27,6 +27,7 @@ from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser, Address 
 from ledger.address.models import Country
+from ledger.checkout.utils import calculate_excl_gst
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -225,13 +226,22 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             # raise Exception
             # send to checkout if application_fee > 0
             if instance.application_fee > 0:
+                product_lines = []
                 application_submission = u'Application submitted by {} confirmation WC{}'.format(
                     u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
                 print(' --- set session application --- ')
                 print(request.session)
                 set_session_application(request.session, instance)
                 print(request.session)
-                checkout_result = checkout(request, instance, invoice_text=application_submission)
+                product_lines.append({
+                    'ledger_description': '{}'.format(instance.licence_type_name),
+                    'quantity': 1,
+                    'price_incl_tax': str(instance.application_fee),
+                    'price_excl_tax': str(calculate_excl_gst(instance.application_fee)),
+                    'oracle_code': ''
+                })
+                checkout_result = checkout(request, instance, lines=product_lines,
+                                                            invoice_text=application_submission)
                 print(' ---- checkout_result ---- ')
                 print(checkout_result)
             # return checkout_result
@@ -255,6 +265,24 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.accept_id_check(request)
+            serializer = InternalApplicationSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    
+    @detail_route(methods=['POST',])
+    def reset_id_check(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.reset_id_check(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 
         except serializers.ValidationError:
