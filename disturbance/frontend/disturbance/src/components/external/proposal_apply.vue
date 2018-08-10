@@ -15,7 +15,7 @@
                         <div class="panel-body collapse in" :id="pBody">
 
                             <div class="col-sm-12">
-                                <div class="form-group">
+                                <div class="form-group" v-if="!isLoading">
                                     <div v-if="profile.disturbance_organisations.length > 0">
                                         <div v-for="org in profile.disturbance_organisations" class="radio">
                                             <label>
@@ -577,16 +577,21 @@ export default {
     vm.form = document.forms.new_proposal;
   },
   beforeRouteEnter: function(to, from, next) {
+
     let initialisers = [
         utils.fetchProfile(),
+        
         //utils.fetchProposal(to.params.proposal_id)
     ]
     next(vm => {
+        vm.loading.push('fetching profile')
         Promise.all(initialisers).then(data => {
             vm.profile = data[0];
             //vm.proposal = data[1];
+            vm.loading.splice('fetching profile', 1)
         })
     })
+    
   }
 }
 </script>
