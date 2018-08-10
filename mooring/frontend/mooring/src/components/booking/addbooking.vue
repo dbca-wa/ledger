@@ -352,7 +352,7 @@ export default {
             guestsPicker:[
                 {
                     id:"adult",
-                    name:"iiiiij Adults (no concession)",
+                    name:"Adults (no concession)",
                     amount:2,
                     description: ""
                 },

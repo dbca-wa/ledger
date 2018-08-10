@@ -16,6 +16,7 @@ class MarinaAdmin(admin.GeoModelAdmin):
     list_filter = ('district',)
     search_fields = ('name',)
     openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
+    exclude = ('ratis_id',)
 
 @admin.register(models.MooringArea)
 class MooringAreaAdmin(admin.GeoModelAdmin):
@@ -130,8 +131,15 @@ class Region(admin.GeoModelAdmin):
     search_fields = ('name',)
 #    list_filter = ('mooring_type','site_type')
     openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
+    exclude = ('ratis_id',)
 
+@admin.register(models.District)
+class District(admin.ModelAdmin):
+    list_display = ('name',)
+    ordering = ('name',)
+    exclude = ('ratis_id',)
+    search_fields = ('name',)
 admin.site.register(models.Rate)
 #admin.site.register(models.Region)
-admin.site.register(models.District)
+#admin.site.register(models.District)
 admin.site.register(models.PromoArea)

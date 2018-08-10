@@ -1618,7 +1618,7 @@ class MooringsiteClassViewSet(viewsets.ModelViewSet):
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
-
+    
     def list(self, request, *args, **kwargs):
         from django.db import connection, transaction
         try:
@@ -1667,7 +1667,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             sqlParams['user'] = request.user.id
 
             if campground :
-                sqlMooringArea = ' mooring_campground.id = %(campground)s'
+                sqlMooringArea = ' mooring_mooringarea.id = %(campground)s'
                 sql = sql + " and "+ sqlMooringArea
                 sqlCount = sqlCount + " and " +sqlMooringArea
                 sqlParams['campground'] = campground
@@ -1694,7 +1694,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             sql += ' and mooring_booking.booking_type <> 3'
             sqlCount += ' and mooring_booking.booking_type <> 3'
             if search:
-                sqlsearch = ' lower(mooring_campground.name) LIKE lower(%(wildSearch)s)\
+                sqlsearch = ' lower(mooring_mooringarea.name) LIKE lower(%(wildSearch)s)\
                 or lower(mooring_region.name) LIKE lower(%(wildSearch)s)\
                 or lower(mooring_booking.details->>\'first_name\') LIKE lower(%(wildSearch)s)\
                 or lower(mooring_booking.details->>\'last_name\') LIKE lower(%(wildSearch)s)\
@@ -1786,7 +1786,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                                 clean_data.append(bk)
                 else:
                     clean_data.append(bk)
-            
+            print "EXIT"  
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
                 ('recordsFiltered',recordsFiltered),

@@ -153,7 +153,7 @@ export default {
                     },
                     {
                         responsivePriority: 3,
-                        targets: 8
+                        targets: 7
                     }
                 ],
                 columns:[
@@ -192,20 +192,20 @@ export default {
                             return full.status != 'Canceled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
                         }
                     },
-                    {
-                        data:"campground_site_type",
-                        mRender:function (data,type,full) {
-                            if (data){
-                                var max_length = 15;
-                                var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
-                                var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
-                                return column.replace('__NAME__', data);
-                            }
-                            return '';
-                        },
-                        orderable:false,
-                        searchable:false
-                    },
+//                    {
+//                        data:"campground_site_type",
+//                        mRender:function (data,type,full) {
+//                            if (data){
+//                                var max_length = 15;
+//                                var name = (data.length > max_length) ? data.substring(0,max_length-1)+'...' : data;
+//                                var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
+//                                return column.replace('__NAME__', data);
+//                            }
+//                            return '';
+//                        },
+//                        orderable:false,
+//                        searchable:false
+//                   },
                     {
                         data:"status",
                         orderable:false,
@@ -275,7 +275,7 @@ export default {
                     },
                 ]
             },
-            dtHeaders:["Mooring","Region","Person","Confirmation #"," Mooring Site(Type)","Status","From","To","Action"],
+            dtHeaders:["Mooring","Region","Person","Confirmation #","Status","From","To","Action"],
             dateFromPicker:null,
             dateToPicker:null,
             datepickerOptions:{
@@ -616,7 +616,7 @@ export default {
                 var csv = json2csv({ data:bookings, fields: fields });
                 var a = document.createElement("a"),
                 file = new Blob([csv], {type: 'text/csv'});
-                var filterCampground = (vm.filterCampground == 'All') ? "All Campgrounds " : $('#filterCampground')[0].selectedOptions[0].text;
+                var filterCampground = (vm.filterCampground == 'All') ? "All Moorings " : $('#filterCampground')[0].selectedOptions[0].text;
                 var filterRegion = (vm.filterCampground == 'All') ? (vm.filterRegion == 'All')? "All Regions" : $('#filterRegion')[0].selectedOptions[0].text : "";
                 var filterDates = (vm.filterDateFrom) ? (vm.filterDateTo) ? "From "+vm.filterDateFrom + " To "+vm.filterDateTo: "From "+vm.filterDateFrom : (vm.filterDateTo) ? " To "+vm.filterDateTo : "" ;
                 var filename =  filterCampground +  "_" + filterRegion + "_" +filterDates+ ".csv";

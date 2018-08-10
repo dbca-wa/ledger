@@ -508,7 +508,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
             'vessel' : vehicles.filter(entry_fee=True, type='vessel'),
-            'vehicle': vehicles.filter(entry_fee=True, type='vehicle'),
+            #'vehicle': vehicles.filter(entry_fee=True, type='vehicle'),
             'motorbike': vehicles.filter(entry_fee=True, type='motorbike'),
             'concession': vehicles.filter(entry_fee=True, type='concession')
         }
