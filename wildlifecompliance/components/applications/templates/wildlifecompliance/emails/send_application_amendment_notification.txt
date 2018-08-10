@@ -1,7 +1,7 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Application {{ application.lodgement_number }} has been reviewed and requires an amendment before approval.
+    Your application {{ application.lodgement_number }} has been reviewed and requires an amendment before further assessment.
 
     {% if reason %}
         <p>
