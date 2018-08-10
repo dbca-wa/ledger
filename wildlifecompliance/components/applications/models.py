@@ -509,9 +509,27 @@ class Application(RevisionedMixin):
             self.save()
             # Create a log entry for the application
             self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
-            # Create a log entry for the organisation
-            self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
+            # Create a log entry for the applicant (submitter, organisation or proxy)
+            if self.org_applicant:
+                self.org_applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
+            elif self.proxy_applicant:
+                self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
+            else:
+                self.submitter.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
             
+    def reset_id_check(self,request):
+            self.id_check_status = 'not_checked'
+            self.save()
+            # Create a log entry for the application
+            self.log_user_action(ApplicationUserAction.ACTION_RESET_ID.format(self.id),request)
+            # Create a log entry for the applicant (submitter, organisation or proxy)
+            if self.org_applicant:
+                self.org_applicant.log_user_action(ApplicationUserAction.ACTION_RESET_ID.format(self.id),request)
+            elif self.proxy_applicant:
+                self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_RESET_ID.format(self.id),request)
+            else:
+                self.submitter.log_user_action(ApplicationUserAction.ACTION_RESET_ID.format(self.id),request)
+
     def request_id_check(self,request):
             self.id_check_status = 'awaiting_update'
             self.save()
@@ -519,11 +537,11 @@ class Application(RevisionedMixin):
             self.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
             # Create a log entry for the applicant (submitter, organisation or proxy)
             if self.org_applicant:
-                self.org_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                self.org_applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
             elif self.proxy_applicant:
-                self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
             else:
-                self.applicant.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
+                self.submitter.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(self.id),request)
 
 
     def accept_character_check(self,request):
@@ -531,8 +549,13 @@ class Application(RevisionedMixin):
             self.save()
             # Create a log entry for the application
             self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
-            # Create a log entry for the organisation
-            self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)    
+            # Create a log entry for the applicant (submitter, organisation or proxy)
+            if self.org_applicant:
+                self.org_applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
+            elif self.proxy_applicant:
+                self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
+            else:
+                self.submitter.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)    
 
     # def send_to_assessor(self,request):
     #         self.processing_status = 'with_assessor'
