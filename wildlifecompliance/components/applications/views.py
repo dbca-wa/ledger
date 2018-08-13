@@ -57,7 +57,7 @@ class ApplicationSuccessView(TemplateView):
             return redirect('home')
 
         context = {
-            'application': application
+            'application': application,
             'invoice_ref': invoice_ref
         }
         print('context')
