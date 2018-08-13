@@ -102,8 +102,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
         return Proposal.objects.none()
 
     @detail_route(methods=['GET',])
-    def get_documents(self, request, *args, **kwargs):
-        """ eg. /api/proposal/293/get_documents/?input_name=1 """
+    def list_documents(self, request, *args, **kwargs):
+        """ eg. /api/proposal/293/list_documents/?input_name=1 """
         try:
             instance = self.get_object()
             if 'input_name' in request.GET:
@@ -115,13 +115,41 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
+    def delete_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            action = request.POST.get('action')
+            if action == 'delete' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                instance.documents.get(id=document_id).delete()
+                return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=request.GET.get('input_name'))] )
+
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
     def process_document(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             action = request.POST.get('action')
             if action == 'list' and 'input_name' in request.POST:
-                return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=request.GET.get('input_name'))] )
+                return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=request.POST.get('input_name'))] )
 
             elif action == 'delete' and 'document_id' in request.POST:
                 document_id = request.POST.get('document_id')

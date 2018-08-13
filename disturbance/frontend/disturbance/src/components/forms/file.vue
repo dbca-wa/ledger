@@ -27,20 +27,24 @@
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
             <div v-if="files">
+                <!--
                 <div v-for="v in files">
                     <p>
                         File: <a :href="docsUrl+v.name" target="_blank">{{v.name}}</a> &nbsp;
                         <span v-if="!readonly">
-                            <!-- <a @click="removeImage(v.name)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a> -->
                             <a @click="delete_file(v.name)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
                     </p>
                     <input :name="name+'-existing'" type="hidden" :value="value"/>
                 </div>
+                -->
                 
                 <div v-for="v in documents">
                     <p>
-                        Doc: <a href="" target="_blank">{{v.file}}</a> &nbsp;
+                        Doc: <a href="" target="_blank">{{v.name}}</a> &nbsp;
+                        <span v-if="!readonly">
+                            <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
+                        </span>
                     </p>
                 </div>
 
@@ -124,10 +128,10 @@ export default {
           return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/update_files.json` : '';
         },
         proposal_list_docs: function() {
-          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_documents?action=list&input_name=${this.name}` : '';
+          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/list_documents/?input_name=${this.name}` : '';
         },
         proposal_delete_doc: function() {
-          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document?action=delete&document_id=${this.document_id}` : '';
+          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/delete_document/` : '';
         },
         proposal_save_doc: function() {
           //return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document?action=save&input_name=${this.name}&filename=${this.files[0].name}` : '';
@@ -165,14 +169,18 @@ export default {
             this.files.push(e.target.files[0]);
 
             if (e.target.files.length > 0) {
-                //this.upload_file(e)
-                this.save_document();
+                this.upload_file(e)
+                //this.save_document();
             }
 
             if (!this.isRepeatable) {
 				/* reset value of 'Choose File' button to null, for non-repeatable file upload buttons */
 				$(e.target).val('');
 			}
+
+            this.$nextTick(() => {
+                this.documents = this.get_documents();
+            });
         },
         upload_file: function(e) {
             let vm = this;
@@ -225,22 +233,35 @@ export default {
             */
         },
 
-        get_documents: function(e) {
+        get_documents: function() {
             let vm = this;
 
-            var formData = new FormData();
-            formData.append('input_name', vm.name);
-            formData.append('csrfmiddlewaretoken', vm.csrf_token);
-
-            vm.$http.post(vm.proposal_list_doc, formData)
+            vm.$http.get(vm.proposal_list_docs)
                 .then(res=>{
                     vm.documents = res.body;
                     console.log(vm.documents);
-                },err=>{
                 });
 
         },
 
+        delete_document: function(file) {
+            let vm = this;
+
+            var formData = new FormData();
+            formData.append('action', 'delete');
+            formData.append('document_id', file.id);
+            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+
+            vm.$http.post(vm.proposal_delete_doc, formData)
+                .then(res=>{
+                    vm.documents = vm.get_documents()
+                    //vm.documents = res.body;
+                    //vm.refreshFromResponse(res);
+                    //console.log(vm.documents);
+                });
+
+        }
+/*
         save_document: function() {
             let vm = this;
 
@@ -258,7 +279,7 @@ export default {
                 });
 
         }
-
+*/
 
     },
     mounted:function () {
