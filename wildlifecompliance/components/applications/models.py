@@ -371,6 +371,10 @@ class Application(RevisionedMixin):
             group = self.__assessor_group()
         return group.members.all() if group else []
 
+    @property
+    def licence_type_short_name(self):
+        return self.licence_type_name.split(' - ')[0] if self.licence_type_name else None
+
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
         if self.region and self.activity:
