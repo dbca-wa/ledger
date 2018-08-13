@@ -66,7 +66,8 @@ from disturbance.components.proposals.serializers import (
     ListProposalSerializer
 )
 from disturbance.helpers import is_customer, is_internal
-
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 class GetProposalType(views.APIView):
     renderer_classes = [JSONRenderer, ]
@@ -106,9 +107,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
         """ eg. /api/proposal/293/list_documents/?input_name=1 """
         try:
             instance = self.get_object()
+            #import ipdb; ipdb.set_trace()
             if 'input_name' in request.GET:
+                #return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=request.GET.get('input_name'))] )
                 return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=request.GET.get('input_name'))] )
-            return Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.all()] )
+                #return  Response( [dict(input_name=d.input_name, name=d.name, id=d.id) for d in instance.documents.filter(input_name=request.GET.get('input_name'))] )
+            #return Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.all()] )
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(repr(e[0].encode('utf-8')))
@@ -148,21 +152,35 @@ class ProposalViewSet(viewsets.ModelViewSet):
             #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             action = request.POST.get('action')
+            section = request.POST.get('input_name')
             if action == 'list' and 'input_name' in request.POST:
-                return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=request.POST.get('input_name'))] )
+                #return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=request.POST.get('input_name'))] )
+                pass
 
             elif action == 'delete' and 'document_id' in request.POST:
                 document_id = request.POST.get('document_id')
-                instance.documents.get(id=document_id).delete()
+                document = instance.documents.get(id=document_id)
+
+                if document._file and os.path.isfile(document._file.path):
+                    os.remove(document._file.path)
+                document.delete()
+                #return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=request.GET.get('input_name'))] )
 
             elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
-                section = request.POST.get('input_name')
+                proposal_id = request.POST.get('proposal_id')
                 filename = request.POST.get('filename')
-                document = instance.documents.get_or_create(input_name=section, name=filename)[0]
-                document.save()
+                _file = request.POST.get('_file')
 
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
+                document = instance.documents.get_or_create(input_name=section, name=filename)[0]
+                path = default_storage.save('proposals/{}/documents/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+
+                document._file = path
+                document.save()
+                #return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=section)] )
+
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=section)] )
+            #serializer = self.get_serializer(instance)
+            #return Response(serializer.data)
 
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -348,7 +366,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.submit(request,self)
             instance.tenure = search_tenure(instance)
@@ -368,28 +386,28 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['post'])
-    @renderer_classes((JSONRenderer,))
-    def update_files(self, request, *args, **kwargs):
-        try:
-            #import ipdb; ipdb.set_trace()
-            instance = self.get_object()
-            instance.update(request,self)
-            instance.save()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-            #return redirect(reverse('external'))
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e,'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+#    @detail_route(methods=['post'])
+#    @renderer_classes((JSONRenderer,))
+#    def update_files(self, request, *args, **kwargs):
+#        try:
+#            #import ipdb; ipdb.set_trace()
+#            instance = self.get_object()
+#            instance.update(request,self)
+#            instance.save()
+#            serializer = self.get_serializer(instance)
+#            return Response(serializer.data)
+#            #return redirect(reverse('external'))
+#        except serializers.ValidationError:
+#            print(traceback.print_exc())
+#            raise
+#        except ValidationError as e:
+#            if hasattr(e,'error_dict'):
+#                raise serializers.ValidationError(repr(e.error_dict))
+#            else:
+#                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+#        except Exception as e:
+#            print(traceback.print_exc())
+#            raise serializers.ValidationError(str(e))
 
 
     @detail_route(methods=['GET',])

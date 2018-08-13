@@ -37,25 +37,33 @@
                     </p>
                     <input :name="name+'-existing'" type="hidden" :value="value"/>
                 </div>
-                -->
                 
                 <div v-for="v in documents">
                     <p>
-                        Doc: <a href="" target="_blank">{{v.name}}</a> &nbsp;
+                        Doc: <a :href="v.file" target="_blank">{{v.name}}</a> &nbsp;
+                        <span v-if="!readonly">
+                            <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
+                        </span>
+                    </p>
+                </div>
+                -->
+                <div v-for="v in documents">
+                    <p>
+                        Doc: <a :href="v.file" target="_blank">{{v.name}}</a> &nbsp;
                         <span v-if="!readonly">
                             <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
                     </p>
                 </div>
 
+
                 <!--<span v-if="show_spinner"><i class="fa fa-circle-o-notch fa-spin fa-fw"></i></span>-->
                 <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
-                
-                <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/>
-                <!-- <input name="Section0-14[]" type="file" id="Section0-14" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired" multiple/><br/> -->
-                <!-- <input name="Section0-14[]" type="file" id="Section0-14" accept="image/*,application/pdf,text/csv,application/msword" multiple=""/><br/> -->
+                <div v-if="isRepeatable || (!isRepeatable && documents.length==0)">
+                    <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/>
+                </div>
             </div>
 
         </div>
@@ -136,8 +144,10 @@ export default {
         proposal_save_doc: function() {
           //return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document?action=save&input_name=${this.name}&filename=${this.files[0].name}` : '';
           return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document/` : '';
+        },
+        proposal_document_action: function() {
+          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document/` : '';
         }
-
 
     },
 
@@ -169,19 +179,21 @@ export default {
             this.files.push(e.target.files[0]);
 
             if (e.target.files.length > 0) {
-                this.upload_file(e)
-                //this.save_document();
+                //this.upload_file(e)
+                this.save_document(e);
             }
 
             if (!this.isRepeatable) {
 				/* reset value of 'Choose File' button to null, for non-repeatable file upload buttons */
 				$(e.target).val('');
 			}
+			$(e.target).val('');
 
             this.$nextTick(() => {
-                this.documents = this.get_documents();
+                //this.documents = this.get_documents();
             });
         },
+
         upload_file: function(e) {
             let vm = this;
             $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
@@ -236,10 +248,15 @@ export default {
         get_documents: function() {
             let vm = this;
 
-            vm.$http.get(vm.proposal_list_docs)
+            var formData = new FormData();
+            formData.append('action', 'list');
+            formData.append('input_name', vm.name);
+            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+            //vm.$http.get(vm.proposal_list_docs)
+            vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
-                    console.log(vm.documents);
+                    //console.log(vm.documents);
                 });
 
         },
@@ -252,34 +269,49 @@ export default {
             formData.append('document_id', file.id);
             formData.append('csrfmiddlewaretoken', vm.csrf_token);
 
-            vm.$http.post(vm.proposal_delete_doc, formData)
+            //vm.$http.post(vm.proposal_delete_doc, formData)
+            vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = vm.get_documents()
                     //vm.documents = res.body;
-                    //vm.refreshFromResponse(res);
-                    //console.log(vm.documents);
                 });
 
-        }
-/*
-        save_document: function() {
+        },
+        
+        uploadFile(e){
             let vm = this;
+            let _file = null;
+
+            if (e.target.files && e.target.files[0]) {
+                var reader = new FileReader();
+                reader.readAsDataURL(e.target.files[0]); 
+                reader.onload = function(e) {
+                    _file = e.target.result;
+                };
+                _file = e.target.files[0];
+            }
+            return _file
+        },
+
+        save_document: function(e) {
+            let vm = this; 
 
             var formData = new FormData();
             formData.append('action', 'save');
+            formData.append('proposal_id', vm.proposal_id);
             formData.append('input_name', vm.name);
-            formData.append('filename', vm.files[0].name);
+            formData.append('filename', e.target.files[0].name);
+            formData.append('_file', vm.uploadFile(e));
             formData.append('csrfmiddlewaretoken', vm.csrf_token);
 
-            vm.$http.post(vm.proposal_save_doc, formData)
+            //vm.$http.post(vm.proposal_save_doc, formData)
+            vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
-                    console.log(vm.documents);
                 },err=>{
                 });
 
         }
-*/
 
     },
     mounted:function () {
