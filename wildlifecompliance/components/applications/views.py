@@ -58,6 +58,7 @@ class ApplicationSuccessView(TemplateView):
 
         context = {
             'application': application
+            'invoice_ref': invoice_ref
         }
         print('context')
         print(context)

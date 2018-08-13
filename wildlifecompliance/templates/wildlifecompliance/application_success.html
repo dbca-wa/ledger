@@ -14,8 +14,12 @@
                                 <td><strong> {{application.id}}</strong></td>
                             </tr>
                             <tr>
-                                <td><strong>Date/Time:</strong></td>
+                                <td><strong>Date:</strong></td>
                                 <td><strong> {{application.lodgement_date}}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Invoice:</strong></td>
+                                <td><strong> {{invoice_ref}}</strong></td>
                             </tr>
                         </table>
                         <a href="{% url 'external' %}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</a>
