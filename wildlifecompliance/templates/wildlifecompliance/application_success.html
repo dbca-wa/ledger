@@ -19,7 +19,7 @@
                             </tr>
                             <tr>
                                 <td><strong>Invoice:</strong></td>
-                                <td><a href="/ledger/payments/invoice-pdf/{{invoice_ref}}" target="_blank" style="padding-left: 0px;">Download Invoice</a></td>
+                                <td><a href="{{invoice_url}}" target="_blank" style="padding-left: 0px;">Download Invoice #{{invoice_ref}}</a></td>
                             </tr>
                         </table>
                         <a href="{% url 'external' %}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</a>

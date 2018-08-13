@@ -11,27 +11,32 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = 'Wildlife Compliance Automated Message'
 class ReferralSendNotificationEmail(TemplateEmailBase):
-    subject = 'A referral for a application has been sent to you.'
+    subject = 'A referral for a application has been sent to you'
     html_template = 'wildlifecompliance/emails/applications/send_referral_notification.html'
     txt_template = 'wildlifecompliance/emails/applications/send_referral_notification.txt'
 
 class ApplicationSubmitterNotificationEmail(TemplateEmailBase):
-    subject = 'Your application has been submitted.'
+    subject = 'Your application has been submitted'
     html_template = 'wildlifecompliance/emails/send_application_submitter_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_submitter_notification.txt'
 
+class ApplicationInvoiceNotificationEmail(TemplateEmailBase):
+    subject = 'Your payment for your application has been received'
+    html_template = 'wildlifecompliance/emails/send_application_invoice_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_application_invoice_notification.txt'
+
 class ApplicationSubmitNotificationEmail(TemplateEmailBase):
-    subject = 'A new application has been submitted.'
+    subject = 'A new application has been submitted'
     html_template = 'wildlifecompliance/emails/send_application_submit_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_submit_notification.txt'
 
 class AmendmentSubmitNotificationEmail(TemplateEmailBase):
-    subject = 'A amendment has been submitted.'
+    subject = 'A amendment has been submitted'
     html_template = 'wildlifecompliance/emails/send_amendment_submit_notification.html'
     txt_template = 'wildlifecompliance/emails/send_amendment_submit_notification.txt'
 
 class ApplicationAmendmentRequestNotificationEmail(TemplateEmailBase):
-    subject = 'An amendment has been requested for your application.'
+    subject = 'An amendment has been requested for your application'
     html_template = 'wildlifecompliance/emails/send_application_amendment_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_amendment_notification.txt'
 
@@ -91,6 +96,23 @@ def send_referral_email_notification(emails,application,request,reminder=False):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, referral, sender=sender)
     _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
+
+
+def send_application_invoice_email_notification(application,invoice_ref,request):
+    # An email with application invoice to submitter
+    email = ApplicationInvoiceNotificationEmail()
+    url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
+    invoice_url = request.build_absolute_uri(reverse('invoice-pdf', kwargs={'reference': invoice_ref}))
+
+    context = {
+        'application': application,
+        'url': url,
+        'invoice_url': invoice_url
+    }
+    recipients=[application.submitter.email]
+    msg = email.send(recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
 
 
 def send_application_submitter_email_notification(application,request):

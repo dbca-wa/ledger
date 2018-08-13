@@ -45,6 +45,8 @@ class ApplicationSuccessView(TemplateView):
             print(invoice_ref)
             try:
                 bind_application_to_invoice(request, application, invoice_ref)
+                invoice_url = request.build_absolute_uri(reverse('invoice-pdf', kwargs={'reference': invoice_ref}))
+                send_application_submitter_email_notification(application, invoice_ref, request)
             except BindApplicationException as e:
                 print(e)
                 traceback.print_exc
@@ -58,7 +60,8 @@ class ApplicationSuccessView(TemplateView):
 
         context = {
             'application': application,
-            'invoice_ref': invoice_ref
+            'invoice_ref': invoice_ref,
+            'invoice_url': invoice_url
         }
         print('context')
         print(context)
