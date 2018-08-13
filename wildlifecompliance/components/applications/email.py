@@ -15,6 +15,10 @@ class ReferralSendNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/applications/send_referral_notification.html'
     txt_template = 'wildlifecompliance/emails/applications/send_referral_notification.txt'
 
+class ApplicationSubmitterNotificationEmail(TemplateEmailBase):
+    subject = 'Your application has been submitted.'
+    html_template = 'wildlifecompliance/emails/send_application_submitter_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_application_submitter_notification.txt'
 
 class ApplicationSubmitNotificationEmail(TemplateEmailBase):
     subject = 'A new application has been submitted.'
@@ -87,6 +91,22 @@ def send_referral_email_notification(emails,application,request,reminder=False):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, referral, sender=sender)
     _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
+
+
+def send_application_submitter_email_notification(application,request):
+    # An email to submitter notifying about new application is submitted
+    email = ApplicationSubmitterNotificationEmail()
+    # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
+    url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
+
+    context = {
+        'application': application,
+        'url': url
+    }
+    recipients=[application.submitter.email]
+    msg = email.send(recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
 
 
 def send_application_submit_email_notification(group_email,application,request):

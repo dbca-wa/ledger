@@ -23,6 +23,7 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Re
 from wildlifecompliance.components.main.utils import get_department_user
 from wildlifecompliance.components.applications.email import (
     send_referral_email_notification,
+    send_application_submitter_email_notification,
     send_application_submit_email_notification,
     send_application_amendment_notification,
     send_assessment_email_notification,
@@ -502,6 +503,8 @@ class Application(RevisionedMixin):
                         self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                     else:
                         self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                    # Send email to submitter, then to linked Officer Groups
+                    send_application_submitter_email_notification(self,request)
                     for group in officer_groups:
                         send_application_submit_email_notification(group.members.all(),self,request)
 
