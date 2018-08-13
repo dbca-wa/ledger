@@ -324,14 +324,14 @@ def save_proponent_data(instance,request,viewset):
 #                document._file = request.FILES[f]
 #                document.save()
 
-            for f in request.FILES:
-                #import ipdb; ipdb; ipdb.set_trace()
-                try:
-					document = instance.documents.get(input_name=f, name=request.FILES[f].name)
-                except ProposalDocument.DoesNotExist:
-					document = instance.documents.get_or_create(input_name=f, name=request.FILES[f].name)[0]
-                document._file = request.FILES[f]
-                document.save()
+#            for f in request.FILES:
+#                #import ipdb; ipdb; ipdb.set_trace()
+#                try:
+#					document = instance.documents.get(input_name=f, name=request.FILES[f].name)
+#                except ProposalDocument.DoesNotExist:
+#					document = instance.documents.get_or_create(input_name=f, name=request.FILES[f].name)[0]
+#                document._file = request.FILES[f]
+#                document.save()
 
             # End Save Documents
         except:

@@ -263,6 +263,7 @@ export default {
 
         delete_document: function(file) {
             let vm = this;
+            vm.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'delete');
@@ -274,6 +275,7 @@ export default {
                 .then(res=>{
                     vm.documents = vm.get_documents()
                     //vm.documents = res.body;
+                    vm.show_spinner = false;
                 });
 
         },
