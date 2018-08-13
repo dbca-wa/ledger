@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import View, TemplateView
 from wildlifecompliance.components.applications.utils import create_data_from_form
 from wildlifecompliance.components.applications.models import Application
+from wildlifecompliance.components.applications.email import send_application_invoice_email_notification
 from wildlifecompliance.components.main.utils import get_session_application, delete_session_application, bind_application_to_invoice
 import json,traceback
 from wildlifecompliance.exceptions import BindApplicationException
@@ -45,8 +46,8 @@ class ApplicationSuccessView(TemplateView):
             print(invoice_ref)
             try:
                 bind_application_to_invoice(request, application, invoice_ref)
-                invoice_url = request.build_absolute_uri(reverse('invoice-pdf', kwargs={'reference': invoice_ref}))
-                send_application_submitter_email_notification(application, invoice_ref, request)
+                invoice_url = request.build_absolute_uri(reverse('payments:invoice-pdf', kwargs={'reference': invoice_ref}))
+                send_application_invoice_email_notification(application, invoice_ref, request)
             except BindApplicationException as e:
                 print(e)
                 traceback.print_exc
