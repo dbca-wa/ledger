@@ -106,6 +106,7 @@ export default {
             showingComment: false,
             show_spinner: false,
             documents:[],
+            filename:null,
         }
     },
 
@@ -122,11 +123,15 @@ export default {
         proposal_update_url: function() {
           return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/update_files.json` : '';
         },
-        proposal_section_docs: function() {
-          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/get_documents?input_name=${this.name}` : '';
+        proposal_list_docs: function() {
+          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_documents?action=list&input_name=${this.name}` : '';
         },
         proposal_delete_doc: function() {
-          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/delete_document?document_id=${this.document_id}` : '';
+          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document?action=delete&document_id=${this.document_id}` : '';
+        },
+        proposal_save_doc: function() {
+          //return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document?action=save&input_name=${this.name}&filename=${this.files[0].name}` : '';
+          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document/` : '';
         }
 
 
@@ -160,7 +165,8 @@ export default {
             this.files.push(e.target.files[0]);
 
             if (e.target.files.length > 0) {
-                this.upload_file(e)
+                //this.upload_file(e)
+                this.save_document();
             }
 
             if (!this.isRepeatable) {
@@ -219,9 +225,32 @@ export default {
             */
         },
 
-        get_documents: function() {
+        get_documents: function(e) {
             let vm = this;
-            vm.$http.get(vm.proposal_section_docs)
+
+            var formData = new FormData();
+            formData.append('input_name', vm.name);
+            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+
+            vm.$http.post(vm.proposal_list_doc, formData)
+                .then(res=>{
+                    vm.documents = res.body;
+                    console.log(vm.documents);
+                },err=>{
+                });
+
+        },
+
+        save_document: function() {
+            let vm = this;
+
+            var formData = new FormData();
+            formData.append('action', 'save');
+            formData.append('input_name', vm.name);
+            formData.append('filename', vm.files[0].name);
+            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+
+            vm.$http.post(vm.proposal_save_doc, formData)
                 .then(res=>{
                     vm.documents = res.body;
                     console.log(vm.documents);
@@ -229,6 +258,7 @@ export default {
                 });
 
         }
+
 
     },
     mounted:function () {

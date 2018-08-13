@@ -47,34 +47,34 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     else:
         raise Exception('Missing name in item %s' % item['label'])
 
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     if 'children' not in item:
         if item['type'] in ['checkbox' 'declaration']:
             #item_data[item['name']] = post_data[item['name']]
             item_data[item['name']] = extended_item_name in post_data
-        elif item['type'] == 'file':
-            import ipdb; ipdb.set_trace()
-            if extended_item_name + '_delete_file' in post_data:
-                # Delete one file
-                try:
-                    #import ipdb; ipdb.set_trace()
-                    delete_filename = post_data[extended_item_name + '_delete_file']
-                    keep_filenames = post_data[extended_item_name] # files to keep
-                    proposal_id = post_data['proposal_id'] # files to keep
-                    item_data[item['name']] = keep_filenames
-                    
-                    document = ProposalDocument.objects.filter(proposal_id=proposal_id, input_name=extended_item_name, name=delete_filename)
-                    if document and document[0]._file and os.path.isfile(document[0]._file.path):
-                        if not ProposalDocument.objects.filter(proposal_id=proposal_id, name=delete_filename):
-                            # make sure there are no other sections with the same file attached
-                        	os.remove(document[0]._file.path)
-                        document[0].delete()
-
-                except:
-                    #import ipdb; ipdb.set_trace()
-                    pass
-
-            elif extended_item_name in file_data:
+#        elif item['type'] == 'file':
+#            import ipdb; ipdb.set_trace()
+#            if extended_item_name + '_delete_file' in post_data:
+#                # Delete one file
+#                try:
+#                    #import ipdb; ipdb.set_trace()
+#                    delete_filename = post_data[extended_item_name + '_delete_file']
+#                    keep_filenames = post_data[extended_item_name] # files to keep
+#                    proposal_id = post_data['proposal_id'] # files to keep
+#                    item_data[item['name']] = keep_filenames
+#
+#                    document = ProposalDocument.objects.filter(proposal_id=proposal_id, input_name=extended_item_name, name=delete_filename)
+#                    if document and document[0]._file and os.path.isfile(document[0]._file.path):
+#                        if not ProposalDocument.objects.filter(proposal_id=proposal_id, name=delete_filename):
+#                            # make sure there are no other sections with the same file attached
+#                        	os.remove(document[0]._file.path)
+#                        document[0].delete()
+#
+#                except:
+#                    #import ipdb; ipdb.set_trace()
+#                    pass
+#
+            if extended_item_name in file_data:
                 #item_data[item['name']] = str(file_data.get(extended_item_name))
                 item_data[item['name']] = ','.join([i.name for i in file_data.getlist(extended_item_name)])
                 # TODO save the file here

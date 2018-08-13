@@ -115,15 +115,27 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
-    def delete_document(self, request, *args, **kwargs):
+    def process_document(self, request, *args, **kwargs):
         try:
-            #import ipdb; ipdb.set_trace()
+            import ipdb; ipdb.set_trace()
             instance = self.get_object()
-            if 'document_id' in request.GET:
+            action = request.POST.get('action')
+            if action == 'list' and 'input_name' in request.POST:
+                return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=request.GET.get('input_name'))] )
+
+            elif action == 'delete' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
                 instance.documents.get(id=document_id).delete()
+
+            elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
+                section = request.POST.get('input_name')
+                filename = request.POST.get('filename')
+                document = instance.documents.get_or_create(input_name=section, name=filename)[0]
+                document.save()
+
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
-            #return redirect(reverse('external'))
+
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -716,7 +728,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             application_type = request.data.get('application')
             region = request.data.get('region')
             district = request.data.get('district')
-            #tenure = request.data.get('tenure') 
+            #tenure = request.data.get('tenure')
             activity = request.data.get('activity')
             sub_activity1 = request.data.get('sub_activity1')
             sub_activity2 = request.data.get('sub_activity2')
