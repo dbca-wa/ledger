@@ -5,8 +5,8 @@
 
         Application : {{ application.id }}
 
-        Link: {{url}}
+        Link: {{ url }}
 
-        Invoice: {{invoice_url}}
+        Invoice: {{ invoice_url }}
 
 {%  endblock %}

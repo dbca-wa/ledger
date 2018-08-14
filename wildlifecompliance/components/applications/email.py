@@ -102,7 +102,7 @@ def send_application_invoice_email_notification(application,invoice_ref,request)
     # An email with application invoice to submitter
     email = ApplicationInvoiceNotificationEmail()
     url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
-    invoice_url = request.build_absolute_uri(reverse('invoice-pdf', kwargs={'reference': invoice_ref}))
+    invoice_url = request.build_absolute_uri(reverse('payments:invoice-pdf',kwargs={'reference': invoice_ref}))
 
     context = {
         'application': application,
