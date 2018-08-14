@@ -180,7 +180,12 @@ class ListProposalSerializer(BaseProposalSerializer):
         request = self.context['request']
         user = request.user
         if obj.can_officer_process:
-            if (obj.assigned_officer and obj.assigned_officer == user) or (user in obj.allowed_assessors):
+            '''if (obj.assigned_officer and obj.assigned_officer == user) or (user in obj.allowed_assessors):
+                return True'''
+            if obj.assigned_officer:
+                if obj.assigned_officer == user:
+                    return True
+            elif user in obj.allowed_assessors:
                 return True
         return False
 
@@ -438,7 +443,8 @@ class DTReferralSerializer(serializers.ModelSerializer):
             'can_be_processed',
             'referral',
             'proposal_lodgement_date',
-            'proposal_lodgement_number'
+            'proposal_lodgement_number',
+            'referral_text'
         )
 
     def get_submitter(self,obj):

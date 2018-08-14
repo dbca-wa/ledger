@@ -819,9 +819,9 @@ class ReferralViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
-        #qs = self.get_queryset().filter(referral=request.user)
-        #serializer = DTReferralSerializer(qs, many=True)
-        serializer = DTReferralSerializer(self.get_queryset(), many=True)
+        qs = self.get_queryset().filter(referral=request.user)
+        serializer = DTReferralSerializer(qs, many=True)
+        #serializer = DTReferralSerializer(self.get_queryset(), many=True)
         return Response(serializer.data)
 
     @list_route(methods=['GET',])
@@ -833,11 +833,13 @@ class ReferralViewSet(viewsets.ModelViewSet):
         serializer = DTReferralSerializer(qs, many=True)
         return Response(serializer.data)
 
-    @detail_route(methods=['GET',])
+    @detail_route(methods=['GET', 'POST'])
     def complete(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            instance.complete(request)
+            #import ipdb; ipdb.set_trace()
+            referral_comment = request.data.get('referral_comment')
+            instance.complete(request, referral_comment)
             serializer = self.get_serializer(instance, context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:
