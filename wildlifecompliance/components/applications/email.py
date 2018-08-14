@@ -4,6 +4,8 @@ from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.utils.encoding import smart_text
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from ledger.payments.pdf import create_invoice_pdf_bytes
+from ledger.payments.models import Invoice
 
 from wildlifecompliance.components.emails.emails import TemplateEmailBase
 
@@ -103,6 +105,9 @@ def send_application_invoice_email_notification(application,invoice_ref,request)
     email = ApplicationInvoiceNotificationEmail()
     url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
     invoice_url = request.build_absolute_uri(reverse('payments:invoice-pdf',kwargs={'reference': invoice_ref}))
+    filename = 'invoice-{}-{}({}).pdf'.format(application.id,application.licence_type_short_name,application.lodgement_date)
+    invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
+    invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
 
     context = {
         'application': application,
@@ -110,7 +115,7 @@ def send_application_invoice_email_notification(application,invoice_ref,request)
         'invoice_url': invoice_url
     }
     recipients=[application.submitter.email]
-    msg = email.send(recipients, context=context)
+    msg = email.send(recipients, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
 
