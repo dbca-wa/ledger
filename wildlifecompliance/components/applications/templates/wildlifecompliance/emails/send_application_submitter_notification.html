@@ -1,0 +1,7 @@
+{%  extends 'wildlifecompliance/emails/base_email.html' %}
+
+{%  block content %}
+        <p>Your application has been submitted with below details</p>
+        <p><strong>Application : {{ application.id }}</strong></p>
+        <p><strong>Link: {{url}}</strong></p>
+{%  endblock %}

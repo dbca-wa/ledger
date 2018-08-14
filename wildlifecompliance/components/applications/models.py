@@ -23,6 +23,7 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Re
 from wildlifecompliance.components.main.utils import get_department_user
 from wildlifecompliance.components.applications.email import (
     send_referral_email_notification,
+    send_application_submitter_email_notification,
     send_application_submit_email_notification,
     send_application_amendment_notification,
     send_assessment_email_notification,
@@ -371,6 +372,10 @@ class Application(RevisionedMixin):
             group = self.__assessor_group()
         return group.members.all() if group else []
 
+    @property
+    def licence_type_short_name(self):
+        return self.licence_type_name.split(' - ')[0] if self.licence_type_name else None
+
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
         if self.region and self.activity:
@@ -498,6 +503,8 @@ class Application(RevisionedMixin):
                         self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                     else:
                         self.submitter.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                    # Send email to submitter, then to linked Officer Groups
+                    send_application_submitter_email_notification(self,request)
                     for group in officer_groups:
                         send_application_submit_email_notification(group.members.all(),self,request)
 

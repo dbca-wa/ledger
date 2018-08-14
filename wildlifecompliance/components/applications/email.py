@@ -4,6 +4,8 @@ from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.utils.encoding import smart_text
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from ledger.payments.pdf import create_invoice_pdf_bytes
+from ledger.payments.models import Invoice
 
 from wildlifecompliance.components.emails.emails import TemplateEmailBase
 
@@ -11,23 +13,32 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = 'Wildlife Compliance Automated Message'
 class ReferralSendNotificationEmail(TemplateEmailBase):
-    subject = 'A referral for a application has been sent to you.'
+    subject = 'A referral for a application has been sent to you'
     html_template = 'wildlifecompliance/emails/applications/send_referral_notification.html'
     txt_template = 'wildlifecompliance/emails/applications/send_referral_notification.txt'
 
+class ApplicationSubmitterNotificationEmail(TemplateEmailBase):
+    subject = 'Your application has been submitted'
+    html_template = 'wildlifecompliance/emails/send_application_submitter_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_application_submitter_notification.txt'
+
+class ApplicationInvoiceNotificationEmail(TemplateEmailBase):
+    subject = 'Your payment for your application has been received'
+    html_template = 'wildlifecompliance/emails/send_application_invoice_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_application_invoice_notification.txt'
 
 class ApplicationSubmitNotificationEmail(TemplateEmailBase):
-    subject = 'A new application has been submitted.'
+    subject = 'A new application has been submitted'
     html_template = 'wildlifecompliance/emails/send_application_submit_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_submit_notification.txt'
 
 class AmendmentSubmitNotificationEmail(TemplateEmailBase):
-    subject = 'A amendment has been submitted.'
+    subject = 'A amendment has been submitted'
     html_template = 'wildlifecompliance/emails/send_amendment_submit_notification.html'
     txt_template = 'wildlifecompliance/emails/send_amendment_submit_notification.txt'
 
 class ApplicationAmendmentRequestNotificationEmail(TemplateEmailBase):
-    subject = 'An amendment has been requested for your application.'
+    subject = 'An amendment has been requested for your application'
     html_template = 'wildlifecompliance/emails/send_application_amendment_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_amendment_notification.txt'
 
@@ -87,6 +98,43 @@ def send_referral_email_notification(emails,application,request,reminder=False):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, referral, sender=sender)
     _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
+
+
+def send_application_invoice_email_notification(application,invoice_ref,request):
+    # An email with application invoice to submitter
+    email = ApplicationInvoiceNotificationEmail()
+    url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
+    invoice_url = request.build_absolute_uri(reverse('payments:invoice-pdf',kwargs={'reference': invoice_ref}))
+    filename = 'invoice-{}-{}({}).pdf'.format(application.id,application.licence_type_short_name.replace(" ", "-"),application.lodgement_date)
+    references = [a.invoice_reference for a in application.invoices.all()]
+    invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
+    invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
+
+    context = {
+        'application': application,
+        'url': url,
+        'invoice_url': invoice_url
+    }
+    recipients=[application.submitter.email]
+    msg = email.send(recipients, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
+
+
+def send_application_submitter_email_notification(application,request):
+    # An email to submitter notifying about new application is submitted
+    email = ApplicationSubmitterNotificationEmail()
+    # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
+    url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
+
+    context = {
+        'application': application,
+        'url': url
+    }
+    recipients=[application.submitter.email]
+    msg = email.send(recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
 
 
 def send_application_submit_email_notification(group_email,application,request):
