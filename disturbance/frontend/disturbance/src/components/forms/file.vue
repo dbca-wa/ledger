@@ -3,7 +3,7 @@
         <div class="form-group">
 
             <!-- using num_files to determine if files have been uploaded for this question/label (used in disturbance/frontend/disturbance/src/components/external/proposal.vue) -->
-            <label :id="id" :num_files="files.length">{{label}}</label>
+            <label :id="id" :num_files="documents.length">{{label}}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
@@ -27,37 +27,14 @@
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
             <div v-if="files">
-                <!--
-                <div v-for="v in files">
-                    <p>
-                        File: <a :href="docsUrl+v.name" target="_blank">{{v.name}}</a> &nbsp;
-                        <span v-if="!readonly">
-                            <a @click="delete_file(v.name)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
-                        </span>
-                    </p>
-                    <input :name="name+'-existing'" type="hidden" :value="value"/>
-                </div>
-                
                 <div v-for="v in documents">
                     <p>
-                        Doc: <a :href="v.file" target="_blank">{{v.name}}</a> &nbsp;
+                        File: <a :href="v.file" target="_blank">{{v.name}}</a> &nbsp;
                         <span v-if="!readonly">
                             <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
                     </p>
                 </div>
-                -->
-                <div v-for="v in documents">
-                    <p>
-                        Doc: <a :href="v.file" target="_blank">{{v.name}}</a> &nbsp;
-                        <span v-if="!readonly">
-                            <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
-                        </span>
-                    </p>
-                </div>
-
-
-                <!--<span v-if="show_spinner"><i class="fa fa-circle-o-notch fa-spin fa-fw"></i></span>-->
                 <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
@@ -108,7 +85,6 @@ export default {
         isRepeatable:Boolean,
         readonly:Boolean,
         docsUrl: String,
-        document_id: String,
     },
     components: {Comment, HelpText},
     data:function(){
@@ -132,23 +108,9 @@ export default {
         csrf_token: function() {
             return helpers.getCookie('csrftoken')
         },
-        proposal_update_url: function() {
-          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/update_files.json` : '';
-        },
-        proposal_list_docs: function() {
-          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/list_documents/?input_name=${this.name}` : '';
-        },
-        proposal_delete_doc: function() {
-          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/delete_document/` : '';
-        },
-        proposal_save_doc: function() {
-          //return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document?action=save&input_name=${this.name}&filename=${this.files[0].name}` : '';
-          return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document/` : '';
-        },
         proposal_document_action: function() {
           return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document/` : '';
         }
-
     },
 
     methods:{
@@ -157,93 +119,44 @@ export default {
             this.showingComment = ! this.showingComment;
         },
         handleChange:function (e) {
-            if (this.isRepeatable) {
+            let vm = this;
+
+            vm.show_spinner = true;
+            if (vm.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
                 avail = [...avail.map(id => {
                     return $(avail[id]).attr('data-que');
                 })];
                 avail.pop();
-                if (this.repeat == 1) {
-                    this.repeat+=1;
+                if (vm.repeat == 1) {
+                    vm.repeat+=1;
                 }else {
                     if (avail.indexOf(el) < 0 ){
-                        this.repeat+=1;
+                        vm.repeat+=1;
                     }
                 }
                 $(e.target).css({ 'display': 'none'});
 
             } else {
-                this.files = [];
+                vm.files = [];
             }
-            this.files.push(e.target.files[0]);
+            vm.files.push(e.target.files[0]);
 
             if (e.target.files.length > 0) {
-                //this.upload_file(e)
-                this.save_document(e);
+                //vm.upload_file(e)
+                vm.save_document(e);
             }
 
-            if (!this.isRepeatable) {
-				/* reset value of 'Choose File' button to null, for non-repeatable file upload buttons */
-				$(e.target).val('');
-			}
-			$(e.target).val('');
-
-            this.$nextTick(() => {
-                //this.documents = this.get_documents();
-            });
+            vm.show_spinner = false;
         },
 
+        /*
         upload_file: function(e) {
             let vm = this;
             $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
         },
-        /*
-        removeImage: function (filename) {
-            let vm = this;
-            //var filename = e.target.getAttribute('filename');
-            if (filename) {
-                vm.files.pop(filename);
-                $('input[name='+vm.name+']').val(null);
-
-                this.$nextTick(() => {
-                    $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
-                });
-            }
-        },
 		*/
-        delete_file: function (filename) {
-            let vm = this;
-            vm.show_spinner = true;
-
-            var file_names = [] /* file names of remaining */
-            for (var idx in vm.files) { 
-                if (vm.files[idx].name==filename){ 
-                    // pop filename from array
-                    //this.files = vm.files.filter(function(item) { return item !== filename })
-                } else {
-                    file_names.push(this.files[idx].name)
-                }
-
-            }
-
-            var formData = new FormData();
-            formData.append('proposal_id', vm.proposal_id);
-            formData.append(vm.name, file_names.join());
-            formData.append(vm.name + '_' + 'delete_file', filename);
-            formData.append('csrfmiddlewaretoken', vm.csrf_token);
-            vm.$http.post(vm.proposal_update_url,formData)
-                .then(function(){
-                    vm.files = vm.files.filter(function(item) { return item.name !== filename }); // pop filename from array
-                    vm.show_spinner = false;
-                });
-
-            /*
-            vm.$http.post(vm.proposal_update_url,formData);
-            vm.files = vm.files.filter(function(item) { return item.name !== filename }); // pop filename from array
-            vm.show_spinner = false;
-            */
-        },
 
         get_documents: function() {
             let vm = this;
@@ -252,11 +165,11 @@ export default {
             formData.append('action', 'list');
             formData.append('input_name', vm.name);
             formData.append('csrfmiddlewaretoken', vm.csrf_token);
-            //vm.$http.get(vm.proposal_list_docs)
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
                     //console.log(vm.documents);
+                    vm.show_spinner = false;
                 });
 
         },
@@ -270,7 +183,6 @@ export default {
             formData.append('document_id', file.id);
             formData.append('csrfmiddlewaretoken', vm.csrf_token);
 
-            //vm.$http.post(vm.proposal_delete_doc, formData)
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = vm.get_documents()
@@ -306,7 +218,6 @@ export default {
             formData.append('_file', vm.uploadFile(e));
             formData.append('csrfmiddlewaretoken', vm.csrf_token);
 
-            //vm.$http.post(vm.proposal_save_doc, formData)
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
