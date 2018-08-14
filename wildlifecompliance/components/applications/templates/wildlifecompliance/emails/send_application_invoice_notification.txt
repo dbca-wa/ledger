@@ -1,7 +1,8 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-        Your application has been submitted with below details
+        Your payment for your application has been received.
+        A copy of your invoice is attached to this email.
 
         Application : {{ application.id }}
 
