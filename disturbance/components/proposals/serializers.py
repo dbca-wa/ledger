@@ -417,7 +417,7 @@ class ProposalLogEntrySerializer(CommunicationLogEntrySerializer):
 
 class SendReferralSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    text = serializers.CharField()
+    text = serializers.CharField(allow_blank=True)
 
 class DTReferralSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(source='proposal.get_processing_status_display')
