@@ -106,6 +106,7 @@ def send_application_invoice_email_notification(application,invoice_ref,request)
     url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
     invoice_url = request.build_absolute_uri(reverse('payments:invoice-pdf',kwargs={'reference': invoice_ref}))
     filename = 'invoice-{}-{}({}).pdf'.format(application.id,application.licence_type_short_name,application.lodgement_date)
+    references = [a.invoice_reference for a in application.invoices.all()]
     invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
     invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
 
