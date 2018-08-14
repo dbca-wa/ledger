@@ -428,7 +428,8 @@ export default {
         vm.approval_level = '';
 
 		vm.$http.get(api_endpoints.activity_matrix).then((response) => {
-				this.activity_matrix = response.body[0].schema[0];
+				//this.activity_matrix = response.body[0].schema[0];
+				this.activity_matrix = response.body;
 				//console.log('this.activity_matrix ' + response.body[0].schema);
 
                 var keys = Object.keys(this.activity_matrix);

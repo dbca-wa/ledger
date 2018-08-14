@@ -9,6 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
 from disturbance.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix
 from disturbance.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer
+from django.core.exceptions import ValidationError
 
 
 class DistrictViewSet(viewsets.ReadOnlyModelViewSet):
@@ -30,6 +31,13 @@ class ActivityMatrixViewSet(viewsets.ReadOnlyModelViewSet):
             # specific to Disturbance application, so only exposing one record (most recent)
             return [ActivityMatrix.objects.filter(name='Disturbance').order_by('-version').first()]
         return ActivityMatrix.objects.none()
+
+    def list(self, request, *args, **kwargs):
+        matrix = ActivityMatrix.objects.filter(name='Disturbance').order_by('-version').first()
+        #l = [activity['children'][0] for activity in matrix.schema]
+        #d.update({([i[i.keys()[0]]) for i in l] )
+        #return Response([i[i.keys()[0]]) for i in l] )
+        return Response( [activity['children'][0] for activity in matrix.schema] )
 
 
 #class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
