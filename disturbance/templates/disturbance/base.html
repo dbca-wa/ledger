@@ -4,6 +4,7 @@
 
 {% load users %}
 {% is_internal as is_internal_login %}
+{% system_maintenance_due as system_maintenance_due %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -52,7 +53,6 @@
                                 <ul class="nav navbar-nav">
                                     {% block left_menu_items %}
                                         {% if is_internal_login %}
-                                        
                                         <li><a href="/internal/approvals">Approvals</a></li>
                                         <li><a href="/internal/compliances">Compliance with Requirements</a></li>
                                         <li><a href="/internal/organisations/access">Organisation Access</a></li>
@@ -121,7 +121,15 @@
                     </div>
                 </div>
             </div>
+
         {% endblock %}
+
+		{% if system_maintenance_due %}
+		    <div class="alert alert-warning">
+		    	<strong>Notice!</strong> System will be down for maintenance between {{ system_maintenance_due }}
+		    </div>
+        {% endif %}
+
         {% block content %}
         {% endblock %}
         {% block modals %}

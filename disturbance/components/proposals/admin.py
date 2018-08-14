@@ -2,7 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from disturbance.components.proposals import models
 from disturbance.components.proposals import forms
-from disturbance.components.main.models import ActivityMatrix
+from disturbance.components.main.models import ActivityMatrix, SystemMaintenance
 #from disturbance.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
@@ -98,33 +98,11 @@ class ActivityMatrixAdmin(admin.ModelAdmin):
     ordering = ('name', '-version')
 
 
-#from disturbance.views import MyCustomView
-#_admin_site_get_urls = admin.site.get_urls
-#def get_urls():
-#    from django.conf.urls import url
-#    urls = _admin_site_get_urls()
-#    urls += [
-#            url(r'^my_custom_view/$',
-#                 admin.site.admin_view(MyCustomView.as_view()))
-#        ]
-#    return urls
+@admin.register(SystemMaintenance)
+class SystemMaintenanceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'description', 'start_date', 'end_date', 'duration']
+    ordering = ('start_date',)
+    readonly_fields = ('duration',)
+    form = forms.SystemMaintenanceAdminForm
 
-
-#@admin.register(Activity)
-#class ActivityAdmin(admin.ModelAdmin):
-#    pass
-#
-#@admin.register(SubActivityLevel1)
-#class SubActivityLevel1Admin(admin.ModelAdmin):
-#    pass
-#
-#@admin.register(SubActivityLevel2)
-#class SubActivityLevel2Admin(admin.ModelAdmin):
-#    pass
-#
-#@admin.register(SubCategory)
-#class SubCategoryAdmin(admin.ModelAdmin):
-#    pass
-
-#admin.site.get_urls = get_urls
 

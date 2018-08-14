@@ -575,7 +575,7 @@ export default {
                 .then((response) => {
                     swal(
                         'Reinstate',
-                        'Your approval has been reinstate',
+                        'Your approval has been reinstated',
                         'success'
                     )
                     vm.$refs.proposal_datatable.vmDataTable.ajax.reload();

@@ -348,6 +348,7 @@ class OrganisationAccessGroup(models.Model):
 
     class Meta:
         app_label = 'disturbance'
+        verbose_name_plural = "Organisation access group"
         
 class OrganisationRequestUserAction(UserAction):
     ACTION_LODGE_REQUEST = "Lodge request {}"

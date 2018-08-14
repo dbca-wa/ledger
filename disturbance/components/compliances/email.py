@@ -89,6 +89,7 @@ def send_compliance_accept_email_notification(compliance,request):
 def send_external_submit_email_notification(request, compliance):
     email = ComplianceExternalSubmitSendNotificationEmail()
     url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
+    url = ''.join(url.split('-internal'))
     context = {
         'compliance': compliance,
         'submitter': compliance.submitter.get_full_name(),

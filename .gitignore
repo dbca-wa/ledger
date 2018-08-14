@@ -92,11 +92,9 @@ importo.py
 
 *.djcache
 uwsgi.ini
-<<<<<<< HEAD
-=======
 
 disturbance/static/disturbance_vue/static/css/app.css
 disturbance/static/disturbance_vue/static/js/app.js
 disturbance/static/disturbance_vue/static/js/manifest.js
 disturbance/static/disturbance_vue/static/js/vendor.js
->>>>>>> upstream/disturbance_v3
+disturbance/static/disturbance_vue/static/js/babel-polyfill.js

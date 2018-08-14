@@ -4,6 +4,8 @@ from ledger.settings_base import *
 ROOT_URLCONF = 'disturbance.urls'
 SITE_ID = 1
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
+SUPERVISOR_STOP_CMD = env('SUPERVISOR_STOP_CMD')
+SYSTEM_MAINTENANCE_WARNING = env('SYSTEM_MAINTENANCE_WARNING', 24) # hours
 
 INSTALLED_APPS += [
     'bootstrap3',
@@ -29,6 +31,11 @@ WSGI_APPLICATION = 'disturbance.wsgi.application'
         'disturbance.perms.OfficerPermission',
     )
 }'''
+
+#REST_FRAMEWORK = {
+#    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+#        'PAGE_SIZE': 3
+#}
 
 MIDDLEWARE_CLASSES += [
     'disturbance.middleware.FirstTimeNagScreenMiddleware'
@@ -59,7 +66,7 @@ DEV_STATIC = env('DEV_STATIC',False)
 DEV_STATIC_URL = env('DEV_STATIC_URL')
 if DEV_STATIC and not DEV_STATIC_URL:
     raise ImproperlyConfigured('If running in DEV_STATIC, DEV_STATIC_URL has to be set')
-DATA_UPLOAD_MAX_NUMBER_FIELDS = None 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # Department details
 VIA_EMAIL = env('VIA_EMAIL','via@dbca.wa.gov.au')

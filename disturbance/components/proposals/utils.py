@@ -312,17 +312,27 @@ def save_proponent_data(instance,request,viewset):
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
             # Save Documents
-            for f in request.FILES:
-                try:
-                    #document = instance.documents.get(name=str(request.FILES[f]))
-                    document = instance.documents.get(input_name=f)
-                except ProposalDocument.DoesNotExist:
-                    document = instance.documents.get_or_create(input_name=f)[0]
-                document.name = str(request.FILES[f])
-                if document._file and os.path.isfile(document._file.path):
-                    os.remove(document._file.path)
-                document._file = request.FILES[f]
-                document.save()
+#            for f in request.FILES:
+#                try:
+#                    #document = instance.documents.get(name=str(request.FILES[f]))
+#                    document = instance.documents.get(input_name=f)
+#                except ProposalDocument.DoesNotExist:
+#                    document = instance.documents.get_or_create(input_name=f)[0]
+#                document.name = str(request.FILES[f])
+#                if document._file and os.path.isfile(document._file.path):
+#                    os.remove(document._file.path)
+#                document._file = request.FILES[f]
+#                document.save()
+
+#            for f in request.FILES:
+#                #import ipdb; ipdb; ipdb.set_trace()
+#                try:
+#					document = instance.documents.get(input_name=f, name=request.FILES[f].name)
+#                except ProposalDocument.DoesNotExist:
+#					document = instance.documents.get_or_create(input_name=f, name=request.FILES[f].name)[0]
+#                document._file = request.FILES[f]
+#                document.save()
+
             # End Save Documents
         except:
             raise
@@ -397,3 +407,4 @@ def clone_proposal_with_status_reset(proposal):
             return proposal
         except:
             raise
+

@@ -1,7 +1,7 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Compliance {{ Compliance.reference }} has been submitted.
+    The Compliance {{ Compliance.reference }} has been submitted and can be assessed.
 
     <p>
     You can access this Compliance using the following link:

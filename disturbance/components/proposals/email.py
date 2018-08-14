@@ -119,6 +119,7 @@ def send_submit_email_notification(request, proposal):
 def send_external_submit_email_notification(request, proposal):
     email = ExternalSubmitSendNotificationEmail()
     url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    url = ''.join(url.split('-internal'))
     context = {
         'proposal': proposal,
         'submitter': proposal.submitter.get_full_name(),

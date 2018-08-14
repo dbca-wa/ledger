@@ -561,6 +561,18 @@ class Proposal(RevisionedMixin):
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
+    def update(self,request,viewset):
+        from disturbance.components.proposals.utils import save_proponent_data
+        with transaction.atomic():
+            #import ipdb; ipdb.set_trace()
+            if self.can_user_edit:
+                # Save the data first
+                save_proponent_data(self,request,viewset)
+                self.save()
+            else:
+                raise ValidationError('You can\'t edit this proposal at this moment')
+
+
     def send_referral(self,request,referral_email,referral_text):
         with transaction.atomic():
             try:
@@ -1098,11 +1110,31 @@ class ComplianceRequest(ProposalRequest):
         app_label = 'disturbance'
 
 
+class AmendmentReason(models.Model):
+    reason = models.CharField('Reason', max_length=125)
+
+    class Meta:
+        app_label = 'disturbance'
+
+
 class AmendmentRequest(ProposalRequest):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
-    REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
-                      ('missing_information', 'There was missing information'),
-                      ('other', 'Other'))
+    #REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
+    #                  ('missing_information', 'There was missing information'),
+    #                  ('other', 'Other'))
+    try:
+        # model requires some choices if AmendmentReason does not yet exist or is empty
+        REASON_CHOICES = list(AmendmentReason.objects.values_list('id', 'reason'))
+        if not REASON_CHOICES:
+            REASON_CHOICES = ((0, 'The information provided was insufficient'),
+                              (1, 'There was missing information'),
+                              (2, 'Other'))
+    except:
+        REASON_CHOICES = ((0, 'The information provided was insufficient'),
+                          (1, 'There was missing information'),
+                          (2, 'Other'))
+
+
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
 

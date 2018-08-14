@@ -61,59 +61,11 @@ class ActivityMatrix(models.Model):
     class Meta:
         app_label = 'disturbance'
         unique_together = ('name', 'version')
+        verbose_name_plural = "Activity matrix"
 
     def __str__(self):
         return '{} - v{}'.format(self.name, self.version)
 
- 
-#@python_2_unicode_compatible
-#class Activity(models.Model):
-#    name = models.CharField(max_length=255, unique=True)
-#    order = models.PositiveSmallIntegerField(default=0)
-#    application_type = models.ForeignKey(ApplicationType, related_name='activity_app_types')
-#
-#    class Meta:
-#        ordering = ['order', 'name']
-#        app_label = 'disturbance'
-#
-#    def __str__(self):
-#        return '{}: {}'.format(self.name, self.application_type)
-#
-#@python_2_unicode_compatible
-#class SubActivityLevel1(models.Model):
-#    activity = models.ForeignKey(Activity, related_name='activities')
-#    name = models.CharField(max_length=200, unique=True)
-#
-#    class Meta:
-#        ordering = ['name']
-#        app_label = 'disturbance'
-#
-#    def __str__(self):
-#        return self.name
-#
-#@python_2_unicode_compatible
-#class SubActivityLevel2(models.Model):
-#    sub_activity_1 = models.ForeignKey(SubActivityLevel1, related_name='sub_activities_1')
-#    name = models.CharField(max_length=200, unique=True)
-#
-#    class Meta:
-#        ordering = ['name']
-#        app_label = 'disturbance'
-#
-#    def __str__(self):
-#        return self.name
-#
-#@python_2_unicode_compatible
-#class SubCategory(models.Model):
-#    sub_activity_2 = models.ForeignKey(SubActivityLevel2, related_name='sub_activities_2')
-#    name = models.CharField(max_length=200)
-#
-#    class Meta:
-#        ordering = ['name']
-#        app_label = 'disturbance'
-#
-#    def __str__(self):
-#        return self.name
 
 @python_2_unicode_compatible
 class Tenure(models.Model):
@@ -146,6 +98,7 @@ class UserAction(models.Model):
         abstract = True
         app_label = 'disturbance'
 
+
 class CommunicationsLogEntry(models.Model):
     TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'), ('mail', 'Mail'), ('person', 'In Person')]
     DEFAULT_TYPE = TYPE_CHOICES[0][0]
@@ -168,6 +121,7 @@ class CommunicationsLogEntry(models.Model):
 
     class Meta:
         app_label = 'disturbance'
+
 
 @python_2_unicode_compatible
 class Document(models.Model):
@@ -192,3 +146,25 @@ class Document(models.Model):
 
     def __str__(self):
         return self.name or self.filename
+
+
+@python_2_unicode_compatible
+class SystemMaintenance(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+
+    def duration(self):
+        """ Duration of system maintenance (in mins) """
+        return int( (self.end_date - self.start_date).total_seconds()/60.) if self.end_date and self.start_date else ''
+        #return (datetime.now(tz=tz) - self.start_date).total_seconds()/60.
+    duration.short_description = 'Duration (mins)'
+
+    class Meta:
+        app_label = 'disturbance'
+        verbose_name_plural = "System maintenance"
+
+    def __str__(self):
+        return 'System Maintenance: {} ({}) - starting {}, ending {}'.format(self.name, self.description, self.start_date, self.end_date)
+

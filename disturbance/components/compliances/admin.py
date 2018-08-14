@@ -10,7 +10,7 @@ from disturbance.components.compliances import models
 #class ComplianceAmendmentStatusAdmin(admin.ModelAdmin):
 #    list_display = ['status']
 
-@admin.register(models.ComplianceAmendmentReason)
-class ComplianceAmendmentReasonAdmin(admin.ModelAdmin):
+@admin.register(models.AmendmentReason)
+class AmendmentReasonAdmin(admin.ModelAdmin):
     list_display = ['reason']
 
