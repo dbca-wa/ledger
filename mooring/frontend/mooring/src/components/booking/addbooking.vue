@@ -12,7 +12,7 @@
                                   <img v-if="campground.images && campground.images.length>0" :src="campground.images[0].image" width="250" class="img-thumbnail img-responsive">
                                   <img v-else src="https://placeholdit.imgix.net/~text?txtsize=33&txt=Campground&w=250&h=250" alt="campground"  width="250" class="img-thumbnail img-responsive">
                                   <p class="pricing" v-if="priceHistory">
-                                      <strong >${{priceHistory[0].rate.adult|formatMoney(2)}}</strong>
+                                      <strong >${{priceHistory[0].rate.mooring|formatMoney(2)}}</strong>
                                       <br> <span class="text-muted">Per adult per night</span>
                                   </p>
                                   <p class="pricing" v-else>
@@ -77,11 +77,11 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row"> 
                 <div class="col-lg-12">
                     <div class="well">
                         <div class="row">
-                            <div class="col-lg-12">
+                            <div class="col-lg-12" >
                                 <h3 class="text-primary">Campsite Booking</h3>
                                 <p>
                                     Click <a target="_blank" :href="campground.campground_map">here</a> to open the map of the campground to help you select the preferred campsite
@@ -319,7 +319,8 @@ export default {
                 arrival:"",
                 departure:"",
                 guests:{
-                    adult:2,
+                    mooring: 1,
+                    adult:0,
                     concession:0,
                     child:0,
                     infant:0
@@ -338,6 +339,7 @@ export default {
                     vehicles:0,
                 },
                 entryFees:{
+                    vessel: 0,
                     vehicles : 0,
                     motorbike: 0,
                     concession:0,
@@ -351,9 +353,15 @@ export default {
             guestsText:"",
             guestsPicker:[
                 {
+                    id:"mooring",
+                    name:"Mooring",
+                    amount:1,
+                    description: ""
+                },
+                {
                     id:"adult",
                     name:"Adults (no concession)",
-                    amount:2,
+                    amount:0,
                     description: ""
                 },
                 {
@@ -377,6 +385,15 @@ export default {
                 },
             ],
             parkEntryPicker:[
+                {   
+                    id:"vessel",
+                    name:"Vessel",
+                    amount:0,
+                    price:0,
+                    description: "Vessel Registration",
+                    rego:"",
+                    entry_fee: false
+                }, 
                 {
                     id:"vehicle",
                     name:"Vehicle",
@@ -476,7 +493,7 @@ export default {
             if (vm.booking.arrival) {
                 $.each(vm.stayHistory,function (i,his) {
                     var range = Moment.range(Moment(his.range_start,"DD/MM/YYYY"),Moment(his.range_end,"DD/MM/YYYY"));
-                    var arrival = Moment(vm.booking.arrival,"YYYY/MM/DD");
+                    var arrival = Moment(vm.booking.arrival,"YYYY-MM-DD");
                     if (range.contains(arrival)) {
                         vm.departurePicker.data("DateTimePicker").maxDate(arrival.clone().add(his.max_days,'days'));
                         vm.departurePicker.data("DateTimePicker").date(null);
@@ -499,10 +516,15 @@ export default {
     methods:{
         fetchSites:function () {
             let vm =this;
+            console.log("fetchSites");
+            console.log(vm.booking_type);
+            console.log(vm.booking_types.CAMPSITE);
             if (vm.booking_type == vm.booking_types.CAMPSITE) {
                 vm.fetchCampsites();
+                console.log("fetchCampsites");
             }
             if (vm.booking_type == vm.booking_types.CLASS) {
+                console.log("fetchCampsiteClasses");
                 vm.fetchCampsiteClasses();
             }
         },
@@ -571,9 +593,17 @@ export default {
         },
         fetchCampsiteClasses:function () {
             let vm = this;
+            console.log("---fetchCampsiteClasses");
             if(vm.selected_arrival && vm.selected_departure){
+                console.log("---fetchCampsiteClasses1");
                 vm.loading.push('fetching campsite classes');
-                vm.$http.get(api_endpoints. available_campsite_classes(vm.booking.campground,vm.booking.arrival,vm.booking.departure)).then((response)=>{
+                vm.$http.get(api_endpoints. available_campsite_classes(
+                    vm.booking.campground,
+                    Moment(vm.booking.arrival, "YYYY-MM-DD").format("YYYY/MM/DD"),
+                    Moment(vm.booking.departure, "YYYY-MM-DD").format("YYYY/MM/DD")
+                    )).then((response)=>{
+                    console.log("-fetchCampsiteClasses");
+                    console.log(response.body);
                     vm.campsite_classes = response.body;
                     if (vm.campsite_classes.length >0) {
                         vm.selected_campsite =vm.campsite_classes[0].campsites[0];
@@ -591,6 +621,8 @@ export default {
             vm.loading.push('fetching campground');
             var cgId = vm.$route.params.cg;
             vm.$http.get(api_endpoints.campground(cgId)).then((response)=>{
+                console.log("fetchCampground");
+                console.log(response.body);
                 vm.campground = response.body;
                 vm.booking.campground = vm.campground.id;
                 vm.booking_type = (vm.campground.site_type == 0) ? vm.booking_types.CAMPSITE : vm.booking_types.CLASS;
@@ -643,7 +675,7 @@ export default {
                 useCurrent: false,
             });
             vm.arrivalPicker.on('dp.change', function(e){
-                vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+                vm.booking.arrival = vm.arrivalPicker.data('DateTimePicker').date().format('YYYY-MM-DD');
                 vm.selected_arrival = vm.booking.arrival;
                 vm.selected_departure = "";
                 vm.booking.departure = "";
@@ -656,7 +688,7 @@ export default {
             });
             vm.departurePicker.on('dp.change', function(e){
                 if (vm.departurePicker.data('DateTimePicker').date()) {
-                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('YYYY/MM/DD');
+                    vm.booking.departure = vm.departurePicker.data('DateTimePicker').date().format('YYYY-MM-DD');
                     vm.selected_departure= vm.booking.departure;
                 }else{
                     vm.booking.departure = null;
@@ -682,6 +714,9 @@ export default {
             let vm =this;
             guest.amount += 1;
             switch (guest.id) {
+                case 'mooring':
+                    vm.booking.guests.adult = guest.mooring;
+                    break;
                 case 'adult':
                     vm.booking.guests.adult = guest.amount;
                     break;
@@ -703,6 +738,9 @@ export default {
             let vm =this;
             guest.amount = (guest.amount > 0) ?  guest.amount-1: 0;
             switch (guest.id) {
+                case 'mooring':
+                    vm.booking.guests.mooring = guest.amount;
+                    break;
                 case 'adult':
                     vm.booking.guests.adult = guest.amount;
                     break;
@@ -1022,6 +1060,7 @@ export default {
     mounted:function () {
         let vm = this;
         vm.bookingForm = document.forms.bookingForm;
+        console.log("Loading");
         vm.fetchCampground();
         vm.fetchCountries();
         vm.addFormValidations();

@@ -64,6 +64,7 @@ class MooringsiteBookingSerializer(serializers.Serializer):
     num_concession = serializers.IntegerField(default=0)
     num_child = serializers.IntegerField(default=0)
     num_infant = serializers.IntegerField(default=0)
+    num_mooring = serializers.IntegerField(default=0)
     campground = serializers.IntegerField(default=0)
     campsite_class = serializers.IntegerField(default=0)
     campsite = serializers.IntegerField(default=0)
@@ -503,7 +504,7 @@ class BookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','mooringarea','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','override_price','override_reason','override_reason_info','mooringarea','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
         read_only_fields = ('vehicle_payment_status','refund_status')
 
 
