@@ -90,9 +90,9 @@
                                 <div class="row form-horizontal">
                                   <div class="col-md-12">
                                       <div class="form-group">
-                                          <label for="vehicles" class="required col-md-4">Number of Vehicles</label>
+                                          <label style='display:none' for="vehicles" class="required col-md-4">Number of Vessels</label>
                                           <div class="dropdown guests col-md-8">
-                                              <input type="number" min="1" max="1" name="vehicles" class="form-control dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" readonly="true" v-model="booking.parkEntry.vehicles">
+                                              <input type="number" min="1" max="1" name="vehicles" class="form-control dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" readonly="true" v-model="booking.parkEntry.vehicles" style='display:none'>
                                               <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
                                                   <li v-for="park_entry in parkEntryPicker">
                                                       <div class="row">
@@ -246,7 +246,20 @@ export default {
                     description: "Ages 0-5"
                 },
             ],
-            parkEntryPicker: [{
+            parkEntryPicker: [
+
+                 {
+                    id: "vessel",
+                    name: "Vessel",
+                    amount: 0,
+                    price: 0,
+                    description: "Registration",
+                    rego: "",
+                    entry_fee: true
+                },
+
+
+                {
                     id: "vehicle",
                     name: "Vehicle",
                     amount: 0,
@@ -640,6 +653,9 @@ export default {
                         entry = JSON.parse(JSON.stringify(entry));
                         if (vm.parkPrices && entry.entry_fee) {
                             switch (entry.id) {
+                                case 'vessel':
+                                    vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.vehicle);
+                                    break;
                                 case 'vehicle':
                                     vm.booking.entryFees.entry_fee += parseInt(vm.parkPrices.vehicle);
                                     //vm.booking.entryFees.vehicle++;
@@ -669,6 +685,7 @@ export default {
                     if (resp.constructor != Array) {
                         vm.parkPrices = response.body;
                     } else {
+                        vm.parkPrices.vessel = "0.00";
                         vm.parkPrices.vehicle = "0.00";
                         vm.parkPrices.motorbike = "0.00";
                         vm.parkPrices.concession = "0.00";
@@ -676,6 +693,7 @@ export default {
                     calcprices();
                 });
             } else {
+                vm.parkPrices.vessel = "0.00";
                 vm.parkPrices.vehicle = "0.00";
                 vm.parkPrices.motorbike = "0.00";
                 vm.parkPrices.concession = "0.00";
@@ -690,7 +708,8 @@ export default {
             if (vm.isFormValid()){
                 vm.loading.push('updating booking');
                 booking.entryFees = {
-                    vehicle: 0,
+                    vessel: 0,
+                    // vehicle: 0,
                     motorbike: 0,
                     concession: 0,
                     regos: []
@@ -705,6 +724,9 @@ export default {
                         });
                     }
                     switch (entry.id) {
+                        case 'vessel':
+                            booking.entryFees.vessel++;
+                            break;
                         case 'vehicle':
                             booking.entryFees.vehicle++;
                             break;
@@ -884,7 +906,8 @@ export default {
             // Update Vehicles
             vm.booking.parkEntry = { 'vehicles': 0};
             vm.booking.entryFees = {
-                vehicle : 0,
+                //vehicle : 0,
+                vessel: 0,
                 motorbike: 0,
                 concession:0,
                 entry_fee: 0,
@@ -892,6 +915,7 @@ export default {
             };
             $.each(vm.booking.regos,(i,v) => {
                 vm.parkEntryPicker.map((vp) => {
+                    
                     if (vp.id == v.type) {
                         vp.rego = v.rego;
                         vp.entry_fee = v.entry_fee;

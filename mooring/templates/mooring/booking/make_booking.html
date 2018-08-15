@@ -222,7 +222,7 @@
                         <div class="col-lg-12">
                             <h3 class="text-primary">Vessels</h3>
                             <p v-if="pricing.vehicle"><b><a href="{{EXPLORE_PARKS_ENTRY_FEES}}" target="_blank">Entry fees</a> are required for each vehicle entering this park.</b></p>
-                            <p v-else>No entry fees are required for this park.</p>
+                            <p style='display: none' v-else>No entry fees are required for this park.</p>
                         </div>
                     </div>
                     {# Manual rendering of the 'vehicles' formset. #}
@@ -231,7 +231,7 @@
                     <div class="row" v-cloak>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Number of vessels:
+                                <label style='display: none'>Number of vessels:
                                     <input class="form-control" name="form-TOTAL_FORMS" max="8" min="1" value="1" v-model="vehicleCount" v-on:change="updateVehicles" type="number"/>
                                     <input id="id_form-INITIAL_FORMS" name="form-INITIAL_FORMS" type="hidden" value="1" />
                                     <input id="id_form-MIN_NUM_FORMS" name="form-MIN_NUM_FORMS" type="hidden" value="0" />

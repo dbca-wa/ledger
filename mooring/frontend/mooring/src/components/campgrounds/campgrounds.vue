@@ -145,8 +145,8 @@ module.exports = {
                             var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>";
                         }
 
-                        column += full.campground_type == '0' ? addBooking : "";
-                        column += full.campground_type == '0' ? availability_admin:"";
+                        column += full.mooring_type == '0' ? addBooking : "";
+                        column += full.mooring_type == '0' ? availability_admin:"";
                         column += "</td>";
                         column = column.replace(/__Current_Closure__/,full.current_closure);
                         return column.replace(/__ID__/g, id);

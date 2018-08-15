@@ -978,6 +978,10 @@ class Booking(models.Model):
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
     expiry_time = models.DateTimeField(blank=True, null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    override_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+    override_reason = models.ForeignKey('DiscountReason', null=True, blank=True)
+    override_reason_info = models.TextField(blank=True, null=True)
+    overridden_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True, related_name='overridden_bookings')
     mooringarea = models.ForeignKey('MooringArea', null=True)
     is_canceled = models.BooleanField(default=False)
     cancellation_reason = models.TextField(null=True,blank=True)
@@ -1426,6 +1430,9 @@ class OpenReason(Reason):
 
 class PriceReason(Reason):
     pass
+class DiscountReason(Reason):
+    pass
+
 # VIEWS
 # =====================================
 class ViewPriceHistory(models.Model):
