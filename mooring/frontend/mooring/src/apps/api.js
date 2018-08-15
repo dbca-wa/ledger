@@ -39,12 +39,12 @@ module.exports = {
         return process.env.PARKSTAY_URL + "/api/mooring-areas/" + id + "/stay_history.json?start="+start+"&end="+end;
     },
     campground_stay_history_detail: function(id){
-        return process.env.PARKSTAY_URL + "/api/campground_stay_history/"+ id +".json";
+        return process.env.PARKSTAY_URL + "/api/mooring_stay_history/"+ id +".json";
     },
     available_campsite_classes:function (id,start,end) {
         return process.env.PARKSTAY_URL + "/api/mooring-areas/" + id + "/available_campsite_classes.json?arrival="+start+"&departure="+end;
     },
-    campground_stay_history: process.env.PARKSTAY_URL + "/api/campground_stay_history.json",
+    campground_stay_history: process.env.PARKSTAY_URL + "/api/mooring_stay_history.json",
     addPrice: function(id){
         return process.env.PARKSTAY_URL + "/api/mooring-areas/"+ id +"/addPrice.json";
     },
@@ -58,10 +58,10 @@ module.exports = {
         return process.env.PARKSTAY_URL + "/api/mooring-areas/" + id + "/open_close.json"
     },
     deleteBookingRange: function (id) {
-        return process.env.PARKSTAY_URL + "/api/campground_booking_ranges/" + id + ".json"
+        return process.env.PARKSTAY_URL + "/api/mooring_booking_ranges/" + id + ".json"
     },
     campground_status_history_detail: function(id){
-        return process.env.PARKSTAY_URL + "/api/campground_booking_ranges/"+ id +".json?original=true";
+        return process.env.PARKSTAY_URL + "/api/mooring_booking_ranges/"+ id +".json?original=true";
     },
     delete_campground_price: function(id){
         return process.env.PARKSTAY_URL + "/api/mooring-areas/" + id + "/deletePrice.json";

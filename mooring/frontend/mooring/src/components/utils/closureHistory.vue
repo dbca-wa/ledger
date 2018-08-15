@@ -52,9 +52,9 @@ export default {
     computed: {
         getTitle: function() {
             if (this.closeCampground){
-                return '(Temporarily) Close Campground';
+                return '(Temporarily) Close Mooring';
             }else{
-                return '(Temporarily) Close Campsite';
+                return '(Temporarily) Close Mooring Site';
             }
         }
     },

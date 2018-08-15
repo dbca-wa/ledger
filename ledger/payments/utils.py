@@ -170,7 +170,8 @@ def addToInterface(date,oracle_codes,system,override):
                         status = 'NEW',
                         status_date = today
                     )
-                    new_codes[k] = remainder_amount
+                    new_codes[k] = v
+
         if system.deduct_percentage and deduction_code.amount != 0:
             deduction_code.save()
             new_codes[deduction_code.activity_name] = deduction_code.amount

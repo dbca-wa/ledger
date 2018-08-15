@@ -19,7 +19,7 @@ from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
 
-def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0):
+def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, num_mooring=0):
     """Create a new temporary booking in the system."""
     # get campground
     campground = MooringArea.objects.get(pk=campground_id)
@@ -58,7 +58,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
         site = sites[0]
 
         # Prevent booking if max people passed
-        total_people = num_adult + num_concession + num_child + num_infant
+        total_people = num_adult + num_concession + num_child + num_infant + num_mooring
         if total_people > site.max_people:
             raise ValidationError('Maximum number of people exceeded for the selected campsite')
         # Prevent booking if less than min people 
@@ -74,7 +74,8 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
                             'num_adult': num_adult,
                             'num_concession': num_concession,
                             'num_child': num_child,
-                            'num_infant': num_infant
+                            'num_infant': num_infant,
+                            'num_mooring' : num_mooring
                         },
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
                         campground=campground
@@ -91,7 +92,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     return booking
 
 
-def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,cost_total=0,customer=None,updating_booking=False):
+def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,num_mooring=0,cost_total=0,customer=None,updating_booking=False):
     """Create a new temporary booking in the system for a specific campsite."""
     # get campsite
     sites_qs = Mooringsite.objects.filter(pk=campsite_id)
@@ -114,7 +115,7 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                     raise ValidationError('Mooringsite unavailable for specified time period.')
 
         # Prevent booking if max people passed
-        total_people = num_adult + num_concession + num_child + num_infant
+        total_people = num_adult + num_concession + num_child + num_infant + num_mooring
         if total_people > campsite.max_people:
             raise ValidationError('Maximum number of people exceeded for the selected campsite')
         # Prevent booking if less than min people 
@@ -130,7 +131,8 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                             'num_adult': num_adult,
                             'num_concession': num_concession,
                             'num_child': num_child,
-                            'num_infant': num_infant
+                            'num_infant': num_infant,
+                            'num_mooring': num_mooring
                         },
                         cost_total= Decimal(cost_total),
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
@@ -360,11 +362,12 @@ def get_available_campsitetypes(campground_id,start_date,end_date,_list=True):
             available_campsiteclasses = {}
 
         for _class in cg.campsite_classes:
-            sites_qs =  Mooringsite.objects.filter(
-                            campground=campground_id,
-                            campsite_class=_class
-                        )
-
+            sites_qs =  Mooringsite.objects.all()
+#            sites_qs =  Mooringsite.objects.filter(
+#                           campground=campground_id,
+        #                    mooringsite_class=_class
+#                        )
+            sites_qs = None
             if sites_qs.exists():
 
                 # get availability for sites, filter out the non-clear runs
@@ -508,7 +511,7 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
         park_entry_rate = get_park_entry_rate(request,booking.arrival.strftime('%Y-%m-%d'))
         vehicle_dict = {
             'vessel' : vehicles.filter(entry_fee=True, type='vessel'),
-            'vehicle': vehicles.filter(entry_fee=True, type='vehicle'),
+            #'vehicle': vehicles.filter(entry_fee=True, type='vehicle'),
             'motorbike': vehicles.filter(entry_fee=True, type='motorbike'),
             'concession': vehicles.filter(entry_fee=True, type='concession')
         }
@@ -558,6 +561,8 @@ def get_diff_days(old_booking,new_booking,additional=True):
     return int((old_booking.departure - new_booking.departure).days)
 
 def create_temp_bookingupdate(request,arrival,departure,booking_details,old_booking,total_price):
+    print "NUM_MOORING"
+    print booking_details
     # delete all the campsites in the old moving so as to transfer them to the new booking
     old_booking.campsites.all().delete()
     booking = create_booking_by_site(booking_details['campsites'][0],
@@ -567,6 +572,7 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
             num_concession= booking_details['num_concession'],
             num_child= booking_details['num_child'],
             num_infant= booking_details['num_infant'],
+            num_mooring = booking_details['num_mooring'],
             cost_total = total_price,
             customer = old_booking.customer,
             updating_booking = True
@@ -749,7 +755,45 @@ def update_booking(request,old_booking,booking_details):
             print(traceback.print_exc())
             raise
 
-def create_or_update_booking(request,booking_details,updating=False):
+def create_or_update_booking(request,booking_details,updating=False,override_checks=False):
+    booking = None
+    if not updating:
+        booking = create_booking_by_site(booking_details['campsites'],
+            start_date = booking_details['start_date'],
+            end_date=booking_details['end_date'],
+            num_adult=booking_details['num_adult'],
+            num_concession=booking_details['num_concession'],
+            num_child=booking_details['num_child'],
+            num_infant=booking_details['num_infant'],
+            num_mooring=booking_details['num_mooring'],
+            cost_total=booking_details['cost_total'],
+            override_price=booking_details['override_price'],
+            override_reason=booking_details['override_reason'],
+            override_reason_info=booking_details['override_reason_info'],
+            overridden_by=booking_details['overridden_by'],
+            customer=booking_details['customer'],
+            override_checks=override_checks
+        )
+        
+        booking.details['first_name'] = booking_details['first_name']
+        booking.details['last_name'] = booking_details['last_name']
+        booking.details['phone'] = booking_details['phone']
+        booking.details['country'] = booking_details['country']
+        booking.details['postcode'] = booking_details['postcode']
+
+        # Add booking regos
+        if 'regos' in booking_details:
+            regos = booking_details['regos']
+            for r in regos:
+                r['booking'] = booking.id
+            regos_serializers = [BookingRegoSerializer(data=r) for r in regos]
+            for r in regos_serializers:
+                r.is_valid(raise_exception=True)
+                r.save()
+        booking.save()
+    return booking
+
+def old_create_or_update_booking(request,booking_details,updating=False):
     booking = None
     if not updating:
         booking = create_booking_by_site(campsite_id= booking_details['campsite_id'],
@@ -759,6 +803,7 @@ def create_or_update_booking(request,booking_details,updating=False):
             num_concession=booking_details['num_concession'],
             num_child=booking_details['num_child'],
             num_infant=booking_details['num_infant'],
+            num_mooring=booking_details['num_mooring'],
             cost_total=booking_details['cost_total'],
             customer=booking_details['customer'])
         
@@ -816,7 +861,8 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
             secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
         )
-    
+    print "HIRE sdfdasfa"
+    print response 
     return response
 
 def iiicheckout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
@@ -867,7 +913,7 @@ def iiicheckout(request, booking, lines, invoice_text=None, vouchers=[], interna
         e.args = (http_error_msg,)
         raise
 
-def internal_create_booking_invoice(booking, checkout_response):
+def old_internal_create_booking_invoice(booking, checkout_response):
     if not checkout_response.history:
         raise Exception('There was a problem retrieving the invoice for this booking')
     last_redirect = checkout_response.history[-2]
@@ -879,8 +925,57 @@ def internal_create_booking_invoice(booking, checkout_response):
     book_inv = BookingInvoice.objects.create(booking=booking,invoice_reference=reference)
     return book_inv
 
+def internal_create_booking_invoice(booking, reference):
+    try:
+        Invoice.objects.get(reference=reference)
+    except Invoice.DoesNotExist:
+        raise Exception("There was a problem attaching an invoice for this booking")
+    book_inv = BookingInvoice.objects.create(booking=booking,invoice_reference=reference)
+    return book_inv
+
+
 
 def internal_booking(request,booking_details,internal=True,updating=False):
+    json_booking = request.data
+    booking = None
+    try:
+        booking = create_or_update_booking(request, booking_details, updating, override_checks=internal)
+        with transaction.atomic():
+            set_session_booking(request.session,booking)
+            # Get line items
+            booking_arrival = booking.arrival.strftime('%d-%m-%Y')
+            booking_departure = booking.departure.strftime('%d-%m-%Y')
+            reservation = u"Reservation for {} confirmation PS{}".format(u'{} {}'.format(booking.customer.first_name,booking.customer.last_name), booking.id)
+            lines = price_or_lineitems(request,booking,booking.campsite_id_list)
+
+            # Proceed to generate invoice
+            checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
+            # Change the type of booking
+            booking.booking_type = 0
+            booking.save()
+
+            # FIXME: replace with session check
+            invoice = None
+            if 'invoice=' in checkout_response.url:
+                invoice = checkout_response.url.split('invoice=', 1)[1]
+            else:
+                for h in reversed(checkout_response.history):
+                    if 'invoice=' in h.url:
+                        invoice = h.url.split('invoice=', 1)[1]
+                        break
+
+            internal_create_booking_invoice(booking, invoice)
+            delete_session_booking(request.session)
+            send_booking_invoice(booking)
+            return booking
+
+    except:
+        if booking: 
+            booking.delete()
+        raise
+
+
+def old_internal_booking(request,booking_details,internal=True,updating=False):
     json_booking = request.data
     booking = None
     try:
@@ -890,7 +985,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
             # Get line items
             booking_arrival = booking.arrival.strftime('%d-%m-%Y')
             booking_departure = booking.departure.strftime('%d-%m-%Y')
-            reservation = u"Reservation for {} from {} to {} at {}".format(u'{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.campground.name)
+            reservation = u"Reservation for {} from {} to {} at {}".format(u'{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.mooringarea.name)
             lines = price_or_lineitems(request,booking,booking.campsite_id_list)
 
             # Proceed to generate invoice

@@ -20,7 +20,7 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label>Mooring: </label>
+                        <label>Mooring Price: </label>
                     </div>
                     <div class="col-md-4">
                         <input :readonly="selected_rate != ''" name="mooring"  v-model="priceHistory.mooring" type='text' class="form-control" />

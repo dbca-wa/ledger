@@ -35,7 +35,7 @@
                     <div class="row">
                         <div class="form-group">
                             <div class="col-md-4">
-                                <label for="open_cg_range_start">Closure end: </label>
+                                <label for="open_cg_range_start">Reopen: </label>
                             </div>
                             <div class="col-md-8">
                                 <div class='input-group date' :id='close_cg_range_end'>
