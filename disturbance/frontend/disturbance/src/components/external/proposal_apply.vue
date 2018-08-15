@@ -429,9 +429,10 @@ export default {
 
 		vm.$http.get(api_endpoints.activity_matrix).then((response) => {
 				this.activity_matrix = response.body[0].schema[0];
+				this.keys_ordered = response.body[0].ordered;
 				//console.log('this.activity_matrix ' + response.body[0].schema);
 
-                var keys = Object.keys(this.activity_matrix);
+                var keys = this.keys_ordered ? Object.keys(this.activity_matrix).sort() : Object.keys(this.activity_matrix)
                 for (var i = 0; i < keys.length; i++) {
                     this.activities.push( {text: keys[i], value: keys[i]} );
                 }
