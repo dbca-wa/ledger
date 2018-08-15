@@ -152,6 +152,7 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
                     if (vm.requiresCheckout) {
+                    //TODO: change below to call new api function for process_payment
                         window.location.href = "/ledger/checkout/checkout/payment-details/";
                     } else {
                         vm.$router.push({

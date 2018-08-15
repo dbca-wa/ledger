@@ -219,20 +219,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.submit(request,self)
             serializer = self.get_serializer(instance)
-            print(instance.submitter.first_name)
-            print(instance.submitter.last_name)
-            print(instance.id)
-            print(instance.application_fee)
-            # raise Exception
-            # send to checkout if application_fee > 0
-            if instance.application_fee > 0:
+            # send to checkout if application_fee > 0 and customer_status == 'draft'
+            # TODO: separate below checkout process so it can be called individually for an application
+            if instance.application_fee > 0 and instance.customer_status == 'draft':
                 product_lines = []
                 application_submission = u'Application submitted by {} confirmation WC{}'.format(
                     u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
-                print(' --- set session application --- ')
-                print(request.session)
                 set_session_application(request.session, instance)
-                print(request.session)
                 product_lines.append({
                     'ledger_description': '{}'.format(instance.licence_type_name),
                     'quantity': 1,
@@ -242,8 +235,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 })
                 checkout_result = checkout(request, instance, lines=product_lines,
                                                             invoice_text=application_submission)
-                print(' ---- checkout_result ---- ')
-                print(checkout_result)
             # return checkout_result
             return Response(serializer.data)
         except serializers.ValidationError:
