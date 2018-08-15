@@ -221,7 +221,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(instance)
             # send to checkout if application_fee > 0 and customer_status == 'draft'
             # TODO: separate below checkout process so it can be called individually for an application
-            if instance.application_fee > 0 and instance.customer_status == 'draft':
+            if instance.application_fee > 0:
                 product_lines = []
                 application_submission = u'Application submitted by {} confirmation WC{}'.format(
                     u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
