@@ -42,7 +42,7 @@ class RegionSerializer(serializers.ModelSerializer):
 class ActivityMatrixSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActivityMatrix
-        fields = ('id', 'name', 'description', 'version', 'schema')
+        fields = ('id', 'name', 'description', 'version', 'ordered', 'schema')
 
 
 #class ActivitySerializer(serializers.ModelSerializer):

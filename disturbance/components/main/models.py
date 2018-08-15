@@ -57,6 +57,7 @@ class ActivityMatrix(models.Model):
     schema = JSONField()
     replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
+    ordered = models.BooleanField('Activities Ordered Alphabetically', default=False)
 
     class Meta:
         app_label = 'disturbance'

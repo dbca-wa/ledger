@@ -16,9 +16,11 @@ class DistrictViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = District.objects.all().order_by('id')
     serializer_class = DistrictSerializer
 
+
 class RegionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Region.objects.all().order_by('id')
     serializer_class = RegionSerializer
+
 
 class ActivityMatrixViewSet(viewsets.ReadOnlyModelViewSet):
     #queryset = ActivityMatrix.objects.all().order_by('id')
@@ -32,17 +34,10 @@ class ActivityMatrixViewSet(viewsets.ReadOnlyModelViewSet):
             return [ActivityMatrix.objects.filter(name='Disturbance').order_by('-version').first()]
         return ActivityMatrix.objects.none()
 
-    def list(self, request, *args, **kwargs):
-        matrix = ActivityMatrix.objects.filter(name='Disturbance').order_by('-version').first()
-        #l = [activity['children'][0] for activity in matrix.schema]
-        #d.update({([i[i.keys()[0]]) for i in l] )
-        #return Response([i[i.keys()[0]]) for i in l] )
-        return Response( [activity['children'][0] for activity in matrix.schema] )
+#    def list(self, request, *args, **kwargs):
+#        matrix = ActivityMatrix.objects.filter(name='Disturbance').order_by('-version').first()
+#        return Response( [activity['children'][0] for activity in matrix.schema] )
 
-
-#class ActivityViewSet(viewsets.ReadOnlyModelViewSet):
-#    queryset = Activity.objects.all().order_by('order')
-#    serializer_class = ActivitySerializer
 
 class TenureViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tenure.objects.all().order_by('order')
