@@ -43,7 +43,8 @@ class DefaultActivitySerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
-            'base_fee',
+            'base_application_fee',
+            'base_licence_fee',
             'short_name'
         ) 
 

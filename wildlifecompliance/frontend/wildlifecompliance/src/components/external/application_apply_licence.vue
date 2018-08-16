@@ -16,8 +16,7 @@
                           
                             <div class="col-sm-12">
                                 <div class="row">
-                                <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
-                                <div class="pull-right" style="font-size: 18px;"><strong>Estimated fee: {{application_fee | toCurrency}}</strong></div>
+                                    <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
                                 </div>
 
                                 
@@ -39,7 +38,7 @@
                                                             <div v-for="(activity,index2) in type.activity" class="checkbox activity-clear-left">
                                                                 
                                                                 <div class ="col-sm-12">
-                                                                    <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected" @click="handleActivityCheckboxChange(index,index1,index2,$event)">{{activity.name}} ({{activity.base_fee}})
+                                                                    <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected" @click="handleActivityCheckboxChange(index,index1,index2,$event)">{{activity.name}} ({{activity.base_application_fee}} + {{activity.base_licence_fee}})
                                                                 </div>
 
                                                             </div>
@@ -55,12 +54,14 @@
                                     </div> 
                                 </div>
                                 </div>
-
-                                
-                                
                             </div>
                             <div class="col-sm-12">
-                                <button :disabled="behalf_of == '' && yourself == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                                <button :disabled="behalf_of == '' && yourself == ''" @click.prevent="submit()" class="btn btn-primary pull-right" style="margin-left: 10px;">Continue</button>
+                                <div class="pull-right" style="font-size: 18px;">
+                                    <strong>Estimated application fee: {{application_fee | toCurrency}}</strong><br>
+                                    <strong>Estimated licence fee: {{licence_fee | toCurrency}}</strong><br>
+                                </div>
+                            </div>
                             </div>
                         </form>
                     </div>
@@ -114,6 +115,7 @@ export default {
         form: null,
         pBody: 'pBody' + vm._uid,
         application_fee: 0,
+        licence_fee: 0,
     }
   },
   components: {
@@ -147,6 +149,7 @@ export default {
                             for(var activity_index=0, len2=vm.licence_classes[i].activity_type[activity_type_index].activity.length; activity_index<len2; activity_index++){
                                 vm.licence_classes[i].activity_type[activity_type_index].activity[activity_index].selected = false;
                                 vm.application_fee = 0;
+                                vm.licence_fee = 0;
                             }    
                         }
                 }
@@ -170,9 +173,11 @@ export default {
         let vm = this
         var activity = vm.licence_classes[index].activity_type[index1].activity[index2]
         if(event.target.checked){
-            vm.application_fee += Number(activity.base_fee);
+            vm.application_fee += Number(activity.base_application_fee);
+            vm.licence_fee += Number(activity.base_licence_fee);
         } else {
-            vm.application_fee -= Number(activity.base_fee);
+            vm.application_fee -= Number(activity.base_application_fee);
+            vm.licence_fee -= Number(activity.base_licence_fee);
         }
     },
     createApplication:function () {
@@ -297,8 +302,10 @@ export default {
             data.licence_class_data=vm.licence_class
             data.licence_type_name=vm.licence_type_name
             data.application_fee=vm.application_fee
+            data.licence_fee=vm.licence_fee
             console.log(' ---- application apply licence createApplication() ---- ');
             console.log(vm.application_fee)
+            console.log(vm.licence_fee)
             console.log(data.licence_type_name);
             console.log(data.licence_class)
             console.log(' ==== licence class data ==== ')
