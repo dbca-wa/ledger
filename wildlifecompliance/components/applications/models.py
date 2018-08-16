@@ -258,7 +258,7 @@ class Application(RevisionedMixin):
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
-    lodgement_date = models.DateField(blank=True, null=True)
+    lodgement_date = models.DateTimeField(blank=True, null=True)
 
     org_applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='org_applications')
     proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='wildlifecompliance_proxy')
@@ -464,7 +464,8 @@ class Application(RevisionedMixin):
                 self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
-                self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                self.lodgement_date = timezone.now()
                 # if amendment is submitted change the status of only particular activity type 
                 # else if the new application is submitted change the status of all the activity types
                 if (self.amendment_requests):
