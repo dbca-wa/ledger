@@ -912,10 +912,24 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             # print(request.data)
-            serializer = self.get_serializer(data= request.data)
-            serializer.is_valid(raise_exception = True)
-            instance = serializer.save()
-            instance.generate_amendment(request)
+            amend_data=self.request.data
+            reason=amend_data.pop('reason')
+            application =amend_data.pop('application')
+            text=amend_data.pop('text')
+            activity_type_id=amend_data.pop('activity_type_id')
+            print(type(application))
+            print(application)
+            for item in activity_type_id:
+                data={
+                    'application':application,
+                    'reason': reason,
+                    'text':text,
+                    'licence_activity_type':item
+                }
+                serializer = self.get_serializer(data= data)
+                serializer.is_valid(raise_exception = True)
+                instance = serializer.save()
+                instance.generate_amendment(request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
