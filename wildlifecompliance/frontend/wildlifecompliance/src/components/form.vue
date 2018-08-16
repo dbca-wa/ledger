@@ -125,7 +125,7 @@
                 return (
                     <div>
                         <div id="scrollspy-heading" class="col-lg-12" >
-                            <h3>Application {vm.application.id}: {vm.application.licence_type_name}</h3>
+                            <h3>Application {vm.application.id}: {vm.application.licence_type_short_name}</h3>
                         </div>
                         <div class="col-md-3" >
                             <div class="panel panel-default fixed">

@@ -27,6 +27,7 @@ from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser, Address 
 from ledger.address.models import Country
+from ledger.checkout.utils import calculate_excl_gst
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -218,22 +219,22 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.submit(request,self)
             serializer = self.get_serializer(instance)
-            print(instance.submitter.first_name)
-            print(instance.submitter.last_name)
-            print(instance.id)
-            print(instance.application_fee)
-            # raise Exception
-            # send to checkout if application_fee > 0
+            # send to checkout if application_fee > 0 and customer_status == 'draft'
+            # TODO: separate below checkout process so it can be called individually for an application
             if instance.application_fee > 0:
+                product_lines = []
                 application_submission = u'Application submitted by {} confirmation WC{}'.format(
                     u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
-                print(' --- set session application --- ')
-                print(request.session)
                 set_session_application(request.session, instance)
-                print(request.session)
-                checkout_result = checkout(request, instance, invoice_text=application_submission)
-                print(' ---- checkout_result ---- ')
-                print(checkout_result)
+                product_lines.append({
+                    'ledger_description': '{}'.format(instance.licence_type_name),
+                    'quantity': 1,
+                    'price_incl_tax': str(instance.application_fee),
+                    'price_excl_tax': str(calculate_excl_gst(instance.application_fee)),
+                    'oracle_code': ''
+                })
+                checkout_result = checkout(request, instance, lines=product_lines,
+                                                            invoice_text=application_submission)
             # return checkout_result
             return Response(serializer.data)
         except serializers.ValidationError:

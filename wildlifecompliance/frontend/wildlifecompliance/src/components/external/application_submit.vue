@@ -12,7 +12,7 @@
                                 <td><strong>{{application.id}}</strong></td>
                             </tr>
                             <tr>
-                                <td><strong>Date/Time:</strong></td>
+                                <td><strong>Date:</strong></td>
                                 <td><strong> {{application.lodgement_date|formatDate}}</strong></td>
                             </tr>
                         </table>

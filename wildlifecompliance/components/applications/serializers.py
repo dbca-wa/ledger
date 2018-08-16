@@ -110,6 +110,7 @@ class ExternalAmendmentRequestSerializer(serializers.ModelSerializer):
 
 class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
+    licence_type_short_name = serializers.ReadOnlyField()
     documents_url = serializers.SerializerMethodField()
     character_check_status = serializers.SerializerMethodField(read_only=True)
     application_fee = serializers.DecimalField(max_digits=8, decimal_places=2, coerce_to_string=False)
@@ -127,6 +128,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'schema',
                 'licence_type_data',
                 'licence_type_name',
+                'licence_type_short_name',
                 'customer_status',
                 'processing_status',
                 'review_status',
