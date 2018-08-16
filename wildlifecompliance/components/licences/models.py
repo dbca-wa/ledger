@@ -33,7 +33,7 @@ class LicenceDocument(Document):
 
 class WildlifeLicenceActivity(models.Model):
     name = models.CharField(max_length = 100)
-    short_name = models.CharField(max_length=30, blank=True, null=True)
+    short_name = models.CharField(max_length=30, default='')
     schema=JSONField(default=list)
     base_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
     
@@ -62,7 +62,7 @@ class WildlifeLicenceActivityType(models.Model):
     licence_activity_status = models.CharField(max_length=40, choices=LICENCE_ACTIVITY_STATUS_CHOICES,default=LICENCE_ACTIVITY_STATUS_CHOICES[0][0])
     name = models.CharField(max_length = 100)
     activity = models.ManyToManyField(WildlifeLicenceActivity, blank= True,through='DefaultActivity',related_name='wildlifecompliance_activity')
-    short_name = models.CharField(max_length=30, blank=True, null=True)
+    short_name = models.CharField(max_length=30, default='')
     schema=JSONField(default=list)
     # default_condition = models.ManyToManyField(Condition, through='DefaultCondition',blank= True)
     # default_period = models.PositiveIntegerField('Default Licence Period (days)', blank = True, null = True)
