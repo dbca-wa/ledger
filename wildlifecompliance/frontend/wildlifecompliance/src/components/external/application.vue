@@ -24,7 +24,13 @@
               </div>
             </div>
               <div class="row">
-            <Application v-if="application" :application="application">
+            <div v-if="hasAmendmentRequest">
+              <Application v-if="application" :application="application" :isAmendmentRequest="hasAmendmentRequest" :amendment_request_id="amendment_request_id">
+            </div>
+            <div v-else>
+              <Application v-if="application" :application="application">
+            </div>
+            
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                 <input type='hidden' name="application_id" :value="1" />
@@ -76,6 +82,7 @@ export default {
       form: null,
       hasAmendmentRequest: false,
       amendment_request: [],
+      amendment_request_id:[],
       application_readonly: true,
       pBody: 'pBody',
       application_customer_status_onload: '',
@@ -115,6 +122,9 @@ export default {
     setAmendmentData: function(amendment_request){
       let vm= this;
       vm.amendment_request = amendment_request;
+      for(var i=0,_len=vm.amendment_request.length;i<_len;i++){
+        vm.amendment_request_id.push(vm.amendment_request[i].licence_activity_type.id)
+      }
 
       if (amendment_request.length > 0){
         vm.hasAmendmentRequest = true;
@@ -182,11 +192,14 @@ export default {
       Vue.http.get(`/api/application/${to.params.application_id}.json`).then(res => {
           next(vm => {
             vm.loading.push('fetching application')
+            // console.log("FROM APPLICATION FETCHING")
             vm.application = res.body;
             vm.loading.splice('fetching application', 1);
+            // console.log("APPLICATION READONLY")
             vm.setdata(vm.application.readonly);
 
             Vue.http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/amendment_request')).then((res) => {
+              // console.log("AMENDMENT REQUEST")
                 console.log(res.body)
                 vm.setAmendmentData(res.body);
             },
