@@ -219,7 +219,7 @@ export default {
                             // if activity selected
                             if(vm.licence_classes[i].activity_type[j].activity[k].selected){
 
-                                // if this is the first level 3 item, prepend licence_type_name with an open parentheses
+                                // if this is the first level 3 item
                                 // start of list in licence_type_name for the selected activity type
                                 if(count_selected_activities_this_loop == 0){
 
