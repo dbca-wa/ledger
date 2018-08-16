@@ -114,6 +114,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     documents_url = serializers.SerializerMethodField()
     character_check_status = serializers.SerializerMethodField(read_only=True)
     application_fee = serializers.DecimalField(max_digits=8, decimal_places=2, coerce_to_string=False)
+    licence_fee = serializers.DecimalField(max_digits=8, decimal_places=2, coerce_to_string=False)
     class_name = serializers.SerializerMethodField(read_only=True)
     activity_type_names = serializers.SerializerMethodField(read_only=True)
 
@@ -149,6 +150,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'id_check_status',
                 'character_check_status',
                 'application_fee',
+                'licence_fee',
                 'class_name',
                 'activity_type_names'
                 )
@@ -246,7 +248,8 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
                 # 'licence_category',
                 'licence_type_data',
                 'licence_type_name',
-                'application_fee'
+                'application_fee',
+                'licence_fee'
                 )
         read_only_fields=('documents','conditions')
 

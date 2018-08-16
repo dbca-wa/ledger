@@ -35,7 +35,8 @@ class WildlifeLicenceActivity(models.Model):
     name = models.CharField(max_length = 100)
     short_name = models.CharField(max_length=30, default='')
     schema=JSONField(default=list)
-    base_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
+    base_application_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
+    base_licence_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
     
     # application_schema = JSONField(blank=True, null=True)
 
