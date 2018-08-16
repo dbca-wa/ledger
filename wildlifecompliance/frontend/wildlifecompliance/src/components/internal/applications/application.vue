@@ -1036,19 +1036,38 @@ export default {
         },
         ammendmentRequest: function(){
             let values = '';
+            let tab_name='';
+            var activity_type_name=[];
+            var activity_type_id=[];
+
+            var selectedTabTitle
+
             // var selected = $("#tabs-section").tabs( "option", "selected" );
-			var selectedTabTitle = $("#tabs-section li.active");
+			// var selectedTabTitle = $("#tabs-section li.active");
 			// console.log($(selectedTabTitle))
 			// console.log($(selectedTabTitle).text())
 
             $('.deficiency').each((i,d) => {
-                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
-                // console.log($(d))
+
+                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n Tab - ${$(d).data('tabname')}\n`: '';
+                
+                tab_name = $(d).data('tabname')
+                if ($(d).val() != '' && (activity_type_name.indexOf(tab_name) < 0) ){
+                    activity_type_name.push(tab_name)
+                    
+                    activity_type_id.push($(d).data('tabid'))
+
+                }
+                console.log('from inside internal application')
+                console.log(activity_type_name)
+                console.log(activity_type_id)
+                // console.log($(d).data('tabname'))
             }); 
             
             this.$refs.ammendment_request.amendment.text = values;
-            this.$refs.ammendment_request.amendment.activity_type_name = $(selectedTabTitle).text();
-            
+            this.$refs.ammendment_request.amendment.activity_type_name = activity_type_name;
+            this.$refs.ammendment_request.amendment.activity_type_id = activity_type_id;
+            console.log(this.$refs.ammendment_request.amendment.activity_type_name)
             this.$refs.ammendment_request.isModalOpen = true;
         },
 

@@ -179,74 +179,141 @@ export default {
         let vm = this;
         // clear out licence class
         vm.licence_class = {
-            id:null,
-            name:null,
-            activity_type:[]
+            id: null,
+            name: null,
+            activity_type: []
         }
-        let index=0
-        let count_activity_types = 0
-        let count_activities = 0
+        let count_total_licence_classes = 0
+        let count_total_activity_types = 0
+        let count_total_activities = 0
+        let count_selected_activities_this_loop = 0
         let data = new FormData()
         vm.licence_type_name = ''
-        for(var i=0,_len=vm.licence_classes.length;i<_len;i++){
-        	console.log('length of licence_classes',_len)
-            // loop through level 1 and find selected
+
+        // loop through level 1 and find selected licence class (radio option, only one)
+        for(var i=0,_len1=vm.licence_classes.length;i<_len1;i++){
+
+            // if licence class selected
             if(vm.licence_classes[i].checked){
-                vm.licence_class.id=vm.licence_classes[i].id
-                vm.licence_class.name=vm.licence_classes[i].short_name
-                vm.licence_class.short_name=vm.licence_classes[i].short_name
-                vm.licence_type_name += vm.licence_classes[i].name + ' - '
-                // loop through level 2 and find selected
-                for(var j=0,_len1=vm.licence_classes[i].activity_type.length;j<_len1;j++){
-                	console.log('length of activity type',_len1)
-                    count_activities = 0
+
+                // set licence class information
+                vm.licence_class.id         = vm.licence_classes[i].id
+                vm.licence_class.name       = vm.licence_classes[i].name
+                vm.licence_class.short_name = vm.licence_classes[i].short_name
+
+                // initialise licence_type_name
+                vm.licence_type_name        += vm.licence_classes[i].short_name + ' - '
+
+                // loop through level 2 and find selected activity type (checkboxes, one or more)
+                for(var j=0,_len2=vm.licence_classes[i].activity_type.length;j<_len2;j++){
+
+                    // if activity type selected
                     if(vm.licence_classes[i].activity_type[j].selected){
-                        if(count_activity_types !=0 && count_activity_types<_len1){
-                            vm.licence_type_name += ', '
-                        }
-                        // console.log("activity type selected",vm.licence_classes[i].activity_type[j].id)
-                        vm.licence_class.activity_type.push({id:vm.licence_classes[i].activity_type[j].id,name:vm.licence_classes[i].activity_type[j].short_name,short_name:vm.licence_classes[i].activity_type[j].short_name})
-                        vm.licence_class.activity_type[index].activity=[]
-                        vm.licence_type_name += vm.licence_classes[i].activity_type[j].short_name + ' ('
-                        // loop through level 3 and find selected
-                        for(var k=0,_len2=vm.licence_classes[i].activity_type[j].activity.length;k<_len2;k++){
+
+                        // reset current loop total of selected activities for this activity type (level 3)
+                        count_selected_activities_this_loop = 0
+
+                        // loop through level 3 and find selected activity (checkboxes, one or more)
+                        for(var k=0,_len3=vm.licence_classes[i].activity_type[j].activity.length;k<_len3;k++){
+
+                            // if activity selected
                             if(vm.licence_classes[i].activity_type[j].activity[k].selected){
-                                if(count_activities!=0 && count_activities<_len2){
+
+                                // if this is the first level 3 item, prepend licence_type_name with an open parentheses
+                                // start of list in licence_type_name for the selected activity type
+                                if(count_selected_activities_this_loop == 0){
+
+                                    // add activity type to the licence_class.activity_type list
+                                    // only do if at least one activity is selected (hence why it is in this loop)
+                                    vm.licence_class.activity_type.push({
+                                        id:         vm.licence_classes[i].activity_type[j].id,
+                                        name:       vm.licence_classes[i].activity_type[j].name,
+                                        short_name: vm.licence_classes[i].activity_type[j].short_name
+                                    })
+
+                                    // if this is not the first level 2 item, prepend licence_type_name with a comma
+                                    if(count_total_activity_types > 0){
+                                        vm.licence_type_name += ', '
+                                    }
+
+                                    // prepend licence_type_name with an open parentheses
+                                    vm.licence_type_name += vm.licence_classes[i].activity_type[j].short_name + ' ('
+
+                                    // initialise activity list for selected activity type
+                                    vm.licence_class.activity_type[count_total_activity_types].activity = []
+
+                                }
+
+                                // if this is not the first level 3 item, prepend licence_type_name with a comma
+                                if(count_selected_activities_this_loop > 0){
                                     vm.licence_type_name += ', '
                                 }
-                            	vm.licence_class.activity_type[index].activity.push({id:vm.licence_classes[i].activity_type[j].activity[k].id,name:vm.licence_classes[i].activity_type[j].activity[k].name})
-                                vm.licence_type_name += vm.licence_classes[i].activity_type[j].activity[k].name
-                                count_activities++;
+
+                                // add activity to the licence_class.activity_type.activity list
+                                vm.licence_class.activity_type[count_total_activity_types].activity.push({
+                                    id:     vm.licence_classes[i].activity_type[j].activity[k].id,
+                                    name:   vm.licence_classes[i].activity_type[j].activity[k].name,
+                                    short_name:   vm.licence_classes[i].activity_type[j].activity[k].short_name
+                                })
+
+                                // add activity short name to licence_type_name
+                                vm.licence_type_name += vm.licence_classes[i].activity_type[j].activity[k].short_name
+
+                                count_selected_activities_this_loop++;
+                                count_total_activities++;
+
+                                // end of selected activity loop
                         	}
                         }
-                        vm.licence_type_name += ')'
-                        index++;
-                        count_activity_types++;
+
+                        // only if there is at least one activity selected for this activity type
+                        if(count_selected_activities_this_loop > 0){
+
+                            // list activities for each activity type inside parentheses for licence_type_name
+                            vm.licence_type_name += ')'
+                            count_total_activity_types++;
+                        }
+
+                        // end of selected activity type loop
                     }
+
                 }
+
+                count_total_licence_classes++; // this should always be 1 at end of full loop
+
+                // end of selected licence class loop
             }
         }
-        data.org_applicant=vm.behalf_of_org
-        data.licence_class_data=vm.licence_class
-        data.licence_type_name=vm.licence_type_name
-        data.application_fee=vm.application_fee
-        console.log(' ---- application apply licence createApplication() ---- ');
-        console.log(vm.application_fee)
-        console.log(data.licence_type_name);
-        console.log(data.licence_class)
-        console.log(' ==== licence class data ==== ')
-        console.log(JSON.stringify(data));
-        vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
-              console.log(res.body);
-              vm.application = res.body;
-              vm.$router.push({
-                  name:"draft_application",
-                  params:{application_id:vm.application.id}
-              });
-          },
-          err => {
-            console.log(err);
-          });
+
+        // if no selections, display error do not continue
+        if(count_total_activities == 0){
+            swal({
+                title: "Create Application",
+                text: "Please ensure at least one licence purpose is selected",
+                type: "error",
+            })
+        } else {
+            data.org_applicant=vm.behalf_of_org
+            data.licence_class_data=vm.licence_class
+            data.licence_type_name=vm.licence_type_name
+            data.application_fee=vm.application_fee
+            console.log(' ---- application apply licence createApplication() ---- ');
+            console.log(vm.application_fee)
+            console.log(data.licence_type_name);
+            console.log(data.licence_class)
+            console.log(' ==== licence class data ==== ')
+            console.log(JSON.stringify(data));
+            vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
+                console.log(res.body);
+                vm.application = res.body;
+                vm.$router.push({
+                    name:"draft_application",
+                    params:{application_id:vm.application.id}
+                });
+            }, err => {
+                console.log(err);
+            });
+        }
     },
     
   },
