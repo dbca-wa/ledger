@@ -210,14 +210,6 @@ export default {
                     // if activity type selected
                     if(vm.licence_classes[i].activity_type[j].selected){
 
-                        // if this is not the first level 2 item, prepend licence_type_name with a comma
-                        if(count_total_activity_types > 0){
-                            vm.licence_type_name += ', '
-                        }
-
-                        // initialise activity list for selected activity type
-                        vm.licence_class.activity_type[j].activity = []
-
                         // reset current loop total of selected activities for this activity type (level 3)
                         count_selected_activities_this_loop = 0
 
@@ -238,7 +230,18 @@ export default {
                                         name:       vm.licence_classes[i].activity_type[j].name,
                                         short_name: vm.licence_classes[i].activity_type[j].short_name
                                     })
+
+                                    // if this is not the first level 2 item, prepend licence_type_name with a comma
+                                    if(count_total_activity_types > 0){
+                                        vm.licence_type_name += ', '
+                                    }
+
+                                    // prepend licence_type_name with an open parentheses
                                     vm.licence_type_name += vm.licence_classes[i].activity_type[j].short_name + ' ('
+
+                                    // initialise activity list for selected activity type
+                                    vm.licence_class.activity_type[count_total_activity_types].activity = []
+
                                 }
 
                                 // if this is not the first level 3 item, prepend licence_type_name with a comma
@@ -247,9 +250,10 @@ export default {
                                 }
 
                                 // add activity to the licence_class.activity_type.activity list
-                                vm.licence_class.activity_type[j].activity.push({
+                                vm.licence_class.activity_type[count_total_activity_types].activity.push({
                                     id:     vm.licence_classes[i].activity_type[j].activity[k].id,
-                                    name:   vm.licence_classes[i].activity_type[j].activity[k].short_name
+                                    name:   vm.licence_classes[i].activity_type[j].activity[k].name,
+                                    short_name:   vm.licence_classes[i].activity_type[j].activity[k].short_name
                                 })
 
                                 // add activity short name to licence_type_name
@@ -264,6 +268,7 @@ export default {
 
                         // only if there is at least one activity selected for this activity type
                         if(count_selected_activities_this_loop > 0){
+
                             // list activities for each activity type inside parentheses for licence_type_name
                             vm.licence_type_name += ')'
                             count_total_activity_types++;
@@ -275,32 +280,40 @@ export default {
                 }
 
                 count_total_licence_classes++; // this should always be 1 at end of full loop
+
                 // end of selected licence class loop
             }
         }
-        // TODO: if no selections, display error do not continue
 
-        data.org_applicant=vm.behalf_of_org
-        data.licence_class_data=vm.licence_class
-        data.licence_type_name=vm.licence_type_name
-        data.application_fee=vm.application_fee
-        console.log(' ---- application apply licence createApplication() ---- ');
-        console.log(vm.application_fee)
-        console.log(data.licence_type_name);
-        console.log(data.licence_class)
-        console.log(' ==== licence class data ==== ')
-        console.log(JSON.stringify(data));
-        vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
-              console.log(res.body);
-              vm.application = res.body;
-              vm.$router.push({
-                  name:"draft_application",
-                  params:{application_id:vm.application.id}
-              });
-          },
-          err => {
-            console.log(err);
-          });
+        // if no selections, display error do not continue
+        if(count_total_activities == 0){
+            swal({
+                title: "Create Application",
+                text: "Please ensure at least one licence purpose is selected",
+                type: "error",
+            })
+        } else {
+            data.org_applicant=vm.behalf_of_org
+            data.licence_class_data=vm.licence_class
+            data.licence_type_name=vm.licence_type_name
+            data.application_fee=vm.application_fee
+            console.log(' ---- application apply licence createApplication() ---- ');
+            console.log(vm.application_fee)
+            console.log(data.licence_type_name);
+            console.log(data.licence_class)
+            console.log(' ==== licence class data ==== ')
+            console.log(JSON.stringify(data));
+            vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
+                console.log(res.body);
+                vm.application = res.body;
+                vm.$router.push({
+                    name:"draft_application",
+                    params:{application_id:vm.application.id}
+                });
+            }, err => {
+                console.log(err);
+            });
+        }
     },
     
   },
