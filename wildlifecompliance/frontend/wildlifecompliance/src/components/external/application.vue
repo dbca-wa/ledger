@@ -148,16 +148,16 @@ export default {
         let formData = new FormData(vm.form);
         console.log(formData);
         let swal_title = 'Submit Application'
-        let swal_text = 'Are you sure you want to submit this application?'
+        let swal_html = 'Are you sure you want to submit this application?'
         if (vm.requiresCheckout) {
             swal_title = 'Submit Application and Checkout'
-            swal_text = 'Are you sure you want to submit this application and proceed to checkout? ' +
+            swal_html = 'Are you sure you want to submit this application and proceed to checkout?<br><br>' +
                 'Upon proceeding, you agree that the system will charge the same credit card used to ' +
                 'pay the application fee when your licence is issued.'
         }
         swal({
             title: swal_title,
-            text: swal_text,
+            html: swal_html,
             type: "question",
             showCancelButton: true,
             confirmButtonText: 'Submit'
