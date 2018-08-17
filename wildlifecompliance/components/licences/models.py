@@ -64,6 +64,7 @@ class WildlifeLicenceActivityType(models.Model):
     name = models.CharField(max_length = 100)
     activity = models.ManyToManyField(WildlifeLicenceActivity, blank= True,through='DefaultActivity',related_name='wildlifecompliance_activity')
     short_name = models.CharField(max_length=30, default='')
+    not_for_organisation = models.BooleanField(default=False, help_text='If ticked, this licenced activity will not be available for applications on behalf of an organisation.')
     schema=JSONField(default=list)
     # default_condition = models.ManyToManyField(Condition, through='DefaultCondition',blank= True)
     # default_period = models.PositiveIntegerField('Default Licence Period (days)', blank = True, null = True)

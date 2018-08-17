@@ -58,7 +58,8 @@ class DefaultActivityTypeSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'activity',
-            'short_name'
+            'short_name',
+            'not_for_organisation'
         ) 
 
 class LicenceClassSerializer(serializers.ModelSerializer):

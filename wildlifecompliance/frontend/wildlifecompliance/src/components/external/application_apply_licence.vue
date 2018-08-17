@@ -31,19 +31,18 @@
 
                                                 <div  v-if="category.checked" class="col-sm-9">
 
-                                                    <div v-for="(type,index1) in category.activity_type" class="checkbox margin-left-20">
+                                                    <div v-if="!(behalf_of_org != '' && type.not_for_organisation == true)" v-for="(type,index1) in category.activity_type" class="checkbox margin-left-20">
                                                         <input type="checkbox" ref="selected_activity_type" name ="activity_type" :value="type.id" :id = "type.id" v-model="category.activity_type[index1].selected" @click="handleActivityTypeCheckboxChange(index,index1)"> {{type.short_name}}
 
                                                         <div v-if="type.selected">
                                                             <div v-for="(activity,index2) in type.activity" class="checkbox activity-clear-left">
-                                                                
+
                                                                 <div class ="col-sm-12">
                                                                     <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected" @click="handleActivityCheckboxChange(index,index1,index2,$event)">{{activity.name}} ({{activity.base_application_fee}} + {{activity.base_licence_fee}})
                                                                 </div>
 
                                                             </div>
                                                         </div>
-                                                        
                                                     </div>
                                                 </div> 
                                                 <div v-else="!radio_selected[index]" class="col-sm-4">
