@@ -1,5 +1,5 @@
 <template lang="html">
-    <div id="addBooking">
+    <div id="bookingCloseClasses">
         <form v-show="!isLoading" name="bookingForm">
             <div class="row">
                 <div class="col-lg-12">
@@ -7,11 +7,8 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="col-md-6">
-                                    <h3 class="text-primary pull-left">Book a Campsite at {{campground.name}}</h3>
+                                    <h3 class="text-primary pull-left">Book Close Campsite at {{campground.name}}</h3>
                                 </div>
-                                <div class="col-md-6" v-if="(campground.site_type == 1) || (campground.site_type == 2)"> 
-                                    <router-link style="margin-top:20px;" class="btn btn-primary table_btn pull-right" :to="{name:'booking-close-classes'}">Booking close campsite</router-link>
-                                </div> 
                             </div>
                             <div class="col-md-12">
                                 <p>Please visit the <a target='_blank' v-bind:href="'/availability_admin/?site_id=' + campground.id "> Campsite Availability checker</a> for expected availability.</p>                          
@@ -125,17 +122,17 @@
                                             <tr>
                                                  <th class="site">Campsite</th>
                                                  <th class="form-group">Status</th>
-                                                 <th class="book">Availability</th>
-                                                 <th class="numBook">Number of sites to book</th>
+                                                 <th class="numBook">Site to book
+                                                    <input class="checkbox" type="checkbox" id="selectAll"  v-model="selectAll"> 
+                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody><template v-for="c in booking.campsite_classes">
                                             <tr>
-                                                <td class="site"> {{c.name}} </td>
+                                                <td class="site"> {{c.name}} - {{c.type}} </td>
                                                 <td class="site"> {{c.status}} </td>
-                                                <td class="book"> {{ c.campsites.length }} available </td>
                                                 <td class="numBook">
-                                                    <input type="number" min="1" v-bind:max="c.campsites.length" name="campsite-type" class="form-control" v-model="c.selected_campsite_class" @change="updatePrices()">
+                                                    <input class="checkbox" type="checkbox" :value="c.id" :disabled="c.status=='booked'" v-model="multibook_selected" @change="updatePrices()" number>
                                                 </td>
                                             </tr></template>
                                         </tbody>
@@ -360,13 +357,13 @@ import loader from '../utils/loader.vue';
 import modal from '../utils/bootstrap-modal.vue';
 import reason from '../utils/reasons.vue';
 export default {
-    name:"addBooking",
+    name:"bookingCloseClasses",
     data:function () {
         let vm =this;
         return {
             overrideCharge: false,
             isModalOpen:false,
-            bookingForm:null,
+            bookingForm:this.$route.params.id,
             countries:[],
             selected_campsite:"",
             selected_arrival:"",
@@ -515,18 +512,17 @@ export default {
         selectAll:{
             get: function () {
 				let vm = this;
-                return vm.booking.campsites ? vm.multibook_selected.length == vm.booking.campsites.length : false;
+                return vm.booking.campsite_classes ? vm.multibook_selected.length == vm.booking.campsite_classes.length : false;
             },
             set: function (value) {
 				let vm = this;
                 var selected = [];
 
                 if (value) {
-                    vm.booking.campsites.forEach(function (campsite) {
+                    vm.booking.campsite_classes.forEach(function (campsite) {
                         selected.push(campsite.id);
                     });
                 }
-
                 vm.multibook_selected = selected;
 				vm.updatePrices();
             }
@@ -534,14 +530,8 @@ export default {
         selected_campsites: function () {
             let vm = this;
             var results = [];
-            if (vm.booking_type == vm.booking_types.CAMPSITE) {
+            if (vm.booking_type == vm.booking_types.CLASS) {
 				results = vm.multibook_selected;
-            } else {
-                vm.booking.campsite_classes.forEach(function (el) {
-                    for (var i=0; i<el.selected_campsite_class; i++) {
-                        results.push(el.campsites[i]);
-                    }
-                });
             }
             return results;
         }
@@ -564,7 +554,8 @@ export default {
         },
         selected_campsite_class:function () {
             let vm =this;
-            vm.selected_campsite =vm.booking.campsite_classes[vm.selected_campsite_class].campsites[0];
+            vm.selected_campsite =vm.booking.campsite_classes[vm.selected_campsite_class];
+            vm.updatePrices();
         },
         selected_arrival:function () {
             let vm = this;
@@ -666,14 +657,14 @@ export default {
             let vm = this;
             if(vm.selected_arrival && vm.selected_departure){
                 vm.loading.push('fetching campsite classes');
-                vm.$http.get(api_endpoints. available_campsite_classes(
+                vm.$http.get(api_endpoints. available_campsites(
                     vm.booking.campground,
                     Moment(vm.booking.arrival, "YYYY-MM-DD").format("YYYY/MM/DD"),
                     Moment(vm.booking.departure, "YYYY-MM-DD").format("YYYY/MM/DD")
                     )).then((response)=>{
                     vm.booking.campsite_classes = response.body;
                     if (vm.booking.campsite_classes.length >0) {
-                        vm.selected_campsite =vm.booking.campsite_classes[0].campsites[0];
+                        vm.selected_campsite =vm.booking.campsite_classes[0].id;
                         vm.selected_campsite_class = 0;
                     }
                     vm.loading.splice('fetching campsite classes',1);

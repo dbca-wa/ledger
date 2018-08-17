@@ -544,7 +544,7 @@ class Campsite(models.Model):
         if closure:
             return closure.id
         return None
-    
+
     # Methods
     # =======================================
     def __is_campground_open(self):
@@ -887,6 +887,7 @@ class Booking(models.Model):
     overridden_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True, related_name='overridden_bookings')
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
+    send_invoice = models.BooleanField(default=False)
     cancellation_reason = models.TextField(null=True,blank=True)
     cancelation_time = models.DateTimeField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)

@@ -687,8 +687,7 @@ export default {
                     }
                     if (typeCondensed[booking.campground_site_type[i].type] == undefined) {
                       typeCondensed[booking.campground_site_type[i].type] = 0;
-                    }
-                    
+                    }                    
                     typeCondensed[booking.campground_site_type[i].type] += 1;
                   }
                   for (var index in typeCondensed) {
