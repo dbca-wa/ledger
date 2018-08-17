@@ -22,7 +22,7 @@ def is_email_auth_backend(request):
 
 def is_officer(request):
     #return request.user.is_authenticated() and is_model_backend(request) and (belongs_to(request.user, 'Disturbance Officers') or request.user.is_superuser)
-    return request.user.is_authenticated() and in_dbca_domain(request) and (belongs_to(request.user, 'Disturbance Officers') or request.user.is_superuser)
+    return request.user.is_authenticated() and is_model_backend(request) and in_dbca_domain(request) and (belongs_to(request.user, 'Disturbance Officers') or request.user.is_superuser)
 
 def in_dbca_domain(request):
     user = request.user
