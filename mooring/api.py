@@ -950,7 +950,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
         try:
             start_date = self.try_parsing_date(request.GET.get('arrival')).date()
             end_date = self.try_parsing_date(request.GET.get('departure')).date()
-            campsite_qs = Mooringsite.objects.filter(campground_id=self.get_object().id)
+            campsite_qs = Mooringsite.objects.filter(mooringarea_id=self.get_object().id)
             http_status = status.HTTP_200_OK
             available = utils.get_available_campsites_list(campsite_qs,request, start_date, end_date)
 
@@ -1005,10 +1005,10 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             http_status = status.HTTP_200_OK
             available = utils.get_available_campsitetypes(self.get_object().id,start_date, end_date,_list=False)
             available_serializers = []
-            for k,v in available.items():
-                s = MooringsiteClassSerializer(MooringsiteClass.objects.get(id=k),context={'request':request},method='get').data
-                s['campsites'] = [c.id for c in v]
-                available_serializers.append(s)
+            #for k,v in available.items():
+                #s = MooringsiteClassSerializer(MooringsiteClass.objects.get(id=k),context={'request':request},method='get').data
+                #s['campsites'] = [c.id for c in v]
+                #available_serializers.append(s)
             data = available_serializers
 
             return Response(data,status=http_status)
@@ -1291,6 +1291,9 @@ def create_booking(request, *args, **kwargs):
     num_concession = serializer.validated_data['num_concession']
     num_child = serializer.validated_data['num_child']
     num_infant = serializer.validated_data['num_infant']
+    num_mooring = serializer.validated_data['num_mooring']
+    print "N_MOO"
+    print num_mooring
 
     if 'ps_booking' in request.session:
         # if there's already a booking in the current session, send bounce signal
@@ -1323,14 +1326,16 @@ def create_booking(request, *args, **kwargs):
             booking = utils.create_booking_by_site(
                 campsite, start_date, end_date,
                 num_adult, num_concession,
-                num_child, num_infant
+                num_child, num_infant,
+                num_mooring
             )
         else:
             booking = utils.create_booking_by_class(
                 campground, campsite_class,
                 start_date, end_date,
                 num_adult, num_concession,
-                num_child, num_infant
+                num_child, num_infant,
+                num_mooring
             )
     except ValidationError as e:
         if hasattr(e,'error_dict'):
@@ -1805,10 +1810,23 @@ class BookingViewSet(viewsets.ModelViewSet):
         try:
             if 'ps_booking' in request.session:
                 del request.session['ps_booking']
-            start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
-            end_date = datetime.strptime(request.data['departure'],'%Y/%m/%d').date()
+#            start_date = datetime.strptime(request.data['arrival'],'%Y/%m/%d').date()
+#            end_date = datetime.strptime(request.data['departure'],'%Y/%m/%d').date()
+#            guests = request.data['guests']
+#            costs = request.data['costs']
+
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            start_date = serializer.validated_data['arrival']
+            end_date = serializer.validated_data['departure']
             guests = request.data['guests']
             costs = request.data['costs']
+            #regos = request.data['regos']
+            override_price = serializer.validated_data.get('override_price', None)
+            override_reason = serializer.validated_data.get('override_reason', None)
+            override_reason_info = serializer.validated_data.get('override_reason_info', None)
+            overridden_by = None if (override_price is None) else request.user
+
             try:
                 emailUser = request.data['customer']
                 customer = EmailUser.objects.get(email = emailUser['email'])
@@ -1820,6 +1838,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                     phone_number = emailUser['phone'],
                     mobile_number  = emailUser['phone'],
                 )
+
                 userCreated = True
                 try:
                     country = emailUser['country']
@@ -1828,23 +1847,50 @@ class BookingViewSet(viewsets.ModelViewSet):
                 except Country.DoesNotExist:
                     raise serializers.ValidationError("Country you have entered does not exist")
 
+
             booking_details = {
-                'campsite_id':request.data['campsite'],
+                'campsites': Mooringsite.objects.filter(id__in=request.data['campsites']),
                 'start_date' : start_date,
                 'end_date' : end_date,
                 'num_adult' : guests['adult'],
                 'num_concession' : guests['concession'],
                 'num_child' : guests['child'],
                 'num_infant' : guests['infant'],
+                'num_mooring' : guests['mooring'],
                 'cost_total' : costs['total'],
+                'override_price' : override_price,
+                'override_reason' : override_reason,
+                'override_reason_info' : override_reason_info,
+                'overridden_by': overridden_by,
                 'customer' : customer,
                 'first_name': emailUser['first_name'],
                 'last_name': emailUser['last_name'],
                 'country': emailUser['country'],
                 'postcode': emailUser['postcode'],
                 'phone': emailUser['phone'],
+                'regos': regos
             }
 
+            #booking_details = {
+            #    'campsites':request.data['campsite'],
+            #    'start_date' : start_date,
+            #    'end_date' : end_date,
+            #    'num_mooring' : guests['mooring'],
+            #    'num_adult' : guests['adult'],
+            #    'num_concession' : guests['concession'],
+            #    'num_child' : guests['child'],
+            #    'num_infant' : guests['infant'],
+            #    'num_mooring' : guests['mooring'],
+            #    'cost_total' : costs['total'],
+            #    'customer' : customer,
+            #    'first_name': emailUser['first_name'],
+            #    'last_name': emailUser['last_name'],
+            #    'country': emailUser['country'],
+            #    'postcode': emailUser['postcode'],
+            #    'phone': emailUser['phone'],
+            #}
+            print "BOOKING DETAILS"
+            print booking_details
             data = utils.internal_booking(request,booking_details)
             serializer = BookingSerializer(data)
             return Response(serializer.data)
@@ -1855,6 +1901,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise
         except ValidationError as e:
+            print e
             raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             utils.delete_session_booking(request.session)

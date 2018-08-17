@@ -159,7 +159,7 @@ class MooringAreaMapFeatureSerializer(serializers.HyperlinkedModelSerializer):
 class MooringAreaMapRegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Region
-        fields = ('id', 'name', 'abbreviation','wkb_geometry')
+        fields = ('id', 'name', 'abbreviation','wkb_geometry', 'zoom_level')
 
 class MooringAreaMapDistrictSerializer(serializers.HyperlinkedModelSerializer):
     region = MooringAreaMapRegionSerializer(read_only=True)

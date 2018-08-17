@@ -148,7 +148,8 @@ def create_confirmation(confirmation_buffer, booking):
                 elif r['Paid'] == 'No':
                     data.append(Paragraph('Unpaid', styles['Left']))
                 elif r['Paid'] == 'pass_required':
-                    data.append(Paragraph('Marina Pass Required', styles['Left']))
+                    pass
+                    #data.append(Paragraph('Marina Pass Required', styles['Left']))
             vehicle_data.append(data)
             
         vehicles = Table(vehicle_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
