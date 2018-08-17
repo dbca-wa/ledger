@@ -167,8 +167,15 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
                     if (vm.requiresCheckout) {
-                    //TODO: change below to call new api function for process_payment
-                        window.location.href = "/ledger/checkout/checkout/payment-details/";
+                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/send_to_checkout')).then(res=>{
+                            window.location.href = "/ledger/checkout/checkout/payment-details/";
+                        },err=>{
+                            swal(
+                                'Submit Error',
+                                helpers.apiVueResourceError(err),
+                                'error'
+                            )
+                        });
                     } else {
                         vm.$router.push({
                             name: 'submit_application',

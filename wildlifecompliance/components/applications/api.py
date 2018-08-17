@@ -219,23 +219,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.submit(request,self)
             serializer = self.get_serializer(instance)
-            # send to checkout if application_fee > 0 and customer_status == 'draft'
-            # TODO: separate below checkout process so it can be called individually for an application
-            if instance.application_fee > 0:
-                product_lines = []
-                application_submission = u'Application submitted by {} confirmation WC{}'.format(
-                    u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
-                set_session_application(request.session, instance)
-                product_lines.append({
-                    'ledger_description': '{}'.format(instance.licence_type_name),
-                    'quantity': 1,
-                    'price_incl_tax': str(instance.application_fee),
-                    'price_excl_tax': str(calculate_excl_gst(instance.application_fee)),
-                    'oracle_code': ''
-                })
-                checkout_result = checkout(request, instance, lines=product_lines,
-                                                            invoice_text=application_submission)
-            # return checkout_result
             return Response(serializer.data)
         except serializers.ValidationError:
             delete_session_application(request.session)
@@ -248,6 +231,36 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             delete_session_application(request.session)
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def send_to_checkout(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            product_lines = []
+            application_submission = u'Application submitted by {} confirmation WC{}'.format(
+                u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
+            set_session_application(request.session, instance)
+            product_lines.append({
+                'ledger_description': '{}'.format(instance.licence_type_name),
+                'quantity': 1,
+                'price_incl_tax': str(instance.application_fee),
+                'price_excl_tax': str(calculate_excl_gst(instance.application_fee)),
+                'oracle_code': ''
+            })
+            checkout_result = checkout(request, instance, lines=product_lines,
+                                       invoice_text=application_submission)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
