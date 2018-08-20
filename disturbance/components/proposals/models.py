@@ -724,6 +724,8 @@ class Proposal(RevisionedMixin):
                 self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_REISSUE_APPROVAL.format(self.id),request)
+            else:
+                raise ValidationError('Cannot reissue Approval')
         else:
             raise ValidationError('Cannot reissue Approval')
 
