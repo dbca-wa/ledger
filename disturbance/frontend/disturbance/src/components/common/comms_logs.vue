@@ -119,6 +119,7 @@ export default {
                         data: 'created',
                         render: function (date) {
                             return moment(date).format(vm.DATE_TIME_FORMAT);
+                            //return moment(date).format(vm.dateFormat);
                         }
                     },
                     {
@@ -132,12 +133,70 @@ export default {
                     {
                         title: 'To',
                         data: 'to',
-                        render: vm.commaToNewline
+                        //render: vm.commaToNewline
+                        'render': function (value) {
+                            var ellipsis = '...',
+                                truncated = _.truncate(value, {
+                                    length: 25,
+                                    omission: ellipsis,
+                                    separator: ' '
+                                }),
+                                result = '<span>' + truncated + '</span>',
+                                popTemplate = _.template('<a href="#" ' +
+                                    'role="button" ' +
+                                    'data-toggle="popover" ' +
+                                    'data-trigger="click" ' +
+                                    'data-placement="top auto"' +
+                                    'data-html="true" ' +
+                                    'data-content="<%= text %>" ' +
+                                    '>more</a>');
+                            if (_.endsWith(truncated, ellipsis)) {
+                                result += popTemplate({
+                                    text: value
+                                });
+                            }
+
+                            return result;
+                        },
+                        'createdCell': function (cell) {
+                            //TODO why this is not working?
+                            // the call to popover is done in the 'draw' event
+                            $(cell).popover();
+                        }
                     },
                     {
                         title: 'CC',
                         data: 'cc',
-                        render: vm.commaToNewline
+                        //render: vm.commaToNewline
+                          'render': function (value) {
+                            var ellipsis = '...',
+                                truncated = _.truncate(value, {
+                                    length: 25,
+                                    omission: ellipsis,
+                                    separator: ' '
+                                }),
+                                result = '<span>' + truncated + '</span>',
+                                popTemplate = _.template('<a href="#" ' +
+                                    'role="button" ' +
+                                    'data-toggle="popover" ' +
+                                    'data-trigger="click" ' +
+                                    'data-placement="top auto"' +
+                                    'data-html="true" ' +
+                                    'data-content="<%= text %>" ' +
+                                    '>more</a>');
+                            if (_.endsWith(truncated, ellipsis)) {
+                                result += popTemplate({
+                                    text: value
+                                });
+                            }
+
+                            return result;
+                        },
+                        'createdCell': function (cell) {
+                            //TODO why this is not working?
+                            // the call to popover is done in the 'draw' event
+                            $(cell).popover();
+                        }
                     },
                     {
                         title: 'From',
@@ -146,7 +205,36 @@ export default {
                     },
                     {
                         title: 'Subject/Desc.',
-                        data: 'subject'
+                        data: 'subject',
+                          'render': function (value) {
+                            var ellipsis = '...',
+                                truncated = _.truncate(value, {
+                                    length: 25,
+                                    omission: ellipsis,
+                                    separator: ' '
+                                }),
+                                result = '<span>' + truncated + '</span>',
+                                popTemplate = _.template('<a href="#" ' +
+                                    'role="button" ' +
+                                    'data-toggle="popover" ' +
+                                    'data-trigger="click" ' +
+                                    'data-placement="top auto"' +
+                                    'data-html="true" ' +
+                                    'data-content="<%= text %>" ' +
+                                    '>more</a>');
+                            if (_.endsWith(truncated, ellipsis)) {
+                                result += popTemplate({
+                                    text: value
+                                });
+                            }
+
+                            return result;
+                        },
+                        'createdCell': function (cell) {
+                            //TODO why this is not working?
+                            // the call to popover is done in the 'draw' event
+                            $(cell).popover();
+                        }
                     },
                     {
                         title: 'Text',
