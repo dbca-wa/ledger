@@ -61,7 +61,7 @@ export default {
     data() {
         let vm = this;
         return {
-            dateFormat: 'DD/MM/YYYY HH:MM:SS',
+            dateFormat: 'DD/MM/YYYY HH:mm:ss',
             actionsTable: null,
             popoversInitialised: false,
             actionsDtOptions:{
@@ -118,8 +118,8 @@ export default {
                         title: 'Date',
                         data: 'created',
                         render: function (date) {
-                            return moment(date).format(vm.DATE_TIME_FORMAT);
-                            //return moment(date).format(vm.dateFormat);
+                            //return moment(date).format(vm.DATE_TIME_FORMAT);
+                            return moment(date).format(vm.dateFormat);
                         }
                     },
                     {

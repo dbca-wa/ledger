@@ -30,7 +30,7 @@ export default {
         let vm = this;
         return {
             table: null,
-            dateFormat: 'DD/MM/YYYY HH:MM:SS',
+            dateFormat: 'DD/MM/YYYY HH:mm:ss',
             datatable_options: {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
