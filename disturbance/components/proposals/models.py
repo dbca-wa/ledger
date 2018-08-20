@@ -256,7 +256,7 @@ class Proposal(RevisionedMixin):
 #    )
 
     APPLICATION_TYPE_CHOICES = (
-        ('new_licence', 'New Licence'),
+        ('new_proposal', 'New Proposal'),
         ('amendment', 'Amendment'),
         ('renewal', 'Renewal'),
     )
