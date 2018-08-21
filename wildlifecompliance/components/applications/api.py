@@ -236,7 +236,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
-    def send_to_checkout(self, request, *args, **kwargs):
+    def application_fee_checkout(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             product_lines = []
