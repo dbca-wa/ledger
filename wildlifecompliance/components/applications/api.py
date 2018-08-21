@@ -252,6 +252,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             })
             checkout_result = checkout(request, instance, lines=product_lines,
                                        invoice_text=application_submission)
+            return checkout_result
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
