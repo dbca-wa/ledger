@@ -69,6 +69,7 @@ from disturbance.helpers import is_customer, is_internal
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
 class GetProposalType(views.APIView):
     renderer_classes = [JSONRenderer, ]
@@ -269,27 +270,27 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-
-
-#    @list_route(methods=['GET',])
-#    def user_list(self, request, *args, **kwargs):
-#        user_orgs = [org.id for org in request.user.disturbance_organisations.all()];
-#        qs = []
-#        qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded')))
-#        #Remove filter to include 'Apporved Proposals in external dashboard .exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])
-#        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs).exclude(processing_status='discarded')))
-#        #Remove filter to include 'Apporved Proposals in external dashboard .exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])
-#        queryset = list(set(qs))
-#        serializer = DTProposalSerializer(queryset, many=True)
-#        return Response(serializer.data)
-
-
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
         qs = self.get_queryset().exclude(processing_status='discarded')
         #serializer = DTProposalSerializer(qs, many=True)
         serializer = ListProposalSerializer(qs,context={'request':request}, many=True)
         return Response(serializer.data)
+
+    @list_route(methods=['GET',])
+    def user_list_paginated(self, request, *args, **kwargs):
+        """
+        Placing Paginator class here (instead of settings.py) allows specific method for desired behaviour),
+        otherwise all serializers will use the default pagination class
+
+        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
+        """
+        proposals = self.get_queryset()
+        paginator = DatatablesPageNumberPagination()
+        paginator.page_size = proposals.count()
+        result_page = paginator.paginate_queryset(proposals, request)
+        serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @detail_route(methods=['GET',])
     def internal_proposal(self, request, *args, **kwargs):

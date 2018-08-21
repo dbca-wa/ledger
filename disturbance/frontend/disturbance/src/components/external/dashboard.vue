@@ -31,7 +31,8 @@ export default {
     data() {
         let vm = this;
         return {
-            proposals_url: helpers.add_endpoint_json(api_endpoints.proposals,'user_list'),
+            //proposals_url: helpers.add_endpoint_json(api_endpoints.proposals,'user_list'),
+            proposals_url: api_endpoints.proposals_paginated,
             approvals_url: helpers.add_endpoint_json(api_endpoints.approvals,'user_list'),
             empty_list: '/api/empty_list',
             compliances_url: helpers.add_endpoint_json(api_endpoints.compliances,'user_list'),

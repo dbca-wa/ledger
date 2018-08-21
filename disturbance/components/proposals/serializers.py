@@ -132,11 +132,15 @@ class ListProposalSerializer(BaseProposalSerializer):
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
-    assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
+    #assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
+    assigned_officer = serializers.SerializerMethodField(read_only=True)
 
     application_type = serializers.CharField(source='application_type.name', read_only=True)
-    region = serializers.CharField(source='region.name', read_only=True)
-    district = serializers.CharField(source='district.name', read_only=True)
+    #region = serializers.CharField(source='region.name', read_only=True)
+    #district = serializers.CharField(source='district.name', read_only=True)
+    region = serializers.SerializerMethodField(read_only=True)
+    district = serializers.SerializerMethodField(read_only=True)
+
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
     assessor_process = serializers.SerializerMethodField(read_only=True)
 
@@ -145,7 +149,7 @@ class ListProposalSerializer(BaseProposalSerializer):
         model = Proposal
         fields = (
                 'id',
-                'application_type',                
+                'application_type',
                 'activity',
                 'approval_level',
                 'title',
@@ -174,6 +178,21 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'allowed_assessors',
                 'proposal_type'
                 )
+
+    def get_assigned_officer(self,obj):
+        if obj.assigned_officer:
+            return obj.assigned_officer.get_full_name()
+        return None
+
+    def get_region(self,obj):
+        if obj.region:
+            return obj.region.name
+        return None
+
+    def get_district(self,obj):
+        if obj.district:
+            return obj.district.name
+        return None
 
     def get_assessor_process(self,obj):
         # Check if currently logged in user has access to process the proposal
@@ -344,7 +363,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
 
     def get_approval_level_document(self,obj):
         if obj.approval_level_document is not None:
-            return [obj.approval_level_document.name,obj.approval_level_document._file.url]  
+            return [obj.approval_level_document.name,obj.approval_level_document._file.url]
         else:
             return obj.approval_level_document
 

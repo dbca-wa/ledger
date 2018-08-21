@@ -18,6 +18,7 @@ INSTALLED_APPS += [
     'disturbance.components.compliances',
     'taggit',
     'rest_framework',
+    'rest_framework_datatables',
     'rest_framework_gis',
     'reset_migrations',
     'ckeditor',
@@ -37,6 +38,20 @@ WSGI_APPLICATION = 'disturbance.wsgi.application'
 #    #'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 #        'PAGE_SIZE': 5
 #}
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework_datatables.renderers.DatatablesRenderer',
+    ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework_datatables.filters.DatatablesFilterBackend',
+    ),
+    #'DEFAULT_PAGINATION_CLASS': 'rest_framework_datatables.pagination.DatatablesPageNumberPagination',
+    #'PAGE_SIZE': 10,
+}
+
 
 MIDDLEWARE_CLASSES += [
     'disturbance.middleware.FirstTimeNagScreenMiddleware'

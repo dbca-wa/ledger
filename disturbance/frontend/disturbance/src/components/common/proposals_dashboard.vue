@@ -141,19 +141,18 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                serverSide: true,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data'
                 },
                 dom: 'lBfrtip',
                 buttons:[
                 'excel', 'csv',],
                 columns: [
                     {
-                        data: "id",
-                        mRender:function(data,type,full){
-                            return full.lodgement_number;
-                        }
+                        data: "lodgement_number",
                     },
                     {
                         data: "region",
@@ -276,19 +275,18 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                serverSide: true,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data'
                 },
                 dom: 'lBfrtip',
                 buttons:[
                 'excel', 'csv', ],
                 columns: [
                     {
-                        data: "id",
-                        mRender:function(data,type,full){
-                            return full.lodgement_number;
-                        }
+                        data: "lodgement_number",
                     },
                     {
                         data: "region",
