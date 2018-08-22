@@ -1322,6 +1322,15 @@ class Referral(models.Model):
     def latest_referrals(self):
         return Referral.objects.filter(sent_by=self.referral, proposal=self.proposal)[:2]
 
+    @property
+    def can_be_completed(self):
+        #Referral cannot be completed until second level referral sent by referral has been completed/recalled
+        qs=Referral.objects.filter(sent_by=self.referral, proposal=self.proposal, processing_status='with_referral')
+        if qs:
+            return False
+        else:
+            return True
+
     def recall(self,request):
         with transaction.atomic():
             if not self.proposal.can_assess(request.user):
