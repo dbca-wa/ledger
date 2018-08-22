@@ -126,7 +126,10 @@ export default {
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action"],
+            proposal_headers:[
+                "Number","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
+                "LodgementNo","CanReissue","CanAction","CanReinstate","SetToCancel","SetToSuspend","SetToSurrender","CurrentProposal","RenewalDoc","RenewalSent","CanAmend","CanRenew"
+            ],
             proposal_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -142,8 +145,6 @@ export default {
                 buttons:[
                 'excel', 'csv', ],
                 columns: [
-                    {data: "id"},
-                    /*
                     {
                         data: "id",
                         'render':function(data,type,full){
@@ -179,16 +180,13 @@ export default {
                                     });   
 
                                 }
-                            }                          
+                            }
                             return result;
                         }
                         else { return full.lodgement_number }
                         },
                         'createdCell': helpers.dtPopoverCellFn
                     },
-                    */
-                    {data: "region"},
-                    /*
                     {
                         data: "region",
                         'render': function (value) {
@@ -196,11 +194,7 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn
                     },
-                    */
                     {data: "activity"},
-
-                    {data: "title"},
-                    /*
                     {
                         data: "title",
                         'render': function (value) {
@@ -208,47 +202,27 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn
                     },
-                    */
                     {data: "applicant"},
                     {data: "status"},
-                    /*
-                    {data: "status"},
+
                     {
                         data: "start_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
-                    */
                     {
                         data: "expiry_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
-                    {data: "licence_document"},
-                    /*
                     {
                         data: "licence_document",
                         mRender:function(data,type,full){
                             return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
                         }
                     },
-                    */
-
-                    {data: "lodgement_number", visible: false},
-                    {data: "can_reissue", visible: false},
-                    {data: "can_action", visible: false},
-                    {data: "can_reinstate", visible: false},
-                    {data: "set_to_cancel", visible: false},
-                    {data: "set_to_suspend", visible: false},
-                    {data: "set_to_surrender", visible: false},
-                    {data: "current_proposal", visible: false},
-                    {data: "renewal_document", visible: false},
-                    {data: "renewal_sent", visible: false},
-                    {data: "can_amend", visible: false},
-                    {data: "can_renew", visible: false},
-
                     {
                         mRender:function (data,type,full) {
                             let links = '';
@@ -298,7 +272,23 @@ export default {
                             }
                             return links;
                         }
-                    }
+                    },
+                    
+                    // dummy fields required for mRender functions above
+                    {data: "lodgement_number", visible: false},
+                    {data: "can_reissue", visible: false},
+                    {data: "can_action", visible: false},
+                    {data: "can_reinstate", visible: false},
+                    {data: "set_to_cancel", visible: false},
+                    {data: "set_to_suspend", visible: false},
+                    {data: "set_to_surrender", visible: false},
+                    {data: "current_proposal", visible: false},
+                    {data: "renewal_document", visible: false},
+                    {data: "renewal_sent", visible: false},
+                    {data: "can_amend", visible: false},
+                    {data: "can_renew", visible: false},
+
+
                 ],
                 processing: true,
                 initComplete: function () {
@@ -414,67 +404,53 @@ export default {
 
             // End Proposal Date Filters
             // Internal Reissue listener
-            if ($(this).attr('data-reissue-approval')) {
-                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reissue-approval]', function(e) {
-                    e.preventDefault();
-                    var id = $(this).attr('data-reissue-approval');
-                    vm.reissueApproval(id);
-                });
-            }
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reissue-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-reissue-approval');
+                vm.reissueApproval(id);
+            });
 
             //Internal Cancel listener
-            if ($(this).attr('data-cancel-approval')) {
-                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-cancel-approval]', function(e) {
-                    e.preventDefault();
-                    var id = $(this).attr('data-cancel-approval');
-                    vm.cancelApproval(id);
-                });
-            }
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-cancel-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-cancel-approval');
+                vm.cancelApproval(id);
+            });
 
             //Internal Suspend listener
-            if ($(this).attr('data-suspend-approval')) {
-                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-suspend-approval]', function(e) {
-                    e.preventDefault();
-                    var id = $(this).attr('data-suspend-approval');
-                    vm.suspendApproval(id);
-                });
-            }
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-suspend-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-suspend-approval');
+                vm.suspendApproval(id);
+            });
 
             // Internal Reinstate listener
-            if ($(this).attr('data-reinstate-approval')) {
-                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reinstate-approval]', function(e) {
-                    e.preventDefault();
-                    var id = $(this).attr('data-reinstate-approval');
-                    vm.reinstateApproval(id);
-                });
-            }
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reinstate-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-reinstate-approval');
+                vm.reinstateApproval(id);
+            });
 
             //Internal/ External Surrender listener
-            if ($(this).attr('data-surrender-approval')) {
-                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-surrender-approval]', function(e) {
-                    e.preventDefault();
-                    var id = $(this).attr('data-surrender-approval');
-                    vm.surrenderApproval(id);
-                });
-            }
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-surrender-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-surrender-approval');
+                vm.surrenderApproval(id);
+            });
 
             // External renewal listener
-            if ($(this).attr('data-renew-approval')) {
-                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-renew-approval]', function(e) {
-                    e.preventDefault();
-                    var id = $(this).attr('data-renew-approval');
-                    vm.renewApproval(id);
-                });
-            }
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-renew-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-renew-approval');
+                vm.renewApproval(id);
+            });
 
             // External amend listener
-            if ($(this).attr('data-amend-approval')) {
-                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-amend-approval]', function(e) {
-                    e.preventDefault();
-                    var id = $(this).attr('data-amend-approval');
-                    vm.amendApproval(id);
-                });
-            }
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-amend-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-amend-approval');
+                vm.amendApproval(id);
+            });
 
         },
         initialiseSearch:function(){
