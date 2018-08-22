@@ -19,9 +19,11 @@ class ComplianceSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(source='get_processing_status_display')
     customer_status = serializers.CharField(source='get_customer_status_display')
     documents = serializers.SerializerMethodField()
-    submitter = serializers.CharField(source='submitter.get_full_name')
+    #submitter = serializers.CharField(source='submitter.get_full_name')
+    submitter = serializers.SerializerMethodField(read_only=True)
     allowed_assessors = EmailUserSerializer(many=True)
-    assigned_to = serializers.CharField(source='assigned_to.get_full_name')
+    #assigned_to = serializers.CharField(source='assigned_to.get_full_name')
+    assigned_to = serializers.SerializerMethodField(read_only=True)
     requirement = serializers.CharField(source='requirement.requirement')
     approval_lodgement_number = serializers.SerializerMethodField()
 
@@ -58,6 +60,16 @@ class ComplianceSerializer(serializers.ModelSerializer):
 
     def get_approval_lodgement_number(self,obj):
         return obj.approval.lodgement_number
+
+    def get_assigned_to(self,obj):
+        if obj.assigned_to:
+            return obj.assigned_to.get_full_name()
+        return None
+
+    def get_submitter(self,obj):
+        if obj.submitter:
+            return obj.submitter.get_full_name()
+        return None
 
 class SaveComplianceSerializer(serializers.ModelSerializer):
     class Meta:
