@@ -127,15 +127,17 @@ export default {
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region/District","Activity","Title","Approval","Holder","Status","Due Date","Assigned To","Action"],
+            proposal_headers:["Number","Region/District","Activity","Title","Approval","Holder","Status","Due Date","Assigned To", "CustomerStatus", "Reference","Action"],
             proposal_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                serverSide: true,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data'
                 },
                 dom: 'lBfrtip',
                 buttons:[
@@ -173,6 +175,8 @@ export default {
                     {data: "assigned_to",
                        // visible: false
                     },
+                    {data: "reference", visible: false},    // used for 'id' column function
+                    {data: "customer_status", visible: false},    // used in 'processing_status' column function
                     {
                         mRender:function (data,type,full) {
                             let links = '';

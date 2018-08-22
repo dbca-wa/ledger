@@ -10,9 +10,11 @@
             </div>
         </div>
     </div>
-    <ProposalDashTable level='external' :url='proposals_url'/>
     <ApprovalDashTable level='external' :url='approvals_url'/>
+    <!--
+    <ProposalDashTable level='external' :url='proposals_url'/>
     <ComplianceDashTable level='external' :url='compliances_url'/>
+    -->
 </div>
 </template>
 <script>
@@ -31,11 +33,14 @@ export default {
     data() {
         let vm = this;
         return {
-            //proposals_url: helpers.add_endpoint_json(api_endpoints.proposals,'user_list'),
-            proposals_url: api_endpoints.proposals_paginated,
-            approvals_url: helpers.add_endpoint_json(api_endpoints.approvals,'user_list'),
             empty_list: '/api/empty_list',
-            compliances_url: helpers.add_endpoint_json(api_endpoints.compliances,'user_list'),
+            //proposals_url: helpers.add_endpoint_json(api_endpoints.proposals,'user_list'),
+            //approvals_url: helpers.add_endpoint_json(api_endpoints.approvals,'user_list'),
+            //compliances_url: helpers.add_endpoint_json(api_endpoints.compliances,'user_list'),
+
+            proposals_url: api_endpoints.proposals_paginated,
+            approvals_url: api_endpoints.approvals_paginated,
+            compliances_url: api_endpoints.compliances_paginated,
         }
     },
     components:{

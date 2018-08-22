@@ -18,6 +18,7 @@ class ComplianceSerializer(serializers.ModelSerializer):
     holder = serializers.CharField(source='proposal.applicant.name')
     processing_status = serializers.CharField(source='get_processing_status_display')
     customer_status = serializers.CharField(source='get_customer_status_display')
+    submitter = serializers.SerializerMethodField(read_only=True)
     documents = serializers.SerializerMethodField()
     #submitter = serializers.CharField(source='submitter.get_full_name')
     submitter = serializers.SerializerMethodField(read_only=True)

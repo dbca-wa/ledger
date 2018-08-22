@@ -43,6 +43,7 @@ from disturbance.components.compliances.serializers import (
 
 )
 from disturbance.helpers import is_customer, is_internal
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
 
 class ComplianceViewSet(viewsets.ModelViewSet):
@@ -74,6 +75,23 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset().exclude(processing_status='future')
         serializer = ComplianceSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    @list_route(methods=['GET'])
+    def user_list_paginated(self, request, *args, **kwargs):
+        """
+        Placing Paginator class here (instead of settings.py) allows specific method for desired behaviour),
+        otherwise all serializers will use the default pagination class
+
+        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
+        """
+        #import ipdb; ipdb.set_trace()
+        queryset = self.get_queryset().exclude(processing_status='future')
+        paginator = DatatablesPageNumberPagination()
+        paginator.page_size = queryset.count()
+        result_page = paginator.paginate_queryset(queryset, request)
+        #serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
+        serializer = self.get_serializer(result_page, context={'request':request}, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @detail_route(methods=['POST',])
     @renderer_classes((JSONRenderer,))

@@ -132,14 +132,18 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                serverSide: true,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data'
                 },
                 dom: 'lBfrtip',
                 buttons:[
                 'excel', 'csv', ],
                 columns: [
+                    {data: "id"},
+                    /*
                     {
                         data: "id",
                         'render':function(data,type,full){
@@ -182,6 +186,9 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn
                     },
+                    */
+                    {data: "region"},
+                    /*
                     {
                         data: "region",
                         'render': function (value) {
@@ -189,7 +196,11 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn
                     },
+                    */
                     {data: "activity"},
+
+                    {data: "title"},
+                    /*
                     {
                         data: "title",
                         'render': function (value) {
@@ -197,7 +208,10 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn
                     },
+                    */
                     {data: "applicant"},
+                    {data: "status"},
+                    /*
                     {data: "status"},
                     {
                         data: "start_date",
@@ -205,18 +219,36 @@ export default {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
+                    */
                     {
                         data: "expiry_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
+                    {data: "licence_document"},
+                    /*
                     {
                         data: "licence_document",
                         mRender:function(data,type,full){
                             return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
                         }
                     },
+                    */
+
+                    {data: "lodgement_number", visible: false},
+                    {data: "can_reissue", visible: false},
+                    {data: "can_action", visible: false},
+                    {data: "can_reinstate", visible: false},
+                    {data: "set_to_cancel", visible: false},
+                    {data: "set_to_suspend", visible: false},
+                    {data: "set_to_surrender", visible: false},
+                    {data: "current_proposal", visible: false},
+                    {data: "renewal_document", visible: false},
+                    {data: "renewal_sent", visible: false},
+                    {data: "can_amend", visible: false},
+                    {data: "can_renew", visible: false},
+
                     {
                         mRender:function (data,type,full) {
                             let links = '';
@@ -382,53 +414,67 @@ export default {
 
             // End Proposal Date Filters
             // Internal Reissue listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reissue-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-reissue-approval');
-                vm.reissueApproval(id);
-            });
+            if ($(this).attr('data-reissue-approval')) {
+                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reissue-approval]', function(e) {
+                    e.preventDefault();
+                    var id = $(this).attr('data-reissue-approval');
+                    vm.reissueApproval(id);
+                });
+            }
 
             //Internal Cancel listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-cancel-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-cancel-approval');
-                vm.cancelApproval(id);
-            });
+            if ($(this).attr('data-cancel-approval')) {
+                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-cancel-approval]', function(e) {
+                    e.preventDefault();
+                    var id = $(this).attr('data-cancel-approval');
+                    vm.cancelApproval(id);
+                });
+            }
 
             //Internal Suspend listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-suspend-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-suspend-approval');
-                vm.suspendApproval(id);
-            });
+            if ($(this).attr('data-suspend-approval')) {
+                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-suspend-approval]', function(e) {
+                    e.preventDefault();
+                    var id = $(this).attr('data-suspend-approval');
+                    vm.suspendApproval(id);
+                });
+            }
 
             // Internal Reinstate listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reinstate-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-reinstate-approval');
-                vm.reinstateApproval(id);
-            });
+            if ($(this).attr('data-reinstate-approval')) {
+                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reinstate-approval]', function(e) {
+                    e.preventDefault();
+                    var id = $(this).attr('data-reinstate-approval');
+                    vm.reinstateApproval(id);
+                });
+            }
 
             //Internal/ External Surrender listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-surrender-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-surrender-approval');
-                vm.surrenderApproval(id);
-            });
+            if ($(this).attr('data-surrender-approval')) {
+                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-surrender-approval]', function(e) {
+                    e.preventDefault();
+                    var id = $(this).attr('data-surrender-approval');
+                    vm.surrenderApproval(id);
+                });
+            }
 
             // External renewal listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-renew-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-renew-approval');
-                vm.renewApproval(id);
-            });
+            if ($(this).attr('data-renew-approval')) {
+                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-renew-approval]', function(e) {
+                    e.preventDefault();
+                    var id = $(this).attr('data-renew-approval');
+                    vm.renewApproval(id);
+                });
+            }
 
             // External amend listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-amend-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-amend-approval');
-                vm.amendApproval(id);
-            });
+            if ($(this).attr('data-amend-approval')) {
+                vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-amend-approval]', function(e) {
+                    e.preventDefault();
+                    var id = $(this).attr('data-amend-approval');
+                    vm.amendApproval(id);
+                });
+            }
 
         },
         initialiseSearch:function(){
@@ -518,6 +564,7 @@ export default {
         check_assessor: function(proposal){
             let vm = this;         
             
+            /*
             var assessor = proposal.allowed_assessors.filter(function(elem){
                     return(elem.id=vm.profile.id)
                 });
@@ -526,6 +573,8 @@ export default {
                 return true;
             else
                 return false;       
+            */
+            return false;       
         },
 
         reissueApproval:function (proposal_id) {
