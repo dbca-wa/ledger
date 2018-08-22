@@ -1318,6 +1318,9 @@ class Referral(models.Model):
         return 'Proposal {} - Referral {}'.format(self.proposal.id,self.id)
 
     # Methods
+    @property
+    def latest_referrals(self):
+        return Referral.objects.filter(sent_by=self.referral, proposal=self.proposal)[:2]
 
     def recall(self,request):
         with transaction.atomic():

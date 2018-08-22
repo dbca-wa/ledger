@@ -63,7 +63,8 @@ from disturbance.components.proposals.serializers import (
     AmendmentRequestSerializer,
     SearchReferenceSerializer,
     SearchKeywordSerializer,
-    ListProposalSerializer
+    ListProposalSerializer,
+    ProposalReferralSerializer
 )
 from disturbance.helpers import is_customer, is_internal
 from django.core.files.base import ContentFile
@@ -831,6 +832,16 @@ class ReferralViewSet(viewsets.ModelViewSet):
         if proposal:
             qs = qs.filter(proposal_id=int(proposal))
         serializer = DTReferralSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def referral_list(self, request, *args, **kwargs):
+        instance = self.get_object()
+        qs = self.get_queryset().all()
+        qs=qs.filter(sent_by=instance.referral, proposal=instance.proposal)
+        serializer = DTReferralSerializer(qs, many=True)
+        #serializer = ProposalReferralSerializer(qs, many=True)
+
         return Response(serializer.data)
 
     @detail_route(methods=['GET', 'POST'])

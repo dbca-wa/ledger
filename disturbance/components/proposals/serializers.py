@@ -389,6 +389,7 @@ class ReferralProposalSerializer(InternalProposalSerializer):
 
 class ReferralSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(source='get_processing_status_display')
+    latest_referrals = ProposalReferralSerializer(many=True)
     class Meta:
         model = Referral
         fields = '__all__'

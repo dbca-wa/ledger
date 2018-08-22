@@ -24,6 +24,10 @@ export default {
         proposal: {
             type: Object,
             required: true
+        },
+        referral_url: {
+            type: String,
+            default: null
         }
     },
     data(){
@@ -31,6 +35,7 @@ export default {
         return {
             table: null,
             dateFormat: 'DD/MM/YYYY HH:mm:ss',
+            datatable_url: '',
             datatable_options: {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -41,7 +46,8 @@ export default {
                 //order: [[0, 'desc']],
                 processing:true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.referrals,'datatable_list')+'?proposal='+vm.proposal.id, 
+                    //"url": helpers.add_endpoint_json(api_endpoints.referrals,'datatable_list')+'?proposal='+vm.proposal.id, 
+                    "url": this.referral_url,
                     "dataSrc": '',
                 },
                 columns:[
@@ -116,6 +122,7 @@ export default {
         }
     },
     computed: {
+        
     },
     methods: {
         remindReferral:function(_id,user){
@@ -247,6 +254,7 @@ export default {
     },
     mounted(){
         this.initialiseTable();
+        
     }
 }
 </script>

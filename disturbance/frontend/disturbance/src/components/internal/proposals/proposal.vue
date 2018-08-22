@@ -115,7 +115,7 @@
                                     <template>
                                             
                                     </template>
-                                    <MoreReferrals @refreshFromResponse="refreshFromResponse" :proposal="proposal" :canAction="canLimitedAction" :isFinalised="isFinalised"/>
+                                    <MoreReferrals @refreshFromResponse="refreshFromResponse" :proposal="proposal" :canAction="canLimitedAction" :isFinalised="isFinalised" :referral_url="referralListURL"/>
                                 </div>
                                 <div class="col-sm-12">
                                     <div class="separator"></div>
@@ -466,6 +466,9 @@ export default {
     computed: {
         contactsURL: function(){
             return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
+        },
+        referralListURL: function(){
+            return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.referrals,'datatable_list')+'?proposal='+this.proposal.id : '';
         },
         isLoading: function() {
           return this.loading.length > 0
