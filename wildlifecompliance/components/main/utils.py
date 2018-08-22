@@ -48,6 +48,7 @@ def checkout(request, application, lines=[], invoice_text=None, vouchers=[], int
         'force_redirect': True,
         'proxy': True if internal else False,
         'invoice_text': invoice_text,
+        'basket_owner': application.submitter.id,
     }
     print(' -------- main utils > checkout > checkout_params ---------- ')
     print(checkout_params)

@@ -169,6 +169,7 @@ export default {
                         }
                     },
                     {
+                        // Actions
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
@@ -288,6 +289,7 @@ export default {
                     },
                     {data: "assigned_officer"},
                     {
+                        // Actions
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
