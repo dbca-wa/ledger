@@ -3,6 +3,7 @@
       <div class="row">
         <h3>Proposal: {{ proposal.lodgement_number }}</h3>
         <h4>Proposal Type: {{proposal.proposal_type }}</h4>
+        <h4>Approval Level: {{proposal.approval_level }}</h4>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             <div class="row" v-if="canSeeSubmission">
