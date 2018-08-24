@@ -47,8 +47,7 @@ def checkout(request, application, lines=[], invoice_text=None, vouchers=[], int
         'return_preload_url': request.build_absolute_uri('/'),
         'force_redirect': True,
         'proxy': True if internal else False,
-        'invoice_text': invoice_text,
-        'basket_owner': application.submitter.id,
+        'invoice_text': invoice_text
     }
     print(' -------- main utils > checkout > checkout_params ---------- ')
     print(checkout_params)

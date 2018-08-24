@@ -354,6 +354,14 @@ class Application(RevisionedMixin):
         return self.customer_status == 'draft' and not self.lodgement_number
 
     @property
+    def payment_status(self):
+        if self.invoices.count() == 0:
+            return 'unpaid'
+        else:
+            latest_invoice = Invoice.objects.get(reference=self.invoices.latest('id').invoice_reference)
+            return latest_invoice.payment_status
+
+    @property
     def latest_referrals(self):
         return self.referrals.all()[:2]
 
@@ -894,7 +902,7 @@ class ApplicationInvoice(models.Model):
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return 'Application {} : Invoice #{}'.format(self.id,self.invoice_reference)
+        return 'Application {} : Invoice #{}'.format(self.application_id,self.invoice_reference)
 
     # Properties
     # ==================

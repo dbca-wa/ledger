@@ -251,7 +251,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 'oracle_code': ''
             })
             checkout_result = checkout(request, instance, lines=product_lines,
-                                       invoice_text=application_submission, internal=True)
+                                       invoice_text=application_submission)
             return checkout_result
         except serializers.ValidationError:
             print(traceback.print_exc())

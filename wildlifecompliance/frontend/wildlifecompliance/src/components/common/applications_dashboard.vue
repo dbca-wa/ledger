@@ -183,6 +183,9 @@ export default {
                                 else if (full.can_user_view) {
                                     links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
                                 }
+                                if (full.payment_status == 'unpaid'){
+                                    links +=  `<a href='#${full.id}' data-pay-application-fee='${full.id}'>Process Payment</a><br/>`;
+                                }
                             }
                             return links;
                         }
@@ -238,7 +241,7 @@ export default {
                     });
                 }
             },
-            application_headers:["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action"],
+            application_headers:["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"],
             application_options:{
                 autoWidth: false,
                 language: {
@@ -277,6 +280,12 @@ export default {
                     {data: "applicant"},
                     {
                         data: "processing_status",
+                        mRender:function(data,type,full){
+                            return vm.level == 'external' ? full.customer_status: data;
+                        }
+                    },
+                    {
+                        data: "payment_status",
                         mRender:function(data,type,full){
                             return vm.level == 'external' ? full.customer_status: data;
                         }
@@ -435,6 +444,19 @@ export default {
             },(error) => {
             });
         },
+        payApplicationFee:function (application_id) {
+            let vm = this;
+            console.log('test')
+            vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,application_id+'/application_fee_checkout/'), application_id).then(res=>{
+                    window.location.href = "/ledger/checkout/checkout/payment-details/";
+                },err=>{
+                    swal(
+                        'Submit Error',
+                        helpers.apiVueResourceError(err),
+                        'error'
+                    )
+                });
+        },
         addEventListeners: function(){
             let vm = this;
             // Initialise Application Date Filters
@@ -463,6 +485,12 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-discard-application');
                 vm.discardApplication(id);
+            });
+            // External Pay Application Fee listener
+            vm.$refs.application_datatable.vmDataTable.on('click', 'a[data-pay-application-fee]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-pay-application-fee');
+                vm.payApplicationFee(id);
             });
             // Initialise select2 for region
             $(vm.$refs.filterRegion).select2({
