@@ -155,9 +155,26 @@
                                                                                                 <div class="panel-body" >
 <!--- START MAP SELECTION -->
 
- <div id="map" class="map"></div>
+ <div id="map" class="map" style='height:80%'></div>
  <input type='hidden' value='' iname='location_coordinates' id='location_coordinates'>
  <input type='hidden' value='Point' name='type' id='type'>
+<div class="col-lg-12">
+  <div class="col-lg-6">
+         Longitude
+  </div>
+   <div class="col-lg-6">
+        Latitude
+   </div>
+</div>
+
+<div class="col-lg-12">
+  <div class="col-lg-6">
+       <input type='text' name='longitude' id='longitude'  class="form-control" v-on:change="setCoordinates()"> 
+  </div>
+   <div class="col-lg-6">
+       <input type='text' name='latitude' id='latitude' class="form-control" v-on:change="setCoordinates()">
+   </div>
+</div>
 
 <!--- END MAP SELECTION -->
 
@@ -365,6 +382,7 @@ export default {
         update: function() {
 			if(this.validateForm()){
 				this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
+                                location.reload(); 
 			}
         },
         validateEditor: function(el){
@@ -568,7 +586,21 @@ export default {
                 });
             }
 
-        }
+        },
+        setCoordinates: function() { 
+		console.log('gps changes');
+                var longitude = $('#longitude').val();
+		var latitude = $('#latitude').val();
+                $('#location_coordinates').val("POINT ("+longitude+" "+latitude+")");
+                console.log("setCoordinates");
+                console.log(this.campground.wkb_geometry);
+                var coord = new Object();
+                coord.coordinates = [parseFloat(longitude),parseFloat(latitude)];
+                coord.type = "Point";
+                this.campground.wkb_geometry = coord;
+                console.log("NBEXT");
+                console.log(this.campground.wkb_geometry);
+	}
     },
     mounted: function() {
         let vm = this;
@@ -620,9 +652,14 @@ var iconFeature = null;
 var lat = 0;
 var lon = 0;
 if (vm.campground.wkb_geometry) {
+    console.log("GSPPP");
+    console.log(vm.campground.wkb_geometry);
     if (vm.campground.wkb_geometry.coordinates) {
 	lat = vm.campground.wkb_geometry.coordinates[0];
 	lon = vm.campground.wkb_geometry.coordinates[1];
+        $('#longitude').val(lat);
+        $('#latitude').val(lon);
+
     }
 }
 
@@ -715,7 +752,10 @@ var source = new ol.source.Vector({wrapX: false, features: [iconFeature]});
           var mouseCoords = [ev.originalEvent.offsetX, ev.originalEvent.offsetY];
           console.log(ev.coordinate);
           var latLon = ol.proj.transform(ev.coordinate, 'EPSG:3857', 'EPSG:4326');
+          console.log("GPS SELECT");
           console.log(latLon);
+          $('#longitude').val(latLon[0]);
+          $('#latitude').val(latLon[1]);
           $('#location_coordinates').val("POINT ("+latLon[0]+" "+latLon[1]+")");
           // console.log("vm.campground.wkb_geometry.coordinates -START");
           var coord = new Object();

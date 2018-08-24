@@ -15,14 +15,17 @@ from django.conf import settings
 from mooring.models import Booking, BookingVehicleRego
 
 
+#print "TEMPLATE_GROUP"
+#print settings.TEMPLATE_GROUP
+
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring','img','mooring_header.png')
 
 LICENCE_HEADER_IMAGE_WIDTH = 840
 LICENCE_HEADER_IMAGE_HEIGHT = 166
 
-DPAW_BUSINESS = 'Marinas and Visitor Services'
-DPAW_EMAIL = 'campgrounds@dpaw.wa.gov.au'
-DPAW_URL = 'https://parks.dpaw.wa.gov.au'
+DPAW_BUSINESS = 'Marine Park and Visitor Services'
+DPAW_EMAIL = 'moorings@dbca.wa.gov.au'
+DPAW_URL = 'https://mooring.dbca.wa.gov.au'
 DPAW_PHONE = '(08) 9219 9000'
 DPAW_FAX = '(08) 9423 8242'
 DPAW_PO_BOX = 'Locked Bag 104, Bentley Delivery Centre, Western Australia 6983'
@@ -148,7 +151,8 @@ def create_confirmation(confirmation_buffer, booking):
                 elif r['Paid'] == 'No':
                     data.append(Paragraph('Unpaid', styles['Left']))
                 elif r['Paid'] == 'pass_required':
-                    data.append(Paragraph('Marina Pass Required', styles['Left']))
+                    pass
+                    #data.append(Paragraph('Marina Pass Required', styles['Left']))
             vehicle_data.append(data)
             
         vehicles = Table(vehicle_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
