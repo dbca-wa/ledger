@@ -19,7 +19,7 @@ from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
 
-def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, num_mooring=0):
+def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, num_mooring=0, vessel_size=0):
     """Create a new temporary booking in the system."""
     # get campground
     campground = MooringArea.objects.get(pk=campground_id)
@@ -75,7 +75,8 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
                             'num_concession': num_concession,
                             'num_child': num_child,
                             'num_infant': num_infant,
-                            'num_mooring' : num_mooring
+                            'num_mooring' : num_mooring,
+                            'vessel_size' : vessel_size
                         },
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
                         campground=campground
@@ -92,7 +93,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     return booking
 
 
-def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,num_mooring=0,cost_total=0,customer=None,updating_booking=False):
+def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,num_mooring=0,vessel_size=0,cost_total=0,customer=None,updating_booking=False):
     """Create a new temporary booking in the system for a specific campsite."""
     # get campsite
     sites_qs = Mooringsite.objects.filter(pk=campsite_id)
@@ -132,7 +133,8 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
                             'num_concession': num_concession,
                             'num_child': num_child,
                             'num_infant': num_infant,
-                            'num_mooring': num_mooring
+                            'num_mooring': num_mooring,
+                            'vessel_size': vessel_size
                         },
                         cost_total= Decimal(cost_total),
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
@@ -150,7 +152,7 @@ def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_c
     return booking
 
 def get_open_marinas(campsites_qs, start_date, end_date):
-    """Fetch the set of campgrounds (from a set of campsites) with spaces open over a range of visit dates."""
+    """Fetch the set of Marine Parks (from a set of Mooring Sites) with spaces open over a range of visit dates."""
     # short circuit: if start date is before today, return nothing
     today = date.today()
     if start_date < today:
@@ -336,7 +338,7 @@ def get_visit_rates(campsites_qs, start_date, end_date):
 
     # complain if there's a Mooringsite without a MooringsiteRate
     if len(early_rates) < rates_qs.count():
-        print('Missing MooringsiteRate coverage!')
+        print('Missing Mooring Site Rate coverage!')
     # for ease of testing against the old datasets, if the visit dates are before the first
     # MooringsiteRate date, use that MooringsiteRate as the pricing model.
     for site_pk, rate in early_rates.items():
@@ -561,8 +563,6 @@ def get_diff_days(old_booking,new_booking,additional=True):
     return int((old_booking.departure - new_booking.departure).days)
 
 def create_temp_bookingupdate(request,arrival,departure,booking_details,old_booking,total_price):
-    print "NUM_MOORING"
-    print booking_details
     # delete all the campsites in the old moving so as to transfer them to the new booking
     old_booking.campsites.all().delete()
     booking = create_booking_by_site(booking_details['campsites'][0],
@@ -667,9 +667,8 @@ def update_booking(request,old_booking,booking_details):
 
             # Add history
             new_history = old_booking._generate_history(user=request.user)
-            print "BOOKING"
 #            print old_booking._generate_history()
-            print new_history
+            
             if request.data.get('entryFees').get('regos'):
                 new_regos = request.data['entryFees'].pop('regos')
                 sent_regos = [r['rego'] for r in new_regos]
@@ -766,6 +765,7 @@ def create_or_update_booking(request,booking_details,updating=False,override_che
             num_child=booking_details['num_child'],
             num_infant=booking_details['num_infant'],
             num_mooring=booking_details['num_mooring'],
+            vessel_size=booking_details['vessel_size'],
             cost_total=booking_details['cost_total'],
             override_price=booking_details['override_price'],
             override_reason=booking_details['override_reason'],
@@ -804,6 +804,7 @@ def old_create_or_update_booking(request,booking_details,updating=False):
             num_child=booking_details['num_child'],
             num_infant=booking_details['num_infant'],
             num_mooring=booking_details['num_mooring'],
+            vessel_size=booking_details['vessel_size'],
             cost_total=booking_details['cost_total'],
             customer=booking_details['customer'])
         
@@ -861,8 +862,6 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
             secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
         )
-    print "HIRE sdfdasfa"
-    print response 
     return response
 
 def iiicheckout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):

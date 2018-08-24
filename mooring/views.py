@@ -36,8 +36,12 @@ from decimal import *
 
 from mooring.helpers import is_officer
 from mooring import utils
+from ledger.payments.mixins import InvoiceOwnerMixin
+from mooring.invoice_pdf import create_invoice_pdf_bytes
+from mooring.context_processors import mooring_url
 
 logger = logging.getLogger('booking_checkout')
+
 
 class MooringsiteBookingSelector(TemplateView):
     template_name = 'mooring/campsite_booking_selector.html'
@@ -392,6 +396,17 @@ class MarinastayRoutingView(TemplateView):
         kwargs['form'] = LoginForm
         return super(MarinastayRoutingView, self).get(*args, **kwargs)
 
+class InvoicePDFView(InvoiceOwnerMixin,View):
+    def get(self, request, *args, **kwargs):
+        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
+        response = HttpResponse(content_type='application/pdf')
+        mooring_var = mooring_url(request)
+        response.write(create_invoice_pdf_bytes('invoice.pdf',invoice, request, mooring_var))
+        return response
+
+    def get_object(self):
+        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
+        return invoice
 
 class MapView(TemplateView):
     template_name = 'mooring/map.html'
