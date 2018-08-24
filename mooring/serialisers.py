@@ -55,7 +55,7 @@ class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     num_child = serializers.IntegerField(default=0)
     num_infant = serializers.IntegerField(default=0)
     gear_type = serializers.ChoiceField(choices=('all', 'tent', 'caravan', 'campervan'), default='all')
-
+    vessel_size = serializers.IntegerField(default=0)
 
 class MooringsiteBookingSerializer(serializers.Serializer):
     """Serializer used by the booking creation process."""
@@ -69,12 +69,15 @@ class MooringsiteBookingSerializer(serializers.Serializer):
     campground = serializers.IntegerField(default=0)
     campsite_class = serializers.IntegerField(default=0)
     campsite = serializers.IntegerField(default=0)
+    vessel_size = serializers.IntegerField(default=0)
+
 
 class AdmissionsBookingSerializer(serializers.ModelSerializer):
     """Serializer used by the admissions booking process."""
     class Meta:
         model = AdmissionsBooking
         excludes = ('customer','totalCost')
+
 
 
 class BookingRangeSerializer(serializers.ModelSerializer):
@@ -166,7 +169,7 @@ class MooringAreaMapFeatureSerializer(serializers.HyperlinkedModelSerializer):
 class MooringAreaMapRegionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Region
-        fields = ('id', 'name', 'abbreviation','wkb_geometry')
+        fields = ('id', 'name', 'abbreviation','wkb_geometry', 'zoom_level')
 
 class MooringAreaMapDistrictSerializer(serializers.HyperlinkedModelSerializer):
     region = MooringAreaMapRegionSerializer(read_only=True)

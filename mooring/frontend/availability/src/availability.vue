@@ -18,7 +18,7 @@
         <div class="row" v-else-if="status == 'closed'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
-                    Sorry, this campground is closed for the selected period. Please visit the <a href="">Mooring Availability checker</a> for expected availability.
+                    Sorry, this mooring is closed for the selected period. Please visit the <a href="">Mooring Availability checker</a> for expected availability.
                 </div>
             </div>
         </div>
@@ -27,7 +27,7 @@
                 <div class="callout alert">
                     Sorry, there was an error placing the booking: {{ errorMsg }} <br/>
                     <template v-if="showSecondErrorLine">
-                    Please try again later. If this reoccurs, please contact <a href="">Parks and Visitor Services</a> with this error message, the campground and the time of the request.
+                    Please try again later. If this reoccurs, please contact <a href="">Parks and Visitor Services</a> with this error message, the mooring and the time of the request.
                     </template>
                 </div>
             </div>
@@ -84,6 +84,12 @@
                     <input id="date-departure" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
+            <div class="columns small-6 medium-6 large-3">
+                <label>Vessel Size
+                    <input id="vesselSize" type="text" placeholder="0" v-on:change="update" v-model="vesselSize"/>
+                </label>
+            </div>
+
             <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns" style='display:none'>
                 <label>
                     Guests 
@@ -134,7 +140,9 @@
                 </label>
             </div>           
         </div>
+
         <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
+             <div v-if="mooring_vessel_size > vesselSize" class="small-12 medium-12 large-12">
             <table class="hover">
                 <thead>
                     <tr>
@@ -165,8 +173,25 @@
                     </tr></template>
                 </template></tbody>
             </table>
-        </div></div>
+            </div>
+     <div v-if="mooring_vessel_size < vesselSize" class="small-12 medium-12 large-12">
+          <table class="hover">
+                <tbody>
+                  <tr>
+
+                     <td>
+         Your vessel size does not suit the selected mooring,  Please choose a mooring suited to your vessel. Click <A HREF="/map/">here</A> to go back to map.
+                     </td>
+		  </tr>
+	        </tbody>
+          </table>
+     </div>
+
+        </div>
+       </div>
+
     </div>
+
 </template>
 
 <style lang="scss">
@@ -315,9 +340,11 @@ export default {
             numChildren: parseInt(getQueryParam('num_children', 0)),
             numConcessions: parseInt(getQueryParam('num_concession', 0)),
             numInfants: parseInt(getQueryParam('num_infants', 0)),
+            vesselSize: parseInt(getQueryParam('vessel_size', 0)),
             maxAdults: 30,
             maxChildren: 30,
             gearType: getQueryParam('gear_type', 'tent'),
+            mooring_vessel_size: 0,
             gearTotals: {
                 tent: 0,
                 campervan: 0,
@@ -386,6 +413,7 @@ export default {
                 num_child: vm.numChildren,
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants,
+                vessel_size: vm.vesselSize
             };
             if (site.type == 0) { // per site listing
                 submitData.campsite = site.id;
@@ -429,7 +457,8 @@ export default {
                 num_adult: vm.numAdults,
                 num_child: vm.numChildren,
                 num_concession: vm.numConcessions,
-                num_infant: vm.numInfants
+                num_infant: vm.numInfants,
+                vessel_size : vm.vesselSize
             });
             history.replaceState('', '', newHist);
         },
@@ -443,14 +472,15 @@ export default {
                         num_adult: vm.numAdults,
                         num_child: vm.numChildren,
                         num_concession: vm.numConcessions,
-                        num_infant: vm.numInfants
+                        num_infant: vm.numInfants,
+                        vessel_size: vm.vesselSize
                     };
 
                 if (parseInt(vm.parkstayGroundRatisId) > 0){
                     var url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param(params);
                 } else if (vm.useAdminApi) {
                     var url = vm.parkstayUrl + '/api/availability_admin/'+ vm.parkstayGroundId +'/?'+$.param(params);
-                } else{
+                } else {
                     vm.updateURL();
                     var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
                 }
@@ -466,6 +496,16 @@ export default {
                         vm.map = data.map;
                         vm.ongoing_booking = data.ongoing_booking;
                         vm.ongoing_booking_id = data.ongoing_booking_id;
+                        vm.mooring_vessel_size = data.vessel_size;
+
+                        if (data.error_type != null) {
+                            vm.status = 'online';
+                            return;
+                        }
+
+                        if (data.sites == null) { 
+                          return;
+			}
 
                         if (data.sites.length == 0) {
                             vm.status = 'empty';
@@ -523,7 +563,7 @@ export default {
     mounted: function () {
         var vm = this;
         $(document).foundation();
-
+        console.log('DATE PICKER'); 
         this.arrivalEl = $('#date-arrival');
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
@@ -574,7 +614,7 @@ export default {
                 ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
-
+        console.log('DATE PICKER END');
 
         this.arrivalData.date = this.arrivalDate.toDate();
         this.arrivalData.setValue();
