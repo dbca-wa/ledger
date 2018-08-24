@@ -10,10 +10,10 @@
                 </div>
                 <div class="row">
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Arrival <input id="dateArrival" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
+                        <label>Arrival <input id="dateArrival" autocomplete="off" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Departure <input id="dateDeparture" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
+                        <label>Departure <input id="dateDeparture" autocomplete="off" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns" style='display:none'>
                         <label>
@@ -130,7 +130,7 @@
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
                         <p><small>Vessel Size: <span id='vessel_size_popup'></span></p>
                         <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;" target="_blank">More info</a>
-                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank">Book now</a>
+                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank"  v-on:click="BookNow()" >Book now</a>
                     </div>
                 </div>
             </div>
@@ -469,6 +469,8 @@ import 'foundation-sites';
 import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
+import swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.css';
 
 export default {
     name: 'parkfinder',
@@ -591,6 +593,7 @@ export default {
                     'num_children': this.numChildren,
                     'num_infants': this.numInfants,
                     'gear_type': this.gearType,
+                    'vessel_size' : this.vesselSize
                 };
                 if (this.arrivalDate && this.departureDate) {
                     params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
@@ -615,7 +618,6 @@ export default {
                 return el['properties']['name'] == place;
             });
             if (target) {
-                //console.log('Search suggestion!')
                 var view = this.olmap.getView();
                 // zoom slightly closer in for campgrounds
                 var resolution = vm.resolutions[10];
@@ -742,7 +744,6 @@ export default {
                     return props;
                 }).sort(function (a, b) {
                     /* distance from map center sort */
-                       // console.log("MAYBE I AM HERE");
                     if (a.distance < b.distance) {
                         return -1;
                     }
@@ -762,15 +763,10 @@ export default {
                     }
                     return 0; */
                 });
-                // console.log('extentFeature'); 
-                // console.log(vm.extentFeatures);
             };
-            // console.log("AM  I RUNNING");
-            // console.log(runNow);
             if (runNow) {
                 updateViewportFunc();
             } else {
-                // console.log('RUNNING 2');
                 if (!vm._updateViewport) {
                     vm._updateViewport = debounce(function() {
                         updateViewportFunc();
@@ -781,8 +777,6 @@ export default {
             }
         },
         updateDates: function(ev) {
-            // console.log('BANG');
-            // console.log(ev);
             // for the first time someone changes the dates, enable the
             // "Show bookable campsites only" flag
             if (this.dateSetFirstTime) {
@@ -798,12 +792,9 @@ export default {
 
               this.buildmarkers();
          //   this.refreshPopup();
-         //   console.log("RELOAD");
-         //   console.log(this);
         }, 250),
         removePinGroups: function() {
                 
-               console.log('removePinGroups');
                var layerRemoved = false;
                var map = this.olmap;
                var refArray = map.getLayers().getArray().slice();
@@ -814,7 +805,6 @@ export default {
                            // map.removeLayer(layer2);
                            if (layer.hasOwnProperty("markerGroup")) {
                                 if (layer.markerGroup == 'circle') {
-                                      // console.log('CIRCLE');
                                       // console.log(layer2);
                                       map.removeLayer(layer2);
                                       layerRemoved = true;
@@ -828,13 +818,11 @@ export default {
                     // to go out of sync resulting in pins not being removed as foreach loop is 
                     // changed.  This loop ensure all pins have been removed
 
-                    console.log("LOOPING"); 
 	            this.removePinGroups();
 		}
                 return layerRemoved; 
 	},
         removePinAnchors: function() {
-               console.log('removePinAnchors');
                var layerRemoved = false;
                var map = this.olmap;
                var refArray = map.getLayers().getArray().slice();
@@ -845,7 +833,6 @@ export default {
                            // map.removeLayer(layer2);
                            if (layer.hasOwnProperty("markerGroup")) {
                                 if (layer.markerGroup == 'anchor') {
-                                      // console.log('Anchor');
                                       // console.log(layer2);
                                       map.removeLayer(layer2);
                                       layerRemoved = true;
@@ -859,13 +846,11 @@ export default {
                     // to go out of sync resulting in pins not being removed as foreach loop is
                     // changed.  This loop ensure all pins have been removed
 
-                   console.log("LOOPING");
                    this.removePinAnchors();
                }
                return layerRemoved;
         },
         updateFilter: function() {
-            // console.log('updateFilter');
             var vm = this;
             // make a lookup table of campground features to filter on
             var legit = new Set();
@@ -881,7 +866,6 @@ export default {
             this.groundsFilter.clear();
             this.groundsData.forEach(function (el) {
                 // first pass filter against the list of IDs returned by search
-                // console.log('groundDATTA1'); 
                 var campgroundType = el.get('mooring_type');
                 switch (campgroundType) {
                     case 0:
@@ -920,11 +904,9 @@ export default {
                     }
                 }
             });
-            // console.log("SEND DATA TO updateViewPort");
             this.updateViewport(true);
         },
         buildmarkers: function() {
-          console.log("we have markers");
           var vm = this;
           var scale = Math.floor(this.current_map_scale);
           var map = this.olmap;
@@ -971,7 +953,6 @@ export default {
 				                } else {
                                                       var marker_id = response[x][m]['id'];
 		                                      pin_count =  pin_count + 1;
-                                                      console.log(response[x][m]);
                 		                      if (response[x][m]['properties']['mooring_type'] == 0) {
 
                                                            if (mooring_type == 'all' || mooring_type == 'rental-available' || mooring_type == 'rental-notavailable') {
@@ -1042,7 +1023,6 @@ export default {
 			}
              }
       } else if (scale >= 1300001) {
-          console.log("marker group scales:"+scale);
 	      var center = map.getView().getCenter();
               if (center) {
 	                var latLon = ol.proj.transform([center[0],center[1]], 'EPSG:3857', 'EPSG:4326');
@@ -1064,6 +1044,7 @@ export default {
                       vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] = {};
                       vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = 1;
                       vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['name'] = response['features'][m]['properties']['park']['district']['region']['name'];
+                      vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['zoom_level'] = response['features'][m]['properties']['park']['district']['region']['zoom_level'];
                       vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['geometry'] = response['features'][m]['properties']['park']['district']['region']['wkb_geometry']['coordinates'];
    		 } else {
 			vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] + 1;
@@ -1077,32 +1058,25 @@ export default {
 
                 var total = vm.anchorGroups[g]['total'];
                 var name = vm.anchorGroups[g]['name'];
-                map.addLayer(vm.buildMarkerGroup(parseFloat(longitude),parseFloat(latitude),total,name));
+                var zoom_level = vm.anchorGroups[g]['zoom_level'];
+                map.addLayer(vm.buildMarkerGroup(parseFloat(longitude),parseFloat(latitude),total,name, zoom_level));
 	 }
 
      } else {
-        // console.log('somehting else');
         scale = Math.round(scale);
      }
 //        document.getElementById('scale').innerHTML = "Scale = 1 : " + scale;
      },
      buildMarkerBookable: function(lat,lon,props,name,marker_id) {
-            console.log('vm.groundsIds');
-            console.log(this.groundsIds);
 
             var mooring_type =  $("input:radio[name=gear_type]:checked").val();
-            console.log("MOORING PIN");
-            console.log(mooring_type);
 
             var pin_type=require('assets/map_pins/pin_red.png');
             if (this.groundsIds.has(marker_id)) {
-                 console.log("MARKER RED"+marker_id);
                  pin_type=require('assets/map_pins/pin_orange.png');
 	    }
 
                 //this.anchorPinsActive.push(marker_id);
-                //console.log('PIN ARRAY');
-                //console.log(this.anchorPinsActive);
             var iconFeature = new ol.Feature({
                   marker_group: 'mooring_marker',
                   geometry: new ol.geom.Point(ol.proj.transform([lat, lon], 'EPSG:4326', 'EPSG:3857')),
@@ -1131,7 +1105,6 @@ export default {
                 features: [iconFeature]
             });
 
-            // console.log(vectorSource);
             var vectorLayer = new ol.layer.Vector({
                canDelete: "yes",
                markerGroup: "anchor",
@@ -1180,15 +1153,13 @@ export default {
 
 	    return vectorLayer;
     },
-    buildMarkerGroup:function(lat,lon,text, name) {
+    buildMarkerGroup:function(lat,lon,text, name, zoom_level) {
 
-              // console.log("Marker Group");
               var iconFeature = new ol.Feature({
                   marker_group: 'group_marker',
                   geometry: new ol.geom.Point(ol.proj.transform([lat, lon], 'EPSG:4326', 'EPSG:3857')),
                   name: name,
-                  population: 4000,
-                  rainfall: 500
+                  zoom_level: zoom_level
               });
 
               var icon = require('assets/map_pins/geo_group_red.png');
@@ -1235,6 +1206,21 @@ export default {
               });
               return vectorLayer;
       },
+      BookNow: function() { 
+       var vessel_size = $('#vesselSize').val();
+       if (vessel_size > 0 ) {
+       } else {
+                swal({
+                  title: 'Missing Vessel Size',
+                  text: "Please enter vessel size:",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'OK',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                })
+       }
+      },
       loadMap: function() {
 
         var vm = this;
@@ -1254,7 +1240,6 @@ export default {
                 //return '';
             }
         }).on('changeDate', function (ev) {
-            //console.log('arrivalEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
@@ -1278,7 +1263,6 @@ export default {
                 return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
-            //console.log('departureEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
             vm.departureData.hide();
@@ -1301,10 +1285,7 @@ export default {
             success: function (response, stat, xhr) {
                 vm.suggestions = response;
                 $(search).on('awesomplete-selectcomplete', function(ev) {
-                    //console.log('autoselect');
-                    //console.log(ev);
                     this.blur();
-                    //vm.search(ev.target.value);
                 });
 
                 autocomplete.list = response['features'].map(function (el) {
@@ -1315,8 +1296,6 @@ export default {
 
         // wire up search box
         $(search).on('blur', function(ev) {
-            //console.log('blur');
-            //console.log(ev);
             vm.search(ev.target.value);
         }).on('keypress', function(ev) {
             if (!ev) {
@@ -1325,7 +1304,6 @@ export default {
             // intercept enter keys
             var keyCode = ev.keyCode || ev.which;
             if (keyCode == '13') {
-                //console.log('enter');
                 this.blur();
                 return false;
             }
@@ -1382,8 +1360,7 @@ export default {
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
 
-
-        // console.log("GROUND FILTER");
+       // console.log("GROUND FILTER");
         // console.log(vm.groundsFilter);
 
         $.ajax({
@@ -1402,12 +1379,14 @@ export default {
         });
 
         this.groundsSource.loadSource = function (onSuccess) {
-            
+
             if (vm.dateCache != vm.arrivalDateString+vm.departureDateString) {
             var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
-            var params = {format: 'json'};
+           var params = {format: 'json'};
             var isCustom = false;
             // console.log('ARR DEPP');
+
+
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
                 isCustom = true;
                 var arrival = vm.arrivalDateString;
@@ -1424,8 +1403,6 @@ export default {
                 params.num_infants = vm.numInfants;
                 params.gear_type = vm.gearType;
             }
-            // console.log('BASEEE');
-            // console.log(urlBase);
             $.ajax({
                 url: urlBase+$.param(params),
                 success: function (response, stat, xhr) {
@@ -1478,9 +1455,7 @@ export default {
 
         // Marker Popup Code
         $('#mapPopupClose').on('click', function(ev) {
-            // console.log(ev);
             $('#mapPopup').hide();
-            // console.log("mapPopupClose yes");
             vm.popup.setPosition(undefined);
             vm.selectedFeature = null;
             return false;
@@ -1544,9 +1519,6 @@ export default {
     },
     mounted: function() {
         var vm = this;
-        // console.log("MOUNTED");
-        // console.log(this);
-        // console.log(this.buildmarkers('3'));
 
         $(document).foundation();
         console.log('Loading map...');
@@ -1872,7 +1844,6 @@ export default {
             vm.posFeature.setGeometry(coords ? new ol.geom.Point(coords) : null);
         });
 
-
         // JASON ADDED
         var map = this.olmap;
 
@@ -1984,21 +1955,28 @@ export default {
             if (properties.marker_group == 'mooring_marker') {
 
                 $('#mapPopupName').html(properties.props.name);
-                // console.log("PROPERTIES");
-                // console.log(properties);
-                // console.log(properties.name);
-                // console.log(properties.marker_id);
 
                 if (properties.props.mooring_type == 0) { 
                    $('#mapPopupBook').show();
                    $("#mapPopupImage").show();
-                   $("#mapPopupImage").attr('src',  '/static/exploreparks/mooring_photo_scaled.png');
+                   console.log("PROP"); 
+                   console.log(properties.props); 
+                   if (properties.props.images.length > 0) { 
+			$("#mapPopupImage").attr('src',  properties.props.images[0].image);
+		   } else {
+	                   $("#mapPopupImage").attr('src',  '/static/exploreparks/mooring_photo_scaled.png');
+		   }
                    // vessel_size_popup
                    // console.log("VESSEL SIZE"+properties['vessel_size_limit']+':'+properties);
                    // console.log(properties);
                    // console.log(properties.props.vessel_size_limit);
                    $("#vessel_size_popup").html(properties.props.vessel_size_limit);
-                   $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                   var vessel_size = $('#vesselSize').val();
+                   if (vessel_size > 0 ) {
+                       $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                   } else {
+		       $("#mapPopupBook").attr('href','javascript:void();');
+		   }
                 } else {
 		   $("#vessel_size_popup").html(properties.props.vessel_size_limit);
                    $('#mapPopupBook').hide();
@@ -2006,20 +1984,26 @@ export default {
 
                 popup.setPosition(coord);
 
-       //       $(element).popover({
-       //         'placement': 'top',
-        //        'html': true,
-        //        'content': feature.get('name')
-        //      });
-
                 $(element).show();
-//                $(element).popover('show');
 
                 } else if (properties.marker_group == 'group_marker') {
+                    var view = vm.olmap.getView();
+                    var resolution = vm.resolutions[properties.zoom_level];
+                    view.animate({
+                          center: coord,
+                          resolution: resolution,
+                          duration: 1000
+                    }); 
+
                     if (properties.props.mooring_type == 0) {
                         $('#mapPopupBook').show();
                         $("#mapPopupImage").hide();
-                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                        var vessel_size = $('#vesselSize').val();
+                        if (vessel_size > 0 ) {
+                               $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                        } else {
+				 $("#mapPopupBook").attr('href','javascript:void();');
+			}
                     } else {
                         $('#mapPopupBook').hide();
                     }
