@@ -13,6 +13,7 @@ module.exports = {
     proposal_type:"/api/proposal_type",
     proposals:"/api/proposal.json",
     proposals_paginated:"/api/proposal/user_list_paginated/?format=datatables",
+    proposals_paginated_internal:"/api/proposal/list_paginated/?format=datatables",
     list_proposals:"/api/proposal/list_proposal.json",
     approvals:"/api/approvals.json",
     approvals_paginated:"/api/approvals/user_list_paginated/?format=datatables",

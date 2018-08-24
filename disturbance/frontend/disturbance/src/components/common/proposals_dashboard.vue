@@ -134,7 +134,11 @@ export default {
             proposal_regions: [],
             proposal_submitters: [],
             proposal_status: [],
-            proposal_ex_headers:["Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"],
+            proposal_ex_headers:[
+                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action",
+                "LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
+            ],
+
             proposal_ex_options:{
                 autoWidth: false,
                 language: {
@@ -152,7 +156,10 @@ export default {
                 'excel', 'csv',],
                 columns: [
                     {
-                        data: "lodgement_number",
+                        data: "id",
+                        mRender:function(data,type,full){
+                            return full.lodgement_number;
+                        }
                     },
                     {
                         data: "region",
@@ -216,7 +223,13 @@ export default {
                             }
                             return links;
                         }
-                    }
+                    },
+
+                    {data: "lodgement_number", visible: false},
+                    {data: "processing_status", visible: false},
+                    {data: "assessor_process", visible: false},
+                    {data: "can_user_edit", visible: false},
+                    {data: "can_user_view", visible: false},
                 ],
                 processing: true,
                 initComplete: function () {
@@ -268,7 +281,10 @@ export default {
                     });
                 }
             },
-            proposal_headers:["Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action"],
+            proposal_headers:[
+                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
+                "LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
+            ],
             proposal_options:{
                 autoWidth: false,
                 language: {
@@ -286,7 +302,10 @@ export default {
                 'excel', 'csv', ],
                 columns: [
                     {
-                        data: "lodgement_number",
+                        data: "id",
+                        mRender:function(data,type,full){
+                            return full.lodgement_number;
+                        }
                     },
                     {
                         data: "region",
@@ -349,7 +368,13 @@ export default {
                             }
                             return links;
                         }
-                    }
+                    },
+
+                    {data: "lodgement_number", visible: false},
+                    {data: "customer_status", visible: false},
+                    {data: "assessor_process", visible: false},
+                    {data: "can_user_edit", visible: false},
+                    {data: "can_user_view", visible: false},
                 ],
                 processing: true,
                 initComplete: function () {

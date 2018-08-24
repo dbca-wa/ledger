@@ -10,11 +10,9 @@
             </div>
         </div>
     </div>
-    <ApprovalDashTable level='external' :url='approvals_url'/>
-    <!--
     <ProposalDashTable level='external' :url='proposals_url'/>
+    <ApprovalDashTable level='external' :url='approvals_url'/>
     <ComplianceDashTable level='external' :url='compliances_url'/>
-    -->
 </div>
 </template>
 <script>

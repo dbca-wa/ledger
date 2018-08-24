@@ -285,6 +285,21 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
         https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
         """
+        proposals = self.get_queryset().exclude(processing_status='discarded')
+        paginator = DatatablesPageNumberPagination()
+        paginator.page_size = proposals.count()
+        result_page = paginator.paginate_queryset(proposals, request)
+        serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    @list_route(methods=['GET',])
+    def list_paginated(self, request, *args, **kwargs):
+        """
+        Placing Paginator class here (instead of settings.py) allows specific method for desired behaviour),
+        otherwise all serializers will use the default pagination class
+
+        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
+        """
         proposals = self.get_queryset()
         paginator = DatatablesPageNumberPagination()
         paginator.page_size = proposals.count()
