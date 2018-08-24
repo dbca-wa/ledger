@@ -16,6 +16,7 @@ from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import Licence
+from ledger.payments.invoice.models import Invoice
 from wildlifecompliance import exceptions
 
 from wildlifecompliance.components.organisations.models import Organisation
