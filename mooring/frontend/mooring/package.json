@@ -21,7 +21,7 @@
     "jquery-validation": "^1.15.1",
     "json2csv": "^3.11.4",
     "lodash": "^4.17.4",
-    "moment": "2.15.2",
+    "moment": "2.19.3",
     "moment-range": "^3.0.3",
     "quill": "^1.1.5",
     "quill-render": "^1.0.5",
