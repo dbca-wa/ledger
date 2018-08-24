@@ -79,6 +79,7 @@ urlpatterns = [
     url(r'^mybookings/', views.MyBookingsView.as_view(), name='public_my_bookings'),
     url(r'^success/', views.BookingSuccessView.as_view(), name='public_booking_success'),
     url(r'^map/', views.MapView.as_view(), name='map'),
+    url(r'mooring/payments/invoice-pdf/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='mooring-invoice-pdf'),
 ##    url(r'^static/(?P<path>.*)$', 'django.conf.urls.static'),
 #    {'document_root': settings.STATIC_ROOT},
 ] + ledger_patterns 

@@ -155,9 +155,18 @@
                                                                                                 <div class="panel-body" >
 <!--- START MAP SELECTION -->
 
- <div id="map" class="map"></div>
+ <div id="map" class="map" style='height:80%'></div>
  <input type='hidden' value='' iname='location_coordinates' id='location_coordinates'>
  <input type='hidden' value='Point' name='type' id='type'>
+<div class="col-lg-12">
+  <div class="col-lg-6">
+         Longitude
+  </div>
+   <div class="col-lg-6">
+        Latitude
+   </div>
+</div>
+
 <div class="col-lg-12">
   <div class="col-lg-6">
        <input type='text' name='longitude' id='longitude'  class="form-control" v-on:change="setCoordinates()"> 
@@ -373,6 +382,7 @@ export default {
         update: function() {
 			if(this.validateForm()){
 				this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
+                                location.reload(); 
 			}
         },
         validateEditor: function(el){
@@ -581,16 +591,15 @@ export default {
 		console.log('gps changes');
                 var longitude = $('#longitude').val();
 		var latitude = $('#latitude').val();
-                $('#location_coordinates').val("POINT ("+latitude+" "+longitude+")");
+                $('#location_coordinates').val("POINT ("+longitude+" "+latitude+")");
                 console.log("setCoordinates");
                 console.log(this.campground.wkb_geometry);
                 var coord = new Object();
-                coord.coordinates = [parseFloat(latitude),parseFloat(longitude)];
+                coord.coordinates = [parseFloat(longitude),parseFloat(latitude)];
                 coord.type = "Point";
                 this.campground.wkb_geometry = coord;
                 console.log("NBEXT");
                 console.log(this.campground.wkb_geometry);
-
 	}
     },
     mounted: function() {

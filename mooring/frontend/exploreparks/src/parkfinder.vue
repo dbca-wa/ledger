@@ -593,6 +593,7 @@ export default {
                     'num_children': this.numChildren,
                     'num_infants': this.numInfants,
                     'gear_type': this.gearType,
+                    'vessel_size' : this.vesselSize
                 };
                 if (this.arrivalDate && this.departureDate) {
                     params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');

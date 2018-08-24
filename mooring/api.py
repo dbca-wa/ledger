@@ -1040,7 +1040,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
-            "gear_type" : request.GET.get('gear_type', 'all')
+            "gear_type" : request.GET.get('gear_type', 'all'),
+            "vessel_size" : request.GET.get('vessel_size', 0)
         }
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -1052,10 +1053,14 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         num_child = serializer.validated_data['num_child']
         num_infant = serializer.validated_data['num_infant']
         gear_type = serializer.validated_data['gear_type']
-        
+        vessel_size = serializer.validated_data['vessel_size'] 
+
         # if campground doesn't support online bookings, abort!
         if ground.mooring_type != 0:
-            return Response({'error': 'MooringArea doesn\'t support online bookings'}, status=400)
+            return Response({'error': 'Mooring doesn\'t support online bookings'}, status=400)
+   
+        if ground.vessel_size_limit < vessel_size:
+             return Response({'name':'   ', 'error': 'Vessel size is too large for mooring', 'error_type': 'vessel_error', 'vessel_size': ground.vessel_size_limit}, status=200 )
 
         #if not ground._is_open(start_date):
         #    return Response({'closed': 'MooringArea is closed for your selected dates'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1099,6 +1104,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'maxChildren': 30,
             'sites': [],
             'classes': {},
+            'vessel_size' : ground.vessel_size_limit
         }
 
         # group results by campsite class
@@ -1276,7 +1282,8 @@ def create_booking(request, *args, **kwargs):
         'num_infant': request.POST.get('num_infant', 0),
         'campground': request.POST.get('campground', 0),
         'campsite_class': request.POST.get('campsite_class', 0),
-        'campsite': request.POST.get('campsite', 0)
+        'campsite': request.POST.get('campsite', 0),
+        'vessel_size' : request.POST.get('vessel_size', 0)
     }
 
     serializer = MooringsiteBookingSerializer(data=data)
@@ -1292,8 +1299,7 @@ def create_booking(request, *args, **kwargs):
     num_child = serializer.validated_data['num_child']
     num_infant = serializer.validated_data['num_infant']
     num_mooring = serializer.validated_data['num_mooring']
-    print "N_MOO"
-    print num_mooring
+    vessel_size = serializer.validated_data['vessel_size']
 
     if 'ps_booking' in request.session:
         # if there's already a booking in the current session, send bounce signal
@@ -1327,7 +1333,7 @@ def create_booking(request, *args, **kwargs):
                 campsite, start_date, end_date,
                 num_adult, num_concession,
                 num_child, num_infant,
-                num_mooring
+                num_mooring, vessel_size
             )
         else:
             booking = utils.create_booking_by_class(
@@ -1335,7 +1341,7 @@ def create_booking(request, *args, **kwargs):
                 start_date, end_date,
                 num_adult, num_concession,
                 num_child, num_infant,
-                num_mooring
+                num_mooring, vessel_size
             )
     except ValidationError as e:
         if hasattr(e,'error_dict'):
@@ -1791,7 +1797,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                                 clean_data.append(bk)
                 else:
                     clean_data.append(bk)
-            print "EXIT"  
+            
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
                 ('recordsFiltered',recordsFiltered),
@@ -1889,8 +1895,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             #    'postcode': emailUser['postcode'],
             #    'phone': emailUser['phone'],
             #}
-            print "BOOKING DETAILS"
-            print booking_details
             data = utils.internal_booking(request,booking_details)
             serializer = BookingSerializer(data)
             return Response(serializer.data)
@@ -1918,9 +1922,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             start_date = datetime.strptime(request.data['arrival'],'%d/%m/%Y').date()
             end_date = datetime.strptime(request.data['departure'],'%d/%m/%Y').date()
             guests = request.data['guests']
-            print "UPDATE"
-            print request.data
-            print instance
             booking_details = {
                 'campsites':request.data['campsites'],
                 'start_date' : start_date,
