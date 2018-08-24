@@ -416,6 +416,11 @@ class Proposal(RevisionedMixin):
         return group.members.all() if group else []
 
     @property
+    def compliance_assessors(self):
+        group = self.__assessor_group()
+        return group.members.all() if group else []
+
+    @property
     def can_officer_process(self):
         """
         :return: True if the application is in one of the processable status for Assessor role.
@@ -446,6 +451,7 @@ class Proposal(RevisionedMixin):
         default_group = ProposalAssessorGroup.objects.get(default=True)
 
         return default_group
+
 
     def __approver_group(self):
         # TODO get list of approver groups based on region and activity
