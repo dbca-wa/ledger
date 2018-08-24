@@ -135,7 +135,7 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action",
+                "Number","Region__1","Activity","Title","Submitter","Proponent","Status","Lodged on","Action",
                 "LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
             ],
 
@@ -161,13 +161,18 @@ export default {
                             return full.lodgement_number;
                         }
                     },
+                    {data: 'region', myname: 'region, region.name, region__name', searchable:false, orderable:false},
+                    /*
                     {
                         data: "region",
                         'render': function (value) {
                             return helpers.dtPopover(value);
                         },
-                        'createdCell': helpers.dtPopoverCellFn
+                        'createdCell': helpers.dtPopoverCellFn,
+                        searchable: true,
+                        'name': "region.name"
                     },
+                    */
                     {data: "activity"},
                     {
                         data: "title",
@@ -307,6 +312,8 @@ export default {
                             return full.lodgement_number;
                         }
                     },
+                    {data: 'region', myname: 'region__name', searchable:false, orderable:false},
+                    /*
                     {
                         data: "region",
                         'render': function (value) {
@@ -314,6 +321,7 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn
                     },
+                    */
                     {data: "activity"},
                     {
                         data: "title",

@@ -70,6 +70,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
+from rest_framework_datatables.filters import DatatablesFilterBackend
 
 class GetProposalType(views.APIView):
     renderer_classes = [JSONRenderer, ]
@@ -88,6 +89,34 @@ class GetEmptyList(views.APIView):
     def get(self, request, format=None):
         return Response([])
 
+class ListProposalViewSet(viewsets.ModelViewSet):
+    #import ipdb; ipdb.set_trace()
+    #queryset = Proposal.objects.all()
+    queryset = Proposal.objects.none()
+    serializer_class = ListProposalSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request): #user.is_authenticated():
+            return Proposal.objects.all()
+            #return Proposal.objects.filter(region__isnull=False)
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.disturbance_organisations.all()]
+            queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+            #queryset =  Proposal.objects.filter(region__isnull=False).filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+            return queryset
+        return Proposal.objects.none()
+
+    def _list(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        queryset = self.get_queryset()
+        filter = DatatablesFilterBackend()
+        queryset = filter.filter_queryset(request, queryset)
+        serializer = ListProposalSerializer(queryset, context={'request':request}, many=True)
+        return Response(serializer.data)
+
+
+
 class ProposalViewSet(viewsets.ModelViewSet):
     #import ipdb; ipdb.set_trace()
     #queryset = Proposal.objects.all()
@@ -97,10 +126,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if is_internal(self.request): #user.is_authenticated():
-            return Proposal.objects.all()
+            #return Proposal.objects.all()
+            return Proposal.objects.filter(region__isnull=False)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.disturbance_organisations.all()]
-            queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+            #queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+            queryset =  Proposal.objects.filter(region__isnull=False).filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             return queryset
         return Proposal.objects.none()
 
@@ -149,14 +180,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-    def list(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
-        #queryset = self.get_queryset()
-        #serializer = DTProposalSerializer(queryset, many=True)
-        #import ipdb; ipdb.set_trace()
-        #serializer = DTProposalSerializer(self.get_queryset(), many=True)
-        serializer = ListProposalSerializer(self.get_queryset(), context={'request':request}, many=True)
-        return Response(serializer.data)
+#    def list(self, request, *args, **kwargs):
+#        #import ipdb; ipdb.set_trace()
+#        #queryset = self.get_queryset()
+#        #serializer = DTProposalSerializer(queryset, many=True)
+#        #import ipdb; ipdb.set_trace()
+#        #serializer = DTProposalSerializer(self.get_queryset(), many=True)
+#        serializer = ListProposalSerializer(self.get_queryset(), context={'request':request}, many=True)
+#        return Response(serializer.data)
 
     @list_route(methods=['GET',])
     def list_paginated(self, request, *args, **kwargs):
