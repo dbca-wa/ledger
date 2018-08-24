@@ -1485,6 +1485,29 @@ class MooringsiteClassPriceHistory(ViewPriceHistory):
         db_table = 'mooring_mooringsiteclass_pricehistory_v'
         ordering = ['-date_start',]
 
+class AdmissionsBooking(models.Model):
+    BOOKING_TYPE_CHOICES = (
+        (0, 'Reception booking'),
+        (1, 'Internet booking'),
+        (2, 'Black booking'),
+        (3, 'In-complete booking')
+    )
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
+    bookingType = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
+    arrivalDate = models.DateField()
+    overnightStay = models.BooleanField(default=False)
+    vesselRegNo = models.CharField(max_length=200, blank=True )
+    noOfAdults = models.IntegerField()
+    noOfConcessions = models.IntegerField()
+    noOfChildren = models.IntegerField()
+    noOfInfants = models.IntegerField()
+    warningReferenceNo = models.CharField(max_length=200, blank=True)
+    totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+
+class AdmissionsOracleCode(models.Model):
+    oracle_code = models.CharField(max_length=50, null=True,blank=True)
+
+
 # LISTENERS
 # ======================================
 class MooringAreaBookingRangeListener(object):

@@ -1,6 +1,6 @@
 import logging
 from django.db.models import Q
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.views.generic.base import View, TemplateView
@@ -25,7 +25,8 @@ from mooring.models import (MooringArea,
                                 Booking,
                                 BookingVehicleRego,
                                 MooringsiteRate,
-                                MarinaEntryRate
+                                MarinaEntryRate,
+                                AdmissionsBooking
                                 )
 from mooring import emails
 from ledger.accounts.models import EmailUser, Address
@@ -310,6 +311,14 @@ class MakeBookingsView(TemplateView):
         
         return result
 
+class AdmissionsBasketCreated(TemplateView):
+    template_name = 'mooring/booking/success.html'
+
+    def get(request, *args, **kwargs):
+        return HttpResponseRedirect(reverse('checkout:index'))
+
+class AdmissionsBookingSuccessView(TemplateView):
+    template_name = 'mooring/booking/success.html'
 
 class BookingSuccessView(TemplateView):
     template_name = 'mooring/booking/success.html'
@@ -379,6 +388,9 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
             'past_bookings': bookings.filter(departure__lt=today).order_by('-arrival')
         }
         return render(request, self.template_name, context)
+
+class AdmissionFeesView(TemplateView):
+    template_name = 'mooring/admissions/admissions_form.html'
 
 
 class MarinastayRoutingView(TemplateView):

@@ -31,6 +31,7 @@ from mooring.models import (MooringAreaPriceHistory,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
                                 BookingHistory,
+                                AdmissionsBooking,
                            )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -68,6 +69,12 @@ class MooringsiteBookingSerializer(serializers.Serializer):
     campground = serializers.IntegerField(default=0)
     campsite_class = serializers.IntegerField(default=0)
     campsite = serializers.IntegerField(default=0)
+
+class AdmissionsBookingSerializer(serializers.ModelSerializer):
+    """Serializer used by the admissions booking process."""
+    class Meta:
+        model = AdmissionsBooking
+        excludes = ('customer','totalCost')
 
 
 class BookingRangeSerializer(serializers.ModelSerializer):

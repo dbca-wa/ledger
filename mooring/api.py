@@ -1,6 +1,8 @@
 import traceback
 import base64
 import geojson
+import decimal
+import logging
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -56,7 +58,8 @@ from mooring.models import (MooringArea,
                                 MaximumStayReason,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
-                                MooringAreaGroup
+                                MooringAreaGroup,
+                                AdmissionsBooking
                                 )
 
 from mooring.serialisers import (  MooringsiteBookingSerialiser,
@@ -107,7 +110,8 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     PhoneSerializer,
                                     OracleSerializer,
                                     BookingHistorySerializer,
-                                    MooringAreaGroupSerializer
+                                    MooringAreaGroupSerializer,
+                                    AdmissionsBookingSerializer
                                     )
 from mooring.helpers import is_officer, is_customer
 from mooring import reports 
@@ -1265,6 +1269,93 @@ class AvailabilityAdminViewSet(BaseAvailabilityViewSet):
 
 @csrf_exempt
 @require_http_methods(['POST'])
+def create_admissions_booking(request, *args, **kwargs):
+    data = {
+        'arrivalDate' : request.POST.get('arrival'),
+        'vesselRegNo': request.POST.get('vesselReg'),
+        'noOfAdults': request.POST.get('noOfAdults', 0),
+        'noOfConcessions': request.POST.get('noOfConcessions', 0),
+        'noOfChildren': request.POST.get('noOfChildren', 0),
+        'noOfInfants': request.POST.get('noOfInfants', 0),
+        'warningReferenceNo': request.POST.get('warningRefNo'),
+    }
+    
+    if(request.POST.get('overnightStay') == 'yes'):
+        data['overnightStay'] = 'True'
+    else:
+        data['overnightStay'] = 'False'
+    dateAsString = data['arrivalDate']
+    data['arrivalDate'] = datetime.strptime(dateAsString, "%Y/%m/%d").date()
+
+    serializer = AdmissionsBookingSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+
+    admissionsBooking = AdmissionsBooking.objects.create(
+        arrivalDate = serializer.validated_data['arrivalDate'],
+        overnightStay = serializer.validated_data['overnightStay'],
+        vesselRegNo = serializer.validated_data['vesselRegNo'],
+        noOfAdults = serializer.validated_data['noOfAdults'],
+        noOfConcessions = serializer.validated_data['noOfConcessions'],
+        noOfChildren = serializer.validated_data['noOfChildren'],
+        noOfInfants = serializer.validated_data['noOfInfants'],
+        warningReferenceNo = serializer.validated_data['warningReferenceNo'],
+        bookingType = 3
+    )
+
+    #Lookup price and set lines.
+    try:
+        lines = utils.admissions_price_or_lineitems(request, admissionsBooking)
+    except Exception as e:
+        error = (None, '{} Please contact Marine Park and Visitors services with this error message and the time of the request.'.format(str(e)))
+        #handle
+    total = sum([decimal.Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
+    
+    #Lookup customer
+    if request.user.is_anonymous():
+        try:
+            customer = EmailUser.objects.get(email=request.POST.get('email'))
+        except EmailUser.DoesNotExist:
+            customer = EmailUser.objects.create(
+                    email=request.POST.get('email'),
+                    first_name=request.POST.get('givenName'),
+                    last_name=request.POST.get('lastName')
+            )
+            Address.objects.create(line1='address', user=customer, postcode='6000', country='Australia')
+    else:
+        customer = request.user 
+    
+
+    admissionsBooking.customer = customer
+    admissionsBooking.totalCost = total
+    admissionsBooking.save()
+
+    request.session['ad_booking'] = admissionsBooking.pk
+    logger = logging.getLogger('booking_checkout')
+    logger.info('{} built admissions booking {} and handing over to payment gateway'.format('User {} with id {}'.format(admissionsBooking.customer.get_full_name(),admissionsBooking.customer.id) if admissionsBooking.customer else 'An anonymous user',admissionsBooking.id))
+
+    # generate invoice
+    invoice = u"Invoice for {} on {}".format(
+            u'{} {}'.format(admissionsBooking.customer.first_name, admissionsBooking.customer.last_name),
+            admissionsBooking.arrivalDate.strftime('%d-%m-%Y')
+    )
+    #Not strictly needed.
+    #logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(admissionsBooking.customer.get_full_name(),admissionsBooking.customer.id) if admissionsBooking.customer else 'An anonymous user',admissionsBooking.id))
+    result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice)
+    print(result)
+    if(result):
+        
+        return result
+        # return HttpResponse(geojson.dumps({
+        #     'status': 'success',
+        #     'redirect': '/ledger/checkout/checkout',
+        # }), content_type='application/json')
+    else:
+        return HttpResponse(geojason.dumps({
+            'status': 'failure',
+        }), content_type='application/json')
+
+@csrf_exempt
+@require_http_methods(['POST'])
 def create_booking(request, *args, **kwargs):
     """Create a temporary booking and link it to the current session"""
     data = {
@@ -1278,7 +1369,6 @@ def create_booking(request, *args, **kwargs):
         'campsite_class': request.POST.get('campsite_class', 0),
         'campsite': request.POST.get('campsite', 0)
     }
-
     serializer = MooringsiteBookingSerializer(data=data)
     serializer.is_valid(raise_exception=True)
 

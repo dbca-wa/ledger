@@ -51,6 +51,7 @@ api_patterns = [
     url(r'^api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),
     url(r'^api/search_suggest', api.search_suggest, name='search_suggest'),
     url(r'^api/create_booking', api.create_booking, name='create_booking'),
+    url(r'^api/create_admissions_booking', api.create_admissions_booking, name="create_admissions_booking"),
     url(r'api/get_confirmation/(?P<booking_id>[0-9]+)/$', api.get_confirmation, name='get_confirmation'),
     url(r'^api/reports/booking_refunds$', api.BookingRefundsReportView.as_view(),name='booking-refunds-report'),
     url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
@@ -78,7 +79,10 @@ urlpatterns = [
     url(r'^booking/', views.MakeBookingsView.as_view(), name='public_make_booking'),
     url(r'^mybookings/', views.MyBookingsView.as_view(), name='public_my_bookings'),
     url(r'^success/', views.BookingSuccessView.as_view(), name='public_booking_success'),
+    url(r'^success_admissions/', views.AdmissionsBookingSuccessView.as_view(), name='public_admissions_success'),
+    url(r'^createdbasket/', views.AdmissionsBasketCreated.as_view(), name='created_basket'),
     url(r'^map/', views.MapView.as_view(), name='map'),
+    url(r'^admissions/$', views.AdmissionFeesView.as_view(), name='admissions'),
 ##    url(r'^static/(?P<path>.*)$', 'django.conf.urls.static'),
 #    {'document_root': settings.STATIC_ROOT},
 ] + ledger_patterns 
