@@ -184,7 +184,7 @@ export default {
                                     links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
 
                                     if (full.payment_status == 'unpaid'){
-                                        links +=  `<a href='#${full.id}' data-pay-application-fee='${full.id}'>Process Payment</a><br/>`;
+                                        links +=  `<a href='#${full.id}' data-pay-application-fee='${full.id}'>Pay Application Fee</a><br/>`;
                                     }
                                 }
                             }
