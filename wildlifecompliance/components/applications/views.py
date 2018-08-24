@@ -39,15 +39,17 @@ class ApplicationSuccessView(TemplateView):
         try:
             print(get_session_application(request.session))
             application = get_session_application(request.session)
-            print('application')
-            print(application)
             invoice_ref = request.GET.get('invoice')
-            print('invoice_ref')
-            print(invoice_ref)
             try:
                 bind_application_to_invoice(request, application, invoice_ref)
                 invoice_url = request.build_absolute_uri(reverse('payments:invoice-pdf', kwargs={'reference': invoice_ref}))
-                send_application_invoice_email_notification(application, invoice_ref, request)
+                if (application.payment_status == 'paid'):
+                    send_application_invoice_email_notification(application, invoice_ref, request)
+                else:
+                    #TODO: check if this ever occurs from the above code and provide error screen for user
+                    # console.log('Invoice remains unpaid')
+                    delete_session_application(request.session)
+                    return redirect(reverse('external'))
             except BindApplicationException as e:
                 print(e)
                 traceback.print_exc
@@ -64,8 +66,6 @@ class ApplicationSuccessView(TemplateView):
             'invoice_ref': invoice_ref,
             'invoice_url': invoice_url
         }
-        print('context')
-        print(context)
         delete_session_application(request.session)
         return render(request, self.template_name, context)
 

@@ -16,6 +16,7 @@ from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import Licence
+from ledger.payments.invoice.models import Invoice
 from wildlifecompliance import exceptions
 
 from wildlifecompliance.components.organisations.models import Organisation
@@ -352,6 +353,14 @@ class Application(RevisionedMixin):
         :return:
         """
         return self.customer_status == 'draft' and not self.lodgement_number
+
+    @property
+    def payment_status(self):
+        if self.invoices.count() == 0:
+            return 'unpaid'
+        else:
+            latest_invoice = Invoice.objects.get(reference=self.invoices.latest('id').invoice_reference)
+            return latest_invoice.payment_status
 
     @property
     def latest_referrals(self):
@@ -894,7 +903,7 @@ class ApplicationInvoice(models.Model):
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return 'Application {} : Invoice #{}'.format(self.id,self.invoice_reference)
+        return 'Application {} : Invoice #{}'.format(self.application_id,self.invoice_reference)
 
     # Properties
     # ==================
