@@ -113,6 +113,7 @@ export default {
             this.approval = {};
             this.errors = false;
             $('.has-error').removeClass('has-error');
+            $(this.$refs.cancellation_date).data('DateTimePicker').clear();
             this.validation_form.resetForm();
         },
         fetchContact: function(id){
