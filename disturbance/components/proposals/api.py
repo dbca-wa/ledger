@@ -71,6 +71,7 @@ from django.core.files.storage import default_storage
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
+from rest_framework.filters import BaseFilterBackend
 
 class GetProposalType(views.APIView):
     renderer_classes = [JSONRenderer, ]
@@ -89,9 +90,29 @@ class GetEmptyList(views.APIView):
     def get(self, request, format=None):
         return Response([])
 
+#class DatatablesFilterBackend(BaseFilterBackend):
+#
+#	def filter_queryset(self, request, queryset, view):
+#		queryset = super(DatatablesFilterBackend, self).filter_queryset(request, queryset, view)
+#		import ipdb; ipdb.set_trace()
+#		return queryset
+
+class ProposalFilterBackend(DatatablesFilterBackend):
+    """
+    Filter that only allows users to see their own objects.
+    """
+
+    def filter_queryset(self, request, queryset, view):
+        queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
+        #import ipdb; ipdb.set_trace()
+        return queryset
+
 class ListProposalViewSet(viewsets.ModelViewSet):
     #import ipdb; ipdb.set_trace()
     #queryset = Proposal.objects.all()
+    #filter_backends = (DatatablesFilterBackend,)
+    filter_backends = (ProposalFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
     queryset = Proposal.objects.none()
     serializer_class = ListProposalSerializer
 
@@ -107,13 +128,21 @@ class ListProposalViewSet(viewsets.ModelViewSet):
             return queryset
         return Proposal.objects.none()
 
-    def _list(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
-        queryset = self.get_queryset()
-        filter = DatatablesFilterBackend()
-        queryset = filter.filter_queryset(request, queryset)
-        serializer = ListProposalSerializer(queryset, context={'request':request}, many=True)
-        return Response(serializer.data)
+#    def filter_queryset(self, request, queryset, view):
+#        #queryset = super(DatatablesFilterBackend, self).filter_queryset(request, queryset, view)
+#        import ipdb; ipdb.set_trace()
+#        queryset = super(ListProposalViewSet, self).filter_queryset(request, queryset, view)
+#        #queryset = DatatablesFilterBackend().filter_queryset(request, queryset, view)
+#        return queryset
+
+#    def list(self, request, *args, **kwargs):
+#        queryset = self.get_queryset()
+#        import ipdb; ipdb.set_trace()
+#        #filter = DatatablesFilterBackend()
+#        #queryset = filter.filter_queryset(request, queryset)
+#        queryset = self.filter_queryset(request, queryset, self)
+#        serializer = ListProposalSerializer(queryset, context={'request':request}, many=True)
+#        return Response(serializer.data)
 
 
 

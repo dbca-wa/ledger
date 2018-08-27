@@ -149,7 +149,12 @@ export default {
                 lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": 'data'
+                    "dataSrc": 'data',
+			        "data": function ( d ) {
+                        //d.data = "data";
+                        d.regions = "mytest";
+        		    }
+
                 },
                 dom: 'lBfrtip',
                 buttons:[
@@ -295,7 +300,10 @@ export default {
                 lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": 'data'
+                    "dataSrc": 'data',
+			        "data": function ( d ) {
+                        d.regions = vm.filterProposalRegion.join();
+        		    }
                 },
                 dom: 'lBfrtip',
                 buttons:[
@@ -460,8 +468,9 @@ export default {
             }
         },
         filterProposalRegion: function(){
-            //this.$refs.proposal_datatable.vmDataTable.draw();
-            this.$refs.proposal_datatable.vmDataTable.columns(1).search('').draw();
+            this.$refs.proposal_datatable.vmDataTable.draw();
+            //let vm = this;
+            //vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion.join()).draw();
         },
         filterProposalSubmitter: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
