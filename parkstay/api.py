@@ -1691,7 +1691,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             override_price = serializer.validated_data.get('override_price', None)
             override_reason = serializer.validated_data.get('override_reason', None)
             override_reason_info = serializer.validated_data.get('override_reason_info', None)
-            send_invoice = serializer.validated_data.get('send_invoice', None)
+            send_invoice = serializer.validated_data.get('send_invoice', False)
             overridden_by = None if (override_price is None) else request.user
             try:
                 emailUser = request.data['customer']
