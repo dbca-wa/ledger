@@ -375,6 +375,7 @@ export default {
             return  vm.form.valid() && isValid;
 		},
         create: function() {
+                        console.log("CREATE");
 			if(this.validateForm()){
 				this.sendData(api_endpoints.campgrounds, 'POST');
 			}
@@ -391,7 +392,7 @@ export default {
 				el.tooltip("destroy");
 				el.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
 			}
-            if (vm.editor.getText().trim().length == 0){
+            if (vm.editor.getText().trim().length == 0) {
                 // add or update tooltips
                 el.tooltip({
                         trigger: "focus"
@@ -529,22 +530,22 @@ export default {
                     name: "required",
                     park: "required",
                     campground_type: "required",
-                    site_type: "required",
-                    street: "required",
+//                    site_type: "required",
+//                    street: "required",
                     email: {
                         required: true,
                         email: true
                     },
                     telephone: "required",
-                    postcode: "required",
-                    price_level: "required"
+            //        postcode: "required",
+ //                   price_level: "required"
                 },
                 messages: {
-                    name: "Enter a campground name",
+                    name: "Enter a mooring name",
                     park: "Select a park from the options",
-                    campground_type: "Select a campground type from the options",
+                    campground_type: "Select a mooring type from the options",
                     site_type: "Select a site type from the options",
-                    price_level: "Select a price level from the options"
+//                    price_level: "Select a price level from the options"
                 },
                 showErrors: function(errorMap, errorList) {
                     $.each(this.validElements(), function(index, element) {
@@ -768,7 +769,7 @@ var source = new ol.source.Vector({wrapX: false, features: [iconFeature]});
          addInteraction();
 
         });
-
+        console.log("ENDED");
 
         // End Map Point Selection
 
