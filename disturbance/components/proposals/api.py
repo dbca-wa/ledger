@@ -99,12 +99,27 @@ class GetEmptyList(views.APIView):
 
 class ProposalFilterBackend(DatatablesFilterBackend):
     """
-    Filter that only allows users to see their own objects.
+    Custom filters
     """
 
     def filter_queryset(self, request, queryset, view):
-        queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
         #import ipdb; ipdb.set_trace()
+        total_count = queryset.count()
+
+        regions = request.GET.get('regions')
+        if regions:
+            queryset = queryset.filter(region__name__iregex=regions.replace(',', '|'))
+
+        lodged_from = request.GET.get('lodged_from')
+        if lodged_from:
+            queryset = queryset.filter(lodgement_date__gte=lodged_from)
+
+        lodged_to = request.GET.get('lodged_to')
+        if lodged_to:
+            queryset = queryset.filter(lodgement_date__lte=lodged_to)
+
+        queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
+        setattr(view, '_datatables_total_count', total_count)
         return queryset
 
 class ListProposalViewSet(viewsets.ModelViewSet):
@@ -115,9 +130,11 @@ class ListProposalViewSet(viewsets.ModelViewSet):
     pagination_class = DatatablesPageNumberPagination
     queryset = Proposal.objects.none()
     serializer_class = ListProposalSerializer
+    page_size = 22
 
     def get_queryset(self):
         user = self.request.user
+        #import ipdb; ipdb.set_trace()
         if is_internal(self.request): #user.is_authenticated():
             return Proposal.objects.all()
             #return Proposal.objects.filter(region__isnull=False)

@@ -288,7 +288,7 @@ export default {
             },
             proposal_headers:[
                 "Number","Region__2","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
-                "LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
+                //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
             ],
             proposal_options:{
                 autoWidth: false,
@@ -301,8 +301,12 @@ export default {
                 ajax: {
                     "url": vm.url,
                     "dataSrc": 'data',
-			        "data": function ( d ) {
+
+                    // adding extra GET params for Custom filtering
+                    "data": function ( d ) {
                         d.regions = vm.filterProposalRegion.join();
+                        d.lodged_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.lodged_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
                 },
                 dom: 'lBfrtip',
@@ -322,7 +326,7 @@ export default {
                             return helpers.dtPopover(value);
                         },
                         'createdCell': helpers.dtPopoverCellFn,
-                        name: "region__name",
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
                     {data: "activity"},
                     {
@@ -340,7 +344,8 @@ export default {
                             }
                             return ''
                         },
-                        name: "submitter__first_name, submitter__last_name",
+                        //name: "submitter__first_name, submitter__last_name",
+                        name: "submitter__email",
                     },
                     {
                         data: "applicant",
@@ -359,6 +364,7 @@ export default {
                             //return data != '' && data != null ? moment(data): '';
                         },
                         //name: "assigned_officer__first_name, assigned_officer__last_name",
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
                     {
                         data: "assigned_officer",
@@ -473,7 +479,14 @@ export default {
             //vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion.join()).draw();
         },
         filterProposalSubmitter: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
+            //this.$refs.proposal_datatable.vmDataTable.draw();
+            let vm = this;
+            if (vm.filterProposalSubmitter!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalSubmitter).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
+            }
+
         },
         filterProposalLodgedFrom: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
