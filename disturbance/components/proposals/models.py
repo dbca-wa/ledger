@@ -22,7 +22,7 @@ from disturbance.components.main.models import CommunicationsLogEntry, UserActio
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
-from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification
+from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
 import copy
 
 
@@ -314,6 +314,7 @@ class Proposal(RevisionedMixin):
     application_type = models.ForeignKey(ApplicationType)
     approval_level = models.CharField('Activity matrix approval level', max_length=255,null=True,blank=True)
     approval_level_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='approval_level_document')
+    approval_comment = models.TextField(blank=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -702,13 +703,19 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
-    def move_to_status(self,request,status):
+    def move_to_status(self,request,status, approver_comment):
+        print approver_comment
         if not self.can_assess(request.user):
             raise exceptions.ProposalNotAuthorized()
         if status in ['with_assessor','with_assessor_requirements','with_approver']:
             if self.processing_status == 'with_referral' or self.can_user_edit:
                 raise ValidationError('You cannot change the current status at this time')
             if self.processing_status != status:
+                if self.processing_status =='with_approver':
+                    if approver_comment:
+                        self.approver_comment = approver_comment
+                        self.save()
+                        send_proposal_approver_sendback_email_notification(request, self)
                 self.processing_status = status
                 self.save()
 

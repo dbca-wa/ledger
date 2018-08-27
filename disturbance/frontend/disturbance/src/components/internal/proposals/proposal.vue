@@ -205,6 +205,14 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
+
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <label class="control-label pull-left"  for="Name">Approver Comments</label>
+                                            <textarea class="form-control" name="name" v-model="approver_comment"></textarea><br>
+                                        </div>
+                                    </div>
+
                                     <div class="row">
                                         <div class="col-sm-12" v-if="proposal.proposed_decline_status">
                                             <button style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="switchStatus('with_assessor')"><!-- Back To Processing -->Back To Assessor</button><br/>
@@ -392,6 +400,7 @@ export default {
             "loading": [],
             selected_referral: '',
             referral_text: '',
+            approver_comment: '',
             form: null,
             members: [],
             department_users : [],
@@ -680,7 +689,7 @@ export default {
             let formData = new FormData(vm.form);
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{ //save Proposal before changing status so that unsaved assessor data is saved.
             
-            let data = {'status': status}
+            let data = {'status': status, 'approver_comment': vm.approver_comment}
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
                 emulateJSON:true,
             })
@@ -688,10 +697,12 @@ export default {
                 vm.proposal = response.body;
                 vm.original_proposal = helpers.copyObject(response.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.approver_comment='';
                 vm.$nextTick(() => {
                     vm.initialiseAssignedOfficerSelect(true);
                     vm.updateAssignedOfficerSelect();
                 });
+
             }, (error) => {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
@@ -709,7 +720,7 @@ export default {
         else{
 
 
-         let data = {'status': status}
+         let data = {'status': status, 'approver_comment': vm.approver_comment}
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
                 emulateJSON:true,
             })
@@ -717,6 +728,7 @@ export default {
                 vm.proposal = response.body;
                 vm.original_proposal = helpers.copyObject(response.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.approver_comment='';
                 vm.$nextTick(() => {
                     vm.initialiseAssignedOfficerSelect(true);
                     vm.updateAssignedOfficerSelect();
