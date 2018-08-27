@@ -161,7 +161,7 @@ export default {
                             return full.lodgement_number;
                         }
                     },
-                    {data: 'region', myname: 'region, region.name, region__name', searchable:false, orderable:false},
+                    {data: 'region', myname: 'region, region.name, region__name', searchable:true, orderable:true},
                     /*
                     {
                         data: "region",
@@ -228,13 +228,8 @@ export default {
                             }
                             return links;
                         }
-                    },
+                    }
 
-                    {data: "lodgement_number", visible: false},
-                    {data: "processing_status", visible: false},
-                    {data: "assessor_process", visible: false},
-                    {data: "can_user_edit", visible: false},
-                    {data: "can_user_view", visible: false},
                 ],
                 processing: true,
                 initComplete: function () {
@@ -287,7 +282,7 @@ export default {
                 }
             },
             proposal_headers:[
-                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
+                "Number","Region__2","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
                 "LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
             ],
             proposal_options:{
@@ -310,18 +305,17 @@ export default {
                         data: "id",
                         mRender:function(data,type,full){
                             return full.lodgement_number;
-                        }
+                        },
+                        //name: "lodgement_number",
                     },
-                    {data: 'region', myname: 'region__name', searchable:false, orderable:false},
-                    /*
                     {
                         data: "region",
                         'render': function (value) {
                             return helpers.dtPopover(value);
                         },
-                        'createdCell': helpers.dtPopoverCellFn
+                        'createdCell': helpers.dtPopoverCellFn,
+                        name: "region__name",
                     },
-                    */
                     {data: "activity"},
                     {
                         data: "title",
@@ -337,22 +331,31 @@ export default {
                                 return `${data.first_name} ${data.last_name}`;
                             }
                             return ''
-                        }
+                        },
+                        name: "submitter__first_name, submitter__last_name",
                     },
-                    {data: "applicant"},
+                    {
+                        data: "applicant",
+                        name: "applicant__organisation__name",
+                    },
                     {
                         data: "processing_status",
                         mRender:function(data,type,full){
                             return vm.level == 'external' ? full.customer_status: data;
-                        }
+                        },
                     },
                     {
                         data: "lodgement_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                            //return data != '' && data != null ? moment(data): '';
+                        },
+                        //name: "assigned_officer__first_name, assigned_officer__last_name",
                     },
-                    {data: "assigned_officer"},
+                    {
+                        data: "assigned_officer",
+                        name: "assigned_officer__first_name, assigned_officer__last_name",
+                    },
                     {
                         mRender:function (data,type,full) {
                             let links = '';
@@ -375,14 +378,11 @@ export default {
                                 }
                             }
                             return links;
-                        }
-                    },
+                        },
+                        searchable: false,
+                        orderable: false
+                    }
 
-                    {data: "lodgement_number", visible: false},
-                    {data: "customer_status", visible: false},
-                    {data: "assessor_process", visible: false},
-                    {data: "can_user_edit", visible: false},
-                    {data: "can_user_view", visible: false},
                 ],
                 processing: true,
                 initComplete: function () {
@@ -460,7 +460,8 @@ export default {
             }
         },
         filterProposalRegion: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
+            //this.$refs.proposal_datatable.vmDataTable.draw();
+            this.$refs.proposal_datatable.vmDataTable.columns(1).search('').draw();
         },
         filterProposalSubmitter: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
