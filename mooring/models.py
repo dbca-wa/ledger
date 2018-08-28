@@ -288,7 +288,7 @@ class MooringArea(models.Model):
                 within.updated_on = timezone.now()
                 within.save(skip_validation=True)
                 if within.range_start != b.range_start or within.range_end != b.range_end:
-                    raise ValidationError('{} campground is already closed.'.format(within.campground.name))
+                    raise ValidationError('{} is already closed.'.format(within.campground.name))
             else:
                 b.save()
         except MooringAreaBookingRange.DoesNotExist:
@@ -646,7 +646,7 @@ class Mooringsite(models.Model):
 
     def close(self, data):
         if not self.active:
-            raise ValidationError('This campsite is already closed.')
+            raise ValidationError('This is already closed.')
         b = MooringsiteBookingRange(**data)
         try:
             within = MooringsiteBookingRange.objects.filter(Q(campsite=b.campsite),~Q(status=0),Q(range_start__lte=b.range_start), Q(range_end__gte=b.range_start) | Q(range_end__isnull=True) ).latest('updated_on')
@@ -879,18 +879,18 @@ class MooringsiteBooking(models.Model):
 
 
 class Rate(models.Model):
-    mooring = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
-    adult = models.DecimalField(max_digits=8, decimal_places=2, default='10.00')
-    concession = models.DecimalField(max_digits=8, decimal_places=2, default='6.60')
-    child = models.DecimalField(max_digits=8, decimal_places=2, default='2.20')
-    infant = models.DecimalField(max_digits=8, decimal_places=2, default='0')
+    mooring = models.DecimalField(max_digits=8, decimal_places=2, default='10.00', unique=False)
+    adult = models.DecimalField(max_digits=8, decimal_places=2, default='10.00', blank=True, null=True, unique=False)
+    concession = models.DecimalField(max_digits=8, decimal_places=2, default='6.60', blank=True, null=True, unique=False)
+    child = models.DecimalField(max_digits=8, decimal_places=2, default='2.20', blank=True, null=True, unique=False)
+    infant = models.DecimalField(max_digits=8, decimal_places=2, default='0', blank=True, null=True, unique=False)
 
     def __str__(self):
         return 'Mooring: ${} '.format(self.mooring,)
         #return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
 
-    class Meta:
-        unique_together = (('adult', 'concession', 'child', 'infant'),)
+    #class Meta:
+    #    unique_together = (('adult', 'concession', 'child', 'infant'),)
 
     # Properties
     # =================================
@@ -1440,6 +1440,7 @@ class ViewPriceHistory(models.Model):
     date_start = models.DateField()
     date_end = models.DateField()
     rate_id = models.IntegerField()
+    mooring = models.DecimalField(max_digits=8, decimal_places=2)
     adult = models.DecimalField(max_digits=8, decimal_places=2)
     concession = models.DecimalField(max_digits=8, decimal_places=2)
     child = models.DecimalField(max_digits=8, decimal_places=2)
@@ -1804,21 +1805,21 @@ class MarinaAreaStayHistoryListener(object):
     @receiver(pre_save, sender=MooringAreaStayHistory)
     def _pre_save(sender, instance, **kwargs):
         if instance.pk:
-            original_instance = MarinaAreaStayHistory.objects.filter(pk=instance.pk)
+            original_instance = MooringAreaStayHistory.objects.filter(pk=instance.pk)
             if original_instance.exists():
                 setattr(instance, "_original_instance", original_instance.first())
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
             try:
-                within = MarinaAreaStayHistory.objects.get(Q(campground=instance.campground),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
+                within = MooringAreaStayHistory.objects.get(Q(mooringarea=instance.mooringarea),Q(range_start__lte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) )
                 within.range_end = instance.range_start - timedelta(days=2)
                 within.save()
-            except MarinaAreaStayHistory.DoesNotExist:
+            except MooringAreaStayHistory.DoesNotExist:
                 pass
 
             # check if there is a newer record and set the end date as the previous record minus 1 day
-            x = CampgroundStayHistory.objects.filter(Q(campground=instance.campground),Q(range_start__gte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) ).order_by('range_start')
+            x = MooringAreaStayHistory.objects.filter(Q(mooringarea=instance.mooringarea),Q(range_start__gte=instance.range_start), Q(range_end__gte=instance.range_start) | Q(range_end__isnull=True) ).order_by('range_start')
             if x:
                 x = x[0]
                 instance.date_end = x.date_start - timedelta(days=2)
@@ -1827,7 +1828,7 @@ class MarinaAreaStayHistoryListener(object):
     @receiver(pre_delete, sender=MooringAreaStayHistory)
     def _pre_delete(sender, instance, **kwargs):
         if not instance.range_end:
-            c = CampgroundStayHistory.objects.filter(campground=instance.campground).order_by('-range_start').exclude(id=instance.id)
+            c = MooringAreaStayHistory.objects.filter(mooringarea=instance.mooringarea).order_by('-range_start').exclude(id=instance.id)
             if c:
                 c = c[0]
                 c.date_end = None

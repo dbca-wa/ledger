@@ -70,7 +70,7 @@ import alert from '../../utils/alert.vue'
 module.exports = {
     name: 'addMaxStayCS',
     props: {
-        campground: {
+        mooringarea: {
             type: Object,
             required: true
         },

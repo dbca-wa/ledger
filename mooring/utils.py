@@ -208,14 +208,12 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     # prefill all slots as 'open'
     duration = (end_date-start_date).days
     results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
-
     # strike out existing bookings
     for b in bookings_qs:
         results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
 
     # generate a campground-to-campsite-list map
     mooring_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.mooringarea.pk == cg[0]] for cg in campsites_qs.distinct('mooringarea').values_list('mooringarea')}
-
     # strike out whole campground closures
     cgbr_qs =    MooringAreaBookingRange.objects.filter(
         Q(campground__in=mooring_map.keys()),
@@ -228,7 +226,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         today = date.today()
         diff = (end-start).days + 1
         for i in range(diff):
-            for cs in mooring_map[closure.mooring.pk]:
+            for cs in mooring_map[closure.campground.pk]:
                 #results[cs][start+timedelta(days=i)][0] = 'closed'
                 if start+timedelta(days=i) == today:
                     if not closure.campground._is_open(start+timedelta(days=i)):
@@ -237,7 +235,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                 else:
                     if start+timedelta(days=i) in results[cs]:
                         results[cs][start+timedelta(days=i)][0] = 'closed'
-
     # strike out campsite closures
     csbr_qs =    MooringsiteBookingRange.objects.filter(
         Q(campsite__in=campsites_qs),
@@ -259,7 +256,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                 if start+timedelta(days=i) in results[closure.campsite.pk]:
                     results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
                 
-
     # strike out days before today
     today = date.today()
     if start_date < today:
@@ -285,14 +281,12 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         max_days = min([x.max_days for x in stay_history])
     else:
         max_days = settings.PS_MAX_BOOKING_LENGTH
-
     # strike out days after the max_stay period
     for site in campsites_qs:
         stop = start_date + timedelta(days=max_days)
         stop_mark = min(max(stop, start_date), end_date)
         for i in range((end_date-stop_mark).days):
             results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
-
     return results
 
 
