@@ -391,6 +391,15 @@ def update_schema_name(item_data,id):
             # print(item['children'])
 
 
+def amendment_requests(application):
+    from wildlifecompliance.components.Application.models import AmendmentRequest
+    try:
+    	qs =AmendmentRequest.objects.filter(application = application)
+    	return qs
+    except AmendmentRequest.DoesNotExist:
+    	return None
+
+    
 
 
     

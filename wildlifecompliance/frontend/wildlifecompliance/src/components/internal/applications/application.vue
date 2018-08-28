@@ -1049,7 +1049,7 @@ export default {
 
             $('.deficiency').each((i,d) => {
 
-                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n Tab - ${$(d).data('tabname')}\n`: '';
+                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
                 
                 tab_name = $(d).data('tabname')
                 if ($(d).val() != '' && (activity_type_name.indexOf(tab_name) < 0) ){

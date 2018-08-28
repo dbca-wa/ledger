@@ -12,6 +12,12 @@
 </style>
 
 <script>
+    import Vue from 'vue'
+    import {
+  api_endpoints,
+  helpers
+}
+from '@/utils/hooks'
     import Renderer from '@/utils/renderer'
     import bs from 'bootstrap'
     require('../../node_modules/bootstrap/dist/css/bootstrap.css');
@@ -31,19 +37,12 @@
             form_width: {
                 type: String,
                 default: 'col-md-9'
-            },
-            isAmendmentRequest:{
-                type:Boolean,
-                default:false
-            },
-            amendment_request_id:{
-                type:Array,
-                default:[]
             }
         },
         data:function () {
             return{
-                values:null
+                values:null,
+                amendment_request_id:[]
             }
         },
         methods:{
@@ -51,38 +50,37 @@
                 if (this.application.data) {
                     this.values = this.application.data[0]
                 }
-                console.log(this.application)
+
             }
 
         },
         created:function () {
-            console.log("inside created")
+           
             this.mapDataToApplication();
         },
         mounted:function () {
-            console.log("inside mounted")
+            this.amendment_request_id=this.application.amendment_requests
+            
             var tabs=Renderer.tabs_list
-            console.log(tabs)
-            if(this.isAmendmentRequest){
+            // tabs.map(tsec => {
+            //         $('#tabs-section').append(`<li><a data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
+            //     });
+            // console.log(tabs)
+            if(this.application.has_amendment){
+                console.log("from inside if")
 
                 tabs.map(tsec => {
-                    console.log("from form.vue before if")
-                    // console.log(tsec.id)
-                    if(amendment_request_id.indexOf('${tsec.id}') < 0){
-                        $('#tabs-section').append(`<li><a class="nav-link" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
+                    if(this.amendment_request_id.indexOf(tsec.id) < 0){
+                        // $('#tabs-section').append(`<li><a class="nav-link disabled" data-toggle="tab" href='#'>${tsec.label}</a></li>`);
                     }
                     else{
-                        console.log("from form.vue inside else")
-                        // console.log(tsec.id)
-                        $('#tabs-section').append(`<li><a class="nav-link disabled" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
+                        $('#tabs-section').append(`<li><a class="nav-link" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
                     }
                     
                 });
 
             }
             else{
-                console.log("inside elase isAmendmentRequest")
-                console.log(this.isAmendmentRequest)
                 tabs.map(tsec => {
                     $('#tabs-section').append(`<li><a data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
                 });
