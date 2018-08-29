@@ -5,7 +5,7 @@ from datetime import date
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, \
-    KeepTogether, PageBreak
+    KeepTogether, PageBreak, ListItem
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.colors import HexColor
@@ -144,7 +144,7 @@ def _create_approval_header(canvas, doc, draw_page_number=True):
         canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER) * 2,
                           '{}'.format(doc.approval.lodgement_number))
 
-def _create_approval(approval_buffer, approval, proposal, copied_to_permit):
+def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user):
     site_url = settings.SITE_URL
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
@@ -163,16 +163,48 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit):
 
     title = approval.title.encode('UTF-8')
 
-    elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
-    elements.append(Paragraph(approval.activity, styles['InfoTitleLargeLeft']))
-    elements.append(Paragraph(approval.region, styles['InfoTitleLargeLeft']))
+    #Organization details
+
+    address = proposal.applicant.organisation.postal_address
+    elements.append(Paragraph(_format_name(approval.applicant),styles['BoldLeft']))
+    elements.append(Paragraph(address.line1, styles['BoldLeft']))
+    elements.append(Paragraph(address.line2, styles['BoldLeft']))
+    elements.append(Paragraph(address.line3, styles['BoldLeft']))
+    elements.append(Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['BoldLeft']))
+    elements.append(Paragraph(address.country.name, styles['BoldLeft']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['BoldLeft']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    #elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
+    #elements.append(Paragraph(approval.activity, styles['InfoTitleLargeLeft']))
+    elements.append(Paragraph('APPROVAL OF PROPOSAL {} {} TO UNDERTAKE DISTURBANCE ACTIVITY IN {} - {}'.format(proposal.lodgement_number, title, approval.region, approval.district), styles['InfoTitleLargeLeft']))
     #import ipdb; ipdb.set_trace()
-    elements.append(Paragraph(approval.tenure if hasattr(approval, 'tenure') else '', styles['InfoTitleLargeRight']))
+    #elements.append(Paragraph(approval.tenure if hasattr(approval, 'tenure') else '', styles['InfoTitleLargeRight']))
+
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('The submitted proposal {} {} has been assessed and approved. The approval is granted on the understanding that: '.format(title, proposal.lodgement_number), styles['BoldLeft']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    list_of_bullets= []
+    list_of_bullets.append('The potential impacts of the proposal on values the department manages have been removed or mitigated to a level \'as low as reasonably possible\'  (ALARP) and the proposal is consistent with departmental objective and associated management plans for the land use category/s in the activity area.')
+    list_of_bullets.append('No sensitive information contained in this proposal is provided to any third party.')
+    list_of_bullets.append('Approval is granted for the period {} to {}. This approval is not valid if {} makes changes that effect'
+        ' what has been agreed in this proposal or the proposal has expired. To change aspects of the proposal of seek an extension, the proponent must re-submit the proposal for assessment.'.format(approval.start_date.strftime(DATE_FORMAT), approval.expiry_date.strftime(DATE_FORMAT),_format_name(approval.applicant)))
+    list_of_bullets.append('The proponet accepts responsibility for supervising and monitoring the proposed activity to ensure compliance with this proposal.'
+        ' DBCA reserves the right to request documents and records demonstrating compliance for the purpose of deparmental monitoring and auditing.')
+    list_of_bullets.append('Non-compliance with the conditions of the proposal may trigger a suspension or withdrawal of the approval for this activity.')
+    list_of_bullets.append('Management actions listed in Appendix 1 are implemented.')
+    understandingList = ListFlowable(
+            [ListItem(Paragraph(a, styles['Left']), bulletColour='black', value='circle') for a in list_of_bullets],
+            bulletFontName=BOLD_FONTNAME, bulletFontSize=SMALL_FONTSIZE, bulletType='bullet')
+            #bulletFontName=BOLD_FONTNAME
+    elements.append(understandingList)
 
     # proposal requirements 
     if proposal.requirements.exists():
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        elements.append(Paragraph('Requirements', styles['BoldLeft']))
+        elements.append(Paragraph('The following requirements must be satisfied for the approval of the proposal not to be withdrawn:', styles['BoldLeft']))
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         conditionList = ListFlowable(
@@ -180,22 +212,15 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit):
             bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
         elements.append(conditionList)
 
-    if copied_to_permit:
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        elements.append(Paragraph('Assessor Comments', styles['BoldLeft']))
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        '''new_list =[]
-        for k, v in copied_to_permit:
-            new_item = '{} : {}'.format(v.encode('UTF-8'), k.encode('UTF-8'))
-            new_list.append(new_item)
-
-        copiedToPermitList = ListFlowable(
-            [Paragraph(c , styles['Left']) for c in new_list],bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
-        elements.append(copiedToPermitList)'''
-        for k,v in copied_to_permit:
-            elements.append(Paragraph(v.encode('UTF-8'), styles['Left']))
-            elements.append(Paragraph(k.encode('UTF-8'), styles['Left']))
-            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    # if copied_to_permit:
+    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    #     elements.append(Paragraph('Assessor Comments', styles['BoldLeft']))
+    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        
+    #     for k,v in copied_to_permit:
+    #         elements.append(Paragraph(v.encode('UTF-8'), styles['Left']))
+    #         elements.append(Paragraph(k.encode('UTF-8'), styles['Left']))
+    #         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     
     elements += _layout_extracted_fields(approval.extracted_fields)
 
@@ -209,43 +234,65 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit):
     delegation = []
 
     # dates and licensing officer
-    dates_licensing_officer_table_style = TableStyle([('VALIGN', (0, 0), (-2, -1), 'TOP'),
-                                                      ('VALIGN', (0, 0), (-1, -1), 'BOTTOM')])
+    # dates_licensing_officer_table_style = TableStyle([('VALIGN', (0, 0), (-2, -1), 'TOP'),
+    #                                                   ('VALIGN', (0, 0), (-1, -1), 'BOTTOM')])
 
-    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    date_headings = [Paragraph('Date of Issue', styles['BoldLeft']), Paragraph('Valid From', styles['BoldLeft']),
-                     Paragraph('Date of Expiry', styles['BoldLeft'])]
-    date_values = [Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']),
-                   Paragraph(approval.start_date.strftime(DATE_FORMAT), styles['Left']),
-                   Paragraph(approval.expiry_date.strftime(DATE_FORMAT), styles['Left'])]
+    # delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    # date_headings = [Paragraph('Date of Issue', styles['BoldLeft']), Paragraph('Valid From', styles['BoldLeft']),
+    #                  Paragraph('Date of Expiry', styles['BoldLeft'])]
+    # date_values = [Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']),
+    #                Paragraph(approval.start_date.strftime(DATE_FORMAT), styles['Left']),
+    #                Paragraph(approval.expiry_date.strftime(DATE_FORMAT), styles['Left'])]
 
-    if approval.original_issue_date is not None:
-        date_headings.insert(0, Paragraph('Original Date of Issue', styles['BoldLeft']))
-        date_values.insert(0, Paragraph(approval.original_issue_date.strftime(DATE_FORMAT), styles['Left']))
+    # if approval.original_issue_date is not None:
+    #     date_headings.insert(0, Paragraph('Original Date of Issue', styles['BoldLeft']))
+    #     date_values.insert(0, Paragraph(approval.original_issue_date.strftime(DATE_FORMAT), styles['Left']))
 
-    delegation.append(Table([[date_headings, date_values]],
-                            colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
-                            style=dates_licensing_officer_table_style))
+    # delegation.append(Table([[date_headings, date_values]],
+    #                         colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+    #                         style=dates_licensing_officer_table_style))
 
     # proponent details
-    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    address = proposal.applicant.organisation.postal_address
-    address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
-                          Paragraph(address.line3, styles['Left']),
-                          Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
-                          Paragraph(address.country.name, styles['Left'])]
-    delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
-                              [Paragraph(_format_name(approval.applicant),
-                                         styles['Left'])] + address_paragraphs]],
-                            colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
-                            style=approval_table_style))
+    # delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    # address = proposal.applicant.organisation.postal_address
+    # address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
+    #                       Paragraph(address.line3, styles['Left']),
+    #                       Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
+    #                       Paragraph(address.country.name, styles['Left'])]
+    # delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
+    #                           [Paragraph(_format_name(approval.applicant),
+    #                                      styles['Left'])] + address_paragraphs]],
+    #                         colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+    #                         style=approval_table_style))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    delegation.append(Paragraph('Issued by a Disturbance Licensing Officer of the {} '
-                                'under delegation from the Minister for Environment pursuant to section 133(1) '
-                                'of the Conservation and Land Management Act 1984.'.format(settings.DEP_NAME), styles['Left']))
+    delegation.append(Paragraph('Should you have any queries about this approval, please contact {} {}, '
+                                'on {} or by email at {}'.format(user.first_name, user.last_name, settings.DEP_PHONE, user.email), styles['Left']))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('To provide feedback on the system used to submit the approval or update contact details, please '
+        'contact VIA Works Coordinator - {}'.format(settings.VIA_EMAIL), styles['Left']))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('Approved on behalf of the', styles['Left']))
+    delegation.append(Paragraph('{}'.format(settings.DEP_NAME), styles['Left']))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    delegation.append(Paragraph('{} {}'.format(user.first_name, user.last_name), styles['Left']))
+    delegation.append(Paragraph('{} - {}'.format(approval.region, approval.district), styles['Left']))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']))
 
     elements.append(KeepTogether(delegation))
+    
+    if copied_to_permit:
+        elements.append(PageBreak())
+        elements.append(Paragraph('Appendix 1 - Management Actions', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        
+        for k,v in copied_to_permit:
+            elements.append(Paragraph(v.encode('UTF-8'), styles['Left']))
+            elements.append(Paragraph(k.encode('UTF-8'), styles['Left']))
+            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     doc.build(elements)
 
@@ -341,10 +388,10 @@ def _layout_extracted_fields(extracted_fields):
 
     return elements
 
-def create_approval_doc(approval,proposal, copied_to_permit):
+def create_approval_doc(approval,proposal, copied_to_permit, user):
     approval_buffer = BytesIO()
 
-    _create_approval(approval_buffer, approval, proposal, copied_to_permit)
+    _create_approval(approval_buffer, approval, proposal, copied_to_permit, user)
     filename = 'approval-{}.pdf'.format(approval.lodgement_number)
     document = ApprovalDocument.objects.create(approval=approval,name=filename)
     document._file.save(filename, File(approval_buffer), save=True)

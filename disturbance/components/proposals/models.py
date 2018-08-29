@@ -914,14 +914,14 @@ class Proposal(RevisionedMixin):
                                     c.delete()  
                         # Log creation
                         # Generate the document
-                        approval.generate_doc()
+                        approval.generate_doc(request.user)
                         self.generate_compliances(approval, request)
                         # send the doc and log in approval and org
                     else:
                         #approval.replaced_by = request.user
                         approval.replaced_by = self.approval
                         # Generate the document
-                        approval.generate_doc()
+                        approval.generate_doc(request.user)
                         #Delete the future compliances if Approval is reissued and generate the compliances again.
                         approval_compliances = Compliance.objects.filter(approval= approval, proposal = self, processing_status='future')
                         if approval_compliances:
