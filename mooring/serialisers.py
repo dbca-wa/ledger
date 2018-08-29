@@ -548,10 +548,11 @@ class RateDetailSerializer(serializers.Serializer):
     '''Used to validate rates from the frontend
     '''
     rate = serializers.IntegerField(required=False)
-    adult = serializers.DecimalField(max_digits=5, decimal_places=2)
-    concession = serializers.DecimalField(max_digits=5, decimal_places=2)
-    child = serializers.DecimalField(max_digits=5, decimal_places=2)
-    infant = serializers.DecimalField(max_digits=5, decimal_places=2)
+    mooring = serializers.DecimalField(max_digits=5, decimal_places=2)
+    adult = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default='0.00') 
+    concession = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default='0.00')
+    child = serializers.DecimalField(max_digits=5, decimal_places=2,  required=False, default='0.00')
+    infant = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default='0.00')
     period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
     reason = serializers.IntegerField()
     details = serializers.CharField(required=False,allow_blank=True)
@@ -575,8 +576,8 @@ class MooringAreaPriceHistorySerializer(serializers.ModelSerializer):
     details = serializers.CharField(required=False,allow_blank=True)
     class Meta:
         model = MooringAreaPriceHistory
-        fields = ('id','date_start','date_end','rate_id','adult','concession','child','infant','editable','deletable','reason','details')
-        read_only_fields = ('id','editable','deletable','adult','concession','child','infant')
+        fields = ('id','date_start','date_end','rate_id','mooring','adult','concession','child','infant','editable','deletable','reason','details')
+        read_only_fields = ('id','editable','deletable','mooring','adult','concession','child','infant')
 
     def validate(self,obj):
         if obj.get('reason') == 1 and not obj.get('details'):
