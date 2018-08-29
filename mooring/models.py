@@ -1313,7 +1313,6 @@ class Booking(models.Model):
                 payment_dict.append(data)
         else:
             pass
-        print payment_dict
         return payment_dict
 
 class BookingHistory(models.Model):
