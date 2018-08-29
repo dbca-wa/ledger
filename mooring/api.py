@@ -1733,19 +1733,21 @@ class BookingViewSet(viewsets.ModelViewSet):
             recordsTotal = cursor.fetchone()[0]
             cursor.execute(sqlCount, sqlParams)
             recordsFiltered = cursor.fetchone()[0]
-
+           
             cursor.execute(sql, sqlParams)
             columns = [col[0] for col in cursor.description]
             data = [
                 dict(zip(columns, row))
                 for row in cursor.fetchall()
             ]
+
+
             bookings_qs = Booking.objects.filter(id__in=[b['id'] for b in data]).prefetch_related('mooringarea', 'campsites', 'campsites__campsite', 'customer', 'regos', 'history', 'invoices', 'canceled_by')
             booking_map = {b.id: b for b in bookings_qs}
             clean_data = []
             for bk in data:
                 cg = None
-                booking = booking_map[bk['id']]
+                booking = booking_map[bk['id']]       
                 cg = booking.mooringarea
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
@@ -1904,7 +1906,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise
         except ValidationError as e:
-            print e
+            print (e)
             raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             utils.delete_session_booking(request.session)
