@@ -86,7 +86,7 @@
             </div>
             <div class="columns small-6 medium-6 large-3">
                 <label>Vessel Size
-                    <input id="vesselSize" type="text" placeholder="0" v-on:change="update" v-model="vesselSize"/>
+                    <input id="vesselSize" type="number" placeholder="0" v-on:change="update" v-model="vesselSize"/>
                 </label>
             </div>
 
