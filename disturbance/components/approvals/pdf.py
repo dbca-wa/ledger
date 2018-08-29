@@ -15,14 +15,19 @@ from django.conf import settings
 
 from disturbance.components.approvals.models import ApprovalDocument
 
-BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
-                                   'bw_dpaw_header_logo.png')
+#BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
+#                                   'bw_dpaw_header_logo.png')
+
+BW_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'disturbance', 'static', 'disturbance', 'img',
+                                   'dbca-logo.jpg')
 
 COLOUR_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', 'static', 'wl', 'img',
                                        'colour_dpaw_header_logo.png')
 
-LICENCE_HEADER_IMAGE_WIDTH = 170
-LICENCE_HEADER_IMAGE_HEIGHT = 42
+#LICENCE_HEADER_IMAGE_WIDTH = 170
+LICENCE_HEADER_IMAGE_WIDTH = 420
+#LICENCE_HEADER_IMAGE_HEIGHT = 42
+LICENCE_HEADER_IMAGE_HEIGHT = 60
 
 DPAW_EMAIL = settings.VIA_EMAIL
 DPAW_URL = settings.DEP_URL
@@ -91,41 +96,45 @@ def _create_approval_header(canvas, doc, draw_page_number=True):
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN
 
-    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, '{}'.format(settings.DEP_NAME.upper()))
+    #canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, '{}'.format(settings.DEP_NAME.upper()))
 
     current_y -= 30
 
     dpaw_header_logo = ImageReader(BW_DPAW_HEADER_LOGO)
-    canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - 40,
+    canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - 58,
                      width=LICENCE_HEADER_IMAGE_WIDTH, height=LICENCE_HEADER_IMAGE_HEIGHT)
 
     current_x = HEADER_MARGIN + LICENCE_HEADER_IMAGE_WIDTH + 5
 
-    canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
 
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER), 'Enquiries:')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Telephone:')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Facsimile:')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Web Site:')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Correspondance:')
+    # canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
 
-    current_x += 80
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER), 'Enquiries:')
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Telephone:')
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Facsimile:')
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Web Site:')
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Correspondance:')
 
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),
-                      '17 DICK PERRY AVE, KENSINGTON, WESTERN AUSTRALIA')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, '08 9219 9000')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, '08 9219 8242')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, doc.site_url)
+    # current_x += 80
 
-    canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Locked Bag 30')
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6,
-                      'Bentley Delivery Centre WA 6983')
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),
+    #                   '17 DICK PERRY AVE, KENSINGTON, WESTERN AUSTRALIA')
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, '08 9219 9000')
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, '08 9219 8242')
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, doc.site_url)
+
+    # canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Locked Bag 30')
+    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6,
+    #                   'Bentley Delivery Centre WA 6983')
 
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
-    current_y -= 36
-    current_x += 200
+    #print current_x, current_y
+
+    #current_y -= 36
+    current_y -= 2
+    current_x += 10
 
     if draw_page_number:
         canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), 'PAGE')
