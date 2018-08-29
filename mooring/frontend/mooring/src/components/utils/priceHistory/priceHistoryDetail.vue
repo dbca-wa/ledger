@@ -160,12 +160,13 @@ module.exports = {
                     }
                 });
             }
-            else{
+            else {
                 delete vm.priceHistory.rate;
-                vm.priceHistory.adult = '';
-                vm.priceHistory.concession = '';
-                vm.priceHistory.child = '';
-                vm.priceHistory.infant = '';
+                vm.priceHistory.mooring = '0.00';
+                vm.priceHistory.adult = '0.00';
+                vm.priceHistory.concession = '0.00';
+                vm.priceHistory.child = '0.00';
+                vm.priceHistory.infant = '0.00';
             }
         }
     },

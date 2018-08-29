@@ -153,11 +153,11 @@ export default {
                     }
 
                 }, {
-                    data: 'adult'
-                }, {
-                    data: 'concession'
-                }, {
-                    data: 'child'
+                    data: 'mooring'
+//                }, {
+//                    data: 'concession'
+//                }, {
+//                    data: 'child'
                 }, {
                     data: 'details',
                     mRender: function(data, type, full) {

@@ -68,7 +68,8 @@ export default {
         dt_headers:{
             type:Array,
             default:function () {
-                return ['Period Start', 'Period End', 'Adult Price', 'Concession Price', 'Child Price', 'Comment', 'Action'];
+//                return ['Period Start', 'Period End', 'Adult Price', 'Concession Price', 'Child Price', 'Comment', 'Action'];
+                return ['Period Start', 'Period End', 'Mooring Price', 'Comment', 'Action'];
             }
         }
     },
@@ -119,11 +120,11 @@ export default {
         getTitle: function() {
             if (this.price.id || this.price.original){
                 return 'Update Price History';
-            }else{
+            } else {
                 return 'Add Price History';
             }
         },
-        showHistory: function(){
+        showHistory: function() {
             this.$refs.historyModal.title = this.getTitle();
             this.$refs.historyModal.isOpen = true;
         },

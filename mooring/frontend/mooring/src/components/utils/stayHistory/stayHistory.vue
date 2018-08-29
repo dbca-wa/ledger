@@ -1,6 +1,6 @@
 <template id="stayHistory">
 <div class="row">
-    <StayHistoryDetail :stay="stay" :campground="campground" ref="addMaxStayModal" @addCgStayHistory="addStayHistory()" @updateStayHistory="updateStayHistory()"></StayHistoryDetail>
+    <StayHistoryDetail :stay="stay" :mooringarea="mooringarea" ref="addMaxStayModal" @addCgStayHistory="addStayHistory()" @updateStayHistory="updateStayHistory()"></StayHistoryDetail>
     <div class="well">
         <alert ref="retrieveStayAlert" :show.sync="retrieve_stay.error" type="danger" :duration="retrieve_stay.timeout">{{retrieve_stay.errorString}}</alert>
         <div class="col-sm-8">
@@ -50,7 +50,7 @@ export default {
     data: function() {
         let vm = this;
         return {
-            campground: {},
+            mooringarea: {},
             stay: {
                 reason:''
             },
@@ -167,7 +167,7 @@ export default {
             let vm = this;
             var data = this.stay;
             if (method == 'POST'){
-                data.campground = vm.object_id;
+                data.mooringarea = vm.object_id;
             }
             $.ajax({
                 url: url,
