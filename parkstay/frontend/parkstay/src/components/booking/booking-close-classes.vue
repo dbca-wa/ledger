@@ -123,7 +123,7 @@
                                                  <th class="site">Campsite</th>
                                                  <th class="form-group">Status</th>
                                                  <th class="numBook">Site to book
-                                                    <input class="checkbox" type="checkbox" id="selectAll"  v-model="selectAll"> 
+                                                    <input class="checkbox" type="checkbox" id="selectAll"  v-model="selectAll" :disabled="isDisabled"> 
                                                  </th>
                                             </tr>
                                         </thead>
@@ -534,6 +534,18 @@ export default {
 				results = vm.multibook_selected;
             }
             return results;
+        },
+        isDisabled:function(){
+            let vm = this;
+            var stat = [];
+            vm.booking.campsite_classes.forEach(function(el){
+               stat.push(el.status);      
+            }); 
+            return stat.find(function(value, index){
+                if (value == "booked"){
+                    return true;
+                }
+            });          
         }
     },
     filters: {
