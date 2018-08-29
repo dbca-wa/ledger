@@ -192,8 +192,6 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN
-    print "HEADER LOGO" 
-    print DPAW_HEADER_LOGO 
 
     dpaw_header_logo = ImageReader(DPAW_HEADER_LOGO)
     dpaw_header_logo_size = dpaw_header_logo.getSize()
@@ -237,8 +235,6 @@ def _create_invoice(invoice_buffer, invoice, request,mooring_var):
     if  mooring_var["TEMPLATE_GROUP"] == 'rottnest':
         DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring', 'img','logo-rottnest-island-sm.png')
 
-#    print DPAW_HEADER_LOGO
-    print DPAW_HEADER_LOGO
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN + 250, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT -450 , id='EveryPagesFrame',showBoundary=0)
     remit_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
@@ -340,9 +336,6 @@ def _create_invoice(invoice_buffer, invoice, request,mooring_var):
 
 def create_invoice_pdf_bytes(filename, invoice,request,mooring_var):
     invoice_buffer = BytesIO()
-    print "MOORING URL" 
-    print mooring_var
-
     _create_invoice(invoice_buffer, invoice, request,mooring_var)
 
     # Get the value of the BytesIO buffer

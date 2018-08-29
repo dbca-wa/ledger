@@ -169,11 +169,7 @@ export default {
                     }
 
                 }, {
-                    data: 'adult'
-                }, {
-                    data: 'concession'
-                }, {
-                    data: 'child'
+                    data: 'mooring'
                 }, {
                     data: 'details',
                     mRender: function(data, type, full) {
