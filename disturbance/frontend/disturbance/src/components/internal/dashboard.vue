@@ -21,7 +21,8 @@ export default {
         return {
             //proposals_url: api_endpoints.proposals,
             //proposals_url: api_endpoints.proposals_paginated_internal,
-            proposals_url: '/api/list_proposal/?format=datatables',
+            proposals_url: api_endpoints.list_proposals,
+            //proposals_url: '/api/list_proposal/?format=datatables',
         }
     
     },

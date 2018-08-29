@@ -1,6 +1,5 @@
 import traceback
 import os
-import datetime
 import base64
 import geojson
 from six.moves.urllib.parse import urlparse
@@ -21,7 +20,6 @@ from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from rest_framework.pagination import PageNumberPagination
-from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser, Address
@@ -104,6 +102,7 @@ class ProposalFilterBackend(DatatablesFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
         #import ipdb; ipdb.set_trace()
+        #print('0a. time: {}'.format(datetime.now().ctime()))
         total_count = queryset.count()
 
         regions = request.GET.get('regions')
@@ -118,10 +117,14 @@ class ProposalFilterBackend(DatatablesFilterBackend):
         if lodged_to:
             queryset = queryset.filter(lodgement_date__lte=lodged_to)
 
+        #print('0b. time: {}'.format(datetime.now().ctime()))
         queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
         setattr(view, '_datatables_total_count', total_count)
+        #print('0c. time: {}'.format(datetime.now().ctime()))
         return queryset
 
+#from django.utils.decorators import method_decorator
+#from django.views.decorators.cache import cache_page
 class ListProposalViewSet(viewsets.ModelViewSet):
     #import ipdb; ipdb.set_trace()
     #queryset = Proposal.objects.all()
@@ -130,14 +133,17 @@ class ListProposalViewSet(viewsets.ModelViewSet):
     pagination_class = DatatablesPageNumberPagination
     queryset = Proposal.objects.none()
     serializer_class = ListProposalSerializer
-    page_size = 22
+    page_size = 10
+
+#    @method_decorator(cache_page(60))
+#    def dispatch(self, *args, **kwargs):
+#        return super(ListProposalViewSet, self).dispatch(*args, **kwargs)
 
     def get_queryset(self):
         user = self.request.user
         #import ipdb; ipdb.set_trace()
         if is_internal(self.request): #user.is_authenticated():
             return Proposal.objects.all()
-            #return Proposal.objects.filter(region__isnull=False)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.disturbance_organisations.all()]
             queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
@@ -147,10 +153,9 @@ class ListProposalViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         response = super(ListProposalViewSet, self).list(request, args, kwargs)
+
         # Add extra data to response.data
-        response.data['regions'] = self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
-        response.data['20_mi_count'] = 30
-        response.data['30_mi_count'] = 45
+        #response.data['regions'] = self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
         return response
 
     @list_route(methods=['GET',])
@@ -158,17 +163,17 @@ class ListProposalViewSet(viewsets.ModelViewSet):
         region_qs =  self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
         district_qs =  self.get_queryset().filter(district__isnull=False).values_list('district__name', flat=True).distinct()
         activity_qs =  self.get_queryset().filter(activity__isnull=False).values_list('activity', flat=True).distinct()
+        submitter_qs = self.get_queryset().filter(submitter__isnull=False).distinct('submitter__email').values_list('submitter__first_name','submitter__last_name','submitter__email')
+        submitters = [dict(email=i[2], search_term='{} {} ({})'.format(i[0], i[1], i[2])) for i in submitter_qs]
         data = dict(
             regions=region_qs,
             districts=district_qs,
             activities=activity_qs,
+            submitters=submitters,
             processing_status_choices = [i[1] for i in Proposal.PROCESSING_STATUS_CHOICES],
             customer_status_choices = [i[1] for i in Proposal.CUSTOMER_STATUS_CHOICES],
         )
         return Response(data)
-        #serializer = ListProposalSerializer(qs,context={'request':request}, many=True)
-        #return Response(serializer.data)
-
 
 #    def filter_queryset(self, request, queryset, view):
 #        #queryset = super(DatatablesFilterBackend, self).filter_queryset(request, queryset, view)

@@ -72,8 +72,11 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
-                            <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
+                            <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
 							<!--
+                            <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
+                            <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
+
                             <datatable v-if="level=='external'" ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
                             <datatable v-else ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
 							-->
@@ -114,11 +117,13 @@ export default {
     data() {
         let vm = this;
         return {
+            /*
             regions: [],
             districts: [],
             activities: [],
             processing_status_choices: [],
             customer_status_choices: [],
+            */
 
             pBody: 'pBody' + vm._uid,
             datatable_id: 'proposal-datatable-'+vm._uid,
@@ -144,7 +149,7 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Region__1","Activity","Title","Submitter","Proponent","Status","Lodged on","Action",
+                "Number","Region__1","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
                 //"LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
             ],
 
@@ -159,7 +164,7 @@ export default {
                 ajax: {
                     "url": vm.url,
                     "dataSrc": 'data',
-                    "regions": 'regions',
+                    //"regions": 'regions',
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
@@ -223,6 +228,7 @@ export default {
                         searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
                     {
+                        data: "",
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
@@ -246,27 +252,30 @@ export default {
                                 }
                             }
                             return links;
-                        }
+                        },
+                        name: '',
+                        searchable: false,
+                        orderable: false
                     }
 
                 ],
                 processing: true,
+                /*
                 initComplete: function () {
                     // Grab Regions from the data in the table
-                    //var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
-                    //regionColumn.data().unique().sort().each( function ( d, j ) {
-                        //let regionTitles = [];
-                        //$.each(d,(index,a) => {
-                        //    // Split region string to array
-                        //    if (a != null){
-                        //        $.each(a.split(','),(i,r) => {
-                        //            r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                        //        });
-                        //    }
-                        //})
-                        //vm.proposal_regions = regionTitles;
-                    //});
-                    vm.proposal_regions = vm.regions;
+                    var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
+                    regionColumn.data().unique().sort().each( function ( d, j ) {
+                        let regionTitles = [];
+                        $.each(d,(index,a) => {
+                            // Split region string to array
+                            if (a != null){
+                                $.each(a.split(','),(i,r) => {
+                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
+                                });
+                            }
+                        })
+                        vm.proposal_regions = regionTitles;
+                    });
                     // Grab Activity from the data in the table
                     var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
                     titleColumn.data().unique().sort().each( function ( d, j ) {
@@ -300,6 +309,7 @@ export default {
                         vm.proposal_status = statusTitles;
                     });
                 }
+                */
             },
             proposal_headers:[
                 "Number","Region__2","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
@@ -385,6 +395,7 @@ export default {
                         name: "assigned_officer__first_name, assigned_officer__last_name",
                     },
                     {
+                        data: '',
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
@@ -407,12 +418,14 @@ export default {
                             }
                             return links;
                         },
+                        name: '',
                         searchable: false,
                         orderable: false
                     }
 
                 ],
                 processing: true,
+                /*
                 initComplete: function () {
                     // Grab Regions from the data in the table
                     var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
@@ -464,6 +477,7 @@ export default {
                     // Fix the table rendering columns
                     vm.$refs.proposal_datatable.vmDataTable.columns.adjust().responsive.recalc();
                 }
+                */
             }
         }
     },
@@ -521,23 +535,18 @@ export default {
     methods:{
         fetchFilterLists: function(){
             let vm = this;
-            vm.regions = [];
-            vm.districts = [];
-            vm.activities = [];
-            vm.processing_status_choices = [];
-            vm.customer_status_choices = [];
 
-            vm.$http.get('/api/list_proposal/filter_list/').then((response) => {
-                console.log(response.body);
-                vm.regions = response.body.regions;
-                vm.districts = response.body.districts;
-                vm.activities = response.body.activities;
-                vm.processing_status_choices = response.body.processing_status_choices;
-                vm.customer_status_choices = response.body.customer_status_choices;
+            //vm.$http.get('/api/list_proposal/filter_list/').then((response) => {
+            vm.$http.get(api_endpoints.filter_list).then((response) => {
+                vm.proposal_regions = response.body.regions;
+                vm.proposal_districts = response.body.districts;
+                vm.proposal_activityTitles = response.body.activities;
+                vm.proposal_submitters = response.body.submitters;
+                vm.proposal_status = vm.level == 'internal' ? response.body.processing_status_choices: response.body.customer_status_choices;
             },(error) => {
                 console.log(error);
             })
-            console.log(vm.regions);
+            //console.log(vm.regions);
         },
 
         discardProposal:function (proposal_id) {
