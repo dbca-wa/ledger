@@ -661,7 +661,6 @@ def update_booking(request,old_booking,booking_details):
 
             # Add history
             new_history = old_booking._generate_history(user=request.user)
-#            print old_booking._generate_history()
             
             if request.data.get('entryFees').get('regos'):
                 new_regos = request.data['entryFees'].pop('regos')

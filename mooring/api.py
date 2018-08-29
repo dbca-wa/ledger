@@ -1368,7 +1368,6 @@ def create_booking(request, *args, **kwargs):
 @require_http_methods(['GET'])
 def get_confirmation(request, *args, **kwargs):
     # fetch booking for ID
-    print "get_confirmation"
     booking_id = kwargs.get('booking_id', None)
     if (booking_id is None):
         return HttpResponse('Booking ID not specified', status=400)
@@ -1407,8 +1406,6 @@ class MarinaViewSet(viewsets.ModelViewSet):
         if data is None:
             queryset = self.get_queryset()
             serializer = self.get_serializer(queryset, many=True)
-            #print "SERIAL"
-            #print serializer
             data = serializer.data
             cache.set('parks',data,3600)
         return Response(data)
@@ -1749,8 +1746,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             for bk in data:
                 cg = None
                 booking = booking_map[bk['id']]
-                print "BOOKING STATUS"
-                print booking.refund_status
                 cg = booking.mooringarea
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
