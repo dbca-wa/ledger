@@ -283,7 +283,8 @@ import 'foundation-sites';
 import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
-
+import swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.css';
 
 var nowTemp = new Date();
 var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
@@ -406,6 +407,22 @@ export default {
         },
         submitBooking: function (site) {
             var vm = this;
+            if (vm.vesselSize > 0 ) { 
+            } else {
+                swal({
+                  title: 'Missing Vessel Size',
+                  text: "Please enter vessel size:",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'OK',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                })
+                return;
+            }
+	 
+             
+
             var submitData = {
                 arrival: vm.arrivalDateString,
                 departure: vm.departureDateString,
