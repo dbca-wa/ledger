@@ -72,8 +72,11 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
+                            <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
+							<!--
                             <datatable v-if="level=='external'" ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
                             <datatable v-else ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
+							-->
                         </div>
                     </div>
                 </div>
@@ -106,11 +109,17 @@ export default {
         url:{
             type: String,
             required: true
-        }
+        },
     },
     data() {
         let vm = this;
         return {
+            regions: [],
+            districts: [],
+            activities: [],
+            processing_status_choices: [],
+            customer_status_choices: [],
+
             pBody: 'pBody' + vm._uid,
             datatable_id: 'proposal-datatable-'+vm._uid,
             //Profile to check if user has access to process Proposal
@@ -136,7 +145,7 @@ export default {
             proposal_status: [],
             proposal_ex_headers:[
                 "Number","Region__1","Activity","Title","Submitter","Proponent","Status","Lodged on","Action",
-                "LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
+                //"LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
             ],
 
             proposal_ex_options:{
@@ -150,9 +159,13 @@ export default {
                 ajax: {
                     "url": vm.url,
                     "dataSrc": 'data',
-			        "data": function ( d ) {
-                        //d.data = "data";
-                        d.regions = "mytest";
+                    "regions": 'regions',
+
+                    // adding extra GET params for Custom filtering
+                    "data": function ( d ) {
+                        d.regions = vm.filterProposalRegion.join();
+                        d.lodged_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.lodged_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
 
                 },
@@ -166,18 +179,14 @@ export default {
                             return full.lodgement_number;
                         }
                     },
-                    {data: 'region', myname: 'region, region.name, region__name', searchable:true, orderable:true},
-                    /*
                     {
                         data: "region",
                         'render': function (value) {
                             return helpers.dtPopover(value);
                         },
                         'createdCell': helpers.dtPopoverCellFn,
-                        searchable: true,
-                        'name': "region.name"
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
-                    */
                     {data: "activity"},
                     {
                         data: "title",
@@ -193,9 +202,13 @@ export default {
                                 return `${data.first_name} ${data.last_name}`;
                             }
                             return ''
-                        }
+                        },
+                        name: "submitter__email",
                     },
-                    {data: "applicant"},
+                    {
+                        data: "applicant",
+                        name: "applicant__organisation__name",
+                    },
                     {
                         data: "customer_status",
                         mRender:function(data,type,full){
@@ -206,7 +219,8 @@ export default {
                         data: "lodgement_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
                     {
                         mRender:function (data,type,full) {
@@ -239,19 +253,20 @@ export default {
                 processing: true,
                 initComplete: function () {
                     // Grab Regions from the data in the table
-                    var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
-                    regionColumn.data().unique().sort().each( function ( d, j ) {
-                        let regionTitles = [];
-                        $.each(d,(index,a) => {
-                            // Split region string to array
-                            if (a != null){
-                                $.each(a.split(','),(i,r) => {
-                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                                });
-                            }
-                        })
-                        vm.proposal_regions = regionTitles;
-                    });
+                    //var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
+                    //regionColumn.data().unique().sort().each( function ( d, j ) {
+                        //let regionTitles = [];
+                        //$.each(d,(index,a) => {
+                        //    // Split region string to array
+                        //    if (a != null){
+                        //        $.each(a.split(','),(i,r) => {
+                        //            r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
+                        //        });
+                        //    }
+                        //})
+                        //vm.proposal_regions = regionTitles;
+                    //});
+                    vm.proposal_regions = vm.regions;
                     // Grab Activity from the data in the table
                     var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
                     titleColumn.data().unique().sort().each( function ( d, j ) {
@@ -344,7 +359,6 @@ export default {
                             }
                             return ''
                         },
-                        //name: "submitter__first_name, submitter__last_name",
                         name: "submitter__email",
                     },
                     {
@@ -505,6 +519,27 @@ export default {
         
     },
     methods:{
+        fetchFilterLists: function(){
+            let vm = this;
+            vm.regions = [];
+            vm.districts = [];
+            vm.activities = [];
+            vm.processing_status_choices = [];
+            vm.customer_status_choices = [];
+
+            vm.$http.get('/api/list_proposal/filter_list/').then((response) => {
+                console.log(response.body);
+                vm.regions = response.body.regions;
+                vm.districts = response.body.districts;
+                vm.activities = response.body.activities;
+                vm.processing_status_choices = response.body.processing_status_choices;
+                vm.customer_status_choices = response.body.customer_status_choices;
+            },(error) => {
+                console.log(error);
+            })
+            console.log(vm.regions);
+        },
+
         discardProposal:function (proposal_id) {
             let vm = this;
             swal({
@@ -687,8 +722,9 @@ export default {
 
 
     mounted: function(){
+        this.fetchFilterLists();
         this.fetchProfile();
-        let vm = this;        
+        let vm = this;
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {

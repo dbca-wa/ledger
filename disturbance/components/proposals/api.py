@@ -145,6 +145,31 @@ class ListProposalViewSet(viewsets.ModelViewSet):
             return queryset
         return Proposal.objects.none()
 
+    def list(self, request, *args, **kwargs):
+        response = super(ListProposalViewSet, self).list(request, args, kwargs)
+        # Add extra data to response.data
+        response.data['regions'] = self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
+        response.data['20_mi_count'] = 30
+        response.data['30_mi_count'] = 45
+        return response
+
+    @list_route(methods=['GET',])
+    def filter_list(self, request, *args, **kwargs):
+        region_qs =  self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
+        district_qs =  self.get_queryset().filter(district__isnull=False).values_list('district__name', flat=True).distinct()
+        activity_qs =  self.get_queryset().filter(activity__isnull=False).values_list('activity', flat=True).distinct()
+        data = dict(
+            regions=region_qs,
+            districts=district_qs,
+            activities=activity_qs,
+            processing_status_choices = [i[1] for i in Proposal.PROCESSING_STATUS_CHOICES],
+            customer_status_choices = [i[1] for i in Proposal.CUSTOMER_STATUS_CHOICES],
+        )
+        return Response(data)
+        #serializer = ListProposalSerializer(qs,context={'request':request}, many=True)
+        #return Response(serializer.data)
+
+
 #    def filter_queryset(self, request, queryset, view):
 #        #queryset = super(DatatablesFilterBackend, self).filter_queryset(request, queryset, view)
 #        import ipdb; ipdb.set_trace()

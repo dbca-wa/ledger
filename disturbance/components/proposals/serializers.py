@@ -228,6 +228,7 @@ class ListProposalSerializer(BaseProposalSerializer):
                 return True
         return False
 
+
 class ProposalSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
     processing_status = serializers.SerializerMethodField(read_only=True)
