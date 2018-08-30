@@ -773,7 +773,9 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
+#                rate = Rate.objects.get_or_create(mooring=serializer.validated_data['mooring'],adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
+#                rate = Rate.objects.get_or_create(mooring=serializer.validated_data['mooring'],adult='0.00',concession='0.00',child='0.00',infant='0.00')[0]
+                rate = Rate.objects.get_or_create(mooring=serializer.validated_data['mooring'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 data = {
@@ -815,7 +817,8 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 except Rate.DoesNotExist as e :
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
-                rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
+                #rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
+                rate = Rate.objects.get_or_create(mooring=serializer.validated_data['mooring'])[0]
             if rate:
                 serializer.validated_data['rate']= rate
                 new_data = {
@@ -1091,7 +1094,6 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                 for date, info in dates.items()
             } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
         }
-
         # fetch availability map
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
         # create our result object, which will be returned as JSON
@@ -1477,7 +1479,6 @@ def get_admissions_confirmation(request, *args, **kwargs):
 @require_http_methods(['GET'])
 def get_confirmation(request, *args, **kwargs):
     # fetch booking for ID
-    print "get_confirmation"
     booking_id = kwargs.get('booking_id', None)
     if (booking_id is None):
         return HttpResponse('Booking ID not specified', status=400)
@@ -1516,8 +1517,6 @@ class MarinaViewSet(viewsets.ModelViewSet):
         if data is None:
             queryset = self.get_queryset()
             serializer = self.get_serializer(queryset, many=True)
-            #print "SERIAL"
-            #print serializer
             data = serializer.data
             cache.set('parks',data,3600)
         return Response(data)

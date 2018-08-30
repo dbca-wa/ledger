@@ -14,10 +14,6 @@ from django.conf import settings
 
 from mooring.models import Booking, BookingVehicleRego, AdmissionsBooking
 
-
-#print "TEMPLATE_GROUP"
-#print settings.TEMPLATE_GROUP
-
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring','img','mooring_header.png')
 
 LICENCE_HEADER_IMAGE_WIDTH = 840

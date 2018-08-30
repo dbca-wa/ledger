@@ -95,7 +95,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     return booking
 
 
-def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, cost_total=0, override_price=None, override_reason=None, override_reason_info=None, overridden_by=None, customer=None, updating_booking=False, override_checks=False):
+def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, cost_total=0, override_price=None, override_reason=None, override_reason_info=None, send_invoice=False, overridden_by=None, customer=None, updating_booking=False, override_checks=False):
     """Create a new temporary booking in the system for a set of specific campsites."""
 
     # the CampsiteBooking table runs the risk of a race condition,
@@ -106,17 +106,21 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
         # get availability for campsite, error out if booked/closed
         availability = get_campsite_availability(campsite_qs, start_date, end_date)
         for site_id, dates in availability.items():
-            if updating_booking:
-                if not all([v[0] in ['open','tooearly'] for k, v in dates.items()]):
-                    raise ValidationError('Campsite(s) unavailable for specified time period.')
+            if not override_checks:
+                if updating_booking:
+                    if not all([v[0] in ['open','tooearly'] for k, v in dates.items()]):
+                        raise ValidationError('Campsite(s) unavailable for specified time period.')
+                else:
+                    if not all([v[0] == 'open' for k, v in dates.items()]):
+                        raise ValidationError('Campsite(s) unavailable for specified time period.')
             else:
-                if not all([v[0] == 'open' for k, v in dates.items()]):
+                if not all([v[0] in ['open','tooearly','closed'] for k, v in dates.items()]):
                     raise ValidationError('Campsite(s) unavailable for specified time period.')
-
+                
         if not override_checks:
             # Prevent booking if max people passed
             total_people = num_adult + num_concession + num_child + num_infant
-            min_people = sum([cs.min_people for cs in campsite_qs])
+            min_people = sum([cs.min_people for cs in campsite_qs]) 
             max_people = sum([cs.max_people for cs in campsite_qs])
 
             if total_people > max_people:
@@ -140,6 +144,7 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
                         override_price = Decimal(override_price) if (override_price is not None) else None,
                         override_reason = override_reason,
                         override_reason_info = override_reason_info,
+                        send_invoice = send_invoice,
                         overridden_by = overridden_by,
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
                         campground=campsite_qs[0].campground,
@@ -213,9 +218,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     # prefill all slots as 'open'
     duration = (end_date-start_date).days
     results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
-    # strike out existing bookings
-    for b in bookings_qs:
-        results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
 
     # generate a campground-to-campsite-list map
     campground_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.campground.pk == cg[0]] for cg in campsites_qs.distinct('campground').values_list('campground')}
@@ -263,6 +265,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                 if start+timedelta(days=i) in results[closure.campsite.pk]:
                     results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
                 
+    # strike out existing bookings
+    for b in bookings_qs:
+        results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
 
     # strike out days before today
     today = date.today()
@@ -354,7 +359,7 @@ def get_visit_rates(campsites_qs, start_date, end_date):
 
     return results
 
-def get_available_campsitetypes(campground_id,start_date,end_date,_list=True):
+def get_available_campsitetypes(campground_id,start_date,end_date,_list=True):   
     try:
         cg = Campground.objects.get(id=campground_id)
 
@@ -370,16 +375,16 @@ def get_available_campsitetypes(campground_id,start_date,end_date,_list=True):
                         )
 
             if sites_qs.exists():
-
-                # get availability for sites, filter out the non-clear runs
+                # get availability for sites, filter out the non-clear runs               
                 availability = get_campsite_availability(sites_qs, start_date, end_date)
-                excluded_site_ids = set()
+                sites = {}
                 for site_id, dates in availability.items():
-                    if not all([v[0] == 'open' for k, v in dates.items()]):
-                        excluded_site_ids.add(site_id)
-
-                # create a list of campsites without bookings for that period
-                sites = [x for x in sites_qs if x.pk not in excluded_site_ids]
+                    if any([v[0] == 'booked' for k, v in dates.items()]):
+                        sites[site_id] = 'booked'
+                    elif any([v[0] == 'closed' for k, v in dates.items()]):
+                        sites[site_id] = 'closed'
+                    else:
+                        sites[site_id] = 'open' 
 
                 if sites:
                     if not _list:
@@ -399,11 +404,16 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
     campsites = get_campsite_availability(campsite_qs, start_date, end_date)
     available = []
     for camp in campsites:
-        av = [item for sublist in campsites[camp].values() for item in sublist]
-        if ('booked' not in av):
-            if ('closed' not in av):
-                available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
-                available.sort(key=lambda x: x['name'])
+        avail_list = [item for sublist in campsites[camp].values() for item in sublist]
+        av = 'open'
+        if 'closed' in avail_list:
+            av = 'closed'
+            if 'booked' in avail_list:
+                av = 'booked'
+        elif 'booked' in avail_list:
+            av = 'booked'
+        available.append(CampsiteSerialiser(Campsite.objects.get(id = camp),context={'request':request, 'status': av}).data)
+        available.sort(key=lambda x: x['name'])
     return available
 
 def get_available_campsites_list_booking(campsite_qs,request, start_date, end_date,booking):
@@ -415,10 +425,18 @@ def get_available_campsites_list_booking(campsite_qs,request, start_date, end_da
     campsites = get_campsite_availability(campsite_qs, start_date, end_date)
     available = []
     for camp in campsites:
-        av = [item for sublist in campsites[camp].values() for item in sublist]
-        if ('booked' not in av or camp in booking.campsite_id_list):
-            if ('closed' not in av):
-                available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request}).data[0])
+        # av = [item for sublist in campsites[camp].values() for item in sublist]
+        # if ('booked' not in av or camp in booking.campsite_id_list):
+        #     if ('closed' not in av):
+        #         available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request, 'status':None}).data[0])
+
+        avail_list = [item for sublist in campsites[camp].values() for item in sublist]
+        av = 'open'
+        if 'closed' in avail_list:
+            av = 'closed'
+        elif 'booked' in avail_list:
+            av = 'booked'
+        available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request, 'status': av}).data[0])
     return available
 
 def get_campsite_current_rate(request,campsite_id,start_date,end_date):
@@ -462,7 +480,7 @@ def get_campsites_current_rate(request, campsites, start_date, end_date):
                 res.append({
                     "date" : single_date.strftime("%Y-%m-%d") ,
                     "rate" : rate,
-                    "campsites": campsites #.values_list('id', flat=True)
+                    "campsites": campsites
                 })
                 
     return res
@@ -693,7 +711,7 @@ def update_booking(request,old_booking,booking_details):
     same_campsites = False
     same_campground = False
     same_details = False
-    same_vehicles = True
+    same_vehicles = True  
     with transaction.atomic():
         try:
             set_session_booking(request.session, old_booking)
@@ -834,6 +852,7 @@ def create_or_update_booking(request,booking_details,updating=False,override_che
             override_price=booking_details['override_price'],
             override_reason=booking_details['override_reason'],
             override_reason_info=booking_details['override_reason_info'],
+            send_invoice=booking_details['send_invoice'],
             overridden_by=booking_details['overridden_by'],
             customer=booking_details['customer'],
             override_checks=override_checks
@@ -936,7 +955,8 @@ def internal_booking(request,booking_details,internal=True,updating=False):
 
             internal_create_booking_invoice(booking, invoice)
             delete_session_booking(request.session)
-            send_booking_invoice(booking)
+            if booking.send_invoice:
+                send_booking_invoice(booking)
             return booking
 
     except:

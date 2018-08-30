@@ -179,6 +179,12 @@ class Remittance(Flowable):
             self.__payment_line()
         self.__footer_line()
 
+#def _set_template_group(mooring_var):
+
+
+#def get_template_group(mooring_var):
+
+
 
 def _create_header(canvas, doc, draw_page_number=True):
     canvas.saveState()
@@ -224,6 +230,11 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.restoreState()
     
 def _create_invoice(invoice_buffer, invoice, request,mooring_var):
+
+    global DPAW_HEADER_LOGO 
+    if  mooring_var["TEMPLATE_GROUP"] == 'rottnest':
+        DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring', 'img','logo-rottnest-island-sm.png')
+
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN + 250, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT -450 , id='EveryPagesFrame',showBoundary=0)
     remit_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
@@ -325,7 +336,6 @@ def _create_invoice(invoice_buffer, invoice, request,mooring_var):
 
 def create_invoice_pdf_bytes(filename, invoice,request,mooring_var):
     invoice_buffer = BytesIO()
-
     _create_invoice(invoice_buffer, invoice, request,mooring_var)
 
     # Get the value of the BytesIO buffer
