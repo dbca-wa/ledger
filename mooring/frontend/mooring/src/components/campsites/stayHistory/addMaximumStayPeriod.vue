@@ -127,7 +127,7 @@ module.exports = {
             this.stay.reason = id;
         },
         addMaxStay: function() {
-            if ($(this.form).valid()){
+            if ($(this.form).valid()) {
                 if (!this.stay.id){
                     this.$emit('addStayHistory');
                 }else {

@@ -1974,8 +1974,10 @@ export default {
                    var vessel_size = $('#vesselSize').val();
                    if (vessel_size > 0 ) {
                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                       $("#mapPopupBook").attr('target','_blank');
                    } else {
-		       $("#mapPopupBook").attr('href','javascript:void();');
+		       $("#mapPopupBook").attr('href','javascript:void(0);');
+                       $("#mapPopupBook").attr('target','');
 		   }
                 } else {
 		   $("#vessel_size_popup").html(properties.props.vessel_size_limit);
@@ -2002,7 +2004,7 @@ export default {
                         if (vessel_size > 0 ) {
                                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
                         } else {
-				 $("#mapPopupBook").attr('href','javascript:void();');
+				 $("#mapPopupBook").attr('href','javascript:void;');
 			}
                     } else {
                         $('#mapPopupBook').hide();

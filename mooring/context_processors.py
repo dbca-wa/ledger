@@ -1,11 +1,8 @@
 from django.conf import settings
 
 def mooring_url(request):
-#    print "TEST"
-#    print request.META['HTTP_HOST'] 
     web_url = request.META['HTTP_HOST']
     if web_url in settings.ROTTNEST_ISLAND_URL:
-#@['mooring-rottnest.austwa.com']:
        template_group = 'rottnest'
     else:
        template_group = 'pvs'
