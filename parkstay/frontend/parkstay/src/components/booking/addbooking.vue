@@ -10,7 +10,7 @@
                                     <h3 class="text-primary pull-left">Book a Campsite at {{campground.name}}</h3>
                                 </div>
                                 <div class="col-md-6" v-if="(campground.site_type == 1) || (campground.site_type == 2)"> 
-                                    <router-link style="margin-top:20px;" class="btn btn-primary table_btn pull-right" :to="{name:'booking-close-classes'}">Booking close campsite</router-link>
+                                    <router-link style="margin-top:20px;" class="btn btn-primary table_btn pull-right" :to="{name:'booking-close-classes'}">Book closed campsite(s)</router-link>
                                 </div> 
                             </div>
                             <div class="col-md-12">
@@ -87,7 +87,7 @@
                                                 <th class="form-group">Campsite</th>
                                                 <th class="form-group">Status</th>
                                                 <th >Sites to book
-                                                    <input class="checkbox" type="checkbox" id="selectAll"  v-model="selectAll"> 
+                                                    <input class="checkbox" type="checkbox" id="selectAll"  v-model="selectAll" :disabled="isDisabled"> 
                                                 </th>
                                             </tr>
                                         </thead>
@@ -544,6 +544,18 @@ export default {
                 });
             }
             return results;
+        },
+        isDisabled:function(){
+            let vm = this;
+            var stat = [];
+            vm.booking.campsites.forEach(function(el){
+               stat.push(el.status);        
+            }); 
+            return stat.find(function(value, index){
+                if (value == "booked"){
+                    return true;
+                }
+            });          
         }
     },
     filters: {
