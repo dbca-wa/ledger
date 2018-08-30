@@ -135,6 +135,7 @@ export default {
         
     },
     setdata: function(readonly){
+      console.log('from setdata')
       this.application_readonly = readonly;
     },
     splitText: function(aText){
@@ -166,6 +167,7 @@ export default {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
+                    
                     if (vm.requiresCheckout) {
                         vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
                             window.location.href = "/ledger/checkout/checkout/payment-details/";
@@ -192,39 +194,49 @@ export default {
             }
         },(error) => {
         });
-    }
+    },
+    fetchAmendmentRequest: function(){
+      let vm= this
+      console.log("before fetch")
+      Vue.http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/amendment_request')).then((res) => {
+                // console.log("AMENDMENT REQUEST")
+                  console.log("inside fetch amendment request")
+                  vm.setAmendmentData(res.body);
+              },err=>{
+                      
+                  });
+
+    },
+
   },
+  
   mounted: function() {
     let vm = this;
     vm.form = document.forms.new_application;
 
   },
+
   beforeRouteEnter: function(to, from, next) {
     if (to.params.application_id) {
+      let vm= this;
+         
+
+         console.log("before fetch application")
       Vue.http.get(`/api/application/${to.params.application_id}.json`).then(res => {
           next(vm => {
             vm.loading.push('fetching application')
-            // console.log("FROM APPLICATION FETCHING")
             vm.application = res.body;
             vm.loading.splice('fetching application', 1);
-            // console.log("APPLICATION READONLY")
             vm.setdata(vm.application.readonly);
 
-            Vue.http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/amendment_request')).then((res) => {
-              // console.log("AMENDMENT REQUEST")
-                console.log(res.body)
-                vm.setAmendmentData(res.body);
-            },
-            err => {
-                console.log(err);
-            });
-
+            vm.fetchAmendmentRequest();
             vm.application_customer_status_onload = vm.application.customer_status;
           });
         },
         err => {
           console.log(err);
         });
+      
     }
     else {
       Vue.http.post('/api/application.json').then(res => {
