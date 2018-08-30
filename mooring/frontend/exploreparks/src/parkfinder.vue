@@ -178,10 +178,9 @@
 [v-cloak] {
     display: none;
 }
-
 @font-face {
     font-family: "DPaWSymbols";
-    src: url("assets/boating.woff") format("woff");
+    src: url('/static/exploreparks/fonts/boating.woff') format("woff"); 
 }
 
 .symb {
@@ -524,6 +523,7 @@ export default {
             sitesInPersonIcon: require('./assets/pin_offline.svg'),
             sitesAltIcon: require('./assets/pin_alt.svg'),
             locationIcon: require('./assets/location.svg'),
+            boatingFont: require('./assets/fonts/boating.woff'),
             paginate: ['filterResults'],
             selectedFeature: null,
             current_map_scale: 1950001,
