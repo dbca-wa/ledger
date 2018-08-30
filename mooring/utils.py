@@ -1086,6 +1086,22 @@ def set_session_booking(session, booking):
     session['ps_booking'] = booking.id
     session.modified = True
 
+def get_session_admissions_booking(session):
+    if 'ad_booking' in session:
+        booking_id = session['ad_booking']
+    else:
+        raise Exception('Admissions booking not in Session')
+
+    try:
+        return AdmissionsBooking.objects.get(id=booking_id)
+    except AdmissionsBooking.DoesNotExist:
+        raise Exception('Admissions booking not found for booking_id {}'.format(booking_id))
+
+
+def delete_session_admissions_booking(session):
+    if 'ad_booking' in session:
+        del session['ad_booking']
+        session.modified = True
 
 def get_session_booking(session):
     if 'ps_booking' in session:

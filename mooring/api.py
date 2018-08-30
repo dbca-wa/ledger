@@ -59,7 +59,8 @@ from mooring.models import (MooringArea,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
                                 MooringAreaGroup,
-                                AdmissionsBooking
+                                AdmissionsBooking,
+                                AdmissionsRate
                                 )
 
 from mooring.serialisers import (  MooringsiteBookingSerialiser,
@@ -111,7 +112,8 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     OracleSerializer,
                                     BookingHistorySerializer,
                                     MooringAreaGroupSerializer,
-                                    AdmissionsBookingSerializer
+                                    AdmissionsBookingSerializer,
+                                    AdmissionsRateSerializer
                                     )
 from mooring.helpers import is_officer, is_customer
 from mooring import reports 
@@ -1305,7 +1307,7 @@ def create_admissions_booking(request, *args, **kwargs):
         noOfChildren = serializer.validated_data['noOfChildren'],
         noOfInfants = serializer.validated_data['noOfInfants'],
         warningReferenceNo = serializer.validated_data['warningReferenceNo'],
-        bookingType = 3
+        booking_type = 3
     )
 
     #Lookup price and set lines.
@@ -1317,7 +1319,7 @@ def create_admissions_booking(request, *args, **kwargs):
     total = sum([decimal.Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
     
     #Lookup customer
-    if request.user.is_anonymous():
+    if request.user.is_anonymous() or request.user.is_staff:
         try:
             customer = EmailUser.objects.get(email=request.POST.get('email'))
         except EmailUser.DoesNotExist:
@@ -1326,7 +1328,6 @@ def create_admissions_booking(request, *args, **kwargs):
                     first_name=request.POST.get('givenName'),
                     last_name=request.POST.get('lastName')
             )
-            Address.objects.create(line1='address', user=customer, postcode='6000', country='Australia')
     else:
         customer = request.user 
     
@@ -1349,12 +1350,7 @@ def create_admissions_booking(request, *args, **kwargs):
     result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice)
     print(result)
     if(result):
-        
         return result
-        # return HttpResponse(geojson.dumps({
-        #     'status': 'success',
-        #     'redirect': '/ledger/checkout/checkout',
-        # }), content_type='application/json')
     else:
         return HttpResponse(geojason.dumps({
             'status': 'failure',
@@ -1451,7 +1447,32 @@ def create_booking(request, *args, **kwargs):
         'pk': booking.pk
     }), content_type='application/json')
 
+@require_http_methods(['GET'])
+def get_admissions_confirmation(request, *args, **kwargs):
+    # fetch booking for ID
+    print "get_confirmation"
+    booking_id = kwargs.get('booking_id', None)
+    if (booking_id is None):
+        return HttpResponse('Booking ID not specified', status=400)
+    
+    try:
+        booking = AdmissionsBooking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return HttpResponse('Booking unavailable', status=403)
 
+    # check permissions
+    if not ((request.user == booking.customer) or is_officer(request.user) or (booking.id == request.session.get('ad_last_booking', None))):
+        return HttpResponse('Booking unavailable', status=403)
+
+    # check payment status
+    if (not is_officer(request.user)) and (not booking.paid):
+        return HttpResponse('Booking unavailable', status=403)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="confirmation-PS{}.pdf"'.format(booking_id)
+
+    pdf.create_admissions_confirmation(response, booking)
+    return response
 
 @require_http_methods(['GET'])
 def get_confirmation(request, *args, **kwargs):
@@ -2425,6 +2446,15 @@ class BulkPricingView(generics.CreateAPIView):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
 
+class AdmissionsRatesView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+
+    def get(self,request,format='json'):
+        rates = AdmissionsRate.objects.all().order_by('-period_start')
+        serializer = AdmissionsRateSerializer(rates, many=True)
+        return HttpResponse(geojson.dumps(serializer.data), content_type='application/json')
+
+
 class BookingRefundsReportView(views.APIView):
     renderer_classes = (JSONRenderer,)
 
@@ -2513,9 +2543,9 @@ class GetProfile(views.APIView):
     def get(self, request, format=None):
         # Check if the user has any address and set to residential address
         user = request.user
-        if not user.residential_address:
-            user.residential_address = user.profile_addresses.first() if user.profile_addresses.all() else None
-            user.save()
+        # if not user.residential_address:
+        #     user.residential_address = user.profile_addresses.first() if user.profile_addresses.all() else None
+        #     user.save()
         serializer  = UserSerializer(request.user)
         return Response(serializer.data)
 

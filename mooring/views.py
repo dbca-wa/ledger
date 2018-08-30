@@ -26,7 +26,8 @@ from mooring.models import (MooringArea,
                                 BookingVehicleRego,
                                 MooringsiteRate,
                                 MarinaEntryRate,
-                                AdmissionsBooking
+                                AdmissionsBooking,
+                                AdmissionsBookingInvoice
                                 )
 from mooring import emails
 from ledger.accounts.models import EmailUser, Address
@@ -322,7 +323,55 @@ class AdmissionsBasketCreated(TemplateView):
         return HttpResponseRedirect(reverse('checkout:index'))
 
 class AdmissionsBookingSuccessView(TemplateView):
-    template_name = 'mooring/booking/success.html'
+    template_name = 'mooring/admissions/admission_success.html'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            booking = utils.get_session_admissions_booking(request.session)
+            invoice_ref = request.GET.get('invoice')
+
+            if booking.booking_type == 3:
+                try:
+                    inv = Invoice.objects.get(reference=invoice_ref)
+                except Invoice.DoesNotExist:
+                    logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
+                    return redirect('admissions')
+
+                if inv.system not in ['0019']:
+                    logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
+                    return redirect('admissions')
+
+                try:
+                    b = BookingInvoice.objects.get(invoice_reference=invoice_ref)
+                    logger.error('{} tried making a booking with an already used invoice with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
+                    return redirect('admissions')
+                except BookingInvoice.DoesNotExist:
+                    logger.info('{} finished temporary booking {}, creating new BookingInvoice with reference {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id, invoice_ref))
+                    # FIXME: replace with server side notify_url callback
+                    book_inv, created = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=invoice_ref)
+
+                    # set booking to be permanent fixture
+                    booking.booking_type = 1  # internet booking
+                    booking.save()
+                    utils.delete_session_admissions_booking(request.session)
+                    request.session['ad_last_booking'] = booking.id
+
+                    # send out the invoice before the confirmation is sent
+                    emails.send_admissions_booking_invoice(booking)
+                    # for fully paid bookings, fire off confirmation email
+                    emails.send_admissions_booking_confirmation(booking,request)
+
+        except Exception as e:
+            print(e)
+            if ('ad_last_booking' in request.session) and AdmissionsBooking.objects.filter(id=request.session['ad_last_booking']).exists():
+                booking = AdmissionsBooking.objects.get(id=request.session['ad_last_booking'])
+            else:
+                return redirect('home')
+        
+        context = {
+            'admissionsBooking': booking
+        }
+        return render(request, self.template_name, context)
 
 class BookingSuccessView(TemplateView):
     template_name = 'mooring/booking/success.html'
@@ -395,6 +444,9 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
 
 class AdmissionFeesView(TemplateView):
     template_name = 'mooring/admissions/admissions_form.html'
+
+class AdmissionsCostView(TemplateView):
+    template_name = 'mooring/admissions/admissions_cost.html'
 
 
 class MarinastayRoutingView(TemplateView):

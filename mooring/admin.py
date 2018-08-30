@@ -128,6 +128,10 @@ class OutstandingBookingRecipient(admin.ModelAdmin):
 class AdmissionsOracleCode(admin.ModelAdmin):
     pass
 
+@admin.register(models.AdmissionsRate)
+class AdmissionsRate(admin.ModelAdmin):
+    pass
+
 @admin.register(models.AdmissionsBooking)
 class AdmissionBooking(admin.ModelAdmin):
     list_display = ('arrivalDate',)

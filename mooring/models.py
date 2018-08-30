@@ -1493,7 +1493,7 @@ class AdmissionsBooking(models.Model):
         (3, 'In-complete booking')
     )
     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
-    bookingType = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
+    booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
     arrivalDate = models.DateField()
     overnightStay = models.BooleanField(default=False)
     vesselRegNo = models.CharField(max_length=200, blank=True )
@@ -1504,9 +1504,59 @@ class AdmissionsBooking(models.Model):
     warningReferenceNo = models.CharField(max_length=200, blank=True)
     totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
 
+    @property
+    def confirmation_number(self):
+        return 'AD{}'.format(self.pk)
+
+    @property
+    def total_admissions(self):
+        return self.noOfAdults + self.noOfConcessions + self.noOfChildren + self.noOfInfants
+
 class AdmissionsOracleCode(models.Model):
     oracle_code = models.CharField(max_length=50, null=True,blank=True)
 
+class AdmissionsBookingInvoice(models.Model):
+    admissions_booking = models.ForeignKey(AdmissionsBooking, related_name='invoices')
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    def __str__(self):
+        return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False
+
+class AdmissionsRate(models.Model):
+    period_start = models.DateField(blank=False, null=False)
+    period_end = models.DateField(blank=True, null=True)
+    adult_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    concession_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    children_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    infant_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    comment = models.CharField(max_length=250, blank=True, null=True)
+
+    # Properties
+    # =================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
+            return True
+        return False
 
 # LISTENERS
 # ======================================

@@ -4,7 +4,7 @@ import datetime
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils import timezone
-from mooring.models import Booking
+from mooring.models import Booking, AdmissionsBooking
 
 CHECKOUT_PATH = re.compile('^/ledger/checkout/checkout')
 
@@ -14,7 +14,7 @@ class BookingTimerMiddleware(object):
             try:
                 booking = AdmissionsBooking.objects.get(pk=request.session['ad_booking'])
             except:
-                # no idea what object is in self.request.session['ps_booking'], ditch it
+                # no idea what object is in self.request.session['ad_booking'], ditch it
                 del request.session['ad_booking']
                 return
             if booking.booking_type != 3:
@@ -47,10 +47,9 @@ class BookingTimerMiddleware(object):
 
         # force a redirect if in the checkout
         if ('ps_booking_internal' not in request.COOKIES) and CHECKOUT_PATH.match(request.path):
-            print("hello")
             if ('ps_booking' not in request.session) and CHECKOUT_PATH.match(request.path) and ('ad_booking' not in request.session):
-                return HttpResponseRedirect(reverse('admissions'))
+                return HttpResponseRedirect(reverse('public_make_booking'))
             else:
                 return
-            return HttpResponseRedirect(reverse('admissions'))
+            return HttpResponseRedirect(reverse('public_make_booking'))
         return

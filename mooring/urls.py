@@ -53,6 +53,8 @@ api_patterns = [
     url(r'^api/create_booking', api.create_booking, name='create_booking'),
     url(r'^api/create_admissions_booking', api.create_admissions_booking, name="create_admissions_booking"),
     url(r'api/get_confirmation/(?P<booking_id>[0-9]+)/$', api.get_confirmation, name='get_confirmation'),
+    url(r'api/get_admissions_confirmation/(?P<booking_id>[0-9]+)/$', api.get_admissions_confirmation, name='get_admissions_confirmation'),
+    url(r'^api/admissions_price_history', api.AdmissionsRatesView.as_view(), name='admissions-price-history'),
     url(r'^api/reports/booking_refunds$', api.BookingRefundsReportView.as_view(),name='booking-refunds-report'),
     url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
     url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
@@ -83,6 +85,7 @@ urlpatterns = [
     url(r'^createdbasket/', views.AdmissionsBasketCreated.as_view(), name='created_basket'),
     url(r'^map/', views.MapView.as_view(), name='map'),
     url(r'^admissions/$', views.AdmissionFeesView.as_view(), name='admissions'),
+    url(r'^admissions-cost/$', views.AdmissionsCostView.as_view(), name='admissions_cost'),
     url(r'mooring/payments/invoice-pdf/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='mooring-invoice-pdf'),
 
 ##    url(r'^static/(?P<path>.*)$', 'django.conf.urls.static'),

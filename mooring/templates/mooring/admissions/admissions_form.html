@@ -1,0 +1,12 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div id="admissionsBooking"></div>
+    <script type="text/javascript">
+        var parkstayUrl = window.location.protocol + '//' + window.location.host;
+    </script>
+    <script src="{% static 'admissions/js/manifest.js' %}"></script>
+    <script src="{% static 'admissions/js/vendor.js' %}"></script>
+    <script src="{% static 'admissions/js/app.js' %}"></script>
+{% endblock %}

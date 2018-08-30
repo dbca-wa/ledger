@@ -1,0 +1,30 @@
+<div class="well">
+    <div class="row"><div class="col-sm-12">
+        <h3 class="text-primary">Rottnest Island on {{ admissionsBooking.arrivalDate }}</h3>
+    </div></div>
+    <div class="row">
+        <div class="col-sm-9">
+            <div class="row">
+            </div>
+            <div class="row" style='display: none'>
+                <div class="col-sm-4">
+                    <b>Number of guests</b>
+                </div>
+                <div class="col-sm-8">
+                    {{ admissionsBooking.noOfAdults}}
+                </div>
+            </div><div class="row">
+                <div class="col-sm-4">
+                    <b>Booking confirmation number</b>
+                </div>
+                <div class="col-sm-8">
+                    {{ admissionsBooking.confirmation_number }}
+                </div>
+            </div><div class="row"><div class="col-sm-12" style="margin-top: 1em">
+                <a href="{% url 'get_admissions_confirmation' admissionsBooking.id %}" class="btn btn-info btn-lg" >Print</a></p>
+                <p style="font-size: 1.5rem; font-weight: bold;">You must bring your printed confirmation with you to the island.</p>
+            </div></div>
+        </div>
+    </div>
+</div>
+

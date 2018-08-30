@@ -32,6 +32,7 @@ from mooring.models import (MooringAreaPriceHistory,
                                 BookingVehicleRego,
                                 BookingHistory,
                                 AdmissionsBooking,
+                                AdmissionsRate
                            )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -722,6 +723,11 @@ class BulkPricingSerializer(serializers.Serializer):
             raise serializers.ValidationError('Details required if reason is other.')
         return obj
 
+class AdmissionsRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdmissionsRate
+        fields = '__all__'
+
 class ReportSerializer(serializers.Serializer):
     start = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
     end = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
@@ -789,6 +795,7 @@ class UserSerializer(serializers.ModelSerializer):
             'residential_address',
             'phone_number',
             'mobile_number',
+            'is_staff',
         )
 
 class PersonalSerializer(serializers.ModelSerializer):

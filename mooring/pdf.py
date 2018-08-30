@@ -12,7 +12,7 @@ from reportlab.lib.colors import HexColor
 from django.core.files import File
 from django.conf import settings
 
-from mooring.models import Booking, BookingVehicleRego
+from mooring.models import Booking, BookingVehicleRego, AdmissionsBooking
 
 
 #print "TEMPLATE_GROUP"
@@ -163,6 +163,35 @@ def create_confirmation(confirmation_buffer, booking):
     if booking.mooringarea.additional_info:        
         table_data.append([Paragraph('Additional confirmation information', styles['BoldLeft']), Paragraph(booking.mooringarea.additional_info, styles['Left'])])
 
+    elements.append(Table(table_data, colWidths=(200, None), style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
+
+    doc.build(elements)
+    return confirmation_buffer
+
+def create_admissions_confirmation(confirmation_buffer, admissionsBooking):
+    every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
+                             PAGE_HEIGHT - 160, id='EveryPagesFrame')
+    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_letter_header_footer)
+
+    doc = BaseDocTemplate(confirmation_buffer, pageTemplates=[every_page_template], pagesize=A4)
+
+    elements = []
+
+    elements.append(Paragraph('ADMISSIONS BOOKING CONFIRMATION', styles['InfoTitleVeryLargeCenter']))
+   
+    table_data = []
+    table_data.append([Paragraph('Date', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.arrivalDate), styles['Left'])])
+    table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} ({})'.format(admissionsBooking.customer.get_full_name(), admissionsBooking.customer.email if admissionsBooking.customer else None), styles['Left'])])
+    table_data.append([Paragraph('Booking confirmation number', styles['BoldLeft']), Paragraph(admissionsBooking.confirmation_number, styles['Left'])])           
+    table_data.append([Paragraph('Total paid for attendees', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.total_admissions), styles['Left'])])
+    if admissionsBooking.noOfAdults > 0:
+        table_data.append([Paragraph('Adults', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfAdults), styles['Left'])])
+    if admissionsBooking.noOfConcessions > 0:
+        table_data.append([Paragraph('Concessions', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfConcessions), styles['Left'])])
+    if admissionsBooking.noOfChildren > 0:
+        table_data.append([Paragraph('Children', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfChildren), styles['Left'])])
+    if admissionsBooking.noOfInfants > 0:
+        table_data.append([Paragraph('Infants', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfInfants), styles['Left'])])
     elements.append(Table(table_data, colWidths=(200, None), style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
 
     doc.build(elements)
