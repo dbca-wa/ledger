@@ -1,5 +1,6 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address,Document
+# from wildlifecompliance.components.applications.utils import amendment_requests
 from wildlifecompliance.components.applications.models import (
                                     ApplicationType,
                                     Application,
@@ -20,6 +21,7 @@ from wildlifecompliance.components.licences.models import WildlifeLicenceActivit
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer 
 from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
 from wildlifecompliance.components.users.serializers import UserAddressSerializer,DocumentSerializer
+
 from rest_framework import serializers
 
 class ApplicationTypeSerializer(serializers.ModelSerializer):
@@ -98,15 +100,14 @@ class AmendmentRequestSerializer(serializers.ModelSerializer):
         return obj.get_reason_display()
 
 class ExternalAmendmentRequestSerializer(serializers.ModelSerializer):
-    reason = serializers.SerializerMethodField()
+    
     licence_activity_type=ActivityTypeserializer(read_only=True)
 
     class Meta:
         model = AmendmentRequest
         fields = '__all__'
 
-    def get_reason (self,obj):
-        return obj.get_reason_display()
+    
 
 class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
@@ -118,6 +119,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     licence_fee = serializers.DecimalField(max_digits=8, decimal_places=2, coerce_to_string=False)
     class_name = serializers.SerializerMethodField(read_only=True)
     activity_type_names = serializers.SerializerMethodField(read_only=True)
+    amendment_requests = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -147,6 +149,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'readonly',
                 'can_user_edit',
                 'can_user_view',
+                'has_amendment',
+                'amendment_requests',
                 'documents_url',
                 'id_check_status',
                 'character_check_status',
@@ -198,6 +202,19 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
         return activity_type
 
+    def get_amendment_requests(self, obj):
+        amendment_request_data=[]
+        # qs = obj.amendment_requests
+        # qs = qs.filter(status = 'requested')
+        # if qs.exists():
+        #     for item in obj.amendment_requests:
+        #         print("printing from serializer")
+        #         print(item.id)
+        #         print(str(item.licence_activity_type.name))
+        #         print(item.licence_activity_type.id)
+        #         amendment_request_data.append({"licence_activity_type":str(item.licence_activity_type),"id":item.licence_activity_type.id})
+        return amendment_request_data
+
        
 class DTApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
@@ -213,9 +230,24 @@ class ApplicationSerializer(BaseApplicationSerializer):
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
+    amendment_requests = serializers.SerializerMethodField(read_only=True)
 
     def get_readonly(self,obj):
         return obj.can_user_view 
+
+    def get_amendment_requests(self, obj):
+        amendment_request_data=[]
+        qs = obj.amendment_requests
+        qs = qs.filter(status = 'requested')
+        if qs.exists():
+            for item in obj.amendment_requests:
+                print("printing from serializer")
+                print(item.id)
+                print(str(item.licence_activity_type.name))
+                print(item.licence_activity_type.id)
+                # amendment_request_data.append({"licence_activity_type":str(item.licence_activity_type),"id":item.licence_activity_type.id})
+                amendment_request_data.append(item.licence_activity_type.id)
+        return amendment_request_data
 
 
 

@@ -198,6 +198,7 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = ['temp',
                                 'draft',
+                                'under_review',
                                 'amendment_required',
                             ]
 
@@ -314,6 +315,15 @@ class Application(RevisionedMixin):
             return "{} {}".format(self.proxy_applicant.first_name, self.proxy_applicant.last_name)
         else:
             return "{} {}".format(self.submitter.first_name, self.submitter.last_name)
+
+    @property
+    def has_amendment(self):
+        qs = self.amendment_requests
+        qs = qs.filter(status = 'requested')
+        if qs.exists():
+            return True
+        else:
+            return False
 
     @property
     def is_assigned(self):
