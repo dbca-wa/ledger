@@ -520,6 +520,24 @@ class Proposal(RevisionedMixin):
         else:
             return False
 
+    def assessor_comments_view(self,user):
+        
+        if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements' or self.processing_status == 'with_approver':
+            try:
+                referral = Referral.objects.get(proposal=self,referral=user)
+            except:
+                referral = None
+            if referral:
+                return True
+            elif self.__assessor_group() in user.proposalassessorgroup_set.all():
+                return True
+            elif self.__approver_group() in user.proposalapprovergroup_set.all():
+                return True 
+            else:
+                return False
+        else:
+            return False
+
     def has_assessor_mode(self,user):
         status_without_assessor = ['with_approver','approved','declined','draft']
         if self.processing_status in status_without_assessor:
@@ -704,7 +722,6 @@ class Proposal(RevisionedMixin):
                 raise
 
     def move_to_status(self,request,status, approver_comment):
-        print approver_comment
         if not self.can_assess(request.user):
             raise exceptions.ProposalNotAuthorized()
         if status in ['with_assessor','with_assessor_requirements','with_approver']:
