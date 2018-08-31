@@ -187,13 +187,13 @@
           </table>
      </div>
 
-     <div v-if="days > max_stay_period" class="small-12 medium-12 large-12">
+     <div v-if="max_advance_booking_days > max_advance_booking" class="small-12 medium-12 large-12">
           <table class="hover">
                 <tbody>
                   <tr>
 
                      <td>
-          	Max Stay Limit is {{ max_stay_period }} day/s. You can not book longer than this period..
+          	Advanced booking is limited to {{ max_advance_booking }} day/s. 
                      </td>
                   </tr>
                 </tbody>
@@ -360,7 +360,8 @@ export default {
             maxChildren: 30,
             gearType: getQueryParam('gear_type', 'tent'),
             mooring_vessel_size: 0,
-            max_stay_period: 0,
+            max_advance_booking: 0,
+            max_advance_booking_days: 0,
             gearTotals: {
                 tent: 0,
                 campervan: 0,
@@ -527,7 +528,8 @@ export default {
                         vm.ongoing_booking = data.ongoing_booking;
                         vm.ongoing_booking_id = data.ongoing_booking_id;
                         vm.mooring_vessel_size = data.vessel_size;
-                        vm.max_stay_period = data.max_stay_period;
+                        vm.max_advance_booking = data.max_advance_booking;
+                        vm.max_advance_booking_days = data.max_advance_booking_days;
 
                         if (data.error_type != null) {
                             vm.status = 'online';
