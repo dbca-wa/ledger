@@ -197,7 +197,6 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = ['temp',
                                 'draft',
-                                'under_review',
                                 'amendment_required',
                             ]
 
@@ -462,7 +461,9 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             if self.can_user_edit:
                 # Save the data first
+                print("inside can_user_edit")
                 save_proponent_data(self,request,viewset)
+                # print(self.data)
                 # Check if the special fields have been completed
                 # missing_fields = self.__check_application_filled_out()
                 # if missing_fields:
@@ -481,11 +482,7 @@ class Application(RevisionedMixin):
                     if (qs):
                         for q in qs:    
                             q.status = 'amended'
-                            print('before for')
                             for activity_type in self.licence_type_data['activity_type']:
-                                print('inside for')
-                                print(q.licence_activity_type.id)
-                                print(activity_type["id"])
                                 if q.licence_activity_type.id==activity_type["id"]:
                                     activity_type["processing_status"]="With Officer"
                             q.save()
@@ -496,14 +493,12 @@ class Application(RevisionedMixin):
 
                 officer_groups = ApplicationGroupType.objects.filter(licence_class=self.licence_type_data["id"],name__icontains='officer')
 
-                print(self.amendment_requests)
                 if self.amendment_requests:
                     print("insid if")
                     self.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(self.id),request)
                     for group in officer_groups:
                         send_amendment_submit_email_notification(group.members.all(),self,request)
                 else:
-                    print("inside else")
                     # Create a log entry for the application
                     self.log_user_action(ApplicationUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                     # Create a log entry for the applicant (submitter, organisation or proxy)

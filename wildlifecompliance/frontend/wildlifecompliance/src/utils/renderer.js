@@ -268,8 +268,12 @@ module.exports = {
     },
     generateAssessorTextBoxes(h,c,val,assessor_mode,assessor_data,assessor_info){
         var boxes = [];
+        console.log("inside generate test boxes")
+
         if (!this.status_data.can_user_edit){
+            console.log("inside can user edit")
             if (assessor_data){
+                console.log("inside assessor_data")
                 var _dt = assessor_data.find(at => at.name == c.name)
                 // Assessor Data
                 var assessor_name = `${c.name}-Assessor`;
@@ -305,9 +309,11 @@ module.exports = {
             }
             else{
                 if (assessor_mode == 'assessor'){
+                    console.log("inside assessor_mode assessor")
                     var name = `${c.name}-Assessor`;
                     var assessor_visibility = assessor_mode == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
                     assessor_visibility = !assessor_visibility;
+                    console.log(name)
                     boxes.push(
                         <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
                     )
@@ -331,6 +337,7 @@ module.exports = {
         }
         if (boxes.length > 0){
             boxes = [<div class="row"> {boxes} </div>]
+            console.log("else can user edit")
         }
         return boxes;
     },
