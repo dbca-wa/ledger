@@ -44,6 +44,7 @@ from disturbance.components.compliances.serializers import (
 )
 from disturbance.helpers import is_customer, is_internal
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
+from disturbance.components.proposals.api import ProposalFilterBackend
 
 
 class ComplianceViewSet(viewsets.ModelViewSet):
@@ -68,6 +69,23 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(proposal__applicant_id=org_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @list_route(methods=['GET',])
+    def compliances_external(self, request, *args, **kwargs):
+        """
+        Used by the external dashboard
+
+        http://localhost:8499/api/compliances/compliances_external/?format=datatables&draw=1&length=2
+        """
+
+        qs = self.get_queryset().exclude(processing_status='future')
+        qs = ProposalFilterBackend().filter_queryset(request, qs, self)
+
+        paginator = DatatablesPageNumberPagination()
+        paginator.page_size = qs.count()
+        result_page = paginator.paginate_queryset(qs, request)
+        serializer = ComplianceSerializer(result_page, context={'request':request}, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 #    @list_route(methods=['GET',])
 #    def user_list(self, request, *args, **kwargs):

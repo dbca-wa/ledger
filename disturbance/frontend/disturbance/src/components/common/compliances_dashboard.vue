@@ -141,7 +141,7 @@ export default {
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
-                        d.regions = vm.filterProposalRegion.join();
+                        //d.regions = vm.filterProposalRegion.join();
                         d.lodged_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.lodged_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
@@ -158,14 +158,24 @@ export default {
                             return full.reference;
                         }
                     },
-                    {data: "regions"},
-                    {data: "activity"},
-                    {data: "title"},
+                    {
+                        data: "regions",
+                        name: "proposal__region",
+                    },
+                    {
+                        data: "activity",
+                        name: "proposal__activity",
+                    },
+                    {
+                        data: "title",
+                        name: "proposal__title",
+                    },
                     {
                         data: "approval_lodgement_number",
                         mRender:function (data,type,full) {
                             return `A${data}`;
-                        }
+                        },
+                        name: "approval__lodgement_number"
                     },
                     {data: "holder"},
                     {data: "processing_status",

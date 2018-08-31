@@ -73,12 +73,14 @@ class ApprovalViewSet(viewsets.ModelViewSet):
         """
         Paginated serializer for datatables - used by the external dashboard
 
-        http://localhost:8499/api/proposal_paginated/approvals_external/?format=datatables&draw=1&length=2
+		To test:
+        	http://localhost:8000/api/approvals/approvals_external/?format=datatables&draw=1&length=2
         """
 
         #import ipdb; ipdb.set_trace()
-        qs = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+        qs = self.get_queryset().order_by('lodgement_number', '-issue_date')
         qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
+        #qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
 
         paginator = DatatablesPageNumberPagination()
         paginator.page_size = qs.count()

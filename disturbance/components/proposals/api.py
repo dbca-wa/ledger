@@ -106,8 +106,6 @@ class ProposalFilterBackend(DatatablesFilterBackend):
     """
 
     def filter_queryset(self, request, queryset, view):
-        import ipdb; ipdb.set_trace()
-        #print('0a. time: {}'.format(datetime.now().ctime()))
         total_count = queryset.count()
 
         regions = request.GET.get('regions')
@@ -116,21 +114,28 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(region__name__iregex=regions.replace(',', '|'))
             elif queryset.model is Referral or queryset.model is Compliance:
                 queryset = queryset.filter(proposal__region__name__iregex=regions.replace(',', '|'))
-            elif queryset.model is Approval:
-                queryset = queryset.filter(region__iregex=regions.replace(',', '|'))
+            #elif queryset.model is Approval:
+            #    queryset = queryset.filter(region__iregex=regions.replace(',', '|'))
 
         lodged_from = request.GET.get('lodged_from')
-        if lodged_from:
-            queryset = queryset.filter(lodgement_date__gte=lodged_from)
-
         lodged_to = request.GET.get('lodged_to')
-        if lodged_to:
-            queryset = queryset.filter(lodgement_date__lte=lodged_to)
+        #import ipdb; ipdb.set_trace()
+        if queryset.model is Proposal:
+            if lodged_from:
+                queryset = queryset.filter(lodgement_date__gte=lodged_from)
 
-        #print('0b. time: {}'.format(datetime.now().ctime()))
+            if lodged_to:
+                queryset = queryset.filter(lodgement_date__lte=lodged_to)
+        elif queryset.model is Approval:
+            if lodged_from:
+                queryset = queryset.filter(start_date__gte=lodged_from)
+
+            if lodged_to:
+                queryset = queryset.filter(expiry_date__lte=lodged_to)
+
+        #import ipdb; ipdb.set_trace()
         queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
         setattr(view, '_datatables_total_count', total_count)
-        #print('0c. time: {}'.format(datetime.now().ctime()))
         return queryset
 
 #from django.utils.decorators import method_decorator
@@ -186,6 +191,7 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
             submitters=submitters,
             processing_status_choices = [i[1] for i in Proposal.PROCESSING_STATUS_CHOICES],
             customer_status_choices = [i[1] for i in Proposal.CUSTOMER_STATUS_CHOICES],
+            approval_status_choices = [i[1] for i in Approval.STATUS_CHOICES],
         )
         return Response(data)
 
@@ -223,60 +229,31 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         result_page = self.paginator.paginate_queryset(qs, request)
         serializer = DTReferralSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
-        #serializer = DTReferralSerializer(qs, many=True)
-        #return Response(serializer.data)
 
 #    @list_route(methods=['GET',])
-#    def approvals_external(self, request, *args, **kwargs):
+#    def compliances_external(self, request, *args, **kwargs):
 #        """
 #        Used by the external dashboard
 #
-#        http://localhost:8499/api/proposal_paginated/approvals_external/?format=datatables&draw=1&length=2
+#        http://localhost:8499/api/proposal_paginated/compliances_external/?format=datatables&draw=1&length=2
 #        """
 #
-#        import ipdb; ipdb.set_trace()
-#        self.queryset = Approval.objects.none()
-#        self.serializer_class = ApprovalSerializer
+#        self.serializer_class = ComplianceSerializer
 #        if is_internal(self.request):
-#            qs = Approval.objects.all()
+#            qs = Compliance.objects.all()
 #        elif is_customer(self.request):
 #            user_orgs = [org.id for org in self.request.user.disturbance_organisations.all()]
-#            qs = Approval.objects.filter(applicant_id__in = user_orgs)
+#            qs =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) )
 #        else:
-#            qs = Approval.objects.none()
-#        qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+#            qs =Compliance.objects.none()
+#        qs = qs.exclude(processing_status='future')
 #        #qs = self.filter_queryset(self.request, qs, self)
 #        qs = self.filter_queryset(qs)
 #
 #        self.paginator.page_size = qs.count()
 #        result_page = self.paginator.paginate_queryset(qs, request)
-#        serializer = ApprovalSerializer(result_page, context={'request':request}, many=True)
+#        serializer = ComplianceSerializer(result_page, context={'request':request}, many=True)
 #        return self.paginator.get_paginated_response(serializer.data)
-
-    @list_route(methods=['GET',])
-    def compliances_external(self, request, *args, **kwargs):
-        """
-        Used by the external dashboard
-
-        http://localhost:8499/api/proposal_paginated/compliances_external/?format=datatables&draw=1&length=2
-        """
-
-        self.serializer_class = ComplianceSerializer
-        if is_internal(self.request):
-            qs = Compliance.objects.all()
-        elif is_customer(self.request):
-            user_orgs = [org.id for org in self.request.user.disturbance_organisations.all()]
-            qs =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) )
-        else:
-            qs =Compliance.objects.none()
-        qs = qs.exclude(processing_status='future')
-        #qs = self.filter_queryset(self.request, qs, self)
-        qs = self.filter_queryset(qs)
-
-        self.paginator.page_size = qs.count()
-        result_page = self.paginator.paginate_queryset(qs, request)
-        serializer = ComplianceSerializer(result_page, context={'request':request}, many=True)
-        return self.paginator.get_paginated_response(serializer.data)
 
     @list_route(methods=['GET',])
     def proposals_external(self, request, *args, **kwargs):
@@ -293,23 +270,6 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         result_page = self.paginator.paginate_queryset(qs, request)
         serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
-
-
-#    @list_route(methods=['GET',])
-#    def user_list_paginated(self, request, *args, **kwargs):
-#        """
-#        Placing Paginator class here (instead of settings.py) allows specific method for desired behaviour),
-#        otherwise all serializers will use the default pagination class
-#
-#        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
-#        """
-#        proposals = self.get_queryset().exclude(processing_status='discarded')
-#        paginator = DatatablesPageNumberPagination()
-#        paginator.page_size = proposals.count()
-#        result_page = paginator.paginate_queryset(proposals, request)
-#        serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
-#        return paginator.get_paginated_response(serializer.data)
-
 
 
 
