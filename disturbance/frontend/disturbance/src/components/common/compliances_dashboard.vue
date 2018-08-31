@@ -137,7 +137,15 @@ export default {
                 lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": 'data'
+                    "dataSrc": 'data',
+
+                    // adding extra GET params for Custom filtering
+                    "data": function ( d ) {
+                        d.regions = vm.filterProposalRegion.join();
+                        d.lodged_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.lodged_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+        		    }
+
                 },
                 dom: 'lBfrtip',
                 buttons:[
@@ -155,9 +163,9 @@ export default {
                     {data: "title"},
                     {
                         data: "approval_lodgement_number",
-                       /* mRender:function (data,type,full) {
+                        mRender:function (data,type,full) {
                             return `A${data}`;
-                        }*/
+                        }
                     },
                     {data: "holder"},
                     {data: "processing_status",
@@ -175,8 +183,6 @@ export default {
                     {data: "assigned_to",
                        // visible: false
                     },
-                    {data: "reference", visible: false},    // used for 'id' column function
-                    {data: "customer_status", visible: false},    // used in 'processing_status' column function
                     {
                         mRender:function (data,type,full) {
                             let links = '';
@@ -200,7 +206,11 @@ export default {
                             }
                             return links;
                         }
-                    }
+                    },
+                    {data: "reference", visible: false},
+                    {data: "customer_status", visible: false},
+                    {data: "can_user_view", visible: false},
+
                 ],
                 processing: true,
                 initComplete: function () {

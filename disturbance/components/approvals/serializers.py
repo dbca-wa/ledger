@@ -72,6 +72,32 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'can_amend',
             'can_reinstate'
         )
+        # the serverSide functionality of datatables is such that only columns that have field 'data' defined are requested from the serializer. We
+        # also require the following additional fields for some of the mRender functions
+        datatables_always_serialize = (
+            'id',
+            'activity',
+            'region',
+            'title',
+            'status',
+            'reference',
+            'lodgement_number',
+            'licence_document',
+            'start_date',
+            'expiry_date',
+            'applicant',
+            'can_reissue',
+            'can_action',
+            'can_reinstate',
+            'can_amend',
+            'can_renew',
+            'set_to_cancel',
+            'set_to_suspend',
+            'set_to_surrender',
+            'current_proposal',
+            'renewal_document',
+            'renewal_sent',
+        )
 
     def get_renewal_document(self,obj):
         if obj.renewal_document and obj.renewal_document._file:

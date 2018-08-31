@@ -127,8 +127,8 @@ export default {
             proposal_regions: [],
             proposal_submitters: [],
             proposal_headers:[
-                "Number","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
-                "LodgementNo","CanReissue","CanAction","CanReinstate","SetToCancel","SetToSuspend","SetToSurrender","CurrentProposal","RenewalDoc","RenewalSent","CanAmend","CanRenew"
+                "Number",//"Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
+                //"LodgementNo","CanReissue","CanAction","CanReinstate","SetToCancel","SetToSuspend","SetToSurrender","CurrentProposal","RenewalDoc","RenewalSent","CanAmend","CanRenew"
             ],
             proposal_options:{
                 language: {
@@ -145,6 +145,7 @@ export default {
                 buttons:[
                 'excel', 'csv', ],
                 columns: [
+                    /*
                     {
                         data: "id",
                         'render':function(data,type,full){
@@ -187,13 +188,16 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn
                     },
+                    */
                     {
                         data: "region",
                         'render': function (value) {
                             return helpers.dtPopover(value);
                         },
-                        'createdCell': helpers.dtPopoverCellFn
+                        'createdCell': helpers.dtPopoverCellFn,
+                        searchable: false
                     },
+                    /*
                     {data: "activity"},
                     {
                         data: "title",
@@ -202,28 +206,34 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn
                     },
-                    {data: "applicant"},
+                    {
+                        data: "applicant",
+                        name: "applicant__name"
+                    },
                     {data: "status"},
-
                     {
                         data: "start_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        searchable: false
                     },
                     {
                         data: "expiry_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        searchable: false
                     },
                     {
                         data: "licence_document",
                         mRender:function(data,type,full){
                             return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
-                        }
+                        },
+                        name: 'licence_document__name'
                     },
                     {
+                        data: '',
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
@@ -271,10 +281,14 @@ export default {
                                 }
                             }
                             return links;
-                        }
+                        },
+                        searchable: false,
+                        orderable: false,
+                        name: ''
                     },
                     
                     // dummy fields required for mRender functions above
+                    /*
                     {data: "lodgement_number", visible: false},
                     {data: "can_reissue", visible: false},
                     {data: "can_action", visible: false},
@@ -287,6 +301,7 @@ export default {
                     {data: "renewal_sent", visible: false},
                     {data: "can_amend", visible: false},
                     {data: "can_renew", visible: false},
+                    */
 
 
                 ],

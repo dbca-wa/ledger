@@ -24,7 +24,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser, Address 
+from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
@@ -42,6 +42,7 @@ from disturbance.components.approvals.serializers import (
 )
 from disturbance.helpers import is_customer, is_internal
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
+from disturbance.components.proposals.api import ProposalFilterBackend
 
 class ApprovalViewSet(viewsets.ModelViewSet):
     #queryset = Approval.objects.all()
@@ -59,13 +60,32 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         #queryset = self.get_queryset()
-        queryset = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number') 
+        queryset = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
         # Filter by org
         org_id = request.GET.get('org_id',None)
         if org_id:
             queryset = queryset.filter(applicant_id=org_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @list_route(methods=['GET',])
+    def approvals_external(self, request, *args, **kwargs):
+        """
+        Paginated serializer for datatables - used by the external dashboard
+
+        http://localhost:8499/api/proposal_paginated/approvals_external/?format=datatables&draw=1&length=2
+        """
+
+        #import ipdb; ipdb.set_trace()
+        qs = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+        qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
+
+        paginator = DatatablesPageNumberPagination()
+        paginator.page_size = qs.count()
+        result_page = paginator.paginate_queryset(qs, request)
+        serializer = ApprovalSerializer(result_page, context={'request':request}, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
 
 #    @list_route(methods=['GET',])
 #    def user_list(self, request, *args, **kwargs):
@@ -79,27 +99,27 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 #        serializer = self.get_serializer(queryset, many=True)
 #        return Response(serializer.data)
 
-    @list_route(methods=['GET',])
-    def user_list(self, request, *args, **kwargs):
-        queryset = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+#    @list_route(methods=['GET',])
+#    def user_list(self, request, *args, **kwargs):
+#        queryset = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+#        serializer = self.get_serializer(queryset, many=True)
+#        return Response(serializer.data)
 
-    @list_route(methods=['GET',])
-    def user_list_paginated(self, request, *args, **kwargs):
-        """
-        Placing Paginator class here (instead of settings.py) allows specific method for desired behaviour),
-        otherwise all serializers will use the default pagination class
-
-        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
-        """
-        queryset = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-        paginator = DatatablesPageNumberPagination()
-        paginator.page_size = queryset.count()
-        result_page = paginator.paginate_queryset(queryset, request)
-        #serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
-        serializer = self.get_serializer(result_page, context={'request':request}, many=True)
-        return paginator.get_paginated_response(serializer.data)
+#    @list_route(methods=['GET',])
+#    def user_list_paginated(self, request, *args, **kwargs):
+#        """
+#        Placing Paginator class here (instead of settings.py) allows specific method for desired behaviour),
+#        otherwise all serializers will use the default pagination class
+#
+#        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
+#        """
+#        queryset = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+#        paginator = DatatablesPageNumberPagination()
+#        paginator.page_size = queryset.count()
+#        result_page = paginator.paginate_queryset(queryset, request)
+#        #serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
+#        serializer = self.get_serializer(result_page, context={'request':request}, many=True)
+#        return paginator.get_paginated_response(serializer.data)
 
 
 
@@ -111,7 +131,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance.approval_cancellation(request,serializer.validated_data)
             serializer = ApprovalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -132,7 +152,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance.approval_suspension(request,serializer.validated_data)
             serializer = ApprovalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -152,7 +172,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.reinstate_approval(request)
             serializer = self.get_serializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -173,7 +193,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance.approval_surrender(request,serializer.validated_data)
             serializer = ApprovalSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -192,7 +212,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.action_logs.all()
             serializer = ApprovalUserActionSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -209,7 +229,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.comms_logs.all()
             serializer = ApprovalLogEntrySerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -238,8 +258,8 @@ class ApprovalViewSet(viewsets.ModelViewSet):
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents
-                
-                return Response(serializer.data) 
+
+                return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

@@ -72,7 +72,8 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
-                            <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
+                            <datatable v-if="level=='external'" ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
+                            <datatable v-else ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
 							<!--
                             <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
                             <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
@@ -164,7 +165,6 @@ export default {
                 ajax: {
                     "url": vm.url,
                     "dataSrc": 'data',
-                    //"regions": 'regions',
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {

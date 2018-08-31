@@ -85,6 +85,13 @@ import {
 }from '@/utils/hooks'
 export default {
     name: 'ProposalTableDash',
+    props: {
+        url:{
+            type: String,
+            required: true
+        },
+    },
+
     data() {
         let vm = this;
         return {
@@ -117,9 +124,21 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                serverSide: true,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.referrals,'user_list'),
-                    "dataSrc": ''
+                    //"url": helpers.add_endpoint_json(api_endpoints.referrals,'user_list'),
+                    //"url": api_endpoints.list_referrals,
+                    "url": vm.url,
+                    "dataSrc": 'data',
+
+                    // adding extra GET params for Custom filtering
+                    "data": function ( d ) {
+                        d.regions = vm.filterProposalRegion.join();
+                        d.lodged_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.lodged_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+        		    }
+
                 },
                 columns: [
                     {
@@ -136,8 +155,15 @@ export default {
                             return full.proposal_lodgement_number+tick;
                         }
                     },
-                    {data: "region"},
-                    {data: "activity"},
+                    {
+                        data: "region",
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
+
+                    },
+                    {
+                        data: "activity",
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
+                    },
                     {data: "title"},
                     {
                         data: "submitter",
@@ -146,9 +172,13 @@ export default {
                                 return `${data.first_name} ${data.last_name}`;
                             }
                             return ''
-                        }
+                        },
+                        name: "proposal__submitter__email",
                     },
-                    {data: "applicant"},
+                    {
+                        data: "applicant",
+                        name: "proposal__applicant__organisation__name",
+                    },
                     {data: "processing_status"},
                     {
                         data: "proposal_lodgement_date",
@@ -157,14 +187,22 @@ export default {
                         }
                     },
                     {
+                        data: '',
                         mRender:function (data,type,full) {
                             let links = '';
                             links +=  full.can_be_processed ? `<a href='/internal/proposal/${full.proposal}/referral/${full.id}'>Process</a><br/>`: `<a href='/internal/proposal/${full.proposal}/referral/${full.id}'>View</a><br/>`;
                             return links;
-                        }
-                    }
+                        },
+                        searchable: false,
+                        orderable: false,
+                        name: ''
+                    },
+                    {data: "can_be_processed", visible: false},
+                    {data: "proposal_lodgement_number", visible: false},
+
                 ],
                 processing: true,
+                /*
                 initComplete: function () {
                     // Grab Regions from the data in the table
                     var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
@@ -213,6 +251,7 @@ export default {
                         vm.proposal_status = statusTitles;
                     });
                 }
+                */
             }
         }
     },
@@ -240,7 +279,15 @@ export default {
             this.$refs.proposal_datatable.vmDataTable.draw();
         },
         filterProposalSubmitter: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
+            //this.$refs.proposal_datatable.vmDataTable.draw();
+            let vm = this;
+            if (vm.filterProposalSubmitter!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalSubmitter).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
+            }
+
+
         },
         filterProposalLodgedFrom: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
@@ -252,6 +299,21 @@ export default {
     computed: {
     },
     methods:{
+        fetchFilterLists: function(){
+            let vm = this;
+
+            vm.$http.get(api_endpoints.filter_list).then((response) => {
+                vm.proposal_regions = response.body.regions;
+                vm.proposal_districts = response.body.districts;
+                vm.proposal_activityTitles = response.body.activities;
+                vm.proposal_submitters = response.body.submitters;
+                vm.proposal_status = response.body.processing_status_choices;
+            },(error) => {
+                console.log(error);
+            })
+            //console.log(vm.regions);
+        },
+
         addEventListeners: function(){
             let vm = this;
             // Initialise Proposal Date Filters
@@ -372,6 +434,7 @@ export default {
     },
     mounted: function(){
         let vm = this;
+        vm.fetchFilterLists();
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {

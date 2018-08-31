@@ -25,7 +25,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser, Address 
+from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
@@ -61,7 +61,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         return Compliance.objects.none()
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset() 
+        queryset = self.get_queryset()
         # Filter by org
         org_id = request.GET.get('org_id',None)
         if org_id:
@@ -69,44 +69,44 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @list_route(methods=['GET',])
-    def user_list(self, request, *args, **kwargs):
-        #Remove filter to include 'Apporved Proposals in external dashboard .exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])
-        queryset = self.get_queryset().exclude(processing_status='future')
-        serializer = ComplianceSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @list_route(methods=['GET'])
-    def user_list_paginated(self, request, *args, **kwargs):
-        """
-        Placing Paginator class here (instead of settings.py) allows specific method for desired behaviour),
-        otherwise all serializers will use the default pagination class
-
-        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
-        """
-        #import ipdb; ipdb.set_trace()
-        queryset = self.get_queryset().exclude(processing_status='future')
-        paginator = DatatablesPageNumberPagination()
-        paginator.page_size = queryset.count()
-        result_page = paginator.paginate_queryset(queryset, request)
-        #serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
-        serializer = self.get_serializer(result_page, context={'request':request}, many=True)
-        return paginator.get_paginated_response(serializer.data)
+#    @list_route(methods=['GET',])
+#    def user_list(self, request, *args, **kwargs):
+#        #Remove filter to include 'Apporved Proposals in external dashboard .exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])
+#        queryset = self.get_queryset().exclude(processing_status='future')
+#        serializer = ComplianceSerializer(queryset, many=True)
+#        return Response(serializer.data)
+#
+#    @list_route(methods=['GET'])
+#    def user_list_paginated(self, request, *args, **kwargs):
+#        """
+#        Placing Paginator class here (instead of settings.py) allows specific method for desired behaviour),
+#        otherwise all serializers will use the default pagination class
+#
+#        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
+#        """
+#        #import ipdb; ipdb.set_trace()
+#        queryset = self.get_queryset().exclude(processing_status='future')
+#        paginator = DatatablesPageNumberPagination()
+#        paginator.page_size = queryset.count()
+#        result_page = paginator.paginate_queryset(queryset, request)
+#        #serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
+#        serializer = self.get_serializer(result_page, context={'request':request}, many=True)
+#        return paginator.get_paginated_response(serializer.data)
 
     @detail_route(methods=['POST',])
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
-            with transaction.atomic():  
-                instance = self.get_object()          
+            with transaction.atomic():
+                instance = self.get_object()
                 data = {
                 'text': request.data.get('detail')
                 }
-                serializer = SaveComplianceSerializer(instance, data=data)               
+                serializer = SaveComplianceSerializer(instance, data=data)
                 serializer.is_valid(raise_exception=True)
                 instance = serializer.save()
                 instance.submit(request)
-                serializer = self.get_serializer(instance)              
+                serializer = self.get_serializer(instance)
                 # Save the files
                 '''for f in request.FILES:
                     document = instance.documents.create()
@@ -114,7 +114,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents'''
-                return Response(serializer.data) 
+                return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -131,7 +131,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.assign_to(request.user,request)
             serializer = ComplianceSerializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -149,7 +149,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             doc=request.data.get('document')
             instance.delete_document(request, doc)
             serializer = ComplianceSerializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -174,7 +174,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError('A user with the id passed in does not exist')
             instance.assign_to(user,request)
             serializer = ComplianceSerializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -191,7 +191,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.unassign(request)
             serializer = (instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -208,7 +208,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.accept(request)
             serializer = ComplianceSerializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -226,7 +226,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             qs = instance.amendment_requests
             qs = qs.filter(status = 'requested')
             serializer = ComplianceAmendmentRequestSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -243,7 +243,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.action_logs.all()
             serializer = ComplianceActionSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -260,7 +260,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.comms_logs.all()
             serializer = ComplianceCommsSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -289,8 +289,8 @@ class ComplianceViewSet(viewsets.ModelViewSet):
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents
-                
-                return Response(serializer.data) 
+
+                return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -328,16 +328,16 @@ class ComplianceAmendmentRequestViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-    
+
 
 class ComplianceAmendmentReasonChoicesView(views.APIView):
-    
+
     renderer_classes = [JSONRenderer,]
     def get(self,request, format=None):
         choices_list = []
         choices = ComplianceAmendmentRequest.REASON_CHOICES
         if choices:
             for c in choices:
-                choices_list.append({'key': c[0],'value': c[1]})       
+                choices_list.append({'key': c[0],'value': c[1]})
         return Response(choices_list)
 
