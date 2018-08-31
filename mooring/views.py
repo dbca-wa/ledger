@@ -330,7 +330,7 @@ class BookingSuccessView(TemplateView):
                     logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
                     return redirect('public_make_booking')
 
-                if inv.system not in ['0019']:
+                if inv.system not in ['0516']:
                     logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                     return redirect('public_make_booking')
 

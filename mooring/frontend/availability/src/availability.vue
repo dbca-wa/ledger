@@ -187,6 +187,20 @@
           </table>
      </div>
 
+     <div v-if="days > max_stay_period" class="small-12 medium-12 large-12">
+          <table class="hover">
+                <tbody>
+                  <tr>
+
+                     <td>
+          	Max Stay Limit is {{ max_stay_period }} day/s. You can not book longer than this period..
+                     </td>
+                  </tr>
+                </tbody>
+          </table>
+     </div>
+
+
         </div>
        </div>
 
@@ -346,6 +360,7 @@ export default {
             maxChildren: 30,
             gearType: getQueryParam('gear_type', 'tent'),
             mooring_vessel_size: 0,
+            max_stay_period: 0,
             gearTotals: {
                 tent: 0,
                 campervan: 0,
@@ -438,8 +453,6 @@ export default {
                 submitData.campground = vm.parkstayGroundId;
                 submitData.campsite_class = site.type;
             }
-            //console.log(site);
-            //console.log(submitData);
             $.ajax({
                 url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',
@@ -514,6 +527,7 @@ export default {
                         vm.ongoing_booking = data.ongoing_booking;
                         vm.ongoing_booking_id = data.ongoing_booking_id;
                         vm.mooring_vessel_size = data.vessel_size;
+                        vm.max_stay_period = data.max_stay_period;
 
                         if (data.error_type != null) {
                             vm.status = 'online';

@@ -277,6 +277,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                     Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
                     ,mooringarea=campsites_qs.first().mooringarea
                     )
+
     if stay_history:
         max_days = min([x.max_days for x in stay_history])
     else:
