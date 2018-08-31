@@ -1065,6 +1065,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         if ground.vessel_size_limit < vessel_size:
              return Response({'name':'   ', 'error': 'Vessel size is too large for mooring', 'error_type': 'vessel_error', 'vessel_size': ground.vessel_size_limit}, status=200 )
 
+
         #if not ground._is_open(start_date):
         #    return Response({'closed': 'MooringArea is closed for your selected dates'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1073,6 +1074,9 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         #if length > settings.PS_MAX_BOOKING_LENGTH:
         #    length = settings.PS_MAX_BOOKING_LENGTH
         #    end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
+        if length > ground.max_advance_booking:
+           return Response({'name':'   ', 'error': 'Max Stay Limit is '+str(ground.max_advance_booking)+' day/s. You can not book longer than this period.', 'error_type': 'stay_error', 'max_stay_period': ground.max_advance_booking, 'days': length}, status=200 )
+
 
         # fetch all the campsites and applicable rates for the campground
         context = {}
@@ -1106,7 +1110,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'maxChildren': 30,
             'sites': [],
             'classes': {},
-            'vessel_size' : ground.vessel_size_limit
+            'vessel_size' : ground.vessel_size_limit,
+            'max_stay_period': ground.max_advance_booking 
         }
 
         # group results by campsite class

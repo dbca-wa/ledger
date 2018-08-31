@@ -129,6 +129,7 @@
                         <img class="thumbnail" id="mapPopupImage" />
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
                         <p><small>Vessel Size: <span id='vessel_size_popup'></span></p>
+                        <p style='display:none'><small>Max Stay Period: <span id='max_stay_period'></span> day/s</p>
                         <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;" target="_blank">More info</a>
                         <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank"  v-on:click="BookNow()" >Book now</a>
                     </div>
@@ -149,7 +150,8 @@
                             <div class="small-12 medium-9 large-9 columns">
                                 <div v-html="f.description"/>
                                 <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
-                                <p ><i><small>Vessel Size Limit: {{ f.vessel_size_limit }} </small></i></p>
+                                <p style='display:none'><i><small>Vessel Size Limit: {{ f.vessel_size_limit }} </small></i></p>
+                                <p ><i><small>Max Stay Period: {{ f.max_advance_booking }} day/s </small></i></p>
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
                                 <a v-if="f.mooring_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
                             </div>
@@ -166,7 +168,7 @@
         <template v-else>
             <div class="row align-center">
                 <div class="small-12 medium-12 large-12 columns">
-                    <h2 class="text-center">There are no marine parks found matching your search criteria. Please change your search query.</h2>
+                    <h2 class="text-center">There are no mooring found matching your search criteria. Please change your search query.</h2>
                 </div>
             </div>
         </template>
@@ -959,7 +961,7 @@ export default {
                                                                 if (mooring_type == 'rental-available' || mooring_type == 'rental-notavailable') { 
                                                                       
                                                                       if (this.groundsIds.has(marker_id)) { 
-                                                                                
+                                                                           
                                                                            if (mooring_type == 'rental-available') {
                                                                               if (response[x][m]['geometry'] != null ) {
                                                                                      if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
@@ -1068,12 +1070,15 @@ export default {
 //        document.getElementById('scale').innerHTML = "Scale = 1 : " + scale;
      },
      buildMarkerBookable: function(lat,lon,props,name,marker_id) {
-
+            console.log("PROPPP");
+            console.log(props);
             var mooring_type =  $("input:radio[name=gear_type]:checked").val();
 
-            var pin_type=require('assets/map_pins/pin_red.png');
+            var pin_type=require('assets/map_pins/pin_red.png'); 
+            var bookable = false;
             if (this.groundsIds.has(marker_id)) {
                  pin_type=require('assets/map_pins/pin_orange.png');
+                 var bookable = true;
 	    }
 
                 //this.anchorPinsActive.push(marker_id);
@@ -1081,10 +1086,12 @@ export default {
                   marker_group: 'mooring_marker',
                   geometry: new ol.geom.Point(ol.proj.transform([lat, lon], 'EPSG:4326', 'EPSG:3857')),
                   name: name,
-                  population: 4000,
-                  rainfall: 500,
+//                  population: 4000,
+//                  rainfall: 500,
+                  bookable: bookable,
                   marker_id: marker_id,
                   props: props
+
             });
 
             var iconStyle = new ol.style.Style({
@@ -1952,12 +1959,18 @@ export default {
             var geometry = feature.getGeometry();
             var coord = geometry.getCoordinates();
             var properties = feature.getProperties();
+            console.log("CLICK PROPERTIES");
+            console.log(properties);
             if (properties.marker_group == 'mooring_marker') {
 
                 $('#mapPopupName').html(properties.props.name);
 
-                if (properties.props.mooring_type == 0) { 
-                   $('#mapPopupBook').show();
+                if (properties.props.mooring_type == 0) {
+                   if (properties.bookable == true) { 
+                      $('#mapPopupBook').show();
+                   } else {
+                      $('#mapPopupBook').hide();
+		   }
                    $("#mapPopupImage").show();
                    console.log("PROP"); 
                    console.log(properties.props); 
@@ -1971,6 +1984,7 @@ export default {
                    // console.log(properties);
                    // console.log(properties.props.vessel_size_limit);
                    $("#vessel_size_popup").html(properties.props.vessel_size_limit);
+//                   $("#max_stay_period").html(properties.props.max_advance_booking);
                    var vessel_size = $('#vesselSize').val();
                    if (vessel_size > 0 ) {
                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
@@ -1996,7 +2010,7 @@ export default {
                           resolution: resolution,
                           duration: 1000
                     }); 
-
+                     
                     if (properties.props.mooring_type == 0) {
                         $('#mapPopupBook').show();
                         $("#mapPopupImage").hide();
