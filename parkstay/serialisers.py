@@ -369,7 +369,12 @@ class CampsiteSerialiser(serializers.ModelSerializer):
     name = serializers.CharField(default='default',required=False)
     class Meta:
         model = Campsite
-        fields = ('id','campground', 'name', 'type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure', 'current_closure_id', 'can_add_rate','tent','campervan','caravan','min_people','max_people','description','max_vehicles')
+        fields = ('id','campground','name','type','campsite_class','price','features','wkb_geometry','campground_open','active','current_closure', 'current_closure_id', 'can_add_rate','tent','campervan','caravan','min_people','max_people','description','max_vehicles', 'status')
+
+    status = serializers.SerializerMethodField()
+
+    def get_status(self, obj):
+        return self.context.get('status', None) 
 
     def __init__(self, *args, **kwargs):
         try:
@@ -382,12 +387,12 @@ class CampsiteSerialiser(serializers.ModelSerializer):
             method = 'put'
         super(CampsiteSerialiser, self).__init__(*args, **kwargs)
         if method == 'get':
-            self.fields['features'] = FeatureSerializer(many=True)
+            self.fields['features'] = FeatureSerializer(many=True)       
         elif method == 'post':
             self.fields['features'] = serializers.HyperlinkedRelatedField(many=True,read_only=True,required=False,view_name='features-detail')
         elif method == 'put':
             self.fields['features'] = serializers.HyperlinkedRelatedField(many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
-
+        
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
@@ -444,7 +449,7 @@ class BookingSerializer(serializers.ModelSerializer):
     regos = BookingRegoSerializer(many=True,read_only=True)
     class Meta:
         model = Booking
-        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','override_price','override_reason','override_reason_info','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
+        fields = ('id','legacy_id','legacy_name','arrival','departure','details','cost_total','override_price','override_reason','override_reason_info','send_invoice','campground','campground_name','campground_region','campground_site_type','campsites','invoices','is_canceled','guests','regos','vehicle_payment_status','refund_status','amount_paid')
         read_only_fields = ('vehicle_payment_status','refund_status','campground_name','campground_region','campground_site_type')
 
 
@@ -460,8 +465,6 @@ class BookingSerializer(serializers.ModelSerializer):
         except :
             method = "get"
         super(BookingSerializer,self).__init__(*args,**kwargs)
-        #if method == 'get':
-        #    self.fields['campground'] = CampgroundSerializer()
 
 class RateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

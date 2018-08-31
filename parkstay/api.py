@@ -760,7 +760,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     def campsites(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            serializer = CampsiteSerialiser(self.get_object().campsites,many=True,context={'request':request})
+            serializer = CampsiteSerialiser(self.get_object().campsites,many=True,context={'request':request,'status': None})
             res = serializer.data
 
             return Response(res,status=http_status)
@@ -870,8 +870,12 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             available_serializers = []
             for k,v in available.items():
                 s = CampsiteClassSerializer(CampsiteClass.objects.get(id=k),context={'request':request},method='get').data
-                s['campsites'] = [c.id for c in v]
-                available_serializers.append(s)
+                s['campsites'] = [c_id for c_id, stat in v.items() if stat != 'booked']
+                counts = {'open': 0, 'closed': 0, 'booked': 0}
+                for c_id, stat in v.items():
+                    counts[stat] += 1
+                s['status'] = ', '.join(['{} {}'.format(stat, type) for type, stat in counts.items() if stat])
+                available_serializers.append(s)            
             available_serializers.sort(key=lambda x: x['name'])
             data = available_serializers
 
@@ -921,14 +925,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         if ground.campground_type != 0:
             return Response({'error': 'Campground doesn\'t support online bookings'}, status=400)
 
-        #if not ground._is_open(start_date):
-        #    return Response({'closed': 'Campground is closed for your selected dates'}, status=status.HTTP_400_BAD_REQUEST)
-
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)
-        #if length > settings.PS_MAX_BOOKING_LENGTH:
-        #    length = settings.PS_MAX_BOOKING_LENGTH
-        #    end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
 
         # fetch all the campsites and applicable rates for the campground
         context = {}
@@ -1110,6 +1108,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         bookings_map[s.name]['availability'][offset][0] = False
                         if stat == 'closed':
                             bookings_map[s.name]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
+                            if any([v[0] == 'booked' for k, v in availability[s.pk].items()]):
+                                bookings_map[s.name]['availability'][offset][1] = 'Closed & booked' if show_all else 'Unavailable'
                         elif stat == 'booked':
                             bookings_map[s.name]['availability'][offset][1] = 'Booked' if show_all else 'Unavailable'
                         else:
@@ -1621,6 +1621,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                     bk['override_reason'] = booking.override_reason.text
                 if booking.override_reason_info:
                     bk['override_reason_info'] = booking.override_reason_info
+                if booking.send_invoice:
+                    bk['send_invoice'] = booking.send_invoice
                 if booking.override_price:
                     discount = booking.discount
                 if not booking.paid:
@@ -1686,6 +1688,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             override_price = serializer.validated_data.get('override_price', None)
             override_reason = serializer.validated_data.get('override_reason', None)
             override_reason_info = serializer.validated_data.get('override_reason_info', None)
+            send_invoice = serializer.validated_data.get('send_invoice', False)
             overridden_by = None if (override_price is None) else request.user
             try:
                 emailUser = request.data['customer']
@@ -1718,6 +1721,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'override_price' : override_price,
                 'override_reason' : override_reason,
                 'override_reason_info' : override_reason_info,
+                'send_invoice' : send_invoice,
                 'overridden_by': overridden_by,
                 'customer' : customer,
                 'first_name': emailUser['first_name'],
