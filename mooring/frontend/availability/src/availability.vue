@@ -453,8 +453,6 @@ export default {
                 submitData.campground = vm.parkstayGroundId;
                 submitData.campsite_class = site.type;
             }
-            //console.log(site);
-            //console.log(submitData);
             $.ajax({
                 url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',

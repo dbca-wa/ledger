@@ -649,7 +649,6 @@ export default {
                         // when you pass control of the popup element to OpenLayers :(
                         $("#mapPopupName")[0].innerHTML = feature.get('name');
                         if (feature.get('images')) {
-                            // console.log(feature.get('images')[0].image);
                             $("#mapPopupImage").attr('src', feature.get('images')[0].image);
                             $("#mapPopupImage").show();
                         } else {
@@ -687,8 +686,6 @@ export default {
                 dataType: 'json',
                 success: function(data, status, xhr) {
                     if (data.features && data.features.length > 0) {
-                        //console.log('Mapbox!');
-                        //console.log(data.features[0]);
                         var view = vm.olmap.getView();
                         view.animate({
                             center: ol.proj.fromLonLat(data.features[0].geometry.coordinates),
@@ -708,7 +705,6 @@ export default {
                 // when you pass control of the popup element to OpenLayers :(
                 $("#mapPopupName")[0].innerHTML = feature.get('name');
                 if (feature.get('images')) {
-                    // console.log(feature.get('images')[0].image);
                     $("#mapPopupImage").attr('src', feature.get('images')[0].image);
                     $("#mapPopupImage").show();
                 } else {
@@ -773,7 +769,6 @@ export default {
                     vm._updateViewport = debounce(function() {
                         updateViewportFunc();
                     }, 100);
-                    //console.log('RUNNING 3');
                 }
                 vm._updateViewport();
             }
@@ -807,7 +802,6 @@ export default {
                            // map.removeLayer(layer2);
                            if (layer.hasOwnProperty("markerGroup")) {
                                 if (layer.markerGroup == 'circle') {
-                                      // console.log(layer2);
                                       map.removeLayer(layer2);
                                       layerRemoved = true;
                                 }
@@ -835,7 +829,6 @@ export default {
                            // map.removeLayer(layer2);
                            if (layer.hasOwnProperty("markerGroup")) {
                                 if (layer.markerGroup == 'anchor') {
-                                      // console.log(layer2);
                                       map.removeLayer(layer2);
                                       layerRemoved = true;
                                 }
@@ -1070,8 +1063,6 @@ export default {
 //        document.getElementById('scale').innerHTML = "Scale = 1 : " + scale;
      },
      buildMarkerBookable: function(lat,lon,props,name,marker_id) {
-            console.log("PROPPP");
-            console.log(props);
             var mooring_type =  $("input:radio[name=gear_type]:checked").val();
 
             var pin_type=require('assets/map_pins/pin_red.png'); 
@@ -1367,9 +1358,6 @@ export default {
         this.groundsIds = new Set();
         this.groundsFilter = new ol.Collection();
 
-       // console.log("GROUND FILTER");
-        // console.log(vm.groundsFilter);
-
         $.ajax({
             url: vm.parkstayUrl+'/api/mooring_map/?format=json',
             dataType: 'json',
@@ -1389,9 +1377,8 @@ export default {
 
             if (vm.dateCache != vm.arrivalDateString+vm.departureDateString) {
             var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
-           var params = {format: 'json'};
+            var params = {format: 'json'};
             var isCustom = false;
-            // console.log('ARR DEPP');
 
 
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
@@ -1590,10 +1577,7 @@ export default {
             success: function (response, stat, xhr) {
                 vm.suggestions = response;
                 $(search).on('awesomplete-selectcomplete', function(ev) {
-                    //console.log('autoselect');
-                    //console.log(ev);
                     this.blur();
-                    //vm.search(ev.target.value);
                 });
 
                 autocomplete.list = response['features'].map(function (el) {
@@ -1604,8 +1588,6 @@ export default {
 
         // wire up search box
         $(search).on('blur', function(ev) {
-            //console.log('blur');
-            //console.log(ev);
             vm.search(ev.target.value);
         }).on('keypress', function(ev) {
             if (!ev) {
@@ -1614,7 +1596,6 @@ export default {
             // intercept enter keys 
             var keyCode = ev.keyCode || ev.which;
             if (keyCode == '13') {
-                //console.log('enter');
                 this.blur();
                 return false;
             }
@@ -1677,14 +1658,11 @@ export default {
             success: function (response, stat, xhr) {
                vm.mooring_map_data = response;
                var features = vm.geojson.readFeatures(response);
-               //console.log('Ground Data');
-               // console.log(features);
                vm.groundsData.clear();
                vm.groundsData.extend(features);
                vm.groundsSource.loadSource();
                vm.buildmarkers();
  
-               // console.log(vm.groundsSource);
             }
         });
 
@@ -1692,7 +1670,6 @@ export default {
             features: vm.groundsFilter   
         });
 
-        console.log('Ground Source'); 
         this.groundsSource.loadSource = function (onSuccess) {
             if (vm.dateCache != vm.arrivalDateString+vm.departureDateString) {
                     vm.removePinAnchors();
@@ -1701,9 +1678,7 @@ export default {
             var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
-            // console.log("GS2");
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
-                // console.log('GG');
                 isCustom = true;
                 var arrival = vm.arrivalDateString;
                 if (arrival) {
@@ -1719,14 +1694,11 @@ export default {
                 params.num_infants = vm.numInfants;
                 params.gear_type = vm.gearType;
             }
-            // console.log(urlBase);
             $.ajax({
                 url: urlBase+$.param(params),
                 success: function (response, stat, xhr) {
-                    // console.log('LOADED groundsID');
                     vm.groundsIds.clear();
                     response.forEach(function(el) {
-                        // console.log("groundsIds"+el.id);
                         vm.groundsIds.add(el.id);
                         vm.dateCache = vm.arrivalDateString+vm.departureDateString;
                     });
@@ -1777,9 +1749,7 @@ export default {
 
 	// Marker Popup Code
         $('#mapPopupClose').on('click', function(ev) {
-            // console.log(ev);
             $('#mapPopup').hide();
-	    // console.log("mapPopupClose yes");
             vm.popup.setPosition(undefined);
             vm.selectedFeature = null;
             return false;
@@ -1855,29 +1825,17 @@ export default {
         var map = this.olmap;
 
         this.olmap.getView().on('change:resolution', function(evt) {
-               // console.log(evt);
-               console.log("resolution");
-               //console.log("MAP");
-               // console.log(map);
-               // console.log("OL MAP");
-               // console.log(this.olmap);   
                var resolution = evt.target.get('resolution');
                var units = map.getView().getProjection().getUnits();
                var dpi = 25.4 / 0.28;
                var mpu = ol.proj.METERS_PER_UNIT[units];
  
                var scale_res = resolution * mpu * 39.37 * dpi;
-               // console.log("New Scale");
-               // console.log(scale);
-               //console.log(vm);
                vm.current_map_scale = scale_res;
                setTimeout(function() { if (scale_res == vm.current_map_scale) { vm.buildmarkers(); vm.updateViewport(); }}, 400);
-               // vm.buildmarkers();
-               //   gs_map.reloadMarkers(map);
         });
 
         $('#vesselSize').blur(function() { 
-               console.log('VESSELL CHANGE');
                // vm.olmap.zoomOut();
                // vm.olmap.zoomIn();
                vm.vesselSize = this.value;
@@ -1887,7 +1845,6 @@ export default {
 	});
 
         $('#dateArrival').change(function() {
-               console.log('Arrival CHANGE');
                vm.groundsSource.loadSource();
                //vm.removePinAnchors();
                //vm.anchorPinLevelChange = true;
@@ -1895,7 +1852,6 @@ export default {
         });
 
         $('#dateDeparture').change(function() {
-               console.log('Departure CHANGE');
                vm.groundsSource.loadSource();
                //vm.removePinAnchors();
                //vm.anchorPinLevelChange = true;
@@ -1903,8 +1859,6 @@ export default {
         });
 
         //$("input[type=radio][name=gear_type]").click(function() {
-        //       console.log('Arrival CHANGE');
-         //      // vm.groundsSource.loadSource();
          //      vm.removePinAnchors();
          //      vm.anchorPinLevelChange = true;
          //      vm.buildmarkers();
@@ -1922,7 +1876,7 @@ export default {
                return feature;
             });
             if (result) {
-                    console.log($('#map').hasClass('click'));
+                    // console.log($('#map').hasClass('click'));
                     if ($('#map').hasClass('click')) { 
                     } else {
 			$('#map').addClass('click', result);
@@ -1959,8 +1913,6 @@ export default {
             var geometry = feature.getGeometry();
             var coord = geometry.getCoordinates();
             var properties = feature.getProperties();
-            console.log("CLICK PROPERTIES");
-            console.log(properties);
             if (properties.marker_group == 'mooring_marker') {
 
                 $('#mapPopupName').html(properties.props.name);
@@ -1972,19 +1924,13 @@ export default {
                       $('#mapPopupBook').hide();
 		   }
                    $("#mapPopupImage").show();
-                   console.log("PROP"); 
-                   console.log(properties.props); 
                    if (properties.props.images.length > 0) { 
 			$("#mapPopupImage").attr('src',  properties.props.images[0].image);
 		   } else {
 	                   $("#mapPopupImage").attr('src',  '/static/exploreparks/mooring_photo_scaled.png');
 		   }
-                   // vessel_size_popup
-                   // console.log("VESSEL SIZE"+properties['vessel_size_limit']+':'+properties);
-                   // console.log(properties);
-                   // console.log(properties.props.vessel_size_limit);
                    $("#vessel_size_popup").html(properties.props.vessel_size_limit);
-//                   $("#max_stay_period").html(properties.props.max_advance_booking);
+		   //  $("#max_stay_period").html(properties.props.max_advance_booking);
                    var vessel_size = $('#vesselSize').val();
                    if (vessel_size > 0 ) {
                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
