@@ -115,7 +115,7 @@ export default {
                 'Due',
                 'Future',
                 'Under Review',
-                'Approved'                
+                'Approved',
             ],
             internal_status:[
                 'Due',
@@ -142,9 +142,9 @@ export default {
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
                         //d.regions = vm.filterProposalRegion.join();
-                        d.lodged_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
-                        d.lodged_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
-        		    }
+                        d.date_from = vm.filterComplianceDueFrom != '' && vm.filterComplianceDueFrom != null ? moment(vm.filterComplianceDueFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterComplianceDueTo != '' && vm.filterComplianceDueTo != null ? moment(vm.filterComplianceDueTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                    }
 
                 },
                 dom: 'lBfrtip',
@@ -160,7 +160,7 @@ export default {
                     },
                     {
                         data: "regions",
-                        name: "proposal__region",
+                        name: "proposal__region__name" // will be use like: Approval.objects.filter(proposal__region__name='Kimberley')
                     },
                     {
                         data: "activity",
@@ -177,7 +177,10 @@ export default {
                         },
                         name: "approval__lodgement_number"
                     },
-                    {data: "holder"},
+                    {
+                        data: "holder",
+                        name: "proposal__applicant__name"
+                    },
                     {data: "processing_status",
                         mRender:function(data,type,full){
                             return vm.level == 'external' ? full.customer_status: data;
@@ -190,10 +193,13 @@ export default {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
-                    {data: "assigned_to",
-                       // visible: false
+                    {
+                        data: "assigned_to",
+                        name: "assigned_to__first_name, assigned_to__last_name, assigned_to__email"
+                        // visible: false
                     },
                     {
+                        data: '',
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
@@ -215,7 +221,8 @@ export default {
                                 }
                             }
                             return links;
-                        }
+                        },
+                        name: ''
                     },
                     {data: "reference", visible: false},
                     {data: "customer_status", visible: false},
@@ -223,6 +230,7 @@ export default {
 
                 ],
                 processing: true,
+                /*
                 initComplete: function () {
                     // Grab Regions from the data in the table
                     var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
@@ -258,6 +266,7 @@ export default {
                         vm.status = statusTitles;
                     });
                 }
+                */
             }
         }
     },
@@ -265,6 +274,15 @@ export default {
         datatable
     },
     watch:{
+        filterProposalRegion: function() {
+            //this.$refs.proposal_datatable.vmDataTable.draw();
+            let vm = this;
+            if (vm.filterProposalRegion!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(1).search('').draw();
+            }
+        },
         filterProposalActivity: function() {
             let vm = this;
             if (vm.filterProposalActivity!= 'All') {
@@ -280,9 +298,6 @@ export default {
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
             }
-        },
-        filterProposalRegion: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
         },
         filterProposalSubmitter: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
@@ -305,6 +320,20 @@ export default {
         
     },
     methods:{
+        fetchFilterLists: function(){
+            let vm = this;
+
+            vm.$http.get(api_endpoints.filter_list).then((response) => {
+                vm.proposal_regions = response.body.regions;
+                vm.proposal_activityTitles = response.body.activities;
+                vm.status = vm.level == 'external' ? vm.external_status: vm.internal_status;
+            },(error) => {
+                console.log(error);
+            })
+            //console.log(vm.regions);
+        },
+
+
         addEventListeners: function(){
             let vm = this;
             // Initialise Proposal Date Filters
@@ -420,6 +449,7 @@ export default {
     },
     mounted: function(){
         let vm = this;
+        vm.fetchFilterLists();
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {

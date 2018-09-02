@@ -25,14 +25,14 @@ class ComplianceSerializer(serializers.ModelSerializer):
     allowed_assessors = EmailUserSerializer(many=True)
     #assigned_to = serializers.CharField(source='assigned_to.get_full_name')
     assigned_to = serializers.SerializerMethodField(read_only=True)
-    requirement = serializers.CharField(source='requirement.requirement')
+    requirement = serializers.CharField(source='requirement.requirement', required=False, allow_null=True)
     approval_lodgement_number = serializers.SerializerMethodField()
 
 
     class Meta:
         model = Compliance
         fields = (
-            'id',            
+            'id',
             'proposal',
             'due_date',
             'processing_status',
@@ -78,14 +78,14 @@ class SaveComplianceSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'title',
-            'text',        
-         
+            'text',
+
         )
 
 class ComplianceActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
     class Meta:
-        model = ComplianceUserAction 
+        model = ComplianceUserAction
         fields = '__all__'
 
 class ComplianceCommsSerializer(serializers.ModelSerializer):
@@ -102,7 +102,7 @@ class ComplianceAmendmentRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComplianceAmendmentRequest
         fields = '__all__'
-    
+
     def get_reason (self,obj):
         return obj.get_reason_display()
 

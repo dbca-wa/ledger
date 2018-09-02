@@ -74,6 +74,7 @@ from django.core.files.storage import default_storage
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
+from rest_framework_datatables.renderers import DatatablesRenderer
 from rest_framework.filters import BaseFilterBackend
 
 class GetProposalType(views.APIView):
@@ -108,6 +109,7 @@ class ProposalFilterBackend(DatatablesFilterBackend):
     def filter_queryset(self, request, queryset, view):
         total_count = queryset.count()
 
+        # on the internal dashboard, the Region filter is multi-select - have to use the custom filter below
         regions = request.GET.get('regions')
         if regions:
             if queryset.model is Proposal:
@@ -117,26 +119,40 @@ class ProposalFilterBackend(DatatablesFilterBackend):
             #elif queryset.model is Approval:
             #    queryset = queryset.filter(region__iregex=regions.replace(',', '|'))
 
-        lodged_from = request.GET.get('lodged_from')
-        lodged_to = request.GET.get('lodged_to')
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
         #import ipdb; ipdb.set_trace()
         if queryset.model is Proposal:
-            if lodged_from:
-                queryset = queryset.filter(lodgement_date__gte=lodged_from)
+            if date_from:
+                queryset = queryset.filter(lodgement_date__gte=date_from)
 
-            if lodged_to:
-                queryset = queryset.filter(lodgement_date__lte=lodged_to)
+            if date_to:
+                queryset = queryset.filter(lodgement_date__lte=date_to)
         elif queryset.model is Approval:
-            if lodged_from:
-                queryset = queryset.filter(start_date__gte=lodged_from)
+            if date_from:
+                queryset = queryset.filter(start_date__gte=date_from)
 
-            if lodged_to:
-                queryset = queryset.filter(expiry_date__lte=lodged_to)
+            if date_to:
+                queryset = queryset.filter(expiry_date__lte=date_to)
+        elif queryset.model is Compliance:
+            if date_from:
+                queryset = queryset.filter(due_date__gte=date_from)
 
-        #import ipdb; ipdb.set_trace()
+            if date_to:
+                queryset = queryset.filter(due_date__lte=date_to)
+
         queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
         setattr(view, '_datatables_total_count', total_count)
         return queryset
+
+class ProposalRenderer(DatatablesRenderer):
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        #import ipdb; ipdb.set_trace()
+        if 'view' in renderer_context and hasattr(renderer_context['view'], '_datatables_total_count'):
+            data['recordsTotal'] = renderer_context['view']._datatables_total_count
+            #data.pop('recordsTotal')
+            #data.pop('recordsFiltered')
+        return super(ProposalRenderer, self).render(data, accepted_media_type, renderer_context)
 
 #from django.utils.decorators import method_decorator
 #from django.views.decorators.cache import cache_page
@@ -146,6 +162,7 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
     #filter_backends = (DatatablesFilterBackend,)
     filter_backends = (ProposalFilterBackend,)
     pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (ProposalRenderer,)
     queryset = Proposal.objects.none()
     serializer_class = ListProposalSerializer
     page_size = 10
@@ -175,25 +192,6 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
 #        # Add extra data to response.data
 #        #response.data['regions'] = self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
 #        return response
-
-    @list_route(methods=['GET',])
-    def filter_list(self, request, *args, **kwargs):
-        """ Used by the dashboard filters """
-        region_qs =  self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
-        district_qs =  self.get_queryset().filter(district__isnull=False).values_list('district__name', flat=True).distinct()
-        activity_qs =  self.get_queryset().filter(activity__isnull=False).values_list('activity', flat=True).distinct()
-        submitter_qs = self.get_queryset().filter(submitter__isnull=False).distinct('submitter__email').values_list('submitter__first_name','submitter__last_name','submitter__email')
-        submitters = [dict(email=i[2], search_term='{} {} ({})'.format(i[0], i[1], i[2])) for i in submitter_qs]
-        data = dict(
-            regions=region_qs,
-            districts=district_qs,
-            activities=activity_qs,
-            submitters=submitters,
-            processing_status_choices = [i[1] for i in Proposal.PROCESSING_STATUS_CHOICES],
-            customer_status_choices = [i[1] for i in Proposal.CUSTOMER_STATUS_CHOICES],
-            approval_status_choices = [i[1] for i in Approval.STATUS_CHOICES],
-        )
-        return Response(data)
 
     @list_route(methods=['GET',])
     def proposals_internal(self, request, *args, **kwargs):
@@ -230,31 +228,6 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         serializer = DTReferralSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
 
-#    @list_route(methods=['GET',])
-#    def compliances_external(self, request, *args, **kwargs):
-#        """
-#        Used by the external dashboard
-#
-#        http://localhost:8499/api/proposal_paginated/compliances_external/?format=datatables&draw=1&length=2
-#        """
-#
-#        self.serializer_class = ComplianceSerializer
-#        if is_internal(self.request):
-#            qs = Compliance.objects.all()
-#        elif is_customer(self.request):
-#            user_orgs = [org.id for org in self.request.user.disturbance_organisations.all()]
-#            qs =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) )
-#        else:
-#            qs =Compliance.objects.none()
-#        qs = qs.exclude(processing_status='future')
-#        #qs = self.filter_queryset(self.request, qs, self)
-#        qs = self.filter_queryset(qs)
-#
-#        self.paginator.page_size = qs.count()
-#        result_page = self.paginator.paginate_queryset(qs, request)
-#        serializer = ComplianceSerializer(result_page, context={'request':request}, many=True)
-#        return self.paginator.get_paginated_response(serializer.data)
-
     @list_route(methods=['GET',])
     def proposals_external(self, request, *args, **kwargs):
         """
@@ -266,11 +239,11 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         #qs = self.filter_queryset(self.request, qs, self)
         qs = self.filter_queryset(qs)
 
+        #import ipdb; ipdb.set_trace()
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
         serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
-
 
 
 class ProposalViewSet(viewsets.ModelViewSet):
@@ -290,6 +263,25 @@ class ProposalViewSet(viewsets.ModelViewSet):
             queryset =  Proposal.objects.filter(region__isnull=False).filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             return queryset
         return Proposal.objects.none()
+
+    @list_route(methods=['GET',])
+    def filter_list(self, request, *args, **kwargs):
+        """ Used by the internal/external dashboard filters """
+        region_qs =  self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
+        district_qs =  self.get_queryset().filter(district__isnull=False).values_list('district__name', flat=True).distinct()
+        activity_qs =  self.get_queryset().filter(activity__isnull=False).values_list('activity', flat=True).distinct()
+        submitter_qs = self.get_queryset().filter(submitter__isnull=False).distinct('submitter__email').values_list('submitter__first_name','submitter__last_name','submitter__email')
+        submitters = [dict(email=i[2], search_term='{} {} ({})'.format(i[0], i[1], i[2])) for i in submitter_qs]
+        data = dict(
+            regions=region_qs,
+            districts=district_qs,
+            activities=activity_qs,
+            submitters=submitters,
+            processing_status_choices = [i[1] for i in Proposal.PROCESSING_STATUS_CHOICES],
+            customer_status_choices = [i[1] for i in Proposal.CUSTOMER_STATUS_CHOICES],
+            approval_status_choices = [i[1] for i in Approval.STATUS_CHOICES],
+        )
+        return Response(data)
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))

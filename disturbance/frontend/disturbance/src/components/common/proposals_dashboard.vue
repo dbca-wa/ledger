@@ -169,8 +169,8 @@ export default {
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
                         d.regions = vm.filterProposalRegion.join();
-                        d.lodged_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
-                        d.lodged_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
 
                 },
@@ -485,6 +485,11 @@ export default {
         datatable
     },
     watch:{
+        filterProposalRegion: function(){
+            this.$refs.proposal_datatable.vmDataTable.draw();
+            //let vm = this;
+            //vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion.join()).draw();
+        },
         filterProposalActivity: function() {
             let vm = this;
             if (vm.filterProposalActivity!= 'All') {
@@ -492,19 +497,6 @@ export default {
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
             }
-        },
-        filterProposalStatus: function() {
-            let vm = this;
-            if (vm.filterProposalStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search(vm.filterProposalStatus).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
-            }
-        },
-        filterProposalRegion: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
-            //let vm = this;
-            //vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion.join()).draw();
         },
         filterProposalSubmitter: function(){
             //this.$refs.proposal_datatable.vmDataTable.draw();
@@ -514,7 +506,14 @@ export default {
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
             }
-
+        },
+        filterProposalStatus: function() {
+            let vm = this;
+            if (vm.filterProposalStatus!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(6).search(vm.filterProposalStatus).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
+            }
         },
         filterProposalLodgedFrom: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();

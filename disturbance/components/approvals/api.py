@@ -42,7 +42,52 @@ from disturbance.components.approvals.serializers import (
 )
 from disturbance.helpers import is_customer, is_internal
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
-from disturbance.components.proposals.api import ProposalFilterBackend
+from disturbance.components.proposals.api import ProposalFilterBackend, ProposalRenderer
+
+class ApprovalPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (ProposalFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (ProposalRenderer,)
+    page_size = 10
+    queryset = Approval.objects.none()
+    serializer_class = ApprovalSerializer
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return Approval.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in self.request.user.disturbance_organisations.all()]
+            queryset =  Approval.objects.filter(applicant_id__in = user_orgs)
+            return queryset
+        return Approval.objects.none()
+
+#    def list(self, request, *args, **kwargs):
+#        response = super(ProposalPaginatedViewSet, self).list(request, args, kwargs)
+#
+#        # Add extra data to response.data
+#        #response.data['regions'] = self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
+#        return response
+
+    @list_route(methods=['GET',])
+    def approvals_external(self, request, *args, **kwargs):
+        """
+        Paginated serializer for datatables - used by the external dashboard
+
+        To test:
+            http://localhost:8000/api/approval_paginated/approvals_external/?format=datatables&draw=1&length=2
+        """
+
+        #import ipdb; ipdb.set_trace()
+        qs = self.get_queryset().order_by('lodgement_number', '-issue_date')
+        #qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
+        qs = self.filter_queryset(qs)
+        #qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+
+        self.paginator.page_size = qs.count()
+        result_page = self.paginator.paginate_queryset(qs, request)
+        serializer = ApprovalSerializer(result_page, context={'request':request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
+
 
 class ApprovalViewSet(viewsets.ModelViewSet):
     #queryset = Approval.objects.all()
@@ -68,25 +113,26 @@ class ApprovalViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @list_route(methods=['GET',])
-    def approvals_external(self, request, *args, **kwargs):
-        """
-        Paginated serializer for datatables - used by the external dashboard
-
-		To test:
-        	http://localhost:8000/api/approvals/approvals_external/?format=datatables&draw=1&length=2
-        """
-
-        #import ipdb; ipdb.set_trace()
-        qs = self.get_queryset().order_by('lodgement_number', '-issue_date')
-        qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
-        #qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-
-        paginator = DatatablesPageNumberPagination()
-        paginator.page_size = qs.count()
-        result_page = paginator.paginate_queryset(qs, request)
-        serializer = ApprovalSerializer(result_page, context={'request':request}, many=True)
-        return paginator.get_paginated_response(serializer.data)
+#    @list_route(methods=['GET',])
+#    def approvals_paginated(self, request, *args, **kwargs):
+#        """
+#        Paginated serializer for datatables - used by the external dashboard
+#
+#		To test:
+#        	http://localhost:8000/api/approvals/approvals_paginated/?format=datatables&draw=1&length=2
+#        """
+#
+#        #import ipdb; ipdb.set_trace()
+#        qs = self.get_queryset().order_by('lodgement_number', '-issue_date')
+#        qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
+#        #qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+#
+#        self.renderer_classes = (ProposalRenderer,)
+#        paginator = DatatablesPageNumberPagination()
+#        paginator.page_size = qs.count()
+#        result_page = paginator.paginate_queryset(qs, request)
+#        serializer = ApprovalSerializer(result_page, context={'request':request}, many=True)
+#        return paginator.get_paginated_response(serializer.data)
 
 
 #    @list_route(methods=['GET',])

@@ -26,11 +26,12 @@ module.exports = {
 
     // used in internal and external dashboards
     proposals_paginated_external:   "/api/proposal_paginated/proposals_external/?format=datatables",
-    approvals_paginated_external:   "/api/approvals/approvals_external/?format=datatables",
-    compliancess_paginated_external:"/api/compliances/compliances_external/?format=datatables",
+    approvals_paginated_external:   "/api/approval_paginated/approvals_external/?format=datatables",
+    compliances_paginated_external: "/api/compliance_paginated/compliances_external/?format=datatables",
     proposals_paginated_internal:   "/api/proposal_paginated/proposals_internal/?format=datatables",
     referrals_paginated_internal:   "/api/proposal_paginated/referrals_internal/?format=datatables",
-    filter_list:                    "/api/proposal_paginated/filter_list.json",
+    //filter_list:                    "/api/proposal_paginated/filter_list.json",
+    filter_list:                    "/api/proposal/filter_list.json",
 
     //approvals_paginated:"/api/approvals/user_list_paginated/?format=datatables",
     //compliances_paginated:"/api/compliances/user_list_paginated/?format=datatables",

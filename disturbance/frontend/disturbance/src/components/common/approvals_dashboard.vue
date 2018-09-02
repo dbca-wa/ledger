@@ -144,8 +144,8 @@ export default {
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
                         //d.regions = vm.filterProposalRegion.join(); // no need to add this since we can filter normally (filter is not multi-select in Approval table)
-                        d.lodged_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
-                        d.lodged_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                     }
 
                 },
@@ -346,22 +346,6 @@ export default {
         ApprovalSurrender
     },
     watch:{
-        filterProposalActivity: function() {
-            let vm = this;
-            if (vm.filterProposalActivity!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalActivity).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
-            }
-        },
-        filterProposalStatus: function() {
-            let vm = this;
-            if (vm.filterProposalStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(5).search(vm.filterProposalStatus).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
-            }
-        },
         filterProposalRegion: function(){
             //this.$refs.proposal_datatable.vmDataTable.draw();
             let vm = this;
@@ -369,6 +353,14 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion).draw();
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(1).search('').draw();
+            }
+        },
+        filterProposalActivity: function() {
+            let vm = this;
+            if (vm.filterProposalActivity!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalActivity).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
             }
         },
         filterProposalSubmitter: function(){
@@ -380,6 +372,14 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
             }
 
+        },
+        filterProposalStatus: function() {
+            let vm = this;
+            if (vm.filterProposalStatus!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(5).search(vm.filterProposalStatus).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
+            }
         },
         filterProposalLodgedFrom: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();

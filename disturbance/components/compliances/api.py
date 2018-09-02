@@ -44,7 +44,51 @@ from disturbance.components.compliances.serializers import (
 )
 from disturbance.helpers import is_customer, is_internal
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
-from disturbance.components.proposals.api import ProposalFilterBackend
+from disturbance.components.proposals.api import ProposalFilterBackend, ProposalRenderer
+
+class CompliancePaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (ProposalFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (ProposalRenderer,)
+    page_size = 10
+    queryset = Compliance.objects.none()
+    serializer_class = ComplianceSerializer
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return Compliance.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in self.request.user.disturbance_organisations.all()]
+            queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) )
+            return queryset
+        return Compliance.objects.none()
+
+#    def list(self, request, *args, **kwargs):
+#        response = super(ProposalPaginatedViewSet, self).list(request, args, kwargs)
+#
+#        # Add extra data to response.data
+#        #response.data['regions'] = self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
+#        return response
+
+    @list_route(methods=['GET',])
+    def compliances_external(self, request, *args, **kwargs):
+        """
+        Paginated serializer for datatables - used by the external dashboard
+
+        To test:
+            http://localhost:8000/api/compliance_paginated/compliances_external/?format=datatables&draw=1&length=2
+        """
+
+        #import ipdb; ipdb.set_trace()
+        qs = self.get_queryset().exclude(processing_status='future')
+        #qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
+        qs = self.filter_queryset(qs)
+        #qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+
+        self.paginator.page_size = qs.count()
+        result_page = self.paginator.paginate_queryset(qs, request)
+        serializer = ComplianceSerializer(result_page, context={'request':request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
 
 
 class ComplianceViewSet(viewsets.ModelViewSet):
@@ -70,22 +114,22 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @list_route(methods=['GET',])
-    def compliances_external(self, request, *args, **kwargs):
-        """
-        Used by the external dashboard
-
-        http://localhost:8499/api/compliances/compliances_external/?format=datatables&draw=1&length=2
-        """
-
-        qs = self.get_queryset().exclude(processing_status='future')
-        qs = ProposalFilterBackend().filter_queryset(request, qs, self)
-
-        paginator = DatatablesPageNumberPagination()
-        paginator.page_size = qs.count()
-        result_page = paginator.paginate_queryset(qs, request)
-        serializer = ComplianceSerializer(result_page, context={'request':request}, many=True)
-        return paginator.get_paginated_response(serializer.data)
+#    @list_route(methods=['GET',])
+#    def compliances_paginated(self, request, *args, **kwargs):
+#        """
+#        Used by the external dashboard
+#
+#        http://localhost:8499/api/compliances/compliances_external/paginated/?format=datatables&draw=1&length=2
+#        """
+#
+#        qs = self.get_queryset().exclude(processing_status='future')
+#        qs = ProposalFilterBackend().filter_queryset(request, qs, self)
+#
+#        paginator = DatatablesPageNumberPagination()
+#        paginator.page_size = qs.count()
+#        result_page = paginator.paginate_queryset(qs, request)
+#        serializer = ComplianceSerializer(result_page, context={'request':request}, many=True)
+#        return paginator.get_paginated_response(serializer.data)
 
 #    @list_route(methods=['GET',])
 #    def user_list(self, request, *args, **kwargs):
