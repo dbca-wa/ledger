@@ -553,11 +553,12 @@ class Proposal(RevisionedMixin):
                 # Create a log entry for the organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
 
-                #ret1 = send_submit_email_notification(request, self)
-                #ret2 = send_external_submit_email_notification(request, self)
+                #import ipdb; ipdb.set_trace()
+                ret1 = send_submit_email_notification(request, self)
+                ret2 = send_external_submit_email_notification(request, self)
 
-                #if ret1 and ret2:
-                if True:
+                if ret1 and ret2:
+                #if True:
                     self.processing_status = 'with_assessor'
                     self.customer_status = 'with_assessor'
                     self.save()
