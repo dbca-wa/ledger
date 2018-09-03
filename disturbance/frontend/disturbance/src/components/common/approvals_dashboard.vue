@@ -3,7 +3,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Approvals <small v-if="is_external">View existing approvals and ammed or renew them</small>
+                    <h3 class="panel-title">Approvals <small v-if="is_external">View existing approvals and amend or renew them</small>
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -126,15 +126,28 @@ export default {
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action"],
+            proposal_headers:[
+                "Number","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
+                //"LodgementNo","CanReissue","CanAction","CanReinstate","SetToCancel","SetToSuspend","SetToSurrender","CurrentProposal","RenewalDoc","RenewalSent","CanAmend","CanRenew"
+            ],
             proposal_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                serverSide: true,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data',
+
+                    // adding extra GET params for Custom filtering
+                    "data": function ( d ) {
+                        //d.regions = vm.filterProposalRegion.join(); // no need to add this since we can filter normally (filter is not multi-select in Approval table)
+                        d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                    }
+
                 },
                 dom: 'lBfrtip',
                 buttons:[
@@ -175,7 +188,7 @@ export default {
                                     });   
 
                                 }
-                            }                          
+                            }
                             return result;
                         }
                         else { return full.lodgement_number }
@@ -187,37 +200,49 @@ export default {
                         'render': function (value) {
                             return helpers.dtPopover(value);
                         },
-                        'createdCell': helpers.dtPopoverCellFn
+                        'createdCell': helpers.dtPopoverCellFn,
+                        name: 'current_proposal__region__name'// will be use like: Approval.objects.filter(current_proposal__region__name='Kimberley')
                     },
-                    {data: "activity"},
+                    {
+                        data: "activity",
+                        name: "current_proposal__activity"
+                    },
                     {
                         data: "title",
                         'render': function (value) {
                             return helpers.dtPopover(value);
                         },
-                        'createdCell': helpers.dtPopoverCellFn
+                        'createdCell': helpers.dtPopoverCellFn,
+                        name: "current_proposal__title"
                     },
-                    {data: "applicant"},
+                    {
+                        data: "applicant",
+                        name: "applicant__organisation__name" // will be use like: Approval.objects.all().order_by('applicant__organisation__nane')
+                    },
                     {data: "status"},
                     {
                         data: "start_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        searchable: false
                     },
                     {
                         data: "expiry_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        searchable: false
                     },
                     {
                         data: "licence_document",
                         mRender:function(data,type,full){
                             return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
-                        }
+                        },
+                        name: 'licence_document__name'
                     },
                     {
+                        data: '',
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
@@ -265,10 +290,15 @@ export default {
                                 }
                             }
                             return links;
-                        }
-                    }
+                        },
+                        searchable: false,
+                        orderable: false,
+                        name: ''
+                    },
+                    
                 ],
                 processing: true,
+				/*
                 initComplete: function () {
                     // Grab Regions from the data in the table
                     var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
@@ -305,6 +335,7 @@ export default {
                     // Fix the table rendering columns
                     vm.$refs.proposal_datatable.vmDataTable.columns.adjust().responsive.recalc();
                 }
+				*/
             }
         }
     },
@@ -315,6 +346,15 @@ export default {
         ApprovalSurrender
     },
     watch:{
+        filterProposalRegion: function(){
+            //this.$refs.proposal_datatable.vmDataTable.draw();
+            let vm = this;
+            if (vm.filterProposalRegion!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(1).search('').draw();
+            }
+        },
         filterProposalActivity: function() {
             let vm = this;
             if (vm.filterProposalActivity!= 'All') {
@@ -323,6 +363,16 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
             }
         },
+        filterProposalSubmitter: function(){
+            //this.$refs.proposal_datatable.vmDataTable.draw();
+            let vm = this;
+            if (vm.filterProposalSubmitter!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalSubmitter).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
+            }
+
+        },
         filterProposalStatus: function() {
             let vm = this;
             if (vm.filterProposalStatus!= 'All') {
@@ -330,12 +380,6 @@ export default {
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
             }
-        },
-        filterProposalRegion: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
-        },
-        filterProposalSubmitter: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
         },
         filterProposalLodgedFrom: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
@@ -357,6 +401,20 @@ export default {
         }
     },
     methods:{
+        fetchFilterLists: function(){
+            let vm = this;
+
+            vm.$http.get(api_endpoints.filter_list_approvals).then((response) => {
+                vm.proposal_regions = response.body.regions;
+                vm.proposal_activityTitles = response.body.activities;
+                vm.proposal_submitters = response.body.submitters;
+                vm.approval_status = response.body.approval_status_choices;
+            },(error) => {
+                console.log(error);
+            })
+            //console.log(vm.regions);
+        },
+
         addEventListeners: function(){
             let vm = this;
             // Initialise Proposal Date Filters
@@ -518,6 +576,7 @@ export default {
         check_assessor: function(proposal){
             let vm = this;         
             
+            /*
             var assessor = proposal.allowed_assessors.filter(function(elem){
                     return(elem.id=vm.profile.id)
                 });
@@ -526,6 +585,8 @@ export default {
                 return true;
             else
                 return false;       
+            */
+            return false;       
         },
 
         reissueApproval:function (proposal_id) {
@@ -694,6 +755,7 @@ export default {
 
     },
     mounted: function(){
+		this.fetchFilterLists();
         this.fetchProfile();
         let vm = this;
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {

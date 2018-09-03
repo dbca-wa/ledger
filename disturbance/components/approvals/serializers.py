@@ -9,7 +9,7 @@ from disturbance.components.approvals.models import (
 from disturbance.components.organisations.models import (
                                 Organisation
                             )
-from disturbance.components.main.serializers import CommunicationLogEntrySerializer 
+from disturbance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
 
 
@@ -23,7 +23,8 @@ class ApprovalSerializer(serializers.ModelSerializer):
     applicant = serializers.CharField(source='applicant.name')
     applicant_id = serializers.ReadOnlyField(source='applicant.id')
     licence_document = serializers.CharField(source='licence_document._file.url')
-    renewal_document = serializers.CharField(source='renewal_document._file.url')
+    #renewal_document = serializers.CharField(source='renewal_document._file.url')
+    renewal_document = serializers.SerializerMethodField(read_only=True)
     status = serializers.CharField(source='get_status_display')
     allowed_assessors = EmailUserSerializer(many=True)
     region = serializers.CharField(source='current_proposal.region.name')
@@ -32,7 +33,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
     activity = serializers.CharField(source='current_proposal.activity')
     title = serializers.CharField(source='current_proposal.title')
     #current_proposal = InternalProposalSerializer(many=False)
-    
+
     class Meta:
         model = Approval
         fields = (
@@ -71,20 +72,52 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'can_amend',
             'can_reinstate'
         )
+        # the serverSide functionality of datatables is such that only columns that have field 'data' defined are requested from the serializer. We
+        # also require the following additional fields for some of the mRender functions
+        datatables_always_serialize = (
+            'id',
+            'activity',
+            'region',
+            'title',
+            'status',
+            'reference',
+            'lodgement_number',
+            'licence_document',
+            'start_date',
+            'expiry_date',
+            'applicant',
+            'can_reissue',
+            'can_action',
+            'can_reinstate',
+            'can_amend',
+            'can_renew',
+            'set_to_cancel',
+            'set_to_suspend',
+            'set_to_surrender',
+            'current_proposal',
+            'renewal_document',
+            'renewal_sent',
+        )
+
+    def get_renewal_document(self,obj):
+        if obj.renewal_document and obj.renewal_document._file:
+            return obj.renewal_document._file.url
+        return None
+
 
 class ApprovalCancellationSerializer(serializers.Serializer):
-    cancellation_date = serializers.DateField(input_formats=['%d/%m/%Y'])    
+    cancellation_date = serializers.DateField(input_formats=['%d/%m/%Y'])
     cancellation_details = serializers.CharField()
-    
+
 class ApprovalSuspensionSerializer(serializers.Serializer):
     from_date = serializers.DateField(input_formats=['%d/%m/%Y'])
     to_date = serializers.DateField(input_formats=['%d/%m/%Y'], required=False, allow_null=True)
     suspension_details = serializers.CharField()
-    
+
 class ApprovalSurrenderSerializer(serializers.Serializer):
-    surrender_date = serializers.DateField(input_formats=['%d/%m/%Y'])    
+    surrender_date = serializers.DateField(input_formats=['%d/%m/%Y'])
     surrender_details = serializers.CharField()
-    
+
 class ApprovalUserActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
     class Meta:

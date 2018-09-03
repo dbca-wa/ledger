@@ -280,6 +280,7 @@ export default {
 
     submit: function(){
         let vm = this;
+        let formData = new FormData(vm.form);
 
         var num_missing_fields = vm.validate()
         if (num_missing_fields > 0) {
@@ -301,7 +302,6 @@ export default {
             showCancelButton: true,
             confirmButtonText: 'Submit'
         }).then(() => {
-            let formData = new FormData(vm.form);
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
                 vm.proposal = res.body;
                 vm.$router.push({

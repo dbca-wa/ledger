@@ -565,8 +565,6 @@ class Proposal(RevisionedMixin):
                 if missing_fields:
                     error_text = 'The proposal has these missing fields, {}'.format(','.join(missing_fields))
                     raise exceptions.ProposalMissingFields(detail=error_text)
-                self.processing_status = 'with_assessor'
-                self.customer_status = 'with_assessor'
                 self.submitter = request.user
                 #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.lodgement_date = timezone.now()
@@ -577,14 +575,22 @@ class Proposal(RevisionedMixin):
                             q.status = 'amended'
                             q.save()
 
-                self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 # Create a log entry for the organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
 
-                send_submit_email_notification(request, self)
-                send_external_submit_email_notification(request, self)
+                #import ipdb; ipdb.set_trace()
+                ret1 = send_submit_email_notification(request, self)
+                ret2 = send_external_submit_email_notification(request, self)
+
+                if ret1 and ret2:
+                #if True:
+                    self.processing_status = 'with_assessor'
+                    self.customer_status = 'with_assessor'
+                    self.save()
+                else:
+                    raise ValidationError('An error occurred while submitting proposal (Submit email notifications failed)')
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
@@ -669,7 +675,7 @@ class Proposal(RevisionedMixin):
                         # Create a log entry for the organisation
                         self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
             except:
-                raise 
+                raise
 
     def assing_approval_level_document(self, request):
         with transaction.atomic():
@@ -679,7 +685,7 @@ class Proposal(RevisionedMixin):
                         document = self.documents.get(input_name=str(request.data['approval_level_document']))
                     except ProposalDocument.DoesNotExist:
                         document = self.documents.get_or_create(input_name=str(request.data['approval_level_document']))[0]
-                    document.name = str(request.data['approval_level_document'])   
+                    document.name = str(request.data['approval_level_document'])
                     if document._file and os.path.isfile(document._file.path):
                         os.remove(document._file.path)
                     document._file = request.data['approval_level_document']
@@ -692,7 +698,7 @@ class Proposal(RevisionedMixin):
                 #instance.save()
                 self.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
                 # Create a log entry for the organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)            
+                self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
                 return self
             except:
                 raise
@@ -928,7 +934,7 @@ class Proposal(RevisionedMixin):
                             approval_compliances = Compliance.objects.filter(approval= previous_approval, proposal = self.previous_application, processing_status='future')
                             if approval_compliances:
                                 for c in approval_compliances:
-                                    c.delete()  
+                                    c.delete()
                         # Log creation
                         # Generate the document
                         approval.generate_doc(request.user)
