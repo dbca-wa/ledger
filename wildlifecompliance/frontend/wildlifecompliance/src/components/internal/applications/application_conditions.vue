@@ -1,26 +1,70 @@
 <template id="application_conditions">
-    <div class="col-md-12">
-        <div class="row">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Conditions
-                        <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
-                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                        </a>
-                    </h3>
-                </div>
-                <div class="panel-body panel-collapse collapse in" :id="panelBody">
-                    <form class="form-horizontal" action="index.html" method="post">
-                        <div class="col-sm-12">
-                            <button v-if="hasAssessorMode" @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
+
+                    <div class="col-md-12">
+                    <div class="row">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Inspection Report
+                                    <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
+                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                    </a>
+                                </h3>
+                            </div>
+                            <div class="panel-body panel-collapse collapse in" :id="panelBody">
+                                <form class="form-horizontal" action="index.html" method="post">
+                                    <div class="col-sm-12">
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-sm-3">
+                                                    <label class="control-label pull-left">Inspection Date</label>
+                                                </div>
+                                                <div class="col-sm-9">
+                                                    <div class="input-group date" style="width: 70%;">
+                                                       <input class="pull-left" placeholder="DD/MM/YYYY"/> 
+                                                       <span class="input-group-addon">
+                                                            <span class="glyphicon glyphicon-calendar"></span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-3">
+                                                    <label class="control-label pull-left">Inspection Report</label>
+                                                </div>
+                                                <div class="col-sm-9">
+                                                       <a href="">Attach File</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </form>
+                            </div>
                         </div>
-                        <datatable ref="conditions_datatable" :id="'conditions-datatable-'+_uid" :dtOptions="condition_options" :dtHeaders="condition_headers"/>
-                    </form>
+                    </div>
+                    <div class="row">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Proposed Conditions
+                                    <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
+                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                    </a>
+                                </h3>
+                            </div>
+                            <div class="panel-body panel-collapse collapse in" :id="panelBody">
+                                <form class="form-horizontal" action="index.html" method="post">
+                                    <div class="col-sm-12">
+                                        <button v-if="hasAssessorMode" @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
+                                    </div>
+                                    <datatable ref="conditions_datatable" :id="'conditions-datatable-'+_uid" :dtOptions="condition_options" :dtHeaders="condition_headers"/>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions"/>
                 </div>
-            </div>
-        </div>
-        <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions"/>
-    </div>
+
+            
 </template>
 <script>
 import {
@@ -34,6 +78,7 @@ export default {
     name: 'InternalApplicationConditions',
     props: {
         application: Object
+
     },
     data: function() {
         let vm = this;
