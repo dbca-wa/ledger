@@ -62,6 +62,7 @@ from disturbance.components.proposals.serializers import (
     SearchReferenceSerializer,
     SearchKeywordSerializer,
     ListProposalSerializer,
+    ProposalReferralSerializer
 )
 from disturbance.components.approvals.models import Approval
 from disturbance.components.approvals.serializers import ApprovalSerializer
@@ -658,12 +659,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             status = request.data.get('status')
+            approver_comment = request.data.get('approver_comment')
             if not status:
                 raise serializers.ValidationError('Status is required')
             else:
                 if not status in ['with_assessor','with_assessor_requirements','with_approver']:
                     raise serializers.ValidationError('The status provided is not allowed')
-            instance.move_to_status(request,status)
+            instance.move_to_status(request,status, approver_comment)
             serializer = InternalProposalSerializer(instance,context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -1083,6 +1085,16 @@ class ReferralViewSet(viewsets.ModelViewSet):
         if proposal:
             qs = qs.filter(proposal_id=int(proposal))
         serializer = DTReferralSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def referral_list(self, request, *args, **kwargs):
+        instance = self.get_object()
+        qs = self.get_queryset().all()
+        qs=qs.filter(sent_by=instance.referral, proposal=instance.proposal)
+        serializer = DTReferralSerializer(qs, many=True)
+        #serializer = ProposalReferralSerializer(qs, many=True)
+
         return Response(serializer.data)
 
     @detail_route(methods=['GET', 'POST'])

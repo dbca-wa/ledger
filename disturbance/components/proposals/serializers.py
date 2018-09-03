@@ -396,7 +396,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
             'assessor_mode': True,
             'has_assessor_mode': obj.has_assessor_mode(user),
             'assessor_can_assess': obj.can_assess(user),
-            'assessor_level': 'assessor'
+            'assessor_level': 'assessor',
+            'assessor_box_view': obj.assessor_comments_view(user)
         }
 
     def get_readonly(self,obj):
@@ -424,11 +425,14 @@ class ReferralProposalSerializer(InternalProposalSerializer):
         return {
             'assessor_mode': True,
             'assessor_can_assess': referral.can_assess_referral(user) if referral else None,
-            'assessor_level': 'referral'
+            'assessor_level': 'referral',
+            'assessor_box_view': obj.assessor_comments_view(user)
         }
 
 class ReferralSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(source='get_processing_status_display')
+    latest_referrals = ProposalReferralSerializer(many=True)
+    can_be_completed = serializers.BooleanField()
     class Meta:
         model = Referral
         fields = '__all__'

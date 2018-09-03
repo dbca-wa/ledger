@@ -80,7 +80,7 @@ class Compliance(models.Model):
 
     @property
     def allowed_assessors(self):
-        return self.proposal.allowed_assessors
+        return self.proposal.compliance_assessors
 
     @property
     def can_user_view(self):

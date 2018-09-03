@@ -100,7 +100,6 @@ module.exports = {
         switch (c.type) {
             case 'text':
         		readonly = (c.readonly) ? (c.readonly): (readonly);
-                console.log('site_url: ' + site_url)
                 _elements.push(
                     <TextField type="text" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
@@ -160,7 +159,7 @@ module.exports = {
                 }
                 _elements.push(
                     <div class="form-group">
-                        <label id={id}>{c.label}</label>
+                        <label id={id} class="inline">{c.label}</label>
                             <HelpText help_text={help_text}/>
                             <HelpText help_text={help_text_assessor} assessorMode={assessorMode} isForAssessor={true}/>
                             <HelpTextUrl help_text_url={help_text_url}/>
@@ -301,6 +300,7 @@ module.exports = {
     },
     sections:[],
     generateAssessorTextBoxes(h,c,val,assessor_mode,assessor_data,assessor_info){
+        var box_visibility = this.status_data.assessorStatus.assessor_box_view
         var boxes = [];
         if (!this.status_data.can_user_edit){
             if (assessor_data){
@@ -311,7 +311,7 @@ module.exports = {
                 var assessor_visibility = assessor_mode == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
                 assessor_visibility = !assessor_visibility;
                 boxes.push(
-                    <AssessorText type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
+                    <AssessorText box_view={box_visibility} type="text" name={assessor_name} value={assessor_val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
                 )
                 // Referral Data
                 var current_referral_present = false;
@@ -321,7 +321,7 @@ module.exports = {
                         var readonly = v.email == assessor_info.email && assessor_mode == 'referral' && this.status_data.assessorStatus.assessor_can_assess ? false : true;
                         var referral_name = `${c.name}-Referral-${v.email}`;
                         boxes.push(
-                            <AssessorText type="text" name={referral_name} value={v.value} label={v.full_name} help_text={c.help_text} readonly={readonly}/>
+                            <AssessorText box_view={box_visibility} type="text" name={referral_name} value={v.value} label={v.full_name} help_text={c.help_text} readonly={readonly}/>
                         )
                     });
                 }
@@ -332,7 +332,7 @@ module.exports = {
                         var referral_visibility =  assessor_mode == 'referral' && this.status_data.assessorStatus.assessor_can_assess ? false : true ;
                         var referral_label = `${assessor_info.name}`;
                         boxes.push(
-                            <AssessorText type="text" name={referral_name} value={assessor_val} label={referral_label} readonly={referral_visibility}/>
+                            <AssessorText box_view={box_visibility} type="text" name={referral_name} value={assessor_val} label={referral_label} readonly={referral_visibility}/>
                         )
                     }
                 }
@@ -343,7 +343,7 @@ module.exports = {
                     var assessor_visibility = assessor_mode == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
                     assessor_visibility = !assessor_visibility;
                     boxes.push(
-                        <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
+                        <AssessorText box_view={box_visibility} type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
                     )
                 }
                 else if (assessor_mode == 'referral'){
@@ -351,14 +351,14 @@ module.exports = {
                     var name = `${c.name}-Assessor`;
                     var assessor_visibility = assessor_mode != 'assessor' ? true : false;
                     boxes.push(
-                        <AssessorText type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
+                        <AssessorText box_view={box_visibility} type="text" name={name} value={val} label={'Assessor'} help_text={c.help_text} readonly={assessor_visibility}/>
                     )
                     // Add Referral Box
                     var referral_name = `${c.name}-Referral-${assessor_info.email}`;
                     var referral_visibility = assessor_mode != 'referral' ? true : false;
                     var referral_label = `${assessor_info.name}`;
                     boxes.push(
-                        <AssessorText type="text" name={referral_name} value={val} label={referral_label} readonly={referral_visibility}/>
+                        <AssessorText box_view={box_visibility} type="text" name={referral_name} value={val} label={referral_label} readonly={referral_visibility}/>
                     )
                 }
             }

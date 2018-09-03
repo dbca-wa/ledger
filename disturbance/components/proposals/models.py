@@ -22,7 +22,7 @@ from disturbance.components.main.models import CommunicationsLogEntry, UserActio
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
-from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification
+from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
 import copy
 
 
@@ -256,7 +256,7 @@ class Proposal(RevisionedMixin):
 #    )
 
     APPLICATION_TYPE_CHOICES = (
-        ('new_licence', 'New Licence'),
+        ('new_proposal', 'New Proposal'),
         ('amendment', 'Amendment'),
         ('renewal', 'Renewal'),
     )
@@ -278,7 +278,8 @@ class Proposal(RevisionedMixin):
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
-    lodgement_date = models.DateField(blank=True, null=True)
+    #lodgement_date = models.DateField(blank=True, null=True)
+    lodgement_date = models.DateTimeField(blank=True, null=True)
 
     proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proxy')
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals')
@@ -313,6 +314,7 @@ class Proposal(RevisionedMixin):
     application_type = models.ForeignKey(ApplicationType)
     approval_level = models.CharField('Activity matrix approval level', max_length=255,null=True,blank=True)
     approval_level_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='approval_level_document')
+    approval_comment = models.TextField(blank=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -415,6 +417,11 @@ class Proposal(RevisionedMixin):
         return group.members.all() if group else []
 
     @property
+    def compliance_assessors(self):
+        group = self.__assessor_group()
+        return group.members.all() if group else []
+
+    @property
     def can_officer_process(self):
         """
         :return: True if the application is in one of the processable status for Assessor role.
@@ -445,6 +452,7 @@ class Proposal(RevisionedMixin):
         default_group = ProposalAssessorGroup.objects.get(default=True)
 
         return default_group
+
 
     def __approver_group(self):
         # TODO get list of approver groups based on region and activity
@@ -512,6 +520,24 @@ class Proposal(RevisionedMixin):
         else:
             return False
 
+    def assessor_comments_view(self,user):
+        
+        if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements' or self.processing_status == 'with_approver':
+            try:
+                referral = Referral.objects.get(proposal=self,referral=user)
+            except:
+                referral = None
+            if referral:
+                return True
+            elif self.__assessor_group() in user.proposalassessorgroup_set.all():
+                return True
+            elif self.__approver_group() in user.proposalapprovergroup_set.all():
+                return True 
+            else:
+                return False
+        else:
+            return False
+
     def has_assessor_mode(self,user):
         status_without_assessor = ['with_approver','approved','declined','draft']
         if self.processing_status in status_without_assessor:
@@ -540,7 +566,8 @@ class Proposal(RevisionedMixin):
                     error_text = 'The proposal has these missing fields, {}'.format(','.join(missing_fields))
                     raise exceptions.ProposalMissingFields(detail=error_text)
                 self.submitter = request.user
-                self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                self.lodgement_date = timezone.now()
                 if (self.amendment_requests):
                     qs = self.amendment_requests.filter(status = "requested")
                     if (qs):
@@ -700,13 +727,18 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
-    def move_to_status(self,request,status):
+    def move_to_status(self,request,status, approver_comment):
         if not self.can_assess(request.user):
             raise exceptions.ProposalNotAuthorized()
         if status in ['with_assessor','with_assessor_requirements','with_approver']:
             if self.processing_status == 'with_referral' or self.can_user_edit:
                 raise ValidationError('You cannot change the current status at this time')
             if self.processing_status != status:
+                if self.processing_status =='with_approver':
+                    if approver_comment:
+                        self.approver_comment = approver_comment
+                        self.save()
+                        send_proposal_approver_sendback_email_notification(request, self)
                 self.processing_status = status
                 self.save()
 
@@ -728,6 +760,8 @@ class Proposal(RevisionedMixin):
                 self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_REISSUE_APPROVAL.format(self.id),request)
+            else:
+                raise ValidationError('Cannot reissue Approval')
         else:
             raise ValidationError('Cannot reissue Approval')
 
@@ -903,14 +937,14 @@ class Proposal(RevisionedMixin):
                                     c.delete()
                         # Log creation
                         # Generate the document
-                        approval.generate_doc()
+                        approval.generate_doc(request.user)
                         self.generate_compliances(approval, request)
                         # send the doc and log in approval and org
                     else:
                         #approval.replaced_by = request.user
                         approval.replaced_by = self.approval
                         # Generate the document
-                        approval.generate_doc()
+                        approval.generate_doc(request.user)
                         #Delete the future compliances if Approval is reissued and generate the compliances again.
                         approval_compliances = Compliance.objects.filter(approval= approval, proposal = self, processing_status='future')
                         if approval_compliances:
@@ -1320,6 +1354,18 @@ class Referral(models.Model):
         return 'Proposal {} - Referral {}'.format(self.proposal.id,self.id)
 
     # Methods
+    @property
+    def latest_referrals(self):
+        return Referral.objects.filter(sent_by=self.referral, proposal=self.proposal)[:2]
+
+    @property
+    def can_be_completed(self):
+        #Referral cannot be completed until second level referral sent by referral has been completed/recalled
+        qs=Referral.objects.filter(sent_by=self.referral, proposal=self.proposal, processing_status='with_referral')
+        if qs:
+            return False
+        else:
+            return True
 
     def recall(self,request):
         with transaction.atomic():

@@ -55,6 +55,11 @@ class ApproverApproveSendNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/proposals/send_approver_approve_notification.html'
     txt_template = 'disturbance/emails/proposals/send_approver_approve_notification.txt'
 
+class ApproverSendBackNotificationEmail(TemplateEmailBase):
+    subject = 'A Proposal has been sent back by approver.'
+    html_template = 'disturbance/emails/proposals/send_approver_sendback_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_approver_sendback_notification.txt'
+
 def send_referral_email_notification(referral,request,reminder=False):
     email = ReferralSendNotificationEmail()
     url = request.build_absolute_uri(reverse('internal-referral-detail',kwargs={'proposal_pk':referral.proposal.id,'referral_pk':referral.id}))
@@ -177,6 +182,20 @@ def send_proposal_decline_email_notification(proposal,request,proposal_decline):
         all_ccs = cc_list.split(',')
 
     msg = email.send(proposal.submitter.email, bcc= all_ccs, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
+def send_proposal_approver_sendback_email_notification(request, proposal):
+    email = ApproverSendBackNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    context = {
+        'proposal': proposal,
+        'url': url,
+        'approver_comment': proposal.approver_comment
+    }
+
+    msg = email.send(proposal.assessor_recipients, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)

@@ -88,6 +88,10 @@ class Approval(models.Model):
         return self.current_proposal.region.name
 
     @property
+    def district(self):
+        return self.current_proposal.district.name
+
+    @property
     def tenure(self):
         return self.current_proposal.tenure.name
 
@@ -166,10 +170,10 @@ class Approval(models.Model):
                 return False
 
 
-    def generate_doc(self):
+    def generate_doc(self, user):
         from disturbance.components.approvals.pdf import create_approval_doc
         copied_to_permit = self.copiedToPermit_fields(self.current_proposal) #Get data related to isCopiedToPermit tag
-        self.licence_document = create_approval_doc(self,self.current_proposal, copied_to_permit)
+        self.licence_document = create_approval_doc(self,self.current_proposal, copied_to_permit, user)
         self.save()
 
     def generate_renewal_doc(self):
