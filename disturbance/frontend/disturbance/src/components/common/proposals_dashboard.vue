@@ -150,7 +150,7 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Region__1","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
+                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
                 //"LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
             ],
 
@@ -312,7 +312,7 @@ export default {
                 */
             },
             proposal_headers:[
-                "Number","Region__2","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
+                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
                 //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
             ],
             proposal_options:{
@@ -330,8 +330,8 @@ export default {
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
                         d.regions = vm.filterProposalRegion.join();
-                        d.lodged_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
-                        d.lodged_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
                 },
                 dom: 'lBfrtip',

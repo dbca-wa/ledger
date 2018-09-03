@@ -32,6 +32,9 @@ module.exports = {
     referrals_paginated_internal:   "/api/proposal_paginated/referrals_internal/?format=datatables",
     //filter_list:                    "/api/proposal_paginated/filter_list.json",
     filter_list:                    "/api/proposal/filter_list.json",
+    filter_list_approvals:          "/api/approvals/filter_list.json",
+    filter_list_compliances:        "/api/compliances/filter_list.json",
+    filter_list_referrals:          "/api/referrals/filter_list.json",
 
     //approvals_paginated:"/api/approvals/user_list_paginated/?format=datatables",
     //compliances_paginated:"/api/compliances/user_list_paginated/?format=datatables",

@@ -323,7 +323,7 @@ export default {
         fetchFilterLists: function(){
             let vm = this;
 
-            vm.$http.get(api_endpoints.filter_list).then((response) => {
+            vm.$http.get(api_endpoints.filter_list_compliances).then((response) => {
                 vm.proposal_regions = response.body.regions;
                 vm.proposal_activityTitles = response.body.activities;
                 vm.status = vm.level == 'external' ? vm.external_status: vm.internal_status;

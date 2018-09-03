@@ -33,7 +33,7 @@
                                 <label for="">Status</label>
                                 <select class="form-control" v-model="filterProposalStatus">
                                     <option value="All">All</option>
-                                    <option v-for="s in proposal_status" :value="s">{{s}}</option>
+                                    <option v-for="s in proposal_status" :value="s.value">{{s.name}}</option>
                                 </select>
                             </div>
                         </div>
@@ -135,6 +135,7 @@ export default {
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
                         d.regions = vm.filterProposalRegion.join();
+                        //d.processing_status = vm.filterProposalStatus;
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
@@ -162,7 +163,8 @@ export default {
                     },
                     {
                         data: "activity",
-                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
+                        name: "proposal__activity",
+                        //searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
                     {data: "title"},
                     {
@@ -179,7 +181,10 @@ export default {
                         data: "applicant",
                         name: "proposal__applicant__organisation__name",
                     },
-                    {data: "processing_status"},
+                    {
+                        data: "processing_status",
+                        name: "proposal__processing_status",
+                    },
                     {
                         data: "proposal_lodgement_date",
                         mRender:function (data,type,full) {
@@ -275,6 +280,7 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
             }
         },
+
         filterProposalRegion: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
         },
@@ -302,7 +308,7 @@ export default {
         fetchFilterLists: function(){
             let vm = this;
 
-            vm.$http.get(api_endpoints.filter_list).then((response) => {
+            vm.$http.get(api_endpoints.filter_list_referrals).then((response) => {
                 vm.proposal_regions = response.body.regions;
                 vm.proposal_districts = response.body.districts;
                 vm.proposal_activityTitles = response.body.activities;

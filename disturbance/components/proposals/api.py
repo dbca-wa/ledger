@@ -109,6 +109,12 @@ class ProposalFilterBackend(DatatablesFilterBackend):
     def filter_queryset(self, request, queryset, view):
         total_count = queryset.count()
 
+        def get_choice(status, choices=Proposal.PROCESSING_STATUS_CHOICES):
+            for i in choices:
+                if i[1]==status:
+                    return i[0]
+            return None
+
         # on the internal dashboard, the Region filter is multi-select - have to use the custom filter below
         regions = request.GET.get('regions')
         if regions:
@@ -118,6 +124,15 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(proposal__region__name__iregex=regions.replace(',', '|'))
             #elif queryset.model is Approval:
             #    queryset = queryset.filter(region__iregex=regions.replace(',', '|'))
+
+        # on the internal dashboard, the Referral 'Status' filter - have to use the custom filter below
+        #import ipdb; ipdb.set_trace()
+#        processing_status = request.GET.get('processing_status')
+#        processing_status = get_choice(processing_status, Proposal.PROCESSING_STATUS_CHOICES)
+#        if processing_status:
+#            if queryset.model is Referral:
+#                #processing_status_id = [i for i in Proposal.PROCESSING_STATUS_CHOICES if i[1]==processing_status][0][0]
+#                queryset = queryset.filter(processing_status=processing_status)
 
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
@@ -140,6 +155,13 @@ class ProposalFilterBackend(DatatablesFilterBackend):
 
             if date_to:
                 queryset = queryset.filter(due_date__lte=date_to)
+        elif queryset.model is Referral:
+            if date_from:
+                queryset = queryset.filter(proposal__lodgement_date__gte=date_from)
+
+            if date_to:
+                queryset = queryset.filter(proposal__lodgement_date__lte=date_to)
+
 
         queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
         setattr(view, '_datatables_total_count', total_count)
@@ -278,6 +300,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             activities=activity_qs,
             submitters=submitters,
             processing_status_choices = [i[1] for i in Proposal.PROCESSING_STATUS_CHOICES],
+            processing_status_id_choices = [i[0] for i in Proposal.PROCESSING_STATUS_CHOICES],
             customer_status_choices = [i[1] for i in Proposal.CUSTOMER_STATUS_CHOICES],
             approval_status_choices = [i[1] for i in Approval.STATUS_CHOICES],
         )
@@ -1019,6 +1042,26 @@ class ReferralViewSet(viewsets.ModelViewSet):
             queryset =  Referral.objects.all()
             return queryset
         return Referral.objects.none()
+
+    @list_route(methods=['GET',])
+    def filter_list(self, request, *args, **kwargs):
+        """ Used by the external dashboard filters """
+        qs =  self.get_queryset().filter(referral=request.user)
+        region_qs =  qs.filter(proposal__region__isnull=False).values_list('proposal__region__name', flat=True).distinct()
+        district_qs =  qs.filter(proposal__district__isnull=False).values_list('proposal__district__name', flat=True).distinct()
+        activity_qs =  qs.filter(proposal__activity__isnull=False).order_by('proposal__activity').distinct('proposal__activity').values_list('proposal__activity', flat=True).distinct()
+        submitter_qs = qs.filter(proposal__submitter__isnull=False).order_by('proposal__submitter').distinct('proposal__submitter').values_list('proposal__submitter__first_name','proposal__submitter__last_name','proposal__submitter__email')
+        submitters = [dict(email=i[2], search_term='{} {} ({})'.format(i[0], i[1], i[2])) for i in submitter_qs]
+        processing_status_qs =  qs.filter(proposal__processing_status__isnull=False).order_by('proposal__processing_status').distinct('proposal__processing_status').values_list('proposal__processing_status', flat=True)
+        processing_status = [dict(value=i, name='{}'.format(' '.join(i.split('_')).capitalize())) for i in processing_status_qs]
+        data = dict(
+            regions=region_qs,
+            districts=district_qs,
+            activities=activity_qs,
+            submitters=submitters,
+            processing_status_choices=processing_status,
+        )
+        return Response(data)
 
 
     def retrieve(self, request, *args, **kwargs):

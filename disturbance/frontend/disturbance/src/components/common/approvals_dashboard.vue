@@ -404,8 +404,7 @@ export default {
         fetchFilterLists: function(){
             let vm = this;
 
-            //vm.$http.get('/api/list_proposal/filter_list/').then((response) => {
-            vm.$http.get(api_endpoints.filter_list).then((response) => {
+            vm.$http.get(api_endpoints.filter_list_approvals).then((response) => {
                 vm.proposal_regions = response.body.regions;
                 vm.proposal_activityTitles = response.body.activities;
                 vm.proposal_submitters = response.body.submitters;
