@@ -128,8 +128,12 @@ export default {
         close:function () {
             this.isModalOpen = false;
             this.approval = {};
+            this.approval.from_date = ""
+            this.approval.to_date = ""
             this.errors = false;
             $('.has-error').removeClass('has-error');
+            $(this.$refs.from_date).data('DateTimePicker').clear();
+            $(this.$refs.to_date).data('DateTimePicker').clear();
             this.validation_form.resetForm();
         },
         fetchContact: function(id){

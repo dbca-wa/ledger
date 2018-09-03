@@ -551,6 +551,11 @@ export default {
                     });
                 }, (error) => {
                     console.log(error);
+                    swal({
+                    title: "Reissue Approval",
+                    text: error.body,
+                    type: "error",                   
+                    })
                 });
             },(error) => {
 
@@ -582,6 +587,11 @@ export default {
                     
                 }, (error) => {
                     console.log(error);
+                    swal({
+                    title: "Reinstate Approval",
+                    text: error.body,
+                    type: "error",                   
+                    })
                 });
             },(error) => {
 
