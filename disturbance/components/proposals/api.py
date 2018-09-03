@@ -69,6 +69,7 @@ from disturbance.components.proposals.serializers import (
 from disturbance.helpers import is_customer, is_internal
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 
 class GetProposalType(views.APIView):
     renderer_classes = [JSONRenderer, ]
@@ -156,6 +157,19 @@ class ProposalViewSet(viewsets.ModelViewSet):
         #serializer = DTProposalSerializer(self.get_queryset(), many=True)
         serializer = ListProposalSerializer(self.get_queryset(), context={'request':request}, many=True)
         return Response(serializer.data)
+
+    @list_route(methods=['GET',])
+    def list_paginated(self, request, *args, **kwargs):
+        """
+        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
+        """
+        proposals = self.get_queryset()
+        paginator = PageNumberPagination()
+        #paginator = LimitOffsetPagination()
+        paginator.page_size = 5
+        result_page = paginator.paginate_queryset(proposals, request)
+        serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @detail_route(methods=['GET',])
     def action_log(self, request, *args, **kwargs):
