@@ -159,7 +159,7 @@ module.exports = {
                 }
                 _elements.push(
                     <div class="form-group">
-                        <label id={id}>{c.label}</label>
+                        <label id={id} class="inline">{c.label}</label>
                             <HelpText help_text={help_text}/>
                             <HelpText help_text={help_text_assessor} assessorMode={assessorMode} isForAssessor={true}/>
                             <HelpTextUrl help_text_url={help_text_url}/>
