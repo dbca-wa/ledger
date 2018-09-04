@@ -194,7 +194,7 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="">Enter Conditions</button><br/>
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleConditions()">Enter Conditions</button><br/>
                                                 </div>
                                             </div>
                                             <div class="row">
@@ -256,10 +256,25 @@
                 <template v-if="application.processing_status == 'With Approver' || isFinalised">
                     <LicenceScreen :application="application"/>
                 </template>
-                <template v-if="application.processing_status == 'With Assessor (Conditions)' || ((application.processing_status == 'With Approver' || isFinalised) && showingConditions)">
-                    <Conditions :application="application"/>
+                <template v-if="showingConditions">
+                    <div v-for="item in application.licence_type_data">
+                        <ul class="nav nav-tabs" id="conditiontabs">
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Assessor'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                        </ul>
+            
+                    </div>   
+                    <div  class="tab-content">
+                        <div v-for="item in application.licence_type_data">
+                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor'" :id="`${item1.id}`+_uid" class="tab-pane fade active in"> 
+                                <Conditions :application="application"/>
+                            </div>
+                        </div>
+                    </div>
                 </template>
-                <template v-if="isSendingToAssessor">
+                <!-- <template v-if="application.processing_status == 'With Assessor (Conditions)' || ((application.processing_status == 'With Approver' || isFinalised) && showingConditions)">
+                    <Conditions :application="application"/>
+                </template> -->
+                <template v-if="isSendingToAssessor && !showingConditions">
                     <div v-for="item in application.licence_type_data">
                             <ul class="nav nav-tabs" id="assessortabs">
                                 <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
@@ -302,7 +317,7 @@
                     </div>
                     </div> 
                 </template>
-                <template v-if="!isSendingToAssessor">
+                <template v-if="!isSendingToAssessor && !showingConditions">
                     <div>
                     <ul class="nav nav-tabs">
                         <li class="active"><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
@@ -1097,6 +1112,8 @@ export default {
         },
         toggleConditions:function(){
             this.showingConditions = !this.showingConditions;
+            console.log(this.showingConditions)
+
         },
         updateAssignedOfficerSelect:function(){
             let vm = this;
