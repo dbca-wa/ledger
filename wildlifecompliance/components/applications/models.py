@@ -365,11 +365,14 @@ class Application(RevisionedMixin):
 
     @property
     def payment_status(self):
-        if self.invoices.count() == 0:
-            return 'unpaid'
+        if self.application_fee == 0:
+            return 'payment_not_required'
         else:
-            latest_invoice = Invoice.objects.get(reference=self.invoices.latest('id').invoice_reference)
-            return latest_invoice.payment_status
+            if self.invoices.count() == 0:
+                return 'unpaid'
+            else:
+                latest_invoice = Invoice.objects.get(reference=self.invoices.latest('id').invoice_reference)
+                return latest_invoice.payment_status
 
     @property
     def latest_referrals(self):
