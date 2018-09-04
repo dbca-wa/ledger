@@ -780,7 +780,8 @@ class Proposal(RevisionedMixin):
                     defaults={'officer': request.user, 'reason': reason, 'cc_email': details.get('cc_email',None)}
                 )
                 self.proposed_decline_status = True
-                self.move_to_status(request,'with_approver')
+                approver_comment = ''
+                self.move_to_status(request,'with_approver', approver_comment)
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 # Log entry for organisation
@@ -828,7 +829,8 @@ class Proposal(RevisionedMixin):
                     'cc_email':details.get('cc_email')
                 }
                 self.proposed_decline_status = False
-                self.move_to_status(request,'with_approver')
+                approver_comment = ''
+                self.move_to_status(request,'with_approver', approver_comment)
                 self.assigned_officer = None
                 self.save()
                 # Log proposal action
