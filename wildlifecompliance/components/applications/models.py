@@ -1099,6 +1099,7 @@ class ApplicationCondition(OrderedModel):
     recurrence = models.BooleanField(default=False)
     recurrence_pattern = models.SmallIntegerField(choices=RECURRENCE_PATTERNS,default=1)
     recurrence_schedule = models.IntegerField(null=True,blank=True)
+    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
     #order = models.IntegerField(default=1)
 
     class Meta:
