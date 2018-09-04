@@ -153,7 +153,9 @@
                                 <p style='display:none'><i><small>Vessel Size Limit: {{ f.vessel_size_limit }} </small></i></p>
                                 <p ><i><small>Max Stay Period: {{ f.max_advance_booking }} day/s </small></i></p>
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
-                                <a v-if="f.mooring_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+                                 
+                                <a v-if="f.mooring_type == 0 && vesselSize > 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+                                <a v-else class="button" v-on:click="BookNow()">Book now</a> 
                             </div>
                         </div>
                     </div>
@@ -168,7 +170,7 @@
         <template v-else>
             <div class="row align-center">
                 <div class="small-12 medium-12 large-12 columns">
-                    <h2 class="text-center">There are no mooring found matching your search criteria. Please change your search query.</h2>
+                    <h2 class="text-center">There are no moorings found matching your search criteria. Please change your search query.</h2>
                 </div>
             </div>
         </template>
