@@ -33,7 +33,8 @@ def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
 
 def application_type_choicelist():
-    return [( (choice.name), (choice.name) ) for choice in ApplicationType.objects.all()]
+    #return [( (choice.name), (choice.name) ) for choice in ApplicationType.objects.all()]
+    return ( ('Disturbance', 'Disturbance'), )
 
 class ProposalType(models.Model):
     #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24)

@@ -41,6 +41,7 @@ class District(models.Model):
 class ApplicationType(models.Model):
     name = models.CharField(max_length=64, unique=True)
     order = models.PositiveSmallIntegerField(default=0)
+    visible = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['order', 'name']

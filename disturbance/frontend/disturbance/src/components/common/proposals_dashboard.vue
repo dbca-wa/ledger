@@ -118,14 +118,6 @@ export default {
     data() {
         let vm = this;
         return {
-            /*
-            regions: [],
-            districts: [],
-            activities: [],
-            processing_status_choices: [],
-            customer_status_choices: [],
-            */
-
             pBody: 'pBody' + vm._uid,
             datatable_id: 'proposal-datatable-'+vm._uid,
             //Profile to check if user has access to process Proposal
@@ -145,6 +137,26 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
+            external_status:[
+                'Draft',
+                'With Assessor',
+                'With Referral',
+                'With Assessor (Requirements)',
+                'With Approver',
+                'Approved',
+                'Declined',
+                'Discarded',
+            ],
+            internal_status:[
+                'Draft',
+                'With Assessor',
+                'With Referral',
+                'With Assessor (Requirements)',
+                'With Approver',
+                'Approved',
+                'Declined',
+                'Discarded',
+            ],
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
@@ -192,7 +204,10 @@ export default {
                         'createdCell': helpers.dtPopoverCellFn,
                         searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
-                    {data: "activity"},
+                    {
+						data: "activity",
+						name: "activity"
+					},
                     {
                         data: "title",
                         'render': function (value) {
@@ -538,10 +553,11 @@ export default {
             //vm.$http.get('/api/list_proposal/filter_list/').then((response) => {
             vm.$http.get(api_endpoints.filter_list).then((response) => {
                 vm.proposal_regions = response.body.regions;
-                vm.proposal_districts = response.body.districts;
+                //vm.proposal_districts = response.body.districts;
                 vm.proposal_activityTitles = response.body.activities;
                 vm.proposal_submitters = response.body.submitters;
-                vm.proposal_status = vm.level == 'internal' ? response.body.processing_status_choices: response.body.customer_status_choices;
+                //vm.proposal_status = vm.level == 'internal' ? response.body.processing_status_choices: response.body.customer_status_choices;
+                vm.proposal_status = vm.level == 'internal' ? vm.internal_status: vm.external_status;
             },(error) => {
                 console.log(error);
             })

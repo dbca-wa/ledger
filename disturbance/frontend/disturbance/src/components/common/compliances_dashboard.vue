@@ -179,7 +179,7 @@ export default {
                     },
                     {
                         data: "holder",
-                        name: "proposal__applicant__name"
+                        name: "proposal__applicant__organisation__name"
                     },
                     {data: "processing_status",
                         mRender:function(data,type,full){

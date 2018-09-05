@@ -154,7 +154,8 @@ export default {
                                 tick = "<i class='fa fa-check-circle' style='color:green'></i>";
                             }
                             return full.proposal_lodgement_number+tick;
-                        }
+                        },
+                        name: "proposal__id",
                     },
                     {
                         data: "region",
@@ -166,7 +167,10 @@ export default {
                         name: "proposal__activity",
                         //searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
-                    {data: "title"},
+                    {
+                        data: "title",
+                        name: "proposal__title",
+                    },
                     {
                         data: "submitter",
                         mRender:function (data,type,full) {
@@ -189,7 +193,8 @@ export default {
                         data: "proposal_lodgement_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        name: "proposal__lodgement_date",
                     },
                     {
                         data: '',
@@ -310,7 +315,7 @@ export default {
 
             vm.$http.get(api_endpoints.filter_list_referrals).then((response) => {
                 vm.proposal_regions = response.body.regions;
-                vm.proposal_districts = response.body.districts;
+                //vm.proposal_districts = response.body.districts;
                 vm.proposal_activityTitles = response.body.activities;
                 vm.proposal_submitters = response.body.submitters;
                 vm.proposal_status = response.body.processing_status_choices;
