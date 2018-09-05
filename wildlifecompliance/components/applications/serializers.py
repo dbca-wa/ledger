@@ -483,7 +483,7 @@ class ApplicationConditionSerializer(serializers.ModelSerializer):
     due_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     class Meta:
         model = ApplicationCondition
-        fields = ('id','due_date','free_condition','standard_condition','standard','order','application','recurrence','recurrence_schedule','recurrence_pattern','condition')
+        fields = ('id','due_date','free_condition','standard_condition','standard','order','application','recurrence','recurrence_schedule','recurrence_pattern','condition','licence_activity_type')
         readonly_fields = ('order','condition')
 
 class ApplicationStandardConditionSerializer(serializers.ModelSerializer):

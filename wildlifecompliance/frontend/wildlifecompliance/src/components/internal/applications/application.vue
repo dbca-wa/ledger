@@ -158,7 +158,7 @@
                             <!-- <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAction">
                                 <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'"> -->
                               <div class="col-sm-12 top-buffer-s" >
-                                        <template v-if="showingApplication || !isSendingToAssessor">
+                                        <template v-if="showingApplication">
                                             <div class="row">
                                                 <div class="col-sm-12">
                                                     <strong>Action</strong><br/>
@@ -202,6 +202,24 @@
                                                     <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
                                                 </div>
                                             </div>
+                                        </template>
+                                        <template v-if="showingConditions">
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <strong>Action</strong><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="">Complete Assessment</button><br/>
+                                                </div>
+                                            </div>
+                                            
                                         </template>
                                     
                                 <!-- <template v-else-if="application.processing_status == 'With Assessor (Conditions)'">
@@ -663,7 +681,7 @@ export default {
             // activity_type_data:[],
             contacts_table_initialised: false,
             initialisedSelects: false,
-            showingApplication:false,
+            showingApplication:true,
             showingConditions:false,
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
@@ -1090,6 +1108,7 @@ export default {
             let vm=this;
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
+            vm.showingConditions=false;
         },
         
         save: function(e) {
@@ -1109,9 +1128,14 @@ export default {
             if(this.isSendingToAssessor){
                 this.isSendingToAssessor=!this.isSendingToAssessor
             }
+            if(this.showingConditions){
+                this.showingConditions=!this.showingConditions
+            }
         },
         toggleConditions:function(){
             this.showingConditions = !this.showingConditions;
+            this.showingApplication = false;
+            this.isSendingToAssessor=false;
             console.log(this.showingConditions)
 
         },
