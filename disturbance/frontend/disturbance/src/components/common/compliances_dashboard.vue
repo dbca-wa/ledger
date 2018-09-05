@@ -156,7 +156,8 @@ export default {
                         mRender:function (data,type,full) {
                             //return `C${data}`;
                             return full.reference;
-                        }
+                        },
+                        name: "id, lodgement_number",
                     },
                     {
                         data: "regions",

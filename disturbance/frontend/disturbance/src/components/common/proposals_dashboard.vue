@@ -132,10 +132,7 @@ export default {
             },
             external_status:[
                 {value: 'draft', name: 'Draft'},
-                {value: 'with_assessor', name: 'With Assessor'},
-                {value: 'with_referral', name: 'With Referral'},
-                {value: 'with_assessor_requirements', name: 'With Assessor (Requirements)'},
-                {value: 'with_approver', name: 'With Approver'},
+                {value: 'with_assessor', name: 'Under Review'},
                 {value: 'approved', name: 'Approved'},
                 {value: 'declined', name: 'Declined'},
                 {value: 'discarded', name: 'Discarded'},
@@ -187,7 +184,8 @@ export default {
                         data: "id",
                         mRender:function(data,type,full){
                             return full.lodgement_number;
-                        }
+                        },
+                        data: "id, lodgement_number",
                     },
                     {
                         data: "region",
@@ -224,9 +222,9 @@ export default {
                     },
                     {
                         data: "customer_status",
-                        mRender:function(data,type,full){
-                            return vm.level == 'internal' ? full.processing_status: data; //Fix the issue with External dashboard Status dropdown shoing internal statuses.
-                        },
+                        //mRender:function(data,type,full){
+                        //    return vm.level == 'internal' ? full.processing_status: data; //Fix the issue with External dashboard Status dropdown shoing internal statuses.
+                        //},
                         name: "customer_status",
                     },
                     {
@@ -353,6 +351,7 @@ export default {
                             return full.lodgement_number;
                         },
                         //name: "lodgement_number",
+                        data: "id, lodgement_number"
                     },
                     {
                         data: "region",
@@ -386,9 +385,9 @@ export default {
                     },
                     {
                         data: "processing_status",
-                        mRender:function(data,type,full){
-                            return vm.level == 'external' ? full.customer_status: data;
-                        },
+                        //mRender:function(data,type,full){
+                        //    return vm.level == 'external' ? full.customer_status: data;
+                        //},
                         name: "processing_status",
                     },
                     {

@@ -193,7 +193,8 @@ export default {
                         }
                         else { return full.lodgement_number }
                         },
-                        'createdCell': helpers.dtPopoverCellFn
+                        'createdCell': helpers.dtPopoverCellFn,
+                        name: "id, lodgement_number",
                     },
                     {
                         data: "region",

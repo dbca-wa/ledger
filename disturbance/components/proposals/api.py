@@ -300,9 +300,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
             #districts=district_qs,
             activities=activity_qs,
             submitters=submitters,
-            processing_status_choices = [i[1] for i in Proposal.PROCESSING_STATUS_CHOICES],
-            processing_status_id_choices = [i[0] for i in Proposal.PROCESSING_STATUS_CHOICES],
-            customer_status_choices = [i[1] for i in Proposal.CUSTOMER_STATUS_CHOICES],
+            #processing_status_choices = [i[1] for i in Proposal.PROCESSING_STATUS_CHOICES],
+            #processing_status_id_choices = [i[0] for i in Proposal.PROCESSING_STATUS_CHOICES],
+            #customer_status_choices = [i[1] for i in Proposal.CUSTOMER_STATUS_CHOICES],
             approval_status_choices = [i[1] for i in Approval.STATUS_CHOICES],
         )
         return Response(data)

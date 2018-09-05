@@ -28,7 +28,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
     allowed_assessors = EmailUserSerializer(many=True)
     region = serializers.CharField(source='current_proposal.region.name')
-    district = serializers.CharField(source='current_proposal.district.name')
+    district = serializers.CharField(source='current_proposal.district.name', allow_null=True)
     #tenure = serializers.CharField(source='current_proposal.tenure.name')
     activity = serializers.CharField(source='current_proposal.activity')
     title = serializers.CharField(source='current_proposal.title')
