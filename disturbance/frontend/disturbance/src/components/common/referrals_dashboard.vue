@@ -155,7 +155,7 @@ export default {
                             }
                             return full.proposal_lodgement_number+tick;
                         },
-                        name: "proposal__id",
+                        name: "proposal__id, proposal__lodgement_number",
                     },
                     {
                         data: "region",

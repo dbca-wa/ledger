@@ -42,6 +42,7 @@ class Compliance(models.Model):
                                  )
 
 
+    lodgement_number = models.CharField(max_length=9, blank=True, default='')
     proposal = models.ForeignKey('disturbance.Proposal',related_name='compliances')
     approval = models.ForeignKey('disturbance.Approval',related_name='compliances')
     due_date = models.DateField()
@@ -76,7 +77,8 @@ class Compliance(models.Model):
 
     @property
     def reference(self):
-        return 'C{0:06d}'.format(self.id)
+        #return 'C{0:06d}'.format(self.id)
+        return self.lodgement_number
 
     @property
     def allowed_assessors(self):
@@ -95,6 +97,12 @@ class Compliance(models.Model):
         qs =ComplianceAmendmentRequest.objects.filter(compliance = self)
         return qs
 
+    def save(self, *args, **kwargs):
+        super(Compliance, self).save(*args,**kwargs)
+        if self.lodgement_number == '':
+            new_lodgment_id = 'C{0:06d}'.format(self.pk)
+            self.lodgement_number = new_lodgment_id
+            self.save()
 
     def submit(self,request):
         with transaction.atomic():

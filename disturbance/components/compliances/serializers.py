@@ -48,6 +48,7 @@ class ComplianceSerializer(serializers.ModelSerializer):
             'requirement',
             'can_user_view',
             'reference',
+            'lodgement_number',
             'lodgement_date',
             'submitter',
             'allowed_assessors',
