@@ -276,7 +276,7 @@ class MakeBookingsView(TemplateView):
             form.add_error(None, '{} Please contact Marine Park and Visitors services with this error message and the time of the request.'.format(str(e)))
             return self.render_page(request, booking, form, vehicles, show_errors=True)
             
-        print(lines)
+        #print(lines)
         total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
 
         # get the customer object
@@ -343,7 +343,7 @@ class BookingSuccessView(TemplateView):
                     logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
                     return redirect('public_make_booking')
 
-                if inv.system not in ['0019']:
+                if inv.system not in ['0516']:
                     logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                     return redirect('public_make_booking')
 

@@ -187,6 +187,20 @@
           </table>
      </div>
 
+     <div v-if="max_advance_booking_days > max_advance_booking" class="small-12 medium-12 large-12">
+          <table class="hover">
+                <tbody>
+                  <tr>
+
+                     <td>
+          	Advanced booking is limited to {{ max_advance_booking }} day/s. 
+                     </td>
+                  </tr>
+                </tbody>
+          </table>
+     </div>
+
+
         </div>
        </div>
 
@@ -346,6 +360,8 @@ export default {
             maxChildren: 30,
             gearType: getQueryParam('gear_type', 'tent'),
             mooring_vessel_size: 0,
+            max_advance_booking: 0,
+            max_advance_booking_days: 0,
             gearTotals: {
                 tent: 0,
                 campervan: 0,
@@ -438,8 +454,6 @@ export default {
                 submitData.campground = vm.parkstayGroundId;
                 submitData.campsite_class = site.type;
             }
-            //console.log(site);
-            //console.log(submitData);
             $.ajax({
                 url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',
@@ -514,6 +528,8 @@ export default {
                         vm.ongoing_booking = data.ongoing_booking;
                         vm.ongoing_booking_id = data.ongoing_booking_id;
                         vm.mooring_vessel_size = data.vessel_size;
+                        vm.max_advance_booking = data.max_advance_booking;
+                        vm.max_advance_booking_days = data.max_advance_booking_days;
 
                         if (data.error_type != null) {
                             vm.status = 'online';
