@@ -2,19 +2,22 @@ from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.licences.models import (
-    Licence,WildlifeLicenceClass,WildlifeLicenceActivityType,WildlifeLicenceActivity
+    WildlifeLicence,WildlifeLicenceClass,WildlifeLicenceActivityType,WildlifeLicenceActivity
 )
+from wildlifecompliance.components.applications.serializers import BaseApplicationSerializer
 from wildlifecompliance.components.organisations.models import (
                                 Organisation
                             )
 from rest_framework import serializers
 
-class LicenceSerializer(serializers.ModelSerializer):
+class WildlifeLicenceSerializer(serializers.ModelSerializer):
     applicant = serializers.CharField(source='applicant.name')
     licence_document = serializers.CharField(source='licence_document._file.url')
     status = serializers.CharField(source='get_status_display')
+    current_application = BaseApplicationSerializer(read_only=True)
+
     class Meta:
-        model = Licence
+        model = WildlifeLicence
         fields = (
             'id',
             'licence_document',
@@ -62,7 +65,7 @@ class DefaultActivityTypeSerializer(serializers.ModelSerializer):
             'not_for_organisation'
         ) 
 
-class LicenceClassSerializer(serializers.ModelSerializer):
+class WildlifeLicenceClassSerializer(serializers.ModelSerializer):
     class_status = serializers.SerializerMethodField()
     activity_type = DefaultActivityTypeSerializer(many=True,read_only=True)
     class Meta:

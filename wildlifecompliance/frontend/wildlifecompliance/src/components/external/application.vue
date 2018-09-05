@@ -23,13 +23,9 @@
                 </div>
               </div>
             </div>
-              <div class="row">
-            <div v-if="hasAmendmentRequest">
-              <Application v-if="application" :application="application" :isAmendmentRequest="hasAmendmentRequest" :amendment_request_id="amendment_request_id">
-            </div>
-            <div v-else>
+            
               <Application v-if="application" :application="application">
-            </div>
+            
             
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(application)" />
@@ -45,7 +41,7 @@
                                     </span>
                                     <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="!requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="!requiresCheckout" type="submit" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
                                     <input v-else type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                 </p>
                             </div>
@@ -65,7 +61,6 @@
                     </div>
                 </div>
             </Application>
-          </div>
         </form>
     </div>
 </template>
@@ -147,7 +142,6 @@ export default {
         let vm = this;
         console.log('SUBMIT VM FORM and CHECKOUT');
         let formData = new FormData(vm.form);
-        console.log(formData);
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
         if (vm.requiresCheckout) {

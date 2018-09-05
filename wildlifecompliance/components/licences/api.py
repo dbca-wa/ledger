@@ -34,14 +34,14 @@ from wildlifecompliance.components.licences.models import (
     WildlifeLicenceClass
 )
 from wildlifecompliance.components.licences.serializers import (
-    LicenceSerializer,
-    LicenceClassSerializer
+    WildlifeLicenceSerializer,
+    WildlifeLicenceClassSerializer
 )
 
 
 class LicenceViewSet(viewsets.ModelViewSet):
     queryset = WildlifeLicence.objects.all()
-    serializer_class = LicenceSerializer
+    serializer_class = WildlifeLicenceSerializer
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset() 
@@ -62,6 +62,6 @@ class LicenceViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-class LicenceClassViewSet(viewsets.ModelViewSet):
+class WildlifeLicenceClassViewSet(viewsets.ModelViewSet):
     queryset = WildlifeLicenceClass.objects.all()
-    serializer_class = LicenceClassSerializer
+    serializer_class = WildlifeLicenceClassSerializer

@@ -133,7 +133,8 @@ export default {
                 standard: true,
                 recurrence: false,
                 recurrence_pattern: '1',
-                application: vm.application_id
+                application: vm.application_id,
+                licence_activity_type:null
             },
             addingCondition: false,
             updatingCondition: false,
