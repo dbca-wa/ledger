@@ -1065,14 +1065,20 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         if ground.vessel_size_limit < vessel_size:
              return Response({'name':'   ', 'error': 'Vessel size is too large for mooring', 'error_type': 'vessel_error', 'vessel_size': ground.vessel_size_limit}, status=200 )
 
+
         #if not ground._is_open(start_date):
         #    return Response({'closed': 'MooringArea is closed for your selected dates'}, status=status.HTTP_400_BAD_REQUEST)
 
         # get a length of the stay (in days), capped if necessary to the request maximum
+        today = date.today()
         length = max(0, (end_date-start_date).days)
+        max_advance_booking_days = max(0, (start_date-today).days) 
         #if length > settings.PS_MAX_BOOKING_LENGTH:
         #    length = settings.PS_MAX_BOOKING_LENGTH
         #    end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
+        if max_advance_booking_days > ground.max_advance_booking:
+           return Response({'name':'   ', 'error': 'Max advanced booking limit is '+str(ground.max_advance_booking)+' day/s. You can not book longer than this period.', 'error_type': 'stay_error', 'max_advance_booking': ground.max_advance_booking, 'days': length, 'max_advance_booking_days': max_advance_booking_days }, status=200 )
+
 
         # fetch all the campsites and applicable rates for the campground
         context = {}
@@ -1106,7 +1112,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'maxChildren': 30,
             'sites': [],
             'classes': {},
-            'vessel_size' : ground.vessel_size_limit
+            'vessel_size' : ground.vessel_size_limit,
+            'max_advance_booking': ground.max_advance_booking 
         }
 
         # group results by campsite class
@@ -1733,19 +1740,21 @@ class BookingViewSet(viewsets.ModelViewSet):
             recordsTotal = cursor.fetchone()[0]
             cursor.execute(sqlCount, sqlParams)
             recordsFiltered = cursor.fetchone()[0]
-
+           
             cursor.execute(sql, sqlParams)
             columns = [col[0] for col in cursor.description]
             data = [
                 dict(zip(columns, row))
                 for row in cursor.fetchall()
             ]
+
+
             bookings_qs = Booking.objects.filter(id__in=[b['id'] for b in data]).prefetch_related('mooringarea', 'campsites', 'campsites__campsite', 'customer', 'regos', 'history', 'invoices', 'canceled_by')
             booking_map = {b.id: b for b in bookings_qs}
             clean_data = []
             for bk in data:
                 cg = None
-                booking = booking_map[bk['id']]
+                booking = booking_map[bk['id']]       
                 cg = booking.mooringarea
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
@@ -1904,7 +1913,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise
         except ValidationError as e:
-            print e
+            print (e)
             raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             utils.delete_session_booking(request.session)

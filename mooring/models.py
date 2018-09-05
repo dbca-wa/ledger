@@ -1190,7 +1190,7 @@ class Booking(models.Model):
         invoices = Invoice.objects.filter(reference__in=references)
         for i in invoices:
             if i.voided:
-                amount += i.payment_amount
+                amount += i.total_payment_amount
                 refund_amount += i.refund_amount
 
         if amount == 0:
