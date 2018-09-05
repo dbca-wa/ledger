@@ -33,7 +33,7 @@
                                 <label for="">Status</label>
                                 <select class="form-control" v-model="filterProposalStatus">
                                     <option value="All">All</option>
-                                    <option v-for="s in proposal_status" :value="s">{{s}}</option>
+                                    <option v-for="s in proposal_status" :value="s.value">{{s.name}}</option>
                                 </select>
                             </div>
                         </div>
@@ -74,13 +74,6 @@
                         <div class="col-lg-12">
                             <datatable v-if="level=='external'" ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
                             <datatable v-else ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
-							<!--
-                            <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
-                            <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
-
-                            <datatable v-if="level=='external'" ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_ex_options" :dtHeaders="proposal_ex_headers"/>
-                            <datatable v-else ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
-							-->
                         </div>
                     </div>
                 </div>
@@ -138,24 +131,24 @@ export default {
                 allowInputToggle:true
             },
             external_status:[
-                'Draft',
-                'With Assessor',
-                'With Referral',
-                'With Assessor (Requirements)',
-                'With Approver',
-                'Approved',
-                'Declined',
-                'Discarded',
+                {value: 'draft', name: 'Draft'},
+                {value: 'with_assessor', name: 'With Assessor'},
+                {value: 'with_referral', name: 'With Referral'},
+                {value: 'with_assessor_requirements', name: 'With Assessor (Requirements)'},
+                {value: 'with_approver', name: 'With Approver'},
+                {value: 'approved', name: 'Approved'},
+                {value: 'declined', name: 'Declined'},
+                {value: 'discarded', name: 'Discarded'},
             ],
             internal_status:[
-                'Draft',
-                'With Assessor',
-                'With Referral',
-                'With Assessor (Requirements)',
-                'With Approver',
-                'Approved',
-                'Declined',
-                'Discarded',
+                {value: 'draft', name: 'Draft'},
+                {value: 'with_assessor', name: 'With Assessor'},
+                {value: 'with_referral', name: 'With Referral'},
+                {value: 'with_assessor_requirements', name: 'With Assessor (Requirements)'},
+                {value: 'with_approver', name: 'With Approver'},
+                {value: 'approved', name: 'Approved'},
+                {value: 'declined', name: 'Declined'},
+                {value: 'discarded', name: 'Discarded'},
             ],
             proposal_activityTitles : [],
             proposal_regions: [],
@@ -233,7 +226,8 @@ export default {
                         data: "customer_status",
                         mRender:function(data,type,full){
                             return vm.level == 'internal' ? full.processing_status: data; //Fix the issue with External dashboard Status dropdown shoing internal statuses.
-                        }
+                        },
+                        name: "customer_status",
                     },
                     {
                         data: "lodgement_date",
@@ -395,6 +389,7 @@ export default {
                         mRender:function(data,type,full){
                             return vm.level == 'external' ? full.customer_status: data;
                         },
+                        name: "processing_status",
                     },
                     {
                         data: "lodgement_date",
