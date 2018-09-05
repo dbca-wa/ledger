@@ -209,6 +209,7 @@ export default {
                     },
                     {data: "can_be_processed", visible: false},
                     {data: "proposal_lodgement_number", visible: false},
+                    {data: "id", visible: false},
 
                 ],
                 processing: true,
