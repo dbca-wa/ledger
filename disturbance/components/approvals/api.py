@@ -118,17 +118,10 @@ class ApprovalViewSet(viewsets.ModelViewSet):
         """ Used by the external dashboard filters """
         #import ipdb; ipdb.set_trace()
         region_qs =  self.get_queryset().filter(current_proposal__region__isnull=False).values_list('current_proposal__region__name', flat=True).distinct()
-        district_qs =  self.get_queryset().filter(current_proposal__district__isnull=False).values_list('current_proposal__district__name', flat=True).distinct()
         activity_qs =  self.get_queryset().filter(current_proposal__activity__isnull=False).values_list('current_proposal__activity', flat=True).distinct()
-        #submitter_qs = self.get_queryset().filter(submitter__isnull=False).distinct('submitter__email').values_list('submitter__first_name','submitter__last_name','submitter__email')
-        #submitters = [dict(email=i[2], search_term='{} {} ({})'.format(i[0], i[1], i[2])) for i in submitter_qs]
         data = dict(
             regions=region_qs,
-            districts=district_qs,
             activities=activity_qs,
-            #submitters=submitters,
-            #processing_status_choices = [i[1] for i in Proposal.PROCESSING_STATUS_CHOICES],
-            #customer_status_choices = [i[1] for i in Proposal.CUSTOMER_STATUS_CHOICES],
             approval_status_choices = [i[1] for i in Approval.STATUS_CHOICES],
         )
         return Response(data)
