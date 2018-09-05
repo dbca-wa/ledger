@@ -330,6 +330,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 proposal_id = request.POST.get('proposal_id')
                 filename = request.POST.get('filename')
                 _file = request.POST.get('_file')
+                if not _file:
+                    _file = request.FILES.get('_file')
 
                 document = instance.documents.get_or_create(input_name=section, name=filename)[0]
                 path = default_storage.save('proposals/{}/documents/{}'.format(proposal_id, filename), ContentFile(_file.read()))
@@ -337,7 +339,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 document._file = path
                 document.save()
 
-            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=section)] )
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=section) if d._file] )
 
         except serializers.ValidationError:
             print(traceback.print_exc())
