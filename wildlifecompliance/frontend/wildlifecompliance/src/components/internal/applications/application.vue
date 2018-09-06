@@ -179,6 +179,11 @@
                                                     <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
                                                 </div>
                                             </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="assessmentSelect()">Continue Assessment</button>
+                                                </div>
+                                            </div>
                                         </template>
 
                                         <template v-if="isSendingToAssessor">
@@ -277,13 +282,13 @@
                 <template v-if="showingConditions">
                     <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Assessor'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
                         </ul>
             
                     </div>   
                     <div  class="tab-content">
                         <div v-for="item in application.licence_type_data">
-                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor'" :id="`${item1.id}`+_uid" class="tab-pane fade active in"> 
+                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`+_uid" class="tab-pane fade active in"> 
                                 <Conditions :application="application"/>
                             </div>
                         </div>
@@ -630,6 +635,7 @@
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
         <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
+        <AssessmentSelect ref="assessment_select" :application_id="application.id" ></AssessmentSelect>
         <SendToAssessor ref="send_to_assessor" :application_id="application.id" ></SendToAssessor>
         <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" @refreshFromResponse="refreshFromResponse"/>
     </div>
@@ -639,6 +645,7 @@ import Application from '../../form.vue'
 import Vue from 'vue'
 import ProposedDecline from './application_proposed_decline.vue'
 import AmmendmentRequest from './ammendment_request.vue'
+import AssessmentSelect from './assessment_select.vue'
 import SendToAssessor from './application_send_assessor.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Conditions from './application_conditions.vue'
@@ -675,6 +682,8 @@ export default {
             "original_application": null,
             "loading": [],
             selected_referral: '',
+            selected_assessment_tab:null,
+            selected_assessment_id:null,
             form: null,
             members: [],
             department_users : [],
@@ -767,6 +776,7 @@ export default {
         datatable,
         ProposedDecline,
         AmmendmentRequest,
+        AssessmentSelect,
         SendToAssessor,
         Conditions,
         ProposedLicence,
@@ -1067,6 +1077,20 @@ export default {
 
             });
         },
+        assessmentSelect: function(){
+            var selectedTabTitle = $("#tabs-section li.active");
+            var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
+            
+            this.$refs.assessment_select.licence_activity_type=tab_id
+            this.$refs.assessment_select.licence_activity_type_name=selectedTabTitle.text();
+            this.selected_assessment_tab=tab_id
+            console.log(tab_id)
+            console.log(selectedTabTitle)
+            console.log(this.$refs)
+
+            this.$refs.assessment_select.isModalOpen = true;
+            
+        },
         ammendmentRequest: function(){
             let values = '';
             let tab_name='';
@@ -1136,7 +1160,6 @@ export default {
             this.showingConditions = !this.showingConditions;
             this.showingApplication = false;
             this.isSendingToAssessor=false;
-            console.log(this.showingConditions)
 
         },
         updateAssignedOfficerSelect:function(){

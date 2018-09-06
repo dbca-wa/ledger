@@ -776,6 +776,11 @@ class Application(RevisionedMixin):
         qs =AmendmentRequest.objects.filter(application = self)
         return qs
 
+    @property
+    def assessments(self):
+        qs =Assessment.objects.filter(application = self,status='awaiting_assessment')
+        return qs
+
 
     def final_decline(self,request,details):
         with transaction.atomic():
