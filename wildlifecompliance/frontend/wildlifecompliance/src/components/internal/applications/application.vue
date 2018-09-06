@@ -1175,7 +1175,12 @@ export default {
         },
         completeAssessment:function(){
             let vm = this;
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')))
+            let data = new FormData();
+            data.selected_assessment_id=vm.selected_assessment_id;
+            data.selected_assessment_tab=vm.selected_assessment_tab
+            console.log(data)
+            
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
             .then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);

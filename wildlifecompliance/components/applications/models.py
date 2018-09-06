@@ -701,10 +701,15 @@ class Application(RevisionedMixin):
             raise ValidationError('The provided status cannot be found.')
 
     def complete_assessment(self,request):
-        return true
-        # with transaction.atomic():
-        #     try:
-        #         for item in  self.licence_type_data['activity_type']:
+        
+        assessment = Assessment.objects.get(id=request.data.get('selected_assessment_id'))
+        assessment.status ='completed'
+        assessment.save()
+        for activity_type in  self.licence_type_data['activity_type']:
+            if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
+                activity_type["processing_status"]="With Officer-Conditions"
+                self.save()
+
 
     def proposed_decline(self,request,details):
         with transaction.atomic():
