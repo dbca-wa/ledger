@@ -4,14 +4,14 @@
         <div class="row" v-if="status == 'offline'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
-                    Sorry, this marine park doesn't yet support online bookings. Please visit the <a href="">Mooring Availability checker</a> for expected availability.
+                    Sorry, this mooring doesn't yet support online bookings. Please visit the <a href="">Mooring Availability checker</a> for expected availability.
                 </div>
             </div>
         </div>
         <div class="row" v-else-if="status == 'empty'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
-                    Sorry, this marine park doesn't yet have any mooring assigned to it. Please visit the <a href="">Mooring Availability checker</a> for expected availability.
+                    Sorry, this mooring doesn't yet have any mooring assigned to it. Please visit the <a href="">Mooring Availability checker</a> for expected availability.
                 </div>
             </div>
         </div>
@@ -32,10 +32,24 @@
                 </div>
             </div>
         </div>
+        <div class="columns small-12 medium-12 large-12">
+        <div class="row">
+                <div class="columns small-9 medium-9 large-9">
+                        <div class="panel panel-default">
+                             <div class="panel-heading"> <h3 class="panel-title">Trolley: $0.00</h3></div>
+                        </div>
+                </div>
+
+                <div class="columns small-3 medium-3 large-3">
+                        <a class="btn btn-primary small-12 medium-12 large-12" style=";">Check Out</a>
+                </div>
+
+        </div>
+        </div>
 
         <div class="row" v-if="name">
             <div class="columns small-12">
-                <h1>Book mooring: {{ name }}</h1>
+                <h1>V2 - Book mooring: {{ name }}</h1>
             </div>
         </div>
         <div v-if="ongoing_booking" class="row">

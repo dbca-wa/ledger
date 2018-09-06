@@ -61,6 +61,19 @@ class MooringsiteAvailabilitySelector(TemplateView):
                 context['ground_id'] = cg.first().id
         return render(request, self.template_name, context)
 
+class MooringAvailability2Selector(TemplateView):
+    template_name = 'mooring/mooring_availablity_booking_selector.html'
+
+    def get(self, request, *args, **kwargs):
+        # if page is called with ratis_id, inject the ground_id
+        context = {}
+        ratis_id = request.GET.get('mooring_site_id', None)
+        if ratis_id:
+            cg = MooringArea.objects.filter(ratis_id=ratis_id)
+            if cg.exists():
+                context['ground_id'] = cg.first().id
+        return render(request, self.template_name, context)
+
 class AvailabilityAdmin(TemplateView):
     template_name = 'mooring/availability_admin.html'
 
@@ -265,7 +278,7 @@ class MakeBookingsView(TemplateView):
             form.add_error(None, '{} Please contact Marine Park and Visitors services with this error message and the time of the request.'.format(str(e)))
             return self.render_page(request, booking, form, vehicles, show_errors=True)
             
-        print(lines)
+        #print(lines)
         total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
 
         # get the customer object
@@ -388,7 +401,7 @@ class BookingSuccessView(TemplateView):
                     logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
                     return redirect('public_make_booking')
 
-                if inv.system not in ['0019']:
+                if inv.system not in ['0516']:
                     logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                     return redirect('public_make_booking')
 

@@ -70,6 +70,7 @@ urlpatterns = [
     url(r'^$', views.MarinastayRoutingView.as_view(), name='ps_home'),
     url(r'^mooringsites/(?P<ground_id>[0-9]+)/$', views.MooringsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^availability/$', views.MooringsiteAvailabilitySelector.as_view(), name='campsite_availaiblity_selector'),
+    url(r'^availability2/$', views.MooringAvailability2Selector.as_view(), name='mooring_availaiblity2_selector'),
     url(r'^availability_admin/$', views.AvailabilityAdmin.as_view(), name='availability_admin'),
     #url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.MooringAreaFeed(), name='campground_calendar'),
     url(r'^dashboard/moorings/$', views.DashboardView.as_view(), name='dash-campgrounds'),

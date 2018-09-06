@@ -199,8 +199,8 @@ class MooringAreaMapSerializer(gis_serializers.GeoFeatureModelSerializer):
     features = MooringAreaMapFeatureSerializer(read_only=True, many=True)
     park = MooringAreaMapMarinaSerializer(read_only=True)
     images = MooringAreaMapImageSerializer(read_only=True, many=True)
-#    price_hint = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True, source='campsites__rates__rate__adult__min')
-#   price_hint = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
+#    price_hint = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True, source='mooringsites__rates__rate__mooring__min')
+#    price_hint = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
 
     class Meta:
         model = MooringArea
@@ -214,8 +214,9 @@ class MooringAreaMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'park',
             'info_url',
             'images',
-            'vessel_size_limit'
- #           'price_hint'
+            'vessel_size_limit',
+            'max_advance_booking'
+#            'price_hint'
         )
 
 class MarineParkRegionMapSerializer(serializers.Serializer):

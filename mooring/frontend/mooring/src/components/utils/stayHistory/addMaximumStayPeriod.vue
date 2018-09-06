@@ -146,6 +146,7 @@ module.exports = {
             this.form.validate({
                 rules: {
                     stay_start: "required",
+                    stay_end: "required",
                     stay_reason: "required",
                     stay_details: {
                         required: {
