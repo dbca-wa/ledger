@@ -116,6 +116,7 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                     return i[0]
             return None
 
+        #import ipdb; ipdb.set_trace()
         # on the internal dashboard, the Region filter is multi-select - have to use the custom filter below
         regions = request.GET.get('regions')
         if regions:
@@ -125,6 +126,12 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(proposal__region__name__iregex=regions.replace(',', '|'))
             #elif queryset.model is Approval:
             #    queryset = queryset.filter(region__iregex=regions.replace(',', '|'))
+            
+        # since in proposal_datatables.vue, the 'region' data field is declared 'searchable=false'
+        #global_search = request.GET.get('search[value]')
+        #if global_search:
+        #    queryset = queryset.filter(region__name__iregex=global_search)
+
 
         # on the internal dashboard, the Referral 'Status' filter - have to use the custom filter below
         #import ipdb; ipdb.set_trace()
