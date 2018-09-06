@@ -124,6 +124,23 @@ class OpenReason(ReasonAdmin):
 class OutstandingBookingRecipient(admin.ModelAdmin):
     pass
 
+@admin.register(models.AdmissionsOracleCode)
+class AdmissionsOracleCode(admin.ModelAdmin):
+    pass
+
+@admin.register(models.AdmissionsRate)
+class AdmissionsRate(admin.ModelAdmin):
+    list_display = ('period_start', 'period_end')
+
+@admin.register(models.AdmissionsReason)
+class AdmissionsReason(admin.ModelAdmin):
+    list_display = ('id', 'text')
+
+@admin.register(models.AdmissionsBooking)
+class AdmissionBooking(admin.ModelAdmin):
+    list_display = ('arrivalDate', 'confirmation_number')
+    search_fields = ('arrivalDate',)
+
 @admin.register(models.Region)
 class Region(admin.GeoModelAdmin):
     list_display = ('name',)

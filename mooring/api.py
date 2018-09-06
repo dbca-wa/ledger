@@ -1,6 +1,8 @@
 import traceback
 import base64
 import geojson
+import decimal
+import logging
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -53,10 +55,13 @@ from mooring.models import (MooringArea,
                                 ClosureReason,
                                 OpenReason,
                                 PriceReason,
+                                AdmissionsReason,
                                 MaximumStayReason,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
-                                MooringAreaGroup
+                                MooringAreaGroup,
+                                AdmissionsBooking,
+                                AdmissionsRate
                                 )
 
 from mooring.serialisers import (  MooringsiteBookingSerialiser,
@@ -92,6 +97,7 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     ClosureReasonSerializer,
                                     OpenReasonSerializer,
                                     PriceReasonSerializer,
+                                    AdmissionsReasonSerializer,
                                     MaximumStayReasonSerializer,
                                     BulkPricingSerializer,
                                     UsersSerializer,
@@ -107,7 +113,9 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     PhoneSerializer,
                                     OracleSerializer,
                                     BookingHistorySerializer,
-                                    MooringAreaGroupSerializer
+                                    MooringAreaGroupSerializer,
+                                    AdmissionsBookingSerializer,
+                                    AdmissionsRateSerializer
                                     )
 from mooring.helpers import is_officer, is_customer
 from mooring import reports 
@@ -1280,6 +1288,87 @@ class AvailabilityAdminViewSet(BaseAvailabilityViewSet):
 
 @csrf_exempt
 @require_http_methods(['POST'])
+def create_admissions_booking(request, *args, **kwargs):
+    data = {
+        'arrivalDate' : request.POST.get('arrival'),
+        'vesselRegNo': request.POST.get('vesselReg'),
+        'noOfAdults': request.POST.get('noOfAdults', 0),
+        'noOfConcessions': request.POST.get('noOfConcessions', 0),
+        'noOfChildren': request.POST.get('noOfChildren', 0),
+        'noOfInfants': request.POST.get('noOfInfants', 0),
+        'warningReferenceNo': request.POST.get('warningRefNo'),
+    }
+    
+    if(request.POST.get('overnightStay') == 'yes'):
+        data['overnightStay'] = 'True'
+    else:
+        data['overnightStay'] = 'False'
+    dateAsString = data['arrivalDate']
+    data['arrivalDate'] = datetime.strptime(dateAsString, "%Y/%m/%d").date()
+
+    serializer = AdmissionsBookingSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+
+    admissionsBooking = AdmissionsBooking.objects.create(
+        arrivalDate = serializer.validated_data['arrivalDate'],
+        overnightStay = serializer.validated_data['overnightStay'],
+        vesselRegNo = serializer.validated_data['vesselRegNo'],
+        noOfAdults = serializer.validated_data['noOfAdults'],
+        noOfConcessions = serializer.validated_data['noOfConcessions'],
+        noOfChildren = serializer.validated_data['noOfChildren'],
+        noOfInfants = serializer.validated_data['noOfInfants'],
+        warningReferenceNo = serializer.validated_data['warningReferenceNo'],
+        booking_type = 3
+    )
+
+    #Lookup price and set lines.
+    try:
+        lines = utils.admissions_price_or_lineitems(request, admissionsBooking)
+    except Exception as e:
+        error = (None, '{} Please contact Marine Park and Visitors services with this error message and the time of the request.'.format(str(e)))
+        #handle
+    total = sum([decimal.Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
+    
+    #Lookup customer
+    if request.user.is_anonymous() or request.user.is_staff:
+        try:
+            customer = EmailUser.objects.get(email=request.POST.get('email'))
+        except EmailUser.DoesNotExist:
+            customer = EmailUser.objects.create(
+                    email=request.POST.get('email'),
+                    first_name=request.POST.get('givenName'),
+                    last_name=request.POST.get('lastName')
+            )
+    else:
+        customer = request.user 
+    
+
+    admissionsBooking.customer = customer
+    admissionsBooking.totalCost = total
+    admissionsBooking.save()
+
+    request.session['ad_booking'] = admissionsBooking.pk
+    logger = logging.getLogger('booking_checkout')
+    logger.info('{} built admissions booking {} and handing over to payment gateway'.format('User {} with id {}'.format(admissionsBooking.customer.get_full_name(),admissionsBooking.customer.id) if admissionsBooking.customer else 'An anonymous user',admissionsBooking.id))
+
+    # generate invoice
+    invoice = u"Invoice for {} on {}".format(
+            u'{} {}'.format(admissionsBooking.customer.first_name, admissionsBooking.customer.last_name),
+            admissionsBooking.arrivalDate.strftime('%d-%m-%Y')
+    )
+    #Not strictly needed.
+    #logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(admissionsBooking.customer.get_full_name(),admissionsBooking.customer.id) if admissionsBooking.customer else 'An anonymous user',admissionsBooking.id))
+    result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice)
+    print(result)
+    if(result):
+        return result
+    else:
+        return HttpResponse(geojason.dumps({
+            'status': 'failure',
+        }), content_type='application/json')
+
+@csrf_exempt
+@require_http_methods(['POST'])
 def create_booking(request, *args, **kwargs):
     """Create a temporary booking and link it to the current session"""
     data = {
@@ -1294,7 +1383,6 @@ def create_booking(request, *args, **kwargs):
         'campsite': request.POST.get('campsite', 0),
         'vessel_size' : request.POST.get('vessel_size', 0)
     }
-
     serializer = MooringsiteBookingSerializer(data=data)
     serializer.is_valid(raise_exception=True)
 
@@ -1370,7 +1458,32 @@ def create_booking(request, *args, **kwargs):
         'pk': booking.pk
     }), content_type='application/json')
 
+@require_http_methods(['GET'])
+def get_admissions_confirmation(request, *args, **kwargs):
+    # fetch booking for ID
+    print "get_confirmation"
+    booking_id = kwargs.get('booking_id', None)
+    if (booking_id is None):
+        return HttpResponse('Booking ID not specified', status=400)
+    
+    try:
+        booking = AdmissionsBooking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return HttpResponse('Booking unavailable', status=403)
 
+    # check permissions
+    if not ((request.user == booking.customer) or is_officer(request.user) or (booking.id == request.session.get('ad_last_booking', None))):
+        return HttpResponse('Booking unavailable', status=403)
+
+    # check payment status
+    if (not is_officer(request.user)) and (not booking.paid):
+        return HttpResponse('Booking unavailable', status=403)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="confirmation-AD{}.pdf"'.format(booking_id)
+
+    pdf.create_admissions_confirmation(response, booking)
+    return response
 
 @require_http_methods(['GET'])
 def get_confirmation(request, *args, **kwargs):
@@ -2206,6 +2319,10 @@ class PriceReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PriceReason.objects.all()
     serializer_class = PriceReasonSerializer
 
+class AdmissionsReasonViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AdmissionsReason.objects.all()
+    serializer_class = AdmissionsReasonSerializer
+
 class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
@@ -2343,6 +2460,40 @@ class BulkPricingView(generics.CreateAPIView):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
 
+class AdmissionsRatesViewSet(viewsets.ModelViewSet):
+    queryset = AdmissionsRate.objects.all()
+    renderer_classes = (JSONRenderer,)
+    serializer_class = AdmissionsRateSerializer;
+
+    @list_route(methods=['get'])
+    def price_history(self, request, format='json', pk=None):
+        http_status = status.HTTP_200_OK
+        try:
+            price_history = AdmissionsRate.objects.all().order_by('-period_start')
+            serializer = AdmissionsRateSerializer(price_history,many=True)
+            res = serializer.data
+        except Exception as e:
+            res ={
+                "Error": str(e)
+            }
+
+        return Response(res,status=http_status)
+
+    @list_route(methods=['post'],)
+    def add_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer =  AdmissionsRateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            res = serializer.data
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+
 class BookingRefundsReportView(views.APIView):
     renderer_classes = (JSONRenderer,)
 
@@ -2431,9 +2582,9 @@ class GetProfile(views.APIView):
     def get(self, request, format=None):
         # Check if the user has any address and set to residential address
         user = request.user
-        if not user.residential_address:
-            user.residential_address = user.profile_addresses.first() if user.profile_addresses.all() else None
-            user.save()
+        # if not user.residential_address:
+        #     user.residential_address = user.profile_addresses.first() if user.profile_addresses.all() else None
+        #     user.save()
         serializer  = UserSerializer(request.user)
         return Response(serializer.data)
 

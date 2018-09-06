@@ -53,7 +53,7 @@
 
 <script>
 import bootstrapModal from '../bootstrap-modal.vue'
-import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
+import { $, datetimepicker,api_endpoints, validate, helpers, bus } from '../../../hooks'
 import alert from '../alert.vue'
 import reason from '../reasons.vue'
 module.exports = {
@@ -80,6 +80,7 @@ module.exports = {
             errorString: '',
             form: '',
             isOpen: false,
+            reasons: [],
             close_cg_range_start: 'close_cg_range_start'+vm._uid,
             close_cg_range_end: 'close_cg_range_end'+vm._uid,
         }
@@ -96,7 +97,15 @@ module.exports = {
             return this.statusHistory.id ? this.statusHistory.id : '';
         },
         requireDetails: function() {
-            return this.statusHistory.closure_reason == '1';
+            let vm = this;
+            var check = this.statusHistory.closure_reason
+            for (var i = 0; i < vm.reasons.length; i++){
+                console.log(vm.reasons[i]);
+                console.log(check);
+                if (vm.reasons[i].id == check){
+                    return vm.reasons[i].detailRequired;
+                }
+            }
         },
     },
     components: {
@@ -138,7 +147,13 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.statusHistory.reason=== '1';
+                                let vm = this;
+                                var check = this.statusHistory.closure_reason
+                                for (var i = 0; i < vm.reasons.length; i++){
+                                    if (vm.reasons[i].id == check){
+                                        return vm.reasons[i].detailRequired;
+                                    }
+                                }
                             }
                         }
                     }
@@ -194,6 +209,9 @@ module.exports = {
         });
         vm.form = $(document.forms.closeForm);
         vm.addFormValidations();
+        bus.$once('closeReasons',setReasons => {
+            vm.reasons = setReasons;
+        });
     },
 };
 </script>

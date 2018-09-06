@@ -2,20 +2,22 @@ from datetime import datetime, timedelta, date
 import traceback
 from decimal import *
 import json
+import geojson
 import requests
 from django.conf import settings
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import redirect
 from django.utils import timezone
 
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego)
-from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate)
+from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
 
@@ -532,6 +534,91 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     else:
         return total_price
 
+def get_admissions_entry_rate(request,start_date):
+    res = []
+    if start_date:
+        start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+        price_history = AdmissionsRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
+        if price_history:
+            serializer = AdmissionsRateSerializer(price_history,many=True,context={'request':request})
+            res = serializer.data[0]
+    return res
+
+def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
+    total_price = Decimal(0)
+    rate_list = {}
+    invoice_lines = []
+    line = lines
+    # Create line items for customers
+    daily_rates = get_admissions_entry_rate(request,admissionsBooking.arrivalDate.strftime('%Y-%m-%d'))
+    if not daily_rates:
+        raise Exception('There was an error while trying to get the daily rates.')
+
+    family = 0
+    adults = admissionsBooking.noOfAdults
+    children = admissionsBooking.noOfChildren
+    if adults > 1 and children > 1:
+        if adults == children:
+            if adults % 2 == 0:
+                family = adults/2
+                adults = 0
+                children = 0
+            else:
+                adults -= 1
+                family = adults/2
+                adults = 1
+                children = 1
+
+        elif adults > children: #Adults greater - tickets based on children
+            if children % 2 == 0:
+                family = children/2
+                adults -= children
+                children = 0
+            else:
+                children -= 1
+                family = children/2
+                adults -= children
+                children = 1
+        else: #Children greater - tickets based on adults
+            if adults % 2 == 0:
+                family = adults/2
+                children -= adults
+                adults = 0
+            else:
+                adults -= 1
+                family = adults/2
+                children -= adults
+                adults = 1
+
+    people = {'Adults': adults,'Concessions': admissionsBooking.noOfConcessions,'Children': children,'Infants': admissionsBooking.noOfInfants, 'Family': family}
+
+    for group, amount in people.items():
+        if line:
+            if(amount > 0):
+                if group == 'Adults':
+                    gr = 'adult'
+                elif group == 'Children':
+                    gr = group
+                elif group == 'Infants':
+                    gr = 'infant'
+                elif group == 'Family':
+                    gr = 'family'
+                if admissionsBooking.overnightStay:
+                    costfield = gr.lower() + "_overnight_cost"
+                else:
+                    costfield = gr.lower() + "_cost"
+                price = daily_rates.get(costfield)
+                invoice_lines.append({'ledger_description':'Admission fee {} ({})'.format(admissionsBooking.arrivalDate, group),"quantity":amount,"price_incl_tax":price, "oracle_code":AdmissionsOracleCode.objects.all().first().oracle_code})
+            
+        else:
+            price = Decimal(daily_rates)
+            total_cost += price
+
+    if line:
+        return invoice_lines
+    else:
+        return total_price
+
 def check_date_diff(old_booking,new_booking):
     if old_booking.arrival == new_booking.arrival and old_booking.departure == new_booking.departure:
         return 4 # same days
@@ -820,6 +907,47 @@ def old_create_or_update_booking(request,booking_details,updating=False):
         booking.save()
     return booking
 
+def admissionsCheckout(request, admissionsBooking, lines, invoice_text=None, vouchers=[], internal=False):
+    basket_params = {
+        'products': lines,
+        'vouchers': vouchers,
+        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'custom_basket': True,
+    }
+    
+    basket, basket_hash = create_basket_session(request, basket_params)
+    print(basket)
+    print(basket_hash)
+    checkout_params = {
+        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'fallback_url': request.build_absolute_uri('/'),
+        'return_url': request.build_absolute_uri(reverse('public_admissions_success')),
+        'return_preload_url': request.build_absolute_uri(reverse('public_admissions_success')),
+        'force_redirect': True,
+        'proxy': True if internal else False,
+        'invoice_text': invoice_text,
+    }
+    
+    if internal or request.user.is_anonymous():
+        checkout_params['basket_owner'] = admissionsBooking.customer.id
+    create_checkout_session(request, checkout_params)
+
+    if internal:
+        responseJson = place_order_submission(request)
+    else:
+        print(reverse('checkout:index'))
+        responseJson = HttpResponse(geojson.dumps({'status': 'success','redirect': reverse('checkout:index'),}), content_type='application/json')
+        # response = HttpResponseRedirect(reverse('checkout:index'))
+
+        # inject the current basket into the redirect response cookies
+        # or else, anonymous users will be directionless
+        responseJson.set_cookie(
+            settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
+            max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
+            secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
+        )
+    return responseJson
+
 
 def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
     basket_params = {
@@ -1000,6 +1128,22 @@ def set_session_booking(session, booking):
     session['ps_booking'] = booking.id
     session.modified = True
 
+def get_session_admissions_booking(session):
+    if 'ad_booking' in session:
+        booking_id = session['ad_booking']
+    else:
+        raise Exception('Admissions booking not in Session')
+
+    try:
+        return AdmissionsBooking.objects.get(id=booking_id)
+    except AdmissionsBooking.DoesNotExist:
+        raise Exception('Admissions booking not found for booking_id {}'.format(booking_id))
+
+
+def delete_session_admissions_booking(session):
+    if 'ad_booking' in session:
+        del session['ad_booking']
+        session.modified = True
 
 def get_session_booking(session):
     if 'ps_booking' in session:

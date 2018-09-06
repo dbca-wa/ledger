@@ -26,11 +26,14 @@ from mooring.models import (MooringAreaPriceHistory,
                                 ClosureReason,
                                 OpenReason,
                                 PriceReason,
+                                AdmissionsReason,
                                 MaximumStayReason,
                                 MooringAreaStayHistory,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
                                 BookingHistory,
+                                AdmissionsBooking,
+                                AdmissionsRate
                            )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -69,6 +72,15 @@ class MooringsiteBookingSerializer(serializers.Serializer):
     campsite_class = serializers.IntegerField(default=0)
     campsite = serializers.IntegerField(default=0)
     vessel_size = serializers.IntegerField(default=0)
+
+
+class AdmissionsBookingSerializer(serializers.ModelSerializer):
+    """Serializer used by the admissions booking process."""
+    class Meta:
+        model = AdmissionsBooking
+        excludes = ('customer','totalCost')
+
+
 
 class BookingRangeSerializer(serializers.ModelSerializer):
 
@@ -636,22 +648,27 @@ class MarinaEntryRateSerializer(serializers.ModelSerializer):
 class ClosureReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClosureReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
 
 class OpenReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpenReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
 
 class PriceReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = PriceReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
+
+class AdmissionsReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdmissionsReason
+        fields = ('id','text', 'detailRequired')
 
 class MaximumStayReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaximumStayReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
 
 class AccountsAddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -713,6 +730,26 @@ class BulkPricingSerializer(serializers.Serializer):
         if obj.get('reason') == 1  and not obj.get('details'):
             raise serializers.ValidationError('Details required if reason is other.')
         return obj
+
+class AdmissionsRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdmissionsRate
+        fields = (
+            'id',
+            'period_start',
+            'period_end',
+            'adult_cost',
+            'adult_overnight_cost',
+            'children_cost',
+            'children_overnight_cost',
+            'infant_cost',
+            'infant_overnight_cost',
+            'family_cost',
+            'family_overnight_cost',
+            'reason',
+            'comment',
+            'editable'
+            )
 
 class ReportSerializer(serializers.Serializer):
     start = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
@@ -781,6 +818,7 @@ class UserSerializer(serializers.ModelSerializer):
             'residential_address',
             'phone_number',
             'mobile_number',
+            'is_staff',
         )
 
 class PersonalSerializer(serializers.ModelSerializer):
