@@ -150,7 +150,6 @@ module.exports = {
                     stay_details: {
                         required: {
                             depends: function(el){
-                                let vm = this;
                                 var check = vm.stay.reason;
                                 for (var i = 0; i < vm.reasons.length; i++){
                                     if (vm.reasons[i].id == check){
