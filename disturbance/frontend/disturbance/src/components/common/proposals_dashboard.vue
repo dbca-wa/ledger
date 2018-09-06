@@ -185,7 +185,7 @@ export default {
                         mRender:function(data,type,full){
                             return full.lodgement_number;
                         },
-                        data: "id, lodgement_number",
+                        name: "id, lodgement_number",
                     },
                     {
                         data: "region",

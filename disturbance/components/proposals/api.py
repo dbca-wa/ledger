@@ -116,6 +116,7 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                     return i[0]
             return None
 
+        #import ipdb; ipdb.set_trace()
         # on the internal dashboard, the Region filter is multi-select - have to use the custom filter below
         regions = request.GET.get('regions')
         if regions:
@@ -125,6 +126,12 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(proposal__region__name__iregex=regions.replace(',', '|'))
             #elif queryset.model is Approval:
             #    queryset = queryset.filter(region__iregex=regions.replace(',', '|'))
+            
+        # since in proposal_datatables.vue, the 'region' data field is declared 'searchable=false'
+        #global_search = request.GET.get('search[value]')
+        #if global_search:
+        #    queryset = queryset.filter(region__name__iregex=global_search)
+
 
         # on the internal dashboard, the Referral 'Status' filter - have to use the custom filter below
         #import ipdb; ipdb.set_trace()
@@ -330,6 +337,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 proposal_id = request.POST.get('proposal_id')
                 filename = request.POST.get('filename')
                 _file = request.POST.get('_file')
+                if not _file:
+                    _file = request.FILES.get('_file')
 
                 document = instance.documents.get_or_create(input_name=section, name=filename)[0]
                 path = default_storage.save('proposals/{}/documents/{}'.format(proposal_id, filename), ContentFile(_file.read()))
@@ -337,7 +346,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 document._file = path
                 document.save()
 
-            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=section)] )
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=section) if d._file] )
 
         except serializers.ValidationError:
             print(traceback.print_exc())

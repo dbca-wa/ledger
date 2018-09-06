@@ -193,7 +193,8 @@ export default {
         // get all required fields, that are not hidden in the DOM
         //var hidden_fields = $('input[type=text]:hidden, textarea:hidden, input[type=checkbox]:hidden, input[type=radio]:hidden, input[type=file]:hidden');
         //hidden_fields.prop('required', null);
-        var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required').not(':hidden');
+        //var required_fields = $('select:required').not(':hidden');
+        var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden');
 
         // loop through all (non-hidden) required fields, and check data has been entered
         required_fields.each(function() {
@@ -214,6 +215,15 @@ export default {
                 if ($("[class="+this.classList['value']+"]:checked").length == 0) {
                     var text = $('#'+id).text()
                     console.log('checkbox not checked: ' + this.type + ' ' + text)
+                    vm.missing_fields.push({id: id, label: text});
+                }
+            }
+
+            if (this.type == 'select-one') {
+                if ($(this).val() == '') {
+                    var text = $('#'+id).text()  // this is the (question) label
+                    var id = 'id_' + $(this).prop('name'); // the label id
+                    console.log('selector not selected: ' + this.type + ' ' + text)
                     vm.missing_fields.push({id: id, label: text});
                 }
             }
