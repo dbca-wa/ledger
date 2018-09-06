@@ -129,6 +129,17 @@ class MooringArea(models.Model):
         #(2, 'Bookable Per Site Type (hide site number)'),
     )
 
+    MOORING_PHYSICAL_TYPE_CHOICES = (
+        (0, 'Mooring'),
+        (1, 'Jetty Pen')
+    )
+
+    MOORING_CLASS_CHOICES = (
+        (0, 'Small'),
+        (1, 'Medium'),
+        (2, 'Large')
+    )
+
     name = models.CharField(max_length=255, null=True)
     park = models.ForeignKey('MarinePark', on_delete=models.PROTECT, related_name='marineparks')
     ratis_id = models.IntegerField(default=-1)
@@ -160,6 +171,11 @@ class MooringArea(models.Model):
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
     mooring_map = models.FileField(upload_to=update_mooring_map_filename,null=True,blank=True)
     vessel_size_limit = models.IntegerField(default=0)
+    # vessel_draft_limit = models.IntegerField(default=0)
+    # vessel_beam_limit = models.IntegerField(default=0)
+    # vessel_weight_limit = models.IntegerField(default=0)
+    # mooring_physical_type = models.SmallIntegerField(choices=MOORING_PHYSICAL_TYPE_CHOICES, default=0)
+    # mooring_class = models.SmallIntegerField(choices=MOORING_CLASS_CHOICES, default=0)
 
     def __str__(self):
         return self.name
