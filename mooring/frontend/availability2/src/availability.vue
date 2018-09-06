@@ -527,7 +527,7 @@ export default {
                     var url = vm.parkstayUrl + '/api/availability_admin/'+ vm.parkstayGroundId +'/?'+$.param(params);
                 } else {
                     vm.updateURL();
-                    var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
+                    var url = vm.parkstayUrl + '/api/availability2/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
                 }
                 
                 $.ajax({

@@ -884,9 +884,9 @@ class MooringsiteBooking(models.Model):
 
     campsite = models.ForeignKey('Mooringsite', db_index=True, on_delete=models.PROTECT)
     date = models.DateField(db_index=True)
-# ria multiple booking
-#    from_dt = models.DateTimeField(blank=True, null=True)
-#    to_dt = models.DateTimeField(blank=True, null=True) 
+    # ria multiple booking
+    from_dt = models.DateTimeField(blank=True, null=True)
+    to_dt = models.DateTimeField(blank=True, null=True) 
     booking = models.ForeignKey('Booking',related_name="campsites", on_delete=models.CASCADE, null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
 

@@ -123,7 +123,8 @@ from mooring import pdf
 from mooring.perms import PaymentCallbackPermission
 from mooring import emails
 from mooring import exceptions
-
+from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import Distance  
 
 # API Views
 class MooringsiteBookingViewSet(viewsets.ModelViewSet):
@@ -1275,7 +1276,267 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
             return Response(result)
 
+
+
+class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
+    queryset = MooringArea.objects.all()
+    serializer_class = MooringAreaSerializer
+    print ("BaseAvailabilityViewSet2")
+    def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
+        print ("BaseAvailabilityViewSet2-IN")
+        """Fetch full campsite availability for a campground."""
+        # convert GET parameters to objects
+        ground = self.get_object()
+        # check if the user has an ongoing booking
+        ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        # Validate parameters
+        data = {
+            "arrival" : request.GET.get('arrival'),
+            "departure" : request.GET.get('departure'),
+            "num_adult" : request.GET.get('num_adult', 0),
+            "num_concession" : request.GET.get('num_concession', 0),
+            "num_child" : request.GET.get('num_child', 0),
+            "num_infant" : request.GET.get('num_infant', 0),
+            "gear_type" : request.GET.get('gear_type', 'all'),
+            "vessel_size" : request.GET.get('vessel_size', 0)
+        }
+        serializer = MooringAreaMooringsiteFilterSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        start_date = serializer.validated_data['arrival']
+        end_date = serializer.validated_data['departure']
+        num_adult = serializer.validated_data['num_adult']
+        num_concession = serializer.validated_data['num_concession']
+        num_child = serializer.validated_data['num_child']
+        num_infant = serializer.validated_data['num_infant']
+        gear_type = serializer.validated_data['gear_type']
+        vessel_size = serializer.validated_data['vessel_size']
+
+        # if campground doesn't support online bookings, abort!
+        if ground.mooring_type != 0:
+            return Response({'error': 'Mooring doesn\'t support online bookings'}, status=400)
+
+        if ground.vessel_size_limit < vessel_size:
+             return Response({'name':'   ', 'error': 'Vessel size is too large for mooring', 'error_type': 'vessel_error', 'vessel_size': ground.vessel_size_limit}, status=200 )
+
+
+        #if not ground._is_open(start_date):
+        #    return Response({'closed': 'MooringArea is closed for your selected dates'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # get a length of the stay (in days), capped if necessary to the request maximum
+        today = date.today()
+        length = max(0, (end_date-start_date).days)
+        max_advance_booking_days = max(0, (start_date-today).days)
+        #if length > settings.PS_MAX_BOOKING_LENGTH:
+        #    length = settings.PS_MAX_BOOKING_LENGTH
+        #    end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
+        if max_advance_booking_days > ground.max_advance_booking:
+           return Response({'name':'   ', 'error': 'Max advanced booking limit is '+str(ground.max_advance_booking)+' day/s. You can not book longer than this period.', 'error_type': 'stay_error', 'max_advance_booking': ground.max_advance_booking, 'days': length, 'max_advance_booking_days': max_advance_booking_days }, status=200 )
+
+
+        # fetch all the campsites and applicable rates for the campground
+        context = {}
+        if gear_type != 'all':
+            context[gear_type] = True
+#        sites_qs = Mooringsite.objects.filter(mooringarea=ground).filter(**context)
+        radius = int(29000)
+#        sites_qs = Mooringsite.objects.all().filter(**context)
+        print ("GROUND GPS")
+        print (ground.wkb_geometry)
+        print Mooringsite.objects.filter(mooringarea__wkb_geometry=(ground.wkb_geometry, Distance(km=radius)))
+        print "DISTANCE"
+        print Distance(km=radius)
+        #print Mooringsite.objects.all()
+        sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
+
+        # fetch rate map
+        rates = {
+            siteid: {
+                #date: num_adult*info['adult']+num_concession*info['concession']+num_child*info['child']+num_infant*info['infant']
+                 date: info['mooring']
+                for date, info in dates.items()
+            } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
+        }
+
+        # fetch availability map
+        availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
+        # create our result object, which will be returned as JSON
+        result = {
+            'id': ground.id,
+            'name': ground.name,
+            'long_description': ground.long_description,
+            'map': ground.mooring_map.url if ground.mooring_map else None,
+            'ongoing_booking': True if ongoing_booking else False,
+            'ongoing_booking_id': ongoing_booking.id if ongoing_booking else None,
+            'arrival': start_date.strftime('%Y/%m/%d'),
+            'days': length,
+            'adults': 1,
+            'children': 0,
+            'maxAdults': 30,
+            'maxChildren': 30,
+            'sites': [],
+            'classes': {},
+            'vessel_size' : ground.vessel_size_limit,
+            'max_advance_booking': ground.max_advance_booking
+        }
+
+        # group results by campsite class
+        if ground.site_type in (1, 2):
+            # from our campsite queryset, generate a distinct list of campsite classes
+#            classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name', 'tent', 'campervan', 'caravan')]
+            classes = [x for x in sites_qs.distinct('mooringsite_class__name').order_by('mooringsite_class__name').values_list('pk', 'mooringsite_class', 'mooringsite_class__name', 'tent', 'campervan', 'caravan')]
+
+            classes_map = {}
+            bookings_map = {}
+
+            # create a rough mapping of rates to campsite classes
+            # (it doesn't matter if this isn't a perfect match, the correct
+            # pricing will show up on the booking page)
+            rates_map = {}
+
+            class_sites_map = {}
+            for s in sites_qs:
+                if s.campsite_class.pk not in class_sites_map:
+                    class_sites_map[s.campsite_class.pk] = set()
+                    rates_map[s.campsite_class.pk] = rates[s.pk]
+
+                class_sites_map[s.campsite_class.pk].add(s.pk)
+            # make an entry under sites for each campsite class
+            for c in classes:
+                rate = rates_map[c[1]]
+                site = {
+                    'name': c[2],
+                    'id': None,
+                    'type': c[1],
+                    'price': '${}'.format(sum(rate.values())) if not show_all else False,
+                    'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
+                    'breakdown': OrderedDict(),
+                    'gearType': {
+                        'tent': c[3],
+                        'campervan': c[4],
+                        'caravan': c[5]
+                    }
+                }
+                result['sites'].append(site)
+                classes_map[c[1]] = site
+
+            # make a map of class IDs to site IDs
+            for s in sites_qs:
+                rate = rates_map[s.campsite_class.pk]
+                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)]] for i in range(length)]
+
+            # store number of campsites in each class
+            class_sizes = {k: len(v) for k, v in class_sites_map.items()}
+
+            # update results based on availability map
+            for s in sites_qs:
+                # get campsite class key
+                key = s.campsite_class.pk
+                # if there's not a free run of slots
+                if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
+                    # clear the campsite from the campsite class map
+                    if s.pk in class_sites_map[key]:
+                        class_sites_map[key].remove(s.pk)
+
+                    # update the days that are non-open
+                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                        # update the per-site availability
+                        classes_map[key]['breakdown'][s.name][offset][0] = False
+                        classes_map[key]['breakdown'][s.name][offset][1] = 'Booked' if (stat == 'booked') else 'Unavailable'
+
+                        # update the class availability status
+                        book_offset = 0 if (stat == 'booked') else 1
+                        classes_map[key]['availability'][offset][3][book_offset] += 1
+                        if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Fully Booked'
+                        elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Unavailable'
+                        elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
+                            classes_map[key]['availability'][offset][1] = 'Partially Booked'
+                        else:
+                            classes_map[key]['availability'][offset][1] = 'Partially Unavailable'
+
+                        # tentatively flag campsite class as unavailable
+                        classes_map[key]['availability'][offset][0] = False
+                        classes_map[key]['price'] = False
+            # convert breakdowns to a flat list
+            for klass in classes_map.values():
+                klass['breakdown'] = [{'name': k, 'availability': v} for k, v in klass['breakdown'].items()]
+
+            # any campsites remaining in the class sites map have zero bookings!
+            # check if there's any left for each class, and if so return that as the target
+            for k, v in class_sites_map.items():
+                if v:
+                    rate = rates_map[k]
+                    # if the number of sites is less than the warning limit, add a notification
+                    if len(v) <= settings.PS_CAMPSITE_COUNT_WARNING:
+                        classes_map[k].update({
+                            'warning': 'Only {} left!'.format(len(v))
+                        })
+
+                    classes_map[k].update({
+                        'id': v.pop(),
+                        'price': '${}'.format(sum(rate.values())),
+                        'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
+                        'breakdown': []
+                    })
+
+
+            return Response(result)
+
+
+        # don't group by class, list individual sites
+        else:
+            sites_qs = sites_qs.order_by('name')
+            # from our campsite queryset, generate a digest for each site
+            sites_map = OrderedDict([(s.name, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
+            bookings_map = {}
+            # make an entry under sites for each site
+            for k, v in sites_map.items():
+                site = {
+                    'name': k,
+                    'id': v[0],
+                    'type': ground.mooring_type,
+                    'class': v[1].pk,
+                    'price': '${}'.format(sum(v[2].values())) if not show_all else False,
+                    'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)],
+                    'gearType': {
+                        'tent': v[3],
+                        'campervan': v[4],
+                        'caravan': v[5]
+                    }
+                }
+                result['sites'].append(site)
+                bookings_map[k] = site
+                if v[1].pk not in result['classes']:
+                    result['classes'][v[1].pk] = v[1].name
+            # update results based on availability map
+            for s in sites_qs:
+                # if there's not a free run of slots
+                if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
+                    # update the days that are non-open
+                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                        bookings_map[s.name]['availability'][offset][0] = False
+                        if stat == 'closed':
+                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                        elif stat == 'booked':
+                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                        else:
+                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+
+                        bookings_map[s.name]['price'] = False
+
+            return Response(result)
+
+
+
+
+
 class AvailabilityViewSet(BaseAvailabilityViewSet):
+    permission_classes = []
+
+class AvailabilityViewSet2(BaseAvailabilityViewSet2):
+    print ("MADE IT AvailabilityViewSet2")
     permission_classes = []
 
 class AvailabilityRatisViewSet(BaseAvailabilityViewSet):
