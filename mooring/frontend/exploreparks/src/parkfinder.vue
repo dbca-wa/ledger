@@ -138,7 +138,7 @@
             </div>
 <!-- here -->
             <div class="small-12 medium-9 large-6 columns">
-                <div class="alert alert-warning" style='text-align: center' role="alert"> <strong style='font-size: 16px;' ></span><A HREF=''>Click here for paying admission fees</A></strong><br><span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> (Only if you do not book a mooring) <span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> </div>
+                <div class="alert alert-warning" style='text-align: center' role="alert"> <strong style='font-size: 16px;' ></span><A HREF='/admissions/'>Click here for paying admission fees</A></strong><br><span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> (Only if you do not book a mooring) <span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> </div>
                 <div id="map"></div>
                 <div id="mapPopup" class="mapPopup" v-cloak>
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
@@ -173,7 +173,7 @@
                                 <p ><i><small>Max Stay Period: {{ f.max_advance_booking }} day/s </small></i></p>
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
                                  
-                                <a v-if="f.mooring_type == 0 && vesselSize > 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+                                <a v-if="f.mooring_type == 0 && vesselSize > 0" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
                                 <a v-else class="button" v-on:click="BookNow()">Book now</a> 
                             </div>
                         </div>
@@ -682,7 +682,7 @@ export default {
                         }
                         $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                         $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+feature.getId()+'&'+vm.bookingParam);
                         if (feature.get('campground_type') == 0) {
                             $("#mapPopupBook").show();
                         } else {
@@ -738,7 +738,7 @@ export default {
                 }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                 $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+feature.getId()+'&'+vm.bookingParam);
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();
                 } else {
@@ -1954,7 +1954,7 @@ export default {
 		   //  $("#max_stay_period").html(properties.props.max_advance_booking);
                    var vessel_size = $('#vesselSize').val();
                    if (vessel_size > 0 ) {
-                       $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                       $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&'+vm.bookingParam);
                        $("#mapPopupBook").attr('target','_blank');
                    } else {
 		       $("#mapPopupBook").attr('href','javascript:void(0);');
@@ -1983,7 +1983,7 @@ export default {
                         $("#mapPopupImage").hide();
                         var vessel_size = $('#vesselSize').val();
                         if (vessel_size > 0 ) {
-                               $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                               $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&'+vm.bookingParam);
                         } else {
 				 $("#mapPopupBook").attr('href','javascript:void;');
 			}
