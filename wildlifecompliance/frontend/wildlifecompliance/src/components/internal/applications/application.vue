@@ -216,7 +216,7 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="">Complete Assessment</button><br/>
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeAssessment()">Complete Assessment</button><br/>
                                                 </div>
                                             </div>
                                             
@@ -1150,6 +1150,25 @@ export default {
                 $(vm.$refs.assigned_officer).trigger('change');
             }
         },
+        completeAssessment:function(){
+            let vm = this;
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')))
+            .then((response) => {
+                vm.application = response.body;
+                vm.original_application = helpers.copyObject(response.body);
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                vm.updateAssignedOfficerSelect();
+            }, (error) => {
+                vm.application = helpers.copyObject(vm.original_application)
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                vm.updateAssignedOfficerSelect();
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
+        },
         assignRequestUser: function(){
             let vm = this;
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assign_request_user')))
@@ -1431,8 +1450,7 @@ export default {
                     'error'
                 )
             });
-        }
-        
+        }        
     },
     mounted: function() {
         let vm = this;

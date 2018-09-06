@@ -423,6 +423,26 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
+    def complete_assessment(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.complete_assessment(request,serializer.validated_data)
+            serializer = InternalApplicationSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    @detail_route(methods=['POST',])
     def proposed_licence(self, request, *args, **kwargs):
         try:
             instance = self.get_object()

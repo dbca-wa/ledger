@@ -131,10 +131,12 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (vm.application.assessor_mode.has_assessor_mode){
-                                links +=  `<a href='#' class="editCondition" data-id="${full.id}">Edit</a><br/>`;
-                                links +=  `<a href='#' class="deleteCondition" data-id="${full.id}">Delete</a><br/>`;
-                            }
+                            // if (vm.application.assessor_mode.has_assessor_mode){
+                            //     links +=  `<a href='#' class="editCondition" data-id="${full.id}">Edit</a><br/>`;
+                            //     links +=  `<a href='#' class="deleteCondition" data-id="${full.id}">Delete</a><br/>`;
+                            // }
+                            links +=  `<a href='#' class="editCondition" data-id="${full.id}">Edit</a><br/>`;
+                            links +=  `<a href='#' class="deleteCondition" data-id="${full.id}">Delete</a><br/>`;
                             return links;
                         },
                         orderable: false
@@ -143,10 +145,12 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             // TODO check permission to change the order
-                            if (vm.application.assessor_mode.has_assessor_mode){
-                                links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up fa-2x"></i></a><br/>`;
-                                links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down fa-2x"></i></a><br/>`;
-                            }
+                            // if (vm.application.assessor_mode.has_assessor_mode){
+                            //     links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up fa-2x"></i></a><br/>`;
+                            //     links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down fa-2x"></i></a><br/>`;
+                            // }
+                            links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up"></i></a><br/>`;
+                            links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down"></i></a><br/>`;
                             return links;
                         },
                         orderable: false
