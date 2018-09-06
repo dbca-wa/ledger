@@ -100,8 +100,6 @@ module.exports = {
             let vm = this;
             var check = this.statusHistory.closure_reason
             for (var i = 0; i < vm.reasons.length; i++){
-                console.log(vm.reasons[i]);
-                console.log(check);
                 if (vm.reasons[i].id == check){
                     return vm.reasons[i].detailRequired;
                 }
@@ -147,7 +145,6 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                let vm = this;
                                 var check = this.statusHistory.closure_reason
                                 for (var i = 0; i < vm.reasons.length; i++){
                                     if (vm.reasons[i].id == check){

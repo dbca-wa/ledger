@@ -217,7 +217,6 @@ export default {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                let vm = this;
                                 var check = this.reason
                                 for (var i = 0; i < vm.reasons.length; i++){
                                     if (vm.reasons[i].id == check){

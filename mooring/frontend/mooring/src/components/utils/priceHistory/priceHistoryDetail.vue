@@ -143,13 +143,15 @@ module.exports = {
             return this.priceHistory.id ? this.priceHistory.id : '';
         },
         requireDetails: function() {
+            // let vm = this;
+            // var check = vm.priceHistory.reason;
+            // for (var i = 0; i < vm.reasons.length; i++){
+            //     if (vm.reasons[i].id == check){
+            //         return vm.reasons[i].detailRequired;
+            //     }
+            // }
             let vm = this;
-            var check = vm.priceHistory.reason;
-            for (var i = 0; i < vm.reasons.length; i++){
-                if (vm.reasons[i].id == check){
-                    return vm.reasons[i].detailRequired;
-                }
-            }
+            return (!vm.priceHistory.reason == '' || !vm.priceHistory.reason == null);
         },
     },
     watch: {
@@ -220,13 +222,13 @@ module.exports = {
                     details: {
                         required: {
                             depends: function(el){
-                                let vm = this;
-                                var check = vm.priceHistory.reason;
-                                for (var i = 0; i < vm.reasons.length; i++){
-                                    if (vm.reasons[i].id == check){
-                                        return vm.reasons[i].detailRequired;
-                                    }
-                                }
+                                // var check = vm.priceHistory.reason;
+                                // for (var i = 0; i < vm.reasons.length; i++){
+                                //     if (vm.reasons[i].id == check){
+                                //         return vm.reasons[i].detailRequired;
+                                //     }
+                                // }
+                                return (!vm.priceHistory.reason == '' || !vm.priceHistory.reason == null);
                             }
                         }
                     }
