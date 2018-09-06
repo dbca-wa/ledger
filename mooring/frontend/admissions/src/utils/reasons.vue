@@ -20,6 +20,7 @@
 <script>
 import {
     $,
+    api_endpoints,
     bus
 }from '../hooks.js'
 export default {
@@ -44,48 +45,18 @@ export default {
         }
     },
     methods:{
-        fetchOpenReasons:function () {
-            let vm = this;
-            //Replace with get without api_endpoints.
-            // $.get(api_endpoints.openReasons(),function (data) {
-            //     vm.reasons = data;
-            // });
-        },
-        fetchClosureReasons:function () {
-            let vm = this;
-            //Replace with get without api_endpoints.
-            // $.get(api_endpoints.closureReasons(),function (data) {
-            //     vm.reasons = data;
-            // });
-        },
-        fetchMaxStayReasons:function () {
-            let vm = this;
-            //Replace with get without api_endpoints.
-            // $.get(api_endpoints.maxStayReasons(),function (data) {
-            //     vm.reasons = data;
-            // });
-        },
         fetchPriceReasons:function () {
             let vm = this;
-            //Replace with get without api_endpoints.
-            // $.get(api_endpoints.priceReasons(),function (data) {
-            //     vm.reasons = data;
-            // });
+            $.get(api_endpoints.priceReasons(),function (data) {
+                vm.reasons = data;
+                bus.$emit('reasons', vm.reasons);
+            });
         }
     },
     mounted:function(){
         let vm =this;
         if(vm.type){
             switch (vm.type.toLowerCase()) {
-                case 'close':
-                    vm.fetchClosureReasons();
-                    break;
-                case 'open':
-                    vm.fetchOpenReasons();
-                    break;
-                case 'stay':
-                    vm.fetchMaxStayReasons();
-                    break;
                 case 'price':
                     vm.fetchPriceReasons();
                     break;

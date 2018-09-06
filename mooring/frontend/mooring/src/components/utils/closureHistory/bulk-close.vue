@@ -69,7 +69,7 @@ import modal from '../bootstrap-modal.vue'
 import reason from '../reasons.vue'
 import alert from '../alert.vue'
 import { mapGetters } from 'vuex'
-import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
+import { $, datetimepicker,api_endpoints, validate, helpers, bus } from '../../../hooks'
 
 export default {
     name:"bulk-close",
@@ -80,6 +80,7 @@ export default {
             closeEndPicker:null,
             closeStartPicker:null,
             reason:'',
+            reasons: [],
             range_start:'',
             range_end:'',
             close_cg_range_end:'close_cg_range_end'+vm._uid,
@@ -90,7 +91,13 @@ export default {
     },
     computed:{
         requireDetails:function () {
-            return (this.reason == '1')
+            let vm = this;
+            var check = this.reason
+            for (var i = 0; i < vm.reasons.length; i++){
+                if (vm.reasons[i].id == check){
+                    return vm.reasons[i].detailRequired;
+                }
+            }
         },
         ...mapGetters([
           'campgrounds'
@@ -210,7 +217,13 @@ export default {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.reason === '1';
+                                let vm = this;
+                                var check = this.reason
+                                for (var i = 0; i < vm.reasons.length; i++){
+                                    if (vm.reasons[i].id == check){
+                                        return vm.reasons[i].detailRequired;
+                                    }
+                                }
                             }
                         }
                     }
@@ -248,6 +261,9 @@ export default {
         let vm = this;
         vm.form = $(document.forms.closeForm);
         vm.events();
+        bus.$once('closeReasons',setReasons => {
+            vm.reasons = setReasons;
+        });
     }
 }
 

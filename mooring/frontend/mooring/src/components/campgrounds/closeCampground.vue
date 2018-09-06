@@ -70,6 +70,7 @@ module.exports = {
                 status:'1',
                 details: ''
             },
+            reasons: [],
             closeStartPicker: '',
             closeEndPicker: '',
             errors: false,
@@ -86,8 +87,13 @@ module.exports = {
             return this.$parent.isOpenCloseCG;
         },
         requireDetails: function () {
-            let vm =this;
-            return (vm.formdata.closure_reason == 1)? true: false;
+            let vm = this;
+            var check = vm.formdata.closure_reason
+            for (var i = 0; i < vm.reasons.length; i++){
+                if (vm.reasons[i].id == check){
+                    return vm.reasons[i].detailRequired;
+                }
+            }
         },
     },
     components: {
@@ -141,7 +147,13 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.closure_reason === '1';
+                                let vm = this;
+                                var check = vm.formdata.closure_reason
+                                for (var i = 0; i < vm.reasons.length; i++){
+                                    if (vm.reasons[i].id == check){
+                                        return vm.reasons[i].detailRequired;
+                                    }
+                                }
                             }
                         }
                     }
@@ -200,6 +212,9 @@ module.exports = {
         });
         vm.form = $('#closeCGForm');
         vm.addFormValidations();
+        bus.$once('closeReasons',setReasons => {
+            vm.reasons = setReasons;
+        });
     }
 };
 </script>

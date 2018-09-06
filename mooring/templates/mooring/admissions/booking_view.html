@@ -21,7 +21,8 @@
                     {{ admissionsBooking.confirmation_number }}
                 </div>
             </div><div class="row"><div class="col-sm-12" style="margin-top: 1em">
-                <a href="{% url 'get_admissions_confirmation' admissionsBooking.id %}" class="btn btn-info btn-lg" >Print</a></p>
+                <a href="{% url 'get_admissions_confirmation' admissionsBooking.id %}" class="btn btn-info btn-lg" >Confirmation</a>
+                <a href="{% url 'mooring-invoice-pdf' request.GET.invoice %}" class="btn btn-info btn-lg" >Invoice</a></p>
                 <p style="font-size: 1.5rem; font-weight: bold;">You must bring your printed confirmation with you to the island.</p>
             </div></div>
         </div>

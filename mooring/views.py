@@ -317,7 +317,7 @@ class MakeBookingsView(TemplateView):
         return result
 
 class AdmissionsBasketCreated(TemplateView):
-    template_name = 'mooring/booking/success.html'
+    template_name = 'mooring/admissions/admissions_success.html'
 
     def get(request, *args, **kwargs):
         return HttpResponseRedirect(reverse('checkout:index'))
@@ -342,10 +342,10 @@ class AdmissionsBookingSuccessView(TemplateView):
                     return redirect('admissions')
 
                 try:
-                    b = BookingInvoice.objects.get(invoice_reference=invoice_ref)
+                    b = AdmissionsBookingInvoice.objects.get(invoice_reference=invoice_ref)
                     logger.error('{} tried making a booking with an already used invoice with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                     return redirect('admissions')
-                except BookingInvoice.DoesNotExist:
+                except AdmissionsBookingInvoice.DoesNotExist:
                     logger.info('{} finished temporary booking {}, creating new BookingInvoice with reference {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id, invoice_ref))
                     # FIXME: replace with server side notify_url callback
                     book_inv, created = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=invoice_ref)

@@ -1,6 +1,6 @@
-# availability
+# admissions
 
-> Availability selector for Mooring 
+> Admissions booking and pricing for mooring
 
 ## Build Setup
 

@@ -120,8 +120,6 @@ var confirmModal = module.exports = {
               $("#"+vm.confirmModal).modal('show');
           }
       });
-
-
    }
 }
 

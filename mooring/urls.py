@@ -21,6 +21,7 @@ router.register(r'mooringsites', api.MooringsiteViewSet)
 router.register(r'mooringsite_bookings', api.MooringsiteBookingViewSet)
 router.register(r'promo_areas', api.PromoAreaViewSet)
 router.register(r'parks', api.MarinaViewSet)
+router.register(r'admissions', api.AdmissionsRatesViewSet)
 router.register(r'parkentryrate', api.MarinaEntryRateViewSet)
 router.register(r'features', api.FeatureViewSet)
 router.register(r'regions', api.RegionViewSet)
@@ -37,6 +38,7 @@ router.register(r'rates',api.RateViewset)
 router.register(r'closureReasons',api.ClosureReasonViewSet)
 router.register(r'openReasons',api.OpenReasonViewSet)
 router.register(r'priceReasons',api.PriceReasonViewSet)
+router.register(r'admissionsReasons',api.AdmissionsReasonViewSet)
 router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
 router.register(r'users',api.UsersViewSet)
 router.register(r'contacts',api.ContactViewSet)
@@ -54,7 +56,6 @@ api_patterns = [
     url(r'^api/create_admissions_booking', api.create_admissions_booking, name="create_admissions_booking"),
     url(r'api/get_confirmation/(?P<booking_id>[0-9]+)/$', api.get_confirmation, name='get_confirmation'),
     url(r'api/get_admissions_confirmation/(?P<booking_id>[0-9]+)/$', api.get_admissions_confirmation, name='get_admissions_confirmation'),
-    url(r'^api/admissions_price_history', api.AdmissionsRatesView.as_view(), name='admissions-price-history'),
     url(r'^api/reports/booking_refunds$', api.BookingRefundsReportView.as_view(),name='booking-refunds-report'),
     url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
     url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),

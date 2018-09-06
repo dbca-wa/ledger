@@ -130,11 +130,15 @@ class AdmissionsOracleCode(admin.ModelAdmin):
 
 @admin.register(models.AdmissionsRate)
 class AdmissionsRate(admin.ModelAdmin):
-    pass
+    list_display = ('period_start', 'period_end')
+
+@admin.register(models.AdmissionsReason)
+class AdmissionsReason(admin.ModelAdmin):
+    list_display = ('id', 'text')
 
 @admin.register(models.AdmissionsBooking)
 class AdmissionBooking(admin.ModelAdmin):
-    list_display = ('arrivalDate',)
+    list_display = ('arrivalDate', 'confirmation_number')
     search_fields = ('arrivalDate',)
 
 @admin.register(models.Region)

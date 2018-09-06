@@ -16,8 +16,8 @@ from django.utils import timezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode)
-from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate)
+from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
 
@@ -533,39 +533,87 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     else:
         return total_price
 
+def get_admissions_entry_rate(request,start_date):
+    res = []
+    if start_date:
+        start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+        price_history = AdmissionsRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
+        if price_history:
+            serializer = AdmissionsRateSerializer(price_history,many=True,context={'request':request})
+            res = serializer.data[0]
+    return res
+
 def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
     total_price = Decimal(0)
     rate_list = {}
     invoice_lines = []
+    line = lines
     # Create line items for customers
-    ####!!!!!!!!! This will need to be created once the admissions costs are set up. !!!!!!!!!!!!
-    daily_rates = get_park_entry_rate(request,admissionsBooking.arrivalDate.strftime('%Y-%m-%d'))
-    daily_rates = 13
-    # if not daily_rates:
-    #     raise Exception('There was an error while trying to get the daily rates.')
-    # for rates in daily_rates:
-    #     for c in rates:
-    #         if c['rate']['campsite'] not in rate_list.keys():
-    #             rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'mooring': c['rate']['mooring'] ,'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
-    #         else:
-    #             if c['rate']['id'] not in rate_list[c['rate']['campsite']].keys():
-    #                 rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'mooring': c['rate']['mooring'], 'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
-    #             else:
-    #                 rate_list[c['rate']['campsite']][c['rate']['id']]['end'] = c['date']
-    
-    people = {'Adults': admissionsBooking.noOfAdults,'Concessions': admissionsBooking.noOfConcessions,'Children': admissionsBooking.noOfChildren,'Infants': admissionsBooking.noOfInfants}
-    
+    daily_rates = get_admissions_entry_rate(request,admissionsBooking.arrivalDate.strftime('%Y-%m-%d'))
+    if not daily_rates:
+        raise Exception('There was an error while trying to get the daily rates.')
+
+    family = 0
+    adults = admissionsBooking.noOfAdults
+    children = admissionsBooking.noOfChildren
+    if adults > 1 and children > 1:
+        if adults == children:
+            if adults % 2 == 0:
+                family = adults/2
+                adults = 0
+                children = 0
+            else:
+                adults -= 1
+                family = adults/2
+                adults = 1
+                children = 1
+
+        elif adults > children: #Adults greater - tickets based on children
+            if children % 2 == 0:
+                family = children/2
+                adults -= children
+                children = 0
+            else:
+                children -= 1
+                family = children/2
+                adults -= children
+                children = 1
+        else: #Children greater - tickets based on adults
+            if adults % 2 == 0:
+                family = adults/2
+                children -= adults
+                adults = 0
+            else:
+                adults -= 1
+                family = adults/2
+                children -= adults
+                adults = 1
+
+    people = {'Adults': adults,'Concessions': admissionsBooking.noOfConcessions,'Children': children,'Infants': admissionsBooking.noOfInfants, 'Family': family}
+
     for group, amount in people.items():
-        if lines:
+        if line:
             if(amount > 0):
-                price = Decimal(daily_rates)
+                if group == 'Adults':
+                    gr = 'adult'
+                elif group == 'Children':
+                    gr = group
+                elif group == 'Infants':
+                    gr = 'infant'
+                elif group == 'Family':
+                    gr = 'family'
+                if admissionsBooking.overnightStay:
+                    costfield = gr.lower() + "_overnight_cost"
+                else:
+                    costfield = gr.lower() + "_cost"
+                price = daily_rates.get(costfield)
                 invoice_lines.append({'ledger_description':'Admission fee {} ({})'.format(admissionsBooking.arrivalDate, group),"quantity":amount,"price_incl_tax":price, "oracle_code":AdmissionsOracleCode.objects.all().first().oracle_code})
             
         else:
             price = Decimal(daily_rates)
             total_cost += price
 
-    if lines:
+    if line:
         return invoice_lines
     else:
         return total_price

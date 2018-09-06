@@ -12,8 +12,9 @@
    </div>
 
 </template>
+
 <script>
-    import {$, DataTable, DataTableBs,DataTableRes} from '../hooks'
+    import {$, DataTable, DataTableBs,DataTableRes} from '../hooks.js'
     import ResponsiveDatatablesHelper from "./responsive_datatable_helper.js"
 module.exports = {
    name : 'DataTable',

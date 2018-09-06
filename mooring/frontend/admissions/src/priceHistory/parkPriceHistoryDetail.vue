@@ -7,41 +7,22 @@
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label>Vehicle : </label>
-                    </div>
-                    <div class="col-md-4">
-                        <input name="vehicle"  v-model="priceHistory.vehicle" type='number' class="form-control" />
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
-                        <label>Concession : </label>
-                    </div>
-                    <div class="col-md-4">
-                        <input name="concession"  v-model="priceHistory.concession" type='number' class="form-control" />
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
-                        <label>Motorbike : </label>
-                    </div>
-                    <div class="col-md-4">
-                        <input name="motorbike"  v-model="priceHistory.motorbike" type='number' class="form-control" />
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="form-group">
-                    <div class="col-md-2">
                         <label>Period start: </label>
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date'>
-                            <input  name="period_start"  v-model="priceHistory.period_start" type='text' class="form-control" />
+                            <input name="period_start" v-model="priceHistory.period_start" type='text' class="form-control" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Period end: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <div class='input-group date'>
+                            <input name="period_end" v-model="priceHistory.period_end" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -49,14 +30,78 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Adult Cost Day: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input name="adult_cost"  v-model="priceHistory.adult_cost" type='number' class="form-control" />
+                    </div>
+                    <div class="col-md-2">
+                        <label>Adult Cost Overnight: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input name="adult_overnight_cost"  v-model="priceHistory.adult_overnight_cost" type='number' class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Child Cost Day: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input name="child_cost"  v-model="priceHistory.children_cost" type='number' class="form-control" />
+                    </div>
+                    <div class="col-md-2">
+                        <label>Child Cost Overnight: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input name="child_overnight_cost"  v-model="priceHistory.children_overnight_cost" type='number' class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Infant Cost Day: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input name="infant_cost"  v-model="priceHistory.infant_cost" type='number' class="form-control" />
+                    </div>
+                    <div class="col-md-2">
+                        <label>Infant Cost Overnight: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input name="infant_overnight_cost"  v-model="priceHistory.infant_overnight_cost" type='number' class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Family Cost Day: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input name="family_cost"  v-model="priceHistory.family_cost" type='number' class="form-control" />
+                    </div>
+                    <div class="col-md-2">
+                        <label>Family Cost Overnight: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <input name="family_overnight_cost"  v-model="priceHistory.family_overnight_cost" type='number' class="form-control" />
+                    </div>
+                </div>
+            </div>
             <reason type="price" v-model="priceHistory.reason" ></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label>Details: </label>
+                        <label>Comment: </label>
                     </div>
                     <div class="col-md-5">
-                        <textarea name="details" v-model="priceHistory.details" class="form-control"></textarea>
+                        <textarea name="comments" v-model="priceHistory.comments" class="form-control"></textarea>
                     </div>
                 </div>
             </div>
@@ -69,7 +114,7 @@
 <script>
 import bootstrapModal from '../utils/bootstrap-modal.vue'
 import reason from '../utils/reasons.vue'
-import { $, datetimepicker, validate, helpers } from '../hooks'
+import { $, datetimepicker, api_endpoints, validate, helpers, bus } from '../hooks'
 import alert from '../utils/alert.vue'
 module.exports = {
     name: 'ParkPriceHistoryDetail',
@@ -91,6 +136,7 @@ module.exports = {
             errors: false,
             errorString: '',
             form: '',
+            reasons: [],
             isOpen: false,
         }
     },
@@ -106,7 +152,13 @@ module.exports = {
             return this.priceHistory.id ? this.priceHistory.id : '';
         },
         requireDetails: function() {
-            return this.priceHistory.reason == '1';
+            let vm = this;
+            var check = this.priceHistory.reason
+            for (var i = 0; i < vm.reasons.length; i++){
+                if (vm.reasons[i].id == check){
+                    return vm.reasons[i].detailRequired;
+                }
+            }
         },
     },
     watch: {
@@ -122,11 +174,21 @@ module.exports = {
             this.errors = false;
             this.selected_rate = '';
             this.priceHistory.period_start= '';
-            this.priceHistory.details= '';
+            this.priceHistory.comments= '';
+            this.priceHistory.period_end='';
+            this.priceHistory.adult_cost='';
+            this.priceHistory.adult_overnight_cost='';
+            this.priceHistory.children_cost='';
+            this.priceHistory.children_overnight_cost='';
+            this.priceHistory.infant_cost='';
+            this.priceHistory.infant_overnight_cost='';
+            this.priceHistory.family_cost='';
+            this.priceHistory.family_overnight_cost='';
+            this.priceHistory.reason={id:1};
 
             this.errorString = '';
             this.isOpen = false;
-            this.$emit("cancel");
+            // this.$emit("cancel");
         },
         addHistory: function() {
             if ($(this.form).valid()){
@@ -141,24 +203,24 @@ module.exports = {
             let vm = this;
             $(vm.form).validate({
                 rules: {
-                    vehicle: "required",
-                    concession: "required",
-                    motorbike: "required",
                     period_start: "required",
-                    details: {
+                    comments: {
                         required: {
                             depends: function(el){
-                                return vm.priceHistory.reason=== '1';
+                                let vm = this;
+                                var check = this.priceHistory.reason;
+                                for (var i = 0; i < vm.reasons.length; i++){
+                                    if (vm.reasons[i].id == check){
+                                        return vm.reasons[i].detailRequired;
+                                    }
+                                }
                             }
                         }
                     }
                 },
                 messages: {
-                    vehicle: "Enter an vehicle rate",
-                    concession: "Enter a concession rate",
-                    motorbike: "Enter a motorbike rate",
                     period_start: "Enter a start date",
-                    details: "Details required if Other reason is selected"
+                    comments: "Details required if other reason is selected"
                 },
                 showErrors: function(errorMap, errorList) {
 
@@ -200,7 +262,19 @@ module.exports = {
         picker.on('dp.change', function(e){
             vm.priceHistory.period_start = picker.data('DateTimePicker').date().format('YYYY-MM-DD');
         });
+        var picker2 = $(vm.form.period_end).closest('.date');
+        picker2.datetimepicker({
+            format: 'DD/MM/YYYY',
+            useCurrent: false,
+            minDate: tomorrow
+        })
+        picker2.on('dp.change', function(e){
+            vm.priceHistory.period_end = picker2.data('DateTimePicker').date().format('YYYY-MM-DD');
+        });
         vm.addFormValidations();
+        bus.$once('reasons',setReasons => {
+            vm.reasons = setReasons;
+        });
     }
 };
 </script>

@@ -26,6 +26,7 @@ from mooring.models import (MooringAreaPriceHistory,
                                 ClosureReason,
                                 OpenReason,
                                 PriceReason,
+                                AdmissionsReason,
                                 MaximumStayReason,
                                 MooringAreaStayHistory,
                                 MarinaEntryRate,
@@ -646,22 +647,27 @@ class MarinaEntryRateSerializer(serializers.ModelSerializer):
 class ClosureReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClosureReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
 
 class OpenReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpenReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
 
 class PriceReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = PriceReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
+
+class AdmissionsReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdmissionsReason
+        fields = ('id','text', 'detailRequired')
 
 class MaximumStayReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaximumStayReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
 
 class AccountsAddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -727,7 +733,22 @@ class BulkPricingSerializer(serializers.Serializer):
 class AdmissionsRateSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdmissionsRate
-        fields = '__all__'
+        fields = (
+            'id',
+            'period_start',
+            'period_end',
+            'adult_cost',
+            'adult_overnight_cost',
+            'children_cost',
+            'children_overnight_cost',
+            'infant_cost',
+            'infant_overnight_cost',
+            'family_cost',
+            'family_overnight_cost',
+            'reason',
+            'comment',
+            'editable'
+            )
 
 class ReportSerializer(serializers.Serializer):
     start = serializers.DateTimeField(input_formats=['%d/%m/%Y'])

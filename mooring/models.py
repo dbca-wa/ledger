@@ -1400,6 +1400,7 @@ class MarinaEntryRate(models.Model):
 # =====================================
 class Reason(models.Model):
     text = models.TextField()
+    detailRequired = models.BooleanField(default=False)
     editable = models.BooleanField(default=True,editable=False)
 
     class Meta:
@@ -1428,6 +1429,8 @@ class OpenReason(Reason):
     pass
 
 class PriceReason(Reason):
+    pass
+class AdmissionsReason(Reason):
     pass
 class DiscountReason(Reason):
     pass
@@ -1537,11 +1540,21 @@ class AdmissionsRate(models.Model):
     period_start = models.DateField(blank=False, null=False)
     period_end = models.DateField(blank=True, null=True)
     adult_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    adult_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
     concession_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    concession_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
     children_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    children_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
     infant_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    infant_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    family_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    family_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
     comment = models.CharField(max_length=250, blank=True, null=True)
+    reason = models.ForeignKey('AdmissionsReason')
 
+    def __str__(self):
+        return '{} - {} ({})'.format(self.period_start, self.period_end, self.comment)
+    
     # Properties
     # =================================
     @property
@@ -1554,7 +1567,7 @@ class AdmissionsRate(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
+        if (self.period_start > today and not self.period_end) or ( self.period_start > today <= self.period_end):
             return True
         return False
 
@@ -1946,6 +1959,60 @@ class MarinaEntryRateListener(object):
     def _post_delete(sender, instance, **kwargs):
         price_before = MarinaEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
         price_after = MarinaEntryRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
+        if price_after:
+            price_after = price_after[0]
+            if price_before:
+                price_before = price_before[0]
+                price_before.period_end =  price_after.period_start - timedelta(days=1)
+                price_before.save()
+        elif price_before:
+            price_before = price_before[0]
+            price_before.period_end = None
+            price_before.save()
+
+
+class AdmissionsRateListener(object):
+    """
+    Event listener for AdmissionsRate
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=AdmissionsRate)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = AdmissionsRate.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
+            price_before = AdmissionsRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+            if price_before:
+                if price_before[0].pk == instance.pk:
+                    price_before = price_before[1]
+                else:
+                    price_before = price_before[0]
+                price_before.period_end = instance.period_start + timedelta(days=-1)
+                price_before.save()
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                price_before = AdmissionsRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+                if price_before:
+                    price_before = price_before[0]
+                    price_before.period_end = instance.period_start 
+                    price_before.save()
+                    instance.period_start = instance.period_start + timedelta(days=1)
+                price_after = AdmissionsRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
+                if price_after:
+                    price_after = price_after[0]
+                    instance.period_end = price_after.period_start - timedelta(days=1)
+            except Exception as e:
+                pass
+
+    @staticmethod
+    @receiver(post_delete, sender=AdmissionsRate)
+    def _post_delete(sender, instance, **kwargs):
+        price_before = AdmissionsRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+        price_after = AdmissionsRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
         if price_after:
             price_after = price_after[0]
             if price_before:

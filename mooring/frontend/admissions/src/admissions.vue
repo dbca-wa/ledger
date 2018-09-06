@@ -5,14 +5,13 @@
             <div class="container">
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="col-md-12" style="background-color:yellow;">
-                            <h3 style="text-align:center;">Paying Admission Fees</h3>
+                        <div class="well" style="text-align:center;">
+                            <h3>Paying Admission Fees</h3>
                         </div>
                         <div class="row" style="margin-top:2%;">
                             <div class="col-lg-6">
                                 <div class="well">
                                     <h3 class="text-primary" style="text-align:center;">Personal Details</h3>
-                                    
                                     <div class="row">
                                         <div class="small-12 medium-12 large-4 columns">
                                             <label class="label-plain2">Given Name(s)</label>
@@ -62,7 +61,7 @@
                                         <div class="small-12 medium-12 large-4 columns">
                                             <label class="label-plain">Overnight Stay</label>
                                             <div class="col-sm-8">
-                                                <input id="overnightStayYes" v-model="overnightStay" name="overnightStay" refs="overnightStayYes" @blur="validateOvernightStay()" value="yes" type="radio"/><label class="radio-label">Yes </label><input id="overnightStayNo" v-model="overnightStay" @blur="validateOvernightStay()" name="overnightStay" type="radio" value="no" style="margin-left:2%"/><label class="radio-label">No</label>
+                                                <input id="overnightStayYes" v-model="overnightStay" name="overnightStay" refs="overnightStayYes" @change="validateOvernightStay()" value="yes" type="radio"/><label class="radio-label">Yes </label><input id="overnightStayNo" v-model="overnightStay" @change="validateOvernightStay()" name="overnightStay" type="radio" value="no" style="margin-left:2%"/><label class="radio-label">No</label>
                                             </div>
                                         </div>
                                     </div>
@@ -83,7 +82,7 @@
                                         </div>
                                         <label class="label-small">(12 and over)</label>
                                     </div>
-                                    <div class="row">
+                                    <div class="row" style="display:none;">
                                         <div class="small-12 medium-12 large-4 columns">
                                             <label class="label-plain">Number of Concessions</label>
                                             <div class="col-sm-8">
@@ -150,7 +149,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="small-12 medium-12 large-4 columns">
-                                        <label class="label-plain">Click <a href="http://ria.wa.gov.au/about-us/Fees-and-charges" taget="_blank">here</a> for price information</label>                                        </div>
+                                        <label class="label-plain" style="width:250px;">Click <a href="http://ria.wa.gov.au/about-us/Fees-and-charges" taget="_blank">here</a> for price information.</label>                                        </div>
                                     </div>
                                 <div class="col-md-6">
                                     <div class="row"> 
@@ -176,6 +175,7 @@ import 'foundation-sites';
 import 'foundation-datepicker/js/foundation-datepicker';
 import moment from 'moment'
 import JQuery from 'jquery'
+import { api_endpoints } from './hooks';
 
 let $ = JQuery
 var nowTemp = new Date();
@@ -209,6 +209,17 @@ export default {
         lastName: '',
         email: '',
         emailConfirm: '',
+        currentCostDateStart: '',
+        currentCostDateEnd: '',
+        adultCost: 0,
+        adultOvernightCost: 0,
+        childrenCost: 0,
+        childrenOvernightCost: 0,
+        infantCost: 0,
+        infantOvernightCost: 0,
+        familyCost: 0,
+        familyOvernightCost: 0,
+        total: 0,
         errorMsg: null,
         toc: false,
         errors: {
@@ -233,6 +244,17 @@ export default {
             get: function() {
                 return this.arrivalEl[0].value ? moment(this.arrivalData.getDate()).format('YYYY/MM/DD') : null; 
             }
+        }
+    },
+    filters: {
+        formatMoney:function(n,c, d, t){
+            c = isNaN(c = Math.abs(c)) ? 2 : c;
+            d = d == undefined ? "." : d;
+            t = t == undefined ? "," : t;
+            var s = n < 0 ? "-" : "";
+            var i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c)));
+            var j = (j = i.length) > 3 ? j % 3 : 0;
+            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
         }
     },
     props: {
@@ -345,6 +367,7 @@ export default {
             if(!fieldToCheck){
                 this.errors.arrivalDate = true;
             } else {
+                this.calculateTotal();
                 var selectedDate = new Date(fieldToCheck);
                 if(selectedDate < now && !this.warningRefNo){
                     this.errors.arrivalDate = true;
@@ -378,12 +401,13 @@ export default {
                 this.errors.overnightStay = true;
                 document.getElementById("overnightStayYes").required = true;
             } else {
+                this.calculateTotal();
                 this.errors.overnightStay = false;
             }
         },
         validateNoOfPeople: function(){
-            var total = parseInt(this.noOfAdults) + parseInt(this.noOfConcessions) + parseInt(this.noOfChildren) + parseInt(this.noOfInfants);
-            if(!total || total == 0){
+            var totalP = parseInt(this.noOfAdults) + parseInt(this.noOfConcessions) + parseInt(this.noOfChildren) + parseInt(this.noOfInfants);
+            if(!totalP || totalP == 0){
                 this.errors.noOfAdults = true;
                 this.errors.noOfConcessions = true;
                 this.errors.noOfChildren = true;
@@ -396,6 +420,7 @@ export default {
                 this.errors.noOfInfants = true;
                 this.errorMsg = "Cannot purchase for a negative value for people.";
             } else {
+                this.calculateTotal();
                 this.errors.noOfAdults = false;
                 this.errors.noOfConcessions = false;
                 this.errors.noOfChildren = false;
@@ -403,6 +428,105 @@ export default {
                 this.errorMsg = null;
             }
         },
+        setPrices: function(data, callback){
+            this.currentCostDateStart = data.period_start;
+            this.adultCost = data.adult_cost;
+            this.adultOvernightCost = data.adult_overnight_cost;
+            this.childrenCost = data.children_cost;
+            this.childrenOvernightCost = data.children_overnight_cost;
+            this.infantCost = data.infant_cost;
+            this.infantOvernightCost = data.infant_overnight_cost;
+            this.familyCost = data.family_cost;
+            this.familyOvernightCost = data.family_overnight_cost;
+            callback();
+        },
+        getPrices: function(callback){
+            var date = this.arrivalDate;
+            $.ajax({
+                url: api_endpoints.park_price_history(),
+                method: 'GET',
+                dataType: 'json',
+                success: (function(data){
+                    for(var i = 0; i < data.length; i++){
+                        var checkDate = Date.parse(date);
+                        var checkingDate = Date.parse(data[i].period_start);
+                        if(data[i].period_end == null){
+                            if(checkingDate <= checkDate){
+                                var temp = new Date();
+                                this.currentCostDateEnd = (temp.getDate + 1000);
+                                this.setPrices(data[i], callback);
+                            }
+                        } else {
+                            var checkingDate2 = Date.parse(data[i].period_end);
+                            if(checkingDate <= checkDate && checkingDate2 >= checkDate){
+                                this.currentCostDateEnd = data[i].period_end;
+                                this.setPrices(data[i], callback);
+                            }
+                        }
+                    }    
+                    return false;                
+                }).bind(this)
+            }); 
+        },
+        calculateTotal: function(){
+            var date = new Date(this.arrivalDate);
+            var temp = date.toISOString().substring(0,10);
+            
+            if(!(this.currentCostDateStart <= temp && this.currentCostDateEnd >= temp)){
+                this.getPrices(this.prepareTotal);
+            } else {
+                this.prepareTotal();
+            }    
+        },
+        prepareTotal: function(){
+            var family = 0;
+            var adults = this.noOfAdults;
+            var children = this.noOfChildren;
+            if (adults > 1 && children > 1){
+                if (adults == children){
+                    if (adults % 2 == 0){
+                        family = adults/2
+                        adults = 0
+                        children = 0
+                    } else {
+                        adults -= 1
+                        family = adults/2
+                        adults = 1
+                        children = 1
+                    }
+                }
+                else if (adults > children){
+                    if (children % 2 == 0){
+                        family = children/2
+                        adults -= children
+                        children = 0
+                    } else{
+                        children -= 1
+                        family = children/2
+                        adults -= children
+                        children = 1
+                    }
+                }
+                else{
+                    if (adults % 2 == 0){
+                        family = adults/2
+                        children -= adults
+                        adults = 0
+                    } else{
+                        adults -= 1
+                        family = adults/2
+                        children -= adults
+                        adults = 1
+                    } 
+                }
+            }
+            if (this.overnightStay == "yes"){
+                this.total = (this.adultOvernightCost * adults) + (this.childrenOvernightCost * children) + (this.infantOvernightCost * this.noOfInfants) + (this.familyOvernightCost * family);
+            } else {
+                this.total = (this.adultCost * adults) + (this.childrenCost * children) + (this.infantCost * this.noOfInfants) + (this.familyCost * family);
+            }
+            return;
+        }
         //Other methods can go here.
     },
     mounted: function(){

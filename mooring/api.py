@@ -55,6 +55,7 @@ from mooring.models import (MooringArea,
                                 ClosureReason,
                                 OpenReason,
                                 PriceReason,
+                                AdmissionsReason,
                                 MaximumStayReason,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
@@ -96,6 +97,7 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     ClosureReasonSerializer,
                                     OpenReasonSerializer,
                                     PriceReasonSerializer,
+                                    AdmissionsReasonSerializer,
                                     MaximumStayReasonSerializer,
                                     BulkPricingSerializer,
                                     UsersSerializer,
@@ -1471,7 +1473,7 @@ def get_admissions_confirmation(request, *args, **kwargs):
         return HttpResponse('Booking unavailable', status=403)
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="confirmation-PS{}.pdf"'.format(booking_id)
+    response['Content-Disposition'] = 'attachment; filename="confirmation-AD{}.pdf"'.format(booking_id)
 
     pdf.create_admissions_confirmation(response, booking)
     return response
@@ -2308,6 +2310,10 @@ class PriceReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PriceReason.objects.all()
     serializer_class = PriceReasonSerializer
 
+class AdmissionsReasonViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AdmissionsReason.objects.all()
+    serializer_class = AdmissionsReasonSerializer
+
 class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
@@ -2445,13 +2451,38 @@ class BulkPricingView(generics.CreateAPIView):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
 
-class AdmissionsRatesView(views.APIView):
+class AdmissionsRatesViewSet(viewsets.ModelViewSet):
+    queryset = AdmissionsRate.objects.all()
     renderer_classes = (JSONRenderer,)
+    serializer_class = AdmissionsRateSerializer;
 
-    def get(self,request,format='json'):
-        rates = AdmissionsRate.objects.all().order_by('-period_start')
-        serializer = AdmissionsRateSerializer(rates, many=True)
-        return HttpResponse(geojson.dumps(serializer.data), content_type='application/json')
+    @list_route(methods=['get'])
+    def price_history(self, request, format='json', pk=None):
+        http_status = status.HTTP_200_OK
+        try:
+            price_history = AdmissionsRate.objects.all().order_by('-period_start')
+            serializer = AdmissionsRateSerializer(price_history,many=True)
+            res = serializer.data
+        except Exception as e:
+            res ={
+                "Error": str(e)
+            }
+
+        return Response(res,status=http_status)
+
+    @list_route(methods=['post'],)
+    def add_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer =  AdmissionsRateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            res = serializer.data
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
 
 
 class BookingRefundsReportView(views.APIView):
