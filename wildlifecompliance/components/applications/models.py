@@ -719,7 +719,6 @@ class Application(RevisionedMixin):
                 # if self.processing_status != 'with_assessor':
                 #     raise ValidationError('You cannot propose to decline if it is not with assessor')
                 activity_type=details.get('activity_type')
-                print(activity_type)
                 ApplicationDeclinedDetails.objects.update_or_create(
                     application = self,
                     officer=request.user,
@@ -730,19 +729,24 @@ class Application(RevisionedMixin):
                 # self.proposed_decline_status = True
                 # self.move_to_status(request,'with_approver')
                 for item in activity_type :
-                    print(item)
                     for activity_type in  self.licence_type_data['activity_type']:
                         # print(activity_type["id"])
                         # print(details.get('activity_type'))
                         if activity_type["id"]==item:
                             activity_type["proposed_decline"]=True
-                            print(activity_type["proposed_decline"])
+                            activity_type["processing_status"]="With Officer Finalisation"
                             self.save()
 
                 # Log application action
                 self.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+                
+                if self.org_applicant:
+                    self.org_applicant.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+                elif self.proxy_applicant:
+                    self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+                else:
+                    self.submitter.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
             except:
                 raise
 

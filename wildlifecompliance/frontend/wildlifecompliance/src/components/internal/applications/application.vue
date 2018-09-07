@@ -1183,13 +1183,9 @@ export default {
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
             .then((response) => {
                 vm.application = response.body;
-                vm.original_application = helpers.copyObject(response.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                vm.updateAssignedOfficerSelect();
+                
             }, (error) => {
-                vm.application = helpers.copyObject(vm.original_application)
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                vm.updateAssignedOfficerSelect();
+                
                 swal(
                     'Application Error',
                     helpers.apiVueResourceError(error),
