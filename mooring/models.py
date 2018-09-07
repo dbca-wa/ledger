@@ -431,15 +431,24 @@ class MooringAreaImage(models.Model):
 
 class BookingPeriodOption(models.Model):
     period_name = models.CharField(max_length=15)
+    small_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
+    medium_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
+    large_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
     start_time = models.TimeField(null=True, blank=True)
     finish_time = models.TimeField(null=True, blank=True)
     all_day = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True) 
 
+    def __str__(self):
+        return self.period_name
+
 class BookingPeriod(models.Model):
     name = models.CharField(max_length=100)
-    booking_period = models.ForeignKey(BookingPeriodOption, related_name='booking_period_options')
+    booking_period = models.ManyToManyField(BookingPeriodOption, related_name='booking_period_options')
     created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
 
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
@@ -949,6 +958,7 @@ class MooringsiteRate(models.Model):
 
     campsite = models.ForeignKey('Mooringsite', on_delete=models.PROTECT, related_name='rates')
     rate = models.ForeignKey('Rate', on_delete=models.PROTECT)
+    booking_period = models.ForeignKey(BookingPeriod, on_delete=models.PROTECT, null=True, blank=True)
     allow_public_holidays = models.BooleanField(default=True)
     date_start = models.DateField(default=date.today)
     date_end = models.DateField(null=True, blank=True)
@@ -1473,6 +1483,7 @@ class ViewPriceHistory(models.Model):
     date_start = models.DateField()
     date_end = models.DateField()
     rate_id = models.IntegerField()
+    booking_period_id = models.IntegerField()
     mooring = models.DecimalField(max_digits=8, decimal_places=2)
     adult = models.DecimalField(max_digits=8, decimal_places=2)
     concession = models.DecimalField(max_digits=8, decimal_places=2)
