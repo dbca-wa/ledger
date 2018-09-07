@@ -413,6 +413,18 @@ class MooringAreaImage(models.Model):
             pass
         super(MooringAreaImage,self).delete(*args,**kwargs)
 
+#class BookingPeriodOption:
+#    period_name = models.CharField(max_length=15)
+#    start_time = models.TimeField(null=True, blank=True)
+#    finish_time = models.TimeField(null=True, blank=True)
+#    all_day = models.BooleanField(default=True)
+#    created = models.DateTimeField(auto_now_add=True) 
+
+#class BookingPeriod(models.Model):
+#    name = models.CharField(max_length=100)
+#    booking_period = models.ForeignKey(BookingPeriodOption, related_name='booking_period_options')
+#    created = models.DateTimeField(auto_now_add=True)
+
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
         (0, 'Open'),
