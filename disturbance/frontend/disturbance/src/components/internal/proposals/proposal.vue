@@ -815,10 +815,11 @@ export default {
             let vm = this;
             //vm.save_wo();
             let formData = new FormData(vm.form);
-          vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+            vm.sendingReferral = true;
+            vm.$http.post(vm.proposal_form_url,formData).then(res=>{
             
             let data = {'email':vm.selected_referral, 'text': vm.referral_text};
-            vm.sendingReferral = true;
+            //vm.sendingReferral = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
                 emulateJSON:true
             }).then((response) => {
