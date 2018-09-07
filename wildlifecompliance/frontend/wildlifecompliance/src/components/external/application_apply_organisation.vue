@@ -13,6 +13,7 @@
                     <div class="panel-body collapse in" :id="pBody">
                         <form class="form-horizontal" name="personal_form" method="post">
                             <div class="col-sm-12">
+                                    <p><strong>Note: If you are applying for a Taking licence, it cannot be applied for on behalf of an organisation.</strong></p>
                                     <div class="radio">
                                         <label>
                                         <input type="radio"  name="behalf_of_org" v-model="yourself" value="yourself"> On behalf of yourself

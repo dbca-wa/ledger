@@ -115,6 +115,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     documents_url = serializers.SerializerMethodField()
     character_check_status = serializers.SerializerMethodField(read_only=True)
     application_fee = serializers.DecimalField(max_digits=8, decimal_places=2, coerce_to_string=False)
+    payment_status = serializers.SerializerMethodField(read_only=True)
+    licence_fee = serializers.DecimalField(max_digits=8, decimal_places=2, coerce_to_string=False)
     class_name = serializers.SerializerMethodField(read_only=True)
     activity_type_names = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
@@ -153,6 +155,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'id_check_status',
                 'character_check_status',
                 'application_fee',
+                'payment_status',
+                'licence_fee',
                 'class_name',
                 'activity_type_names'
                 )
@@ -178,6 +182,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_customer_status(self,obj):
         return obj.get_customer_status_display()
+
+    def get_payment_status(self,obj):
+        return obj.payment_status
 
     def get_class_name(self, obj):
         for item in obj.licence_type_data:
@@ -278,7 +285,8 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
                 # 'licence_category',
                 'licence_type_data',
                 'licence_type_name',
-                'application_fee'
+                'application_fee',
+                'licence_fee'
                 )
         read_only_fields=('documents','conditions')
 

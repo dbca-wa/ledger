@@ -35,7 +35,10 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <span v-if="requiresCheckout"style="margin-right: 5px; font-size: 18px;"><strong>Estimated fee: {{application.application_fee | toCurrency}}</strong></span>
+                                    <span v-if="requiresCheckout"style="margin-right: 5px; font-size: 18px;">
+                                        <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
+                                        <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
+                                    </span>
                                     <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                                     <input v-if="!requiresCheckout" type="submit" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
@@ -140,14 +143,16 @@ export default {
         console.log('SUBMIT VM FORM and CHECKOUT');
         let formData = new FormData(vm.form);
         let swal_title = 'Submit Application'
-        let swal_text = 'Are you sure you want to submit this application?'
+        let swal_html = 'Are you sure you want to submit this application?'
         if (vm.requiresCheckout) {
             swal_title = 'Submit Application and Checkout'
-            swal_text = 'Are you sure you want to submit this application and proceed to checkout?'
+            swal_html = 'Are you sure you want to submit this application and proceed to checkout?<br><br>' +
+                'Upon proceeding, you agree that the system will charge the same credit card used to ' +
+                'pay the application fee when your licence is issued.'
         }
         swal({
             title: swal_title,
-            text: swal_text,
+            html: swal_html,
             type: "question",
             showCancelButton: true,
             confirmButtonText: 'Submit'
@@ -158,8 +163,15 @@ export default {
                     vm.application = res.body;
                     
                     if (vm.requiresCheckout) {
-                    //TODO: change below to call new api function for process_payment
-                        window.location.href = "/ledger/checkout/checkout/payment-details/";
+                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
+                            window.location.href = "/ledger/checkout/checkout/payment-details/";
+                        },err=>{
+                            swal(
+                                'Submit Error',
+                                helpers.apiVueResourceError(err),
+                                'error'
+                            )
+                        });
                     } else {
                         vm.$router.push({
                             name: 'submit_application',

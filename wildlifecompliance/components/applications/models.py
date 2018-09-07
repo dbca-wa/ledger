@@ -16,6 +16,7 @@ from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import Licence
+from ledger.payments.invoice.models import Invoice
 from wildlifecompliance import exceptions
 
 from wildlifecompliance.components.organisations.models import Organisation
@@ -258,7 +259,7 @@ class Application(RevisionedMixin):
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
-    lodgement_date = models.DateField(blank=True, null=True)
+    lodgement_date = models.DateTimeField(blank=True, null=True)
 
     org_applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='org_applications')
     proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='wildlifecompliance_proxy')
@@ -289,6 +290,7 @@ class Application(RevisionedMixin):
     tenure = models.CharField(max_length=255,null=True,blank=True)
 
     application_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
+    licence_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
 
     # licence_class = models.ForeignKey('wildlifecompliance.WildlifeLicenceClass',blank=True,null=True)
     # licence_activity_type= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',blank=True,null=True)
@@ -360,6 +362,17 @@ class Application(RevisionedMixin):
         :return:
         """
         return self.customer_status == 'draft' and not self.lodgement_number
+
+    @property
+    def payment_status(self):
+        if self.application_fee == 0:
+            return 'payment_not_required'
+        else:
+            if self.invoices.count() == 0:
+                return 'unpaid'
+            else:
+                latest_invoice = Invoice.objects.get(reference=self.invoices.latest('id').invoice_reference)
+                return latest_invoice.payment_status
 
     @property
     def latest_referrals(self):
@@ -475,7 +488,8 @@ class Application(RevisionedMixin):
                 self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
-                self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                self.lodgement_date = timezone.now()
                 # if amendment is submitted change the status of only particular activity type 
                 # else if the new application is submitted change the status of all the activity types
                 if (self.amendment_requests):
@@ -932,7 +946,7 @@ class ApplicationInvoice(models.Model):
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return 'Application {} : Invoice #{}'.format(self.id,self.invoice_reference)
+        return 'Application {} : Invoice #{}'.format(self.application_id,self.invoice_reference)
 
     # Properties
     # ==================

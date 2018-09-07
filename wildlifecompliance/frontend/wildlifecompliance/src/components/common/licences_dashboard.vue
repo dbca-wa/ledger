@@ -50,7 +50,7 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
-                            <datatable ref="application_datatable" :id="datatable_id" :dtOptions="application_options" :dtHeaders="application_headers"/>
+                            <datatable ref="licence_datatable" :id="datatable_id" :dtOptions="licence_options" :dtHeaders="licence_headers"/>
                         </div>
                     </div>
                 </div>
@@ -65,7 +65,7 @@ import {
     helpers
 }from '@/utils/hooks'
 export default {
-    name: 'ApplicationTableDash',
+    name: 'LicenceTableDash',
     props: {
         level:{
             type: String,
@@ -84,7 +84,7 @@ export default {
         let vm = this;
         return {
             pBody: 'pBody' + vm._uid,
-            datatable_id: 'application-datatable-'+vm._uid,
+            datatable_id: 'licence-datatable-'+vm._uid,
             // Filters for Licences
             filterLicenceType: 'All',
             filterLicenceStatus: 'All',
@@ -99,11 +99,11 @@ export default {
                 allowInputToggle:true
             },
             licence_status:[],
-            application_activityTitles : [],
-            application_regions: [],
-            application_submitters: [],
-            application_headers:["Number","Licence Type","Licence Holder","Status","Issue Date","Licence","Action"],
-            application_options:{
+            licence_activityTitles : [],
+            licence_regions: [],
+            licence_submitters: [],
+            licence_headers:["Number","Licence Type","Licence Holder","Status","Issue Date","Licence","Action"],
+            licence_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
@@ -114,8 +114,8 @@ export default {
                 },
                 columns: [
                     {data: "id"},
-                    {data: "licence_type"},
-                    {data: "licence_holder"},
+                    {data: "current_application.licence_type_data.name"},
+                    {data: "applicant"},
                     {data: "status"},
                     {
                         data: "issue_date",
@@ -132,18 +132,6 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (!vm.is_external){
-                                links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
-                            }
-                            else{
-                                if (full.can_user_edit) {
-                                    links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                                }
-                                else if (full.can_user_view) {
-                                    links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
-                                }
-                            }
                             return links;
                         }
                     }
@@ -151,7 +139,7 @@ export default {
                 processing: true,
                 initComplete: function () {
                     // Grab Regions from the data in the table
-                    var regionColumn = vm.$refs.application_datatable.vmDataTable.columns(1);
+                    var regionColumn = vm.$refs.licence_datatable.vmDataTable.columns(1);
                     regionColumn.data().unique().sort().each( function ( d, j ) {
                         let regionTitles = [];
                         $.each(d,(index,a) => {
@@ -162,19 +150,19 @@ export default {
                                 });
                             }
                         })
-                        vm.application_regions = regionTitles;
+                        vm.licence_regions = regionTitles;
                     });
                     // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.application_datatable.vmDataTable.columns(2);
+                    var titleColumn = vm.$refs.licence_datatable.vmDataTable.columns(2);
                     titleColumn.data().unique().sort().each( function ( d, j ) {
                         let activityTitles = [];
                         $.each(d,(index,a) => {
                             a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
                         })
-                        vm.application_activityTitles = activityTitles;
+                        vm.licence_activityTitles = activityTitles;
                     });
                     // Grab Status from the data in the table
-                    var statusColumn = vm.$refs.application_datatable.vmDataTable.columns(5);
+                    var statusColumn = vm.$refs.licence_datatable.vmDataTable.columns(5);
                     statusColumn.data().unique().sort().each( function ( d, j ) {
                         let statusTitles = [];
                         $.each(d,(index,a) => {
@@ -183,7 +171,7 @@ export default {
                         vm.licence_status = statusTitles;
                     });
                     // Fix the table rendering columns
-                    vm.$refs.application_datatable.vmDataTable.columns.adjust().responsive.recalc();
+                    vm.$refs.licence_datatable.vmDataTable.columns.adjust().responsive.recalc();
                 }
             }
         }
@@ -302,9 +290,9 @@ export default {
         },
         submitterSearch:function(){
             let vm = this;
-            vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
+            vm.$refs.licence_datatable.table.dataTableExt.afnFiltering.push(
                 function(settings,data,dataIndex,original){
-                    let filtered_submitter = vm.filterApplicationSubmitter;
+                    let filtered_submitter = vm.filterLicenceSubmitter;
                     if (filtered_submitter == 'All'){ return true; } 
                     return filtered_submitter == original.submitter.email;
                 }
