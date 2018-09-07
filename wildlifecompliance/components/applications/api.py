@@ -179,6 +179,25 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET',])
+    def assessments(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.assessments
+            serializer = AssessmentSerializer(qs,many=True)
+            print(qs)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    @detail_route(methods=['GET',])
     def amendment_request(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -435,6 +454,27 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def complete_assessment(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            selected_assessment_id = request.data.get('selected_assessment_id')
+            instance.complete_assessment(request)
+            serializer = InternalApplicationSerializer(instance,context={'request':request})
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
     @detail_route(methods=['POST',])
     def proposed_licence(self, request, *args, **kwargs):

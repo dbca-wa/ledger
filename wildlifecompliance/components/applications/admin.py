@@ -29,6 +29,13 @@ class ApplicationDeclinedDetails(admin.ModelAdmin):
 class Assessment(admin.ModelAdmin):
     pass
 
+@admin.register(models.ApplicationCondition)
+class ApplicationCondition(admin.ModelAdmin):
+    pass
+
+@admin.register(models.DefaultCondition)
+class DefaultCondition(admin.ModelAdmin):
+    pass
 
 @admin.register(models.ApplicationGroupType)
 class ApplicationGroupTypeAdmin(admin.ModelAdmin):

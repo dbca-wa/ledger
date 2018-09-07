@@ -471,6 +471,7 @@ class Application(RevisionedMixin):
 
     def submit(self,request,viewset):
         from wildlifecompliance.components.applications.utils import save_proponent_data 
+        from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType
         with transaction.atomic():
             if self.can_user_edit:
                 # Save the data first
@@ -503,6 +504,20 @@ class Application(RevisionedMixin):
                 else:
                     for activity_type in  self.licence_type_data['activity_type']:
                         activity_type["processing_status"]="With Officer"
+                        qs =DefaultCondition.objects.filter(licence_activity_type=activity_type["id"])
+                        if (qs):
+                            print("inside if")
+                            for q in qs:
+                                print("inside for")
+                                print(q.condition)
+                                ApplicationCondition.objects.create(
+                                    default_condition = q,
+                                    is_default = True,
+                                    standard = False,
+                                    application = self,
+                                    licence_activity_type = WildlifeLicenceActivityType.objects.get(id=activity_type["id"])
+                                )
+                        print(qs)
                 self.save()
 
                 officer_groups = ApplicationGroupType.objects.filter(licence_class=self.licence_type_data["id"],name__icontains='officer')
@@ -699,6 +714,17 @@ class Application(RevisionedMixin):
         else:
             raise ValidationError('The provided status cannot be found.')
 
+    def complete_assessment(self,request):
+        
+        assessment = Assessment.objects.get(id=request.data.get('selected_assessment_id'))
+        assessment.status ='completed'
+        assessment.save()
+        for activity_type in  self.licence_type_data['activity_type']:
+            if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
+                activity_type["processing_status"]="With Officer-Conditions"
+                self.save()
+
+
     def proposed_decline(self,request,details):
         with transaction.atomic():
             try:
@@ -767,6 +793,11 @@ class Application(RevisionedMixin):
     @property
     def amendment_requests(self):
         qs =AmendmentRequest.objects.filter(application = self)
+        return qs
+
+    @property
+    def assessments(self):
+        qs =Assessment.objects.filter(application = self,status='awaiting_assessment')
         return qs
 
 
@@ -1103,10 +1134,19 @@ class ApplicationStandardCondition(RevisionedMixin):
     class Meta:
         app_label = 'wildlifecompliance'
 
+class DefaultCondition(OrderedModel):
+    condition = models.TextField(null=True,blank=True)
+    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
 class ApplicationCondition(OrderedModel):
     RECURRENCE_PATTERNS = [(1, 'Weekly'), (2, 'Monthly'), (3, 'Yearly')]
     standard_condition = models.ForeignKey(ApplicationStandardCondition,null=True,blank=True)
     free_condition = models.TextField(null=True,blank=True)
+    default_condition=models.ForeignKey(DefaultCondition,null=True,blank=True)
+    is_default=models.BooleanField(default=False)
     standard = models.BooleanField(default=True)
     application = models.ForeignKey(Application,related_name='conditions')
     due_date = models.DateField(null=True,blank=True)
@@ -1122,7 +1162,15 @@ class ApplicationCondition(OrderedModel):
 
     @property
     def condition(self):
-        return self.standard_condition.text if self.standard else self.free_condition
+        if self.standard:
+            print("inside standard")
+            return self.standard_condition.text
+        elif self.is_default:
+            print("inside is default")
+            return self.default_condition.condition
+        else:
+            print("inside free condition")
+            return self.free_condition
 
 class ApplicationUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"
