@@ -85,13 +85,15 @@ if DEV_STATIC and not DEV_STATIC_URL:
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # Department details
-VIA_EMAIL = env('VIA_EMAIL','via@dbca.wa.gov.au')
-DEP_URL = env('DEP_URL','www.dbca.wa.gov.au')
+SITE_PREFIX = env('SITE_PREFIX')
+SITE_DOMAIN = env('SITE_DOMAIN')
+VIA_EMAIL = env('VIA_EMAIL','via@' + SITE_DOMAIN)
+DEP_URL = env('DEP_URL','www.' + SITE_DOMAIN)
 DEP_PHONE = env('DEP_PHONE','(08) 9219 9831')
 DEP_FAX = env('DEP_FAX','(08) 9423 8242')
 DEP_POSTAL = env('DEP_POSTAL','Locked Bag 104, Bentley Delivery Centre, Western Australia 6983')
 DEP_NAME = env('DEP_NAME','Department of Biodiversity,Conservation and Attractions')
-SITE_URL = env('SITE_URL','https://via-uat.dpaw.wa.gov.au')
+SITE_URL = env('SITE_URL', 'https://' + SITE_PREFIX + '.' + 'SITE_DOMAIN')
 TENURE_SECTION = env('TENURE_SECTION', None)
 
 BASE_URL=env('BASE_URL')

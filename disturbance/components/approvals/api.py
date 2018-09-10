@@ -71,7 +71,7 @@ class ApprovalPaginatedViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET',])
     def approvals_external(self, request, *args, **kwargs):
         """
-        Paginated serializer for datatables - used by the external dashboard
+        Paginated serializer for datatables - used by the internal and external dashboard (filtered by the get_queryset method)
 
         To test:
             http://localhost:8000/api/approval_paginated/approvals_external/?format=datatables&draw=1&length=2
