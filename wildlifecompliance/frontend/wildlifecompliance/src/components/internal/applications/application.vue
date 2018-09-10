@@ -319,7 +319,7 @@
                                             </div>
                                             <div class="panel-body panel-collapse collapse" :id="`${item1.id}`+assessorsBody">
                                                         <div class="row">
-                                                           <div class="col-sm-offset-2 col-sm-10">
+                                                           <div class="col-sm-10" style="margin-bottom: 10px">
                                                                     <label class="control-label pull-left"  for="Name">Assessor Group</label>
                                                                     <select class="form-control" v-model="selectedAssessor">
                                                                         <option v-for="assessor in assessorGroup" :id="assessor.id" 
