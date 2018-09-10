@@ -9,7 +9,8 @@ from disturbance.components.proposals.models import (
                                     ProposalRequirement,
                                     ProposalStandardRequirement,
                                     ProposalDeclinedDetails,
-                                    AmendmentRequest
+                                    AmendmentRequest,
+                                    AmendmentReason
                                 )
 from disturbance.components.organisations.models import (
                                 Organisation
@@ -515,8 +516,19 @@ class ProposedApprovalSerializer(serializers.Serializer):
 class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False)
+   
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
+    #reason = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AmendmentRequest
+        fields = '__all__'
+
+    #def get_reason (self,obj):
+        #return obj.get_reason_display()
+        #return obj.reason.reason
+class AmendmentRequestDisplaySerializer(serializers.ModelSerializer):
     reason = serializers.SerializerMethodField()
 
     class Meta:
@@ -524,7 +536,9 @@ class AmendmentRequestSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_reason (self,obj):
-        return obj.get_reason_display()
+        #return obj.get_reason_display()
+        return obj.reason.reason if obj.reason else None
+
 
 class SearchKeywordSerializer(serializers.Serializer):
     number = serializers.CharField()

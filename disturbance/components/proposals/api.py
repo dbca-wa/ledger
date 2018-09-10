@@ -40,6 +40,7 @@ from disturbance.components.proposals.models import (
     ProposalRequirement,
     ProposalStandardRequirement,
     AmendmentRequest,
+    AmendmentReason,
 
 )
 from disturbance.components.proposals.serializers import (
@@ -62,7 +63,8 @@ from disturbance.components.proposals.serializers import (
     SearchReferenceSerializer,
     SearchKeywordSerializer,
     ListProposalSerializer,
-    ProposalReferralSerializer
+    ProposalReferralSerializer,
+    AmendmentRequestDisplaySerializer,
 )
 from disturbance.components.approvals.models import Approval
 from disturbance.components.approvals.serializers import ApprovalSerializer
@@ -470,7 +472,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.amendment_requests
             qs = qs.filter(status = 'requested')
-            serializer = AmendmentRequestSerializer(qs,many=True)
+            serializer = AmendmentRequestDisplaySerializer(qs,many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -1254,8 +1256,16 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
     serializer_class = AmendmentRequestSerializer
 
     def create(self, request, *args, **kwargs):
-        try:
+        try:            
+            reason_id=request.data.get('reason')
+            data = {
+                #'schema': qs_proposal_type.order_by('-version').first().schema,
+                'text': request.data.get('text'),
+                'proposal': request.data.get('proposal'),
+                'reason': AmendmentReason.objects.get(id=reason_id) if reason_id else None,
+            }
             serializer = self.get_serializer(data= request.data)
+            #serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception = True)
             instance = serializer.save()
             instance.generate_amendment(request)
@@ -1282,11 +1292,12 @@ class AmendmentRequestReasonChoicesView(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self,request, format=None):
         choices_list = []
-        choices = AmendmentRequest.REASON_CHOICES
+        #choices = AmendmentRequest.REASON_CHOICES
+        choices=AmendmentReason.objects.all()
         if choices:
             for c in choices:
-                choices_list.append({'key': c[0],'value': c[1]})
-
+                #choices_list.append({'key': c[0],'value': c[1]})
+                choices_list.append({'key': c.id,'value': c.reason})
         return Response(choices_list)
 
 class SearchKeywordsView(views.APIView):
