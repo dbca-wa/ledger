@@ -319,7 +319,7 @@
                                             </div>
                                             <div class="panel-body panel-collapse collapse" :id="`${item1.id}`+assessorsBody">
                                                         <div class="row">
-                                                           <div class="col-sm-offset-2 col-sm-8">
+                                                           <div class="col-sm-offset-2 col-sm-10">
                                                                     <label class="control-label pull-left"  for="Name">Assessor Group</label>
                                                                     <select class="form-control" v-model="selectedAssessor">
                                                                         <option v-for="assessor in assessorGroup" :id="assessor.id" 
@@ -327,7 +327,7 @@
                                                                     </select>
                                                             </div> 
                                                             <div class="col-sm-2">
-                                                                <a style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)"> send</a>
+                                                                <a class="btn btn-primary" style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)">Send</a>
                                                             </div>
                                                         </div>
                                                         <div class="row">
