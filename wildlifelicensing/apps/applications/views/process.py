@@ -82,7 +82,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         data = {
             'user': serialize(request.user),
             #'application': serialize(application, posthook=format_application),
-            'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}}),
+            'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']},'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']}}),
             'form_structure': application.licence_type.application_schema,
             'officers': officers,
             'amendment_requests': serialize(AmendmentRequest.objects.filter(application=application),
