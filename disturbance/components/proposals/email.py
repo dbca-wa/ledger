@@ -111,6 +111,9 @@ def send_amendment_email_notification(amendment_request, request, proposal):
 def send_submit_email_notification(request, proposal):
     email = SubmitSendNotificationEmail()
     url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    if "-internal" not in url:
+        url = '-internal.{}'.format(settings.SITE_DOMAIN).join(url.split('.' + settings.SITE_DOMAIN))
+
     context = {
         'proposal': proposal,
         'url': url
