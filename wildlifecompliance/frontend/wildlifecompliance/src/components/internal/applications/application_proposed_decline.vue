@@ -87,6 +87,7 @@ export default {
             propose_decline:{
                 activity_type:[]
             },
+            selected_activity_type:null,
             decliningApplication: false,
             errors: false,
             validation_form: null,
