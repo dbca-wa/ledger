@@ -479,9 +479,10 @@ export default {
         sendReferral: function(){
             let vm = this;
             let formData = new FormData(vm.form); //save data before completing referral
+            vm.sendingReferral = true;
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{
                 let data = {'email':vm.selected_referral, 'text': vm.referral_text};
-                vm.sendingReferral = true;
+                //vm.sendingReferral = true;
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,(vm.referral.id+'/send_referral')),JSON.stringify(data),{
                 emulateJSON:true
                 }).then((response) => {
@@ -493,6 +494,9 @@ export default {
                     'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
                     'success'
                 )
+                $(vm.$refs.department_users).val(null).trigger("change");
+                vm.selected_referral = '';
+                vm.referral_text = '';
              }, (error) => {
                 console.log(error);
                 swal(
@@ -501,6 +505,8 @@ export default {
                     'error'
                 )
                 vm.sendingReferral = false;
+                vm.selected_referral = '';
+                vm.referral_text = '';
                 });
             
              
