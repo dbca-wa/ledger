@@ -46,12 +46,12 @@ class ExternalSubmitSendNotificationEmail(TemplateEmailBase):
     txt_template = 'disturbance/emails/proposals/send_external_submit_notification.txt'
 
 class ApproverDeclineSendNotificationEmail(TemplateEmailBase):
-    subject = 'A new Proposal has been declined.'
+    subject = 'A Proposal has been recommended for decline.'
     html_template = 'disturbance/emails/proposals/send_approver_decline_notification.html'
     txt_template = 'disturbance/emails/proposals/send_approver_decline_notification.txt'
 
 class ApproverApproveSendNotificationEmail(TemplateEmailBase):
-    subject = 'A new Proposal has been proposed for approval.'
+    subject = 'A Proposal has been recommended for approval.'
     html_template = 'disturbance/emails/proposals/send_approver_approve_notification.html'
     txt_template = 'disturbance/emails/proposals/send_approver_approve_notification.txt'
 
