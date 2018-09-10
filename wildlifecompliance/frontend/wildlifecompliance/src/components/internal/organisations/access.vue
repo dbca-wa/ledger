@@ -95,7 +95,7 @@
                                     <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Letter</label>
                                         <div class="col-sm-6">
-                                            <a target="_blank" :href="access.identification"><i class="fa fa-file-pdf-o"></i>&nbsp;Letter.PDF</a>
+                                            <a target="_blank" :href="access.identification"><i class="fa fa-file-pdf-o"></i>&nbsp;Organisation Proof Document</a>
                                         </div>
                                     </div>   
                                     <div class="form-group" style="margin-top:50px;">
@@ -392,9 +392,18 @@ export default {
             if (result.value) {
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/accept')))
                 .then((response) => {
-                    console.log(response);
+                    swal({
+                        title: "Accept Organisation Request",
+                        text: "The organisation access request has been accepted.",
+                        type: "success"}
+                    );
                     vm.access = response.body;
                 }, (error) => {
+                    swal({
+                        title: "Accept Organisation Request",
+                        text: "There was an error accepting the organisation access request.",
+                        type: "error"}
+                    );
                     console.log(error);
                 });
             }
@@ -422,9 +431,13 @@ export default {
                         text: "A new letter has been requested.",
                         type: "success"}
                     );
-                    console.log(response);
                     vm.access = response.body;
                 }, (error) => {
+                    swal({
+                        title: "Amendment Request",
+                        text: "There was an error sending the amendment request request.",
+                        type: "error"}
+                    );
                     console.log(error);
                 });
             }
@@ -445,10 +458,18 @@ export default {
             if (result.value) {
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/decline')))
                 .then((response) => {
-                    console.log(response);
+                    swal({
+                        title: "Decline Organisation Request",
+                        text: "The organisation access request has been declined.",
+                        type: "success"}
+                    );
                     vm.access = response.body;
                 }, (error) => {
-                    console.log(error);
+                    swal({
+                        title: "Decline Organisation Request",
+                        text: "There was an error declining the organisation access request.",
+                        type: "error"}
+                    );
                 });
             }
         },(error) => {
