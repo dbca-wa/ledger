@@ -1,7 +1,7 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from disturbance.components.compliances.models import (
-    Compliance, ComplianceUserAction, ComplianceLogEntry, ComplianceAmendmentRequest
+    Compliance, ComplianceUserAction, ComplianceLogEntry, ComplianceAmendmentRequest, ComplianceAmendmentReason
 )
 from rest_framework import serializers
 
@@ -98,6 +98,16 @@ class ComplianceCommsSerializer(serializers.ModelSerializer):
         return [[d.name,d._file.url] for d in obj.documents.all()]
 
 class ComplianceAmendmentRequestSerializer(serializers.ModelSerializer):
+    #reason = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ComplianceAmendmentRequest
+        fields = '__all__'
+
+    # def get_reason (self,obj):
+    #     return obj.get_reason_display()
+
+class CompAmendmentRequestDisplaySerializer(serializers.ModelSerializer):
     reason = serializers.SerializerMethodField()
 
     class Meta:
@@ -105,5 +115,6 @@ class ComplianceAmendmentRequestSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_reason (self,obj):
-        return obj.get_reason_display()
+        #return obj.get_reason_display()
+        return obj.reason.reason if obj.reason else None
 

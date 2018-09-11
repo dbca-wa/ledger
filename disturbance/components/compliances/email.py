@@ -39,7 +39,8 @@ class ComplianceReminderNotificationEmail(TemplateEmailBase):
 
 def send_amendment_email_notification(amendment_request, request, compliance):
     email = ComplianceAmendmentRequestSendNotificationEmail()
-    reason = amendment_request.get_reason_display()
+    #reason = amendment_request.get_reason_display()
+    reason = amendment_request.reason.reason
     url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
     context = {
         'compliance': compliance,
