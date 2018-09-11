@@ -32,7 +32,8 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from disturbance.components.compliances.models import (
    Compliance,
-   ComplianceAmendmentRequest
+   ComplianceAmendmentRequest,
+   ComplianceAmendmentReason
 )
 from disturbance.components.compliances.serializers import (
     ComplianceSerializer,
@@ -40,7 +41,7 @@ from disturbance.components.compliances.serializers import (
     ComplianceActionSerializer,
     ComplianceCommsSerializer,
     ComplianceAmendmentRequestSerializer,
-
+    CompAmendmentRequestDisplaySerializer
 )
 from disturbance.helpers import is_customer, is_internal
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -300,7 +301,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.amendment_requests
             qs = qs.filter(status = 'requested')
-            serializer = ComplianceAmendmentRequestSerializer(qs,many=True)
+            serializer = CompAmendmentRequestDisplaySerializer(qs,many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -410,9 +411,10 @@ class ComplianceAmendmentReasonChoicesView(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self,request, format=None):
         choices_list = []
-        choices = ComplianceAmendmentRequest.REASON_CHOICES
+        #choices = ComplianceAmendmentRequest.REASON_CHOICES
+        choices=ComplianceAmendmentReason.objects.all()
         if choices:
             for c in choices:
-                choices_list.append({'key': c[0],'value': c[1]})
+                choices_list.append({'key': c.id,'value': c.reason})
         return Response(choices_list)
 
