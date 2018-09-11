@@ -75,7 +75,7 @@ class Command(BaseCommand):
                         print('Error surrendering Approval {} status'.format(a.id))
 
         for a in Approval.objects.filter(status = 'suspended'):
-            if a.suspension_details:               
+            if a.suspension_details and a.suspension_details['to_date']:               
                 to_date = datetime.datetime.strptime(a.suspension_details['to_date'],'%d/%m/%Y')
                 to_date = to_date.date()
                 if to_date <= today and today < a.expiry_date:

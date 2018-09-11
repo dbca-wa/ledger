@@ -97,6 +97,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'current_proposal',
             'renewal_document',
             'renewal_sent',
+            'allowed_assessors'
         )
 
     def get_renewal_document(self,obj):

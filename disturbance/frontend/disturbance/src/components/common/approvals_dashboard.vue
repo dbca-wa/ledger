@@ -577,7 +577,6 @@ export default {
         check_assessor: function(proposal){
             let vm = this;         
             
-            /*
             var assessor = proposal.allowed_assessors.filter(function(elem){
                     return(elem.id=vm.profile.id)
                 });
@@ -586,7 +585,7 @@ export default {
                 return true;
             else
                 return false;       
-            */
+            
             return false;       
         },
 
