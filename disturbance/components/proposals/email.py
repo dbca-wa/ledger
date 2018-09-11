@@ -94,7 +94,8 @@ def send_referral_complete_email_notification(referral,request):
 
 def send_amendment_email_notification(amendment_request, request, proposal):
     email = AmendmentRequestSendNotificationEmail()
-    reason = amendment_request.get_reason_display()
+    #reason = amendment_request.get_reason_display()
+    reason = amendment_request.reason.reason
     url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
     context = {
         'proposal': proposal,

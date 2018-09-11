@@ -1159,27 +1159,31 @@ class AmendmentReason(models.Model):
     class Meta:
         app_label = 'disturbance'
 
+    def __str__(self):
+        return self.reason
+
 
 class AmendmentRequest(ProposalRequest):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
     #REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
     #                  ('missing_information', 'There was missing information'),
     #                  ('other', 'Other'))
-    try:
-        # model requires some choices if AmendmentReason does not yet exist or is empty
-        REASON_CHOICES = list(AmendmentReason.objects.values_list('id', 'reason'))
-        if not REASON_CHOICES:
-            REASON_CHOICES = ((0, 'The information provided was insufficient'),
-                              (1, 'There was missing information'),
-                              (2, 'Other'))
-    except:
-        REASON_CHOICES = ((0, 'The information provided was insufficient'),
-                          (1, 'There was missing information'),
-                          (2, 'Other'))
+    # try:
+    #     # model requires some choices if AmendmentReason does not yet exist or is empty
+    #     REASON_CHOICES = list(AmendmentReason.objects.values_list('id', 'reason'))
+    #     if not REASON_CHOICES:
+    #         REASON_CHOICES = ((0, 'The information provided was insufficient'),
+    #                           (1, 'There was missing information'),
+    #                           (2, 'Other'))
+    # except:
+    #     REASON_CHOICES = ((0, 'The information provided was insufficient'),
+    #                       (1, 'There was missing information'),
+    #                       (2, 'Other'))
 
 
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
-    reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
+    #reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
+    reason = models.ForeignKey(AmendmentReason, blank=True, null=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -1202,6 +1206,7 @@ class AmendmentRequest(ProposalRequest):
                     proposal.applicant.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
 
                     # send email
+
                     send_amendment_email_notification(self,request, proposal)
 
                 self.save()
