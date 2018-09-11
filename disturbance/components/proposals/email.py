@@ -97,6 +97,11 @@ def send_amendment_email_notification(amendment_request, request, proposal):
     #reason = amendment_request.get_reason_display()
     reason = amendment_request.reason.reason
     url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+
+    if "-internal" in url:
+        # remove '-internal'. This email is for external submitters 
+        url = ''.join(url.split('-internal'))
+
     context = {
         'proposal': proposal,
         'reason': reason,
@@ -113,6 +118,7 @@ def send_submit_email_notification(request, proposal):
     email = SubmitSendNotificationEmail()
     url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
     if "-internal" not in url:
+        # add it. This email is for internal staff (assessors)
         url = '-internal.{}'.format(settings.SITE_DOMAIN).join(url.split('.' + settings.SITE_DOMAIN))
 
     context = {
@@ -129,7 +135,11 @@ def send_submit_email_notification(request, proposal):
 def send_external_submit_email_notification(request, proposal):
     email = ExternalSubmitSendNotificationEmail()
     url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
-    url = ''.join(url.split('-internal'))
+
+    if "-internal" in url:
+        # remove '-internal'. This email is for external submitters 
+        url = ''.join(url.split('-internal'))
+
     context = {
         'proposal': proposal,
         'submitter': proposal.submitter.get_full_name(),
