@@ -164,6 +164,8 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     # this is the only way to get data into the onPage callback function
     doc.approval = approval
     doc.site_url = site_url
+    region = approval.region if hasattr(approval, 'region') else ''
+    district = approval.district if hasattr(approval, 'district') else ''
 
     approval_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])
 
@@ -187,7 +189,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
 
     #elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
     #elements.append(Paragraph(approval.activity, styles['InfoTitleLargeLeft']))
-    elements.append(Paragraph('APPROVAL OF PROPOSAL {} {} TO UNDERTAKE DISTURBANCE ACTIVITY IN {} - {}'.format(proposal.lodgement_number, title, approval.region, approval.district), styles['InfoTitleLargeLeft']))
+    elements.append(Paragraph('APPROVAL OF PROPOSAL {} {} TO UNDERTAKE DISTURBANCE ACTIVITY IN {} - {}'.format(proposal.lodgement_number, title, region, district), styles['InfoTitleLargeLeft']))
     #import ipdb; ipdb.set_trace()
     #elements.append(Paragraph(approval.tenure if hasattr(approval, 'tenure') else '', styles['InfoTitleLargeRight']))
 
@@ -287,7 +289,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     delegation.append(Paragraph('{} {}'.format(user.first_name, user.last_name), styles['Left']))
-    delegation.append(Paragraph('{} - {}'.format(approval.region, approval.district), styles['Left']))
+    delegation.append(Paragraph('{} - {}'.format(region, district), styles['Left']))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']))
 

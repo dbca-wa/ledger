@@ -499,7 +499,7 @@ class ProposalRequirementSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProposalRequirement
         fields = ('id','due_date','free_requirement','standard_requirement','standard','order','proposal','recurrence','recurrence_schedule','recurrence_pattern','requirement')
-        readonly_fields = ('order','requirement')
+        read_only_fields = ('order','requirement')
 
 class ProposalStandardRequirementSerializer(serializers.ModelSerializer):
     class Meta:
