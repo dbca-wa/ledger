@@ -3,8 +3,11 @@
 {% load static %}
 
 {% load users %}
+{% load utils %}
 {% is_internal as is_internal_login %}
 {% system_maintenance_due as system_maintenance_due %}
+{% system_name_short as short_name %}
+{% dept_name as department_name %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -22,7 +25,7 @@
             {% endblock %}
             <title>
                 {% block title %}
-                    VIA - Department of Biodiversity, Conservation and Attractions
+                {{ short_name }} - {{ department_name }}
                 {% endblock %}
             </title>
 

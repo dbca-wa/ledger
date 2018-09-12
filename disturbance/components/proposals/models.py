@@ -1184,6 +1184,7 @@ class AmendmentRequest(ProposalRequest):
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     #reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
     reason = models.ForeignKey(AmendmentReason, blank=True, null=True)
+    #reason = models.ForeignKey(AmendmentReason)
 
     class Meta:
         app_label = 'disturbance'

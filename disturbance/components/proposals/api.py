@@ -237,6 +237,11 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         #qs = self.filter_queryset(self.request, qs, self)
         qs = self.filter_queryset(qs)
 
+        # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
+        applicant_id = request.GET.get('org_id')
+        if applicant_id:
+            qs = qs.filter(applicant_id=applicant_id)
+
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
         serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
@@ -270,6 +275,11 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         qs = self.get_queryset().exclude(processing_status='discarded')
         #qs = self.filter_queryset(self.request, qs, self)
         qs = self.filter_queryset(qs)
+
+        # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
+        applicant_id = request.GET.get('org_id')
+        if applicant_id:
+            qs = qs.filter(applicant_id=applicant_id)
 
         #import ipdb; ipdb.set_trace()
         self.paginator.page_size = qs.count()

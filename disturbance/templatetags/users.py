@@ -51,3 +51,7 @@ def system_maintenance_can_start():
     return False
 
 
+@register.simple_tag()
+def dept_support_phone2():
+    return settings.DEPT_NAME
+

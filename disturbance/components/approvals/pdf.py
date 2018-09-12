@@ -29,7 +29,7 @@ LICENCE_HEADER_IMAGE_WIDTH = 420
 #LICENCE_HEADER_IMAGE_HEIGHT = 42
 LICENCE_HEADER_IMAGE_HEIGHT = 60
 
-DPAW_EMAIL = settings.VIA_EMAIL
+DPAW_EMAIL = settings.SUPPORT_EMAIL
 DPAW_URL = settings.DEP_URL
 DPAW_PHONE = settings.DEP_PHONE
 DPAW_FAX = settings.DEP_FAX
@@ -281,7 +281,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
                                 'on {} or by email at {}'.format(user.first_name, user.last_name, settings.DEP_PHONE, user.email), styles['Left']))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Paragraph('To provide feedback on the system used to submit the approval or update contact details, please '
-        'contact VIA Works Coordinator - {}'.format(settings.VIA_EMAIL), styles['Left']))
+        'contact {} Works Coordinator - {}'.format(settings.SYSTEM_NAME_SHORT, settings.SUPPORT_EMAIL), styles['Left']))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Paragraph('Approved on behalf of the', styles['Left']))
     delegation.append(Paragraph('{}'.format(settings.DEP_NAME), styles['Left']))

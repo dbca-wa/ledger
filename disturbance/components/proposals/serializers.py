@@ -119,7 +119,7 @@ class DTProposalSerializer(BaseProposalSerializer):
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
-    assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
+    assigned_officer = serializers.CharField(source='assigned_officer.get_full_name', allow_null=True)
 
     application_type = serializers.CharField(source='application_type.name', read_only=True)
     region = serializers.CharField(source='region.name', read_only=True)
@@ -528,6 +528,7 @@ class AmendmentRequestSerializer(serializers.ModelSerializer):
     #def get_reason (self,obj):
         #return obj.get_reason_display()
         #return obj.reason.reason
+
 class AmendmentRequestDisplaySerializer(serializers.ModelSerializer):
     reason = serializers.SerializerMethodField()
 

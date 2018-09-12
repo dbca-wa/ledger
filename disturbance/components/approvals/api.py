@@ -83,6 +83,11 @@ class ApprovalPaginatedViewSet(viewsets.ModelViewSet):
         qs = self.filter_queryset(qs)
         #qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
 
+        # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
+        applicant_id = request.GET.get('org_id')
+        if applicant_id:
+            qs = qs.filter(applicant_id=applicant_id)
+
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
         serializer = ApprovalSerializer(result_page, context={'request':request}, many=True)

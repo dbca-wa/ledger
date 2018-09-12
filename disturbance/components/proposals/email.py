@@ -9,7 +9,7 @@ from disturbance.components.emails.emails import TemplateEmailBase
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_NAME = 'VIA Automated Message'
+SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 class ReferralSendNotificationEmail(TemplateEmailBase):
     subject = 'A referral for a proposal has been sent to you.'
     html_template = 'disturbance/emails/proposals/send_referral_notification.html'
