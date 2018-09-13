@@ -673,6 +673,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         # queryset = self.get_queryset() 
         instance = self.get_object()
         queryset =  Assessment.objects.filter(application=instance.id)
+        licence_activity_type = self.request.query_params.get('licence_activity_type', None)
+        if licence_activity_type is not None:
+            queryset = queryset.filter(licence_activity_type=licence_activity_type)
         serializer = AssessmentSerializer(queryset,many=True)
         return Response(serializer.data)
 

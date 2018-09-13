@@ -118,7 +118,7 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="assessmentSelect()">Propose Conditions</button>
+                                                    <button style="width:80%;" class="btn btn-info top-buffer-s" @click.prevent="assessmentSelect()">Propose Conditions</button>
                                                 </div>
                                             </div>
                                         </template>
@@ -636,7 +636,7 @@ export default {
                   processing: true
             },
             contacts_table: null,
-            assessors_headers:["Assessor Group","Date Sent","Status","Action"],
+            assessors_headers:["Activity Type","Assessor Group","Date Sent","Status","Action"],
             assessors_options:{
                  language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -647,6 +647,7 @@ export default {
                     "dataSrc": ''
                 },
                 columns: [
+                    {data:'licence_activity_type'},
                     {data:'assessor_group.name'},
                     {data:'date_last_reminded'},
                     {data:'status'},
@@ -770,89 +771,92 @@ export default {
         
     	eventListeners: function(){
             let vm = this;
-            console.log('event listeners function - assessorDatatable[0]');
-            console.log(vm.$refs);
-            console.log(vm.$refs.assessorDatatable[0].vmDataTable)
 
-            vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_remind',(e) => {
-            console.log("inside assessment remind")
-            e.preventDefault();
+            // Listeners for Send to Assessor datatable actions
+            if (vm.$refs.assessorDatatable) {
+                for (var i=0; i < vm.$refs.assessorDatatable.length; i++) {
+                    console.log('printing datatable in loop');
+                    console.log(datatable);
+                    vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_remind',(e) => {
+                    console.log("inside assessment remind")
+                    e.preventDefault();
 
-            let assessment_id = $(e.target).data('assessmentid');
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
-                console.log('successful')
-                    //vm.$parent.loading.splice('processing contact',1);
-                    swal(
-                         'Sent',
-                         'An email has been sent to assessor with the request to assess this Proposal',
-                         'success'
-                    ).then(() => {
-                                vm.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
-                            },(error) => {
-                            });
-                 
-                },(error)=>{
-                    console.log(error);
-                    vm.errors = true;
-                    vm.errorString = helpers.apiVueResourceError(error);
-                    
-                    
-                });
-            });
+                    let assessment_id = $(e.target).data('assessmentid');
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
+                        console.log('successful')
+                            //vm.$parent.loading.splice('processing contact',1);
+                            swal(
+                                 'Sent',
+                                 'An email has been sent to assessor with the request to assess this Proposal',
+                                 'success'
+                            ).then(() => {
+                                        vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
+                                    },(error) => {
+                                    });
 
-            vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_resend',(e) => {
-            e.preventDefault();
+                        },(error)=>{
+                            console.log(error);
+                            vm.errors = true;
+                            vm.errorString = helpers.apiVueResourceError(error);
 
-            let assessment_id = $(e.target).data('assessmentid');
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/resend_assessment'))).then((response)=>{
-                console.log('successful')
-                    //vm.$parent.loading.splice('processing contact',1);
-                    swal(
-                         'Sent',
-                         'An email has been sent to assessor with the request to assess this Proposal',
-                         'success'
-                    ).then(() => {
-                                vm.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
-                            },(error) => {
-                            });
-                    
-                 
-                },(error)=>{
-                    console.log(error);
-                    vm.errors = true;
-                    vm.errorString = helpers.apiVueResourceError(error);
-                    
-                    
-                });
-            });
 
-            vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_recall',(e) => {
-            console.log("inside assessment remind")
-            e.preventDefault();
+                        });
+                    });
 
-            let assessment_id = $(e.target).data('assessmentid');
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/recall_assessment'))).then((response)=>{
-                console.log('successful')
-                    //vm.$parent.loading.splice('processing contact',1);
-                    swal(
-                         'Success',
-                         'An assessment has been recalled',
-                         'success'
-                    ).then(() => {
-                                vm.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
-                            },(error) => {
-                            });
-                    
-                 
-                },(error)=>{
-                    console.log(error);
-                    vm.errors = true;
-                    vm.errorString = helpers.apiVueResourceError(error);
-                    
-                    
-                });
-            });
+                    vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_resend',(e) => {
+                    e.preventDefault();
 
+                    let assessment_id = $(e.target).data('assessmentid');
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/resend_assessment'))).then((response)=>{
+                        console.log('successful')
+                            //vm.$parent.loading.splice('processing contact',1);
+                            swal(
+                                 'Sent',
+                                 'An email has been sent to assessor with the request to assess this Proposal',
+                                 'success'
+                            ).then(() => {
+                                        vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
+                                    },(error) => {
+                                    });
+
+
+                        },(error)=>{
+                            console.log(error);
+                            vm.errors = true;
+                            vm.errorString = helpers.apiVueResourceError(error);
+
+
+                        });
+                    });
+
+                    vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_recall',(e) => {
+                    console.log("inside assessment remind")
+                    e.preventDefault();
+
+                    let assessment_id = $(e.target).data('assessmentid');
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/recall_assessment'))).then((response)=>{
+                        console.log('successful')
+                            //vm.$parent.loading.splice('processing contact',1);
+                            swal(
+                                 'Success',
+                                 'An assessment has been recalled',
+                                 'success'
+                            ).then(() => {
+                                        vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
+                                    },(error) => {
+                                    });
+
+
+                        },(error)=>{
+                            console.log(error);
+                            vm.errors = true;
+                            vm.errorString = helpers.apiVueResourceError(error);
+
+
+                        });
+                    });
+                }
+            }
         },
         initialiseOrgContactTable: function(){
             let vm = this;
