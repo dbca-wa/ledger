@@ -68,73 +68,7 @@
                                     </template>
                                 </div>
                             </div>
-                            <!-- <div class="col-sm-12">
-                                <div class="separator"></div>
-                            </div>
-                            <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'">
-                                <div class="col-sm-12 top-buffer-s">
-                                    <strong>Referrals</strong><br/>
-                                    <div class="form-group">
-                                        <select :disabled="!canLimitedAction" ref="department_users" class="form-control">
-                                            <option value="null"></option>
-                                            <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
-                                        </select>
-                                        <template v-if='!sendingReferral'>
-                                            <template v-if="selected_referral">
-                                                <a v-if="canLimitedAction" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
-                                            </template>
-                                        </template>
-                                        <template v-else>
-                                            <span v-if="canLimitedAction" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
-                                                Sending Referral&nbsp;
-                                                <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
-                                            </span>
-                                        </template>
-                                    </div>
-                                    <table class="table small-table">
-                                        <tr>
-                                            <th>Referral</th>
-                                            <th>Status/Action</th>
-                                        </tr>
-                                        <tr v-for="r in application.latest_referrals">
-                                            <td>
-                                                <small><strong>{{r.referral}}</strong></small><br/>
-                                                <small><strong>{{r.lodged_on | formatDate}}</strong></small>
-                                            </td>
-                                            <td>
-                                                <small><strong>{{r.processing_status}}</strong></small><br/>
-                                                <template v-if="r.processing_status == 'Awaiting'">
-                                                    <small v-if="canLimitedAction"><a @click.prevent="remindReferral(r)" href="#">Remind</a> / <a @click.prevent="recallReferral(r)"href="#">Recall</a></small>
-                                                </template>
-                                                <template v-else>
-                                                    <small v-if="canLimitedAction"><a @click.prevent="resendReferral(r)" href="#">Resend</a></small>
-                                                </template>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <MoreReferrals @refreshFromResponse="refreshFromResponse" :application="application" :canAction="canLimitedAction" :isFinalised="isFinalised"/>
-                                </div>
-                                <div class="col-sm-12">
-                                    <div class="separator"></div>
-                                </div>
-                            </template> -->
-                            <!-- <div v-if="!isFinalised" class="col-sm-12 top-buffer-s">
-                                <strong>Currently assigned to</strong><br/>
-                                <div class="form-group">
-                                    <template v-if="application.processing_status == 'With Approver'">
-                                        <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_approver">
-                                            <option v-for="member in application.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
-                                        </select>
-                                        <a v-if="canAssess && application.assigned_approver != application.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
-                                    </template>
-                                    <template v-else>
-                                        <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_officer">
-                                            <option v-for="member in application.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
-                                        </select>
-                                        <a v-if="canAssess && application.assigned_officer != application.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
-                                    </template>
-                                </div>
-                            </div> -->
+
                             <template v-if="application.processing_status == 'With Assessor (Conditions)' || application.processing_status == 'With Approver' || isFinalised">
                                 <div class="col-sm-12">
                                     <strong>Application</strong><br/>
@@ -155,8 +89,6 @@
                                     <div class="separator"></div>
                                 </div>
                             </template>
-                            <!-- <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAction">
-                                <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'"> -->
                               <div class="col-sm-12 top-buffer-s" >
                                         <template v-if="showingApplication">
                                             <div class="row">
@@ -226,47 +158,6 @@
                                             </div>
                                             
                                         </template>
-                                    
-                                <!-- <template v-else-if="application.processing_status == 'With Assessor (Conditions)'">
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <strong>Action</strong><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor')">Back To Processing</button><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="proposedLicence()">Issue Licence</button><br/>
-                                        </div>
-                                    </div>
-                                </template> -->
-                               <!--  <template v-else-if="application.processing_status == 'With Approver'">
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <strong>Action</strong><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-sm-12" v-if="application.proposed_decline_status">
-                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor')">Back To Processing</button><br/>
-                                        </div>
-                                        <div class="col-sm-12" v-else>
-                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor_conditions')">Back To Conditions</button><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-sm-12" v-if="!application.proposed_decline_status">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="issueApplication()">Issue</button><br/>
-                                        </div>
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="declineApplication()">Decline</button><br/>
-                                        </div>
-                                    </div>
-                                </template> -->
                             </div>
                         </div>
                     </div>
@@ -294,9 +185,6 @@
                         </div>
                     </div>
                 </template>
-                <!-- <template v-if="application.processing_status == 'With Assessor (Conditions)' || ((application.processing_status == 'With Approver' || isFinalised) && showingConditions)">
-                    <Conditions :application="application"/>
-                </template> -->
                 <template v-if="isSendingToAssessor && !showingConditions">
                     <div>
                         <ul class="nav nav-tabs" id="assessortabs">
@@ -863,7 +751,9 @@ export default {
         
     	eventListeners: function(){
             let vm = this;
-            console.log(vm.$refs.assessorDatatable[0].vmDatatTable)
+            console.log('event listeners function - assessorDatatable[0]');
+            console.log(vm.$refs);
+            console.log(vm.$refs.assessorDatatable[0].vmDataTable)
 
             vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_remind',(e) => {
             console.log("inside assessment remind")
