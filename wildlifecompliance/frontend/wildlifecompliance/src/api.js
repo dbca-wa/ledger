@@ -1,6 +1,6 @@
 module.exports = {
     organisations: '/api/organisations',
-    organisation_requests: '/api/organisation_requests',
+    organisation_requests: '/api/organisation_requests/',
     organisation_contacts: '/api/organisation_contacts',
     organisation_access_group_members: '/api/organisation_access_group_members',
     users: '/api/users',
@@ -21,7 +21,7 @@ module.exports = {
     referrals:"/api/referrals",
     returns:"/api/returns",
     application_standard_conditions:"/api/application_standard_conditions",
-    application_conditions:"/api/application_conditions",
+    application_conditions:"/api/application_conditions.json",
     discard_application:function (id) {
       return `/api/application/${id}`;
     }

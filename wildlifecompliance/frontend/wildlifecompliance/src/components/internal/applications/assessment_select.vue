@@ -89,6 +89,7 @@ export default {
             let vm = this;
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application_id+'/assessments')))
             .then((response) => {
+                console.log("FROM ASSESSMENT SELECT")
                 vm.assessments = response.body;
                 console.log(vm.assessments)
                 
