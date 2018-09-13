@@ -12,7 +12,7 @@
                                         <label class="control-label"  for="Name">Select licensed activities for decline </label>
                                         <div  v-for="item in application_licence_type">
                                             <div v-for="item1 in item">
-                                                <div  v-if="item1.name && !item1.proposed_decline">
+                                                <div  v-if="item1.name && item1.processing_status=='With Officer-Conditions'">
                                                     <input type="checkbox" :value ="item1.id" :id="item1.id" v-model="propose_decline.activity_type">{{item1.name}}
                                                 </div>
                                             </div>
@@ -131,7 +131,13 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_decline'),JSON.stringify(propose_decline),{
                         emulateJSON:true,
                     }).then((response)=>{
+                        swal(
+                             'Sent',
+                             'An email has been sent to applicant with the request to amend this Application',
+                             'success'
+                        );
                         vm.decliningApplication = false;
+                        vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
                         vm.close();
                         vm.$emit('refreshFromResponse',response);
                     },(error)=>{

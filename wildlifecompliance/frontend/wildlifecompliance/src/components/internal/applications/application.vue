@@ -113,7 +113,12 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="assessmentSelect()">Continue Assessment</button>
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="assessmentSelect()">Propose Conditions</button>
                                                 </div>
                                             </div>
                                         </template>
@@ -129,17 +134,30 @@
                                                     <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
                                                 </div>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleConditions()">Enter Conditions</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
-                                                </div>
-                                            </div>
+                                            
                                         </template>
+                                       <!--  <template v-if="assessmentComplete">
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <strong>Action</strong><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Resend To Assessor</button><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
+                                                </div>
+                                            </div>
+                                        </template> -->
                                         <template v-if="showingConditions">
                                             <div class="row">
                                                 <div class="col-sm-12">
@@ -522,7 +540,7 @@
         <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
         <AssessmentSelect ref="assessment_select" :application_id="application.id" ></AssessmentSelect>
         <SendToAssessor ref="send_to_assessor" :application_id="application.id" ></SendToAssessor>
-        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" @refreshFromResponse="refreshFromResponse"/>
+        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"/>
     </div>
 </template>
 <script>
@@ -577,6 +595,7 @@ export default {
             initialisedSelects: false,
             showingApplication:true,
             showingConditions:false,
+            assessmentComplete:false,
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             application_assessor_datatable:vm._uid+'assessment-table',
@@ -862,7 +881,17 @@ export default {
         	this.$refs.send_to_assessor.isModalOpen=true;
         },
         proposedLicence: function(){
-            this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
+        	var activity_type_name=[]
+        	var selectedTabTitle = $("#tabs-section li.active");
+            // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
+
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
+            
+            this.$refs.proposed_licence.propose_issue.licence_activity_type_id=tab_id
+            this.$refs.proposed_licence.propose_issue.licence_activity_type_name=selectedTabTitle.text();
+            console.log(tab_id)
+            console.log(this.$refs.proposed_licence.propose_issue.licence_activity_type_name)
+            // this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
             this.$refs.proposed_licence.isModalOpen = true;
         },
         issueApplication:function(){
@@ -966,7 +995,9 @@ export default {
         },
         assessmentSelect: function(){
             var selectedTabTitle = $("#tabs-section li.active");
-            var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
+            // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
+
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
             
             this.$refs.assessment_select.licence_activity_type=tab_id
             this.$refs.assessment_select.licence_activity_type_name=selectedTabTitle.text();
@@ -1002,9 +1033,9 @@ export default {
                     activity_type_id.push($(d).data('tabid'))
 
                 }
-                console.log('from inside internal application')
-                console.log(activity_type_name)
-                console.log(activity_type_id)
+                // console.log('from inside internal application')
+                // console.log(activity_type_name)
+                // console.log(activity_type_id)
                 // console.log($(d).data('tabname'))
             }); 
             
@@ -1065,14 +1096,20 @@ export default {
             let data = new FormData();
             data.selected_assessment_id=vm.selected_assessment_id;
             data.selected_assessment_tab=vm.selected_assessment_tab
-            console.log(data)
             
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
             .then((response) => {
                 vm.application = response.body;
+                vm.refreshFromResponse(response)
+                vm.showingApplication = true;
+                vm.isSendingToAssessor=false;
+                vm.showingConditions=false;
+                vm.assessmentComplete=true;
                 
             }, (error) => {
-                
+                vm.application = helpers.copyObject(vm.original_application)
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
                     helpers.apiVueResourceError(error),

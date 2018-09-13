@@ -21,8 +21,8 @@ class ApplicationTypeAdmin(admin.ModelAdmin):
 class AmendmentRequestAdmin(admin.ModelAdmin):
     list_display = ['application','licence_activity_type']
 
-@admin.register(models.ApplicationDeclinedDetails)
-class ApplicationDeclinedDetails(admin.ModelAdmin):
+@admin.register(models.ApplicationDecisionPropose)
+class ApplicationDecisionPropose(admin.ModelAdmin):
     pass
 
 @admin.register(models.Assessment)
