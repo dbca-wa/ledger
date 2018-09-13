@@ -235,7 +235,7 @@
                                                             </div>
                                                         </div>
                                                         <div class="row">
-                                                            <datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options" :dtHeaders="assessors_headers" />
+                                                            <datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options[`${item1.id}`]" :dtHeaders="assessors_headers" />
                                                         </div>
                                             </div>
                                         </div>
@@ -637,37 +637,7 @@ export default {
             },
             contacts_table: null,
             assessors_headers:["Activity Type","Assessor Group","Date Sent","Status","Action"],
-            assessors_options:{
-                 language: {
-                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-                },
-                responsive: true,
-                ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/assessment_details'),
-                    "dataSrc": ''
-                },
-                columns: [
-                    {data:'licence_activity_type'},
-                    {data:'assessor_group.name'},
-                    {data:'date_last_reminded'},
-                    {data:'status'},
-                    {
-                        mRender:function (data,type,full) {
-                            let links = '';
-                                if(full.status == 'Completed'){
-                                    links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a>`;
-                                    
-                                } else if(full.status == 'Awaiting Assessment'){
-                                    links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>`;
-                                    links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</button>`;
-                                    // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
-                                } 
-                            return links;
-                        }}
-                  ],
-                  processing: true
-                
-            },
+            assessors_options:{},
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             comms_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/comms_log'),
             comms_add_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/add_comms_log'),
@@ -1408,7 +1378,45 @@ export default {
         let vm = this;
         vm.fetchDeparmentUsers();
         vm.fetchAssessorGroup();
+        vm.$nextTick(function () {
+            console.log('application licence_type_data');
+            console.log(vm.application.licence_type_data);
+            for (var i=0;i<vm.application.licence_type_data.activity_type.length;i++) {
+                var activity_type_id = vm.application.licence_type_data.activity_type[i].id
+                console.log(activity_type_id);
+                vm.assessors_options[activity_type_id] = {
+                     language: {
+                        processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                    },
+                    responsive: true,
+                    ajax: {
+                        "url": helpers.add_endpoint_join(api_endpoints.applications,vm.$route.params.application_id+'/assessment_details/?licence_activity_type='+activity_type_id),
+                        "dataSrc": ''
+                    },
+                    columns: [
+                        {data:'licence_activity_type'},
+                        {data:'assessor_group.name'},
+                        {data:'date_last_reminded'},
+                        {data:'status'},
+                        {
+                            mRender:function (data,type,full) {
+                                let links = '';
+                                    if(full.status == 'Completed'){
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a>`;
 
+                                    } else if(full.status == 'Awaiting Assessment'){
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</button>`;
+                                        // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
+                                    }
+                                return links;
+                            }}
+                    ],
+                    processing: true
+                }
+            }
+
+        })
     },
     updated: function(){
         let vm = this;
