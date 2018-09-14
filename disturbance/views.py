@@ -65,6 +65,12 @@ class DisturbanceRoutingView(TemplateView):
         kwargs['form'] = LoginForm
         return super(DisturbanceRoutingView, self).get(*args, **kwargs)
 
+class DisturbanceContactView(TemplateView):
+    template_name = 'disturbance/contact.html'
+
+class DisturbanceFurtherInformationView(TemplateView):
+    template_name = 'disturbance/further_info.html'
+
 class InternalProposalView(DetailView):
     #template_name = 'disturbance/index.html'
     model = Proposal

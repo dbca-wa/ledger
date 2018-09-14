@@ -166,6 +166,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     doc.site_url = site_url
     region = approval.region if hasattr(approval, 'region') else ''
     district = approval.district if hasattr(approval, 'district') else ''
+    region_district = '{} - {}'.format(region, district) if district else region
 
     approval_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])
 
@@ -177,6 +178,9 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     #Organization details
 
     address = proposal.applicant.organisation.postal_address
+    email = proposal.applicant.organisation.organisation_set.all().first().contacts.all().first().email
+    elements.append(Paragraph(email,styles['BoldLeft']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph(_format_name(approval.applicant),styles['BoldLeft']))
     elements.append(Paragraph(address.line1, styles['BoldLeft']))
     elements.append(Paragraph(address.line2, styles['BoldLeft']))
@@ -189,7 +193,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
 
     #elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
     #elements.append(Paragraph(approval.activity, styles['InfoTitleLargeLeft']))
-    elements.append(Paragraph('APPROVAL OF PROPOSAL {} {} TO UNDERTAKE DISTURBANCE ACTIVITY IN {} - {}'.format(proposal.lodgement_number, title, region, district), styles['InfoTitleLargeLeft']))
+    elements.append(Paragraph('APPROVAL OF PROPOSAL {} {} TO UNDERTAKE DISTURBANCE ACTIVITY IN {}'.format(title, proposal.lodgement_number, region_district), styles['InfoTitleLargeLeft']))
     #import ipdb; ipdb.set_trace()
     #elements.append(Paragraph(approval.tenure if hasattr(approval, 'tenure') else '', styles['InfoTitleLargeRight']))
 
@@ -198,14 +202,14 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     list_of_bullets= []
-    list_of_bullets.append('The potential impacts of the proposal on values the department manages have been removed or mitigated to a level \'as low as reasonably possible\'  (ALARP) and the proposal is consistent with departmental objective and associated management plans for the land use category/s in the activity area.')
-    list_of_bullets.append('No sensitive information contained in this proposal is provided to any third party.')
-    list_of_bullets.append('Approval is granted for the period {} to {}. This approval is not valid if {} makes changes that effect'
-        ' what has been agreed in this proposal or the proposal has expired. To change aspects of the proposal of seek an extension, the proponent must re-submit the proposal for assessment.'.format(approval.start_date.strftime(DATE_FORMAT), approval.expiry_date.strftime(DATE_FORMAT),_format_name(approval.applicant)))
-    list_of_bullets.append('The proponet accepts responsibility for supervising and monitoring the proposed activity to ensure compliance with this proposal.'
-        ' DBCA reserves the right to request documents and records demonstrating compliance for the purpose of deparmental monitoring and auditing.')
+    list_of_bullets.append('The potential impacts of the proposal on values the department manages have been removed or minimised to a level \'As Low As Reasonably Practicable\' (ALARP) and the proposal is consistent with departmental objectives, associated management plans and the land use category/s in the activity area.')
+    list_of_bullets.append('Approval is granted for the period {} to {}.  This approval is not valid if {} makes changes to what has been proposed or the proposal has expired.  To change the proposal or seek an extension, the proponent must re-submit the proposal for assessment.'.format(approval.start_date.strftime(DATE_FORMAT), approval.expiry_date.strftime(DATE_FORMAT),_format_name(approval.applicant)))
+    list_of_bullets.append('The proponent accepts responsibility for advising {} of new information or unforeseen threats that may affect the risk of the proposed activity.'.format(settings.DEP_NAME_SHORT))
+    list_of_bullets.append('Information provided by {0} for the purposes of this proposal will not be provided to third parties without permission from {0}.'.format(settings.DEP_NAME_SHORT))
+    list_of_bullets.append('The proponent accepts responsibility for supervising and monitoring implementation of activity/ies to ensure compliance with this proposal. {} reserves the right to request documents and records demonstrating compliance for departmental monitoring and auditing.'.format(settings.DEP_NAME_SHORT))
     list_of_bullets.append('Non-compliance with the conditions of the proposal may trigger a suspension or withdrawal of the approval for this activity.')
     list_of_bullets.append('Management actions listed in Appendix 1 are implemented.')
+
     understandingList = ListFlowable(
             [ListItem(Paragraph(a, styles['Left']), bulletColour='black', value='circle') for a in list_of_bullets],
             bulletFontName=BOLD_FONTNAME, bulletFontSize=SMALL_FONTSIZE, bulletType='bullet')
@@ -284,26 +288,29 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
         'contact {} Works Coordinator - {}'.format(settings.SYSTEM_NAME_SHORT, settings.SUPPORT_EMAIL), styles['Left']))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Paragraph('Approved on behalf of the', styles['Left']))
-    delegation.append(Paragraph('{}'.format(settings.DEP_NAME), styles['Left']))
+    delegation.append(Paragraph('{}'.format(settings.DEP_NAME), styles['BoldLeft']))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     delegation.append(Paragraph('{} {}'.format(user.first_name, user.last_name), styles['Left']))
-    delegation.append(Paragraph('{} - {}'.format(region, district), styles['Left']))
+    delegation.append(Paragraph('{}'.format(region_district), styles['Left']))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']))
 
     elements.append(KeepTogether(delegation))
     
+    # Appendix section
+    elements.append(PageBreak())
+    elements.append(Paragraph('Appendix 1 - Management Actions', styles['BoldLeft']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     if copied_to_permit:
-        elements.append(PageBreak())
-        elements.append(Paragraph('Appendix 1 - Management Actions', styles['BoldLeft']))
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        
         for k,v in copied_to_permit:
             elements.append(Paragraph(v.encode('UTF-8'), styles['Left']))
             elements.append(Paragraph(k.encode('UTF-8'), styles['Left']))
             elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    else:
+        elements.append(Paragraph('There are no management actions.', styles['Left']))
+
 
     doc.build(elements)
 

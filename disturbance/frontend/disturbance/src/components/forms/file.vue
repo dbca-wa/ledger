@@ -79,7 +79,15 @@ export default {
         },
         fileTypes:{
             default:function () {
-                return "image/*,application/pdf,text/csv,application/msword"
+                var file_types = 
+                    "image/*," + 
+                    "video/*," +
+                    "audio/*," +
+                    "application/pdf,text/csv,application/msword,application/vnd.ms-excel,application/x-msaccess," +
+                    "application/x-7z-compressed,application/x-bzip,application/x-bzip2,application/zip," + 
+                    ".dbf,.gdb,.gpx,.prj,.shp,.shx," + 
+                    ".json,.kml,.gpx";
+                return file_types;
             }
         },
         isRepeatable:Boolean,

@@ -44,6 +44,10 @@ module.exports = {
     discard_proposal:function (id) {
       return `/api/proposal/${id}.json`;
     },
-    site_url: site_url
+    site_url: site_url,
+    //dep_name: 'Department of Biodiversity, Conservation and Attractions',
+    //dep_name_short: 'DBCA',
+    system_name: 'Disturbance Approval System',
+    //system_name_short: 'DAS',
 
 }

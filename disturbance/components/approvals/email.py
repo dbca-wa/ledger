@@ -10,7 +10,7 @@ from ledger.accounts.models import EmailUser
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_NAME = 'VIA Automated Message'
+SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 class ApprovalExpireNotificationEmail(TemplateEmailBase):
     subject = 'Your Approval has been expired.'
     html_template = 'disturbance/emails/approval_expire_notification.html'

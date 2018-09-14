@@ -535,8 +535,13 @@ export default {
             if (sub_activities[activity_name].length > 0) {
                 if ('pass' in sub_activities[activity_name][0]) {
                     return [sub_activities[activity_name], "pass"];
+
                 } else if ('null' in sub_activities[activity_name][0]) {
-                    var approval_level = sub_activities[activity_name]['sub_matrix'][0]['null'][0];
+                    if (sub_activities[activity_name]['sub_matrix'] == null) {
+                        var approval_level = sub_activities[activity_name][0]['null'][0][0];
+                    } else {
+                        var approval_level = sub_activities[activity_name]['sub_matrix'][0]['null'][0];
+                    }
                     return [approval_level, "null"];
                     //return [sub_activities[activity_name], "null"];
                 }
