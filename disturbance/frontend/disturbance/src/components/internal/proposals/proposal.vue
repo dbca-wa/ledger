@@ -717,6 +717,34 @@ export default {
           });
         }
 
+        //if approver is pushing back proposal to Assessor then navigate the approver back to dashboard page
+        if(vm.proposal.processing_status == 'With Approver' && (status == 'with_assessor_requirements' || status=='with_assessor')) {
+            let data = {'status': status, 'approver_comment': vm.approver_comment}
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
+                emulateJSON:true,
+            })
+            .then((response) => {
+                vm.proposal = response.body;
+                vm.original_proposal = helpers.copyObject(response.body);
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.approver_comment='';
+                vm.$nextTick(() => {
+                    vm.initialiseAssignedOfficerSelect(true);
+                    vm.updateAssignedOfficerSelect();
+                });
+                vm.$router.push({ path: '/internal' });
+            }, (error) => {
+                vm.proposal = helpers.copyObject(vm.original_proposal)
+                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                swal(
+                    'Proposal Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
+            });
+
+        }
+
         else{
 
 
