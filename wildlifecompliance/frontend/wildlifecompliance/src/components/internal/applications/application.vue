@@ -636,7 +636,7 @@ export default {
                   processing: true
             },
             contacts_table: null,
-            assessors_headers:["Activity Type","Assessor Group","Date Sent","Status","Action"],
+            assessors_headers:["Assessor Group","Date Sent","Status","Action"],
             assessors_options:{},
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             comms_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/comms_log'),
@@ -1394,7 +1394,6 @@ export default {
                         "dataSrc": ''
                     },
                     columns: [
-                        {data:'licence_activity_type'},
                         {data:'assessor_group.name'},
                         {data:'date_last_reminded'},
                         {data:'status'},
