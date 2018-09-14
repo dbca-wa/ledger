@@ -44,6 +44,15 @@
                                         </div>
 
                                     </div>
+                                    </template> 
+
+                                    <template v-if="isFinalised">
+                                        <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
+                                        
+                                    <div v-if="isApprovalLevel">    
+                                        <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
+                                        </p>
+                                    </div>
                                     </template>                                    
                             </div>
                         </div> 

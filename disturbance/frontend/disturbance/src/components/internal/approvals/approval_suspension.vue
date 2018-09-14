@@ -128,8 +128,8 @@ export default {
         close:function () {
             this.isModalOpen = false;
             this.approval = {};
-            this.approval.from_date = ""
-            this.approval.to_date = ""
+            //this.approval.from_date = ""
+            //this.approval.to_date = ""
             this.errors = false;
             $('.has-error').removeClass('has-error');
             $(this.$refs.from_date).data('DateTimePicker').clear();
@@ -154,6 +154,7 @@ export default {
                         emulateJSON:true,
                     }).then((response)=>{
                         vm.issuingApproval = false;
+                        vm.approval={};
                         vm.close();
                         swal(
                              'Suspend',
@@ -167,6 +168,8 @@ export default {
                         vm.errors = true;
                         vm.issuingApproval = false;
                         vm.errorString = helpers.apiVueResourceError(error);
+                        //vm.approval={};
+                        //vm.close();
                     });
                         
             

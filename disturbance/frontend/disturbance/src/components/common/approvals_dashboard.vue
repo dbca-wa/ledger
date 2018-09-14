@@ -737,7 +737,7 @@ export default {
         },
 
         suspendApproval: function(approval_id){
-           
+            this.$refs.approval_suspension.approval = {};
             this.$refs.approval_suspension.approval_id = approval_id;
             this.$refs.approval_suspension.isModalOpen = true;
         },
