@@ -10,7 +10,7 @@ from ledger.accounts.models import EmailUser
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_NAME = 'VIA Automated Message'
+SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 class ComplianceExternalSubmitSendNotificationEmail(TemplateEmailBase):
     subject = 'Your Compliance with requirements has been submitted.'
     html_template = 'disturbance/emails/send_external_submit_notification.html'

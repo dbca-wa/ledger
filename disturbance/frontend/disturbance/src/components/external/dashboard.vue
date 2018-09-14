@@ -4,8 +4,7 @@
         <div class="col-sm-12">
             <div class="well well-sm">
                 <p>
-                    Welcome to the Values Impact Assessment online system dashboard.<br/><br/> Here you can access your existing approvals, view any proposals in progress, lodge new<br/> proposals or submit information required to comply with requirements listed
-                    on your approval
+                    Welcome to the {{system_name}} online system dashboard.<br/><br/> Here you can access your existing approvals, view any proposals in progress, lodge new<br/> proposals or submit information required to comply with requirements listed on your approval
                 </p>
             </div>
         </div>
@@ -39,6 +38,8 @@ export default {
             proposals_url: api_endpoints.proposals_paginated_external,
             approvals_url: api_endpoints.approvals_paginated_external,
             compliances_url: api_endpoints.compliances_paginated_external,
+
+            system_name: api_endpoints.system_name,
         }
     },
     components:{
