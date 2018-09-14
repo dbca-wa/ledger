@@ -1039,7 +1039,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = MooringAreaSerializer
 
     def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
-        """Fetch full campsite availability for a campground."""
+        """Fetch mooring availability."""
         # convert GET parameters to objects
         ground = self.get_object()
         # check if the user has an ongoing booking
@@ -1257,13 +1257,16 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                 if v[1].pk not in result['classes']:
                     result['classes'][v[1].pk] = v[1].name
 
-
+#            print "AVAIL BOOKING MAP" 
+#            print bookings_map
+              
             # update results based on availability map
             for s in sites_qs:
                 # if there's not a free run of slots
                 if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
                     # update the days that are non-open
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                     
                         bookings_map[s.name]['availability'][offset][0] = False
                         if stat == 'closed':
                             bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
@@ -1272,7 +1275,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         else:
                             bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
 
-                        bookings_map[s.name]['price'] = False
+                        bookings_map[s.id]['price'] = False
 
             return Response(result)
 
@@ -1281,7 +1284,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
     queryset = MooringArea.objects.all()
     serializer_class = MooringAreaSerializer
-    print ("BaseAvailabilityViewSet2")
+
     def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
         print ("BaseAvailabilityViewSet2-IN")
         """Fetch full campsite availability for a campground."""
@@ -1339,25 +1342,30 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         if gear_type != 'all':
             context[gear_type] = True
 #        sites_qs = Mooringsite.objects.filter(mooringarea=ground).filter(**context)
-        radius = int(29000)
-#        sites_qs = Mooringsite.objects.all().filter(**context)
-        print ("GROUND GPS")
-        print (ground.wkb_geometry)
-        print Mooringsite.objects.filter(mooringarea__wkb_geometry=(ground.wkb_geometry, Distance(km=radius)))
-        print "DISTANCE"
-        print Distance(km=radius)
-        #print Mooringsite.objects.all()
-        sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
-
+        radius = int(100)
+#       sites_qs = Mooringsite.objects.all().filter(**context)
+        sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
+#        print "sites_qs"
+#        print sites_qs
         # fetch rate map
         rates = {
             siteid: {
                 #date: num_adult*info['adult']+num_concession*info['concession']+num_child*info['child']+num_infant*info['infant']
-                 date: info['mooring']
+#                 date: info['mooring']
+                 date: info
+                 #booking_period: info['booking_period'],
                 for date, info in dates.items()
             } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
         }
 
+#        print "RATES TOP"
+#        print rates
+#        print utils.get_visit_rates(sites_qs, start_date, end_date).items()
+#        print "RATE BOTTOM"
+  
+        #for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items():
+        #     print "DATESSS"
+        #     print dates 
         # fetch availability map
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
         # create our result object, which will be returned as JSON
@@ -1401,6 +1409,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     rates_map[s.campsite_class.pk] = rates[s.pk]
 
                 class_sites_map[s.campsite_class.pk].add(s.pk)
+#            print "RATES_MAP"
+#            print rates_map
             # make an entry under sites for each campsite class
             for c in classes:
                 rate = rates_map[c[1]]
@@ -1410,6 +1420,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     'type': c[1],
                     'price': '${}'.format(sum(rate.values())) if not show_all else False,
                     'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
+                    'availability2' : [],
                     'breakdown': OrderedDict(),
                     'gearType': {
                         'tent': c[3],
@@ -1488,18 +1499,32 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         # don't group by class, list individual sites
         else:
             sites_qs = sites_qs.order_by('name')
+            print "sites_qs"
+            print sites_qs
             # from our campsite queryset, generate a digest for each site
-            sites_map = OrderedDict([(s.name, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
+            sites_map = OrderedDict([(s, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
+#            print "rates[s.pk]"
+#            print rates[s.pk]
+
+            #print "SSSSSSSSSSSSSS"
+            #print sites_map
             bookings_map = {}
             # make an entry under sites for each site
             for k, v in sites_map.items():
+#               print "SITR$EESS"
+                #print "V 2"
+                #print v[2]
+                #print [v[2][start_date+timedelta(days=i)]['mooring'] for i in range(length)]
                 site = {
-                    'name': k,
+                    'name': k.name,
+                    'mooring_class' : k.mooringarea.mooring_class,
                     'id': v[0],
                     'type': ground.mooring_type,
                     'class': v[1].pk,
-                    'price': '${}'.format(sum(v[2].values())) if not show_all else False,
-                    'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)],
+                    'price' : '0.00',
+#                    'price': '${}'.format(sum(v[2].values())) if not show_all else False,
+#                    'price': '${}'.format(v[2][start_date+timedelta(days=i)]['mooring'] for i in range(length)) if not show_all else False,
+                    'availability': [[True, v[2][start_date+timedelta(days=i)], v[2][start_date+timedelta(days=i)] ] for i in range(length)],
                     'gearType': {
                         'tent': v[3],
                         'campervan': v[4],
@@ -1507,24 +1532,27 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     }
                 }
                 result['sites'].append(site)
-                bookings_map[k] = site
+                bookings_map[k.id] = site
                 if v[1].pk not in result['classes']:
                     result['classes'][v[1].pk] = v[1].name
             # update results based on availability map
-            for s in sites_qs:
-                # if there's not a free run of slots
-                if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
-                    # update the days that are non-open
-                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
-                        bookings_map[s.name]['availability'][offset][0] = False
-                        if stat == 'closed':
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
-                        elif stat == 'booked':
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
-                        else:
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+#            print "BOOKING MAP"
+#            print bookings_map
 
-                        bookings_map[s.name]['price'] = False
+
+#            for s in sites_qs:
+#                if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
+#                    # update the days that are non-open
+#                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+#                        bookings_map[s.id]['availability'][offset][0] = False
+#                        if stat == 'closed':
+#                            bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
+#                        elif stat == 'booked':
+#                            bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
+#                        else:
+#                            bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
+#
+#                        bookings_map[s.id]['price'] = False
 
             return Response(result)
 

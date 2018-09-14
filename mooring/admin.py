@@ -72,8 +72,8 @@ class MooringsiteBookingAdmin(admin.ModelAdmin):
 
 @admin.register(models.MooringsiteRate)
 class MooringsiteRateAdmin(admin.ModelAdmin):
-    list_display = ('campsite','rate','allow_public_holidays')
-    list_filter = ('campsite','rate','allow_public_holidays')
+    list_display = ('campsite','rate','allow_public_holidays','booking_period')
+    list_filter = ('campsite','rate','allow_public_holidays','booking_period')
     search_fields = ('campground__name',)
 
 @admin.register(models.Contact)
@@ -140,6 +140,16 @@ class AdmissionsReason(admin.ModelAdmin):
 class AdmissionBooking(admin.ModelAdmin):
     list_display = ('arrivalDate', 'confirmation_number')
     search_fields = ('arrivalDate',)
+
+@admin.register(models.BookingPeriod)
+class BookingPeriod(admin.ModelAdmin):
+    list_display = ('name', 'created')
+    search_fields = ('name',)
+
+@admin.register(models.BookingPeriodOption)
+class BookingPeriodOption(admin.ModelAdmin):
+    list_display = ('period_name', 'small_price','medium_price','large_price','created')
+    search_fields = ('period_name',)
 
 @admin.register(models.Region)
 class Region(admin.GeoModelAdmin):

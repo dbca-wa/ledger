@@ -148,7 +148,9 @@ def abort_booking_view(request, *args, **kwargs):
         utils.delete_session_booking(request.session)
         if change:
             # Redirect to the availability screen
-            return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
+            #return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
+            #mooring_availaiblity2_selector
+            return redirect(reverse('mooring_availaiblity2_selector') + '?site_id={}'.format(c_id))
         else:
             # Redirect to explore parks
             return redirect(settings.EXPLORE_PARKS_URL+'/map')
@@ -180,11 +182,16 @@ class MakeBookingsView(TemplateView):
 
         if booking:
             pricing_list = utils.get_visit_rates(Mooringsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
-            pricing['mooring'] = sum([x['mooring'] for x in pricing_list.values()])
-            pricing['adult'] = sum([x['adult'] for x in pricing_list.values()])
-            pricing['concession'] = sum([x['concession'] for x in pricing_list.values()])
-            pricing['child'] = sum([x['child'] for x in pricing_list.values()])
-            pricing['infant'] = sum([x['infant'] for x in pricing_list.values()])
+            print "PRIUCING LIST"
+#            print (pricing_list)
+#            for x in pricing_list.values():
+#                print x['mooring']
+#                print "---------------------------"
+            pricing['mooring'] = sum([int(x['mooring']) for x in pricing_list.values()])
+            pricing['adult'] = sum([int(x['adult']) for x in pricing_list.values()])
+            pricing['concession'] = sum([int(x['concession']) for x in pricing_list.values()])
+            pricing['child'] = sum([int(x['child']) for x in pricing_list.values()])
+            pricing['infant'] = sum([int(x['infant']) for x in pricing_list.values()])
 
 
         return render(request, self.template_name, {

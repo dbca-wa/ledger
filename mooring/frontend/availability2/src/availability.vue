@@ -34,16 +34,14 @@
         </div>
         <div class="columns small-12 medium-12 large-12">
         <div class="row">
-                <div class="columns small-9 medium-9 large-9">
+                <div class="columns small-8 medium-9 large-10">
                         <div class="panel panel-default">
                              <div class="panel-heading"> <h3 class="panel-title">Trolley: $0.00</h3></div>
                         </div>
                 </div>
-
-                <div class="columns small-3 medium-3 large-3">
-                        <a class="btn btn-primary small-12 medium-12 large-12" style=";">Check Out</a>
+                <div class="columns small-4 medium-3 large-2">
+                        <button class="button small-12 medium-12 large-12" >Check Out</button>
                 </div>
-
         </div>
         </div>
 
@@ -178,7 +176,7 @@
                                 <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
                             </template>
                         </td>
-                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" ><div v-for="bp in day[1].booking_period"><button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px;' ><small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 0">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 1">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 2">${{ bp.large_price }}</span></small></button></div></td>
                     </tr>
                     <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
                         <td class="site">Site: {{ line.name }}</td>
