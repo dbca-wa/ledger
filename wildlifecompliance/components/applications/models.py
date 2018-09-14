@@ -735,14 +735,16 @@ class Application(RevisionedMixin):
                         if activity_type["processing_status"] !="With Officer-Conditions":
                             raise ValidationError('You cannot propose for licence if it is not with assessor for conditions')
                 activity_type=details.get('activity_type')
-                ApplicationDecisionPropose.objects.update_or_create(
-                    application = self,
-                    officer=request.user,
-                    action='propose_decline',
-                    reason=details.get('reason'),
-                    cc_email=details.get('cc_email',None),
-                    licence_activity_type_id=details.get('activity_type')
-                )
+                print(type(activity_type))
+                for item1 in activity_type:
+                    ApplicationDecisionPropose.objects.update_or_create(
+                        application = self,
+                        officer=request.user,
+                        action='propose_decline',
+                        reason=details.get('reason'),
+                        cc_email=details.get('cc_email',None),
+                        licence_activity_type_id=item1
+                    )
                 
                 for item in activity_type :
                     for activity_type in  self.licence_type_data['activity_type']:

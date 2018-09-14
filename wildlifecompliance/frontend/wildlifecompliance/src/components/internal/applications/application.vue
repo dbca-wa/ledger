@@ -108,6 +108,11 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleOfficerConditions()">Return To Conditions</button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
                                                     <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
                                                 </div>
                                             </div>
@@ -199,6 +204,21 @@
                         <div v-for="item in application.licence_type_data">
                             <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`+_uid" class="tab-pane fade active in"> 
                                 <Conditions :application="application"/>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <template v-if="isOfficerConditions">
+                    <div v-for="item in application.licence_type_data">
+                        <ul class="nav nav-tabs" id="conditiontabs">
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                        </ul>
+            
+                    </div>   
+                    <div  class="tab-content">
+                        <div v-for="item in application.licence_type_data">
+                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" :id="`${item1.id}`+_uid" class="tab-pane fade active in"> 
+                                <OfficerConditions :application="application"/>
                             </div>
                         </div>
                     </div>
@@ -552,6 +572,7 @@ import AssessmentSelect from './assessment_select.vue'
 import SendToAssessor from './application_send_assessor.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Conditions from './application_conditions.vue'
+import OfficerConditions from './application_officer_conditions.vue'
 import ProposedLicence from './proposed_issuance.vue'
 import LicenceScreen from './application_licence.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
@@ -596,6 +617,7 @@ export default {
             showingApplication:true,
             showingConditions:false,
             assessmentComplete:false,
+            isOfficerConditions:false,
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             application_assessor_datatable:vm._uid+'assessment-table',
@@ -683,6 +705,7 @@ export default {
         AssessmentSelect,
         SendToAssessor,
         Conditions,
+        OfficerConditions,
         ProposedLicence,
         LicenceScreen,
         CommsLogs,
@@ -768,16 +791,14 @@ export default {
     },
     methods: {
         
-    	eventListeners: function(){
+        eventListeners: function(){
             let vm = this;
             console.log('event listeners function - assessorDatatable[0]');
             console.log(vm.$refs);
             console.log(vm.$refs.assessorDatatable[0].vmDataTable)
-
             vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_remind',(e) => {
             console.log("inside assessment remind")
             e.preventDefault();
-
             let assessment_id = $(e.target).data('assessmentid');
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
                 console.log('successful')
@@ -799,10 +820,8 @@ export default {
                     
                 });
             });
-
             vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_resend',(e) => {
             e.preventDefault();
-
             let assessment_id = $(e.target).data('assessmentid');
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/resend_assessment'))).then((response)=>{
                 console.log('successful')
@@ -825,11 +844,9 @@ export default {
                     
                 });
             });
-
             vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_recall',(e) => {
             console.log("inside assessment remind")
             e.preventDefault();
-
             let assessment_id = $(e.target).data('assessmentid');
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/recall_assessment'))).then((response)=>{
                 console.log('successful')
@@ -852,7 +869,6 @@ export default {
                     
                 });
             });
-
         },
         initialiseOrgContactTable: function(){
             let vm = this;
@@ -870,21 +886,20 @@ export default {
             this.$refs.proposed_decline.isModalOpen = true;
         },
         sendtoAssessor: function(item1){
-        	let vm=this;
-        	// var selectedTabTitle = $("#tabs-section li.active");
-			// console.log($(selectedTabTitle))
-			// console.log($(selectedTabTitle).text())
-			// console.log($(item1))
-			this.$refs.send_to_assessor.assessment.licence_activity_type=item1
-        	this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id
-        	this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.name
-        	this.$refs.send_to_assessor.isModalOpen=true;
+            let vm=this;
+            // var selectedTabTitle = $("#tabs-section li.active");
+            // console.log($(selectedTabTitle))
+            // console.log($(selectedTabTitle).text())
+            // console.log($(item1))
+            this.$refs.send_to_assessor.assessment.licence_activity_type=item1
+            this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id
+            this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.name
+            this.$refs.send_to_assessor.isModalOpen=true;
         },
         proposedLicence: function(){
-        	var activity_type_name=[]
-        	var selectedTabTitle = $("#tabs-section li.active");
+            var activity_type_name=[]
+            var selectedTabTitle = $("#tabs-section li.active");
             // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
-
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
             
             this.$refs.proposed_licence.propose_issue.licence_activity_type_id=tab_id
@@ -922,7 +937,6 @@ export default {
                     });
                 }
             },(error) => {
-
             });
         },
         resetIdRequest: function() {
@@ -944,7 +958,6 @@ export default {
                     });
                 }
             },(error) => {
-
             });
         },
         updateIdRequest: function() {
@@ -968,7 +981,6 @@ export default {
                     });
                 }
             },(error) => {
-
             });
         },
         acceptCharacterRequest: function() {
@@ -990,13 +1002,11 @@ export default {
                     });
                 }
             },(error) => {
-
             });
         },
         assessmentSelect: function(){
             var selectedTabTitle = $("#tabs-section li.active");
             // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
-
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
             
             this.$refs.assessment_select.licence_activity_type=tab_id
@@ -1005,7 +1015,6 @@ export default {
             console.log(tab_id)
             console.log(selectedTabTitle)
             console.log(this.$refs)
-
             this.$refs.assessment_select.isModalOpen = true;
             
         },
@@ -1014,16 +1023,12 @@ export default {
             let tab_name='';
             var activity_type_name=[];
             var activity_type_id=[];
-
             var selectedTabTitle
-
             // var selected = $("#tabs-section").tabs( "option", "selected" );
-			// var selectedTabTitle = $("#tabs-section li.active");
-			// console.log($(selectedTabTitle))
-			// console.log($(selectedTabTitle).text())
-
+            // var selectedTabTitle = $("#tabs-section li.active");
+            // console.log($(selectedTabTitle))
+            // console.log($(selectedTabTitle).text())
             $('.deficiency').each((i,d) => {
-
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
                 
                 tab_name = $(d).data('tabname')
@@ -1031,7 +1036,6 @@ export default {
                     activity_type_name.push(tab_name)
                     
                     activity_type_id.push($(d).data('tabid'))
-
                 }
                 // console.log('from inside internal application')
                 // console.log(activity_type_name)
@@ -1045,7 +1049,6 @@ export default {
             console.log(this.$refs.ammendment_request.amendment.activity_type_name)
             this.$refs.ammendment_request.isModalOpen = true;
         },
-
         togglesendtoAssessor:function(){
             let vm=this;
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
@@ -1078,6 +1081,13 @@ export default {
             this.showingConditions = !this.showingConditions;
             this.showingApplication = false;
             this.isSendingToAssessor=false;
+        },
+        toggleOfficerConditions:function(){
+            this.showingApplication = false;
+            this.isSendingToAssessor=false;
+            this.showingConditions=false;
+            this.isOfficerConditions=true;
+            this.assessmentComplete=false;
 
         },
         updateAssignedOfficerSelect:function(){
@@ -1309,7 +1319,6 @@ export default {
         },
         sendReferral: function(){
             let vm = this;
-
             let data = {'email':vm.selected_referral};
             vm.sendingReferral = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assesor_send_referral')),JSON.stringify(data),{
@@ -1404,7 +1413,6 @@ export default {
         let vm = this;
         vm.fetchDeparmentUsers();
         vm.fetchAssessorGroup();
-
     },
     updated: function(){
         let vm = this;
