@@ -133,7 +133,7 @@ export default {
                     }).then((response)=>{
                         swal(
                              'Sent',
-                             'An email has been sent to applicant with the request to amend this Application',
+                             'An Application has been proposed to decline',
                              'success'
                         );
                         vm.decliningApplication = false;
