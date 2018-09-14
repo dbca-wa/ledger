@@ -108,17 +108,17 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleOfficerConditions()">Back to Officer Review</button>
+                                                    <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleOfficerConditions()">Back to Officer Review</button>
                                                 </div>
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
+                                                    <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
                                                 </div>
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
+                                                    <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
                                                 </div>
                                             </div>
                                             <div class="row">

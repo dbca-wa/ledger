@@ -108,8 +108,10 @@ export default {
                              'success'
                         );
                         vm.assessingApplication = true;
-                        console.log(vm.$parent);
-                        vm.$parent.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
+                        // Refresh all assessorDatatables
+                        for (var i=0;i<vm.$parent.$refs.assessorDatatable.length;i++){
+                            vm.$parent.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
+                        }
                         vm.close();
                         //vm.$emit('refreshFromResponse',response);
                         // Vue.http.get(`/api/proposal/${vm.proposal_id}/internal_proposal.json`).then((response)=>
