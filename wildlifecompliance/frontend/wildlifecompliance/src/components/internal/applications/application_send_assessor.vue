@@ -102,12 +102,14 @@ export default {
                         emulateJSON:true,
                     }).then((response)=>{
                         //vm.$parent.loading.splice('processing contact',1);
-                        // swal(
-                        //      'Sent',
-                        //      'An email has been sent to applicant with the request to amend this Proposal',
-                        //      'success'
-                        // );
+                        swal(
+                             'Send to Assessor',
+                             'This application has been sent to the selected group for assessment.',
+                             'success'
+                        );
                         vm.assessingApplication = true;
+                        console.log(vm.$parent);
+                        vm.$parent.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
                         vm.close();
                         //vm.$emit('refreshFromResponse',response);
                         // Vue.http.get(`/api/proposal/${vm.proposal_id}/internal_proposal.json`).then((response)=>

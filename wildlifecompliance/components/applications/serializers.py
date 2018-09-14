@@ -496,6 +496,8 @@ class ProposedLicenceSerializer(serializers.Serializer):
     start_date = serializers.DateField(input_formats=['%d/%m/%Y'])
     details = serializers.CharField()
     cc_email = serializers.CharField(required=False,allow_null=True)
+    licence_activity_type_name=serializers.CharField(required=False,allow_null=True)
+    licence_activity_type_id=serializers.IntegerField()
 
 class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()

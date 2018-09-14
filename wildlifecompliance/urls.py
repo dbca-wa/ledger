@@ -38,13 +38,13 @@ router.register(r'my_profiles',users_api.MyProfilesViewSet)
 router.register(r'emailidentities',users_api.EmailIdentityViewSet)
 
 api_patterns = [
-    url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
-    url(r'^api/is_new_user$', users_api.IsNewUser.as_view(), name='is-new-user'),
-    url(r'^api/user_profile_completed$', users_api.UserProfileCompleted.as_view(), name='get-user-profile-completed'),
-    url(r'^api/department_users$', users_api.DepartmentUserList.as_view(), name='department-users-list'),
-    url(r'^api/application_type$', application_api.GetApplicationType.as_view(), name='get-application-type'),
+    url(r'^api/profile/$', users_api.GetProfile.as_view(), name='get-profile'),
+    url(r'^api/is_new_user/$', users_api.IsNewUser.as_view(), name='is-new-user'),
+    url(r'^api/user_profile_completed/$', users_api.UserProfileCompleted.as_view(), name='get-user-profile-completed'),
+    url(r'^api/department_users/$', users_api.DepartmentUserList.as_view(), name='department-users-list'),
+    url(r'^api/application_type/$', application_api.GetApplicationType.as_view(), name='get-application-type'),
     url(r'^api/amendment_request_reason_choices',application_api.AmendmentRequestReasonChoicesView.as_view(),name='amendment_request_reason_choices'),
-    url(r'^api/empty_list$', application_api.GetEmptyList.as_view(), name='get-empty-list'),
+    url(r'^api/empty_list/$', application_api.GetEmptyList.as_view(), name='get-empty-list'),
     url(r'^api/organisation_access_group_members',org_api.OrganisationAccessGroupMembers.as_view(),name='organisation-access-group-members'),
     url(r'^api/',include(router.urls))
 ]

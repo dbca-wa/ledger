@@ -730,22 +730,24 @@ class Application(RevisionedMixin):
             try:
                 # if not self.can_assess(request.user):
                 #     raise exceptions.ApplicationNotAuthorized()
-                # if self.processing_status != 'with_assessor':
-                #     raise ValidationError('You cannot propose to decline if it is not with assessor')
+                for activity_type in  self.licence_type_data['activity_type']:
+                    if activity_type["id"]==details.get('activity_type'):
+                        if activity_type["processing_status"] !="With Officer-Conditions":
+                            raise ValidationError('You cannot propose for licence if it is not with assessor for conditions')
                 activity_type=details.get('activity_type')
-                ApplicationDeclinedDetails.objects.update_or_create(
-                    application = self,
-                    officer=request.user,
-                    reason=details.get('reason'),
-                    cc_email=details.get('cc_email',None),
-                    activity_type=details.get('activity_type')
-                )
-                # self.proposed_decline_status = True
-                # self.move_to_status(request,'with_approver')
+                print(type(activity_type))
+                for item1 in activity_type:
+                    ApplicationDecisionPropose.objects.update_or_create(
+                        application = self,
+                        officer=request.user,
+                        action='propose_decline',
+                        reason=details.get('reason'),
+                        cc_email=details.get('cc_email',None),
+                        licence_activity_type_id=item1
+                    )
+                
                 for item in activity_type :
                     for activity_type in  self.licence_type_data['activity_type']:
-                        # print(activity_type["id"])
-                        # print(details.get('activity_type'))
                         if activity_type["id"]==item:
                             activity_type["proposed_decline"]=True
                             activity_type["processing_status"]="With Officer Finalisation"
@@ -754,7 +756,6 @@ class Application(RevisionedMixin):
                 # Log application action
                 self.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 # Log entry for organisation
-                
                 if self.org_applicant:
                     self.org_applicant.log_user_action(ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 elif self.proxy_applicant:
@@ -831,22 +832,39 @@ class Application(RevisionedMixin):
     def proposed_licence(self,request,details):
         with transaction.atomic():
             try:
-                if not self.can_assess(request.user):
-                    raise exceptions.ApplicationNotAuthorized()
-                if self.processing_status != 'with_assessor_conditions':
-                    raise ValidationError('You cannot propose for licence if it is not with assessor for conditions')
-                self.proposed_issuance_licence = {
-                    'start_date' : details.get('start_date').strftime('%d/%m/%Y'),
-                    'expiry_date' : details.get('expiry_date').strftime('%d/%m/%Y'),
-                    'details': details.get('details'),
-                    'cc_email':details.get('cc_email')
-                }
-                self.proposed_decline_status = False
-                self.move_to_status(request,'with_approver')
+                # if not self.can_assess(request.user):
+                #     raise exceptions.ApplicationNotAuthorized()
+                for activity_type in  self.licence_type_data['activity_type']:
+                    if activity_type["id"]==details.get('licence_activity_type_id'):
+                        if activity_type["processing_status"] !="With Officer-Conditions":
+                            raise ValidationError('You cannot propose for licence if it is not with assessor for conditions')
+
+                try:
+                    ApplicationDecisionPropose.objects.get(application=self, licence_activity_type_id=details.get('licence_activity_type_id'))
+                    raise ValidationError('This activity type has already been proposed to issue')
+                except ApplicationDecisionPropose.DoesNotExist:
+                    ApplicationDecisionPropose.objects.update_or_create(
+                        application = self,
+                        officer=request.user,
+                        action='propose_issue',
+                        reason=details.get('details'),
+                        cc_email=details.get('cc_email',None),
+                        licence_activity_type_id=details.get('licence_activity_type_id')
+                    )
+                    for activity_type in  self.licence_type_data['activity_type']:
+                        if activity_type["id"]==details.get('licence_activity_type_id'):
+                            activity_type["processing_status"]="With Officer-Finalisation"
+                            self.save()
+                
                 # Log application action
                 self.log_user_action(ApplicationUserAction.ACTION_PROPOSED_LICENCE.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ApplicationUserAction.ACTION_PROPOSED_LICENCE.format(self.id),request)
+                if self.org_applicant:
+                    self.org_applicant.log_user_action(ApplicationUserAction.ACTION_PROPOSED_LICENCE.format(self.id),request)
+                elif self.proxy_applicant:
+                    self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_PROPOSED_LICENCE.format(self.id),request)
+                else:
+                    self.submitter.log_user_action(ApplicationUserAction.ACTION_PROPOSED_LICENCE.format(self.id),request)
             except:
                 raise
 
@@ -1117,14 +1135,40 @@ class Assessment(ApplicationRequest):
                 raise
 
 class ApplicationDeclinedDetails(models.Model):
+    STATUS_CHOICES = (('default','Default'),('propose_decline', 'Propose Decline'), ('declined', 'Declined'),
+                      ('propose_issue', 'Propose Issue'),('issued','Issued'))
+    status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     application = models.OneToOneField(Application)
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
     activity_type=JSONField(blank=True, null=True)
+    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
+    proposed_start_date = models.DateField(null=True, blank=True)
+    proposed_end_date = models.DateField(null=True, blank=True)
+    is_activity_renewable=models.BooleanField(default=False)
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+class ApplicationDecisionPropose(models.Model):
+    ACTION_CHOICES = (('default','Default'),('propose_decline', 'Propose Decline'), ('declined', 'Declined'),
+                      ('propose_issue', 'Propose Issue'),('issued','Issued'))
+    action = models.CharField('Action', max_length=20, choices=ACTION_CHOICES, default=ACTION_CHOICES[0][0])
+    application = models.OneToOneField(Application)
+    officer = models.ForeignKey(EmailUser, null=False)
+    reason = models.TextField(blank=True)
+    cc_email = models.TextField(null=True)
+    activity_type=JSONField(blank=True, null=True)
+    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
+    proposed_start_date = models.DateField(null=True, blank=True)
+    proposed_end_date = models.DateField(null=True, blank=True)
+    is_activity_renewable=models.BooleanField(default=False)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        unique_together = (('application','licence_activity_type'),)
+
 
 @python_2_unicode_compatible
 class ApplicationStandardCondition(RevisionedMixin):

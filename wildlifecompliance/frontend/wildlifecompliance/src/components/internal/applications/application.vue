@@ -68,73 +68,7 @@
                                     </template>
                                 </div>
                             </div>
-                            <!-- <div class="col-sm-12">
-                                <div class="separator"></div>
-                            </div>
-                            <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'">
-                                <div class="col-sm-12 top-buffer-s">
-                                    <strong>Referrals</strong><br/>
-                                    <div class="form-group">
-                                        <select :disabled="!canLimitedAction" ref="department_users" class="form-control">
-                                            <option value="null"></option>
-                                            <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
-                                        </select>
-                                        <template v-if='!sendingReferral'>
-                                            <template v-if="selected_referral">
-                                                <a v-if="canLimitedAction" @click.prevent="sendReferral()" class="actionBtn pull-right">Send</a>
-                                            </template>
-                                        </template>
-                                        <template v-else>
-                                            <span v-if="canLimitedAction" @click.prevent="sendReferral()" disabled class="actionBtn text-primary pull-right">
-                                                Sending Referral&nbsp;
-                                                <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
-                                            </span>
-                                        </template>
-                                    </div>
-                                    <table class="table small-table">
-                                        <tr>
-                                            <th>Referral</th>
-                                            <th>Status/Action</th>
-                                        </tr>
-                                        <tr v-for="r in application.latest_referrals">
-                                            <td>
-                                                <small><strong>{{r.referral}}</strong></small><br/>
-                                                <small><strong>{{r.lodged_on | formatDate}}</strong></small>
-                                            </td>
-                                            <td>
-                                                <small><strong>{{r.processing_status}}</strong></small><br/>
-                                                <template v-if="r.processing_status == 'Awaiting'">
-                                                    <small v-if="canLimitedAction"><a @click.prevent="remindReferral(r)" href="#">Remind</a> / <a @click.prevent="recallReferral(r)"href="#">Recall</a></small>
-                                                </template>
-                                                <template v-else>
-                                                    <small v-if="canLimitedAction"><a @click.prevent="resendReferral(r)" href="#">Resend</a></small>
-                                                </template>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <MoreReferrals @refreshFromResponse="refreshFromResponse" :application="application" :canAction="canLimitedAction" :isFinalised="isFinalised"/>
-                                </div>
-                                <div class="col-sm-12">
-                                    <div class="separator"></div>
-                                </div>
-                            </template> -->
-                            <!-- <div v-if="!isFinalised" class="col-sm-12 top-buffer-s">
-                                <strong>Currently assigned to</strong><br/>
-                                <div class="form-group">
-                                    <template v-if="application.processing_status == 'With Approver'">
-                                        <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_approver">
-                                            <option v-for="member in application.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
-                                        </select>
-                                        <a v-if="canAssess && application.assigned_approver != application.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
-                                    </template>
-                                    <template v-else>
-                                        <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_officer">
-                                            <option v-for="member in application.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
-                                        </select>
-                                        <a v-if="canAssess && application.assigned_officer != application.current_assessor.id" @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
-                                    </template>
-                                </div>
-                            </div> -->
+
                             <template v-if="application.processing_status == 'With Assessor (Conditions)' || application.processing_status == 'With Approver' || isFinalised">
                                 <div class="col-sm-12">
                                     <strong>Application</strong><br/>
@@ -155,8 +89,6 @@
                                     <div class="separator"></div>
                                 </div>
                             </template>
-                            <!-- <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && canAction">
-                                <template v-if="application.processing_status == 'With Assessor' || application.processing_status == 'With Referral'"> -->
                               <div class="col-sm-12 top-buffer-s" >
                                         <template v-if="showingApplication">
                                             <div class="row">
@@ -176,12 +108,22 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleOfficerConditions()">Return To Conditions</button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
                                                     <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
                                                 </div>
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="assessmentSelect()">Continue Assessment</button>
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-info top-buffer-s" @click.prevent="assessmentSelect()">Propose Conditions</button>
                                                 </div>
                                             </div>
                                         </template>
@@ -197,17 +139,30 @@
                                                     <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
                                                 </div>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleConditions()">Enter Conditions</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
-                                                </div>
-                                            </div>
+                                            
                                         </template>
+                                       <!--  <template v-if="assessmentComplete">
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <strong>Action</strong><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Resend To Assessor</button><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button><br/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
+                                                </div>
+                                            </div>
+                                        </template> -->
                                         <template v-if="showingConditions">
                                             <div class="row">
                                                 <div class="col-sm-12">
@@ -226,47 +181,6 @@
                                             </div>
                                             
                                         </template>
-                                    
-                                <!-- <template v-else-if="application.processing_status == 'With Assessor (Conditions)'">
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <strong>Action</strong><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor')">Back To Processing</button><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="proposedLicence()">Issue Licence</button><br/>
-                                        </div>
-                                    </div>
-                                </template> -->
-                               <!--  <template v-else-if="application.processing_status == 'With Approver'">
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <strong>Action</strong><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-sm-12" v-if="application.proposed_decline_status">
-                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor')">Back To Processing</button><br/>
-                                        </div>
-                                        <div class="col-sm-12" v-else>
-                                            <button style="width:80%;" class="btn btn-primary" :disabled="application.can_user_edit" @click.prevent="switchStatus('with_assessor_conditions')">Back To Conditions</button><br/>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-sm-12" v-if="!application.proposed_decline_status">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="issueApplication()">Issue</button><br/>
-                                        </div>
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="application.can_user_edit" @click.prevent="declineApplication()">Decline</button><br/>
-                                        </div>
-                                    </div>
-                                </template> -->
                             </div>
                         </div>
                     </div>
@@ -294,32 +208,42 @@
                         </div>
                     </div>
                 </template>
-                <!-- <template v-if="application.processing_status == 'With Assessor (Conditions)' || ((application.processing_status == 'With Approver' || isFinalised) && showingConditions)">
-                    <Conditions :application="application"/>
-                </template> -->
-                <template v-if="isSendingToAssessor && !showingConditions">
+                <template v-if="isOfficerConditions">
                     <div v-for="item in application.licence_type_data">
-                            <ul class="nav nav-tabs" id="assessortabs">
-                                <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
-                            </ul>
-                            
-                        </div>         
-                        
+                        <ul class="nav nav-tabs" id="conditiontabs">
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                        </ul>
+            
+                    </div>   
                     <div  class="tab-content">
-                    <div v-for="item in application.licence_type_data">
-                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                        <div v-for="item in application.licence_type_data">
+                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" :id="`${item1.id}`+_uid" class="tab-pane fade active in"> 
+                                <OfficerConditions :application="application"/>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <template v-if="isSendingToAssessor && !showingConditions">
+                    <div>
+                        <ul class="nav nav-tabs" id="assessortabs">
+                            <li v-for="(item1,index) in application.licence_type_data.activity_type"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                        </ul>
+                    </div>
+                        
+                    <div class="tab-content">
+                            <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" class="tab-pane fade">
                                 <div class="col-md-12">
                                         <div class="panel panel-default">
                                             <div class="panel-heading">
                                                 <h3 class="panel-title">Send to Assessor
-                                                    <a class="panelClicker" :href="`#${item1.id}`+assessorsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="assessorsBody">
+                                                    <a class="panelClicker" :href="`#${item1.id}`+assessorsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="assessorsBody">
                                                         <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                                                     </a>
                                                 </h3>
                                             </div>
-                                            <div class="panel-body panel-collapse collapse" :id="`${item1.id}`+assessorsBody">
+                                            <div class="panel-body panel-collapse collapse in" :id="`${item1.id}`+assessorsBody">
                                                         <div class="row">
-                                                           <div class="col-sm-offset-2 col-sm-8">
+                                                           <div class="col-sm-10" style="margin-bottom: 10px">
                                                                     <label class="control-label pull-left"  for="Name">Assessor Group</label>
                                                                     <select class="form-control" v-model="selectedAssessor">
                                                                         <option v-for="assessor in assessorGroup" :id="assessor.id" 
@@ -327,18 +251,17 @@
                                                                     </select>
                                                             </div> 
                                                             <div class="col-sm-2">
-                                                                <a style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)"> send</a>
+                                                                <a class="btn btn-primary" style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)">Send</a>
                                                             </div>
                                                         </div>
                                                         <div class="row">
-                                                            <datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options" :dtHeaders="assessors_headers" />
+                                                            <datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options[`${item1.id}`]" :dtHeaders="assessors_headers" />
                                                         </div>
                                             </div>
                                         </div>
                                 </div>
                             </div>
                     </div>
-                    </div> 
                 </template>
                 <template v-if="!isSendingToAssessor && !showingConditions">
                     <div>
@@ -637,7 +560,7 @@
         <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
         <AssessmentSelect ref="assessment_select" :application_id="application.id" ></AssessmentSelect>
         <SendToAssessor ref="send_to_assessor" :application_id="application.id" ></SendToAssessor>
-        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" @refreshFromResponse="refreshFromResponse"/>
+        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"/>
     </div>
 </template>
 <script>
@@ -649,6 +572,7 @@ import AssessmentSelect from './assessment_select.vue'
 import SendToAssessor from './application_send_assessor.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Conditions from './application_conditions.vue'
+import OfficerConditions from './application_officer_conditions.vue'
 import ProposedLicence from './proposed_issuance.vue'
 import LicenceScreen from './application_licence.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
@@ -692,6 +616,8 @@ export default {
             initialisedSelects: false,
             showingApplication:true,
             showingConditions:false,
+            assessmentComplete:false,
+            isOfficerConditions:false,
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             application_assessor_datatable:vm._uid+'assessment-table',
@@ -733,36 +659,7 @@ export default {
             },
             contacts_table: null,
             assessors_headers:["Assessor Group","Date Sent","Status","Action"],
-            assessors_options:{
-                 language: {
-                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
-                },
-                responsive: true,
-                ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/assessment_details'),
-                    "dataSrc": ''
-                },
-                columns: [
-                    {data:'assessor_group.name'},
-                    {data:'date_last_reminded'},
-                    {data:'status'},
-                    {
-                        mRender:function (data,type,full) {
-                            let links = '';
-                                if(full.status == 'Completed'){
-                                    links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a>`;
-                                    
-                                } else if(full.status == 'Awaiting Assessment'){
-                                    links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>`;
-                                    links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</button>`;
-                                    // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
-                                } 
-                            return links;
-                        }}
-                  ],
-                  processing: true
-                
-            },
+            assessors_options:{},
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             comms_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/comms_log'),
             comms_add_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/add_comms_log'),
@@ -779,6 +676,7 @@ export default {
         AssessmentSelect,
         SendToAssessor,
         Conditions,
+        OfficerConditions,
         ProposedLicence,
         LicenceScreen,
         CommsLogs,
@@ -864,89 +762,94 @@ export default {
     },
     methods: {
         
-    	eventListeners: function(){
+        eventListeners: function(){
             let vm = this;
-            console.log(vm.$refs.assessorDatatable[0].vmDatatTable)
 
-            vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_remind',(e) => {
-            console.log("inside assessment remind")
-            e.preventDefault();
+            // Listeners for Send to Assessor datatable actions
+            if (vm.$refs.assessorDatatable) {
+                for (var i=0; i < vm.$refs.assessorDatatable.length; i++) {
+                    console.log('printing datatable in loop');
+                    console.log(datatable);
+                    vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_remind',(e) => {
+                    console.log("inside assessment remind")
+                    e.preventDefault();
 
-            let assessment_id = $(e.target).data('assessmentid');
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
-                console.log('successful')
-                    //vm.$parent.loading.splice('processing contact',1);
-                    swal(
-                         'Sent',
-                         'An email has been sent to assessor with the request to assess this Proposal',
-                         'success'
-                    ).then(() => {
-                                vm.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
-                            },(error) => {
-                            });
-                 
-                },(error)=>{
-                    console.log(error);
-                    vm.errors = true;
-                    vm.errorString = helpers.apiVueResourceError(error);
-                    
-                    
-                });
-            });
+                    let assessment_id = $(e.target).data('assessmentid');
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
+                        console.log('successful')
+                            //vm.$parent.loading.splice('processing contact',1);
+                            swal(
+                                 'Sent',
+                                 'An email has been sent to assessor with the request to assess this Proposal',
+                                 'success'
+                            ).then(() => {
+                                        vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
+                                    },(error) => {
+                                    });
 
-            vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_resend',(e) => {
-            e.preventDefault();
+                        },(error)=>{
+                            console.log(error);
+                            vm.errors = true;
+                            vm.errorString = helpers.apiVueResourceError(error);
 
-            let assessment_id = $(e.target).data('assessmentid');
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/resend_assessment'))).then((response)=>{
-                console.log('successful')
-                    //vm.$parent.loading.splice('processing contact',1);
-                    swal(
-                         'Sent',
-                         'An email has been sent to assessor with the request to assess this Proposal',
-                         'success'
-                    ).then(() => {
-                                vm.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
-                            },(error) => {
-                            });
-                    
-                 
-                },(error)=>{
-                    console.log(error);
-                    vm.errors = true;
-                    vm.errorString = helpers.apiVueResourceError(error);
-                    
-                    
-                });
-            });
 
-            vm.$refs.assessorDatatable[0].vmDataTable.on('click','.assessment_recall',(e) => {
-            console.log("inside assessment remind")
-            e.preventDefault();
+                        });
+                    });
 
-            let assessment_id = $(e.target).data('assessmentid');
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/recall_assessment'))).then((response)=>{
-                console.log('successful')
-                    //vm.$parent.loading.splice('processing contact',1);
-                    swal(
-                         'Success',
-                         'An assessment has been recalled',
-                         'success'
-                    ).then(() => {
-                                vm.$refs.assessorDatatable[0].vmDataTable.ajax.reload();
-                            },(error) => {
-                            });
-                    
-                 
-                },(error)=>{
-                    console.log(error);
-                    vm.errors = true;
-                    vm.errorString = helpers.apiVueResourceError(error);
-                    
-                    
-                });
-            });
+                    vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_resend',(e) => {
+                    e.preventDefault();
 
+                    let assessment_id = $(e.target).data('assessmentid');
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/resend_assessment'))).then((response)=>{
+                        console.log('successful')
+                            //vm.$parent.loading.splice('processing contact',1);
+                            swal(
+                                 'Sent',
+                                 'An email has been sent to assessor with the request to assess this Proposal',
+                                 'success'
+                            ).then(() => {
+                                        vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
+                                    },(error) => {
+                                    });
+
+
+                        },(error)=>{
+                            console.log(error);
+                            vm.errors = true;
+                            vm.errorString = helpers.apiVueResourceError(error);
+
+
+                        });
+                    });
+
+                    vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_recall',(e) => {
+                    console.log("inside assessment remind")
+                    e.preventDefault();
+
+                    let assessment_id = $(e.target).data('assessmentid');
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/recall_assessment'))).then((response)=>{
+                        console.log('successful')
+                            //vm.$parent.loading.splice('processing contact',1);
+                            swal(
+                                 'Success',
+                                 'An assessment has been recalled',
+                                 'success'
+                            ).then(() => {
+                                        vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
+                                    },(error) => {
+                                    });
+
+
+                        },(error)=>{
+                            console.log(error);
+                            vm.errors = true;
+                            vm.errorString = helpers.apiVueResourceError(error);
+
+
+                        });
+                    });
+                }
+            }
         },
         initialiseOrgContactTable: function(){
             let vm = this;
@@ -964,18 +867,27 @@ export default {
             this.$refs.proposed_decline.isModalOpen = true;
         },
         sendtoAssessor: function(item1){
-        	let vm=this;
-        	// var selectedTabTitle = $("#tabs-section li.active");
-			// console.log($(selectedTabTitle))
-			// console.log($(selectedTabTitle).text())
-			// console.log($(item1))
-			this.$refs.send_to_assessor.assessment.licence_activity_type=item1
-        	this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id
-        	this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.name
-        	this.$refs.send_to_assessor.isModalOpen=true;
+            let vm=this;
+            // var selectedTabTitle = $("#tabs-section li.active");
+            // console.log($(selectedTabTitle))
+            // console.log($(selectedTabTitle).text())
+            // console.log($(item1))
+            this.$refs.send_to_assessor.assessment.licence_activity_type=item1
+            this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id
+            this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.name
+            this.$refs.send_to_assessor.isModalOpen=true;
         },
         proposedLicence: function(){
-            this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
+            var activity_type_name=[]
+            var selectedTabTitle = $("#tabs-section li.active");
+            // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
+            
+            this.$refs.proposed_licence.propose_issue.licence_activity_type_id=tab_id
+            this.$refs.proposed_licence.propose_issue.licence_activity_type_name=selectedTabTitle.text();
+            console.log(tab_id)
+            console.log(this.$refs.proposed_licence.propose_issue.licence_activity_type_name)
+            // this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
             this.$refs.proposed_licence.isModalOpen = true;
         },
         issueApplication:function(){
@@ -1006,7 +918,6 @@ export default {
                     });
                 }
             },(error) => {
-
             });
         },
         resetIdRequest: function() {
@@ -1028,7 +939,6 @@ export default {
                     });
                 }
             },(error) => {
-
             });
         },
         updateIdRequest: function() {
@@ -1052,7 +962,6 @@ export default {
                     });
                 }
             },(error) => {
-
             });
         },
         acceptCharacterRequest: function() {
@@ -1074,12 +983,12 @@ export default {
                     });
                 }
             },(error) => {
-
             });
         },
         assessmentSelect: function(){
             var selectedTabTitle = $("#tabs-section li.active");
-            var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
+            // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
             
             this.$refs.assessment_select.licence_activity_type=tab_id
             this.$refs.assessment_select.licence_activity_type_name=selectedTabTitle.text();
@@ -1087,7 +996,6 @@ export default {
             console.log(tab_id)
             console.log(selectedTabTitle)
             console.log(this.$refs)
-
             this.$refs.assessment_select.isModalOpen = true;
             
         },
@@ -1096,16 +1004,12 @@ export default {
             let tab_name='';
             var activity_type_name=[];
             var activity_type_id=[];
-
             var selectedTabTitle
-
             // var selected = $("#tabs-section").tabs( "option", "selected" );
-			// var selectedTabTitle = $("#tabs-section li.active");
-			// console.log($(selectedTabTitle))
-			// console.log($(selectedTabTitle).text())
-
+            // var selectedTabTitle = $("#tabs-section li.active");
+            // console.log($(selectedTabTitle))
+            // console.log($(selectedTabTitle).text())
             $('.deficiency').each((i,d) => {
-
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
                 
                 tab_name = $(d).data('tabname')
@@ -1113,11 +1017,10 @@ export default {
                     activity_type_name.push(tab_name)
                     
                     activity_type_id.push($(d).data('tabid'))
-
                 }
-                console.log('from inside internal application')
-                console.log(activity_type_name)
-                console.log(activity_type_id)
+                // console.log('from inside internal application')
+                // console.log(activity_type_name)
+                // console.log(activity_type_id)
                 // console.log($(d).data('tabname'))
             }); 
             
@@ -1127,7 +1030,6 @@ export default {
             console.log(this.$refs.ammendment_request.amendment.activity_type_name)
             this.$refs.ammendment_request.isModalOpen = true;
         },
-
         togglesendtoAssessor:function(){
             let vm=this;
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
@@ -1160,6 +1062,13 @@ export default {
             this.showingConditions = !this.showingConditions;
             this.showingApplication = false;
             this.isSendingToAssessor=false;
+        },
+        toggleOfficerConditions:function(){
+            this.showingApplication = false;
+            this.isSendingToAssessor=false;
+            this.showingConditions=false;
+            this.isOfficerConditions=true;
+            this.assessmentComplete=false;
 
         },
         updateAssignedOfficerSelect:function(){
@@ -1178,14 +1087,20 @@ export default {
             let data = new FormData();
             data.selected_assessment_id=vm.selected_assessment_id;
             data.selected_assessment_tab=vm.selected_assessment_tab
-            console.log(data)
             
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
             .then((response) => {
                 vm.application = response.body;
+                vm.refreshFromResponse(response)
+                vm.showingApplication = true;
+                vm.isSendingToAssessor=false;
+                vm.showingConditions=false;
+                vm.assessmentComplete=true;
                 
             }, (error) => {
-                
+                vm.application = helpers.copyObject(vm.original_application)
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
                     helpers.apiVueResourceError(error),
@@ -1385,7 +1300,6 @@ export default {
         },
         sendReferral: function(){
             let vm = this;
-
             let data = {'email':vm.selected_referral};
             vm.sendingReferral = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assesor_send_referral')),JSON.stringify(data),{
@@ -1480,7 +1394,44 @@ export default {
         let vm = this;
         vm.fetchDeparmentUsers();
         vm.fetchAssessorGroup();
+        vm.$nextTick(function () {
+            console.log('application licence_type_data');
+            console.log(vm.application.licence_type_data);
+            for (var i=0;i<vm.application.licence_type_data.activity_type.length;i++) {
+                var activity_type_id = vm.application.licence_type_data.activity_type[i].id
+                console.log(activity_type_id);
+                vm.assessors_options[activity_type_id] = {
+                     language: {
+                        processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                    },
+                    responsive: true,
+                    ajax: {
+                        "url": helpers.add_endpoint_join(api_endpoints.applications,vm.$route.params.application_id+'/assessment_details/?licence_activity_type='+activity_type_id),
+                        "dataSrc": ''
+                    },
+                    columns: [
+                        {data:'assessor_group.name'},
+                        {data:'date_last_reminded'},
+                        {data:'status'},
+                        {
+                            mRender:function (data,type,full) {
+                                let links = '';
+                                    if(full.status == 'Completed'){
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a>`;
 
+                                    } else if(full.status == 'Awaiting Assessment'){
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</button>`;
+                                        // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
+                                    }
+                                return links;
+                            }}
+                    ],
+                    processing: true
+                }
+            }
+
+        })
     },
     updated: function(){
         let vm = this;

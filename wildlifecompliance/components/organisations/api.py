@@ -363,7 +363,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def applications(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            qs = instance.applications.all()
+            qs = instance.org_applications.all()
             serializer = DTApplicationSerializer(qs,many=True)
             return Response(serializer.data) 
         except serializers.ValidationError:
