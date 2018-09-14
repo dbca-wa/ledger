@@ -232,7 +232,7 @@
                         
                     <div class="tab-content">
                             <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" class="tab-pane fade">
-                                <div class="col-md-12">
+                                <div>
                                         <div class="panel panel-default">
                                             <div class="panel-heading">
                                                 <h3 class="panel-title">Send to Assessor
@@ -776,17 +776,15 @@ export default {
 
                     let assessment_id = $(e.target).data('assessmentid');
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
+                    console.log(e.target.parentElement);
                         console.log('successful')
                             //vm.$parent.loading.splice('processing contact',1);
                             swal(
                                  'Sent',
-                                 'An email has been sent to assessor with the request to assess this Proposal',
+                                 'An email has been sent to assessor with the request to assess this Application',
                                  'success'
-                            ).then(() => {
-                                        vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
-                                    },(error) => {
-                                    });
-
+                            )
+                            vm.refreshAssessorDatatables();
                         },(error)=>{
                             console.log(error);
                             vm.errors = true;
@@ -805,14 +803,10 @@ export default {
                             //vm.$parent.loading.splice('processing contact',1);
                             swal(
                                  'Sent',
-                                 'An email has been sent to assessor with the request to assess this Proposal',
+                                 'An email has been sent to assessor with the request to re-assess this Application',
                                  'success'
-                            ).then(() => {
-                                        vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
-                                    },(error) => {
-                                    });
-
-
+                            )
+                            vm.refreshAssessorDatatables();
                         },(error)=>{
                             console.log(error);
                             vm.errors = true;
@@ -832,14 +826,10 @@ export default {
                             //vm.$parent.loading.splice('processing contact',1);
                             swal(
                                  'Success',
-                                 'An assessment has been recalled',
+                                 'An assessment for this Application has been recalled',
                                  'success'
-                            ).then(() => {
-                                        vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
-                                    },(error) => {
-                                    });
-
-
+                            )
+                            vm.refreshAssessorDatatables();
                         },(error)=>{
                             console.log(error);
                             vm.errors = true;
@@ -998,6 +988,13 @@ export default {
             console.log(this.$refs)
             this.$refs.assessment_select.isModalOpen = true;
             
+        },
+        refreshAssessorDatatables: function(){
+            var vm = this;
+            console.log(vm.$refs.assessorDatatable);
+            for (var i=0;i<vm.$refs.assessorDatatable.length;i++){
+                vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
+            }
         },
         ammendmentRequest: function(){
             let values = '';
