@@ -1080,6 +1080,7 @@ export default {
         completeAssessment:function(){
             let vm = this;
             let data = new FormData();
+            console.log(data);
             data.selected_assessment_id=vm.selected_assessment_id;
             data.selected_assessment_tab=vm.selected_assessment_tab
             
@@ -1091,6 +1092,12 @@ export default {
                 vm.isSendingToAssessor=false;
                 vm.showingConditions=false;
                 vm.assessmentComplete=true;
+                swal(
+                     'Complete Assessment',
+                     'The assessment has been successfully completed',
+                     'success'
+                )
+
                 
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
@@ -1412,11 +1419,11 @@ export default {
                             mRender:function (data,type,full) {
                                 let links = '';
                                     if(full.status == 'Completed'){
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a><br/>`;
 
                                     } else if(full.status == 'Awaiting Assessment'){
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>`;
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</button>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a><br/>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</a><br/>`;
                                         // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
                                     }
                                 return links;
