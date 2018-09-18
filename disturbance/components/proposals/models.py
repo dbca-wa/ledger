@@ -1456,6 +1456,9 @@ class Referral(models.Model):
                             user.first_name = department_user['given_name']
                             user.last_name = department_user['surname']
                             user.save()
+                    qs=Referral.objects.filter(sent_by=user, proposal=self.proposal)
+                    if qs:
+                        raise ValidationError('You cannot send referral to this user')
                     try:
                         Referral.objects.get(referral=user,proposal=self.proposal)
                         raise ValidationError('A referral has already been sent to this user')

@@ -105,7 +105,7 @@
                                     <div class="col-sm-12">
                                         <label class="control-label pull-left"  for="Name">Comments</label>
                                         <textarea class="form-control" name="name" v-model="referral_comment"></textarea>
-                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="completeReferral">Complete Referral</button>
+                                        <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="completeReferral">Complete Referral Task</button>
                                     </div>
                                 </div>
                             </div>

@@ -147,7 +147,8 @@ export default {
                         mRender:function(data,type,full){
                             let tick='';
                             if (full.can_be_processed){
-                                tick = "<i class='fa fa-times-circle' style='color:red'></i>";
+                                // tick = "<span class='fa-stack'><i class='fa fa-circle fa-stack-1x' style='color:yellow'></i><i class='fa fa-exclamation fa-stack-1x' style=''></i></span>";
+                                tick = "<i class='fa fa-exclamation-circle' style='color:#FFBF00'></i>";
                             }
                             else
                             {
