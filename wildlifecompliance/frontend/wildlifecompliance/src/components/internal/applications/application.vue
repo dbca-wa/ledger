@@ -591,8 +591,6 @@ export default {
             applicantTab: 'applicantTab'+vm._uid,
             applicationTab: 'applicationTab'+vm._uid,
             taking_fauna: 'taking_fauna'+vm._uid,
-            sendToAssessorTab: 'sendToAssessorTab'+vm._uid,
-            sendToAssessorTab1: 'sendToAssessorTab1'+vm._uid,
             detailsBody: 'detailsBody'+vm._uid,
             identificationBody: 'identificationBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
@@ -864,7 +862,7 @@ export default {
             // console.log($(item1))
             this.$refs.send_to_assessor.assessment.licence_activity_type=item1
             this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id
-            this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.name
+            this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name
             this.$refs.send_to_assessor.isModalOpen=true;
         },
         proposedLicence: function(){
@@ -1407,7 +1405,7 @@ export default {
                         "dataSrc": ''
                     },
                     columns: [
-                        {data:'assessor_group.name'},
+                        {data:'assessor_group.display_name'},
                         {data:'date_last_reminded'},
                         {data:'status'},
                         {
