@@ -7,11 +7,11 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="col-md-6">
-                                    <h3 class="text-primary pull-left">Book Close Campsite at {{campground.name}}</h3>
+                                    <h3 class="text-primary pull-left">Book closed sites for {{campground.name}}</h3>
                                 </div>
                             </div>
                             <div class="col-md-12">
-                                <p>Please visit the <a target='_blank' v-bind:href="'/availability_admin/?site_id=' + campground.id "> Campsite Availability checker</a> for expected availability.</p>                          
+                                <p>Internal bookings can be made for campsites closed to public bookings<a target='_blank' v-bind:href="'/availability_admin/?site_id=' + campground.id "> Check closures</a> before adding a closed site to a booking.</p>                          
                             </div>
                             <div class="row">
                                 <div class="col-md-12">
@@ -1089,7 +1089,7 @@ export default {
                 };
                 options.messages['vehicleRego_'+i] = {
                     required: 'Fill in vehicle details',
-                    noDuplicateRego: 'Rego must be a unique set'
+                    noDuplicateRego: 'Duplicate regos not permitted.If unknown add number, e.g. Hire1, Hire2'
                 };
             }
             var form = $(vm.bookingForm);

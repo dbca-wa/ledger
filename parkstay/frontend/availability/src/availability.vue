@@ -156,7 +156,10 @@
                                 <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
                             </template>
                         </td>
-                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                        <td v-if="!useAdminApi" class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" > {{ day[1] }} </td>
+                        <td v-if="useAdminApi" class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" > 
+                            <span data-tooltip v-bind:title="day[3]"> {{ day[1] }} </span>
+                        </td>
                     </tr>
                     <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
                         <td class="site">Site: {{ line.name }}</td>
@@ -575,7 +578,7 @@ export default {
             }
         }).data('datepicker');
 
-
+        
         this.arrivalData.date = this.arrivalDate.toDate();
         this.arrivalData.setValue();
         this.arrivalData.fill();
