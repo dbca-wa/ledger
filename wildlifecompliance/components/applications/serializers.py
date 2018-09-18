@@ -143,6 +143,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'submitter',
                 'assigned_officer',
                 'previous_application',
+                'lodgement_number',
                 'lodgement_date',
                 'documents',
                 'conditions',
