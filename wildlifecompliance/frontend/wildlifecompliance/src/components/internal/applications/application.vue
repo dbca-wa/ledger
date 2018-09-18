@@ -591,8 +591,6 @@ export default {
             applicantTab: 'applicantTab'+vm._uid,
             applicationTab: 'applicationTab'+vm._uid,
             taking_fauna: 'taking_fauna'+vm._uid,
-            sendToAssessorTab: 'sendToAssessorTab'+vm._uid,
-            sendToAssessorTab1: 'sendToAssessorTab1'+vm._uid,
             detailsBody: 'detailsBody'+vm._uid,
             identificationBody: 'identificationBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
@@ -864,7 +862,7 @@ export default {
             // console.log($(item1))
             this.$refs.send_to_assessor.assessment.licence_activity_type=item1
             this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id
-            this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.name
+            this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name
             this.$refs.send_to_assessor.isModalOpen=true;
         },
         proposedLicence: function(){
@@ -1082,6 +1080,7 @@ export default {
         completeAssessment:function(){
             let vm = this;
             let data = new FormData();
+            console.log(data);
             data.selected_assessment_id=vm.selected_assessment_id;
             data.selected_assessment_tab=vm.selected_assessment_tab
             
@@ -1093,6 +1092,12 @@ export default {
                 vm.isSendingToAssessor=false;
                 vm.showingConditions=false;
                 vm.assessmentComplete=true;
+                swal(
+                     'Complete Assessment',
+                     'The assessment has been successfully completed',
+                     'success'
+                )
+
                 
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
@@ -1407,18 +1412,18 @@ export default {
                         "dataSrc": ''
                     },
                     columns: [
-                        {data:'assessor_group.name'},
+                        {data:'assessor_group.display_name'},
                         {data:'date_last_reminded'},
                         {data:'status'},
                         {
                             mRender:function (data,type,full) {
                                 let links = '';
                                     if(full.status == 'Completed'){
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a><br/>`;
 
                                     } else if(full.status == 'Awaiting Assessment'){
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>`;
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</button>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a><br/>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</a><br/>`;
                                         // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
                                     }
                                 return links;
