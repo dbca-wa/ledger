@@ -1419,11 +1419,11 @@ export default {
                             mRender:function (data,type,full) {
                                 let links = '';
                                     if(full.status == 'Completed'){
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a><br/>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a>&nbsp;`;
 
                                     } else if(full.status == 'Awaiting Assessment'){
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a><br/>`;
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</a><br/>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>&nbsp;`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</a>&nbsp;`;
                                         // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
                                     }
                                 return links;

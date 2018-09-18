@@ -955,7 +955,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
 
 
 class AssessorGroupViewSet(viewsets.ModelViewSet):
-    queryset = ApplicationGroupType.objects.filter(name='assessor')
+    queryset = ApplicationGroupType.objects.filter(type='assessor')
     serializer_class = ApplicationGroupTypeSerializer
     renderer_classes = [JSONRenderer,]
 
