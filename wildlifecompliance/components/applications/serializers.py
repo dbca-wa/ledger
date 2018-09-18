@@ -65,7 +65,7 @@ class EmailUserAppViewSerializer(serializers.ModelSerializer):
 class ApplicationGroupTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model=ApplicationGroupType
-        fields=('id','name','display_name','licence_class')
+        fields=('id','name','display_name','licence_class', 'licence_activity_type')
 
 class AssessmentSerializer(serializers.ModelSerializer):
     assessor_group = ApplicationGroupTypeSerializer(read_only=True)
@@ -360,6 +360,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                 'assigned_approver',
                 'previous_application',
                 'lodgement_date',
+                'lodgement_number',
                 'documents',
                 'conditions',
                 'readonly',
