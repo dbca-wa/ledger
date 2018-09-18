@@ -68,7 +68,6 @@ class ApplicationGroupType(models.Model):
         ('assessor', 'Assessor'),
     )
     name= models.CharField('Group Type', max_length=40, choices=NAME_CHOICES,default=NAME_CHOICES[0][0])
-    display_name=models.CharField('Display Group Name',max_length=40)
     licence_class=models.ForeignKey('wildlifecompliance.WildlifeLicenceClass')
     licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType')
     members=models.ManyToManyField(EmailUser,blank=True)
@@ -76,7 +75,11 @@ class ApplicationGroupType(models.Model):
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return '{} - {}, {} ({} members)'.format(self.name, self.licence_class, self.licence_activity_type, self.members.count())
+        return '{} - {}, {} ({} members)'.format(self.get_name_display(), self.licence_class, self.licence_activity_type, self.members.count())
+
+    @property
+    def display_name(self):
+        return self.__str__
 
     def member_is_assigned(self,member):
         # for p in self.current_applications:
