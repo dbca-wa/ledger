@@ -860,9 +860,10 @@ export default {
             // console.log($(selectedTabTitle))
             // console.log($(selectedTabTitle).text())
             // console.log($(item1))
-            this.$refs.send_to_assessor.assessment.licence_activity_type=item1
-            this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id
-            this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name
+            this.$refs.send_to_assessor.assessment.licence_activity_type=item1;
+            this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id;
+            this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name;
+            this.$refs.send_to_assessor.assessment.text='';
             this.$refs.send_to_assessor.isModalOpen=true;
         },
         proposedLicence: function(){
