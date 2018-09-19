@@ -49,11 +49,13 @@
                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
 
-                        <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                        <input v-if="!isSubmitting" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                        <button v-else disabled class="btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
                         <!-- <input type="submit" class="btn btn-primary" value="Submit"/> -->
 
                         <!-- hidden 'save_and_continue_btn' used to allow File (file.vue component) to trigger save -->
                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
+                        
                       </p>
                     </div>
                     <div v-else class="container">
@@ -87,6 +89,7 @@ export default {
       proposal_readonly: true,
       hasAmendmentRequest: false,
       submitting: false,
+      submittingProposal: false,
       newText: "",
       pBody: 'pBody',
       missing_fields: [],
@@ -98,6 +101,9 @@ export default {
   computed: {
     isLoading: function() {
       return this.loading.length > 0
+    },
+    isSubmitting: function() {
+      return this.submittingProposal;
     },
     csrf_token: function() {
       return helpers.getCookie('csrftoken')
@@ -304,7 +310,7 @@ export default {
 
         // remove the confirm prompt when navigating away from window (on button 'Submit' click)
         vm.submitting = true;
-
+        
         swal({
             title: "Submit Proposal",
             text: "Are you sure you want to submit this proposal?",
@@ -312,6 +318,7 @@ export default {
             showCancelButton: true,
             confirmButtonText: 'Submit'
         }).then(() => {
+          vm.submittingProposal = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
                 vm.proposal = res.body;
                 vm.$router.push({
@@ -327,6 +334,7 @@ export default {
             });
         },(error) => {
         });
+        //vm.submittingProposal= false;
     },
 
 //    _submit: function(){
