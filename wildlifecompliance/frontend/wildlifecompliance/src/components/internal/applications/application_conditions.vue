@@ -61,7 +61,7 @@
                             </div>
                         </div>
                     </div>
-                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions"/>
+                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_type_tab="licence_activity_type_tab"/>
                 </div>
 
             
@@ -77,8 +77,8 @@ import ConditionDetail from './application_add_condition.vue'
 export default {
     name: 'InternalApplicationConditions',
     props: {
-        application: Object
-
+        application: Object,
+        licence_activity_type_tab:Number
     },
     data: function() {
         let vm = this;
@@ -93,7 +93,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/conditions'),
+                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity_type='+vm.licence_activity_type_tab),
                     "dataSrc": ''
                 },
                 order: [],
@@ -160,11 +160,9 @@ export default {
                 drawCallback: function (settings) {
                     $(vm.$refs.conditions_datatable.table).find('tr:last .dtMoveDown').remove();
                     $(vm.$refs.conditions_datatable.table).children('tbody').find('tr:first .dtMoveUp').remove();
-
                     // Remove previous binding before adding it
                     $('.dtMoveUp').unbind('click');
                     $('.dtMoveDown').unbind('click');
-
                     // Bind clicks to functions
                     $('.dtMoveUp').click(vm.moveUp);
                     $('.dtMoveDown').click(vm.moveDown);
@@ -189,12 +187,10 @@ export default {
     },
     methods:{
         addCondition(){
-
             var selectedTabTitle = $("li.active");
             var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
             
             this.$refs.condition_detail.licence_activity_type=tab_id
-
             this.$refs.condition_detail.isModalOpen = true;
         },
         removeCondition(_id){
@@ -282,21 +278,16 @@ export default {
             // Move up or down (depending...)
             var table = this.$refs.conditions_datatable.vmDataTable;
             var index = table.row(row).index();
-
             var order = -1;
             if (direction === 'down') {
               order = 1;
             }
-
             var data1 = table.row(index).data();
             data1.order += order;
-
             var data2 = table.row(index + order).data();
             data2.order += -order;
-
             table.row(index).data(data2);
             table.row(index + order).data(data1);
-
             table.page(0).draw(false);
         }
     },
