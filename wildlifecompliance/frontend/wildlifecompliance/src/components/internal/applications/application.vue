@@ -1087,12 +1087,18 @@ export default {
             
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
             .then((response) => {
+                swal(
+                             'Complete Assessment',
+                             'This assessment is successfully marked as complete.',
+                             'success'
+                        );
                 vm.application = response.body;
                 vm.refreshFromResponse(response)
                 vm.showingApplication = true;
                 vm.isSendingToAssessor=false;
                 vm.showingConditions=false;
                 vm.assessmentComplete=true;
+
                 
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
