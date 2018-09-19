@@ -7,9 +7,11 @@ from datetime import date, timedelta
 from disturbance.components.approvals.email import (
     send_approval_renewal_email_notification,)
 
-
-
 import itertools
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 class Command(BaseCommand):
     help = 'Send Approval renewal notice when approval is due expire in 30 days'
@@ -27,6 +29,7 @@ class Command(BaseCommand):
             'replaced_by__isnull': True
         }
 
+        logger.info('Running command {}'.format(__name__))
         for a in Approval.objects.filter(**renewal_conditions):
             if a.status == 'current' or a.status == 'suspended':
                 try:
@@ -34,6 +37,8 @@ class Command(BaseCommand):
                     send_approval_renewal_email_notification(a)
                     a.renewal_sent = True
                     a.save()
-                    print('Renewal notice sent for Approval {}'.format(a.id))
+                    logger.info('Renewal notice sent for Approval {}'.format(a.id))
                 except:
-                    print('Error sending renewal notice for Approval {}'.format(a.id))
+                    logger.info('Error sending renewal notice for Approval {}'.format(a.id))
+
+        logger.info('Command {} completed'.format(__name__))
