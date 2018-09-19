@@ -203,7 +203,7 @@
                     <div  class="tab-content">
                         <div v-for="item in application.licence_type_data">
                             <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`+_uid" class="tab-pane fade active in"> 
-                                <Conditions :application="application"/>
+                                <Conditions :application="application" :licence_activity_type_tab="selected_assessment_tab"/>
                             </div>
                         </div>
                     </div>

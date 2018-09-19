@@ -166,6 +166,14 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.conditions.all()
+            licence_activity_type = self.request.query_params.get('licence_activity_type', None)
+            print('activity type from conditions api')
+            print(licence_activity_type)
+            if licence_activity_type is not None:
+                print('inside if')
+                qs = qs.filter(licence_activity_type=licence_activity_type)
+            print(qs)
+
             serializer = ApplicationConditionSerializer(qs,many=True)
             return Response(serializer.data) 
         except serializers.ValidationError:

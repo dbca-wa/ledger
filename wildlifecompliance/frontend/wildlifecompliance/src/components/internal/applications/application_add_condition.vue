@@ -121,6 +121,10 @@ export default {
             conditions: {
                 type: Array,
                 required: true
+            },
+            licence_activity_type_tab:{
+                type:Number,
+                required:true
             }
     },
     data:function () {
@@ -222,6 +226,7 @@ export default {
         sendData:function(){
             let vm = this;
             vm.errors = false;
+            vm.condition.licence_activity_type=vm.licence_activity_type_tab
             let condition = JSON.parse(JSON.stringify(vm.condition));
             if (condition.standard){
                 condition.free_condition = '';
@@ -238,6 +243,9 @@ export default {
             }
             if (vm.condition.id){
                 vm.updatingCondition = true;
+                
+                console.log('adding condition')
+                console.log(JSON.stringify(condition))
                 vm.$http.put(helpers.add_endpoint_json(api_endpoints.application_conditions,condition.id),JSON.stringify(condition),{
                         emulateJSON:true,
                     }).then((response)=>{
@@ -251,6 +259,8 @@ export default {
                     });
             } else {
                 vm.addingCondition = true;
+                console.log('adding condition')
+                console.log(JSON.stringify(condition))
                 vm.$http.post(api_endpoints.application_conditions,JSON.stringify(condition),{
                         emulateJSON:true,
                     }).then((response)=>{
