@@ -729,15 +729,22 @@ class Application(RevisionedMixin):
         else:
             raise ValidationError('The provided status cannot be found.')
 
+    
+
     def complete_assessment(self,request):
-        
-        assessment = Assessment.objects.get(id=request.data.get('selected_assessment_id'))
-        assessment.status ='completed'
-        assessment.save()
-        for activity_type in  self.licence_type_data['activity_type']:
-            if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
-                activity_type["processing_status"]="With Officer-Conditions"
-                self.save()
+        with transaction.atomic():
+            try:
+                assessment = Assessment.objects.get(id=request.data.get('selected_assessment_id'))
+                assessment.status ='completed'
+                assessment.save()
+                # is_last_assessment=Assessment.objects.filter(application=assessment.application, licence_activity_type=assessment.licence_activity_type).count()
+                if not Assessment.objects.filter(application=assessment.application, licence_activity_type=assessment.licence_activity_type,status='awaiting_assessment').exists():
+        	        for activity_type in  self.licence_type_data['activity_type']:
+        	            if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
+        	                activity_type["processing_status"]="With Officer-Conditions"
+        	                self.save()
+            except:
+                raise
 
 
     def proposed_decline(self,request,details):
@@ -1148,6 +1155,7 @@ class Assessment(ApplicationRequest):
                 self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RESENT,request)
             except:
                 raise
+
 
 class ApplicationDeclinedDetails(models.Model):
     STATUS_CHOICES = (('default','Default'),('propose_decline', 'Propose Decline'), ('declined', 'Declined'),

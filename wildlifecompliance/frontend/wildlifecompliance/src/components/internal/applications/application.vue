@@ -203,7 +203,7 @@
                     <div  class="tab-content">
                         <div v-for="item in application.licence_type_data">
                             <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`+_uid" class="tab-pane fade active in"> 
-                                <Conditions :application="application"/>
+                                <Conditions :application="application" :licence_activity_type_tab="selected_assessment_tab"/>
                             </div>
                         </div>
                     </div>
@@ -1087,6 +1087,11 @@ export default {
             
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
             .then((response) => {
+                swal(
+                             'Complete Assessment',
+                             'This assessment is successfully marked as complete.',
+                             'success'
+                        );
                 vm.application = response.body;
                 vm.refreshFromResponse(response)
                 vm.showingApplication = true;
@@ -1098,8 +1103,6 @@ export default {
                      'The assessment has been successfully completed',
                      'success'
                 )
-
-                
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
                 vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
