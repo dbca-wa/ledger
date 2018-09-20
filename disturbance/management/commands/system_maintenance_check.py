@@ -5,9 +5,10 @@ import os
 from disturbance.components.main.models import SystemMaintenance
 from disturbance.templatetags.users import system_maintenance_can_start
 
-
-
 import itertools
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     """
@@ -26,6 +27,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if system_maintenance_can_start():
+            logger.info('Running command {}'.format(__name__))
             subprocess.Popen('date 2>&1 | tee -a {}'.format(self.log_file), shell=True)
             subprocess.Popen(settings.SUPERVISOR_STOP_CMD + ' 2>&1 | tee -a {}'.format(self.log_file), shell=True)
 

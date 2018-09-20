@@ -227,7 +227,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
+            'level': env('LOG_CONSOLE_LEVEL', 'INFO'),
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
@@ -258,6 +258,12 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
+        'disturbance': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True
+        },
+
 #        'oscar.checkout': {
 #            'handlers': ['file'],
 #            'level': 'INFO'
