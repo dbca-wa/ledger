@@ -33,8 +33,11 @@ def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
 
 def application_type_choicelist():
-    return [( (choice.name), (choice.name) ) for choice in ApplicationType.objects.filter(visible=True)]
-    #return ( ('Disturbance', 'Disturbance'), )
+    try:
+        return [( (choice.name), (choice.name) ) for choice in ApplicationType.objects.filter(visible=True)]
+    except:
+        # required because on first DB tables creation, there are no ApplicationType objects -- setting a default value
+        return ( ('Disturbance', 'Disturbance'), )
 
 class ProposalType(models.Model):
     #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24)
