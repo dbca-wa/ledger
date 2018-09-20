@@ -284,6 +284,7 @@ export default {
             errorString: '',
             showUpdate: false,
             isLoading: false,
+            reload : false,
             contacts:[],
             mooring_groups: [],
             MooringGroups: [{ id: 1, name: 'Principal' }, { id: 2, name: 'Dessert' }, { id: 3, name: 'Drink' }],
@@ -382,9 +383,8 @@ export default {
         },
         update: function() {
 			if(this.validateForm()){
-				this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
-                                location.reload(); 
-			}
+				this.sendData(api_endpoints.campground(this.campground.id), 'PUT',true); 
+			}	
         },
         validateEditor: function(el){
             let vm = this;
@@ -403,9 +403,10 @@ export default {
             }
             return true;
         },
-        sendData: function(url, method) {
+        sendData: function(url, method, reload=false) {
             let vm = this;
             vm.isLoading =true;
+            vm.reload = reload;
             var featuresURL = new Array();
             var temp_features = vm.selected_features;
             if (vm.createCampground) {
@@ -452,6 +453,9 @@ export default {
 						type:"danger",
 						message: ""
 					});
+                     if (vm.reload == true) {  
+	                     location.reload();
+	             }
                 },
                 error: function(resp) {
 					vm.$store.dispatch("updateAlert",{
