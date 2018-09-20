@@ -735,11 +735,12 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             try:
                 #Get the assessor groups the current user is member of for the selected activity type tab
-                qs = ApplicationGroupType.objects.filter(name='assessor',licence_activity_type_id=request.data.get('selected_assessment_tab'),members__email=request.user.email)
+                qs = ApplicationGroupType.objects.filter(type='assessor',licence_activity_type_id=request.data.get('selected_assessment_tab'),members__email=request.user.email)
                 print(qs)
                 #For each assessor groups get the assessments of current application whose status is awaiting_assessment and mark it as complete
                 for q in qs:
                     assessments = Assessment.objects.filter(licence_activity_type_id=request.data.get('selected_assessment_tab'),assessor_group=q,status='awaiting_assessment',application=self)
+                    print('inside q in qs')
                     print(assessments)
                     for q1 in assessments:
                         q1.status='completed'

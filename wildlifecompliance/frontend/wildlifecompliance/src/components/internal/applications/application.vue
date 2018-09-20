@@ -558,7 +558,6 @@
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
         <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
-        <AssessmentSelect ref="assessment_select" :application_id="application.id" ></AssessmentSelect>
         <SendToAssessor ref="send_to_assessor" :application_id="application.id" ></SendToAssessor>
         <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"/>
     </div>
@@ -568,7 +567,6 @@ import Application from '../../form.vue'
 import Vue from 'vue'
 import ProposedDecline from './application_proposed_decline.vue'
 import AmmendmentRequest from './ammendment_request.vue'
-import AssessmentSelect from './assessment_select.vue'
 import SendToAssessor from './application_send_assessor.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Conditions from './application_conditions.vue'
@@ -671,7 +669,6 @@ export default {
         datatable,
         ProposedDecline,
         AmmendmentRequest,
-        AssessmentSelect,
         SendToAssessor,
         Conditions,
         OfficerConditions,
@@ -973,20 +970,6 @@ export default {
                 }
             },(error) => {
             });
-        },
-        assessmentSelect: function(){
-            var selectedTabTitle = $("#tabs-section li.active");
-            // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
-            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
-            
-            this.$refs.assessment_select.licence_activity_type=tab_id
-            this.$refs.assessment_select.licence_activity_type_name=selectedTabTitle.text();
-            this.selected_assessment_tab=tab_id
-            console.log(tab_id)
-            console.log(selectedTabTitle)
-            console.log(this.$refs)
-            this.$refs.assessment_select.isModalOpen = true;
-            
         },
         refreshAssessorDatatables: function(){
             var vm = this;
