@@ -63,20 +63,27 @@ class TaggedApplicationAssessorGroupActivities(TaggedItemBase):
         app_label = 'wildlifecompliance'
 
 class ApplicationGroupType(models.Model):
-    NAME_CHOICES = (
+    GROUP_TYPE_CHOICES = (
         ('officer', 'Officer'),
         ('assessor', 'Assessor'),
     )
-    name= models.CharField('Group Type', max_length=40, choices=NAME_CHOICES,default=NAME_CHOICES[0][0])
-    display_name=models.CharField('Display Group Name',max_length=40)
-    licence_class=models.ForeignKey('wildlifecompliance.WildlifeLicenceClass')
-    licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType')
-    members=models.ManyToManyField(EmailUser,blank=True)
+    name = models.CharField('Group Name', max_length=255, null=True, blank=True)
+    type = models.CharField('Group Type', max_length=40, choices=GROUP_TYPE_CHOICES,default=GROUP_TYPE_CHOICES[0][0])
+    licence_class = models.ForeignKey('wildlifecompliance.WildlifeLicenceClass')
+    licence_activity_type = models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType')
+    members = models.ManyToManyField(EmailUser,blank=True)
     class Meta:
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return '{} - {}, {} ({} members)'.format(self.name, self.licence_class, self.licence_activity_type, self.members.count())
+        group = '{} - {}, {} ({} members)'.format(self.get_type_display(), self.licence_class, self.licence_activity_type, self.members.count())
+        if self.name:
+            group = '{} - {}'.format(self.name, group)
+        return group
+
+    @property
+    def display_name(self):
+        return self.__str__
 
     def member_is_assigned(self,member):
         # for p in self.current_applications:
@@ -301,6 +308,14 @@ class Application(RevisionedMixin):
 
     def __str__(self):
         return str(self.id)
+
+    # Append 'A' to Application id to generate Lodgement number. Lodgement number and lodgement sequence are used to generate Reference.
+    def save(self, *args, **kwargs):
+        super(Application, self).save(*args, **kwargs)
+        if self.lodgement_number == '':
+            new_lodgment_id = 'A{0:06d}'.format(self.pk)
+            self.lodgement_number = new_lodgment_id
+            self.save()
 
     @property
     def reference(self):

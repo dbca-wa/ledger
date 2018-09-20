@@ -132,9 +132,9 @@ export default {
                 },
                 columns: [
                     {
-                        data: "id",
+                        data: "lodgement_number",
                         mRender:function(data,type,full){
-                            return 'P'+data;
+                            return data;
                         }
                     },
                     {data: "class_name"},
@@ -255,9 +255,9 @@ export default {
                 },
                 columns: [
                     {
-                        data: "id",
+                        data: "lodgement_number",
                         mRender:function(data,type,full){
-                            return 'P'+data;
+                            return data;
                         }
                     },
                     {data: "class_name"},

@@ -1,7 +1,7 @@
 <template lang="html">
     <div v-if="application" class="container" id="internalApplication">
             <div class="row">
-        <h3>Application: {{ application.id }}</h3>
+        <h3>Application: {{ application.lodgement_number }}</h3>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             <div class="row" v-if="canSeeSubmission">
@@ -247,7 +247,7 @@
                                                                     <label class="control-label pull-left"  for="Name">Assessor Group</label>
                                                                     <select class="form-control" v-model="selectedAssessor">
                                                                         <option v-for="assessor in assessorGroup" :id="assessor.id" 
-                                                                        :value="assessor" v-if="application.licence_type_data.id == assessor.licence_class">{{assessor.display_name}}</option>
+                                                                        :value="assessor" v-if="application.licence_type_data.id == assessor.licence_class && item1.id == assessor.licence_activity_type">{{assessor.display_name}}</option>
                                                                     </select>
                                                             </div> 
                                                             <div class="col-sm-2">
@@ -591,8 +591,6 @@ export default {
             applicantTab: 'applicantTab'+vm._uid,
             applicationTab: 'applicationTab'+vm._uid,
             taking_fauna: 'taking_fauna'+vm._uid,
-            sendToAssessorTab: 'sendToAssessorTab'+vm._uid,
-            sendToAssessorTab1: 'sendToAssessorTab1'+vm._uid,
             detailsBody: 'detailsBody'+vm._uid,
             identificationBody: 'identificationBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
@@ -862,9 +860,10 @@ export default {
             // console.log($(selectedTabTitle))
             // console.log($(selectedTabTitle).text())
             // console.log($(item1))
-            this.$refs.send_to_assessor.assessment.licence_activity_type=item1
-            this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id
-            this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.name
+            this.$refs.send_to_assessor.assessment.licence_activity_type=item1;
+            this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id;
+            this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name;
+            this.$refs.send_to_assessor.assessment.text='';
             this.$refs.send_to_assessor.isModalOpen=true;
         },
         proposedLicence: function(){
@@ -1089,6 +1088,7 @@ export default {
         completeAssessment:function(){
             let vm = this;
             let data = new FormData();
+
             var selectedTabTitle = $("li.active");
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
             
@@ -1104,14 +1104,18 @@ export default {
                              'The assessment is successfully marked as complete.',
                              'success'
                         );
-                // vm.application = response.body;
-                // vm.refreshFromResponse(response)
-                // vm.showingApplication = true;
-                // vm.isSendingToAssessor=false;
-                // vm.showingConditions=false;
-                // vm.assessmentComplete=true;
 
-                
+                vm.application = response.body;
+                vm.refreshFromResponse(response)
+                vm.showingApplication = true;
+                vm.isSendingToAssessor=false;
+                vm.showingConditions=false;
+                vm.assessmentComplete=true;
+                swal(
+                     'Complete Assessment',
+                     'The assessment has been successfully completed',
+                     'success'
+                )
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
                 vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
@@ -1425,18 +1429,18 @@ export default {
                         "dataSrc": ''
                     },
                     columns: [
-                        {data:'assessor_group.name'},
+                        {data:'assessor_group.display_name'},
                         {data:'date_last_reminded'},
                         {data:'status'},
                         {
                             mRender:function (data,type,full) {
                                 let links = '';
                                     if(full.status == 'Completed'){
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_resend">Resend</a>&nbsp;`;
 
                                     } else if(full.status == 'Awaiting Assessment'){
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>`;
-                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</button>`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_remind">Remind</a>&nbsp;`;
+                                        links +=  `<a data-assessmentid='${full.id}' class="assessment_recall">Recall</a>&nbsp;`;
                                         // links +=  `<a data-email='${full.email}' data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="unlink_contact">Recall</a><br/>`;
                                     }
                                 return links;

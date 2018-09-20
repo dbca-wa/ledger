@@ -965,15 +965,21 @@ class AssessmentViewSet(viewsets.ModelViewSet):
 
 
 class AssessorGroupViewSet(viewsets.ModelViewSet):
-    queryset = ApplicationGroupType.objects.all()
+    queryset = ApplicationGroupType.objects.filter(type='assessor')
     serializer_class = ApplicationGroupTypeSerializer
-
     renderer_classes = [JSONRenderer,]
-    def get(self, request, *args, **kwargs):
-        qs = self.get_queryset().filter(name='Assessor')
-            # serializer = self.get_serializer(qs, many=True)
-        print(qs)
-        return qs
+
+    # def list(self, request, *args, **kwargs):
+    #     queryset = self.get_queryset()
+    #     # licence_activity_type = request.GET.get('licence_activity_type')
+    #     # if licence_activity_type:
+    #     #     queryset = queryset.filter(licence_activity_type=licence_activity_type)
+    #     serializer = ApplicationGroupTypeSerializer(queryset, many=True)
+    #     return Response(serializer.data)
+
+    # def get_queryset(self):
+    #     return self.queryset.filter(name='assessor')
+
 
 class AmendmentRequestViewSet(viewsets.ModelViewSet):
     queryset = AmendmentRequest.objects.all()
