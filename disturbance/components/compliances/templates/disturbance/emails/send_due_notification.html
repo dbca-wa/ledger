@@ -1,0 +1,12 @@
+{%  extends 'disturbance/emails/base_email.html' %}
+
+{%  block content %}
+
+	Your Compliance with requirements {{ compliance.reference }} is due for submission.   
+    <p>
+    You can access this Compliance using the following link:
+    </p>
+    <a href="{{url}}">Access Compliance</a>
+
+
+{%  endblock %}

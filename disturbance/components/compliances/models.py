@@ -25,7 +25,8 @@ from disturbance.components.compliances.email import (
                         send_amendment_email_notification,
                         send_reminder_email_notification,
                         send_external_submit_email_notification,
-                        send_submit_email_notification)
+                        send_submit_email_notification,
+                        send_internal_reminder_email_notification)
 
 class Compliance(models.Model):
 
@@ -54,6 +55,7 @@ class Compliance(models.Model):
     requirement = models.ForeignKey(ProposalRequirement, blank=True, null=True, related_name='compliance_requirement')
     lodgement_date = models.DateTimeField(blank=True, null=True)
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_compliances')
+    reminder_sent = models.BooleanField(default=False)
 
 
     class Meta:
@@ -170,9 +172,12 @@ class Compliance(models.Model):
             today = timezone.now().date()
             try:
                 if self.processing_status =='due':
-                    if self.due_date < today and self.lodgement_date==None:
+                    if self.due_date < today and self.lodgement_date==None and self.reminder_sent==False:
                         send_reminder_email_notification(self)
-                        ComplianceUserAction.log_action(self,ComplianceUserAction.ACTION_CONCLUDE_REQUEST.format(self.id),user)
+                        send_internal_reminder_email_notification(self)
+                        self.reminder_sent=True
+                        self.save()
+                        ComplianceUserAction.log_action(self,ComplianceUserAction.ACTION_REMINDER_SENT.format(self.id),user)
             except:
                 raise
 
@@ -201,6 +206,7 @@ class ComplianceUserAction(UserAction):
     ACTION_DECLINE_REQUEST = "Decline request"
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
     ACTION_REMINDER_SENT = "Reminder sent for compliance {}"
+    ACTION_STATUS_CHANGE = "Change status to Due for compliance {}"
     # Assessors
 
 

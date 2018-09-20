@@ -195,7 +195,8 @@ class Approval(models.Model):
                         for d in search_assessor_data:
                             if c['name'] == d['name']:
                                 if d['assessor']:
-                                    copied_data.append({c['label'], d['assessor']})
+                                    #copied_data.append({c['label'], d['assessor']})
+                                    copied_data.append({c['label']:d['assessor']})
                 except: 
                     raise
         return copied_data

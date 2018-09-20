@@ -23,7 +23,7 @@ class Command(BaseCommand):
         logger.info('Running command {}'.format(__name__))
         for c in Compliance.objects.filter(processing_status = 'due'):
             if c.due_date < today:
-                if c.lodgement_date==None:
+                if c.lodgement_date==None and c.reminder_sent==False:
                     try:
                         c.send_reminder(user)
                         c.save()

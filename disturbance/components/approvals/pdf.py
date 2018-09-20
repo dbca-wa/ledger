@@ -304,10 +304,14 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     elements.append(Paragraph('Appendix 1 - Management Actions', styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     if copied_to_permit:
-        for k,v in copied_to_permit:
-            elements.append(Paragraph(v.encode('UTF-8'), styles['Left']))
-            elements.append(Paragraph(k.encode('UTF-8'), styles['Left']))
-            elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        # for k,v in copied_to_permit:
+        #     elements.append(Paragraph(v.encode('UTF-8'), styles['Left']))
+        #     elements.append(Paragraph(k.encode('UTF-8'), styles['Left']))
+        #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        for item in copied_to_permit:
+            for key in item:
+               elements.append(Paragraph(key.encode('UTF-8'), styles['Left'])) 
+               elements.append(Paragraph(item[key].encode('UTF-8'), styles['Left']))
     else:
         elements.append(Paragraph('There are no management actions.', styles['Left']))
 
