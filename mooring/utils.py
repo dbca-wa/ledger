@@ -2,20 +2,22 @@ from datetime import datetime, timedelta, date
 import traceback
 from decimal import *
 import json
+import geojson
 import requests
 from django.conf import settings
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import redirect
 from django.utils import timezone
 
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego)
-from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate)
+from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
 
@@ -196,21 +198,68 @@ def get_open_marinas(campsites_qs, start_date, end_date):
     return set(mooring_map.keys())
 
 
+
 def get_campsite_availability(campsites_qs, start_date, end_date):
-    """Fetch the availability of each campsite in a queryset over a range of visit dates."""
+    """Fetch the availability of each mooring in a queryset over a range of visit dates."""
     # fetch all of the single-day MooringsiteBooking objects within the date range for the sites
+    print start_date
+
+    start_date_time = datetime.strptime(str(start_date)+str(' 00:00'), '%Y-%m-%d %H:%M')
+    end_date_time = datetime.strptime(str(end_date)+str(' 23:59'), '%Y-%m-%d %H:%M')
+    print start_date_time
+    print end_date_time
     bookings_qs =   MooringsiteBooking.objects.filter(
                         campsite__in=campsites_qs,
-                        date__gte=start_date,
-                        date__lt=end_date
+                        #date__gte=start_date,
+                        #date__lt=end_date
+                        from_dt__gte=start_date_time,
+                        to_dt__lt=end_date_time,
                     ).order_by('date', 'campsite__name')
 
+    print "bookings_qs"
+    print bookings_qs
     # prefill all slots as 'open'
     duration = (end_date-start_date).days
-    results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
+    #results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
+    results = {}
+    for site in campsites_qs:
+        for i in range(duration):
+            pass
+            results[site.pk] = {}
+            
+            mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk)[0]
+            bp_result =  mooring_rate.booking_period.booking_period.all()
+            booking_period = {}
+            for bp in bp_result:
+                booking_period[bp.pk] = 'open'
+
+            results[site.pk][start_date+timedelta(days=i)] = ['open',booking_period]
+            
+#    results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
+
+    print "RESULTS" 
+    print results 
+#    for i in range(duration):
+#       print "DURA"
+#       print start_date_time+timedelta(days=i)
     # strike out existing bookings
     for b in bookings_qs:
-        results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
+        #print "BOOKING PER"
+        #print b.campsite.booking_period
+        print ("MR")
+        mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite)[0]
+#        print mooring_rate.booking_period
+        if mooring_rate:
+            for bp in mooring_rate.booking_period.booking_period.all():
+                for i in range(duration):
+                    pass
+            #        print "DURATION"
+                    #date_rotate_forward = start_date_time+timedelta(days=i)
+                    #start_dt_booking_period = datetime.strptime(str(bp.start_time)+str(' 00:00'), '%Y-%m-%d %H:%M')
+                    #end_dt_booking_period = datetime.strptime(str(bp.start_time)+str(' 00:00'), '%Y-%m-%d %H:%M')
+            #        print bp.start_time
+            #        print bp.finish_time
+        #results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
 
     # generate a campground-to-campsite-list map
     mooring_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.mooringarea.pk == cg[0]] for cg in campsites_qs.distinct('mooringarea').values_list('mooringarea')}
@@ -304,11 +353,12 @@ def get_visit_rates(campsites_qs, start_date, end_date):
     results = {
         site.pk: {
             start_date+timedelta(days=i): {
-                'mooring':  Decimal('0.00'),
-                'adult': Decimal('0.00'),
-                'child': Decimal('0.00'),
-                'concession': Decimal('0.00'),
-                'infant': Decimal('0.00')
+                'mooring':  '0.00',
+                'adult': '0.00',
+                'child': '0.00',
+                'concession': '0.00',
+                'infant': '0.00',
+                'booking_period' : [] 
             } for i in range(duration)
         } for site in campsites_qs
     }
@@ -325,11 +375,21 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         start = max(start_date, rate.date_start)
         end = min(end_date, rate.date_end) if rate.date_end else end_date
         for i in range((end-start).days):
-            results[rate.campsite.pk][start+timedelta(days=i)]['mooring'] = rate.rate.mooring
-            results[rate.campsite.pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
-            results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
-            results[rate.campsite.pk][start+timedelta(days=i)]['child'] = rate.rate.child
-            results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = rate.rate.infant
+            print "BOOKING PERIOD 1"
+            booking_period = rate.booking_period.booking_period.all()
+            
+            results[rate.campsite.pk][start+timedelta(days=i)]['mooring'] = str(rate.rate.mooring)
+            results[rate.campsite.pk][start+timedelta(days=i)]['adult'] = str(rate.rate.adult)
+            results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = str(rate.rate.concession)
+            results[rate.campsite.pk][start+timedelta(days=i)]['child'] = str(rate.rate.child)
+            results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = str(rate.rate.infant)
+            for b in booking_period:
+                booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'created' : b.created  }
+#                booking_period_row = {} 
+#                booking_period_row['id'] = b.id
+#                booking_period_row['period_name'] = b.period_name
+#                   , 'period_name' : b.period_name, 'small_price': str(b.small_price), 'medium_price': str(b.medium_price), 'large_price' : str(b.large_price), 'start_time' : str(b.start_time), 'finish_time' : str(b.finish_time),'all_day' : str(b.all_day), 'created' : str(b.created)  )
+                results[rate.campsite.pk][start+timedelta(days=i)]['booking_period'].append(booking_period_row)
 
     # complain if there's a Mooringsite without a MooringsiteRate
     if len(early_rates) < rates_qs.count():
@@ -340,12 +400,18 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         if start_date < rate.date_start:
             start = start_date
             end = rate.date_start
+            print "BOOKING PERIOD"
+            print rate.booking_period
             for i in range((end-start).days):
-                results[site_pk][start+timedelta(days=i)]['mooring'] = rate.rate.mooring
-                results[site_pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
-                results[site_pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
-                results[site_pk][start+timedelta(days=i)]['child'] = rate.rate.child
-                results[site_pk][start+timedelta(days=i)]['infant'] = rate.rate.infant
+                results[site_pk][start+timedelta(days=i)]['mooring'] = str(rate.rate.mooring)
+                results[site_pk][start+timedelta(days=i)]['adult'] = str(rate.rate.adult)
+                results[site_pk][start+timedelta(days=i)]['concession'] = str(rate.rate.concession)
+                results[site_pk][start+timedelta(days=i)]['child'] = str(rate.rate.child)
+                results[site_pk][start+timedelta(days=i)]['infant'] = str(rate.rate.infant)
+                for b in rate.booking_period: 
+                    booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'created' : b.created  } 
+                    results[site_pk][start+timedelta(days=i)]['booking_period'].append(booking_period_row) 
+                    
 
     return results
 
@@ -528,6 +594,91 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                     price =  Decimal(park_entry_rate[k]) * v.count()
                     total_price += price
     if lines:
+        return invoice_lines
+    else:
+        return total_price
+
+def get_admissions_entry_rate(request,start_date):
+    res = []
+    if start_date:
+        start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+        price_history = AdmissionsRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
+        if price_history:
+            serializer = AdmissionsRateSerializer(price_history,many=True,context={'request':request})
+            res = serializer.data[0]
+    return res
+
+def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
+    total_price = Decimal(0)
+    rate_list = {}
+    invoice_lines = []
+    line = lines
+    # Create line items for customers
+    daily_rates = get_admissions_entry_rate(request,admissionsBooking.arrivalDate.strftime('%Y-%m-%d'))
+    if not daily_rates:
+        raise Exception('There was an error while trying to get the daily rates.')
+
+    family = 0
+    adults = admissionsBooking.noOfAdults
+    children = admissionsBooking.noOfChildren
+    if adults > 1 and children > 1:
+        if adults == children:
+            if adults % 2 == 0:
+                family = adults/2
+                adults = 0
+                children = 0
+            else:
+                adults -= 1
+                family = adults/2
+                adults = 1
+                children = 1
+
+        elif adults > children: #Adults greater - tickets based on children
+            if children % 2 == 0:
+                family = children/2
+                adults -= children
+                children = 0
+            else:
+                children -= 1
+                family = children/2
+                adults -= children
+                children = 1
+        else: #Children greater - tickets based on adults
+            if adults % 2 == 0:
+                family = adults/2
+                children -= adults
+                adults = 0
+            else:
+                adults -= 1
+                family = adults/2
+                children -= adults
+                adults = 1
+
+    people = {'Adults': adults,'Concessions': admissionsBooking.noOfConcessions,'Children': children,'Infants': admissionsBooking.noOfInfants, 'Family': family}
+
+    for group, amount in people.items():
+        if line:
+            if(amount > 0):
+                if group == 'Adults':
+                    gr = 'adult'
+                elif group == 'Children':
+                    gr = group
+                elif group == 'Infants':
+                    gr = 'infant'
+                elif group == 'Family':
+                    gr = 'family'
+                if admissionsBooking.overnightStay:
+                    costfield = gr.lower() + "_overnight_cost"
+                else:
+                    costfield = gr.lower() + "_cost"
+                price = daily_rates.get(costfield)
+                invoice_lines.append({'ledger_description':'Admission fee {} ({})'.format(admissionsBooking.arrivalDate, group),"quantity":amount,"price_incl_tax":price, "oracle_code":AdmissionsOracleCode.objects.all().first().oracle_code})
+            
+        else:
+            price = Decimal(daily_rates)
+            total_cost += price
+
+    if line:
         return invoice_lines
     else:
         return total_price
@@ -820,6 +971,47 @@ def old_create_or_update_booking(request,booking_details,updating=False):
         booking.save()
     return booking
 
+def admissionsCheckout(request, admissionsBooking, lines, invoice_text=None, vouchers=[], internal=False):
+    basket_params = {
+        'products': lines,
+        'vouchers': vouchers,
+        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'custom_basket': True,
+    }
+    
+    basket, basket_hash = create_basket_session(request, basket_params)
+    print(basket)
+    print(basket_hash)
+    checkout_params = {
+        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'fallback_url': request.build_absolute_uri('/'),
+        'return_url': request.build_absolute_uri(reverse('public_admissions_success')),
+        'return_preload_url': request.build_absolute_uri(reverse('public_admissions_success')),
+        'force_redirect': True,
+        'proxy': True if internal else False,
+        'invoice_text': invoice_text,
+    }
+    
+    if internal or request.user.is_anonymous():
+        checkout_params['basket_owner'] = admissionsBooking.customer.id
+    create_checkout_session(request, checkout_params)
+
+    if internal:
+        responseJson = place_order_submission(request)
+    else:
+        print(reverse('checkout:index'))
+        responseJson = HttpResponse(geojson.dumps({'status': 'success','redirect': reverse('checkout:index'),}), content_type='application/json')
+        # response = HttpResponseRedirect(reverse('checkout:index'))
+
+        # inject the current basket into the redirect response cookies
+        # or else, anonymous users will be directionless
+        responseJson.set_cookie(
+            settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
+            max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
+            secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
+        )
+    return responseJson
+
 
 def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
     basket_params = {
@@ -1000,6 +1192,22 @@ def set_session_booking(session, booking):
     session['ps_booking'] = booking.id
     session.modified = True
 
+def get_session_admissions_booking(session):
+    if 'ad_booking' in session:
+        booking_id = session['ad_booking']
+    else:
+        raise Exception('Admissions booking not in Session')
+
+    try:
+        return AdmissionsBooking.objects.get(id=booking_id)
+    except AdmissionsBooking.DoesNotExist:
+        raise Exception('Admissions booking not found for booking_id {}'.format(booking_id))
+
+
+def delete_session_admissions_booking(session):
+    if 'ad_booking' in session:
+        del session['ad_booking']
+        session.modified = True
 
 def get_session_booking(session):
     if 'ps_booking' in session:

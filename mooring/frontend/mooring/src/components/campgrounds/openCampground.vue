@@ -65,6 +65,7 @@ module.exports = {
                 status:'0',
                 details: ''
             },
+            reasons: [],
             picker: '',
             errors: false,
             errorString: '',
@@ -80,7 +81,13 @@ module.exports = {
             return this.$parent.isOpenOpenCG;
         },
         requireDetails: function () {
-            return (this.formdata.reason === '1')? true: false;
+            let vm = this;
+            var check = vm.formdata.reason;
+            for (var i = 0; i < vm.reasons.length; i++){
+                if (vm.reasons[i].id == check){
+                    return vm.reasons[i].detailRequired;
+                }
+            }
         }
     },
     components: {
@@ -130,7 +137,12 @@ module.exports = {
                     open_details: {
                         required: {
                             depends: function(el){
-                                return vm.formdata.reason === 'other';
+                                var check = vm.formdata.reason;
+                                for (var i = 0; i < vm.reasons.length; i++){
+                                    if (vm.reasons[i].id == check){
+                                        return vm.reasons[i].detailRequired;
+                                    }
+                                }
                             }
                         }
                     }
@@ -180,6 +192,9 @@ module.exports = {
         });
         vm.form = $('#openCGForm');
         vm.addFormValidations();
+        bus.$once('openReasons',setReasons => {
+            vm.reasons = setReasons;
+        });
     }
 };
 </script>

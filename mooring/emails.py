@@ -9,11 +9,31 @@ from ledger.payments.models import Invoice
 from ledger.emails.emails import EmailBase
 
 default_campground_email = settings.CAMPGROUNDS_EMAIL
+default_rottnest_email = settings.ROTTNEST_EMAIL
+
 class TemplateEmailBase(EmailBase):
     subject = ''
     html_template = 'mooring/email/base_email.html'
     # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
     txt_template = 'mooring/email/base_email.txt'
+
+
+def send_admissions_booking_invoice(admissionsBooking):
+    email_obj = TemplateEmailBase()
+    email_obj.subject = 'Your booking invoice for {}'.format(admissionsBooking.arrivalDate)
+    email_obj.html_template = 'mooring/email/admissions_invoice.html'
+    email_obj.txt_template = 'mooring/email/admissions_invoice.txt'
+
+    email = admissionsBooking.customer.email
+    context = {
+        'booking': admissionsBooking
+    }
+    filename = 'invoice-{}({}).pdf'.format(admissionsBooking.arrivalDate, admissionsBooking.customer.get_full_name())
+    references = [b.invoice_reference for b in admissionsBooking.invoices.all()]
+    invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
+    invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
+    rottnest_email = default_rottnest_email
+    email_obj.send([email], from_address=rottnest_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
 
 
 def send_booking_invoice(booking):
@@ -35,6 +55,27 @@ def send_booking_invoice(booking):
 
     campground_email = booking.campground.email if booking.campground.email else default_campground_email
     email_obj.send([email], from_address=campground_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
+
+def send_admissions_booking_confirmation(admissionsBooking, request):
+    email_obj = TemplateEmailBase()
+    email_obj.subject = 'Your booking {} on {} is confirmed'.format(admissionsBooking.confirmation_number,admissionsBooking.arrivalDate)
+    email_obj.html_template = 'mooring/email/admissions_confirmation.html'
+    email_obj.txt_template = 'mooring/email/admissions_confirmation.txt'
+    email = admissionsBooking.customer.email
+    cc = None
+    bcc = [default_rottnest_email]
+    rottnest_email = default_rottnest_email
+    my_bookings_url = request.build_absolute_uri('/mybookings/')
+
+    context = {
+        'booking': admissionsBooking,
+        'my_bookings': my_bookings_url
+    }
+    att = BytesIO()
+    pdf.create_admissions_confirmation(att, admissionsBooking)
+    att.seek(0)
+    filename = 'confirmation-AD{}.pdf'.format(admissionsBooking.id)
+    email_obj.send([email], from_address=rottnest_email, context=context, cc=cc, bcc=bcc, attachments=[(filename, att.read(), 'application/pdf')])
 
 def send_booking_confirmation(booking,request):
     email_obj = TemplateEmailBase()

@@ -72,8 +72,8 @@ class MooringsiteBookingAdmin(admin.ModelAdmin):
 
 @admin.register(models.MooringsiteRate)
 class MooringsiteRateAdmin(admin.ModelAdmin):
-    list_display = ('campsite','rate','allow_public_holidays')
-    list_filter = ('campsite','rate','allow_public_holidays')
+    list_display = ('campsite','rate','allow_public_holidays','booking_period')
+    list_filter = ('campsite','rate','allow_public_holidays','booking_period')
     search_fields = ('campground__name',)
 
 @admin.register(models.Contact)
@@ -123,6 +123,33 @@ class OpenReason(ReasonAdmin):
 @admin.register(models.OutstandingBookingRecipient)
 class OutstandingBookingRecipient(admin.ModelAdmin):
     pass
+
+@admin.register(models.AdmissionsOracleCode)
+class AdmissionsOracleCode(admin.ModelAdmin):
+    pass
+
+@admin.register(models.AdmissionsRate)
+class AdmissionsRate(admin.ModelAdmin):
+    list_display = ('period_start', 'period_end')
+
+@admin.register(models.AdmissionsReason)
+class AdmissionsReason(admin.ModelAdmin):
+    list_display = ('id', 'text')
+
+@admin.register(models.AdmissionsBooking)
+class AdmissionBooking(admin.ModelAdmin):
+    list_display = ('arrivalDate', 'confirmation_number')
+    search_fields = ('arrivalDate',)
+
+@admin.register(models.BookingPeriod)
+class BookingPeriod(admin.ModelAdmin):
+    list_display = ('name', 'created')
+    search_fields = ('name',)
+
+@admin.register(models.BookingPeriodOption)
+class BookingPeriodOption(admin.ModelAdmin):
+    list_display = ('period_name', 'small_price','medium_price','large_price','created')
+    search_fields = ('period_name',)
 
 @admin.register(models.Region)
 class Region(admin.GeoModelAdmin):
