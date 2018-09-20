@@ -71,16 +71,18 @@ def send_amendment_email_notification(amendment_request, request, compliance):
 
 #send reminder emails if Compliance has not been lodged by due date. Used in Cron job so cannot use 'request' parameter
 def send_reminder_email_notification(compliance):
+    """ Used by the management command, therefore have no request object - therefore explicitly defining base_url """
     email = ComplianceReminderNotificationEmail()
     #url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
-    url=settings.BASE_URL
+    url=settings.SITE_URL if settings.SITE_URL else ''
     url+=reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id})
     context = {
         'compliance': compliance,
         'url': url
     }
 
-    msg = email.send(compliance.submitter.email, context=context)
+    submitter = compliance.submitter.email if compliance.submitter and compliance.submitter.email else compliance.proposal.submitter.email
+    msg = email.send(submitter, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     try:
         sender_user = EmailUser.objects.get(email__icontains=sender)
