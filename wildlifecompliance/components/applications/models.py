@@ -719,15 +719,31 @@ class Application(RevisionedMixin):
     def complete_assessment(self,request):
         with transaction.atomic():
             try:
-                assessment = Assessment.objects.get(id=request.data.get('selected_assessment_id'))
-                assessment.status ='completed'
-                assessment.save()
-                # is_last_assessment=Assessment.objects.filter(application=assessment.application, licence_activity_type=assessment.licence_activity_type).count()
-                if not Assessment.objects.filter(application=assessment.application, licence_activity_type=assessment.licence_activity_type,status='awaiting_assessment').exists():
-        	        for activity_type in  self.licence_type_data['activity_type']:
-        	            if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
-        	                activity_type["processing_status"]="With Officer-Conditions"
-        	                self.save()
+                #Get the assessor groups the current user is member of for the selected activity type tab
+                qs = ApplicationGroupType.objects.filter(name='assessor',licence_activity_type_id=request.data.get('selected_assessment_tab'),members__email=request.user.email)
+                print(qs)
+                #For each assessor groups get the assessments of current application whose status is awaiting_assessment and mark it as complete
+                for q in qs:
+                    assessments = Assessment.objects.filter(licence_activity_type_id=request.data.get('selected_assessment_tab'),assessor_group=q,status='awaiting_assessment',application=self)
+                    print(assessments)
+                    for q1 in assessments:
+                        q1.status='completed'
+                        q1.save()
+                #check if this is the last assessment for current applicatio,Change the processing status only if it is the last assessment
+                if not Assessment.objects.filter(application=self, licence_activity_type=request.data.get('selected_assessment_tab'),status='awaiting_assessment').exists():
+                    for activity_type in  self.licence_type_data['activity_type']:
+                        if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
+                            activity_type["processing_status"]="With Officer-Conditions"
+                            self.save()
+                # assessment = Assessment.objects.get(id=request.data.get('selected_assessment_id'))
+                # assessment.status ='completed'
+                # assessment.save()
+                # # is_last_assessment=Assessment.objects.filter(application=assessment.application, licence_activity_type=assessment.licence_activity_type).count()
+                # if not Assessment.objects.filter(application=assessment.application, licence_activity_type=assessment.licence_activity_type,status='awaiting_assessment').exists():
+        	       #  for activity_type in  self.licence_type_data['activity_type']:
+        	       #      if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
+        	       #          activity_type["processing_status"]="With Officer-Conditions"
+        	       #          self.save()
             except:
                 raise
 

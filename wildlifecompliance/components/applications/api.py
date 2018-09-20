@@ -467,7 +467,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def complete_assessment(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            selected_assessment_id = request.data.get('selected_assessment_id')
+            selected_assessment_id = request.data.get('selected_assessment_tab')
+            print('from api')
+            print(selected_assessment_id)
             instance.complete_assessment(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 

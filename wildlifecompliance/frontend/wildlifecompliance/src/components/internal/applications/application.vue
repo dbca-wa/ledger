@@ -123,7 +123,7 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-info top-buffer-s" @click.prevent="assessmentSelect()">Propose Conditions</button>
+                                                    <button style="width:80%;" class="btn btn-info top-buffer-s" @click.prevent="toggleConditions()">Propose Conditions</button>
                                                 </div>
                                             </div>
                                         </template>
@@ -196,13 +196,13 @@
                 <template v-if="showingConditions">
                     <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
             
                     </div>   
                     <div  class="tab-content">
                         <div v-for="item in application.licence_type_data">
-                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`+_uid" class="tab-pane fade active in"> 
+                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`" class="tab-pane fade active in"> 
                                 <Conditions :application="application" :licence_activity_type_tab="selected_assessment_tab"/>
                             </div>
                         </div>
@@ -1056,9 +1056,16 @@ export default {
             }
         },
         toggleConditions:function(){
-            this.showingConditions = !this.showingConditions;
+            this.showingConditions = true;
             this.showingApplication = false;
             this.isSendingToAssessor=false;
+            this.isOfficerConditions=false;
+            this.assessmentComplete=false;
+            var selectedTabTitle = $("#tabs-section li.active");
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
+            
+            this.selected_assessment_tab=tab_id
+
         },
         toggleOfficerConditions:function(){
             this.showingApplication = false;
@@ -1082,22 +1089,27 @@ export default {
         completeAssessment:function(){
             let vm = this;
             let data = new FormData();
-            data.selected_assessment_id=vm.selected_assessment_id;
+            var selectedTabTitle = $("li.active");
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
+            
+            vm.selected_assessment_tab=tab_id
+
             data.selected_assessment_tab=vm.selected_assessment_tab
+            data.application_id=vm.application_id
             
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
             .then((response) => {
                 swal(
                              'Complete Assessment',
-                             'This assessment is successfully marked as complete.',
+                             'The assessment is successfully marked as complete.',
                              'success'
                         );
-                vm.application = response.body;
-                vm.refreshFromResponse(response)
-                vm.showingApplication = true;
-                vm.isSendingToAssessor=false;
-                vm.showingConditions=false;
-                vm.assessmentComplete=true;
+                // vm.application = response.body;
+                // vm.refreshFromResponse(response)
+                // vm.showingApplication = true;
+                // vm.isSendingToAssessor=false;
+                // vm.showingConditions=false;
+                // vm.assessmentComplete=true;
 
                 
             }, (error) => {
