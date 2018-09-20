@@ -36,6 +36,20 @@ class ComplianceReminderNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/send_reminder_notification.html'
     txt_template = 'disturbance/emails/send_reminder_notification.txt'
 
+class ComplianceInternalReminderNotificationEmail(TemplateEmailBase):
+    subject = 'A Compliance with requirements has passed the due date.'
+    html_template = 'disturbance/emails/send_internal_reminder_notification.html'
+    txt_template = 'disturbance/emails/send_internal_reminder_notification.txt'
+
+class ComplianceDueNotificationEmail(TemplateEmailBase):
+    subject = 'Your Compliance with requirements is due for submission.'
+    html_template = 'disturbance/emails/send_due_notification.html'
+    txt_template = 'disturbance/emails/send_due_notification.txt'
+
+class ComplianceInternalDueNotificationEmail(TemplateEmailBase):
+    subject = 'A Compliance with requirements is due for submission.'
+    html_template = 'disturbance/emails/send_internal_due_notification.html'
+    txt_template = 'disturbance/emails/send_internal_due_notification.txt'
 
 def send_amendment_email_notification(amendment_request, request, compliance):
     email = ComplianceAmendmentRequestSendNotificationEmail()
@@ -67,6 +81,71 @@ def send_reminder_email_notification(compliance):
     }
 
     msg = email.send(compliance.submitter.email, context=context)
+    sender = settings.DEFAULT_FROM_EMAIL
+    try:
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    except:
+        sender_user = EmailUser.objects.create(email=sender, password='')
+    _log_compliance_email(msg, compliance, sender=sender_user)
+    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender_user)
+
+def send_internal_reminder_email_notification(compliance):
+    email = ComplianceInternalReminderNotificationEmail()
+    #url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
+    url=settings.BASE_URL
+    url+=reverse('internal-compliance-detail',kwargs={'compliance_pk': compliance.id})
+    if "-internal" not in url:
+        # add it. This email is for internal staff
+        url = '-internal.{}'.format(settings.SITE_DOMAIN).join(url.split('.' + settings.SITE_DOMAIN))
+
+    context = {
+        'compliance': compliance,
+        'url': url
+    }
+
+    msg = email.send(compliance.proposal.assessor_recipients, context=context)
+    sender = settings.DEFAULT_FROM_EMAIL
+    try:
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    except:
+        sender_user = EmailUser.objects.create(email=sender, password='')
+    _log_compliance_email(msg, compliance, sender=sender_user)
+    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender_user)
+
+def send_due_email_notification(compliance):
+    email = ComplianceDueNotificationEmail()
+    #url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
+    url=settings.BASE_URL
+    url+=reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id})
+    context = {
+        'compliance': compliance,
+        'url': url
+    }
+
+    msg = email.send(compliance.submitter.email, context=context)
+    sender = settings.DEFAULT_FROM_EMAIL
+    try:
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    except:
+        sender_user = EmailUser.objects.create(email=sender, password='')
+    _log_compliance_email(msg, compliance, sender=sender_user)
+    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender_user)
+
+def send_internal_due_email_notification(compliance):
+    email = ComplianceInternalDueNotificationEmail()
+    #url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
+    url=settings.BASE_URL
+    url+=reverse('internal-compliance-detail',kwargs={'compliance_pk': compliance.id})
+    if "-internal" not in url:
+        # add it. This email is for internal staff
+        url = '-internal.{}'.format(settings.SITE_DOMAIN).join(url.split('.' + settings.SITE_DOMAIN))
+
+    context = {
+        'compliance': compliance,
+        'url': url
+    }
+
+    msg = email.send(compliance.proposal.assessor_recipients, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     try:
         sender_user = EmailUser.objects.get(email__icontains=sender)
