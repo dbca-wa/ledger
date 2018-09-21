@@ -5,6 +5,7 @@
 {% load users %}
 {% load utils %}
 {% is_internal as is_internal_login %}
+{% is_disturbance_admin as is_disturbance_admin_user %}
 {% system_maintenance_due as system_maintenance_due %}
 {% system_name_short as short_name %}
 {% dept_name as department_name %}
@@ -88,9 +89,11 @@
                                                 <span class="caret"></span>
                                             </a>
                                             <ul class="dropdown-menu">
-                                                {% if request.user.is_superuser %}
+                                                {% if is_disturbance_admin_user or request.user.is_superuser %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                     <li role="separator" class="divider"></li>
+                                                {% endif %}
+                                                {% if request.user.is_superuser %}
                                                     <li><a href="{% url 'mgt-commands' %}">Management Commands</a></li>
                                                 {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
