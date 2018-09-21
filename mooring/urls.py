@@ -14,6 +14,7 @@ router.register(r'mooring_map_filter', api.MooringAreaMapFilterViewSet)
 router.register(r'marine_parks_map', api.MarineParksMapViewSet)
 router.register(r'region_marine_parks_map', api.MarineParksRegionMapViewSet)
 router.register(r'availability', api.AvailabilityViewSet, 'availability')
+router.register(r'availability2', api.AvailabilityViewSet2, 'availability2')
 router.register(r'availability_admin', api.AvailabilityAdminViewSet)
 router.register(r'availability_ratis', api.AvailabilityRatisViewSet, 'availability_ratis')
 router.register(r'mooring-areas', api.MooringAreaViewSet)
@@ -21,6 +22,7 @@ router.register(r'mooringsites', api.MooringsiteViewSet)
 router.register(r'mooringsite_bookings', api.MooringsiteBookingViewSet)
 router.register(r'promo_areas', api.PromoAreaViewSet)
 router.register(r'parks', api.MarinaViewSet)
+router.register(r'admissions', api.AdmissionsRatesViewSet)
 router.register(r'parkentryrate', api.MarinaEntryRateViewSet)
 router.register(r'features', api.FeatureViewSet)
 router.register(r'regions', api.RegionViewSet)
@@ -37,6 +39,7 @@ router.register(r'rates',api.RateViewset)
 router.register(r'closureReasons',api.ClosureReasonViewSet)
 router.register(r'openReasons',api.OpenReasonViewSet)
 router.register(r'priceReasons',api.PriceReasonViewSet)
+router.register(r'admissionsReasons',api.AdmissionsReasonViewSet)
 router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
 router.register(r'users',api.UsersViewSet)
 router.register(r'contacts',api.ContactViewSet)
@@ -51,7 +54,9 @@ api_patterns = [
     url(r'^api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),
     url(r'^api/search_suggest', api.search_suggest, name='search_suggest'),
     url(r'^api/create_booking', api.create_booking, name='create_booking'),
+    url(r'^api/create_admissions_booking', api.create_admissions_booking, name="create_admissions_booking"),
     url(r'api/get_confirmation/(?P<booking_id>[0-9]+)/$', api.get_confirmation, name='get_confirmation'),
+    url(r'api/get_admissions_confirmation/(?P<booking_id>[0-9]+)/$', api.get_admissions_confirmation, name='get_admissions_confirmation'),
     url(r'^api/reports/booking_refunds$', api.BookingRefundsReportView.as_view(),name='booking-refunds-report'),
     url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
     url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
@@ -66,6 +71,7 @@ urlpatterns = [
     url(r'^$', views.MarinastayRoutingView.as_view(), name='ps_home'),
     url(r'^mooringsites/(?P<ground_id>[0-9]+)/$', views.MooringsiteBookingSelector.as_view(), name='campsite_booking_selector'),
     url(r'^availability/$', views.MooringsiteAvailabilitySelector.as_view(), name='campsite_availaiblity_selector'),
+    url(r'^availability2/$', views.MooringAvailability2Selector.as_view(), name='mooring_availaiblity2_selector'),
     url(r'^availability_admin/$', views.AvailabilityAdmin.as_view(), name='availability_admin'),
     #url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.MooringAreaFeed(), name='campground_calendar'),
     url(r'^dashboard/moorings/$', views.DashboardView.as_view(), name='dash-campgrounds'),
@@ -78,8 +84,13 @@ urlpatterns = [
     url(r'^booking/', views.MakeBookingsView.as_view(), name='public_make_booking'),
     url(r'^mybookings/', views.MyBookingsView.as_view(), name='public_my_bookings'),
     url(r'^success/', views.BookingSuccessView.as_view(), name='public_booking_success'),
+    url(r'^success_admissions/', views.AdmissionsBookingSuccessView.as_view(), name='public_admissions_success'),
+    url(r'^createdbasket/', views.AdmissionsBasketCreated.as_view(), name='created_basket'),
     url(r'^map/', views.MapView.as_view(), name='map'),
+    url(r'^admissions/$', views.AdmissionFeesView.as_view(), name='admissions'),
+    url(r'^admissions-cost/$', views.AdmissionsCostView.as_view(), name='admissions_cost'),
     url(r'mooring/payments/invoice-pdf/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='mooring-invoice-pdf'),
+
 ##    url(r'^static/(?P<path>.*)$', 'django.conf.urls.static'),
 #    {'document_root': settings.STATIC_ROOT},
 ] + ledger_patterns 

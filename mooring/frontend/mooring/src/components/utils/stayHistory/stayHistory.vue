@@ -29,6 +29,23 @@ import {
 }
 from '../../../hooks.js'
 
+$.extend($.fn.dataTableExt.oSort, {
+    "extract-date-pre": function(value){
+        if (value == '-'){
+            return Infinity;
+        }
+        var date = value.split('/');
+        return Date.parse(date[2] + '/' + date[1] + '/' + date[0])
+        
+    },
+    "extract-date-asc": function(a, b){
+        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    },
+    "extract-date-desc": function(a, b){
+        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    }
+});
+
 export default {
     name: 'stayHistory',
     props: {
@@ -91,9 +108,23 @@ export default {
                 columns: [{
                     "data": "id"
                 }, {
-                    "data": "range_start"
+                    "data": "range_start",
+                    sType: 'extract-date',
+                    mRender: function(data, type, full) {
+                        // return new Date(data).toLocaleDateString('en-GB');
+                        return data;
+                    }
                 }, {
-                    "data": "range_end"
+                    "data": "range_end",
+                    sType: 'extract-date',
+                    mRender: function(data, type, full) {
+                        if(data){
+                            // return new Date(data).toLocaleDateString('en-GB');
+                            return data;
+                        } else {
+                            return '-';
+                        }   
+                    }
                 }, {
                     "data": "max_days"
                 },{

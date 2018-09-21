@@ -17,19 +17,19 @@
 								</div>
 								<div class="panel-body">
 									<div class="row">
-										<div class="col-md-3">
+										<div class="col-md-4">
 											<div class="form-group">
 												<label class="control-label" >Mooring Name</label>
 												<input type="text" name="name" id="name" class="form-control" v-model="campground.name" required/>
 											</div>
 										</div>
-										<div class="col-md-3">
+										<div class="col-md-4">
 											<div class="form-group">
 												<label class="control-label" >Mooring Oracle Code</label>
 												<input type="text" name="oracle_code" id="oracle_code" class="form-control" v-model="campground.oracle_code" required/>
 											</div>
 										</div>
-										<div class="col-md-3">
+										<div class="col-md-4">
 											<div class="form-group ">
 												<label class="control-label" >Park</label>
 												<select name="park" v-show="!parks.length > 0" class="form-control" >
@@ -40,13 +40,6 @@
 												</select>
 											</div>
 										</div>
-                                                                                <div class="col-md-3">
-                                                                                        <div class="form-group">
-                                                                                                <label class="control-label" >Vessel Size</label>
-                                                                                                <input type="text" name="vessel_size_limit" id="vessel_size_limit" class="form-control" v-model="campground.vessel_size_limit" required/>
-                                                                                        </div>
-                                                                                </div>
-
 									</div>
 									<div class="row">
 										<div class="col-md-6">
@@ -70,18 +63,37 @@
 												</select>
 											</div>
 										</div>
-                                                                                <div class="col-md-6">
-                                                                                        <div class="form-group ">
-                                                                                                <label class="control-label" >Mooring Group (Permissions)</label>
-                                                                                                <select class="form-control" v-model="campground.mooring_group" id='mooring_groups' name='mooring_groups' multiple>
-                                                                                                      <option v-for="m in mooring_groups" :value="m.id" >{{m.name}}</option>
-                                                                                                </select>
-                                                                                        </div>
-                                                                                </div>
-
+                                        <div class="col-md-6">
+                                            <div class="form-group ">
+                                                <label class="control-label" >Mooring Group (Permissions)</label>
+                                                <select class="form-control" v-model="campground.mooring_group" id='mooring_groups' name='mooring_groups' multiple>
+                                                    <option v-for="m in mooring_groups" :value="m.id" >{{m.name}}</option>
+                                                </select>
+                                            </div>
+                                        </div>
 									</div>
-				                                        <imagePicker :images="campground.images"></imagePicker>
-
+                                    <div class="row">
+                                        <div class="col-md-6">
+											<div class="form-group ">
+												<label class="control-label" >Mooring Physical Type</label>
+												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.mooring_physical_type">
+													<option value="0">Mooring</option>
+													<option value="1">Jetty Pen</option>
+												</select>
+											</div>
+										</div>
+                                        <div class="col-md-6">
+											<div class="form-group ">
+												<label class="control-label" >Mooring Class</label>
+												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.mooring_class">
+													<option value="0">Small</option>
+													<option value="1">Medium</option>
+													<option value="2">Large</option>
+												</select>
+											</div>
+										</div>
+                                    </div>
+                                    <imagePicker :images="campground.images"></imagePicker>
 									<div class="row" style="margin-top: 40px;">
 										<div class="col-lg-12">
 											<div class="panel panel-primary">
@@ -116,6 +128,41 @@
 											</div>
 										</div>
 									</div>
+                                    <div class="row" style="margin-top: 40px;">
+										<div class="col-lg-12">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h3 class="panel-title">Vessel Limits</h3>
+												</div>
+												<div class="panel-body">
+													<div class="row">
+														<div class="form-group">
+															<div class="col-md-6">
+															  	<label class="control-label" >Maximum Vessel Size (Meters)</label>
+                                                                <input type="text" name="vessel_size_limit" id="vessel_size_limit" class="form-control" v-model="campground.vessel_size_limit" required/>
+															</div>
+                                                            <div class="col-md-6">
+                                                                <label class="control-label" >Maximum Vessel Draft (Meters)</label>
+                                                                <input type="text" name="vessel_draft_limit" id="vessel_draft_limit" class="form-control" v-model="campground.vessel_draft_limit" required/>
+                                                            </div>
+														</div>
+													</div>
+                                                    <div class="row" style="margin-top: 10px;">
+                                                        <div class="form-group">
+                                                            <div class="col-md-6" v-if="jettyPen">
+                                                                <label class="control-label" >Maximum Vessel Beam (Meters)</label>
+                                                                <input type="text" name="vessel_beam_limit" id="vessel_beam_limit" class="form-control" v-model="campground.vessel_beam_limit"/>
+                                                            </div>
+                                                            <div class="col-md-6" v-else>
+                                                                <label class="control-label" >Maximum Vessel Weight (Tons)</label>
+                                                                <input type="text" name="vessel_weight_limit" id="vessel_weight_limit" class="form-control" v-model="campground.vessel_weight_limit"/>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+												</div>
+											</div>
+										</div>
+									</div>
 									<div class="row" style="margin-top: 40px;">
 										<div class="col-sm-3 features">
 											<div class="panel panel-primary">
@@ -135,7 +182,7 @@
 										<div class="col-sm-3 features">
 											<div class="panel panel-primary">
 												<div class="panel-heading">
-													<h3 class="panel-title">Selected Feautures</h3>
+													<h3 class="panel-title">Selected Features</h3>
 												</div>
 												<div class="panel-body"  v-bind:class="{ 'empty-features': !hasSelectedFeatures }">
 													<p v-show="!hasSelectedFeatures" style='text-align: center'>
@@ -284,6 +331,7 @@ export default {
             errorString: '',
             showUpdate: false,
             isLoading: false,
+            reload : false,
             contacts:[],
             mooring_groups: [],
             MooringGroups: [{ id: 1, name: 'Principal' }, { id: 2, name: 'Dessert' }, { id: 3, name: 'Drink' }],
@@ -350,6 +398,9 @@ export default {
                 return '';
             }
         },
+        jettyPen: function(){
+            return this.campground.name == "Joondalup";
+        },
 		...mapGetters([
           'parks',
           'mooring_groups'
@@ -382,9 +433,8 @@ export default {
         },
         update: function() {
 			if(this.validateForm()){
-				this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
-                                location.reload(); 
-			}
+				this.sendData(api_endpoints.campground(this.campground.id), 'PUT',true); 
+			}	
         },
         validateEditor: function(el){
             let vm = this;
@@ -403,9 +453,10 @@ export default {
             }
             return true;
         },
-        sendData: function(url, method) {
+        sendData: function(url, method, reload=false) {
             let vm = this;
             vm.isLoading =true;
+            vm.reload = reload;
             var featuresURL = new Array();
             var temp_features = vm.selected_features;
             if (vm.createCampground) {
@@ -417,6 +468,11 @@ export default {
             vm.campground.features = featuresURL;
             if ( vm.campground.contact == "undefined") {
                 vm.campground.contact = '';
+            }
+            if (vm.campground.name == 'Joondalup'){
+                vm.campground.vessel_weight_limit = 0;
+            } else {
+                vm.campground.vessel_beam_limit = 0;
             }
             $.ajax({
                 beforeSend: function(xhrObj) {
@@ -452,6 +508,9 @@ export default {
 						type:"danger",
 						message: ""
 					});
+                     if (vm.reload == true) {  
+	                     location.reload();
+	             }
                 },
                 error: function(resp) {
 					vm.$store.dispatch("updateAlert",{
@@ -619,7 +678,7 @@ export default {
             },
             theme: 'snow'
         });
-        vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
+        // vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
         vm.editor.on('text-change', function(delta, oldDelta, source) {
             var text = $('#editor >.ql-editor').html();
             vm.campground.description = text;

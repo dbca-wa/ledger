@@ -103,7 +103,7 @@
 <script>
 import bootstrapModal from '../bootstrap-modal.vue'
 import reason from '../reasons.vue'
-import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
+import { $, datetimepicker,api_endpoints, validate, helpers, bus } from '../../../hooks'
 import alert from '../alert.vue'
 module.exports = {
     name: 'PriceHistoryDetail',
@@ -127,6 +127,7 @@ module.exports = {
             errors: false,
             errorString: '',
             form: '',
+            reasons: [],
             isOpen: false,
         }
     },
@@ -142,7 +143,15 @@ module.exports = {
             return this.priceHistory.id ? this.priceHistory.id : '';
         },
         requireDetails: function() {
-            return this.priceHistory.reason == '1';
+            // let vm = this;
+            // var check = vm.priceHistory.reason;
+            // for (var i = 0; i < vm.reasons.length; i++){
+            //     if (vm.reasons[i].id == check){
+            //         return vm.reasons[i].detailRequired;
+            //     }
+            // }
+            let vm = this;
+            return (!vm.priceHistory.reason == '' || !vm.priceHistory.reason == null);
         },
     },
     watch: {
@@ -213,7 +222,13 @@ module.exports = {
                     details: {
                         required: {
                             depends: function(el){
-                                return vm.priceHistory.reason=== '1';
+                                // var check = vm.priceHistory.reason;
+                                // for (var i = 0; i < vm.reasons.length; i++){
+                                //     if (vm.reasons[i].id == check){
+                                //         return vm.reasons[i].detailRequired;
+                                //     }
+                                // }
+                                return (!vm.priceHistory.reason == '' || !vm.priceHistory.reason == null);
                             }
                         }
                     }
@@ -268,6 +283,9 @@ module.exports = {
         });
         vm.addFormValidations();
         vm.fetchRates();
+        bus.$once('priceReasons',setReasons => {
+            vm.reasons = setReasons;
+        });
     }
 };
 </script>
