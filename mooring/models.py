@@ -129,6 +129,17 @@ class MooringArea(models.Model):
         #(2, 'Bookable Per Site Type (hide site number)'),
     )
 
+    MOORING_PHYSICAL_TYPE_CHOICES = (
+        (0, 'Mooring'),
+        (1, 'Jetty Pen')
+    )
+
+    MOORING_CLASS_CHOICES = (
+        (0, 'Small'),
+        (1, 'Medium'),
+        (2, 'Large')
+    )
+
     name = models.CharField(max_length=255, null=True)
     park = models.ForeignKey('MarinePark', on_delete=models.PROTECT, related_name='marineparks')
     ratis_id = models.IntegerField(default=-1)
@@ -160,6 +171,11 @@ class MooringArea(models.Model):
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
     mooring_map = models.FileField(upload_to=update_mooring_map_filename,null=True,blank=True)
     vessel_size_limit = models.IntegerField(default=0)
+    vessel_draft_limit = models.IntegerField(default=0)
+    vessel_beam_limit = models.IntegerField(default=0)
+    vessel_weight_limit = models.IntegerField(default=0)
+    mooring_physical_type = models.SmallIntegerField(choices=MOORING_PHYSICAL_TYPE_CHOICES, default=0)
+    mooring_class = models.SmallIntegerField(choices=MOORING_CLASS_CHOICES, default=0)
 
     def __str__(self):
         return self.name
@@ -412,6 +428,27 @@ class MooringAreaImage(models.Model):
         except:
             pass
         super(MooringAreaImage,self).delete(*args,**kwargs)
+
+class BookingPeriodOption(models.Model):
+    period_name = models.CharField(max_length=15)
+    small_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
+    medium_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
+    large_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
+    start_time = models.TimeField(null=True, blank=True)
+    finish_time = models.TimeField(null=True, blank=True)
+    all_day = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True) 
+
+    def __str__(self):
+        return self.period_name
+
+class BookingPeriod(models.Model):
+    name = models.CharField(max_length=100)
+    booking_period = models.ManyToManyField(BookingPeriodOption, related_name='booking_period_options')
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
 
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
@@ -868,6 +905,9 @@ class MooringsiteBooking(models.Model):
 
     campsite = models.ForeignKey('Mooringsite', db_index=True, on_delete=models.PROTECT)
     date = models.DateField(db_index=True)
+    # ria multiple booking
+    from_dt = models.DateTimeField(blank=True, null=True)
+    to_dt = models.DateTimeField(blank=True, null=True) 
     booking = models.ForeignKey('Booking',related_name="campsites", on_delete=models.CASCADE, null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
 
@@ -918,6 +958,7 @@ class MooringsiteRate(models.Model):
 
     campsite = models.ForeignKey('Mooringsite', on_delete=models.PROTECT, related_name='rates')
     rate = models.ForeignKey('Rate', on_delete=models.PROTECT)
+    booking_period = models.ForeignKey(BookingPeriod, on_delete=models.PROTECT, null=True, blank=True)
     allow_public_holidays = models.BooleanField(default=True)
     date_start = models.DateField(default=date.today)
     date_end = models.DateField(null=True, blank=True)
@@ -1400,6 +1441,7 @@ class MarinaEntryRate(models.Model):
 # =====================================
 class Reason(models.Model):
     text = models.TextField()
+    detailRequired = models.BooleanField(default=False)
     editable = models.BooleanField(default=True,editable=False)
 
     class Meta:
@@ -1429,6 +1471,8 @@ class OpenReason(Reason):
 
 class PriceReason(Reason):
     pass
+class AdmissionsReason(Reason):
+    pass
 class DiscountReason(Reason):
     pass
 
@@ -1439,6 +1483,7 @@ class ViewPriceHistory(models.Model):
     date_start = models.DateField()
     date_end = models.DateField()
     rate_id = models.IntegerField()
+    booking_period_id = models.IntegerField()
     mooring = models.DecimalField(max_digits=8, decimal_places=2)
     adult = models.DecimalField(max_digits=8, decimal_places=2)
     concession = models.DecimalField(max_digits=8, decimal_places=2)
@@ -1484,6 +1529,89 @@ class MooringsiteClassPriceHistory(ViewPriceHistory):
         managed = False
         db_table = 'mooring_mooringsiteclass_pricehistory_v'
         ordering = ['-date_start',]
+
+class AdmissionsBooking(models.Model):
+    BOOKING_TYPE_CHOICES = (
+        (0, 'Reception booking'),
+        (1, 'Internet booking'),
+        (2, 'Black booking'),
+        (3, 'In-complete booking')
+    )
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
+    booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
+    arrivalDate = models.DateField()
+    overnightStay = models.BooleanField(default=False)
+    vesselRegNo = models.CharField(max_length=200, blank=True )
+    noOfAdults = models.IntegerField()
+    noOfConcessions = models.IntegerField()
+    noOfChildren = models.IntegerField()
+    noOfInfants = models.IntegerField()
+    warningReferenceNo = models.CharField(max_length=200, blank=True)
+    totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+
+    @property
+    def confirmation_number(self):
+        return 'AD{}'.format(self.pk)
+
+    @property
+    def total_admissions(self):
+        return self.noOfAdults + self.noOfConcessions + self.noOfChildren + self.noOfInfants
+
+class AdmissionsOracleCode(models.Model):
+    oracle_code = models.CharField(max_length=50, null=True,blank=True)
+
+class AdmissionsBookingInvoice(models.Model):
+    admissions_booking = models.ForeignKey(AdmissionsBooking, related_name='invoices')
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    def __str__(self):
+        return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False
+
+class AdmissionsRate(models.Model):
+    period_start = models.DateField(blank=False, null=False)
+    period_end = models.DateField(blank=True, null=True)
+    adult_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    adult_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    concession_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    concession_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    children_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    children_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    infant_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    infant_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    family_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    family_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    comment = models.CharField(max_length=250, blank=True, null=True)
+    reason = models.ForeignKey('AdmissionsReason')
+
+    def __str__(self):
+        return '{} - {} ({})'.format(self.period_start, self.period_end, self.comment)
+    
+    # Properties
+    # =================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.period_start > today and not self.period_end) or ( self.period_start > today <= self.period_end):
+            return True
+        return False
 
 # LISTENERS
 # ======================================
@@ -1873,6 +2001,60 @@ class MarinaEntryRateListener(object):
     def _post_delete(sender, instance, **kwargs):
         price_before = MarinaEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
         price_after = MarinaEntryRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
+        if price_after:
+            price_after = price_after[0]
+            if price_before:
+                price_before = price_before[0]
+                price_before.period_end =  price_after.period_start - timedelta(days=1)
+                price_before.save()
+        elif price_before:
+            price_before = price_before[0]
+            price_before.period_end = None
+            price_before.save()
+
+
+class AdmissionsRateListener(object):
+    """
+    Event listener for AdmissionsRate
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=AdmissionsRate)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = AdmissionsRate.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
+            price_before = AdmissionsRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+            if price_before:
+                if price_before[0].pk == instance.pk:
+                    price_before = price_before[1]
+                else:
+                    price_before = price_before[0]
+                price_before.period_end = instance.period_start + timedelta(days=-1)
+                price_before.save()
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                price_before = AdmissionsRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+                if price_before:
+                    price_before = price_before[0]
+                    price_before.period_end = instance.period_start 
+                    price_before.save()
+                    instance.period_start = instance.period_start + timedelta(days=1)
+                price_after = AdmissionsRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
+                if price_after:
+                    price_after = price_after[0]
+                    instance.period_end = price_after.period_start - timedelta(days=1)
+            except Exception as e:
+                pass
+
+    @staticmethod
+    @receiver(post_delete, sender=AdmissionsRate)
+    def _post_delete(sender, instance, **kwargs):
+        price_before = AdmissionsRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+        price_after = AdmissionsRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
         if price_after:
             price_after = price_after[0]
             if price_before:

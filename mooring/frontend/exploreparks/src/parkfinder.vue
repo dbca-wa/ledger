@@ -9,10 +9,10 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-6 columns">
                         <label>Arrival <input id="dateArrival" autocomplete="off" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-6 columns">
                         <label>Departure <input id="dateDeparture" autocomplete="off" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
                     <div class="small-12 medium-12 large-4 columns" style='display:none'>
@@ -51,41 +51,57 @@
                                     <input type="number" id="numChildren" name="num_children" v-model="numChildren" min="0" max="16"/></label>
                                 </div>
                             </div>
-                       </div>
-                       </div>
-                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Vessel Size (meters) <input id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
-                      </div>
-                    <div class="small-12 medium-12 large-12 columns">
-                        <label><input type="checkbox" v-model="bookableOnly"/> Show bookable moorings only</label>
-                    </div>
-                </div>
-                <div class="row"><div class="small-12 columns">
-                    <hr/>
-                </div>
+                        </div>
+                   </div>
                 </div>
                 <div class="row">
-                    <div class="small-12 medium-12 large-12 columns">
-                        <label>Mooring</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="rental-available" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Rental (available)</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="rental-notavailable" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Rental (not available)</label>
-                    </div>
-                    <div class="small-12 medium-12 large-4 columns">
-                        <label><input type="radio" name="gear_type" value="public-notbookable" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Public (not bookable)</label>
-                    </div>
-                </div>
-                <div class="row"><div class="small-12 columns">
+                         <div class="small-12 medium-12 large-6 columns">
+                           <label>Vessel Registration  <input id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" /></label>
+                         </div>
+                         <div class="small-12 medium-12 large-6 columns">
+                            <label>Vessel Size (meters) <input id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
+                         </div>
+                         <div class="small-12 medium-12 large-6 columns">
+                            <label>Vessel Draft (meters) <input id="vesselDraft" name="vessel_draft" type="number" placeholder="10" /></label>
+                         </div>
+                         <div class="small-12 medium-12 large-6 columns">
+                            <label>Vessel Beams (meters)  <input id="vesselDraft" name="vessel_beams" type="number" placeholder="3" /></label>
+                         </div>
+                         <div class="small-12 medium-12 large-6 columns">
+                            <label>Vessel Weight (tons)  <input id="vesselWeight" name="vessel_weight" type="number" placeholder="2" /></label>
+                         </div>
+                 </div>
+                 <div class="row">
+                       <div class="small-12 medium-12 large-12 columns">
+                            <label><input type="checkbox" v-model="bookableOnly"/> Show bookable moorings only</label>
+                       </div>
+                 </div>
+                 <div class="row">
+                     <div class="small-12 columns">
+                        <hr/>
+                     </div>
+                 </div>
+                 <div class="row">
+                      <div class="small-12 medium-12 large-12 columns">
+                           <label>Mooring</label>
+                      </div>
+                      <div class="small-12 medium-12 large-4 columns">
+                           <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
+                      </div>
+                      <div class="small-12 medium-12 large-4 columns">
+                          <label><input type="radio" name="gear_type" value="rental-available" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Rental (available)</label>
+                      </div>
+                      <div class="small-12 medium-12 large-4 columns">
+                          <label><input type="radio" name="gear_type" value="rental-notavailable" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Rental (not available)</label>
+                      </div>
+                      <div class="small-12 medium-12 large-4 columns">
+                          <label><input type="radio" name="gear_type" value="public-notbookable" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Public (not bookable)</label>
+                      </div>
+                 </div>
+                 <div class="row"><div class="small-12 columns">
                     <hr class="search"/>
-                </div>
-                </div>
-                <div class="row" style='display:none'>
+                 </div>
+                 <div class="row" style='display:none'>
                     <div class="small-12 medium-12 large-12 columns">
                         <label>Select features</label>
                     </div>
@@ -119,7 +135,10 @@
                 </div>
 -->
             </div>
+            </div>
+<!-- here -->
             <div class="small-12 medium-9 large-6 columns">
+                <div class="alert alert-warning" style='text-align: center' role="alert"> <strong style='font-size: 16px;' ></span><A HREF='/admissions/'>Click here for paying admission fees</A></strong><br><span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> (Only if you do not book a mooring) <span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> </div>
                 <div id="map"></div>
                 <div id="mapPopup" class="mapPopup" v-cloak>
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
@@ -154,7 +173,7 @@
                                 <p ><i><small>Max Stay Period: {{ f.max_advance_booking }} day/s </small></i></p>
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
                                  
-                                <a v-if="f.mooring_type == 0 && vesselSize > 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+                                <a v-if="f.mooring_type == 0 && vesselSize > 0" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
                                 <a v-else class="button" v-on:click="BookNow()">Book now</a> 
                             </div>
                         </div>
@@ -663,7 +682,7 @@ export default {
                         }
                         $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                         $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+feature.getId()+'&'+vm.bookingParam);
                         if (feature.get('campground_type') == 0) {
                             $("#mapPopupBook").show();
                         } else {
@@ -719,7 +738,7 @@ export default {
                 }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
                 $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+feature.getId()+'&'+vm.bookingParam);
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();
                 } else {
@@ -1935,7 +1954,7 @@ export default {
 		   //  $("#max_stay_period").html(properties.props.max_advance_booking);
                    var vessel_size = $('#vesselSize').val();
                    if (vessel_size > 0 ) {
-                       $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                       $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&'+vm.bookingParam);
                        $("#mapPopupBook").attr('target','_blank');
                    } else {
 		       $("#mapPopupBook").attr('href','javascript:void(0);');
@@ -1964,7 +1983,7 @@ export default {
                         $("#mapPopupImage").hide();
                         var vessel_size = $('#vesselSize').val();
                         if (vessel_size > 0 ) {
-                               $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                               $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&'+vm.bookingParam);
                         } else {
 				 $("#mapPopupBook").attr('href','javascript:void;');
 			}

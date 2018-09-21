@@ -1,6 +1,8 @@
 import traceback
 import base64
 import geojson
+import decimal
+import logging
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -53,10 +55,13 @@ from mooring.models import (MooringArea,
                                 ClosureReason,
                                 OpenReason,
                                 PriceReason,
+                                AdmissionsReason,
                                 MaximumStayReason,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
-                                MooringAreaGroup
+                                MooringAreaGroup,
+                                AdmissionsBooking,
+                                AdmissionsRate
                                 )
 
 from mooring.serialisers import (  MooringsiteBookingSerialiser,
@@ -92,6 +97,7 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     ClosureReasonSerializer,
                                     OpenReasonSerializer,
                                     PriceReasonSerializer,
+                                    AdmissionsReasonSerializer,
                                     MaximumStayReasonSerializer,
                                     BulkPricingSerializer,
                                     UsersSerializer,
@@ -107,7 +113,9 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     PhoneSerializer,
                                     OracleSerializer,
                                     BookingHistorySerializer,
-                                    MooringAreaGroupSerializer
+                                    MooringAreaGroupSerializer,
+                                    AdmissionsBookingSerializer,
+                                    AdmissionsRateSerializer
                                     )
 from mooring.helpers import is_officer, is_customer
 from mooring import reports 
@@ -115,7 +123,8 @@ from mooring import pdf
 from mooring.perms import PaymentCallbackPermission
 from mooring import emails
 from mooring import exceptions
-
+from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import Distance  
 
 # API Views
 class MooringsiteBookingViewSet(viewsets.ModelViewSet):
@@ -1030,7 +1039,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = MooringAreaSerializer
 
     def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
-        """Fetch full campsite availability for a campground."""
+        """Fetch mooring availability."""
         # convert GET parameters to objects
         ground = self.get_object()
         # check if the user has an ongoing booking
@@ -1248,13 +1257,16 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                 if v[1].pk not in result['classes']:
                     result['classes'][v[1].pk] = v[1].name
 
-
+#            print "AVAIL BOOKING MAP" 
+#            print bookings_map
+              
             # update results based on availability map
             for s in sites_qs:
                 # if there's not a free run of slots
                 if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
                     # update the days that are non-open
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                     
                         bookings_map[s.name]['availability'][offset][0] = False
                         if stat == 'closed':
                             bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
@@ -1263,11 +1275,296 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         else:
                             bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
 
-                        bookings_map[s.name]['price'] = False
+                        bookings_map[s.id]['price'] = False
 
             return Response(result)
 
+
+
+class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
+    queryset = MooringArea.objects.all()
+    serializer_class = MooringAreaSerializer
+
+    def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
+        print ("BaseAvailabilityViewSet2-IN")
+        """Fetch full campsite availability for a campground."""
+        # convert GET parameters to objects
+        ground = self.get_object()
+        # check if the user has an ongoing booking
+        ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        # Validate parameters
+        data = {
+            "arrival" : request.GET.get('arrival'),
+            "departure" : request.GET.get('departure'),
+            "num_adult" : request.GET.get('num_adult', 0),
+            "num_concession" : request.GET.get('num_concession', 0),
+            "num_child" : request.GET.get('num_child', 0),
+            "num_infant" : request.GET.get('num_infant', 0),
+            "gear_type" : request.GET.get('gear_type', 'all'),
+            "vessel_size" : request.GET.get('vessel_size', 0)
+        }
+        serializer = MooringAreaMooringsiteFilterSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        start_date = serializer.validated_data['arrival']
+        end_date = serializer.validated_data['departure']
+        num_adult = serializer.validated_data['num_adult']
+        num_concession = serializer.validated_data['num_concession']
+        num_child = serializer.validated_data['num_child']
+        num_infant = serializer.validated_data['num_infant']
+        gear_type = serializer.validated_data['gear_type']
+        vessel_size = serializer.validated_data['vessel_size']
+
+        # if campground doesn't support online bookings, abort!
+        if ground.mooring_type != 0:
+            return Response({'error': 'Mooring doesn\'t support online bookings'}, status=400)
+
+        if ground.vessel_size_limit < vessel_size:
+             return Response({'name':'   ', 'error': 'Vessel size is too large for mooring', 'error_type': 'vessel_error', 'vessel_size': ground.vessel_size_limit}, status=200 )
+
+
+        #if not ground._is_open(start_date):
+        #    return Response({'closed': 'MooringArea is closed for your selected dates'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # get a length of the stay (in days), capped if necessary to the request maximum
+        today = date.today()
+        length = max(0, (end_date-start_date).days)
+        max_advance_booking_days = max(0, (start_date-today).days)
+        #if length > settings.PS_MAX_BOOKING_LENGTH:
+        #    length = settings.PS_MAX_BOOKING_LENGTH
+        #    end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
+        if max_advance_booking_days > ground.max_advance_booking:
+           return Response({'name':'   ', 'error': 'Max advanced booking limit is '+str(ground.max_advance_booking)+' day/s. You can not book longer than this period.', 'error_type': 'stay_error', 'max_advance_booking': ground.max_advance_booking, 'days': length, 'max_advance_booking_days': max_advance_booking_days }, status=200 )
+
+
+        # fetch all the campsites and applicable rates for the campground
+        context = {}
+        if gear_type != 'all':
+            context[gear_type] = True
+#        sites_qs = Mooringsite.objects.filter(mooringarea=ground).filter(**context)
+        radius = int(100)
+#       sites_qs = Mooringsite.objects.all().filter(**context)
+        sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
+#        print "sites_qs"
+#        print sites_qs
+        # fetch rate map
+        rates = {
+            siteid: {
+                #date: num_adult*info['adult']+num_concession*info['concession']+num_child*info['child']+num_infant*info['infant']
+#                 date: info['mooring']
+                 date: info
+                 #booking_period: info['booking_period'],
+                for date, info in dates.items()
+            } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
+        }
+
+#        print "RATES TOP"
+#        print rates
+#        print utils.get_visit_rates(sites_qs, start_date, end_date).items()
+#        print "RATE BOTTOM"
+  
+        #for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items():
+        #     print "DATESSS"
+        #     print dates 
+        # fetch availability map
+        availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
+        # create our result object, which will be returned as JSON
+        result = {
+            'id': ground.id,
+            'name': ground.name,
+            'long_description': ground.long_description,
+            'map': ground.mooring_map.url if ground.mooring_map else None,
+            'ongoing_booking': True if ongoing_booking else False,
+            'ongoing_booking_id': ongoing_booking.id if ongoing_booking else None,
+            'arrival': start_date.strftime('%Y/%m/%d'),
+            'days': length,
+            'adults': 1,
+            'children': 0,
+            'maxAdults': 30,
+            'maxChildren': 30,
+            'sites': [],
+            'classes': {},
+            'vessel_size' : ground.vessel_size_limit,
+            'max_advance_booking': ground.max_advance_booking
+        }
+
+        # group results by campsite class
+        if ground.site_type in (1, 2):
+            # from our campsite queryset, generate a distinct list of campsite classes
+#            classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name', 'tent', 'campervan', 'caravan')]
+            classes = [x for x in sites_qs.distinct('mooringsite_class__name').order_by('mooringsite_class__name').values_list('pk', 'mooringsite_class', 'mooringsite_class__name', 'tent', 'campervan', 'caravan')]
+
+            classes_map = {}
+            bookings_map = {}
+
+            # create a rough mapping of rates to campsite classes
+            # (it doesn't matter if this isn't a perfect match, the correct
+            # pricing will show up on the booking page)
+            rates_map = {}
+
+            class_sites_map = {}
+            for s in sites_qs:
+                if s.campsite_class.pk not in class_sites_map:
+                    class_sites_map[s.campsite_class.pk] = set()
+                    rates_map[s.campsite_class.pk] = rates[s.pk]
+
+                class_sites_map[s.campsite_class.pk].add(s.pk)
+#            print "RATES_MAP"
+#            print rates_map
+            # make an entry under sites for each campsite class
+            for c in classes:
+                rate = rates_map[c[1]]
+                site = {
+                    'name': c[2],
+                    'id': None,
+                    'type': c[1],
+                    'price': '${}'.format(sum(rate.values())) if not show_all else False,
+                    'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
+                    'availability2' : [],
+                    'breakdown': OrderedDict(),
+                    'gearType': {
+                        'tent': c[3],
+                        'campervan': c[4],
+                        'caravan': c[5]
+                    }
+                }
+                result['sites'].append(site)
+                classes_map[c[1]] = site
+
+            # make a map of class IDs to site IDs
+            for s in sites_qs:
+                rate = rates_map[s.campsite_class.pk]
+                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)]] for i in range(length)]
+
+            # store number of campsites in each class
+            class_sizes = {k: len(v) for k, v in class_sites_map.items()}
+
+            # update results based on availability map
+            for s in sites_qs:
+                # get campsite class key
+                key = s.campsite_class.pk
+                # if there's not a free run of slots
+                if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
+                    # clear the campsite from the campsite class map
+                    if s.pk in class_sites_map[key]:
+                        class_sites_map[key].remove(s.pk)
+
+                    # update the days that are non-open
+                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                        # update the per-site availability
+                        classes_map[key]['breakdown'][s.name][offset][0] = False
+                        classes_map[key]['breakdown'][s.name][offset][1] = 'Booked' if (stat == 'booked') else 'Unavailable'
+
+                        # update the class availability status
+                        book_offset = 0 if (stat == 'booked') else 1
+                        classes_map[key]['availability'][offset][3][book_offset] += 1
+                        if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Fully Booked'
+                        elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Unavailable'
+                        elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
+                            classes_map[key]['availability'][offset][1] = 'Partially Booked'
+                        else:
+                            classes_map[key]['availability'][offset][1] = 'Partially Unavailable'
+
+                        # tentatively flag campsite class as unavailable
+                        classes_map[key]['availability'][offset][0] = False
+                        classes_map[key]['price'] = False
+            # convert breakdowns to a flat list
+            for klass in classes_map.values():
+                klass['breakdown'] = [{'name': k, 'availability': v} for k, v in klass['breakdown'].items()]
+
+            # any campsites remaining in the class sites map have zero bookings!
+            # check if there's any left for each class, and if so return that as the target
+            for k, v in class_sites_map.items():
+                if v:
+                    rate = rates_map[k]
+                    # if the number of sites is less than the warning limit, add a notification
+                    if len(v) <= settings.PS_CAMPSITE_COUNT_WARNING:
+                        classes_map[k].update({
+                            'warning': 'Only {} left!'.format(len(v))
+                        })
+
+                    classes_map[k].update({
+                        'id': v.pop(),
+                        'price': '${}'.format(sum(rate.values())),
+                        'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
+                        'breakdown': []
+                    })
+
+
+            return Response(result)
+
+
+        # don't group by class, list individual sites
+        else:
+            sites_qs = sites_qs.order_by('name')
+            print "sites_qs"
+            print sites_qs
+            # from our campsite queryset, generate a digest for each site
+            sites_map = OrderedDict([(s, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
+#            print "rates[s.pk]"
+#            print rates[s.pk]
+
+            #print "SSSSSSSSSSSSSS"
+            #print sites_map
+            bookings_map = {}
+            # make an entry under sites for each site
+            for k, v in sites_map.items():
+#               print "SITR$EESS"
+                #print "V 2"
+                #print v[2]
+                #print [v[2][start_date+timedelta(days=i)]['mooring'] for i in range(length)]
+                site = {
+                    'name': k.name,
+                    'mooring_class' : k.mooringarea.mooring_class,
+                    'id': v[0],
+                    'type': ground.mooring_type,
+                    'class': v[1].pk,
+                    'price' : '0.00',
+#                    'price': '${}'.format(sum(v[2].values())) if not show_all else False,
+#                    'price': '${}'.format(v[2][start_date+timedelta(days=i)]['mooring'] for i in range(length)) if not show_all else False,
+                    'availability': [[True, v[2][start_date+timedelta(days=i)], v[2][start_date+timedelta(days=i)] ] for i in range(length)],
+                    'gearType': {
+                        'tent': v[3],
+                        'campervan': v[4],
+                        'caravan': v[5]
+                    }
+                }
+                result['sites'].append(site)
+                bookings_map[k.id] = site
+                if v[1].pk not in result['classes']:
+                    result['classes'][v[1].pk] = v[1].name
+            # update results based on availability map
+#            print "BOOKING MAP"
+#            print bookings_map
+
+
+#            for s in sites_qs:
+#                if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
+#                    # update the days that are non-open
+#                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+#                        bookings_map[s.id]['availability'][offset][0] = False
+#                        if stat == 'closed':
+#                            bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
+#                        elif stat == 'booked':
+#                            bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
+#                        else:
+#                            bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
+#
+#                        bookings_map[s.id]['price'] = False
+
+            return Response(result)
+
+
+
+
+
 class AvailabilityViewSet(BaseAvailabilityViewSet):
+    permission_classes = []
+
+class AvailabilityViewSet2(BaseAvailabilityViewSet2):
+    print ("MADE IT AvailabilityViewSet2")
     permission_classes = []
 
 class AvailabilityRatisViewSet(BaseAvailabilityViewSet):
@@ -1277,6 +1574,87 @@ class AvailabilityRatisViewSet(BaseAvailabilityViewSet):
 class AvailabilityAdminViewSet(BaseAvailabilityViewSet):
     def retrieve(self, request, *args, **kwargs):
         return super(AvailabilityAdminViewSet, self).retrieve(request, *args, show_all=True, **kwargs)
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def create_admissions_booking(request, *args, **kwargs):
+    data = {
+        'arrivalDate' : request.POST.get('arrival'),
+        'vesselRegNo': request.POST.get('vesselReg'),
+        'noOfAdults': request.POST.get('noOfAdults', 0),
+        'noOfConcessions': request.POST.get('noOfConcessions', 0),
+        'noOfChildren': request.POST.get('noOfChildren', 0),
+        'noOfInfants': request.POST.get('noOfInfants', 0),
+        'warningReferenceNo': request.POST.get('warningRefNo'),
+    }
+    
+    if(request.POST.get('overnightStay') == 'yes'):
+        data['overnightStay'] = 'True'
+    else:
+        data['overnightStay'] = 'False'
+    dateAsString = data['arrivalDate']
+    data['arrivalDate'] = datetime.strptime(dateAsString, "%Y/%m/%d").date()
+
+    serializer = AdmissionsBookingSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+
+    admissionsBooking = AdmissionsBooking.objects.create(
+        arrivalDate = serializer.validated_data['arrivalDate'],
+        overnightStay = serializer.validated_data['overnightStay'],
+        vesselRegNo = serializer.validated_data['vesselRegNo'],
+        noOfAdults = serializer.validated_data['noOfAdults'],
+        noOfConcessions = serializer.validated_data['noOfConcessions'],
+        noOfChildren = serializer.validated_data['noOfChildren'],
+        noOfInfants = serializer.validated_data['noOfInfants'],
+        warningReferenceNo = serializer.validated_data['warningReferenceNo'],
+        booking_type = 3
+    )
+
+    #Lookup price and set lines.
+    try:
+        lines = utils.admissions_price_or_lineitems(request, admissionsBooking)
+    except Exception as e:
+        error = (None, '{} Please contact Marine Park and Visitors services with this error message and the time of the request.'.format(str(e)))
+        #handle
+    total = sum([decimal.Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
+    
+    #Lookup customer
+    if request.user.is_anonymous() or request.user.is_staff:
+        try:
+            customer = EmailUser.objects.get(email=request.POST.get('email'))
+        except EmailUser.DoesNotExist:
+            customer = EmailUser.objects.create(
+                    email=request.POST.get('email'),
+                    first_name=request.POST.get('givenName'),
+                    last_name=request.POST.get('lastName')
+            )
+    else:
+        customer = request.user 
+    
+
+    admissionsBooking.customer = customer
+    admissionsBooking.totalCost = total
+    admissionsBooking.save()
+
+    request.session['ad_booking'] = admissionsBooking.pk
+    logger = logging.getLogger('booking_checkout')
+    logger.info('{} built admissions booking {} and handing over to payment gateway'.format('User {} with id {}'.format(admissionsBooking.customer.get_full_name(),admissionsBooking.customer.id) if admissionsBooking.customer else 'An anonymous user',admissionsBooking.id))
+
+    # generate invoice
+    invoice = u"Invoice for {} on {}".format(
+            u'{} {}'.format(admissionsBooking.customer.first_name, admissionsBooking.customer.last_name),
+            admissionsBooking.arrivalDate.strftime('%d-%m-%Y')
+    )
+    #Not strictly needed.
+    #logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(admissionsBooking.customer.get_full_name(),admissionsBooking.customer.id) if admissionsBooking.customer else 'An anonymous user',admissionsBooking.id))
+    result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice)
+    print(result)
+    if(result):
+        return result
+    else:
+        return HttpResponse(geojason.dumps({
+            'status': 'failure',
+        }), content_type='application/json')
 
 @csrf_exempt
 @require_http_methods(['POST'])
@@ -1294,7 +1672,6 @@ def create_booking(request, *args, **kwargs):
         'campsite': request.POST.get('campsite', 0),
         'vessel_size' : request.POST.get('vessel_size', 0)
     }
-
     serializer = MooringsiteBookingSerializer(data=data)
     serializer.is_valid(raise_exception=True)
 
@@ -1370,7 +1747,32 @@ def create_booking(request, *args, **kwargs):
         'pk': booking.pk
     }), content_type='application/json')
 
+@require_http_methods(['GET'])
+def get_admissions_confirmation(request, *args, **kwargs):
+    # fetch booking for ID
+    print "get_confirmation"
+    booking_id = kwargs.get('booking_id', None)
+    if (booking_id is None):
+        return HttpResponse('Booking ID not specified', status=400)
+    
+    try:
+        booking = AdmissionsBooking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return HttpResponse('Booking unavailable', status=403)
 
+    # check permissions
+    if not ((request.user == booking.customer) or is_officer(request.user) or (booking.id == request.session.get('ad_last_booking', None))):
+        return HttpResponse('Booking unavailable', status=403)
+
+    # check payment status
+    if (not is_officer(request.user)) and (not booking.paid):
+        return HttpResponse('Booking unavailable', status=403)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="confirmation-AD{}.pdf"'.format(booking_id)
+
+    pdf.create_admissions_confirmation(response, booking)
+    return response
 
 @require_http_methods(['GET'])
 def get_confirmation(request, *args, **kwargs):
@@ -2206,6 +2608,10 @@ class PriceReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PriceReason.objects.all()
     serializer_class = PriceReasonSerializer
 
+class AdmissionsReasonViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AdmissionsReason.objects.all()
+    serializer_class = AdmissionsReasonSerializer
+
 class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
@@ -2343,6 +2749,40 @@ class BulkPricingView(generics.CreateAPIView):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
 
+class AdmissionsRatesViewSet(viewsets.ModelViewSet):
+    queryset = AdmissionsRate.objects.all()
+    renderer_classes = (JSONRenderer,)
+    serializer_class = AdmissionsRateSerializer;
+
+    @list_route(methods=['get'])
+    def price_history(self, request, format='json', pk=None):
+        http_status = status.HTTP_200_OK
+        try:
+            price_history = AdmissionsRate.objects.all().order_by('-period_start')
+            serializer = AdmissionsRateSerializer(price_history,many=True)
+            res = serializer.data
+        except Exception as e:
+            res ={
+                "Error": str(e)
+            }
+
+        return Response(res,status=http_status)
+
+    @list_route(methods=['post'],)
+    def add_price(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            serializer =  AdmissionsRateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            res = serializer.data
+            return Response(res,status=http_status)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+
 class BookingRefundsReportView(views.APIView):
     renderer_classes = (JSONRenderer,)
 
@@ -2431,9 +2871,9 @@ class GetProfile(views.APIView):
     def get(self, request, format=None):
         # Check if the user has any address and set to residential address
         user = request.user
-        if not user.residential_address:
-            user.residential_address = user.profile_addresses.first() if user.profile_addresses.all() else None
-            user.save()
+        # if not user.residential_address:
+        #     user.residential_address = user.profile_addresses.first() if user.profile_addresses.all() else None
+        #     user.save()
         serializer  = UserSerializer(request.user)
         return Response(serializer.data)
 

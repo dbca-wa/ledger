@@ -1,0 +1,21 @@
+{%  extends 'mooring/email/base_email.txt' %}
+
+{% block greetings %}
+{{admissionsBooking.customer.first_name}} {{admissionsBooking.customer.last_name}},
+{% endblock %}
+
+{% block content %}
+
+Print or save this confirmation for presentation on arrival and at any time during your stay.
+
+Arrival: {{admissionsBooking.arrivalDate|date:"d/m/Y"}}
+
+Before you go, check:
+
+- Your contact details are correct [link to on screen details] 
+- The Bureau of Meteorology (http://www.bom.gov.au) for weather forecasts and warnings 
+- Emergency WA (https://www.emergency.wa.gov.au) for warnings and incidents 
+- The ABC (http://www.abc.net.au) radio frequency for the area you are visiting (ABC local radio broadcasts emergency information)
+
+View my Park Stay WA bookings {{my_bookings}}
+{% endblock %}
