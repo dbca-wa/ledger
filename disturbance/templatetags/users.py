@@ -12,8 +12,14 @@ register = Library()
 
 
 @register.simple_tag(takes_context=True)
+def is_disturbance_admin(context):
+    # checks if user is an AdminUser
+    request = context['request']
+    return disturbance_helpers.is_disturbance_admin(request)
+
+@register.simple_tag(takes_context=True)
 def is_internal(context):
-    # checks if user is (departmentUser or Officer) and logged in via single sign-on
+    # checks if user is a departmentuser and logged in via single sign-on
     request = context['request']
     return disturbance_helpers.is_internal(request)
 
