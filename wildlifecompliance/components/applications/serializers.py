@@ -12,7 +12,8 @@ from wildlifecompliance.components.applications.models import (
                                     ApplicationDeclinedDetails,
                                     Assessment,
                                     ApplicationGroupType,
-                                    AmendmentRequest
+                                    AmendmentRequest,
+                                    ApplicationDecisionPropose
                                 )
 from wildlifecompliance.components.organisations.models import (
                                 Organisation
@@ -492,6 +493,19 @@ class ApplicationStandardConditionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApplicationStandardCondition
         fields = ('id','code','text')
+
+class ApplicationProposedIssueSerializer(serializers.ModelSerializer):
+    action = serializers.SerializerMethodField(read_only=True)
+    
+    class Meta:
+        model = ApplicationDecisionPropose
+        fields = '__all__'
+
+    def get_action(self,obj):
+        return obj.get_action_display()
+
+    
+
 
 class ProposedLicenceSerializer(serializers.Serializer):
     expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'])

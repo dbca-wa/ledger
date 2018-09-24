@@ -1195,7 +1195,7 @@ class ApplicationDecisionPropose(models.Model):
     ACTION_CHOICES = (('default','Default'),('propose_decline', 'Propose Decline'), ('declined', 'Declined'),
                       ('propose_issue', 'Propose Issue'),('issued','Issued'))
     action = models.CharField('Action', max_length=20, choices=ACTION_CHOICES, default=ACTION_CHOICES[0][0])
-    application = models.OneToOneField(Application)
+    application = models.ForeignKey(Application,related_name='decisions')
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
@@ -1207,7 +1207,7 @@ class ApplicationDecisionPropose(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
-        unique_together = (('application','licence_activity_type'),)
+        
 
 
 @python_2_unicode_compatible

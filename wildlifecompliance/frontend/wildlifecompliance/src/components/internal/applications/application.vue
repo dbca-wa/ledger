@@ -126,6 +126,21 @@
                                                     <button style="width:80%;" class="btn btn-info top-buffer-s" @click.prevent="toggleConditions()">Propose Conditions</button>
                                                 </div>
                                             </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="">Return to Conditions</button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="">Decline</button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="issueLicence()">Issue</button>
+                                                </div>
+                                            </div>
                                         </template>
 
                                         <template v-if="isSendingToAssessor">
@@ -560,6 +575,7 @@
         <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
         <SendToAssessor ref="send_to_assessor" :application_id="application.id" ></SendToAssessor>
         <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"/>
+        <IssueLicence ref="issue_licence" :application_id="application" :licence_activity_type_tab="selected_assessment_tab" @refreshFromResponse="refreshFromResponse"/>
     </div>
 </template>
 <script>
@@ -572,6 +588,7 @@ import datatable from '@vue-utils/datatable.vue'
 import Conditions from './application_conditions.vue'
 import OfficerConditions from './application_officer_conditions.vue'
 import ProposedLicence from './proposed_issuance.vue'
+import IssueLicence from './application_issuance.vue'
 import LicenceScreen from './application_licence.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
 import MoreReferrals from '@common-utils/more_referrals.vue'
@@ -673,6 +690,7 @@ export default {
         Conditions,
         OfficerConditions,
         ProposedLicence,
+        IssueLicence,
         LicenceScreen,
         CommsLogs,
         MoreReferrals
@@ -876,10 +894,11 @@ export default {
             // this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
             this.$refs.proposed_licence.isModalOpen = true;
         },
-        issueApplication:function(){
-            this.$refs.proposed_licence.licence = helpers.copyObject(this.application.proposed_issuance_licence);
-            this.$refs.proposed_licence.state = 'final_licence';
-            this.$refs.proposed_licence.isModalOpen = true;
+        issueLicence:function(){
+            // this.$refs.proposed_licence.licence = helpers.copyObject(this.application.proposed_issuance_licence);
+            // this.$refs.proposed_licence.state = 'final_licence';
+            console.log('Inside issue licence')
+            this.$refs.issue_licence.isModalOpen = true;
         },
         declineApplication:function(){
             this.$refs.proposed_decline.decline = helpers.copyObject(this.application.applicationdeclineddetails);
