@@ -8,6 +8,7 @@ SUPERVISOR_STOP_CMD = env('SUPERVISOR_STOP_CMD')
 SYSTEM_MAINTENANCE_WARNING = env('SYSTEM_MAINTENANCE_WARNING', 24) # hours
 
 INSTALLED_APPS += [
+    'reversion_compare',
     'bootstrap3',
     'disturbance',
     'disturbance.components.main',
@@ -23,6 +24,8 @@ INSTALLED_APPS += [
     'reset_migrations',
     'ckeditor',
 ]
+
+ADD_REVERSION_ADMIN=True
 
 # maximum number of days allowed for a booking
 WSGI_APPLICATION = 'disturbance.wsgi.application'
@@ -54,7 +57,8 @@ REST_FRAMEWORK = {
 
 
 MIDDLEWARE_CLASSES += [
-    'disturbance.middleware.FirstTimeNagScreenMiddleware'
+    'disturbance.middleware.FirstTimeNagScreenMiddleware',
+    'reversion.middleware.RevisionMiddleware'
 ]
 
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'disturbance', 'templates'))

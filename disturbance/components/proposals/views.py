@@ -24,3 +24,12 @@ class ProposalView(TemplateView):
         except:
             traceback.print_exc
             return JsonResponse({error:"something went wrong"},safe=False,status=400)
+
+
+from reversion_compare.views import HistoryCompareDetailView
+class ProposalHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare
+    """
+    model = Proposal
+    template_name = 'disturbance/reversion_history.html'

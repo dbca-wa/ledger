@@ -130,7 +130,7 @@ class Compliance(models.Model):
                 self.lodgement_date = timezone.now()
                 self.save()
                 self.log_user_action(ComplianceUserAction.ACTION_SUBMIT_REQUEST.format(self.id),request)
-                send_external_submit_email_notification(request,self) 
+                send_external_submit_email_notification(request,self)
                 send_submit_email_notification(request,self)
             except:
                 raise
@@ -285,7 +285,7 @@ class ComplianceAmendmentRequest(CompRequest):
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     # reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
     reason = models.ForeignKey(ComplianceAmendmentReason, blank=True, null=True)
-    
+
     class Meta:
         app_label = 'disturbance'
 
@@ -316,3 +316,8 @@ class ComplianceDocument(Document):
 
     class Meta:
         app_label = 'disturbance'
+
+
+import reversion
+reversion.register(Compliance, follow=[])
+
