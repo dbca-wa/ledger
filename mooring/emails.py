@@ -95,7 +95,7 @@ def send_booking_confirmation(booking,request):
 
 def send_booking_cancelation(booking,request):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Canceled:your booking REF {} at {},{}.'.format(booking.confirmation_number,booking.mooringarea.name,booking.mooringarea.park.name)
+    email_obj.subject = 'Cancelled: your booking {} at {},{}.'.format(booking.confirmation_number,booking.mooringarea.name,booking.mooringarea.park.name)
     email_obj.html_template = 'mooring/email/cancel.html'
     email_obj.txt_template = 'mooring/email/cancel.txt'
 
@@ -104,7 +104,7 @@ def send_booking_cancelation(booking,request):
     bcc = [default_campground_email]
 
     campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
-    my_bookings_url = '{}/mybookings/'.format(settings.PARKSTAY_EXTERNAL_URL)
+    my_bookings_url = '{}mybookings/'.format(settings.PARKSTAY_EXTERNAL_URL)
     context = {
         'booking': booking,
         'my_bookings': my_bookings_url,
