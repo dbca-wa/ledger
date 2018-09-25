@@ -1662,10 +1662,10 @@ class HelpPage(models.Model):
 import reversion
 reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals',])
 reversion.register(ProposalType)
-reversion.register(ProposalRequirement)    # related_name=requirements
+reversion.register(ProposalRequirement)            # related_name=requirements
 reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
 reversion.register(ProposalDocument)               # related_name=documents
-reversion.register(Document)               # related_name=documents
+reversion.register(Document)                       # related_name=documents
 reversion.register(ProposalLogEntry)
 reversion.register(ProposalUserAction)
 reversion.register(ComplianceRequest)

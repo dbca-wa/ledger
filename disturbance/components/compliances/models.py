@@ -319,5 +319,12 @@ class ComplianceDocument(Document):
 
 
 import reversion
-reversion.register(Compliance, follow=[])
+reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs'])
+reversion.register(ComplianceDocument)
+reversion.register(ComplianceUserAction)
+reversion.register(ComplianceLogEntry)
+reversion.register(ComplianceLogDocument)
+reversion.register(CompRequest)
+reversion.register(ComplianceAmendmentReason)
+reversion.register(ComplianceAmendmentRequest)
 

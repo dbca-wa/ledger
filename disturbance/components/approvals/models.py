@@ -399,3 +399,8 @@ def delete_documents(sender, instance, *args, **kwargs):
             document.delete()
         except:
             pass
+
+import reversion
+reversion.register(Approval, follow=['documents'])
+reversion.register(ApprovalDocument)
+
