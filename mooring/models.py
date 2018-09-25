@@ -732,24 +732,24 @@ class MooringsiteBookingRange(BookingRange):
     # Methods
     # =====================================
     def _is_same(self,other):
-        if not isinstance(other, MooringsiteBookingRange) and self.id != other.id:
-            return False
-        if self.range_start == other.range_start and self.range_end == other.range_end:
-            return True
+#        if not isinstance(other, MooringsiteBookingRange) and self.id != other.id:
+#            return False
+#        if self.range_start == other.range_start and self.range_end == other.range_end:
+#            return True
         return False
 
-    def clean(self, *args, **kwargs):
-        original = None
-        # Preventing ranges within other ranges
-        within = MooringsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
-        if within:
-            raise BookingRangeWithinException('This Booking Range is within the range of another one')
-        if self.pk:
-            original = MooringsiteBookingRange.objects.get(pk=self.pk)
-            if not original.editable:
-                raise ValidationError('This Booking Range is not editable')
-            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
-                raise ValidationError('The start date can\'t be in the past')
+#    def clean(self, *args, **kwargs):
+#        original = None
+#        # Preventing ranges within other ranges
+#        within = MooringsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
+#        if within:
+#            raise BookingRangeWithinException('This Booking Range is within the range of another one')
+#        if self.pk:
+#            original = MooringsiteBookingRange.objects.get(pk=self.pk)
+#            if not original.editable:
+#                raise ValidationError('This Booking Range is not editable')
+#            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
+#                raise ValidationError('The start date can\'t be in the past')
 
     def __str__(self):
         return '{}: {} {} - {}'.format(self.campsite, self.status, self.range_start, self.range_end)
@@ -914,8 +914,8 @@ class MooringsiteBooking(models.Model):
     def __str__(self):
         return '{} - {}'.format(self.campsite, self.date)
 
-    class Meta:
-        unique_together = (('campsite', 'date'),)
+#    class Meta:
+#        unique_together = (('campsite', 'date'),)
 
 
 class Rate(models.Model):

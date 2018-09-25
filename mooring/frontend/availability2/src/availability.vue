@@ -152,7 +152,6 @@
                 </label>
             </div>           
         </div>
-
         <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
              <div v-if="mooring_vessel_size > vesselSize" class="small-12 medium-12 large-12">
             <table class="hover">
@@ -163,7 +162,7 @@
                         <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
                     </tr>
                 </thead>
-                <tbody><template v-for="site in sites" v-if="site.gearType[gearType]">
+                <tbody><template v-for="site in sites" >
                     <tr>
                         <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
@@ -176,7 +175,16 @@
                                 <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
                             </template>
                         </td>
-                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" ><div v-for="bp in day[1].booking_period"><button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px;' ><small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 0">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 1">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 2">${{ bp.large_price }}</span></small></button></div></td>
+                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >
+                                     <div v-for="bp in day[1].booking_period">
+                                        <button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px;' v-if="bp.status == 'open'"  @click="addBooking(site.id,bp.id,bp.date)" >
+                                            <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 0">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 1">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 2">${{ bp.large_price }}</span></small>
+                                        </button>
+                                        <button class="button" v-else  style='min-width: 150px; width: 80%; margin-bottom: 2px; background-color: rgb(255, 236, 236); text-decoration: line-through;color: #000;' >
+                                             <small>{{ bp.period_name }}</small>
+                                        </button>
+                                     </div>
+                        </td>
                     </tr>
                     <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
                         <td class="site">Site: {{ line.name }}</td>
@@ -433,6 +441,29 @@ export default {
                 site.showBreakdown = true;
             }
         },
+        addBooking: function (site_id,bp_id,date) {
+              var vm = this;
+              console.log("ADD BOOKING");
+              console.log(site_id+' : '+bp_id);
+              console.log(date);
+            var submitData = {
+                  site_id: site_id,
+                  bp_id: bp_id,
+                  date: date
+            };
+
+                $.ajax({
+                    url: vm.parkstayUrl + '/api/booking/create', 
+                    dataType: 'json',
+                    method: 'POST',
+                    data: submitData, 
+                    success: function(data, stat, xhr) {
+                    },
+                    error: function(xhr, stat, err) {
+                    }
+                });
+
+        },
         submitBooking: function (site) {
             var vm = this;
             if (vm.vesselSize > 0 ) { 
@@ -660,7 +691,7 @@ export default {
             }
         }).data('datepicker');
         console.log('DATE PICKER END');
-
+        console.log(this.site);
         this.arrivalData.date = this.arrivalDate.toDate();
         this.arrivalData.setValue();
         this.arrivalData.fill();

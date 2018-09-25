@@ -60,6 +60,7 @@ api_patterns = [
     url(r'^api/reports/booking_refunds$', api.BookingRefundsReportView.as_view(),name='booking-refunds-report'),
     url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
     url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
+    url(r'^api/booking/create$', api.add_booking,name='add_booking'),
     url(r'^api/',include(router.urls))
 ]
 

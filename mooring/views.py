@@ -187,11 +187,11 @@ class MakeBookingsView(TemplateView):
 #            for x in pricing_list.values():
 #                print x['mooring']
 #                print "---------------------------"
-            pricing['mooring'] = sum([int(x['mooring']) for x in pricing_list.values()])
-            pricing['adult'] = sum([int(x['adult']) for x in pricing_list.values()])
-            pricing['concession'] = sum([int(x['concession']) for x in pricing_list.values()])
-            pricing['child'] = sum([int(x['child']) for x in pricing_list.values()])
-            pricing['infant'] = sum([int(x['infant']) for x in pricing_list.values()])
+            pricing['mooring'] = sum([float(x['mooring']) for x in pricing_list.values()])
+            pricing['adult'] = sum([float(x['adult']) for x in pricing_list.values()])
+            pricing['concession'] = sum([float(x['concession']) for x in pricing_list.values()])
+            pricing['child'] = sum([float(x['child']) for x in pricing_list.values()])
+            pricing['infant'] = sum([float(x['infant']) for x in pricing_list.values()])
 
 
         return render(request, self.template_name, {
