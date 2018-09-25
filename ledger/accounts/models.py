@@ -410,14 +410,14 @@ class RevisionedMixin(models.Model):
     """
     A model tracked by reversion through the save method.
     """
-    def save(self, **kwargs):
-        if kwargs.pop('no_revision', False):
-            super(RevisionedMixin, self).save(**kwargs)
-        else:
-            with revisions.create_revision():
-                revisions.set_user(kwargs.pop('version_user', None))
-                revisions.set_comment(kwargs.pop('version_comment', ''))
-                super(RevisionedMixin, self).save(**kwargs)
+#    def save(self, **kwargs):
+#        if kwargs.pop('no_revision', False):
+#            super(RevisionedMixin, self).save(**kwargs)
+#        else:
+#            with revisions.create_revision():
+#                revisions.set_user(kwargs.pop('version_user', None))
+#                revisions.set_comment(kwargs.pop('version_comment', ''))
+#                super(RevisionedMixin, self).save(**kwargs)
 
     @property
     def created_date(self):

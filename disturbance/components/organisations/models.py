@@ -403,3 +403,15 @@ class OrganisationRequestLogEntry(CommunicationsLogEntry):
 
     class Meta:
         app_label = 'disturbance'
+
+
+
+import reversion
+reversion.register(Organisation, follow=['contacts', 'action_logs', 'comms_logs'])
+reversion.register(OrganisationContact)
+reversion.register(OrganisationAction)
+reversion.register(OrganisationLogEntry)
+reversion.register(OrganisationLogDocument)
+reversion.register(OrganisationRequest)
+reversion.register(UserDelegation)
+

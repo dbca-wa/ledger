@@ -184,6 +184,7 @@ class ProposalDocument(Document):
         app_label = 'disturbance'
 
 class Proposal(RevisionedMixin):
+#class Proposal(models.Model):
 
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
                                ('with_assessor', 'Under Review'),
@@ -288,8 +289,8 @@ class Proposal(RevisionedMixin):
     proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proxy')
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals')
 
-    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_assigned')
-    assigned_approver = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_approvals')
+    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_assigned', on_delete=models.SET_NULL)
+    assigned_approver = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_approvals', on_delete=models.SET_NULL)
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[1][0])
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
@@ -1240,6 +1241,7 @@ class ProposalDeclinedDetails(models.Model):
         app_label = 'disturbance'
 
 @python_2_unicode_compatible
+#class ProposalStandardRequirement(models.Model):
 class ProposalStandardRequirement(RevisionedMixin):
     text = models.TextField()
     code = models.CharField(max_length=10, unique=True)
@@ -1655,4 +1657,20 @@ class HelpPage(models.Model):
     class Meta:
         app_label = 'disturbance'
         unique_together = ('application_type', 'help_type', 'version')
+
+
+import reversion
+reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals',])
+reversion.register(ProposalType)
+reversion.register(ProposalRequirement)            # related_name=requirements
+reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
+reversion.register(ProposalDocument)               # related_name=documents
+reversion.register(Document)                       # related_name=documents
+reversion.register(ProposalLogEntry)
+reversion.register(ProposalUserAction)
+reversion.register(ComplianceRequest)
+reversion.register(AmendmentRequest)
+reversion.register(Assessment)
+reversion.register(Referral)
+reversion.register(HelpPage)
 

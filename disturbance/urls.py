@@ -5,6 +5,7 @@ from rest_framework import routers
 from disturbance import views
 from disturbance.admin import disturbance_admin_site
 from disturbance.components.proposals import views as proposal_views
+from disturbance.components.organisations import views as organisation_views
 
 from disturbance.components.users import api as users_api
 from disturbance.components.organisations import api as org_api
@@ -76,6 +77,9 @@ urlpatterns = [
     url(r'^internal/compliance/(?P<compliance_pk>\d+)/$', views.InternalComplianceView.as_view(), name='internal-compliance-detail'),
 
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
+    url(r'^history/proposal/(?P<pk>\d+)/$', proposal_views.ProposalHistoryCompareView.as_view(), name='proposal_history'),
+    url(r'^history/organisation/(?P<pk>\d+)/$', organisation_views.OrganisationHistoryCompareView.as_view(), name='organisation_history'),
+
 ] + ledger_patterns
 
 if settings.DEBUG:  # Serve media locally in development.
