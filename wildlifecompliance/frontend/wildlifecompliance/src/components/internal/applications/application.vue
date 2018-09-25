@@ -138,7 +138,7 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="issueLicence()">Issue</button>
+                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue</button>
                                                 </div>
                                             </div>
                                         </template>
@@ -207,6 +207,9 @@
             <div class="row">
                 <template v-if="application.processing_status == 'With Approver' || isFinalised">
                     <LicenceScreen :application="application"/>
+                </template>
+                <template v-if="isofficerfinalisation">
+                    <IssueLicence :application="application" :licence_activity_type_tab="selected_assessment_tab"/>
                 </template>
                 <template v-if="showingConditions">
                     <div v-for="item in application.licence_type_data">
@@ -575,7 +578,7 @@
         <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
         <SendToAssessor ref="send_to_assessor" :application_id="application.id" ></SendToAssessor>
         <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"/>
-        <IssueLicence ref="issue_licence" :application_id="application" :licence_activity_type_tab="selected_assessment_tab" @refreshFromResponse="refreshFromResponse"/>
+        
     </div>
 </template>
 <script>
@@ -631,6 +634,7 @@ export default {
             showingConditions:false,
             assessmentComplete:false,
             isOfficerConditions:false,
+            isofficerfinalisation:false,
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             application_assessor_datatable:vm._uid+'assessment-table',
@@ -894,11 +898,16 @@ export default {
             // this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
             this.$refs.proposed_licence.isModalOpen = true;
         },
-        issueLicence:function(){
+        toggleIssue:function(){
             // this.$refs.proposed_licence.licence = helpers.copyObject(this.application.proposed_issuance_licence);
             // this.$refs.proposed_licence.state = 'final_licence';
             console.log('Inside issue licence')
-            this.$refs.issue_licence.isModalOpen = true;
+            this.showingApplication = false;
+            this.isSendingToAssessor=false;
+            this.showingConditions=false;
+            this.isOfficerConditions=false;
+            this.assessmentComplete=false;
+            this.isofficerfinalisation=true
         },
         declineApplication:function(){
             this.$refs.proposed_decline.decline = helpers.copyObject(this.application.applicationdeclineddetails);

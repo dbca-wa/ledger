@@ -496,6 +496,7 @@ class ApplicationStandardConditionSerializer(serializers.ModelSerializer):
 
 class ApplicationProposedIssueSerializer(serializers.ModelSerializer):
     action = serializers.SerializerMethodField(read_only=True)
+    licence_activity_type = ActivityTypeserializer()
     
     class Meta:
         model = ApplicationDecisionPropose
