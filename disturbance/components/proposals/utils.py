@@ -395,7 +395,8 @@ def clone_proposal_with_status_reset(proposal):
 
             proposal.id = None
 
-            proposal.save(no_revision=True)
+            #proposal.save(no_revision=True)
+            proposal.save()
 
 
             # clone documents
