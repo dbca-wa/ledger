@@ -1162,6 +1162,8 @@ class AmendmentReason(models.Model):
 
     class Meta:
         app_label = 'disturbance'
+        verbose_name = "Proposal Amendment Reason" # display name in Admin
+        verbose_name_plural = "Proposal Amendment Reasons"
 
     def __str__(self):
         return self.reason

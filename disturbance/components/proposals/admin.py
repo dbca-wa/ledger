@@ -22,6 +22,10 @@ class ProposalDocumentInline(admin.TabularInline):
     model = models.ProposalDocument
     extra = 0
 
+@admin.register(models.AmendmentReason)
+class AmendmentReasonAdmin(admin.ModelAdmin):
+    list_display = ['reason']
+
 @admin.register(models.Proposal)
 class ProposalAdmin(VersionAdmin):
     inlines =[ProposalDocumentInline,]
