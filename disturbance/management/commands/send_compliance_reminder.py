@@ -15,11 +15,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            user = EmailUser.objects.get(email__icontains='cron')
+            user = EmailUser.objects.get(email='cron@dbca.wa.gov.au')
         except:
-            user = user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
+            user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
 
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         logger.info('Running command {}'.format(__name__))
         for c in Compliance.objects.filter(processing_status = 'due'):
             if c.due_date < today:

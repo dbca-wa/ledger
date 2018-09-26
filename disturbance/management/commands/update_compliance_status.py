@@ -15,14 +15,13 @@ class Command(BaseCommand):
     help = 'Change the status of Compliances from future to due when they are close to due date'
 
     def handle(self, *args, **options):
-        today = timezone.now().date()
-        timedelta = datetime.timedelta
-        compare_date = timedelta(days=14) + today
+        today = timezone.localtime(timezone.now()).date()
+        compare_date = today + datetime.timedelta(days=14)
 
         try:
-            user = EmailUser.objects.get(email__icontains='cron')
+            user = EmailUser.objects.get(email='cron@dbca.wa.gov.au')
         except:
-            user = user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
+            user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
 
         logger.info('Running command {}'.format(__name__))
         for c in Compliance.objects.filter(processing_status = 'future'):

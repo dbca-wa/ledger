@@ -80,6 +80,10 @@ from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
 from rest_framework.filters import BaseFilterBackend
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 class GetProposalType(views.APIView):
     renderer_classes = [JSONRenderer, ]
 
@@ -296,6 +300,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        #import ipdb; ipdb.set_trace()
         if is_internal(self.request): #user.is_authenticated():
             #return Proposal.objects.all()
             return Proposal.objects.filter(region__isnull=False)
@@ -304,6 +309,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             #queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             queryset =  Proposal.objects.filter(region__isnull=False).filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             return queryset
+        logger.warn("User is neither customer nor internal user: {} <{}>".format(user.get_full_name(), user.email))
         return Proposal.objects.none()
 
     @list_route(methods=['GET',])

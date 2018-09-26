@@ -24,11 +24,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            user = EmailUser.objects.get(email__icontains='cron')
+            user = EmailUser.objects.get(email='cron@dbca.wa.gov.au')
         except:
-            user = user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
+            user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
 
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
         logger.info('Running command {}'.format(__name__))
         for a in Approval.objects.filter(status = 'current'):
             if a.suspension_details and a.set_to_suspend:

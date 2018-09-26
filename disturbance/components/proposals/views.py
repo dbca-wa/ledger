@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import View, TemplateView
 from disturbance.components.proposals.utils import create_data_from_form
-from disturbance.components.proposals.models import Proposal
+from disturbance.components.proposals.models import Proposal, ProposalType, HelpPage
 import json,traceback
 
 class ProposalView(TemplateView):
@@ -33,3 +33,21 @@ class ProposalHistoryCompareView(HistoryCompareDetailView):
     """
     model = Proposal
     template_name = 'disturbance/reversion_history.html'
+
+
+class ProposalTypeHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare
+    """
+    model = ProposalType
+    template_name = 'disturbance/reversion_history.html'
+
+
+class HelpPageHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare
+    """
+    model = HelpPage
+    template_name = 'disturbance/reversion_history.html'
+
+
