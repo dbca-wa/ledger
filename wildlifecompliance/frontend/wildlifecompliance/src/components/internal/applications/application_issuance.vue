@@ -1,10 +1,10 @@
 <template id="application_issuance">
 
                 <div class="col-md-12">
-                    <div class="row" v-for="item in proposed_licence">
+                    <div class="row" v-for="(item,index) in licence.activity_type">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3 class="panel-title">Issue {{item.licence_activity_type.name}}
+                                <h3 class="panel-title">Issue {{item.name}}
                                     <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
                                         <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                                     </a>
@@ -17,11 +17,11 @@
                                             <div class="row">
                                                 <div class="col-sm-3">
                                                     
-                                                    <label class="control-label pull-left"  for="Name">Proposed Start Date</label>
+                                                    <label class="control-label pull-left">Proposed Start Date</label>
                                                 </div>
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="start_date" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY">{{item.proposed_start_date}}
+                                                        <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="licence.activity_type[index].start_date">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
@@ -30,11 +30,11 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-3">
-                                                    <label class="control-label pull-left"  for="Name">Proposed Expiry Date</label>
+                                                    <label class="control-label pull-left">Proposed Expiry Date</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <div class="input-group date" ref="due_date" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" >{{item.proposed_end_date}}
+                                                    <div class="input-group date" ref="end_date" style="width: 70%;">
+                                                        <input type="text" class="form-control" name="end_date" placeholder="DD/MM/YYYY" v-model="licence.activity_type[index].end_date">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
@@ -44,11 +44,11 @@
                                             <div class="row">
                                                 <div class="col-sm-3">
                                                     
-                                                    <label class="control-label pull-left"  for="Fee">Fee</label>
+                                                    <label class="control-label pull-left">Fee</label>
                                                 </div>
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="fee" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="fee">
+                                                        <input type="text" class="form-control" name="fee" v-model="licence.activity_type[index].fee">
                                                         
                                                     </div>
                                                 </div>
@@ -56,11 +56,11 @@
                                             <div class="row">
                                                 <div class="col-sm-3">
                                                     
-                                                    <label class="control-label pull-left"  for="Fee">Reduced Fee</label>
+                                                    <label class="control-label pull-left">Reduced Fee</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <div class="input-group date" ref="fee" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="fee">
+                                                    <div class="input-group date" ref="reduced_fee" style="width: 70%;">
+                                                        <input type="text" class="form-control" name="reduced_fee" v-model="licence.activity_type[index].reduced_fee">
                                                         
                                                     </div>
                                                 </div>
@@ -135,9 +135,11 @@
                                         
                                         <label class="control-label pull-left"  for="details">ID Check</label>
                                     </div>
+
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="details" style="width: 70%;">
-                                            
+                                            <button v-if="isIdCheckAccepted" disabled class="btn btn-light">Accepted</button>
+                                            <label v-if="isIdNotChecked">Has not been accepted. Override to Issue</label><input v-if="isIdNotChecked" type="checkbox" v-model="licence.id_check" >
                                             
                                         </div>
                                     </div>
@@ -149,27 +151,28 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="cc_email" style="width: 70%;">
+                                            <button v-if="isCharacterCheckAccepted" disabled class="btn btn-light">Accepted</button>
+                                            <label v-if="isCharacterNotChecked">Has not been accepted. Override to Issue</label><input v-if="isCharacterNotChecked" type="checkbox" v-model="licence.character_check" >
                                             
                                             
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div class="col-sm-3">
-                                        
-                                        <label class="control-label pull-left"  for="details">Returns Check</label>
+                                <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                                    <div class="navbar-inner">
+                                        <div class="container">
+                                            <p class="pull-right" style="margin-top:5px;">
+                                                <button v-if="licence.id_check && licence.character_check" class="btn btn-primary pull-right" @click.prevent="">Issue</button>
+                                                <button v-else disabled class="btn btn-primary pull-right">Issue</button>
+                                            </p>
+                                        </div>
                                     </div>
-                                    
                                 </div>
-
 
                             </div>
                         </div>
                     </div>
 
-
-
-                   
                 </div>
 
             
@@ -193,21 +196,11 @@ export default {
             panelBody: "application-conditions-"+vm._uid,
             proposed_licence:{},
             licence:{
-                activity_type:{
-                    id:null,
-                    issue_date:'',
-                    start_date:'',
-                    expiry_date:'',
-                    fee:'',
-                    reduced_fee:''
-
-                },
-                
-                standard: true,
-                recurrence: false,
-                recurrence_pattern: '1',
+                activity_type:[],
+                id_check:false,
+                character_check:false,
                 current_application: vm.application.id,
-                licence_activity_type:null}
+                }
         }
     },
     watch:{
@@ -219,9 +212,50 @@ export default {
     computed:{
         hasAssessorMode(){
             return this.application.assessor_mode.has_assessor_mode;
-        }
+        },
+        isIdCheckAccepted: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Accepted';
+        },
+        isIdNotChecked: function(){
+            console.log(this.application.id_check_status)
+            return this.application.id_check_status == 'Not Checked';
+        },
+        isCharacterCheckAccepted: function(){
+            console.log(this.application.id_check_status)
+            return this.application.character_check_status == 'Accepted';
+        },
+        isCharacterNotChecked: function(){
+            console.log(this.application.id_check_status)
+            return this.application.character_check_status == 'Not Checked';
+        },
     },
     methods:{
+        initialiseLicenceDetails(){
+            let vm=this;
+            console.log('from fetch licence')
+            console.log(vm.application.id_check_status)
+            for(var i=0, len=vm.proposed_licence.length; i<len; i++){
+                vm.licence.activity_type.push({
+                                        id:         vm.proposed_licence[i].licence_activity_type.id,
+                                        name:       vm.proposed_licence[i].licence_activity_type.name,
+                                        start_date: vm.proposed_licence[i].proposed_start_date,
+                                        end_date: vm.proposed_licence[i].proposed_end_date
+                                    })
+            }
+            if(vm.application.id_check_status == 'Accepted'){
+                vm.licence.id_check=true
+            }
+            if(vm.application.id_check_status == 'Not Checked'){
+                vm.licence.id_check=false
+            }
+            if(vm.application.character_check_status == 'Accepted'){
+                vm.licence.character_check=true
+            }
+            if(vm.application.character_check_status == 'Not Checked'){
+                vm.licence.character_check=false
+            }
+        },
         
         fetchProposeIssue(){
             let vm = this;
@@ -229,7 +263,8 @@ export default {
            vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/get_proposed_licence')))
             .then((response) => {
                 vm.proposed_licence = response.body;
-                console.log(vm.proposed_licence)
+                // console.log(vm.proposed_licence)
+                this.initialiseLicenceDetails();
                 
             }, (error) => {
                
@@ -243,14 +278,19 @@ export default {
        
         eventListeners(){
             
+            
         },
     },
     mounted: function(){
         let vm = this;
         this.fetchProposeIssue();
+
         vm.$nextTick(() => {
             this.eventListeners();
         });
+    },
+    created:function(){
+
     }
 }
 </script>
