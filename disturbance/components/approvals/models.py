@@ -209,7 +209,7 @@ class Approval(models.Model):
     def expire_approval(self,user):
         with transaction.atomic():
             try:
-                today = timezone.now().date()               
+                today = timezone.localtime(timezone.now()).date()
                 if self.status == 'current' and self.expiry_date < today:
                     self.status = 'expired'
                     self.save()

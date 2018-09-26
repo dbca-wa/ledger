@@ -15,9 +15,8 @@ class Command(BaseCommand):
     help = 'Change the status of Compliances from future to due when they are close to due date'
 
     def handle(self, *args, **options):
-        today = timezone.now().date()
-        timedelta = datetime.timedelta
-        compare_date = timedelta(days=14) + today
+        today = timezone.localtime(timezone.now()).date()
+        compare_date = today + datetime.timedelta(days=14)
 
         try:
             user = EmailUser.objects.get(email='cron@dbca.wa.gov.au')

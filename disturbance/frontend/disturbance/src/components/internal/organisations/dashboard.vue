@@ -193,12 +193,13 @@ export default {
     computed: {
         isLoading: function () {
             return this.loading.length == 0;
-        },
-        is_assessor: function(){
-            return this.check_assessor()
         }
     },
     methods: {
+        is_assessor: function(){
+            return this.check_assessor()
+        },
+
         fetchAccessGroupMembers: function(){
         let vm = this;
         //vm.loading.push('Loading Access Group Members');

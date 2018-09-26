@@ -169,7 +169,7 @@ class Compliance(models.Model):
 
     def send_reminder(self,user):
         with transaction.atomic():
-            today = timezone.now().date()
+            today = timezone.localtime(timezone.now()).date()
             try:
                 if self.processing_status =='due':
                     if self.due_date < today and self.lodgement_date==None and self.reminder_sent==False:

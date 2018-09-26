@@ -22,7 +22,8 @@ class Command(BaseCommand):
         except:
             user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
 
-        expiry_notification_date = date.today() + timedelta(days=30)
+        today = timezone.localtime(timezone.now()).date()
+        expiry_notification_date = today + timedelta(days=30)
         renewal_conditions = {
             'expiry_date__lte': expiry_notification_date,
             'renewal_sent': False,
