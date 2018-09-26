@@ -148,6 +148,7 @@ class WildlifeLicence(models.Model):
     )
     status = models.CharField(max_length=40, choices=STATUS_CHOICES,
                                        default=STATUS_CHOICES[0][0])
+    parent_licence=models.ForeignKey('self',blank=True,null=True,related_name='children_licence')
     licence_document = models.ForeignKey(LicenceDocument, blank=True, null=True, related_name='licence_document')
     cover_letter_document = models.ForeignKey(LicenceDocument, blank=True, null=True, related_name='cover_letter_document')
     replaced_by = models.ForeignKey('self', blank=True, null=True)
