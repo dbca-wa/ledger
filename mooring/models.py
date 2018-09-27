@@ -192,7 +192,7 @@ class MooringArea(models.Model):
     def current_closure(self):
         closure = self._get_current_closure()
         if closure:
-            return 'Start: {} End: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y') if closure.range_end else "")
+            return 'Start: {} Reopen: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y') if closure.range_end else "")
         return ''
 
     @property
