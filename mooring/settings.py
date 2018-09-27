@@ -97,6 +97,7 @@ if not VALID_SYSTEMS:
 
 CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','mooringbookings@dbca.wa.gov.au')
 ROTTNEST_EMAIL = env('ROTTNEST_EMAIL', 'mooringbookings@dbca.wa.gov.au')
+DEFAULT_FROM_EMAIL = env('EMAIL_FROM','no-reply@dbca.wa.gov.au')
 EXPLORE_PARKS_URL = env('EXPLORE_PARKS_URL','https://mooring.dbca.wa.gov.au/')
 PARKSTAY_EXTERNAL_URL = env('PARKSTAY_EXTERNAL_URL','https://mooring.dbca.wa.gov.au/')
 DEV_STATIC = env('DEV_STATIC',False)
