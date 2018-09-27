@@ -33,7 +33,7 @@ DPAW_EMAIL = settings.SUPPORT_EMAIL
 DPAW_URL = settings.DEP_URL
 DPAW_PHONE = settings.DEP_PHONE
 DPAW_FAX = settings.DEP_FAX
-DPAW_PO_BOX = settings.DEP_POSTAL 
+DPAW_PO_BOX = settings.DEP_POSTAL
 
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
@@ -216,7 +216,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
             #bulletFontName=BOLD_FONTNAME
     elements.append(understandingList)
 
-    # proposal requirements 
+    # proposal requirements
     if proposal.requirements.exists():
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('The following requirements must be satisfied for the approval of the proposal not to be withdrawn:', styles['BoldLeft']))
@@ -231,12 +231,12 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     #     elements.append(Paragraph('Assessor Comments', styles['BoldLeft']))
     #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        
+
     #     for k,v in copied_to_permit:
     #         elements.append(Paragraph(v.encode('UTF-8'), styles['Left']))
     #         elements.append(Paragraph(k.encode('UTF-8'), styles['Left']))
     #         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    
+
     elements += _layout_extracted_fields(approval.extracted_fields)
 
     # additional information
@@ -298,7 +298,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     delegation.append(Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']))
 
     elements.append(KeepTogether(delegation))
-    
+
     # Appendix section
     elements.append(PageBreak())
     elements.append(Paragraph('Appendix 1 - Management Actions', styles['BoldLeft']))
@@ -310,7 +310,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
         #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         for item in copied_to_permit:
             for key in item:
-               elements.append(Paragraph(key.encode('UTF-8'), styles['Left'])) 
+               elements.append(Paragraph(key.encode('UTF-8'), styles['Left']))
                elements.append(Paragraph(item[key].encode('UTF-8'), styles['Left']))
     else:
         elements.append(Paragraph('There are no management actions.', styles['Left']))
@@ -463,7 +463,7 @@ def _create_renewal(renewal_buffer, approval, proposal):
 
 
     title = approval.title.encode('UTF-8')
-   
+
     # additional information
     '''if approval.additional_information:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
