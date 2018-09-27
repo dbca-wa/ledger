@@ -8,6 +8,7 @@ from ledger.payments.models import Invoice
 
 from ledger.emails.emails import EmailBase
 
+default_from_email = settings.DEFAULT_FROM_EMAIL
 default_campground_email = settings.CAMPGROUNDS_EMAIL
 class TemplateEmailBase(EmailBase):
     subject = ''
@@ -33,7 +34,8 @@ def send_booking_invoice(booking):
         
     invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
 
-    campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
+#    campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
+    campground_email = default_from_email 
     email_obj.send([email], from_address=campground_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
 
 def send_booking_confirmation(booking,request):
@@ -47,7 +49,8 @@ def send_booking_confirmation(booking,request):
     cc = None
     bcc = [default_campground_email]
 
-    campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
+    #campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
+    campground_email = default_from_email
     if campground_email != default_campground_email:
         cc = [campground_email]
 
@@ -103,7 +106,8 @@ def send_booking_cancelation(booking,request):
 
     bcc = [default_campground_email]
 
-    campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
+    #campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
+    campground_email = default_from_email
     my_bookings_url = '{}mybookings/'.format(settings.PARKSTAY_EXTERNAL_URL)
     context = {
         'booking': booking,
@@ -125,5 +129,5 @@ def send_booking_lapse(booking):
         'booking': booking,
         'settings': settings,
     }
-    email_obj.send([email], from_address=camground_email, context=context)
+    email_obj.send([email], from_address=default_from_email, context=context)
 
