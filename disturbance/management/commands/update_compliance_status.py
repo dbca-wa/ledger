@@ -31,8 +31,6 @@ class Command(BaseCommand):
                     c.processing_status='due'
                     c.customer_status='due'
                     c.save()
-                    send_due_email_notification(c)
-                    send_internal_due_email_notification(c)
                     ComplianceUserAction.log_action(c,ComplianceUserAction.ACTION_STATUS_CHANGE.format(c.id),user)
                     logger.info('updated Compliance {} status to {}'.format(c.id,c.processing_status))
                 except:

@@ -22,13 +22,10 @@ class Command(BaseCommand):
         today = timezone.localtime(timezone.now()).date()
         logger.info('Running command {}'.format(__name__))
         for c in Compliance.objects.filter(processing_status = 'due'):
-            if c.due_date < today:
-                if c.lodgement_date==None and c.reminder_sent==False:
-                    try:
-                        c.send_reminder(user)
-                        c.save()
-                        logger.info('Reminder sent for Compliance {} '.format(c.id))
-                    except Exception as e:
-                        logger.info('Error sending Reminder Compliance {} '.format(c.id))
+            try:
+                c.send_reminder(user)
+                c.save()
+            except Exception as e:
+                logger.info('Error sending Reminder Compliance {}\n{}'.format(c.lodgement_number, e))
 
         logger.info('Command {} completed'.format(__name__))
