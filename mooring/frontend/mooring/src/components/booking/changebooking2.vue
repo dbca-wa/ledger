@@ -498,10 +498,7 @@ export default {
             if (!vm.fetchingSites) {
                 if (vm.selected_arrival && vm.selected_departure) {
                     vm.fetchingSites = true;
-                    vm.loading.push('fetching campsites');
-                    console.log('FETCHSITES');
-                    console.log(vm.booking.campground);
-                    console.log(vm.booking.mooringarea);
+                    vm.loading.push('fetching mooring');
                     vm.$http.get(api_endpoints.available_campsites_booking(vm.booking.mooringarea, vm.booking.arrival, vm.booking.departure,vm.booking.id)).then((response) => {
                         vm.fetchingSites = false;
                         vm.campsites = response.body;
@@ -511,10 +508,10 @@ export default {
                                 vm.selected_campsite = vm.campsites[0].id;
                             }
                         }
-                        vm.loading.splice('fetching campsites', 1);
+                        vm.loading.splice('fetching mooring', 1);
                     }, (response) => {
                         console.log(response);
-                        vm.loading.splice('fetching campsites', 1);
+                        vm.loading.splice('fetching mooring', 1);
                         vm.fetchingSites = false;
                     });
                 }
@@ -536,19 +533,14 @@ export default {
         },
         fetchPark: function() {
             let vm = this;
-            console.log("FETCHPARK");
-            console.log(vm);
-            vm.loading.push('fetching park');
-            console.log('FETch Park');
-            console.log(vm.campground.park);
-            console.log(vm.mooringarea);
+            vm.loading.push('fetching marine park');
             //vm.campground.park = vm.mooringarea;
             vm.$http.get(api_endpoints.park(vm.campground)).then((response) => {
                 vm.park = response.body;
-                vm.loading.splice('fetching park details', 1);
+                vm.loading.splice('fetching marine park', 1);
             }, (error) => {
                 console.log(error);
-                vm.loading.splice('fetching park details', 1);
+                vm.loading.splice('fetching marine park', 1);
             });
         },
         addEventListeners: function() {
