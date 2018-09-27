@@ -158,17 +158,24 @@ class WildlifeLicence(models.Model):
     tenure = models.CharField(max_length=255,null=True)
     title = models.CharField(max_length=255)
     renewal_sent = models.BooleanField(default=False)
-    issue_date = models.DateField()
+    issue_date = models.DateField(blank=True,null=True)
     original_issue_date = models.DateField(auto_now_add=True)
-    start_date = models.DateField()
-    expiry_date = models.DateField()
+    start_date = models.DateField(blank=True,null=True)
+    expiry_date = models.DateField(blank=True,null=True)
     surrender_details = JSONField(blank=True,null=True)
     suspension_details = JSONField(blank=True,null=True)
-    applicant = models.ForeignKey(Organisation,on_delete=models.PROTECT, related_name='wildlifecompliance_licences')
+    # applicant = models.ForeignKey(Organisation,on_delete=models.PROTECT, related_name='wildlifecompliance_licences')
+
+    org_applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='wildlifecompliance_org_applicant')
+    proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='wildlifecompliance_proxy_applicant')
+    submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='wildlifecompliance_submitter')
+
     extracted_fields = JSONField(blank=True, null=True)
+    licence_activity_type=models.ForeignKey('WildlifeLicenceActivityType',null=True)
+
 
     # licence_class = models.ForeignKey(WildlifeLicenceClass)
-    # licence_activity = models.ForeignKey(WildlifeLicenceActivity)
+    # licence_activity_type = models.ForeignKey(WildlifeLicenceActivityType)
     # licence_descriptor = models.ForeignKey(WildlifeLicenceDescriptor)
 
 

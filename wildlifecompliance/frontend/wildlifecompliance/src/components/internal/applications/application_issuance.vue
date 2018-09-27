@@ -22,9 +22,7 @@
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="start_date" style="width: 70%;">
                                                         <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="licence.activity_type[index].start_date">
-                                                        <span class="input-group-addon">
-                                                            <span class="glyphicon glyphicon-calendar"></span>
-                                                        </span>
+                                                        
                                                     </div>
                                                 </div>
                                             </div>
@@ -35,9 +33,7 @@
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="end_date" style="width: 70%;">
                                                         <input type="text" class="form-control" name="end_date" placeholder="DD/MM/YYYY" v-model="licence.activity_type[index].end_date">
-                                                        <span class="input-group-addon">
-                                                            <span class="glyphicon glyphicon-calendar"></span>
-                                                        </span>
+                                                        
                                                     </div>
                                                 </div>
                                             </div>
@@ -162,7 +158,7 @@
                                     <div class="navbar-inner">
                                         <div class="container">
                                             <p class="pull-right" style="margin-top:5px;">
-                                                <button v-if="licence.id_check && licence.character_check" class="btn btn-primary pull-right" @click.prevent="">Issue</button>
+                                                <button v-if="licence.id_check && licence.character_check" class="btn btn-primary pull-right" @click.prevent="ok()">Issue</button>
                                                 <button v-else disabled class="btn btn-primary pull-right">Issue</button>
                                             </p>
                                         </div>
@@ -231,6 +227,19 @@ export default {
         },
     },
     methods:{
+        ok:function () {
+            let vm = this;
+            let licence = JSON.parse(JSON.stringify(vm.licence));
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_licence'),JSON.stringify(licence),{
+                        emulateJSON:true,
+                    }).then((response)=>{
+                        // vm.close();
+                        vm.$emit('refreshFromResponse',response);
+                    },(error)=>{
+                        vm.errors = true;
+                        vm.errorString = helpers.apiVueResourceError(error);
+                    });
+        },
         initialiseLicenceDetails(){
             let vm=this;
             console.log('from fetch licence')
@@ -289,9 +298,7 @@ export default {
             this.eventListeners();
         });
     },
-    created:function(){
-
-    }
+    
 }
 </script>
 <style scoped>

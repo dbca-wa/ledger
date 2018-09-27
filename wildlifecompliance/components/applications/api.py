@@ -531,9 +531,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def final_licence(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = ProposedLicenceSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance.final_licence(request,serializer.validated_data)
+            # serializer = ProposedLicenceSerializer(data=request.data)
+            # serializer.is_valid(raise_exception=True)
+            print(request.data)
+            instance.final_licence(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 
         except serializers.ValidationError:
