@@ -678,7 +678,7 @@ export default {
             },
             theme: 'snow'
         });
-        vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
+        // vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
         vm.editor.on('text-change', function(delta, oldDelta, source) {
             var text = $('#editor >.ql-editor').html();
             vm.campground.description = text;

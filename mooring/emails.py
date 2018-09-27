@@ -38,7 +38,7 @@ def send_admissions_booking_invoice(admissionsBooking):
 
 def send_booking_invoice(booking):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Your booking invoice for {}'.format(booking.campground.name)
+    email_obj.subject = 'Your booking invoice for {}'.format(booking.mooringarea.name)
     email_obj.html_template = 'mooring/email/invoice.html'
     email_obj.txt_template = 'mooring/email/invoice.txt'
 
@@ -47,13 +47,13 @@ def send_booking_invoice(booking):
     context = {
         'booking': booking
     }
-    filename = 'invoice-{}({}-{}).pdf'.format(booking.campground.name,booking.arrival,booking.departure)
+    filename = 'invoice-{}({}-{}).pdf'.format(booking.mooringarea.name,booking.arrival,booking.departure)
     references = [b.invoice_reference for b in booking.invoices.all()]
     invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
         
     invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
 
-    campground_email = booking.campground.email if booking.campground.email else default_campground_email
+    campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
     email_obj.send([email], from_address=campground_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
 
 def send_admissions_booking_confirmation(admissionsBooking, request):
@@ -79,7 +79,7 @@ def send_admissions_booking_confirmation(admissionsBooking, request):
 
 def send_booking_confirmation(booking,request):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Your booking {} at {} is confirmed'.format(booking.confirmation_number,booking.campground.name)
+    email_obj.subject = 'Your booking {} at {} is confirmed'.format(booking.confirmation_number,booking.mooringarea.name)
     email_obj.html_template = 'mooring/email/confirmation.html'
     email_obj.txt_template = 'mooring/email/confirmation.txt'
 
@@ -88,12 +88,12 @@ def send_booking_confirmation(booking,request):
     cc = None
     bcc = [default_campground_email]
 
-    campground_email = booking.campground.email if booking.campground.email else default_campground_email
+    campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
     if campground_email != default_campground_email:
         cc = [campground_email]
 
     my_bookings_url = request.build_absolute_uri('/mybookings/')
-    booking_availability = request.build_absolute_uri('/availability/?site_id={}'.format(booking.campground.id))
+    booking_availability = request.build_absolute_uri('/availability/?site_id={}'.format(booking.mooringarea.id))
     unpaid_vehicle = False
     mobile_number = booking.customer.mobile_number
     booking_number = booking.details.get('phone',None)
@@ -113,7 +113,7 @@ def send_booking_confirmation(booking,request):
             break
     
     
-    additional_info = booking.campground.additional_info if booking.campground.additional_info else ''
+    additional_info = booking.mooringarea.additional_info if booking.mooringarea.additional_info else ''
 
     context = {
         'booking': booking,
@@ -136,7 +136,7 @@ def send_booking_confirmation(booking,request):
 
 def send_booking_cancelation(booking,request):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Canceled:your booking REF {} at {},{}.'.format(booking.confirmation_number,booking.mooringarea.name,booking.mooringarea.park.name)
+    email_obj.subject = 'Cancelled: your booking {} at {},{}.'.format(booking.confirmation_number,booking.mooringarea.name,booking.mooringarea.park.name)
     email_obj.html_template = 'mooring/email/cancel.html'
     email_obj.txt_template = 'mooring/email/cancel.txt'
 
@@ -145,7 +145,7 @@ def send_booking_cancelation(booking,request):
     bcc = [default_campground_email]
 
     campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
-    my_bookings_url = '{}/mybookings/'.format(settings.PARKSTAY_EXTERNAL_URL)
+    my_bookings_url = '{}mybookings/'.format(settings.PARKSTAY_EXTERNAL_URL)
     context = {
         'booking': booking,
         'my_bookings': my_bookings_url,

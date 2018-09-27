@@ -56,6 +56,7 @@ class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     num_concession = serializers.IntegerField(default=0)
     num_child = serializers.IntegerField(default=0)
     num_infant = serializers.IntegerField(default=0)
+    num_mooring = serializers.IntegerField(default=0)
     gear_type = serializers.ChoiceField(choices=('all', 'tent', 'caravan', 'campervan'), default='all')
     vessel_size = serializers.IntegerField(default=0)
 

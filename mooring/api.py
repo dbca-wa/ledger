@@ -1069,6 +1069,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
+            "num_mooring" : request.GET.get('num_mooring', 0),
             "gear_type" : request.GET.get('gear_type', 'all'),
             "vessel_size" : request.GET.get('vessel_size', 0)
         }
@@ -1081,6 +1082,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         num_concession = serializer.validated_data['num_concession']
         num_child = serializer.validated_data['num_child']
         num_infant = serializer.validated_data['num_infant']
+        num_mooring = serializer.validated_data['num_mooring']
         gear_type = serializer.validated_data['gear_type']
         vessel_size = serializer.validated_data['vessel_size'] 
 
@@ -1252,7 +1254,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             sites_qs = sites_qs.order_by('name')
             # from our campsite queryset, generate a digest for each site
-            sites_map = OrderedDict([(s.name, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
+            sites_map = OrderedDict([(s.mooringarea.name, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
             bookings_map = {}
             # make an entry under sites for each site
             for k, v in sites_map.items():
@@ -1270,30 +1272,25 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     }
                 }
                 result['sites'].append(site)
-                bookings_map[k] = site
+#                bookings_map[k] = site
+                bookings_map[v[0]] = site
                 if v[1].pk not in result['classes']:
                     result['classes'][v[1].pk] = v[1].name
-
-#            print "AVAIL BOOKING MAP" 
-#            print bookings_map
-              
             # update results based on availability map
             for s in sites_qs:
                 # if there's not a free run of slots
                 if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
                     # update the days that are non-open
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
-                     
-                        bookings_map[s.name]['availability'][offset][0] = False
+                        bookings_map[s.id]['availability'][offset][0] = False
                         if stat == 'closed':
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                            bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
                         elif stat == 'booked':
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                            bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
                         else:
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                            bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
 
                         bookings_map[s.id]['price'] = False
-
             return Response(result)
 
 
@@ -1706,14 +1703,14 @@ def create_booking(request, *args, **kwargs):
     data = {
         'arrival': request.POST.get('arrival'),
         'departure': request.POST.get('departure'),
-        'num_adult': request.POST.get('num_adult', 0),
-        'num_concession': request.POST.get('num_concession', 0),
-        'num_child': request.POST.get('num_child', 0),
-        'num_infant': request.POST.get('num_infant', 0),
-        'campground': request.POST.get('campground', 0),
-        'campsite_class': request.POST.get('campsite_class', 0),
-        'campsite': request.POST.get('campsite', 0),
-        'vessel_size' : request.POST.get('vessel_size', 0)
+        'num_adult': int(request.POST.get('num_adult', 0)),
+        'num_concession': int(request.POST.get('num_concession', 0)),
+        'num_child': int(request.POST.get('num_child', 0)),
+        'num_infant': int(request.POST.get('num_infant', 0)),
+        'campground': int(request.POST.get('campground', 0)),
+        'campsite_class': int(request.POST.get('campsite_class', 0)),
+        'campsite': int(request.POST.get('campsite', 0)),
+        'vessel_size' : int(request.POST.get('vessel_size', 0))
     }
     serializer = MooringsiteBookingSerializer(data=data)
     serializer.is_valid(raise_exception=True)
@@ -1759,7 +1756,7 @@ def create_booking(request, *args, **kwargs):
     try:
         if campsite:
             booking = utils.create_booking_by_site(
-                campsite, start_date, end_date,
+                Mooringsite.objects.filter(id=campsite), start_date, end_date,
                 num_adult, num_concession,
                 num_child, num_infant,
                 num_mooring, vessel_size
@@ -2384,6 +2381,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_concession' : guests['concession'],
                 'num_child' : guests['children'],
                 'num_infant' : guests['infants'],
+                'num_mooring' : guests['mooring'],
             }
             
             data = utils.update_booking(request,instance,booking_details)
