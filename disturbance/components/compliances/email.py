@@ -94,7 +94,7 @@ def send_reminder_email_notification(compliance):
 def send_internal_reminder_email_notification(compliance):
     email = ComplianceInternalReminderNotificationEmail()
     #url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
-    url=settings.BASE_URL
+    url=settings.SITE_URL
     url+=reverse('internal-compliance-detail',kwargs={'compliance_pk': compliance.id})
     if "-internal" not in url:
         # add it. This email is for internal staff
@@ -117,14 +117,15 @@ def send_internal_reminder_email_notification(compliance):
 def send_due_email_notification(compliance):
     email = ComplianceDueNotificationEmail()
     #url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
-    url=settings.BASE_URL
+    url=settings.SITE_URL
     url+=reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id})
     context = {
         'compliance': compliance,
         'url': url
     }
 
-    msg = email.send(compliance.submitter.email, context=context)
+    submitter = compliance.submitter.email if compliance.submitter and compliance.submitter.email else compliance.proposal.submitter.email
+    msg = email.send(submitter, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     try:
         sender_user = EmailUser.objects.get(email__icontains=sender)
@@ -136,7 +137,7 @@ def send_due_email_notification(compliance):
 def send_internal_due_email_notification(compliance):
     email = ComplianceInternalDueNotificationEmail()
     #url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
-    url=settings.BASE_URL
+    url=settings.SITE_URL
     url+=reverse('internal-compliance-detail',kwargs={'compliance_pk': compliance.id})
     if "-internal" not in url:
         # add it. This email is for internal staff
