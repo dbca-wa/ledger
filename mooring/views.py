@@ -252,9 +252,9 @@ class MakeBookingsView(TemplateView):
                 form.add_error(None, 'Number of people exceeded for the current camp site.')
                 return self.render_page(request, booking, form, vehicles, show_errors=True)
             # Prevent booking if less than min people 
-            if booking.num_guests < c.campsite.min_people:
-                form.add_error('Number of people is less than the minimum allowed for the current campsite.')
-                return self.render_page(request, booking, form, vehicles, show_errors=True)
+#            if booking.num_guests < c.campsite.min_people:
+#                form.add_error('Number of people is less than the minimum allowed for the current campsite.')
+#                return self.render_page(request, booking, form, vehicles, show_errors=True)
 
         # generate final pricing
         try:

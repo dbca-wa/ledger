@@ -153,7 +153,7 @@
                 </thead>
                 <tbody><template v-for="site in sites" v-if="site.gearType[gearType]">
                     <tr>
-                        <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
+                        <td class="site">{{ site.name }}<span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
                             <template v-if="site.price">
                                 <button v-if="!ongoing_booking" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
@@ -355,6 +355,7 @@ export default {
             numChildren: parseInt(getQueryParam('num_children', 0)),
             numConcessions: parseInt(getQueryParam('num_concession', 0)),
             numInfants: parseInt(getQueryParam('num_infants', 0)),
+            numMooring: parseInt(getQueryParam('num_mooring', 0)),
             vesselSize: parseInt(getQueryParam('vessel_size', 0)),
             maxAdults: 30,
             maxChildren: 30,
@@ -383,7 +384,7 @@ export default {
         numPeople: {
             cache: false,
             get: function() {
-                var count = parseInt(this.numAdults) + parseInt(this.numConcessions) + parseInt(this.numChildren) + parseInt(this.numInfants);
+                var count = parseInt(this.numAdults) + parseInt(this.numConcessions) + parseInt(this.numChildren) + parseInt(this.numInfants) + parseInt(this.numMooring);
                 if (count === 1) {
                     return count +" person ▼";
                 } else {
@@ -489,7 +490,9 @@ export default {
                 num_child: vm.numChildren,
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants,
+                num_mooring: vm.numMooring,
                 vessel_size : vm.vesselSize
+                
             });
             history.replaceState('', '', newHist);
         },
@@ -504,7 +507,9 @@ export default {
                         num_child: vm.numChildren,
                         num_concession: vm.numConcessions,
                         num_infant: vm.numInfants,
+                        num_mooring: vm.numMooring,
                         vessel_size: vm.vesselSize
+                        
                     };
 
                 if (parseInt(vm.parkstayGroundRatisId) > 0){

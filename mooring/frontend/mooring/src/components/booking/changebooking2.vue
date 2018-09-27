@@ -42,7 +42,7 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="form-group" v-if="booking.campground != null || booking.campground != ''">
+                                        <div class="form-group" v-if="booking.campground != null || booking.campground != ''" style='display:none'>
                                             <div class="col-md-4">
                                                 <label class="control-label pull-left required"  for="Dates">Mooring Site: </label>
                                             </div>
@@ -55,7 +55,7 @@
                                                 <h4>Sorry, no available campsites were found.</h4>
                                             </div>
                                         </div>
-                                        <div class="form-group">
+                                        <div class="form-group" style='display:none'>
                                             <div class="col-md-4">
                                                 <label class="control-label pull-left required"  for="Campground">Guests: </label>
                                             </div>
@@ -245,6 +245,13 @@ export default {
                     amount: 0,
                     description: "Ages 0-5"
                 },
+                {
+                    id: "mooring",
+                    name: "mooring",
+                    amount: 0,
+                    description: "Ages 0-5"
+                },
+
             ],
             parkEntryPicker: [
 
@@ -449,6 +456,10 @@ export default {
                                 case 'infants':
                                 vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['infant']);
                                 break;
+                                case 'mooring':
+                                vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['mooring']);
+                                break;
+
                             }
                         }
                     });
@@ -471,6 +482,9 @@ export default {
                             break;
                             case 'infants':
                             vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['infant']);
+                            break;
+                            case 'mooring':
+                            vm.booking.price += vm.booking.guests[guest] * parseFloat(price.rate['mooring']);
                             break;
                         }
                     }
@@ -607,6 +621,9 @@ export default {
                 case 'infants':
                     vm.booking.guests.infants = guest.amount;
                     break;
+                case 'mooring':
+                    vm.booking.guests.mooring = guest.amount;
+                    break;
                 default:
 
             }
@@ -627,6 +644,9 @@ export default {
                     break;
                 case 'infants':
                     vm.booking.guests.infants = guest.amount;
+                    break;
+                case 'mooring':
+                    vm.booking.guests.mooring = guest.amount;
                     break;
                 default:
 
