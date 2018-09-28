@@ -1103,10 +1103,14 @@ class Proposal(RevisionedMixin):
                 proposal.submitter = request.user
                 proposal.previous_application = self
                 #copy all the requirements from the previous proposal
-                req=self.requirements.all()
+                #req=self.requirements.all()
+                req=self.requirements.all().exclude(is_deleted=True)
+                from copy import deepcopy
                 if req:
                     for r in req:
+                        old_r = deepcopy(r)
                         r.proposal = proposal
+                        r.copied_from=old_r
                         r.id = None
                         r.save()
                 # Create a log entry for the proposal
