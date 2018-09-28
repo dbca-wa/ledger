@@ -59,7 +59,7 @@ class Compliance(models.Model):
     customer_status = models.CharField(choices=CUSTOMER_STATUS_CHOICES,max_length=20, default=CUSTOMER_STATUS_CHOICES[1][0])
     assigned_to = models.ForeignKey(EmailUser,related_name='disturbance_compliance_assignments',null=True,blank=True)
     #requirement = models.TextField(null=True,blank=True)
-    requirement = models.ForeignKey(ProposalRequirement, blank=True, null=True, related_name='compliance_requirement')
+    requirement = models.ForeignKey(ProposalRequirement, blank=True, null=True, related_name='compliance_requirement', on_delete=models.SET_NULL)
     lodgement_date = models.DateTimeField(blank=True, null=True)
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_compliances')
     reminder_sent = models.BooleanField(default=False)
