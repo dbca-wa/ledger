@@ -249,7 +249,7 @@ export default {
                     id: "mooring",
                     name: "mooring",
                     amount: 0,
-                    description: "Ages 0-5"
+                    description: "Mooring"
                 },
 
             ],
@@ -534,8 +534,10 @@ export default {
         fetchPark: function() {
             let vm = this;
             vm.loading.push('fetching marine park');
+            console.log("fetchPark");
+            console.log(vm.mooringarea);
             //vm.campground.park = vm.mooringarea;
-            vm.$http.get(api_endpoints.park(vm.campground)).then((response) => {
+            vm.$http.get(api_endpoints.park(vm.campground.park)).then((response) => {
                 vm.park = response.body;
                 vm.loading.splice('fetching marine park', 1);
             }, (error) => {
@@ -905,7 +907,13 @@ export default {
             // fetch the sites
             vm.fetchSites();
             // Update guests
+            
+            // if (vm.booking.guests['adults'] == 0 && vm.booking.guests['children'] == 0 && vm.booking.guests['concession'] && vm.booking.guests['infants'] == 0 && vm.booking.guests['mooring'] == 0) {
+            if (vm.booking.guests['adults'] == 0 && vm.booking.guests['children'] == 0 && vm.booking.guests['concession'] ==0 && vm.booking.guests['infants'] == 0 && vm.booking.guests['mooring'] == 0) {
+                 vm.booking.guests['mooring'] = 1;
+	    }
             let guests = vm.booking.guests;
+               
             Object.keys(guests).forEach((key) => {
                 vm.guestsPicker.map((p) => {
                     if (p.id == key) {
@@ -925,6 +933,7 @@ export default {
                 entry_fee: 0,
                 regos:[]
             };
+
             $.each(vm.booking.regos,(i,v) => {
                 vm.parkEntryPicker.map((vp) => {
                     
