@@ -132,7 +132,7 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(proposal__region__name__iregex=regions.replace(',', '|'))
             #elif queryset.model is Approval:
             #    queryset = queryset.filter(region__iregex=regions.replace(',', '|'))
-            
+
         # since in proposal_datatables.vue, the 'region' data field is declared 'searchable=false'
         #global_search = request.GET.get('search[value]')
         #if global_search:
@@ -350,6 +350,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 if document._file and os.path.isfile(document._file.path):
                     os.remove(document._file.path)
                 document.delete()
+                instance.save(version_comment='File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
 
             elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
                 proposal_id = request.POST.get('proposal_id')
@@ -363,6 +364,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
                 document._file = path
                 document.save()
+                instance.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
 
             return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=section) if d._file] )
 
@@ -1272,7 +1274,7 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
     serializer_class = AmendmentRequestSerializer
 
     def create(self, request, *args, **kwargs):
-        try:            
+        try:
             reason_id=request.data.get('reason')
             data = {
                 #'schema': qs_proposal_type.order_by('-version').first().schema,

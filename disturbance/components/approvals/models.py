@@ -20,7 +20,7 @@ from disturbance.components.organisations.models import Organisation
 from disturbance.components.proposals.models import Proposal, ProposalUserAction
 from disturbance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from disturbance.components.approvals.email import (
-    send_approval_expire_email_notification, 
+    send_approval_expire_email_notification,
     send_approval_cancel_email_notification,
     send_approval_suspend_email_notification,
     send_approval_reinstate_email_notification,
@@ -30,7 +30,7 @@ from disturbance.utils import search_keys, search_multiple_keys
 #from disturbance.components.approvals.email import send_referral_email_notification
 
 
-def update_approval_doc_filename(instance, filename): 
+def update_approval_doc_filename(instance, filename):
     return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
 
 def update_approval_comms_log_filename(instance, filename):
@@ -103,15 +103,20 @@ class Approval(models.Model):
     def title(self):
         return self.current_proposal.title
 
+    @property
+    def next_id(self):
+        #ids = map(int,[(i.lodgement_number.split('A')[1]) for i in Approval.objects.all()])
+        ids = map(int,[i.split('A')[1] for i in Approval.objects.all().values_list('lodgement_number', flat=True) if i])
+        return max(ids) + 1 if ids else 1
+
     def save(self, *args, **kwargs):
         super(Approval, self).save(*args,**kwargs)
         if self.lodgement_number == '':
-            new_lodgment_id = 'A{0:06d}'.format(self.pk)
-            self.lodgement_number = new_lodgment_id
+            self.lodgement_number = 'A{0:06d}'.format(self.next_id)
             self.save()
 
     def __str__(self):
-        return self.reference
+        return self.lodgement_number
 
     @property
     def reference(self):
@@ -142,7 +147,7 @@ class Approval(models.Model):
 
     @property
     def can_renew(self):
-        try: 
+        try:
             renew_conditions = {
                     'previous_application': self.current_proposal,
                     'proposal_type': 'renewal'
@@ -155,7 +160,7 @@ class Approval(models.Model):
 
     @property
     def can_amend(self):
-        try: 
+        try:
             amend_conditions = {
                     'previous_application': self.current_proposal,
                     'proposal_type': 'amendment'
@@ -177,7 +182,7 @@ class Approval(models.Model):
         self.save()
 
     def generate_renewal_doc(self):
-        from disturbance.components.approvals.pdf import create_renewal_doc 
+        from disturbance.components.approvals.pdf import create_renewal_doc
         self.renewal_document = create_renewal_doc(self,self.current_proposal)
         self.save()
 
@@ -197,7 +202,7 @@ class Approval(models.Model):
                                 if d['assessor']:
                                     #copied_data.append({c['label'], d['assessor']})
                                     copied_data.append({c['label']:d['assessor']})
-                except: 
+                except:
                     raise
         return copied_data
 
@@ -215,8 +220,8 @@ class Approval(models.Model):
                     self.save()
                     send_approval_expire_email_notification(self)
                     proposal = self.current_proposal
-                    ApprovalUserAction.log_action(self,ApprovalUserAction.ACTION_EXPIRE_APPROVAL.format(self.id),user)  
-                    ProposalUserAction.log_action(proposal,ProposalUserAction.ACTION_EXPIRED_APPROVAL_.format(proposal.id),user)  
+                    ApprovalUserAction.log_action(self,ApprovalUserAction.ACTION_EXPIRE_APPROVAL.format(self.id),user)
+                    ProposalUserAction.log_action(proposal,ProposalUserAction.ACTION_EXPIRED_APPROVAL_.format(proposal.id),user)
             except:
                 raise
 
@@ -232,11 +237,11 @@ class Approval(models.Model):
                 cancellation_date = datetime.datetime.strptime(self.cancellation_date,'%Y-%m-%d')
                 cancellation_date = cancellation_date.date()
                 today = timezone.now().date()
-                if cancellation_date <= today:                    
+                if cancellation_date <= today:
                     if not self.status == 'cancelled':
-                        self.status = 'cancelled'  
-                        self.set_to_cancel = False                      
-                        send_approval_cancel_email_notification(self)                        
+                        self.status = 'cancelled'
+                        self.set_to_cancel = False
+                        send_approval_cancel_email_notification(self)
                 else:
                     self.set_to_cancel = True
                 self.save()
@@ -254,8 +259,8 @@ class Approval(models.Model):
                     raise ValidationError('You do not have access to suspend this approval')
                 if not self.can_reissue and self.can_action:
                     raise ValidationError('You cannot suspend approval if it is not current or suspended')
-                if details.get('to_date'): 
-                    to_date= details.get('to_date').strftime('%d/%m/%Y') 
+                if details.get('to_date'):
+                    to_date= details.get('to_date').strftime('%d/%m/%Y')
                 else:
                     to_date=''
                 self.suspension_details = {
@@ -266,15 +271,15 @@ class Approval(models.Model):
                 today = timezone.now().date()
                 from_date = datetime.datetime.strptime(self.suspension_details['from_date'],'%d/%m/%Y')
                 from_date = from_date.date()
-                if from_date <= today:                    
-                    if not self.status == 'suspended':                        
-                        self.status = 'suspended'  
-                        self.set_to_suspend = False                      
+                if from_date <= today:
+                    if not self.status == 'suspended':
+                        self.status = 'suspended'
+                        self.set_to_suspend = False
                         self.save()
-                        send_approval_suspend_email_notification(self)                        
+                        send_approval_suspend_email_notification(self)
                 else:
                     self.set_to_suspend = True
-                self.save()                
+                self.save()
                 # Log approval action
                 self.log_user_action(ApprovalUserAction.ACTION_SUSPEND_APPROVAL.format(self.id),request)
                 # Log entry for proposal
@@ -282,7 +287,7 @@ class Approval(models.Model):
             except:
                 raise
 
-    def reinstate_approval(self,request): 
+    def reinstate_approval(self,request):
         with transaction.atomic():
             try:
                 if not request.user in self.allowed_assessors:
@@ -322,21 +327,21 @@ class Approval(models.Model):
                 if not self.can_reissue and self.can_action:
                     raise ValidationError('You cannot surrender approval if it is not current or suspended')
                 self.surrender_details = {
-                    'surrender_date' : details.get('surrender_date').strftime('%d/%m/%Y'),                    
+                    'surrender_date' : details.get('surrender_date').strftime('%d/%m/%Y'),
                     'details': details.get('surrender_details'),
                 }
                 today = timezone.now().date()
                 surrender_date = datetime.datetime.strptime(self.surrender_details['surrender_date'],'%d/%m/%Y')
                 surrender_date = surrender_date.date()
-                if surrender_date <= today:                    
-                    if not self.status == 'surrendered':                        
-                        self.status = 'surrendered' 
-                        self.set_to_surrender = False                       
+                if surrender_date <= today:
+                    if not self.status == 'surrendered':
+                        self.status = 'surrendered'
+                        self.set_to_surrender = False
                         self.save()
-                        send_approval_surrender_email_notification(self)                        
+                        send_approval_surrender_email_notification(self)
                 else:
                     self.set_to_surrender = True
-                self.save()                
+                self.save()
                 # Log approval action
                 self.log_user_action(ApprovalUserAction.ACTION_SURRENDER_APPROVAL.format(self.id),request)
                 # Log entry for proposal
@@ -376,8 +381,8 @@ class ApprovalUserAction(UserAction):
     ACTION_SURRENDER_APPROVAL = "surrender approval {}"
     ACTION_RENEW_APPROVAL = "Create renewal Proposal for approval {}"
     ACTION_AMEND_APPROVAL = "Create amendment Proposal for approval {}"
-    
-    
+
+
     class Meta:
         app_label = 'disturbance'
         ordering = ('-when',)
