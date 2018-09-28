@@ -1,0 +1,54 @@
+{%  extends 'mooring/email/base_email.txt' %}
+
+{% block greetings %}
+{{booking.details.first_name}} {{booking.details.last_name}},
+{% endblock %}
+
+{% block content %}
+
+Print or save this confirmation for presentation on arrival and at any time during your stay.
+
+Arrival: {{booking.arrival|date:"d/m/Y"}}
+Departure: {{booking.departure|date:"d/m/Y"}}
+
+{% if booking.campground.site_type == 2 %}
+Campsite: {{booking.first_campsite.type}}
+{% else %}
+Campsite: {{booking.first_campsite.name}}({{booking.first_campsite.type}})
+{% endif %}
+Campers: {{booking.stay_guests}}
+
+{% for v in booking.vehicle_payment_status %}
+{% if v.Paid == 'Yes' %}
+Vehicle: {{v.Rego}}, {{v.Type}}, Entry Fee Paid
+{% elif v.Paid == 'No' %}
+Vehicle: {{v.Rego}}, {{v.Type}}, Unpaid
+{% elif v.Paid == 'pass_required' %}
+Vehicle: {{v.Rego}}, {{v.Type}}, Park Pass Required
+{% else %}
+Vehicle: {{v.Rego}}, {{v.Type}}
+{% endif %}
+{% endfor %}
+
+{% if unpaid_vehicle %}Purchase a park entry pass at our online store (https://shop.dpaw.wa.gov.au/park-passes) or pay on arrival ({{EXPLORE_PARKS_ENTRY_FEES}}){% endif %}
+
+
+About {{booking.campground.name}} and booking conditions {{availability}}
+
+{% if booking.campground.additional_info %}Additional confirmation information: {{booking.campground.additional_info}}{% endif %}
+
+Before you go, check:
+
+- Your contact details and vehicle registration are correct [link to on screen details] 
+- The Bureau of Meteorology (http://www.bom.gov.au) for weather forecasts and warnings 
+- Emergency WA (https://www.emergency.wa.gov.au) for warnings and incidents 
+- The ABC (http://www.abc.net.au) radio frequency for the area you are visiting (ABC local radio broadcasts emergency information)
+
+Contact us about your booking
+{{campground_email}}
+{% if booking.campground.telephone %}
+{{booking.campground.telephone}}
+{% endif %}
+
+View my Park Stay WA bookings {{my_bookings}}
+{% endblock %}

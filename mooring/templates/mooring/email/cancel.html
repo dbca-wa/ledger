@@ -1,0 +1,9 @@
+{%  extends 'mooring/email/base_email.html' %}
+
+{% block content %}
+<p>Your booking REF {{booking.confirmation_number}}, arrival {{booking.arrival|date:"d/m/Y"}} at {{booking.campground.name}}, {{booking.campground.park.name}} has been cancelled.</p>
+
+<p>If we received an email from you notifying us of cancellation more than 28 days before your booking arrival date, 50% of the total fees paid will be refunded to the account used to make payment within 30 days.</p><br />
+
+<p>View my Park Stay WA bookings {{my_bookings}}</p>
+{% endblock %}

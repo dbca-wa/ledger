@@ -364,12 +364,10 @@ class CampgroundStayHistoryViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
-
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campground.objects.exclude(campground_type=3).annotate(Min('campsites__rates__rate__adult'))
     serializer_class = CampgroundMapSerializer
     permission_classes = []
-
 
 class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campground.objects.exclude(campground_type=3)
@@ -1596,7 +1594,6 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['start'] = start
 
             sql += ';'
-            #print(sql)
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");
@@ -1936,7 +1933,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
                 rate = Rate.objects.get_or_create(adult=rate_serializer.validated_data['adult'],concession=rate_serializer.validated_data['concession'],child=rate_serializer.validated_data['child'])[0]
-            print(rate_serializer.validated_data)
             if rate:
                 data = {
                     'rate': rate.id,
@@ -2153,7 +2149,6 @@ class BulkPricingView(generics.CreateAPIView):
             http_status = status.HTTP_200_OK
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            print(serializer.validated_data)
 
             rate_id = serializer.data.get('rate',None)
             if rate_id:
