@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Send Approval renewal notice when approval is due expire in 30 days'
+    help = 'Send Approval renewal notice when approval is due to expire in 30 days'
 
     def handle(self, *args, **options):
         try:

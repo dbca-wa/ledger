@@ -347,8 +347,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 document_id = request.POST.get('document_id')
                 document = instance.documents.get(id=document_id)
 
-                if document._file and os.path.isfile(document._file.path):
+                if document._file and os.path.isfile(document._file.path) and document.can_delete:
                     os.remove(document._file.path)
+                
                 document.delete()
                 instance.save(version_comment='File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
 
@@ -366,7 +367,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 document.save()
                 instance.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
 
-            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id) for d in instance.documents.filter(input_name=section) if d._file] )
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.documents.filter(input_name=section) if d._file] )
 
         except serializers.ValidationError:
             print(traceback.print_exc())

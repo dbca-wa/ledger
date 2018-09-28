@@ -25,6 +25,9 @@ from disturbance.ordered_model import OrderedModel
 from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
 import copy
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def update_proposal_doc_filename(instance, filename):
     return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
@@ -179,6 +182,12 @@ class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
     _file = models.FileField(upload_to=update_proposal_doc_filename)
     input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+
+    def delete(self):
+        if self.can_delete:
+            return super(ProposalDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
 
     class Meta:
         app_label = 'disturbance'
@@ -590,9 +599,9 @@ class Proposal(RevisionedMixin):
                 ret2 = send_external_submit_email_notification(request, self)
 
                 if ret1 and ret2:
-                #if True:
                     self.processing_status = 'with_assessor'
                     self.customer_status = 'with_assessor'
+                    self.documents.all().update(can_delete=False)
                     self.save()
                 else:
                     raise ValidationError('An error occurred while submitting proposal (Submit email notifications failed)')
@@ -685,22 +694,26 @@ class Proposal(RevisionedMixin):
     def assing_approval_level_document(self, request):
         with transaction.atomic():
             try:
-                if request.data['approval_level_document'] != 'null':
+                approval_level_document = request.data['approval_level_document']
+                if approval_level_document != 'null':
                     try:
-                        document = self.documents.get(input_name=str(request.data['approval_level_document']))
+                        document = self.documents.get(input_name=str(approval_level_document))
                     except ProposalDocument.DoesNotExist:
-                        document = self.documents.get_or_create(input_name=str(request.data['approval_level_document']))[0]
-                    document.name = str(request.data['approval_level_document'])
-                    if document._file and os.path.isfile(document._file.path):
-                        os.remove(document._file.path)
-                    document._file = request.data['approval_level_document']
+                        document = self.documents.get_or_create(input_name=str(approval_level_document), name=str(approval_level_document))[0]
+                    document.name = str(approval_level_document)
+                    # commenting out below tow lines - we want to retain all past attachments - reversion can use them
+                    #if document._file and os.path.isfile(document._file.path): 
+                    #    os.remove(document._file.path)
+                    document._file = approval_level_document
                     document.save()
                     d=ProposalDocument.objects.get(id=document.id)
                     self.approval_level_document = d
+                    comment = 'Approval Level Document Added: {}'.format(document.name)
                 else:
                     self.approval_level_document = None
-                self.save()
-                #instance.save()
+                    comment = 'Approval Level Document Deleted: {}'.format(request.data['approval_level_document_name'])
+                #self.save()
+                self.save(version_comment=comment) # to allow revision to be added to reversion history
                 self.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
                 # Create a log entry for the organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
@@ -1663,7 +1676,7 @@ class HelpPage(models.Model):
 
 
 import reversion
-reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals',])
+reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approval',])
 reversion.register(ProposalType)
 reversion.register(ProposalRequirement)            # related_name=requirements
 reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements

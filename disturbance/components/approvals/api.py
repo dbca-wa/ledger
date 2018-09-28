@@ -321,6 +321,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files
+                import ipdb; ipdb.set_trace()
                 for f in request.FILES:
                     document = comms.documents.create()
                     document.name = str(request.FILES[f])
