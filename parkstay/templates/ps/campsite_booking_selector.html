@@ -13,12 +13,16 @@
         </div></div>
     </div></div></noscript>
     <div id="availability"></div>
-    <script type="text/javascript">
-{% if ground_id %}    var parkstayGroundId = '{{ ground_id|escapejs }}';
-{% endif %}
-    </script>
-    <script src="{% static 'availability/js/manifest.js' %}"></script>
     <script src="{% static 'availability/js/vendor.js' %}"></script>
     <script src="{% static 'availability/js/app.js' %}"></script>
-{% endblock %}
+    <script type="text/javascript">
+window.onload = function () {
+    {% if ground_id %}
+    var availability = availabilityApp('#availability', null, parseInt('{{ ground_id|escapejs }}'));
+    {% else %}
+    var availability = availabilityApp('#availability');
+    {% endif %}
+};
+    </script>
+ {% endblock %}
 

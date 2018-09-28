@@ -518,9 +518,10 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
         # Get the cheapest campsite (based on adult rate) to be used
         # for the whole booking period, using the first rate as default
         # Set initial campsite and rate to first in rate_list
-        multibook_rate = rate_list.items()[0][1].items()[0][1]
+        first_ratelist_item = rate_list[next(iter(rate_list))]
+        multibook_rate = next(iter(first_ratelist_item.values()))
         multibook_rate_adult = Decimal(multibook_rate['adult'])
-        multibook_campsite = rate_list.items()[0][0]
+        multibook_campsite = next(iter(rate_list))
         multibook_index = 1
         for campsite, ratelist in rate_list.items():
             for index, rate in ratelist.items():
@@ -673,10 +674,8 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
                 invoice = h.url.split('invoice=', 1)[1]
                 break
     
-    internal_create_booking_invoice(booking, invoice)
-
-    # Get the new invoice
-    new_invoice = booking.invoices.first()
+    # create the new invoice
+    new_invoice = internal_create_booking_invoice(booking, invoice)
 
     # Check if the booking is a legacy booking and doesn't have an invoice
     if old_booking.legacy_id and old_booking.invoices.count() < 1:
