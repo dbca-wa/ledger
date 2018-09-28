@@ -135,7 +135,7 @@
                                                 <td class="site"> {{c.status}} </td>
                                                 <td class="book"> {{ c.campsites.length }} available </td>
                                                 <td class="numBook">
-                                                    <input type="number" min="0" v-bind:max="c.campsites.length" class="form-control" v-model="c.selected_campsite_class" @change="updatePrices()">
+                                                    <input type="number" id="numberRange" min="0" v-bind:max="c.campsites.length" class="form-control" v-model="c.selected_campsite_class" @change="updateCampsiteCount(c)">
                                                 </td>
                                             </tr></template>
                                         </tbody>
@@ -1041,6 +1041,10 @@ export default {
                 } 
             }
             return true;
+        },
+        updateCampsiteCount: function(c) {
+            c.selected_campsite_class = Math.max(0, Math.min(c.selected_campsite_class, c.campsites.length));
+            this.updatePrices();
         },
         addFormValidations: function() {
             let vm=this;
