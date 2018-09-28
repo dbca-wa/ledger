@@ -471,7 +471,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def requirements(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            qs = instance.requirements.all()
+            #qs = instance.requirements.all()
+            qs = instance.requirements.all().exclude(is_deleted=True)
             serializer = ProposalRequirementSerializer(qs,many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -1218,8 +1219,13 @@ class ReferralViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 class ProposalRequirementViewSet(viewsets.ModelViewSet):
-    queryset = ProposalRequirement.objects.all()
+    #queryset = ProposalRequirement.objects.all()
+    queryset = ProposalRequirement.objects.none()
     serializer_class = ProposalRequirementSerializer
+
+    def get_queryset(self):
+        qs = ProposalRequirement.objects.all().exclude(is_deleted=True)
+        return qs
 
     @detail_route(methods=['GET',])
     def move_up(self, request, *args, **kwargs):
@@ -1244,6 +1250,24 @@ class ProposalRequirementViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.down()
+            instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def discard(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.is_deleted = True
             instance.save()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)

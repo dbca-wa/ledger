@@ -187,12 +187,20 @@ export default {
                 confirmButtonText: 'Remove Requirement',
                 confirmButtonColor:'#d9534f'
             }).then(() => {
-                vm.$http.delete(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id))
+                // vm.$http.delete(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id))
+                // .then((response) => {
+                //     vm.$refs.requirements_datatable.vmDataTable.ajax.reload();
+                // }, (error) => {
+                //     console.log(error);
+                // });
+
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id+'/discard'))
                 .then((response) => {
                     vm.$refs.requirements_datatable.vmDataTable.ajax.reload();
                 }, (error) => {
                     console.log(error);
                 });
+
             },(error) => {
             });
         },
