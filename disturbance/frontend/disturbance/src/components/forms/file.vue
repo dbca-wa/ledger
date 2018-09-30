@@ -33,7 +33,7 @@
                         <span v-if="!readonly && v.can_delete">
                             <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
-                        <span v-else><i class="fa fa-ban" aria-hidden="true" title="Previously submitted documents cannot be deleted" style="cursor: pointer; color:#FFFF00;"></i></span>
+                        <span v-else><i class="fa fa-info-circle" aria-hidden="true" title="Previously submitted documents cannot be deleted" style="cursor: pointer;"></i></span>
                     </p>
                 </div>
                 <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>

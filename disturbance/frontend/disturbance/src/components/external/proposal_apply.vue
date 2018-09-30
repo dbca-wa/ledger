@@ -302,6 +302,8 @@ export default {
         let vm = this;
 		if (vm.selected_application_name == 'Disturbance') {
         	return "a disturbance";
+		} else if (vm.selected_application_name == 'Disturbance Lite') {
+        	return "a disturbance (lite)";
 		} else if (vm.selected_application_name == 'Apiary') {
         	return "an apiary";
 		}
@@ -334,17 +336,16 @@ export default {
     },
     isDisabled: function() {
         let vm = this;
-        if (vm.selected_application_name == 'Disturbance') {
-            //if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_district == '' || vm.approval_level == ''){
+        if (vm.selected_application_name == 'Disturbance' || vm.selected_application_name == 'Disturbance Lite') {
             if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.approval_level == ''){
-	    		return true;
+                return true;
             }
         } else {
             if (vm.behalf_of == '' || vm.selected_application_id == ''){
-	    		return true;
+                return true;
             }
         }
-		return false;
+        return false;
     },
 	fetchRegions: function(){
 		let vm = this;
@@ -413,7 +414,7 @@ export default {
         //this.chainedSelectActivities(application_id);
         //this.chainedSelectActivities(application_id);
 
-        if (vm.selected_application_name == 'Disturbance') {
+        if (vm.selected_application_name == 'Disturbance' || vm.selected_application_name == 'Disturbance Lite') {
             vm.display_region_selectbox = true;
             vm.display_activity_matrix_selectbox = true;
         } 

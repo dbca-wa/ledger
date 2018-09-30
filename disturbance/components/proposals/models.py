@@ -702,7 +702,7 @@ class Proposal(RevisionedMixin):
                         document = self.documents.get_or_create(input_name=str(approval_level_document), name=str(approval_level_document))[0]
                     document.name = str(approval_level_document)
                     # commenting out below tow lines - we want to retain all past attachments - reversion can use them
-                    #if document._file and os.path.isfile(document._file.path): 
+                    #if document._file and os.path.isfile(document._file.path):
                     #    os.remove(document._file.path)
                     document._file = approval_level_document
                     document.save()
@@ -978,7 +978,8 @@ class Proposal(RevisionedMixin):
                     self.approval = approval
                 #send Proposal approval email with attachment
                 send_proposal_approval_email_notification(self,request)
-                self.save()
+                self.save(version_comment='Final Approval: {}'.format(self.approval.lodgement_number))
+                self.approval.documents.all().update(can_delete=False)
 
             except:
                 raise
@@ -1676,7 +1677,7 @@ class HelpPage(models.Model):
 
 
 import reversion
-reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approval',])
+reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals',])
 reversion.register(ProposalType)
 reversion.register(ProposalRequirement)            # related_name=requirements
 reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements

@@ -349,9 +349,10 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
                 if document._file and os.path.isfile(document._file.path) and document.can_delete:
                     os.remove(document._file.path)
-                
+
                 document.delete()
-                instance.save(version_comment='File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
+                instance.save(version_comment='Approval File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
+                instance.current_proposal.save(version_comment='File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
 
             elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
                 proposal_id = request.POST.get('proposal_id')
@@ -366,6 +367,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 document._file = path
                 document.save()
                 instance.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
+                instance.current_proposal.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
 
             return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.documents.filter(input_name=section) if d._file] )
 
@@ -587,6 +589,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance.tenure = search_tenure(instance)
             instance.save()
             serializer = self.get_serializer(instance)
+            instance.current_proposal.save(version_comment='Approval Submitted: {}'.format(self.lodgement_number)) # to allow revision to be added to reversion history
             return Response(serializer.data)
             #return redirect(reverse('external'))
         except serializers.ValidationError:

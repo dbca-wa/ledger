@@ -78,12 +78,12 @@ class ApprovalPaginatedViewSet(viewsets.ModelViewSet):
         """
 
         #import ipdb; ipdb.set_trace()
-        #qs = self.get_queryset().order_by('lodgement_number', '-issue_date')
         #qs = self.queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
         #qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
-        #qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-        qs = self.filter_queryset(self.get_queryset())
-        qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+
+        ids = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number').values_list('id', flat=True)
+        qs = Approval.objects.filter(id__in=ids)
+        qs = self.filter_queryset(qs)
 
         # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
         applicant_id = request.GET.get('org_id')
