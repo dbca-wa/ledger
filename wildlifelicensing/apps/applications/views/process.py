@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils import formats
 
 from reversion import revisions
+from reversion.models import Version
 from preserialize.serialize import serialize
 
 from ledger.accounts.models import EmailUser, Document
@@ -47,9 +48,9 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
 
         # extract and format the previous lodgements of the application
         previous_lodgements = []
-        for revision in revisions.get_for_object(application).filter(revision__comment='Details Modified').order_by(
+        for revision in Version.objects.get_for_object(application).filter(revision__comment='Details Modified').order_by(
                 '-revision__date_created'):
-            previous_lodgement = revision.object_version.object
+            previous_lodgement = revision._object_version.object
 
             if previous_lodgement.hard_copy is not None:
                 previous_lodgement.licence_type.application_schema, previous_lodgement.data = \
@@ -89,7 +90,10 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
                                             posthook=format_amendment_request),
             'assessor_groups': ass_groups,
             'assessments': serialize(Assessment.objects.filter(application=application),
-                                     posthook=format_assessment,exclude=['application','applicationrequest_ptr']),
+                                     posthook=format_assessment,exclude=['application','applicationrequest_ptr'],
+                                     related={'assessor_group':{'related':{'members':{'exclude':['residential_address']}}},
+                                         'officer':{'exclude':['residential_address']},
+                                         'assigned_assessor':{'exclude':['residential_address']}}),
             'previous_versions': serialize(previous_lodgements),
             'returns_outstanding': previous_application_returns_outstanding,
             'payment_status': payment_utils.PAYMENT_STATUSES.get(payment_utils.
@@ -372,7 +376,10 @@ class SendForAssessmentView(OfficerRequiredMixin, View):
 
         assessment.save()
 
-        return JsonResponse({'assessment': serialize(assessment, posthook=format_assessment,exclude=['application','applicationrequest_ptr']),
+        return JsonResponse({'assessment': serialize(assessment, posthook=format_assessment,exclude=['application','applicationrequest_ptr'],
+                                                                 related={'assessor_group':{'related':{'members':{'exclude':['residential_address']}}},
+                                                                     'officer':{'exclude':['residential_address']},
+                                                                     'assigned_assessor':{'exclude':['residential_address']}}),
                              'processing_status': PROCESSING_STATUSES[application.processing_status]},
                             safe=False, encoder=WildlifeLicensingJSONEncoder)
 
