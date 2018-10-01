@@ -1707,6 +1707,7 @@ def create_booking(request, *args, **kwargs):
         'num_concession': int(request.POST.get('num_concession', 0)),
         'num_child': int(request.POST.get('num_child', 0)),
         'num_infant': int(request.POST.get('num_infant', 0)),
+        'num_mooring' : int(request.POST.get('num_mooring', 0)),
         'campground': int(request.POST.get('campground', 0)),
         'campsite_class': int(request.POST.get('campsite_class', 0)),
         'campsite': int(request.POST.get('campsite', 0)),
@@ -2421,8 +2422,10 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @csrf_exempt
     @detail_route(permission_classes=[PaymentCallbackPermission],methods=['GET','POST'])
     def payment_callback(self, request, *args, **kwargs):
+        print "CALL BACK PAYMENT "
         from django.utils import timezone
         http_status = status.HTTP_200_OK
         try:
