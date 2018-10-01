@@ -1008,7 +1008,31 @@ class Proposal(RevisionedMixin):
         today = timezone.now().date()
         timedelta = datetime.timedelta
         from disturbance.components.compliances.models import Compliance, ComplianceUserAction
-        for req in self.requirements.all():
+        #For amendment type of Proposal, check for copied requirements from previous proposal
+        if self.proposal_type == 'amendment':
+            try:
+                for r in self.requirements.filter(copied_from__isnull=False):
+                    cs=[]
+                    cs=Compliance.objects.filter(requirement=r.copied_from, proposal=self.previous_application, processing_status='due')
+                    if cs:
+                        if r.is_deleted == True:
+                            for c in cs:
+                                c.processing_status='discarded'
+                                c.customer_status = 'discarded'
+                                c.save()
+                        if r.is_deleted == False:
+                            for c in cs:
+                                c.proposal= self
+                                c.approval=approval
+                                c.requirement=r
+                                c.save()
+            except:
+                raise
+        #requirement_set= self.requirements.filter(copied_from__isnull=True).exclude(is_deleted=True)
+        requirement_set= self.requirements.all().exclude(is_deleted=True)
+
+        #for req in self.requirements.all():
+        for req in requirement_set:
             try:
                 if req.due_date and req.due_date >= today:
                     current_date = req.due_date

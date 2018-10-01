@@ -41,12 +41,14 @@ class Compliance(models.Model):
                                  ('future', 'Future'),
                                  ('with_assessor', 'With Assessor'),
                                  ('approved', 'Approved'),
+                                 ('discarded', 'Discarded'),
                                  )
 
     CUSTOMER_STATUS_CHOICES = (('due', 'Due'),
                                  ('future', 'Future'),
                                  ('with_assessor', 'Under Review'),
                                  ('approved', 'Approved'),
+                                 ('discarded', 'Discarded'),
                                  )
 
 
