@@ -72,21 +72,18 @@
                                              <div class="col-sm-6">
                                                 <div class="row" v-for="d in compliance.documents">
                                                     <a :href="d[1]" target="_blank" class="control-label pull-left">{{d[0]   }}</a>
-                                                    <span v-if="!isFinalised">
+                                                    <span v-if="!isFinalisedi && d.can_delete">
                                                         <a @click="delete_document(d)" class="fa fa-trash-o control-label" title="Remove file" style="cursor: pointer; color:red;"></a>
                                                     </span>
+                                                    <span v-else >    <i class="fa fa-info-circle" aria-hidden="true" title="Previously submitted documents cannot be deleted" style="cursor: pointer;"></i></span>
                                                 </div>
                                             </div>
                                             </div>
-                                   
                                 </div>
-                                
-                               
+
                                 <div class="row">
                                     <div v-if="!isFinalised" class="form-group"> 
-                                   
                                         <label class="col-sm-3 control-label pull-left"  for="Name">Attachments:</label>
-                                    
                                     <div class="col-sm-6">
                                         <template v-for="(f,i) in files">
                                             <div :class="'row top-buffer file-row-'+i">
@@ -106,11 +103,10 @@
                                                 </div>
                                             </div>
                                         </template>
-                                            <a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a>
-                                    </div>  
-                                    </div>                           
+                                        <a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a>
+                                    </div>
+                                    </div>
                                 </div>
-                           
 
                                 <div class="row">
                                     <div class="form-group">

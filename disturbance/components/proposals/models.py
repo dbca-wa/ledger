@@ -24,6 +24,10 @@ from disturbance.components.proposals.email import send_referral_email_notificat
 from disturbance.ordered_model import OrderedModel
 from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
 import copy
+import subprocess
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def update_proposal_doc_filename(instance, filename):
@@ -44,7 +48,7 @@ class ProposalType(models.Model):
     #application_type = models.ForeignKey(ApplicationType, related_name='aplication_types')
     description = models.CharField(max_length=256, blank=True, null=True)
     #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=application_type_choicelist(), default=application_type_choicelist()[0][0])
-    name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=application_type_choicelist(), default='Disturbance')
+    name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=64, choices=application_type_choicelist(), default='Disturbance')
     schema = JSONField()
     #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
     #site = models.OneToOneField(Site, default='1')
@@ -179,6 +183,12 @@ class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
     _file = models.FileField(upload_to=update_proposal_doc_filename)
     input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+
+    def delete(self):
+        if self.can_delete:
+            return super(ProposalDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
 
     class Meta:
         app_label = 'disturbance'
@@ -590,9 +600,9 @@ class Proposal(RevisionedMixin):
                 ret2 = send_external_submit_email_notification(request, self)
 
                 if ret1 and ret2:
-                #if True:
                     self.processing_status = 'with_assessor'
                     self.customer_status = 'with_assessor'
+                    self.documents.all().update(can_delete=False)
                     self.save()
                 else:
                     raise ValidationError('An error occurred while submitting proposal (Submit email notifications failed)')
@@ -685,22 +695,26 @@ class Proposal(RevisionedMixin):
     def assing_approval_level_document(self, request):
         with transaction.atomic():
             try:
-                if request.data['approval_level_document'] != 'null':
+                approval_level_document = request.data['approval_level_document']
+                if approval_level_document != 'null':
                     try:
-                        document = self.documents.get(input_name=str(request.data['approval_level_document']))
+                        document = self.documents.get(input_name=str(approval_level_document))
                     except ProposalDocument.DoesNotExist:
-                        document = self.documents.get_or_create(input_name=str(request.data['approval_level_document']))[0]
-                    document.name = str(request.data['approval_level_document'])
-                    if document._file and os.path.isfile(document._file.path):
-                        os.remove(document._file.path)
-                    document._file = request.data['approval_level_document']
+                        document = self.documents.get_or_create(input_name=str(approval_level_document), name=str(approval_level_document))[0]
+                    document.name = str(approval_level_document)
+                    # commenting out below tow lines - we want to retain all past attachments - reversion can use them
+                    #if document._file and os.path.isfile(document._file.path):
+                    #    os.remove(document._file.path)
+                    document._file = approval_level_document
                     document.save()
                     d=ProposalDocument.objects.get(id=document.id)
                     self.approval_level_document = d
+                    comment = 'Approval Level Document Added: {}'.format(document.name)
                 else:
                     self.approval_level_document = None
-                self.save()
-                #instance.save()
+                    comment = 'Approval Level Document Deleted: {}'.format(request.data['approval_level_document_name'])
+                #self.save()
+                self.save(version_comment=comment) # to allow revision to be added to reversion history
                 self.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
                 # Create a log entry for the organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
@@ -897,6 +911,7 @@ class Proposal(RevisionedMixin):
                             if created:
                                 previous_approval.replaced_by = approval
                                 previous_approval.save()
+
                     elif self.proposal_type == 'amendment':
                         if self.previous_application:
                             previous_approval = self.previous_application.approval
@@ -965,7 +980,8 @@ class Proposal(RevisionedMixin):
                     self.approval = approval
                 #send Proposal approval email with attachment
                 send_proposal_approval_email_notification(self,request)
-                self.save()
+                self.save(version_comment='Final Approval: {}'.format(self.approval.lodgement_number))
+                self.approval.documents.all().update(can_delete=False)
 
             except:
                 raise
@@ -1078,7 +1094,8 @@ class Proposal(RevisionedMixin):
                 #Log entry for approval
                 from disturbance.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_RENEW_APPROVAL.format(self.approval.id),request)
-                proposal.save()
+                proposal.save(version_comment='New Amendment/Renewal Proposal created, from origin {}'.format(proposal.previous_application_id))
+                #proposal.save()
             return proposal
 
     def amend_approval(self,request):
@@ -1116,7 +1133,8 @@ class Proposal(RevisionedMixin):
                 #Log entry for approval
                 from disturbance.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_AMEND_APPROVAL.format(self.approval.id),request)
-                proposal.save()
+                proposal.save(version_comment='New Amendment/Renewal Proposal created, from origin {}'.format(proposal.previous_application_id))
+                #proposal.save()
             return proposal
 
 
@@ -1545,16 +1563,20 @@ def clone_proposal_with_status_reset(proposal):
                 #proposal.previous_application = Proposal.objects.get(id=original_proposal_id)
 
                 proposal.id = None
+                proposal.approval_level_document = None
 
-                #proposal.save(no_revision=True)
-                proposal.save()
-
+                proposal.save(no_revision=True)
 
                 # clone documents
                 for proposal_document in ProposalDocument.objects.filter(proposal=original_proposal_id):
                     proposal_document.proposal = proposal
                     proposal_document.id = None
+                    proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
+                    proposal_document.can_delete = True
                     proposal_document.save()
+
+                # copy documents on file system and reset can_delete flag
+                subprocess.call('cp -pr media/proposals/{} media/proposals/{}'.format(original_proposal_id, proposal.id), shell=True)
 
                 return proposal
             except:
@@ -1663,12 +1685,11 @@ class HelpPage(models.Model):
 
 
 import reversion
-reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals',])
+reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals',])
 reversion.register(ProposalType)
 reversion.register(ProposalRequirement)            # related_name=requirements
 reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
 reversion.register(ProposalDocument)               # related_name=documents
-reversion.register(Document)                       # related_name=documents
 reversion.register(ProposalLogEntry)
 reversion.register(ProposalUserAction)
 reversion.register(ComplianceRequest)
@@ -1677,4 +1698,5 @@ reversion.register(Assessment)
 reversion.register(Referral)
 reversion.register(HelpPage)
 reversion.register(ApplicationType)
+
 

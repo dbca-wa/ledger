@@ -13,6 +13,7 @@ from django.db.models.signals import post_delete, pre_save, post_save
 from django.core.exceptions import ValidationError
 
 from reversion import revisions
+from reversion.models import Version
 from django_countries.fields import CountryField
 
 from social_django.models import UserSocialAuth
@@ -410,22 +411,24 @@ class RevisionedMixin(models.Model):
     """
     A model tracked by reversion through the save method.
     """
-#    def save(self, **kwargs):
-#        if kwargs.pop('no_revision', False):
-#            super(RevisionedMixin, self).save(**kwargs)
-#        else:
-#            with revisions.create_revision():
-#                revisions.set_user(kwargs.pop('version_user', None))
-#                revisions.set_comment(kwargs.pop('version_comment', ''))
-#                super(RevisionedMixin, self).save(**kwargs)
+    def save(self, **kwargs):
+        if kwargs.pop('no_revision', False):
+            super(RevisionedMixin, self).save(**kwargs)
+        else:
+            with revisions.create_revision():
+                revisions.set_user(kwargs.pop('version_user', None))
+                revisions.set_comment(kwargs.pop('version_comment', ''))
+                super(RevisionedMixin, self).save(**kwargs)
 
     @property
     def created_date(self):
-        return revisions.get_for_object(self).last().revision.date_created
+        #return revisions.get_for_object(self).last().revision.date_created
+        return Version.objects.get_for_object(self).last().revision.date_created
 
     @property
     def modified_date(self):
-        return revisions.get_for_object(self).first().revision.date_created
+        #return revisions.get_for_object(self).first().revision.date_created
+        return Version.objects.get_for_object(self).first().revision.date_created
 
     class Meta:
         abstract = True

@@ -165,6 +165,9 @@ export default {
             let vm = this;
                 let data = new FormData(vm.form);
                 data.append('approval_level_document', vm.uploadedFile)
+                if (vm.proposal.approval_level_document) {
+                    data.append('approval_level_document_name', vm.proposal.approval_level_document[0])
+                }
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/approval_level_document'),data,{
                 emulateJSON:true
             }).then(res=>{
