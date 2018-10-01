@@ -108,13 +108,13 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
             if not override_checks:
                 if updating_booking:
                     if not all([v[0] in ['open','tooearly'] for k, v in dates.items()]):
-                        raise ValidationError('Campsite(s) unavailable for specified time period.')
+                        raise ValidationError('Moorings unavailable for specified time period.')
                 else:
                     if not all([v[0] == 'open' for k, v in dates.items()]):
-                        raise ValidationError('Campsite(s) unavailable for specified time period.')
+                        raise ValidationError('Mooring unavailable for specified time period.')
             else:
                 if not all([v[0] in ['open','tooearly','closed'] for k, v in dates.items()]):
-                    raise ValidationError('Campsite(s) unavailable for specified time period.')
+                    raise ValidationError('Mooring unavailable for specified time period.')
                 
         if not override_checks:
             # Prevent booking if max people passed
