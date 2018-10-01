@@ -2,7 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from disturbance.components.proposals import models
 from disturbance.components.proposals import forms
-from disturbance.components.main.models import ActivityMatrix, SystemMaintenance
+from disturbance.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType
 #from disturbance.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
@@ -108,5 +108,10 @@ class SystemMaintenanceAdmin(admin.ModelAdmin):
     ordering = ('start_date',)
     readonly_fields = ('duration',)
     form = forms.SystemMaintenanceAdminForm
+
+@admin.register(ApplicationType)
+class ApplicationTypeAdmin(admin.ModelAdmin):
+    list_display = ['name', 'order', 'visible']
+    ordering = ('order',)
 
 

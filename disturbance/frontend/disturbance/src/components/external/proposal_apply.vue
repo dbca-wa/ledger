@@ -302,8 +302,8 @@ export default {
         let vm = this;
 		if (vm.selected_application_name == 'Disturbance') {
         	return "a disturbance";
-		} else if (vm.selected_application_name == 'Disturbance Lite') {
-        	return "a disturbance (lite)";
+		} else if (vm.selected_application_name == 'Western Power Maintenance') {
+        	return "a Western Power Maintenance";
 		} else if (vm.selected_application_name == 'Apiary') {
         	return "an apiary";
 		}
@@ -336,7 +336,7 @@ export default {
     },
     isDisabled: function() {
         let vm = this;
-        if (vm.selected_application_name == 'Disturbance' || vm.selected_application_name == 'Disturbance Lite') {
+        if (vm.selected_application_name == 'Disturbance' || vm.selected_application_name == 'Western Power Maintenance') {
             if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.approval_level == ''){
                 return true;
             }
@@ -414,7 +414,7 @@ export default {
         //this.chainedSelectActivities(application_id);
         //this.chainedSelectActivities(application_id);
 
-        if (vm.selected_application_name == 'Disturbance' || vm.selected_application_name == 'Disturbance Lite') {
+        if (vm.selected_application_name == 'Disturbance' || vm.selected_application_name == 'Western Power Maintenance') {
             vm.display_region_selectbox = true;
             vm.display_activity_matrix_selectbox = true;
         } 

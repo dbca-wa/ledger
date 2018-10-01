@@ -24,6 +24,7 @@ from disturbance.components.proposals.email import send_referral_email_notificat
 from disturbance.ordered_model import OrderedModel
 from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
 import copy
+import subprocess
 
 import logging
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class ProposalType(models.Model):
     #application_type = models.ForeignKey(ApplicationType, related_name='aplication_types')
     description = models.CharField(max_length=256, blank=True, null=True)
     #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=application_type_choicelist(), default=application_type_choicelist()[0][0])
-    name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=application_type_choicelist(), default='Disturbance')
+    name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=64, choices=application_type_choicelist(), default='Disturbance')
     schema = JSONField()
     #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
     #site = models.OneToOneField(Site, default='1')
@@ -910,6 +911,7 @@ class Proposal(RevisionedMixin):
                             if created:
                                 previous_approval.replaced_by = approval
                                 previous_approval.save()
+
                     elif self.proposal_type == 'amendment':
                         if self.previous_application:
                             previous_approval = self.previous_application.approval
@@ -1092,7 +1094,8 @@ class Proposal(RevisionedMixin):
                 #Log entry for approval
                 from disturbance.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_RENEW_APPROVAL.format(self.approval.id),request)
-                proposal.save()
+                proposal.save(version_comment='New Amendment/Renewal Proposal created, from origin {}'.format(proposal.previous_application_id))
+                #proposal.save()
             return proposal
 
     def amend_approval(self,request):
@@ -1130,7 +1133,8 @@ class Proposal(RevisionedMixin):
                 #Log entry for approval
                 from disturbance.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_AMEND_APPROVAL.format(self.approval.id),request)
-                proposal.save()
+                proposal.save(version_comment='New Amendment/Renewal Proposal created, from origin {}'.format(proposal.previous_application_id))
+                #proposal.save()
             return proposal
 
 
@@ -1559,16 +1563,20 @@ def clone_proposal_with_status_reset(proposal):
                 #proposal.previous_application = Proposal.objects.get(id=original_proposal_id)
 
                 proposal.id = None
+                proposal.approval_level_document = None
 
-                #proposal.save(no_revision=True)
-                proposal.save()
-
+                proposal.save(no_revision=True)
 
                 # clone documents
                 for proposal_document in ProposalDocument.objects.filter(proposal=original_proposal_id):
                     proposal_document.proposal = proposal
                     proposal_document.id = None
+                    proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
+                    proposal_document.can_delete = True
                     proposal_document.save()
+
+                # copy documents on file system and reset can_delete flag
+                subprocess.call('cp -pr media/proposals/{} media/proposals/{}'.format(original_proposal_id, proposal.id), shell=True)
 
                 return proposal
             except:
