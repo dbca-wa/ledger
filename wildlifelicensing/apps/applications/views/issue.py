@@ -174,7 +174,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         application = get_object_or_404(Application, pk=self.args[0])
 
         #kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
+        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']},'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']}})
 
         if application.licence:
             kwargs['issue_licence_form'] = IssueLicenceForm(instance=application.licence)
@@ -275,7 +275,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
                 return render(request, self.template_name, {
                     #'application': serialize(application, posthook=format_application),
-                    'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}}),
+                    'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']},'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']}}),
                     'issue_licence_form': issue_licence_form,
                     'extracted_fields': extracted_fields,
                     'payment_status': payment_status_verbose,
@@ -294,7 +294,7 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             return render(request, self.template_name, {
                 #'application': serialize(application, posthook=format_application),
-                'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}}),
+                'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']},'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']}}),
                 'issue_licence_form': issue_licence_form,
                 'extracted_fields': extracted_fields,
                 'payment_status': payment_status_verbose,
