@@ -239,11 +239,11 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                     if not closure.campground._is_open(start+timedelta(days=i)):
                         if start+timedelta(days=i) in results[cs]:
                             results[cs][start+timedelta(days=i)][0] = 'closed' 
-                            results[cs][start+timedelta(days=i)][1] = reason
+                            results[cs][start+timedelta(days=i)][1] = str(reason)
                 else:
                     if start+timedelta(days=i) in results[cs]:
                         results[cs][start+timedelta(days=i)][0] = 'closed'
-                        results[cs][start+timedelta(days=i)][1] = reason
+                        results[cs][start+timedelta(days=i)][1] = str(reason)
 
     # strike out campsite closures
     csbr_qs =    CampsiteBookingRange.objects.filter(
@@ -262,11 +262,11 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                 if not closure.campsite._is_open(start+timedelta(days=i)):
                     if start+timedelta(days=i) in results[closure.campsite.pk]:
                         results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
-                        results[closure.campsite.pk][start+timedelta(days=i)][1] = reason
+                        results[closure.campsite.pk][start+timedelta(days=i)][1] = str(reason)
             else:
                 if start+timedelta(days=i) in results[closure.campsite.pk]:
                     results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
-                    results[closure.campsite.pk][start+timedelta(days=i)][1] = reason
+                    results[closure.campsite.pk][start+timedelta(days=i)][1] = str(reason)
            
     # strike out existing bookings
     for b in bookings_qs:
