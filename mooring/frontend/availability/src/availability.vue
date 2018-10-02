@@ -90,7 +90,7 @@
                 </label>
             </div>
 
-            <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns" style='display:none'>
+            <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns" iiiistyle='display:none'>
                 <label>
                     Guests 
                     <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
@@ -102,7 +102,8 @@
                         </div><div class="small-6 columns">
                             <input type="number" id="numAdults" name="num_adults" @change="update()" v-model="numAdults" min="0" max="16"/>
                         </div>
-                    </div><div class="row">
+                    </div>
+                    <div class="row">
                         <div class="small-6 columns" >
                             <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
 - Seniors Card
@@ -115,17 +116,26 @@
                         </div><div class="small-6 columns">
                             <input type="number" id="numConcessions" name="num_concessions" @change="update()" v-model="numConcessions" min="0" max="16"/>
                         </div>
-                    </div><div class="row">
+                    </div>
+                    <div class="row">
                         <div class="small-6 columns">
                             <label for="num_children" class="text-right">Children (ages 6-15)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="numChildren" name="num_children" @change="update()" v-model="numChildren" min="0" max="16"/>
                         </div>
-                    </div><div class="row">
+                    </div>
+                    <div class="row">
                         <div class="small-6 columns">
                             <label for="num_infants" class="text-right">Infants (ages 0-5)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="numInfants" name="num_infants" @change="update()" v-model="numInfants" min="0" max="16"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-6 columns">
+                            <label for="num_infants" class="text-right">Mooring</label>
+                        </div><div class="small-6 columns">
+                            <input type="number" id="numMooring" name="num_mooring" @change="update()" v-model="numMooring" min="0" max="16"/>
                         </div>
                     </div>
                 </div>
@@ -153,7 +163,7 @@
                 </thead>
                 <tbody><template v-for="site in sites" v-if="site.gearType[gearType]">
                     <tr>
-                        <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
+                        <td class="site">{{ site.name }}<span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
                             <template v-if="site.price">
                                 <button v-if="!ongoing_booking" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
@@ -351,10 +361,11 @@ export default {
             parkstayGroundId: parseInt(getQueryParam('site_id', global.parkstayGroundId || '1')),
             parkstayGroundRatisId: parseInt(getQueryParam('parkstay_site_id', '0')),
             days: 5,
-            numAdults: parseInt(getQueryParam('num_adult', 2)),
+            numAdults: parseInt(getQueryParam('num_adult', 0)),
             numChildren: parseInt(getQueryParam('num_children', 0)),
             numConcessions: parseInt(getQueryParam('num_concession', 0)),
             numInfants: parseInt(getQueryParam('num_infants', 0)),
+            numMooring: parseInt(getQueryParam('num_mooring', 1)),
             vesselSize: parseInt(getQueryParam('vessel_size', 0)),
             maxAdults: 30,
             maxChildren: 30,
@@ -383,7 +394,7 @@ export default {
         numPeople: {
             cache: false,
             get: function() {
-                var count = parseInt(this.numAdults) + parseInt(this.numConcessions) + parseInt(this.numChildren) + parseInt(this.numInfants);
+                var count = parseInt(this.numAdults) + parseInt(this.numConcessions) + parseInt(this.numChildren) + parseInt(this.numInfants) + parseInt(this.numMooring);
                 if (count === 1) {
                     return count +" person ▼";
                 } else {
@@ -444,6 +455,7 @@ export default {
                 departure: vm.departureDateString,
                 num_adult: vm.numAdults,
                 num_child: vm.numChildren,
+                num_mooring: vm.numMooring,
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants,
                 vessel_size: vm.vesselSize
@@ -489,7 +501,9 @@ export default {
                 num_child: vm.numChildren,
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants,
+                num_mooring: vm.numMooring,
                 vessel_size : vm.vesselSize
+                
             });
             history.replaceState('', '', newHist);
         },
@@ -504,7 +518,9 @@ export default {
                         num_child: vm.numChildren,
                         num_concession: vm.numConcessions,
                         num_infant: vm.numInfants,
+                        num_mooring: vm.numMooring,
                         vessel_size: vm.vesselSize
+                        
                     };
 
                 if (parseInt(vm.parkstayGroundRatisId) > 0){
