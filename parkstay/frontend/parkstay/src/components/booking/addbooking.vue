@@ -7,14 +7,14 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="col-md-6">
-                                    <h3 class="text-primary pull-left">Book a Campsite at {{campground.name}}</h3>
+                                    <h3 class="text-primary pull-left">Add internal booking for {{campground.name}}</h3>
                                 </div>
-                                <div class="col-md-6" v-if="(campground.site_type == 1) || (campground.site_type == 2)"> 
-                                    <router-link style="margin-top:20px;" class="btn btn-primary table_btn pull-right" :to="{name:'booking-close-classes'}">Book closed campsite(s)</router-link>
-                                </div> 
                             </div>
                             <div class="col-md-12">
-                                <p>Please visit the <a target='_blank' v-bind:href="'/availability_admin/?site_id=' + campground.id "> Campsite Availability checker</a> for expected availability.</p>                          
+                                <p>Internal bookings can be made for campsites closed to public bookings.<a target='_blank' v-bind:href="'/availability_admin/?site_id=' + campground.id "> Check closures</a> before adding a closed site to a booking.</p>                          
+                            </div>
+                            <div class="col-md-12" v-if="(campground.site_type == 1) || (campground.site_type == 2)">
+                                <p>To book closed sites, you must allocate specific site numbers/names - switch to the <router-link :to="{name:'booking-close-classes'}">full camp site list.</router-link> The allocated site number/name is for management purposes only - it will not be visible to the public.</p>                          
                             </div>
                             <div class="row">
                                 <div class="col-md-12">
@@ -135,7 +135,7 @@
                                                 <td class="site"> {{c.status}} </td>
                                                 <td class="book"> {{ c.campsites.length }} available </td>
                                                 <td class="numBook">
-                                                    <input type="number" min="1" v-bind:max="c.campsites.length" name="campsite-type" class="form-control" v-model="c.selected_campsite_class" @change="updatePrices()">
+                                                    <input type="number" id="numberRange" min="0" v-bind:max="c.campsites.length" class="form-control" v-model="c.selected_campsite_class" @change="updateCampsiteCount(c)">
                                                 </td>
                                             </tr></template>
                                         </tbody>
@@ -1042,6 +1042,10 @@ export default {
             }
             return true;
         },
+        updateCampsiteCount: function(c) {
+            c.selected_campsite_class = Math.max(0, Math.min(c.selected_campsite_class, c.campsites.length));
+            this.updatePrices();
+        },
         addFormValidations: function() {
             let vm=this;
             var options = {
@@ -1098,7 +1102,7 @@ export default {
                 };
                 options.messages['vehicleRego_'+i] = {
                     required: 'Fill in vehicle details',
-                    noDuplicateRego: 'Rego must be a unique set'
+                    noDuplicateRego: 'Duplicate regos not permitted.If unknown add number, e.g. Hire1, Hire2'
                 };
             }
             var form = $(vm.bookingForm);

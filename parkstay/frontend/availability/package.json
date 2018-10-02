@@ -11,6 +11,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "babel-loader": "^8.0.4",
     "custom-event-polyfill": "^0.3.0",
     "debounce": "^1.0.0",
     "foundation-datepicker": "^1.5.5",
