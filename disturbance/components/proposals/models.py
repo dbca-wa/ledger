@@ -1019,6 +1019,8 @@ class Proposal(RevisionedMixin):
                             for c in cs:
                                 c.processing_status='discarded'
                                 c.customer_status = 'discarded'
+                                c.reminder_sent=True
+                                c.post_reminder_sent=True
                                 c.save()
                         if r.is_deleted == False:
                             for c in cs:

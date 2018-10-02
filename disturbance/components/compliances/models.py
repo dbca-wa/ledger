@@ -119,6 +119,8 @@ class Compliance(models.Model):
     def submit(self,request):
         with transaction.atomic():
             try:
+                if self.processing_status=='discarded':
+                    raise ValidationError('You cannot submit this compliance with requirements as it has been discarded.')
                 if self.processing_status == 'future' or 'due':
                     self.processing_status = 'with_assessor'
                     self.customer_status = 'with_assessor'
@@ -126,8 +128,8 @@ class Compliance(models.Model):
 
                     if request.FILES:
                         for f in request.FILES:
-                            document = self.documents.create()
-                            document.name = str(request.FILES[f])
+                            document = self.documents.create(name=str(request.FILES[f]))
+                            #document.name = str(request.FILES[f])
                             document._file = request.FILES[f]
                             document.save()
                     if (self.amendment_requests):
@@ -136,12 +138,13 @@ class Compliance(models.Model):
                             for q in qs:
                                 q.status = 'amended'
                                 q.save()
-                #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
-                self.lodgement_date = timezone.now()
-                self.save()
-                self.log_user_action(ComplianceUserAction.ACTION_SUBMIT_REQUEST.format(self.id),request)
-                send_external_submit_email_notification(request,self)
-                send_submit_email_notification(request,self)
+                    #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                    self.lodgement_date = timezone.now()
+                    self.save()
+                    self.log_user_action(ComplianceUserAction.ACTION_SUBMIT_REQUEST.format(self.id),request)
+                    send_external_submit_email_notification(request,self)
+                    send_submit_email_notification(request,self)
+                
             except:
                 raise
 

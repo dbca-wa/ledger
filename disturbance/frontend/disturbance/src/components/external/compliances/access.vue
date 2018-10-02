@@ -1,6 +1,10 @@
 <template>
 <div class="container" id="externalCompliance">
-    <div class="row">
+    <div v-if="isDiscarded" class="row" style="color:red;">
+        <h3>You cannot access this Compliance with requirements as this has been discarded.</h3>
+        
+    </div>
+    <div v-else class="row">
         <div v-if="!isFinalised">
             <div v-if="hasAmendmentRequest" class="row" style="color:red;">
                 <div class="col-lg-12 pull-right">
@@ -155,6 +159,8 @@ export default {
         amendment_request: [],
         hasAmendmentRequest: false,
         isFinalised: false,
+        errors: false,
+        errorString: '',
         pdBody: 'pdBody'+vm._uid,
         oBody: 'oBody'+vm._uid,
         isFinalised: false,
@@ -171,6 +177,7 @@ export default {
     }
   },
   watch: {
+    
     isFinalised: function(){             
         return this.compliance && (this.compliance.customer_status == "Under Review" || this.compliance.customer_status == "Approved");
     },
@@ -189,8 +196,15 @@ export default {
     CommsLogs
   },
   computed: {
+    showError: function() {
+            var vm = this;
+            return vm.errors;
+        },
     isLoading: function () {
       return this.loading.length > 0;
+    },
+    isDiscarded: function(){         
+        return this.compliance && (this.compliance.customer_status == "Discarded");
     },
     
   },
