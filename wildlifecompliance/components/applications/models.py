@@ -888,6 +888,8 @@ class Application(RevisionedMixin):
                         action='propose_issue',
                         reason=details.get('details'),
                         cc_email=details.get('cc_email',None),
+                        proposed_start_date=details.get('start_date',None),
+                        proposed_end_date=details.get('expiry_date',None),
                         licence_activity_type_id=details.get('licence_activity_type_id')
                     )
                     for activity_type in  self.licence_type_data['activity_type']:
@@ -1307,7 +1309,7 @@ class ApplicationUserAction(UserAction):
     ACTION_ASSESSMENT_RECALLED="Assessment recalled"
     ACTION_ASSESSMENT_RESENT="Assessment Resent"
     ACTION_DECLINE = "Decline application {}"
-    ACTION_ENTER_CONDITIONS = "Enter condition"
+    ACTION_ENTER_CONDITIONS = "Entered condition for activity type {}"
     ACTION_CREATE_CONDITION_ = "Create condition {}"
     ACTION_ISSUE_LICENCE_ = "Issue Licence for application {}"
     ACTION_DISCARD_application = "Discard application {}"

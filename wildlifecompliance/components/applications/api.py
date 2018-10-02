@@ -43,7 +43,8 @@ from wildlifecompliance.components.applications.models import (
     ApplicationStandardCondition,
     Assessment,
     ApplicationGroupType,
-    AmendmentRequest
+    AmendmentRequest,
+    ApplicationUserAction
 )
 from wildlifecompliance.components.applications.serializers import (
     SendReferralSerializer,
@@ -857,6 +858,24 @@ class ReferralViewSet(viewsets.ModelViewSet):
 class ApplicationConditionViewSet(viewsets.ModelViewSet):
     queryset = ApplicationCondition.objects.all()
     serializer_class = ApplicationConditionSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            with transaction.atomic():
+                instance = serializer.save()
+                instance.application.log_user_action(ApplicationUserAction.ACTION_ENTER_CONDITIONS.format(instance.licence_activity_type.name),request)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET',])
     def move_up(self, request, *args, **kwargs):
