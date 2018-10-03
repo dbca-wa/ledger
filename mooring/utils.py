@@ -734,6 +734,7 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
 
     people = {'Adults': adults,'Concessions': admissionsBooking.noOfConcessions,'Children': children,'Infants': admissionsBooking.noOfInfants, 'Family': family}
 
+
     for group, amount in people.items():
         if line:
             if(amount > 0):
@@ -747,10 +748,12 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
                     gr = 'family'
                 if admissionsBooking.overnightStay:
                     costfield = gr.lower() + "_overnight_cost"
+                    overnightStay = "Overnight Included"
                 else:
                     costfield = gr.lower() + "_cost"
+                    overnightStay = "Day Visit Only"
                 price = daily_rates.get(costfield)
-                invoice_lines.append({'ledger_description':'Admission fee {} ({})'.format(admissionsBooking.arrivalDate, group),"quantity":amount,"price_incl_tax":price, "oracle_code":AdmissionsOracleCode.objects.all().first().oracle_code})
+                invoice_lines.append({'ledger_description':'Admission fee on {} ({}) {}'.format(admissionsBooking.arrivalDate, group, overnightStay),"quantity":amount,"price_incl_tax":price, "oracle_code":AdmissionsOracleCode.objects.all().first().oracle_code})
             
         else:
             price = Decimal(daily_rates)

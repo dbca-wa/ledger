@@ -44,6 +44,9 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="row" v-if="errorMsgPersonal">
+                                        <div class="alert alert-danger" id="warning" role="alert">{{ errorMsgPersonal }}</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -119,8 +122,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row" v-if="errorMsg" style="color:red;">
-                                        {{ errorMsg }}
+                                    <div class="row" v-if="errorMsg">
+                                        <div class="alert alert-danger" id="warning" role="alert">{{ errorMsg }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -221,6 +224,7 @@ export default {
         familyOvernightCost: 0,
         total: 0,
         errorMsg: null,
+        errorMsgPersonal: null,
         toc: false,
         errors: {
             arrivalDate: false,
@@ -328,41 +332,62 @@ export default {
             }
         },
         validateGivenName: function(){
+            var error = "Please enter a valid given name.";
             var fieldToCheck = this.givenName;
             if(!fieldToCheck){
                 this.errors.givenName = true;
+                this.errorMsgPersonal = error
             } else {
                 this.errors.givenName = false;
+                if(this.errorMsgPersonal == error){
+                    this.errorMsgPersonal = null;
+                }
             }
         },
         validateLastName: function(){
+            var error = "Please enter a valid surname.";
             var fieldToCheck = this.lastName;
             if(!fieldToCheck){
                 this.errors.lastName = true;
+                this.errorMsgPersonal = error;
             } else {
                 this.errors.lastName = false;
+                if(this.errorMsgPersonal == error){
+                    this.errorMsgPersonal = null;
+                }
             }
         },
         validateEmail: function(){
+            var error1 = "Please enter a valid email.";
+            var error2 = "Email does not match.";
+            var error3 = "Email does not follow convention.\nexample@domain.com";
             var fieldToCheck = this.email;
             var emailConfirm = this.emailConfirm;
             if(!fieldToCheck){
                 this.errors.email = true;
+                this.errorMsgPersonal = error1;
             } else {
                 var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
                 if(re.test(fieldToCheck)){
                     if(fieldToCheck === emailConfirm){
                         this.errors.email = false;
                         this.errors.emailConfirm = false;
+                        if(this.errorMsgPersonal == error1 || this.errorMsgPersonal == error2 || this.errorMsgPersonal == error3){
+                            this.errorMsgPersonal = null;
+                        }
                     } else {
                         this.errors.emailConfirm = true;
+                        this.errorMsgPersonal = error2
                     }
                 } else {
                     this.errors.email = true;
+                    this.errorMsgPersonal = error3
                 }  
             }
         },
         validateArrivalDate: function(){
+            var error1 = "If paying for a prior warning, please ensure you enter the reference number.";
+            var error2 = "Please select a date from the past if paying for a warning.";
             var fieldToCheck = this.arrivalDate;
             if(!fieldToCheck){
                 this.errors.arrivalDate = true;
@@ -371,61 +396,76 @@ export default {
                 var selectedDate = new Date(fieldToCheck);
                 if(selectedDate < now && !this.warningRefNo){
                     this.errors.arrivalDate = true;
-                    this.errorMsg = "If paying for a prior warning, please ensure you enter the reference number."
+                    this.errorMsg = error1;
                 } else if (selectedDate > now && this.warningRefNo){
                     this.errors.warningRefNo = true;
-                    this.errorMsg = "Please select a date from the past if paying for a warning."
+                    this.errorMsg = error2;
                 } else {
-                    this.errorMsg = null;
                     this.errors.arrivalDate = false;
+                    if(this.errorMsg == error1 || this.errorMsg == error2){
+                        this.errorMsg = null;
+                    }
                 }
             }
         },
         validateWarningRefNo: function(){
+            var error1 = "If paying for a prior warning, please ensure you enter the reference number.";
+            var error2 = "Please select a date from the past if paying for a warning.";
             var fieldToCheck = this.warningRefNo;
             var selectedDate = new Date(this.arrivalDate);
             if(fieldToCheck && selectedDate > now){
                 this.errors.warningRefNo = true;
-                this.errorMsg = "Please select a date from the past if paying for a warning."
+                this.errorMsg = error2
             } else if (!fieldToCheck && selectedDate < now){
                 this.errors.arrivalDate = true;
-                this.errorMsg = "If paying for a prior warning, please ensure you enter the reference number."
+                this.errorMsg = error1
             } else {
                 this.errors.warningRefNo = false;
-                this.errorMsg = null;
+                if(this.errorMsg == error1 || this.errorMsg == error2){
+                    this.errorMsg = null;
+                }
             }
         },
         validateOvernightStay: function(){
+            var error = "Please make a selection for overnight stay."
             var fieldToCheck = this.overnightStay;
             if(!fieldToCheck){
                 this.errors.overnightStay = true;
                 document.getElementById("overnightStayYes").required = true;
+                this.errorMsg = error;
             } else {
                 this.calculateTotal();
                 this.errors.overnightStay = false;
+                if(this.errorMsg == error){
+                    this.errorMsg = null;
+                }
             }
         },
         validateNoOfPeople: function(){
+            var error1 = "Please enter at least 1 person for admission booking.";
+            var error2 = "Cannot purchase for a negative value for people.";
             var totalP = parseInt(this.noOfAdults) + parseInt(this.noOfConcessions) + parseInt(this.noOfChildren) + parseInt(this.noOfInfants);
             if(!totalP || totalP == 0){
                 this.errors.noOfAdults = true;
                 this.errors.noOfConcessions = true;
                 this.errors.noOfChildren = true;
                 this.errors.noOfInfants = true;
-                this.errorMsg = "Please enter at least 1 person for admission booking.";
+                this.errorMsg = error1;
             } else if (parseInt(this.noOfAdults) < 0 || parseInt(this.noOfConcessions) < 0 || parseInt(this.noOfChildren) < 0 || parseInt(this.noOfInfants) < 0){
                 this.errors.noOfAdults = true;
                 this.errors.noOfConcessions = true;
                 this.errors.noOfChildren = true;
                 this.errors.noOfInfants = true;
-                this.errorMsg = "Cannot purchase for a negative value for people.";
+                this.errorMsg = error2;
             } else {
                 this.calculateTotal();
                 this.errors.noOfAdults = false;
                 this.errors.noOfConcessions = false;
                 this.errors.noOfChildren = false;
                 this.errors.noOfInfants = false;
-                this.errorMsg = null;
+                if(this.errorMsg == error1 || this.errorMsg == error2){
+                    this.errorMsg = null;
+                }
             }
         },
         setPrices: function(data, callback){
@@ -613,5 +653,7 @@ export default {
 .radio-label{
     margin-left:10px;
 }
+
+
 
 </style>

@@ -63,6 +63,7 @@ from mooring.models import (MooringArea,
                                 AdmissionsBooking,
                                 AdmissionsRate,
                                 BookingPeriodOption
+                                AdmissionsBookingInvoice
                                 )
 
 from mooring.serialisers import (  MooringsiteBookingSerialiser,
@@ -1768,7 +1769,7 @@ def create_admissions_booking(request, *args, **kwargs):
     if(result):
         return result
     else:
-        return HttpResponse(geojason.dumps({
+        return HttpResponse(geojson.dumps({
             'status': 'failure',
         }), content_type='application/json')
 
@@ -2150,6 +2151,70 @@ class MooringsiteClassViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+class AdmissionsBookingViewSet(viewsets.ModelViewSet):
+    queryset = AdmissionsBooking.objects.all()
+    serializer_class = AdmissionsBookingSerializer
+
+    def list(self, request, *args, **kwargs):
+        http_status = status.HTTP_200_OK
+        try:
+            data = AdmissionsBooking.objects.filter(booking_type__in=(0, 1)).order_by('arrivalDate', 'pk')
+            recordsTotal = len(data)
+            search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
+            start = request.GET.get('start') if request.GET.get('start') else 0
+            length = request.GET.get('length') if request.GET.get('length') else len(data)
+            date_from = datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y').date() if request.GET.get('arrival') else None
+            date_to = datetime.strptime(request.GET.get('departure'),'%d/%m/%Y').date() if request.GET.get('departure') else None
+            data2 = []
+            if search:
+                if(search.upper().startswith('AD')):
+                    try:
+                        int(search[2:])
+                        search = search[2:]
+                    except:
+                        pass
+                data2 = data.filter(Q(warningReferenceNo__icontains=search) | Q(vesselRegNo__icontains=search) | Q(customer__first_name__icontains=search) | Q(customer__last_name__icontains=search) | Q(id__icontains=search))
+            if(date_from):
+                if(data2):
+                    data2 = data2.filter(arrivalDate__gte=date_from)
+                else:
+                    data2 = data.filter(arrivalDate__gte=date_from)
+            if(date_to):
+                if(data2):
+                    data2 = data2.filter(arrivalDate__lte=date_to)
+                else:
+                    data2 = data.filter(arrivalDate__lte=date_to)
+            if(data2):
+                recordsFiltered = int(len(data2))
+                data2 = data2[int(start):int(length)+int(start)]
+            else:
+                recordsFiltered = int(len(data))
+                data2 = data[int(start):int(length)+int(start)]
+            serializer = AdmissionsBookingSerializer(data2,many=True)
+            res = serializer.data
+            for r in res:
+                ad = AdmissionsBooking.objects.get(pk=r['id'])
+                adi = AdmissionsBookingInvoice.objects.get(admissions_booking=ad)
+                r.update({'invoice_ref': adi.invoice_reference})
+                if(r['customer']):
+                    name = ad.customer.first_name + " " + ad.customer.last_name
+                    email = ad.customer.email
+                    r.update({'customerName': name, 'email': email})
+                else:
+                    r.update({'customerName': 'No customer', 'email': "No customer"})
+            
+        except Exception as e:
+            res ={
+                "Error": str(e)
+            }
+
+        return Response(OrderedDict([
+                ('recordsTotal', recordsTotal),
+                ('recordsFiltered',recordsFiltered),
+                ('results',res)
+            ]),status=status.HTTP_200_OK)
+
 
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()

@@ -1559,7 +1559,7 @@ class AdmissionsBooking(models.Model):
 
     @property
     def confirmation_number(self):
-        return 'AD{}'.format(self.pk)
+        return 'AD{}'.format(self.id)
 
     @property
     def total_admissions(self):
@@ -1573,7 +1573,7 @@ class AdmissionsBookingInvoice(models.Model):
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
     def __str__(self):
-        return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
+        return 'Fee Payment {} : Invoice #{}'.format(self.id,self.invoice_reference)
 
     # Properties
     # ==================
