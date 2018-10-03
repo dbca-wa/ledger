@@ -147,6 +147,7 @@ module.exports = {
     },
     //bookings
     bookings:process.env.PARKSTAY_URL + "/api/booking.json",
+    admissionsbookings:process.env.PARKSTAY_URL + "/api/admissionsbooking.json",
     booking: function(id){
         return process.env.PARKSTAY_URL + "/api/booking/"+id+".json";
     },

@@ -171,6 +171,12 @@ def create_admissions_confirmation(confirmation_buffer, admissionsBooking):
 
     doc = BaseDocTemplate(confirmation_buffer, pageTemplates=[every_page_template], pagesize=A4)
 
+    overnightStay = ""
+    if(admissionsBooking.overnightStay):
+        overnightStay = "Yes"
+    else:
+        overnightStay = "No"
+
     elements = []
 
     elements.append(Paragraph('ADMISSIONS BOOKING CONFIRMATION', styles['InfoTitleVeryLargeCenter']))
@@ -178,7 +184,8 @@ def create_admissions_confirmation(confirmation_buffer, admissionsBooking):
     table_data = []
     table_data.append([Paragraph('Date', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.arrivalDate), styles['Left'])])
     table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} ({})'.format(admissionsBooking.customer.get_full_name(), admissionsBooking.customer.email if admissionsBooking.customer else None), styles['Left'])])
-    table_data.append([Paragraph('Booking confirmation number', styles['BoldLeft']), Paragraph(admissionsBooking.confirmation_number, styles['Left'])])           
+    table_data.append([Paragraph('Booking confirmation number', styles['BoldLeft']), Paragraph(admissionsBooking.confirmation_number, styles['Left'])])
+    table_data.append([Paragraph('Overnight Stay', styles['BoldLeft']), Paragraph(u'{}'.format(overnightStay), styles['Left'])])
     table_data.append([Paragraph('Total paid for attendees', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.total_admissions), styles['Left'])])
     if admissionsBooking.noOfAdults > 0:
         table_data.append([Paragraph('Adults', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfAdults), styles['Left'])])

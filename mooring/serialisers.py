@@ -78,7 +78,7 @@ class AdmissionsBookingSerializer(serializers.ModelSerializer):
     """Serializer used by the admissions booking process."""
     class Meta:
         model = AdmissionsBooking
-        excludes = ('customer','totalCost')
+        excludes = ('totalCost')
 
 
 
@@ -215,6 +215,10 @@ class MooringAreaMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'info_url',
             'images',
             'vessel_size_limit',
+            'vessel_draft_limit',
+            'vessel_beam_limit',
+            'vessel_weight_limit',
+            'mooring_physical_type',
             'max_advance_booking'
 #            'price_hint'
         )
@@ -292,6 +296,7 @@ class MooringAreaDatatableSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'mooring_physical_type',
             'park',
             'district',
             'region',
@@ -353,11 +358,11 @@ class MooringAreaSerializer(serializers.ModelSerializer):
             'additional_info',
             'mooring_group',
             'vessel_size_limit',
-            # 'vessel_draft_limit',
-            # 'vessel_beam_limit',
-            # 'vessel_weight_limit',
-            # 'mooring_physical_type',
-            # 'mooring_class',
+            'vessel_draft_limit',
+            'vessel_beam_limit',
+            'vessel_weight_limit',
+            'mooring_physical_type',
+            'mooring_class',
         )
         read_only_fields = ('mooring_group',)
 

@@ -1,9 +1,10 @@
 <template lang="html" id="booking-dashboard">
 <div class="row">
   <div class="col-lg-12" v-show="!isLoading">
-      <div class="well"     style="overflow: auto;">
+      <div class="well"     style="overflow: visible;">
           <div class="row">
-              <div class="col-lg-12">
+              <div class="col-lg-12" style="text-align:center;">
+                  <h1>Bookings</h1>
                   <button v-if="!exportingCSV" type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
                       <i class="fa fa-file-excel-o" aria-hidden="true"></i> Export to CSV
                   </button>
@@ -88,10 +89,54 @@
       <bookingHistory ref="bookingHistory" :booking_id="selected_booking" />
   </div>
    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
+
+  <div class="col-lg-12" v-show="!isLoading2">
+      <div class="well" style="overflow: visible;">
+          <div class="row">
+              <div class="col-lg-12" style="text-align:center;">
+                  <h1>Admission Fee Payments</h1>
+                  <button v-if="!exportingCSV2" type="button" class="btn btn-default pull-right" id="print-btn" @click="print2()">
+                      <i class="fa fa-file-excel-o" aria-hidden="true"></i> Export to CSV
+                  </button>
+                  <button v-else type="button" class="btn btn-default pull-right" disabled>
+                      <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Exporting to CSV
+                  </button>
+              </div>
+          </div>
+        <div class="row" style="margin-bottom:10px;">
+            <div class="col-md-4">
+                <label for="">Date From</label>
+                <div class="input-group date" id="admission-date-from">
+                  <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterDateFrom2">
+                  <span class="input-group-addon">
+                      <span class="glyphicon glyphicon-calendar"></span>
+                  </span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label for="">Date To</label>
+                <div class="input-group date" id="admission-date-to">
+                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo2">
+                  <span class="input-group-addon">
+                      <span class="glyphicon glyphicon-calendar"></span>
+                  </span>
+                </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-12">
+                <datatable ref="admissions_bookings_table" id="admissions-bookings-table" :dtOptions="dtOptions2" :dtHeaders="dtHeaders2"></datatable>
+            </div>
+          </div>
+      </div>
+  </div>
+   <loader :isLoading2="isLoading2" >{{loading2.join(' , ')}}</loader>
 </div>
 </template>
 
+
 <script>
+// Variabled ending with a 2 (except select2) are reused for the admissions fee payment table.
 import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal,select2} from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
@@ -112,6 +157,7 @@ export default {
         let vm =this;
         return {
             exportingCSV: false,
+            exportingCSV2: false,
             dtOptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -275,9 +321,96 @@ export default {
                     },
                 ]
             },
-            dtHeaders:["Mooring","Region","Person","Confirmation #","Status","From","To","Action"],
+            dtOptions2:{
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                serverSide:true,
+                processing:true,
+                searchDelay: 800,
+                ajax: {
+                    "url": api_endpoints.admissionsbookings,
+                    "dataSrc": 'results',
+                    data :function (d) {
+                        if (vm.filterDateFrom2) {
+                            d.arrival = vm.filterDateFrom2;
+                        }
+                        if (vm.filterDateTo2) {
+                            d.departure = vm.filterDateTo2;
+                        }
+                    }
+                },
+                columns:[
+                    {
+                        data:"arrivalDate",
+                        orderable:false,
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            return Moment(data).format('DD/MM/YYYY');
+                        }
+                    },
+                    {
+                        data: "customerName",
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        mRender:function(data,type,full){
+                            return "<a href='/api/get_admissions_confirmation/"+full.id+"' target='_blank' class='text-primary'>AD"+full.id+"</a><br/>";
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        mRender:function(data,type,full){
+                            return full.noOfAdults + full.noOfChildren + full.noOfInfants;
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        mRender: function(data,type,full){
+                            if(full.vesselRegNo){
+                                return full.vesselRegNo;
+                            } else {
+                                return "-";
+                            }
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                         mRender: function(data,type,full){
+                            if(full.warningReferenceNo){
+                                return full.warningReferenceNo;
+                            } else {
+                                return "-";
+                            }
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        mRender: function(data, type, full) {
+                            var invoice = "/ledger/payments/invoice/payment?invoice="+full.invoice_ref;
+                            var invoice_link= (full.invoice_ref)?"<a href='"+invoice+"' target='_blank' class='text-primary'>View Payment</a><br/>":"";
+                            var column = invoice_link;
+                            var invoices = "<a href='/ledger/payments/invoice-pdf/"+full.invoice_ref+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+full.invoice_ref+"</a><br/>"; 
+                            column += invoices;
+                            return column;
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                ]
+            },
+            dtHeaders:["Mooring", "Region", "Person", "Confirmation #", "Status", "From", "To", "Action"],
+            dtHeaders2:["Admission Date", "Person", "Confirmation #", "Total Attendees", "Vessel Reg #", "Warning Ref #", "Action"],
             dateFromPicker:null,
             dateToPicker:null,
+            dateFromPicker2:null,
+            dateToPicker2:null,
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
                 showClear:true,
@@ -286,13 +419,16 @@ export default {
                 allowInputToggle:true
             },
             loading:[],
+            loading2:[],
             selected_booking:-1,
             filterCampground:"All",
             filterRegion:"All",
             filterDateFrom:"",
             filterDateTo:"",
             filterCanceled: 'False',
-            filterRefundStatus: 'All'
+            filterRefundStatus: 'All',
+            filterDateFrom2:"",
+            filterDateTo2:"",
         }
     },
     watch:{
@@ -316,6 +452,9 @@ export default {
     computed:{
         isLoading:function () {
             return this.loading.length > 0;
+        },
+        isLoading2: function (){
+            return this.loading2.length > 0;
         },
         ...mapGetters([
           'regions',
@@ -460,6 +599,31 @@ export default {
                 }
 
             });
+
+            vm.dateToPicker2.on('dp.change', function(e){
+                if (vm.dateToPicker2.data('DateTimePicker').date()) {
+                    vm.filterDateTo2 =  e.date.format('DD/MM/YYYY');
+                    vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+                }
+                else if (vm.dateToPicker2.data('date') === "") {
+                    vm.filterDateTo2 = "";
+                    vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+                }
+
+             });
+
+            vm.dateFromPicker2.on('dp.change',function (e) {
+                if (vm.dateFromPicker2.data('DateTimePicker').date()) {
+                    vm.filterDateFrom2 = e.date.format('DD/MM/YYYY');
+                    vm.dateToPicker2.data("DateTimePicker").minDate(e.date);
+                    vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+                }
+                else if (vm.dateFromPicker2.data('date') === "") {
+                    vm.filterDateFrom2 = "";
+                    vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+                }
+
+            });
             helpers.namePopover($,vm.$refs.bookings_table.vmDataTable);
             $(document).on('keydown', function(e) {
                 if(e.ctrlKey && (e.key == "p" || e.charCode == 16 || e.charCode == 112 || e.keyCode == 80) ){
@@ -479,6 +643,20 @@ export default {
                 region : vm.filterRegion != 'All' ? vm.filterRegion : '',
                 canceled: vm.filterCanceled,
                 'search[value]': vm.$refs.bookings_table.vmDataTable.search()
+            }
+            for(var p in obj)
+                if (obj.hasOwnProperty(p)) {
+                str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                }
+            return str.join("&");
+        },
+        printParams2() {
+            let vm = this;
+            var str = [];
+            let obj = {
+                arrival : vm.filterDateFrom2 != null ? vm.filterDateFrom2: '',
+                departure : vm.filterDateTo2 != null ? vm.filterDateTo2:'' ,
+                'search[value]': vm.$refs.admissions_bookings_table.vmDataTable.search()
             }
             for(var p in obj)
                 if (obj.hasOwnProperty(p)) {
@@ -643,17 +821,107 @@ export default {
                     text: helpers.apiVueResourceError(error), 
                 })
             });
-        }
+        },
+        print2:function () {
+            let vm =this;
+            vm.exportingCSV2 = true;
+
+            vm.$http.get(api_endpoints.admissionsbookings+'?'+vm.printParams2()).then(res => {
+                var data = res.body.results;
+
+                var json2csv = require('json2csv');
+                var fields = ["Arrival Date","Confirmation No", "Overnight Stay", "Customer", "Email", "Total Attendees", "Adults","Children","Infants", "Vessel Reg No", "Warning Reference", "Invoice Reference"]
+                
+                var bookings = [];
+                $.each(data,function (i,booking) {
+                    var bk = {};
+                    $.each(fields,function (j,field) {
+                        switch (j) {
+                            case 0:
+                                bk[field] = Moment(booking.arrivalDate).format("DD/MM/YYYY HH:mm:ss");
+                            break;
+                            case 1:
+                                bk[field] = "AD" + booking.id;
+                            break;
+                            case 2:
+                                if(booking.overnightStay){
+                                    var answer = "Yes"
+                                } else {
+                                    var answer = "No"
+                                }
+                                bk[field] = answer;
+                            break;
+                            case 3:
+                                bk[field] = booking.customerName;
+                            break;
+                            case 4:
+                                bk[field] = booking.email;
+                            break;
+                            case 5:
+                                bk[field] = booking.noOfAdults + booking.noOfChildren + booking.noOfInfants;
+                            break;
+                            case 6:
+                                bk[field] = booking.noOfAdults;
+                            break;
+                            case 7:
+                                bk[field] = booking.noOfChildren;
+                            break;
+                            case 8:
+                                bk[field] = booking.noOfInfants;
+                            break;
+                            case 9:
+                                bk[field] = booking.vesselRegNo;
+                            break;
+                            case 10:
+                                bk[field] = booking.warningReferenceNo;
+                            break;
+                            case 11:
+                                bk[field] = booking.invoice_ref;
+                            break;
+                        }
+                    });
+                    bookings.push(bk);
+                });
+                var csv = json2csv({ data:bookings, fields: fields });
+                var a = document.createElement("a"),
+                file = new Blob([csv], {type: 'text/csv'});
+                var filterDates = (vm.filterDateFrom2) ? (vm.filterDateTo2) ? "From "+vm.filterDateFrom2 + " To "+vm.filterDateTo2: "From "+vm.filterDateFrom2 : (vm.filterDateTo2) ? " To "+vm.filterDateTo2 : "" ;
+                var filename =  filterDates + "_admissions" + ".csv";
+                filename.replace(" ", "_");
+                if (window.navigator.msSaveOrOpenBlob) // IE10+
+                    window.navigator.msSaveOrOpenBlob(file, filename);
+                else { // Others
+                    var url = URL.createObjectURL(file);
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(function() {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    }, 0);
+                }
+                vm.exportingCSV2 = false;
+            },
+            (error) => {
+                vm.exportingCSV2 = false;
+                swal({
+                    type: 'error',
+                    title: 'Export Error', 
+                    text: helpers.apiVueResourceError(error), 
+                })
+            });
+        },
     },
     mounted:function () {
         let vm = this;
         vm.dateFromPicker = $('#booking-date-from').datetimepicker(vm.datepickerOptions);
         vm.dateToPicker = $('#booking-date-to').datetimepicker(vm.datepickerOptions);
+        vm.dateFromPicker2 = $('#admission-date-from').datetimepicker(vm.datepickerOptions);
+        vm.dateToPicker2 = $('#admission-date-to').datetimepicker(vm.datepickerOptions);
         vm.fetchCampgrounds();
         vm.fetchRegions();
         vm.addEventListeners();
-        // Set the from date to todays date as default
-        vm.filterDateFrom = Moment().format('DD/MM/YYYY')
     }
 
 }

@@ -361,7 +361,7 @@ class AdmissionsBookingSuccessView(TemplateView):
                 except AdmissionsBookingInvoice.DoesNotExist:
                     logger.info('{} finished temporary booking {}, creating new BookingInvoice with reference {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id, invoice_ref))
                     # FIXME: replace with server side notify_url callback
-                    book_inv, created = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=invoice_ref)
+                    admissionsInvoice = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=invoice_ref)
 
                     # set booking to be permanent fixture
                     booking.booking_type = 1  # internet booking
@@ -378,11 +378,13 @@ class AdmissionsBookingSuccessView(TemplateView):
             print(e)
             if ('ad_last_booking' in request.session) and AdmissionsBooking.objects.filter(id=request.session['ad_last_booking']).exists():
                 booking = AdmissionsBooking.objects.get(id=request.session['ad_last_booking'])
+                invoice_ref = AdmissionsBookingInvoice.objects.get(admissions_booking=booking).invoice_reference
             else:
                 return redirect('home')
         
         context = {
-            'admissionsBooking': booking
+            'admissionsBooking': booking,
+            'admissionsInvoice': invoice_ref
         }
         return render(request, self.template_name, context)
 
@@ -447,11 +449,36 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         bookings = Booking.objects.filter(customer=request.user, booking_type__in=(0, 1), is_canceled=False)
+        admissions = AdmissionsBooking.objects.filter(customer=request.user, booking_type__in=(0, 1))
         today = timezone.now().date()
 
+        ad_currents = admissions.filter(arrivalDate__gte=today).order_by('arrivalDate')
+        ad_current = []
+        for ad in ad_currents:
+            to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
+            ad_current.append(to_add)
+        ad_pasts = admissions.filter(arrivalDate__lt=today).order_by('-arrivalDate')
+        ad_past = []
+        for ad in ad_pasts:
+            to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
+            ad_past.append(to_add)
+
+        bk_currents = bookings.filter(departure__gte=today).order_by('arrival')
+        bk_current = []
+        for bk in bk_currents:
+            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
+            bk_current.append(to_add)
+        bk_pasts = bookings.filter(departure__lt=today).order_by('-arrival')
+        bk_past = []
+        for bk in bk_pasts:
+            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
+            bk_past.append(to_add)
         context = {
-            'current_bookings': bookings.filter(departure__gte=today).order_by('arrival'),
-            'past_bookings': bookings.filter(departure__lt=today).order_by('-arrival')
+            'current_bookings': bk_current,
+            'past_bookings': bk_past,
+            'current_admissions': ad_current,
+            'past_admissions': ad_past,
+            # 'admissions_invoice': AdmissionsBookingInvoice.objects.filter(admissions_booking__in=admissions)
         }
         return render(request, self.template_name, context)
 

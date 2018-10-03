@@ -62,7 +62,7 @@
                                 </div>
                             </div>
                         </form>
-                        <datatable :dtHeaders="['Mooring','Status','Region','District','Park','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
+                        <datatable :dtHeaders="['Mooring','Type', 'Status','Region','District','Park','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
                     </div>
                 </div>
             </div>
@@ -118,6 +118,15 @@ module.exports = {
                 },
                 columns: [{
                     "data": "name"
+                }, {
+                    "data": "mooring_physical_type",
+                    "mRender": function(data, type, full){
+                        if (data == 0){
+                            return "Mooring"
+                        } else {
+                            return "Jetty Pen"
+                        }
+                    }
                 }, {
                     "data": "active",
                     "mRender": function(data, type, full) {

@@ -1,28 +1,73 @@
 <div class="well">
     <div class="row"><div class="col-sm-12">
-        <h3 class="text-primary">Rottnest Island on {{ admissionsBooking.arrivalDate }}</h3>
+        <h3 class="text-primary">Rottnest Island Admission Fee Payment</h3>
     </div></div>
     <div class="row">
+        <div class="col-sm-3">
+
+        </div>
         <div class="col-sm-9">
             <div class="row">
-            </div>
-            <div class="row" style='display: none'>
-                <div class="col-sm-4">
-                    <b>Number of guests</b>
+                <div class="col-sm-5">
+                    <b>Admission date:</b>
                 </div>
-                <div class="col-sm-8">
+                <div class="col-sm-7">
+                        {{ admissionsBooking.arrivalDate }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-5">
+                    <b>Admission fee confirmation number:</b>
+                </div>
+                <div class="col-sm-7">
+                    AD{{ admissionsBooking.id }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-5">
+                    <b>Overnight Stay: </b>
+                </div>
+                <div class="col-sm-7">
+                    {% if admissionsBooking.overnightStay %}
+                        Yes
+                    {% else %}
+                        No
+                    {% endif %}
+                </div>
+            </div>
+            {% if admissionsBooking.noOfAdults > 0 %}
+            <div class="row">
+                <div class="col-sm-5">
+                    <b>Adults:</b>
+                </div>
+                <div class="col-sm-7">
                     {{ admissionsBooking.noOfAdults}}
                 </div>
-            </div><div class="row">
-                <div class="col-sm-4">
-                    <b>Booking confirmation number</b>
+            </div>
+            {% endif %}
+            {% if admissionsBooking.noOfChildren > 0 %}
+            <div class="row">
+                <div class="col-sm-5">
+                    <b>Children:</b>
                 </div>
-                <div class="col-sm-8">
-                    {{ admissionsBooking.confirmation_number }}
+                <div class="col-sm-7">
+                    {{ admissionsBooking.noOfChildren }}
                 </div>
-            </div><div class="row"><div class="col-sm-12" style="margin-top: 1em">
+            </div>
+            {% endif %}
+            {% if admissionsBooking.noOfInfants > 0 %}
+            <div class="row">
+                <div class="col-sm-5">
+                    <b>Infants:</b>
+                </div>
+                <div class="col-sm-7">
+                    {{ admissionsBooking.noOfInfants }}
+                </div>
+            </div>
+            {% endif %}
+            <div class="row"><div class="col-sm-12" style="margin-top: 1em">
                 <a href="{% url 'get_admissions_confirmation' admissionsBooking.id %}" class="btn btn-info btn-lg" >Confirmation</a>
-                <a href="{% url 'mooring-invoice-pdf' request.GET.invoice %}" class="btn btn-info btn-lg" >Invoice</a></p>
+                <a href="{% url 'mooring-invoice-pdf' admissionsInvoice %}" class="btn btn-info btn-lg" >Invoice</a></p>
                 <p style="font-size: 1.5rem; font-weight: bold;">You must bring your printed confirmation with you to the island.</p>
             </div></div>
         </div>

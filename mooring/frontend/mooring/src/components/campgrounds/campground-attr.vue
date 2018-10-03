@@ -103,8 +103,8 @@
 												<div class="panel-body">
 													<div class="row">
 														<div class="form-group">
-															<label class="col-md-4 control-label">Customer Contact</label>
-															<div class="col-md-8">
+															<label class="col-md-2 control-label">Customer Contact</label>
+															<div class="col-md-4">
 															  	<select class="form-control" name="contact" v-model="campground.contact">
 																	<option value="undefined">Select Contact</option>
 																	<option v-for="c in contacts" :value="c.id">{{ c.name }}</option>
@@ -139,11 +139,13 @@
 														<div class="form-group">
 															<div class="col-md-6">
 															  	<label class="control-label" >Maximum Vessel Size (Meters)</label>
-                                                                <input type="text" name="vessel_size_limit" id="vessel_size_limit" class="form-control" v-model="campground.vessel_size_limit" required/>
+                                                                <div class="alert alert-danger" id="vessel_size_warning" role="alert">Size limit must be greater than 0.</div>
+                                                                <input type="number" name="vessel_size_limit" id="vessel_size_limit" class="form-control" v-model="campground.vessel_size_limit" required/>
 															</div>
                                                             <div class="col-md-6">
                                                                 <label class="control-label" >Maximum Vessel Draft (Meters)</label>
-                                                                <input type="text" name="vessel_draft_limit" id="vessel_draft_limit" class="form-control" v-model="campground.vessel_draft_limit" required/>
+                                                                <div class="alert alert-danger" id="vessel_draft_warning" role="alert">Draft limit must be greater than 0.</div>
+                                                                <input type="number" name="vessel_draft_limit" id="vessel_draft_limit" class="form-control" v-model="campground.vessel_draft_limit" required/>
                                                             </div>
 														</div>
 													</div>
@@ -151,11 +153,13 @@
                                                         <div class="form-group">
                                                             <div class="col-md-6" v-if="jettyPen">
                                                                 <label class="control-label" >Maximum Vessel Beam (Meters)</label>
-                                                                <input type="text" name="vessel_beam_limit" id="vessel_beam_limit" class="form-control" v-model="campground.vessel_beam_limit"/>
+                                                                <div class="alert alert-danger" id="vessel_beam_warning" role="alert">Beam limit must be greater than 0.</div>
+                                                                <input type="number" name="vessel_beam_limit" id="vessel_beam_limit" class="form-control" v-model="campground.vessel_beam_limit" required/>
                                                             </div>
                                                             <div class="col-md-6" v-else>
                                                                 <label class="control-label" >Maximum Vessel Weight (Tons)</label>
-                                                                <input type="text" name="vessel_weight_limit" id="vessel_weight_limit" class="form-control" v-model="campground.vessel_weight_limit"/>
+                                                                <div class="alert alert-danger" id="vessel_weight_warning" role="alert">Weight limit must be greater than 0.</div>
+                                                                <input type="number" name="vessel_weight_limit" id="vessel_weight_limit" class="form-control" v-model="campground.vessel_weight_limit" required/>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -163,7 +167,10 @@
 											</div>
 										</div>
 									</div>
-									<div class="row" style="margin-top: 40px;">
+                                    <div class="row" style="margin-top: 40px;margin-left:10px;">
+                                        <div class="alert alert-danger" id="selected_features_warning">Please select at least 1 feature.</div>
+                                    </div>
+									<div class="row">
 										<div class="col-sm-3 features">
 											<div class="panel panel-primary">
 												<div class="panel-heading">
@@ -285,7 +292,12 @@
 	</div>
 </template>
 <style>
-
+.alert{
+    display:none;
+    height:30px;
+    line-height:30px;
+    padding:7px 9px;
+}
 .ol-box{box-sizing:border-box;border-radius:2px;border:2px solid #00f}.ol-mouse-position{top:8px;right:8px;position:absolute}.ol-scale-line{background:rgba(0,60,136,.3);border-radius:4px;bottom:8px;left:8px;padding:2px;position:absolute}.ol-scale-line-inner{border:1px solid #eee;border-top:none;color:#eee;font-size:10px;text-align:center;margin:1px;will-change:contents,width}.ol-overlay-container{will-change:left,right,top,bottom}.ol-unsupported{display:none}.ol-unselectable,.ol-viewport{-webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}.ol-selectable{-webkit-touch-callout:default;-webkit-user-select:auto;-moz-user-select:auto;-ms-user-select:auto;user-select:auto}.ol-grabbing{cursor:-webkit-grabbing;cursor:-moz-grabbing;cursor:grabbing}.ol-grab{cursor:move;cursor:-webkit-grab;cursor:-moz-grab;cursor:grab}.ol-control{position:absolute;background-color:rgba(255,255,255,.4);border-radius:4px;padding:2px}.ol-control:hover{background-color:rgba(255,255,255,.6)}.ol-zoom{top:.5em;left:.5em}.ol-rotate{top:.5em;right:.5em;transition:opacity .25s linear,visibility 0s linear}.ol-rotate.ol-hidden{opacity:0;visibility:hidden;transition:opacity .25s linear,visibility 0s linear .25s}.ol-zoom-extent{top:4.643em;left:.5em}.ol-full-screen{right:.5em;top:.5em}@media print{.ol-control{display:none}}.ol-control button{display:block;margin:1px;padding:0;color:#fff;font-size:1.14em;font-weight:700;text-decoration:none;text-align:center;height:1.375em;width:1.375em;line-height:.4em;background-color:rgba(0,60,136,.5);border:none;border-radius:2px}.ol-control button::-moz-focus-inner{border:none;padding:0}.ol-zoom-extent button{line-height:1.4em}.ol-compass{display:block;font-weight:400;font-size:1.2em;will-change:transform}.ol-touch .ol-control button{font-size:1.5em}.ol-touch .ol-zoom-extent{top:5.5em}.ol-control button:focus,.ol-control button:hover{text-decoration:none;background-color:rgba(0,60,136,.7)}.ol-zoom .ol-zoom-in{border-radius:2px 2px 0 0}.ol-zoom .ol-zoom-out{border-radius:0 0 2px 2px}.ol-attribution{text-align:right;bottom:.5em;right:.5em;max-width:calc(100% - 1.3em)}.ol-attribution ul{margin:0;padding:0 .5em;font-size:.7rem;line-height:1.375em;color:#000;text-shadow:0 0 2px #fff}.ol-attribution li{display:inline;list-style:none;line-height:inherit}.ol-attribution li:not(:last-child):after{content:" "}.ol-attribution img{max-height:2em;max-width:inherit;vertical-align:middle}.ol-attribution button,.ol-attribution ul{display:inline-block}.ol-attribution.ol-collapsed ul{display:none}.ol-attribution.ol-logo-only ul{display:block}.ol-attribution:not(.ol-collapsed){background:rgba(255,255,255,.8)}.ol-attribution.ol-uncollapsible{bottom:0;right:0;border-radius:4px 0 0;height:1.1em;line-height:1em}.ol-attribution.ol-logo-only{background:0 0;bottom:.4em;height:1.1em;line-height:1em}.ol-attribution.ol-uncollapsible img{margin-top:-.2em;max-height:1.6em}.ol-attribution.ol-logo-only button,.ol-attribution.ol-uncollapsible button{display:none}.ol-zoomslider{top:4.5em;left:.5em;height:200px}.ol-zoomslider button{position:relative;height:10px}.ol-touch .ol-zoomslider{top:5.5em}.ol-overviewmap{left:.5em;bottom:.5em}.ol-overviewmap.ol-uncollapsible{bottom:0;left:0;border-radius:0 4px 0 0}.ol-overviewmap .ol-overviewmap-map,.ol-overviewmap button{display:inline-block}.ol-overviewmap .ol-overviewmap-map{border:1px solid #7b98bc;height:150px;margin:2px;width:150px}.ol-overviewmap:not(.ol-collapsed) button{bottom:1px;left:2px;position:absolute}.ol-overviewmap.ol-collapsed .ol-overviewmap-map,.ol-overviewmap.ol-uncollapsible button{display:none}.ol-overviewmap:not(.ol-collapsed){background:rgba(255,255,255,.8)}.ol-overviewmap-box{border:2px dotted rgba(0,60,136,.7)}.ol-overviewmap .ol-overviewmap-box:hover{cursor:move}
 
 </style>
@@ -398,7 +410,7 @@ export default {
             }
         },
         jettyPen: function(){
-            return this.campground.name == "Joondalup";
+            return this.campground.mooring_physical_type == 1;
         },
 		...mapGetters([
           'parks',
@@ -419,13 +431,56 @@ export default {
 		goBack: function() {
             helpers.goBack(this);
         },
+        validateLimits: function(){
+            let vm = this;
+            var isValid = true;
+            if(!parseInt(vm.campground.vessel_size_limit) > 0){
+                $('#vessel_size_warning').css("display","inline");
+                isValid = false;
+            } else {
+                $('#vessel_size_warning').css("display","none");
+            }
+            if(!parseInt(vm.campground.vessel_draft_limit) > 0){
+                $('#vessel_draft_warning').css("display","inline");
+                isValid = false;
+            } else {
+                $('#vessel_draft_warning').css("display","none");
+            }
+            if(vm.campground.mooring_physical_type == 0){
+                if(!parseInt(vm.campground.vessel_weight_limit) > 0){
+                    $('#vessel_weight_warning').css("display","inline");
+                    isValid = false;
+                } else {
+                    $('#vessel_weight_warning').css("display","none");
+                }
+            } else {
+                if(!parseInt(vm.campground.vessel_beam_limit) > 0){
+                    $('#vessel_beam_warning').css("display","inline");
+                    isValid = false;
+                } else {
+                    $('#vessel_beam_warning').css("display","none");
+                }
+            }
+            return isValid;
+        },
 		validateForm:function () {
 			let vm = this;
-			var isValid = vm.validateEditor($('#editor'));
+            var isValid = vm.validateEditor($('#editor'))
+            if(isValid){
+                isValid = vm.validateLimits();
+                if(isValid){
+                    if(!vm.selected_features || vm.selected_features == ''){
+                        $('#selected_features_warning').css("display","inline");
+                        isValid = false;
+                    } else {
+                        $('#selected_features_warning').css("display","none");
+                    }
+                }
+            }
             return  vm.form.valid() && isValid;
 		},
         create: function() {
-                        console.log("CREATE");
+            console.log("CREATE");
 			if(this.validateForm()){
 				this.sendData(api_endpoints.campgrounds, 'POST');
 			}
@@ -433,7 +488,7 @@ export default {
         update: function() {
 			if(this.validateForm()){
 				this.sendData(api_endpoints.campground(this.campground.id), 'PUT');
-                                location.reload(); 
+                location.reload(); 
 			}
         },
         validateEditor: function(el){
@@ -468,7 +523,7 @@ export default {
             if ( vm.campground.contact == "undefined") {
                 vm.campground.contact = '';
             }
-            if (vm.campground.name == 'Joondalup'){
+            if (vm.campground.mooring_physical_type == 1){
                 vm.campground.vessel_weight_limit = 0;
             } else {
                 vm.campground.vessel_beam_limit = 0;
@@ -488,11 +543,12 @@ export default {
                 contentType: "application/x-www-form-urlencoded",
                 dataType: 'json',
                 success: function(data, stat, xhr) {
+                    console.log("SUCCESS!!");
                     if (method == 'POST') {
                         vm.$router.push({
                             name: 'cg_detail',
                             params: {
-                                id: data.id
+                                id: data.data.id
                             }
                         });
                         vm.isLoading = false;
@@ -509,6 +565,8 @@ export default {
 					});
                 },
                 error: function(resp) {
+                    console.log("There was an error sending data.");
+                    console.log(resp);
 					vm.$store.dispatch("updateAlert",{
 						visible:true,
 						type:"danger",
@@ -594,6 +652,7 @@ export default {
                     telephone: "required",
             //        postcode: "required",
  //                   price_level: "required"
+
                 },
                 messages: {
                     name: "Enter a mooring name",
@@ -674,7 +733,7 @@ export default {
             },
             theme: 'snow'
         });
-        vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
+        // vm.editor.clipboard.dangerouslyPasteHTML(0, vm.campground.description, 'api');
         vm.editor.on('text-change', function(delta, oldDelta, source) {
             var text = $('#editor >.ql-editor').html();
             vm.campground.description = text;
@@ -827,6 +886,19 @@ var source = new ol.source.Vector({wrapX: false, features: [iconFeature]});
         console.log("ENDED");
 
         // End Map Point Selection
+
+        $('#vessel_size_limit').blur(function() {
+            vm.validateLimits();
+        });
+        $('#vessel_draft_limit').blur(function() {
+            vm.validateLimits();
+        });
+        $('#vessel_beam_limit').blur(function() {
+            vm.validateLimits();
+        });
+        $('#vessel_weight_limit').blur(function() {
+            vm.validateLimits();
+        });
 
     },
     updated: function() {

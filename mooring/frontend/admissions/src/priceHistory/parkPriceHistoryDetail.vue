@@ -11,7 +11,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date'>
-                            <input name="period_start" v-model="priceHistory.period_start" type='text' class="form-control" />
+                            <input name="period_start" v-model="priceHistory.period_start" @blur="validatePeriodStart()" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -94,14 +94,14 @@
                     </div>
                 </div>
             </div>
-            <reason type="price" v-model="priceHistory.reason" ></reason>
+            <reason type="price" @blur="validateReason()" v-model="priceHistory.reason" ></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Comment: </label>
                     </div>
                     <div class="col-md-5">
-                        <textarea name="comments" v-model="priceHistory.comments" class="form-control"></textarea>
+                        <textarea name="comments" @blur="validateReason()" v-model="priceHistory.comments" class="form-control"></textarea>
                     </div>
                 </div>
             </div>
@@ -191,12 +191,55 @@ module.exports = {
             // this.$emit("cancel");
         },
         addHistory: function() {
-            if ($(this.form).valid()){
-                if (this.priceHistory.id){
-                    this.$emit('updateParkPriceHistory');
-                }else {
-                    this.$emit('addParkPriceHistory');
+            if(this.validateForm()){
+                if ($(this.form).valid()){
+                    if (this.priceHistory.id){
+                        this.$emit('updateParkPriceHistory');
+                    }else {
+                        this.$emit('addParkPriceHistory');
+                    } 
                 }
+                
+            }
+        },
+        validateForm: function(){
+            var isValid = true;
+            isValid = this.validatePeriodStart();
+            if(isValid){
+                isValid = this.validateReason();
+            }
+            return isValid;
+        },
+        validateReason: function(){
+            if(!Number.isInteger(parseInt(this.priceHistory.reason))){
+                this.errorString = "Please select a reason.";
+                this.errors = true;
+                return false;
+            } else if(this.requireDetails){
+                if(!this.priceHistory.comments || this.priceHistory.comments == ""){
+                    this.errorString = "Please enter further details to explain the reason.";
+                    this.errors = true;
+                    return false;
+                } else {
+                    this.errorString = "";
+                    this.errors = false;
+                    return true;
+                }
+            } else {
+                this.errorString = "";
+                this.errors = false;
+                return true;
+            }  
+        },
+        validatePeriodStart: function(){
+            if(!this.priceHistory.period_start || this.priceHistory.period_start == "" || this.priceHistory.period_start == undefined){
+                this.errorString = "Please select a Period Start date.";
+                this.errors = true;
+                return false;
+            } else {
+                this.errorString = "";
+                this.errors = false;
+                return true;
             }
         },
         addFormValidations: function() {
@@ -207,8 +250,7 @@ module.exports = {
                     comments: {
                         required: {
                             depends: function(el){
-                                let vm = this;
-                                var check = this.priceHistory.reason;
+                                var check = vm.priceHistory.reason;
                                 for (var i = 0; i < vm.reasons.length; i++){
                                     if (vm.reasons[i].id == check){
                                         return vm.reasons[i].detailRequired;
@@ -220,7 +262,7 @@ module.exports = {
                 },
                 messages: {
                     period_start: "Enter a start date",
-                    comments: "Details required if other reason is selected"
+                    comments: "Details required if certain reasons are selected"
                 },
                 showErrors: function(errorMap, errorList) {
 

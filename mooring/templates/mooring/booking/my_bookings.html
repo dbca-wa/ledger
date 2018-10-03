@@ -15,21 +15,27 @@
 {% block content %}
     <div class="container"><div class="row">
         <div class="col-sm-12">
-            <h2>Upcoming Bookings</h2>
+            <h2>Upcoming Bookings and Admission Fee Payments</h2>
 {% if not current_bookings %}
             <div class="well">
                 <h3>You do not have any upcoming bookings!</h3>
                 <p>Please visit the <a href="{{EXPLORE_PARKS_SEARCH}}">Explore Parks website</a> to book a campsite.</p>
             </div>
 {% else %}
-    {% for booking in current_bookings %}
-        {% include "mooring/booking/booking_view.html" %}
+    {% for bk in current_bookings %}
+        {% include "mooring/booking/booking_view.html" with booking=bk.0 book_inv=bk.1 %}
+    {% endfor %}
+    {% for ad in current_admissions %}
+        {% include "mooring/admissions/booking_view.html" with admissionsBooking=ad.0 admissionsInvoice=ad.1 %}
     {% endfor %}
 {% endif %}
 {% if past_bookings %}
-            <h2>Past Bookings</h2>
+            <h2>Past Bookings and Admission Fee Payments</h2>
     {% for booking in past_bookings %}
-        {% include "mooring/booking/booking_view.html" %}
+        {% include "mooring/booking/booking_view.html" with booking=bk.0 book_inv=bk.1 %}
+    {% endfor %}
+    {% for ad in past_admissions %}
+        {% include "mooring/admissions/booking_view.html" with admissionsBooking=ad.0 admissionsInvoice=ad.1 %}
     {% endfor %}
 {% endif %}
         </div>
