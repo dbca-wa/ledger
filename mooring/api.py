@@ -31,6 +31,7 @@ from django.db.models import Count
 from mooring import utils
 from mooring.helpers import can_view_campground
 from datetime import datetime,timedelta, date
+from decimal import Decimal 
 from mooring.models import (MooringArea,
                                 District,
                                 Contact,
@@ -62,7 +63,7 @@ from mooring.models import (MooringArea,
                                 MooringAreaGroup,
                                 AdmissionsBooking,
                                 AdmissionsRate,
-                                BookingPeriodOption
+                                BookingPeriodOption,
                                 AdmissionsBookingInvoice
                                 )
 
@@ -543,6 +544,7 @@ def add_booking(request, *args, **kwargs):
     print booking_period
     print booking_period.start_time
     print booking_period.finish_time
+
     if booking_period.start_time > booking_period.finish_time:
             finish_bd = datetime.strptime(finish_booking_date, "%Y-%m-%d").date()
             finish_booking_date = str(finish_bd+timedelta(days=1))
@@ -551,8 +553,19 @@ def add_booking(request, *args, **kwargs):
     print "TIME" 
     print start_booking_date
     print finish_booking_date
-    print mooringsite.mooringarea. 
- 
+    print "MOORING CLASS"
+    print mooringsite.mooringarea.mooring_class
+
+    mooring_class = mooringsite.mooringarea.mooring_class
+    amount = '0.00'
+
+    if mooring_class == 'small':
+        amount = booking_period.small_price
+    elif mooring_class == 'medium':
+        amount = booking_period.medium_price
+    elif mooring_class == 'large':
+        amount = booking_period.large_price
+    print amount 
 #    MooringsiteBooking
 #    for i in range((end_date-start_date).days):
     cb =    MooringsiteBooking.objects.create(
@@ -562,6 +575,7 @@ def add_booking(request, *args, **kwargs):
                   from_dt=start_booking_date+' '+str(booking_period.start_time),
                   to_dt=finish_booking_date+' '+str(booking_period.finish_time),
                   booking=booking,
+                  amount=amount
                   )
 
 #    with transaction.atomic():
@@ -1447,12 +1461,13 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         print "MS_BOOKING"
         ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
         current_booking = []
+        total_price = Decimal('0.00')
         for ms in ms_booking:
            row = {} 
            row['item'] = ms.campsite.name + ' from '+ms.from_dt.strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.strftime('%d/%m/%y %H:%M %p')
-           row['amount'] = '20.00'
+           row['amount'] = str(ms.amount)
 #           row['item'] = ms.campsite.name
-           print ms
+           total_price = total_price +ms.amount
            current_booking.append(row)
  
 
@@ -1466,6 +1481,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             'ongoing_booking': True if ongoing_booking else False,
             'ongoing_booking_id': ongoing_booking.id if ongoing_booking else None,
             'current_booking': current_booking,
+            'total_booking': str(total_price),
             'arrival': start_date.strftime('%Y/%m/%d'),
             'days': length,
             'adults': 1,

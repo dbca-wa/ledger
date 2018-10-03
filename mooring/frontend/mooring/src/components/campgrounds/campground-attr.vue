@@ -86,9 +86,9 @@
 											<div class="form-group ">
 												<label class="control-label" >Mooring Class</label>
 												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.mooring_class">
-													<option value="0">Small</option>
-													<option value="1">Medium</option>
-													<option value="2">Large</option>
+													<option value="small">Small</option>
+													<option value="medium">Medium</option>
+													<option value="large">Large</option>
 												</select>
 											</div>
 										</div>

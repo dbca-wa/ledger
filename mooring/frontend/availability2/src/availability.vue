@@ -34,13 +34,16 @@
         </div>
         <div class="columns small-12 medium-12 large-12">
         <div class="row">
-                <div class="columns small-8 medium-9 large-10">
+                <div class="small-8 medium-9 large-10">
                         <div class="panel panel-default">
-                             <div class="panel-heading"> <h3 class="panel-title">Trolley: $0.00</h3></div>
+                             <div class="panel-heading"> <h3 class="panel-title">Trolley: <span id='total_trolley'>$0.00</span></h3></div>
+                              <div class='columns small-12 medium-12 large-12'> 
+                                 <div v-for="item in current_booking" class="row small-12 medium-12 large-12"><div class="columns small-12 medium-9 large-9">{{ item.item }}</div><div class="columns small-12 medium-3 large-3">${{ item.amount }}</div>  </div>
+			      </div>
                         </div>
                 </div>
                 <div class="columns small-4 medium-3 large-2">
-                        <button class="button small-12 medium-12 large-12" >Check Out</button>
+                        <a class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'">Check Out</a>
                 </div>
         </div>
         </div>
@@ -178,7 +181,7 @@
                         <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >
                                      <div v-for="bp in day[1].booking_period">
                                         <button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px;' v-if="bp.status == 'open'"  @click="addBooking(site.id,bp.id,bp.date)" >
-                                            <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 0">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 1">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 2">${{ bp.large_price }}</span></small>
+                                            <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }}</span></small>
                                         </button>
                                         <button class="button" v-else  style='min-width: 150px; width: 80%; margin-bottom: 2px; background-color: rgb(255, 236, 236); text-decoration: line-through;color: #000;' >
                                              <small>{{ bp.period_name }}</small>
@@ -396,6 +399,7 @@ export default {
             showMoreInfo: false,
             ongoing_booking: false,
             ongoing_booking_id: null,
+            current_booking: [],
             showSecondErrorLine: true,
         };
     },
@@ -446,22 +450,29 @@ export default {
               console.log("ADD BOOKING");
               console.log(site_id+' : '+bp_id);
               console.log(date);
-            var submitData = {
+              var booking_start = $('#date-arrival').val();
+              var booking_finish = $('#date-departure').val();
+
+              var submitData = {
                   site_id: site_id,
                   bp_id: bp_id,
-                  date: date
-            };
+                  date: date,
+                  booking_start: booking_start,
+                  booking_finish: booking_finish,
+              };
 
-                $.ajax({
-                    url: vm.parkstayUrl + '/api/booking/create', 
-                    dataType: 'json',
-                    method: 'POST',
-                    data: submitData, 
-                    success: function(data, stat, xhr) {
-                    },
-                    error: function(xhr, stat, err) {
-                    }
-                });
+              $.ajax({
+                  url: vm.parkstayUrl + '/api/booking/create', 
+                  dataType: 'json',
+                  method: 'POST',
+                  data: submitData, 
+                  success: function(data, stat, xhr) {
+                      vm.update();
+                  },
+                  error: function(xhr, stat, err) {
+                       vm.update();
+                  }
+              });
 
         },
         submitBooking: function (site) {
@@ -573,7 +584,9 @@ export default {
                         vm.mooring_vessel_size = data.vessel_size;
                         vm.max_advance_booking = data.max_advance_booking;
                         vm.max_advance_booking_days = data.max_advance_booking_days;
-
+                        vm.current_booking = data.current_booking;
+                        vm.total_booking = data.total_booking;
+                        
                         if (data.error_type != null) {
                             vm.status = 'online';
                             return;

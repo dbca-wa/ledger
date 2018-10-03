@@ -135,9 +135,9 @@ class MooringArea(models.Model):
     )
 
     MOORING_CLASS_CHOICES = (
-        (0, 'Small'),
-        (1, 'Medium'),
-        (2, 'Large')
+        ('small', 'Small'),
+        ('medium', 'Medium'),
+        ('large','Large')
     )
 
     name = models.CharField(max_length=255, null=True)
@@ -175,7 +175,7 @@ class MooringArea(models.Model):
     vessel_beam_limit = models.IntegerField(default=0)
     vessel_weight_limit = models.IntegerField(default=0)
     mooring_physical_type = models.SmallIntegerField(choices=MOORING_PHYSICAL_TYPE_CHOICES, default=0)
-    mooring_class = models.SmallIntegerField(choices=MOORING_CLASS_CHOICES, default=0)
+    mooring_class = models.CharField(choices=MOORING_CLASS_CHOICES, default=0, max_length=20)
 
     def __str__(self):
         return self.name
