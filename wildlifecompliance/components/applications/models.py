@@ -745,6 +745,15 @@ class Application(RevisionedMixin):
                     for q1 in assessments:
                         q1.status='completed'
                         q1.save()
+                        # Log application action
+                        self.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q),request)
+                        # Log entry for organisation
+                        if self.org_applicant:
+                            self.org_applicant.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q),request)
+                        elif self.proxy_applicant:
+                            self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q),request)
+                        else:
+                            self.submitter.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q),request)
                 #check if this is the last assessment for current applicatio,Change the processing status only if it is the last assessment
                 if not Assessment.objects.filter(application=self, licence_activity_type=request.data.get('selected_assessment_tab'),status='awaiting_assessment').exists():
                     for activity_type in  self.licence_type_data['activity_type']:
@@ -760,6 +769,10 @@ class Application(RevisionedMixin):
         	       #      if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
         	       #          activity_type["processing_status"]="With Officer-Conditions"
         	       #          self.save()
+
+
+        	    
+
             except:
                 raise
 
@@ -1181,7 +1194,7 @@ class Assessment(ApplicationRequest):
                         self.application.save()
                 self.save()
                 # Create a log entry for the application
-                self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RECALLED,request)
+                self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RECALLED.format(self.assessor_group),request)
             except:
                 raise
 
@@ -1196,7 +1209,7 @@ class Assessment(ApplicationRequest):
                         self.application.save()
                 self.save()
                 # Create a log entry for the application
-                self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RESENT,request)
+                self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RESENT.format(self.assessor_group),request)
             except:
                 raise
 
@@ -1306,8 +1319,9 @@ class ApplicationUserAction(UserAction):
     ACTION_ID_REQUEST_AMENDMENTS_SUBMIT="Amendment submitted by {}"
     ACTION_SEND_FOR_ASSESSMENT_TO_ = "Sent for assessment to {}"
     ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
-    ACTION_ASSESSMENT_RECALLED="Assessment recalled"
-    ACTION_ASSESSMENT_RESENT="Assessment Resent"
+    ACTION_ASSESSMENT_RECALLED="Assessment recalled {}"
+    ACTION_ASSESSMENT_RESENT="Assessment Resent {}"
+    ACTION_ASSESSMENT_COMPLETE="Assessment Completed for group {} "
     ACTION_DECLINE = "Decline application {}"
     ACTION_ENTER_CONDITIONS = "Entered condition for activity type {}"
     ACTION_CREATE_CONDITION_ = "Create condition {}"
