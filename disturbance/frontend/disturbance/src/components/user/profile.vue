@@ -407,10 +407,11 @@ export default {
         },
         checkOrganisation: function() {
             let vm = this;
+            this.newOrg.abn = this.newOrg.abn.replace(/\s+/g,'');
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,'existance'),JSON.stringify(this.newOrg),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
+                //console.log(response);
                 this.newOrg.exists = response.body.exists;
                 this.newOrg.detailsChecked = true;
                 this.newOrg.id = response.body.id;
