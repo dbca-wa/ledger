@@ -218,10 +218,10 @@
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
                                 <div class="col-sm-6">
-                                    <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="">
+                                    <input type="number" class="form-control" name="abn" v-model.number="newOrg.abn" placeholder="" style="width: 40%">
                                 </div>
                                 <div class="col-sm-2">
-                                    <button @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
+                                    <button :disabled="!isNewOrgDetails" @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
                                 </div>
                               </div>
                               <div class="form-group" v-if="newOrg.exists && newOrg.detailsChecked">
@@ -313,7 +313,7 @@ export default {
                 this.uploadedFile = null;
                 this.addingCompany = false;
             } 
-        }
+        },
     },
     computed: {
         hasOrgs: function() {
@@ -324,6 +324,9 @@ export default {
         },
         isFileUploaded: function() {
             return this.uploadedFile != null ? true: false;
+        },
+        isNewOrgDetails: function() {
+            return this.newOrg && this.newOrg.name != '' && this.newOrg.abn != '' ? true: false;
         },
         showCompletion: function() {
             return this.$route.name == 'first-time'
@@ -407,7 +410,7 @@ export default {
         },
         checkOrganisation: function() {
             let vm = this;
-            this.newOrg.abn = this.newOrg.abn.replace(/\s+/g,'');
+            //this.newOrg.abn = this.newOrg.abn.replace(/\s+/g,'');
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,'existance'),JSON.stringify(this.newOrg),{
                 emulateJSON:true
             }).then((response) => {
