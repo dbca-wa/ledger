@@ -1024,7 +1024,33 @@ class Proposal(RevisionedMixin):
         today = timezone.now().date()
         timedelta = datetime.timedelta
         from disturbance.components.compliances.models import Compliance, ComplianceUserAction
-        for req in self.requirements.all():
+        #For amendment type of Proposal, check for copied requirements from previous proposal
+        if self.proposal_type == 'amendment':
+            try:
+                for r in self.requirements.filter(copied_from__isnull=False):
+                    cs=[]
+                    cs=Compliance.objects.filter(requirement=r.copied_from, proposal=self.previous_application, processing_status='due')
+                    if cs:
+                        if r.is_deleted == True:
+                            for c in cs:
+                                c.processing_status='discarded'
+                                c.customer_status = 'discarded'
+                                c.reminder_sent=True
+                                c.post_reminder_sent=True
+                                c.save()
+                        if r.is_deleted == False:
+                            for c in cs:
+                                c.proposal= self
+                                c.approval=approval
+                                c.requirement=r
+                                c.save()
+            except:
+                raise
+        #requirement_set= self.requirements.filter(copied_from__isnull=True).exclude(is_deleted=True)
+        requirement_set= self.requirements.all().exclude(is_deleted=True)
+
+        #for req in self.requirements.all():
+        for req in requirement_set:
             try:
                 if req.due_date and req.due_date >= today:
                     current_date = req.due_date
@@ -1120,10 +1146,14 @@ class Proposal(RevisionedMixin):
                 proposal.submitter = request.user
                 proposal.previous_application = self
                 #copy all the requirements from the previous proposal
-                req=self.requirements.all()
+                #req=self.requirements.all()
+                req=self.requirements.all().exclude(is_deleted=True)
+                from copy import deepcopy
                 if req:
                     for r in req:
+                        old_r = deepcopy(r)
                         r.proposal = proposal
+                        r.copied_from=old_r
                         r.id = None
                         r.save()
                 # Create a log entry for the proposal
@@ -1283,6 +1313,8 @@ class ProposalRequirement(OrderedModel):
     recurrence = models.BooleanField(default=False)
     recurrence_pattern = models.SmallIntegerField(choices=RECURRENCE_PATTERNS,default=1)
     recurrence_schedule = models.IntegerField(null=True,blank=True)
+    copied_from = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
     #order = models.IntegerField(default=1)
 
     class Meta:

@@ -57,10 +57,11 @@ class CompliancePaginatedViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if is_internal(self.request):
-            return Compliance.objects.all()
+            #return Compliance.objects.all()
+            return Compliance.objects.all().exclude(processing_status='discarded')
         elif is_customer(self.request):
             user_orgs = [org.id for org in self.request.user.disturbance_organisations.all()]
-            queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) )
+            queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) ).exclude(processing_status='discarded')
             return queryset
         return Compliance.objects.none()
 
@@ -104,10 +105,10 @@ class ComplianceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if is_internal(self.request):
-            return Compliance.objects.all()
+            return Compliance.objects.all().exclude(processing_status='discarded')
         elif is_customer(self.request):
             user_orgs = [org.id for org in self.request.user.disturbance_organisations.all()]
-            queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) )
+            queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) ).exclude(processing_status='discarded')
             return queryset
         return Compliance.objects.none()
 
@@ -201,7 +202,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             raise
         except ValidationError as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
+            raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))

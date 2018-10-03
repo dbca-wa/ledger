@@ -122,7 +122,11 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (vm.proposal.assessor_mode.has_assessor_mode){
-                                links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
+                                if(full.copied_from==null)
+                                {
+                                    links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
+                                }
+                                //links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
                                 links +=  `<a href='#' class="deleteRequirement" data-id="${full.id}">Delete</a><br/>`;
                             }
                             return links;
@@ -187,12 +191,20 @@ export default {
                 confirmButtonText: 'Remove Requirement',
                 confirmButtonColor:'#d9534f'
             }).then(() => {
-                vm.$http.delete(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id))
+                // vm.$http.delete(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id))
+                // .then((response) => {
+                //     vm.$refs.requirements_datatable.vmDataTable.ajax.reload();
+                // }, (error) => {
+                //     console.log(error);
+                // });
+
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id+'/discard'))
                 .then((response) => {
                     vm.$refs.requirements_datatable.vmDataTable.ajax.reload();
                 }, (error) => {
                     console.log(error);
                 });
+
             },(error) => {
             });
         },
