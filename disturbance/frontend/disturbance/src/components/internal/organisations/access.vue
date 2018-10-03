@@ -92,7 +92,7 @@
                                     <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Letter</label>
                                         <div class="col-sm-6">
-                                            <a target="_blank" :href="access.identification"><i class="fa fa-file-pdf-o"></i>&nbsp;Letter.PDF</a>
+                                            <a target="_blank" :href="access.identification"><i class="fa fa-file-pdf-o"></i>&nbsp;Letter</a>
                                         </div>
                                     </div>   
                                     <div class="form-group" style="margin-top:50px;">

@@ -35,7 +35,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class Compliance(models.Model):
+#class Compliance(models.Model):
+class Compliance(RevisionedMixin):
 
     PROCESSING_STATUS_CHOICES = (('due', 'Due'),
                                  ('future', 'Future'),
@@ -129,7 +130,6 @@ class Compliance(models.Model):
                     if request.FILES:
                         for f in request.FILES:
                             document = self.documents.create(name=str(request.FILES[f]))
-                            #document.name = str(request.FILES[f])
                             document._file = request.FILES[f]
                             document.save()
                     if (self.amendment_requests):
@@ -138,13 +138,15 @@ class Compliance(models.Model):
                             for q in qs:
                                 q.status = 'amended'
                                 q.save()
-                    #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
-                    self.lodgement_date = timezone.now()
-                    self.save()
-                    self.log_user_action(ComplianceUserAction.ACTION_SUBMIT_REQUEST.format(self.id),request)
-                    send_external_submit_email_notification(request,self)
-                    send_submit_email_notification(request,self)
-                
+
+                #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                self.lodgement_date = timezone.now()
+                self.save(version_comment='Compliance Submitted: {}'.format(self.id))
+                self.proposal.save(version_comment='Compliance Submitted: {}'.format(self.id))
+                self.log_user_action(ComplianceUserAction.ACTION_SUBMIT_REQUEST.format(self.id),request)
+                send_external_submit_email_notification(request,self)
+                send_submit_email_notification(request,self)
+                self.documents.all().update(can_delete=False)
             except:
                 raise
 
@@ -219,7 +221,12 @@ def update_proposal_complaince_filename(instance, filename):
 class ComplianceDocument(Document):
     compliance = models.ForeignKey('Compliance',related_name='documents')
     _file = models.FileField(upload_to=update_proposal_complaince_filename)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
 
+    def delete(self):
+        if self.can_delete:
+            return super(ComplianceDocument, self).delete()
+        logger.info('Cannot delete existing document object after Compliance has been submitted (including document submitted before Compliance pushback to status Due): {}'.format(self.name))
 
     class Meta:
         app_label = 'disturbance'
@@ -333,15 +340,6 @@ class ComplianceAmendmentRequest(CompRequest):
 def update_proposal_complaince_filename(instance, filename):
     return 'proposals/{}/compliance/{}/{}'.format(instance.compliance.proposal.id,instance.compliance.id,filename)
 
-
-
-class ComplianceDocument(Document):
-    compliance = models.ForeignKey('Compliance',related_name='documents')
-    _file = models.FileField(upload_to=update_proposal_complaince_filename)
-
-
-    class Meta:
-        app_label = 'disturbance'
 
 
 import reversion

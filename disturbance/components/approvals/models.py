@@ -40,11 +40,19 @@ def update_approval_comms_log_filename(instance, filename):
 class ApprovalDocument(Document):
     approval = models.ForeignKey('Approval',related_name='documents')
     _file = models.FileField(upload_to=update_approval_doc_filename)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+
+    def delete(self):
+        if self.can_delete:
+            return super(ApprovalDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+
 
     class Meta:
         app_label = 'disturbance'
 
-class Approval(models.Model):
+#class Approval(models.Model):
+class Approval(RevisionedMixin):
     STATUS_CHOICES = (
         ('current','Current'),
         ('expired','Expired'),
@@ -58,7 +66,8 @@ class Approval(models.Model):
     licence_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='licence_document')
     cover_letter_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='cover_letter_document')
     replaced_by = models.ForeignKey('self', blank=True, null=True)
-    current_proposal = models.ForeignKey(Proposal,related_name = '+')
+    #current_proposal = models.ForeignKey(Proposal,related_name = '+')
+    current_proposal = models.ForeignKey(Proposal,related_name='approvals')
 #    activity = models.CharField(max_length=255)
 #    region = models.CharField(max_length=255)
 #    tenure = models.CharField(max_length=255,null=True)
@@ -179,12 +188,14 @@ class Approval(models.Model):
         from disturbance.components.approvals.pdf import create_approval_doc
         copied_to_permit = self.copiedToPermit_fields(self.current_proposal) #Get data related to isCopiedToPermit tag
         self.licence_document = create_approval_doc(self,self.current_proposal, copied_to_permit, user)
-        self.save()
+        self.save(version_comment='Created Approval PDF: {}'.format(self.licence_document.name))
+        self.current_proposal.save(version_comment='Created Approval PDF: {}'.format(self.licence_document.name))
 
     def generate_renewal_doc(self):
         from disturbance.components.approvals.pdf import create_renewal_doc
         self.renewal_document = create_renewal_doc(self,self.current_proposal)
-        self.save()
+        self.save(version_comment='Created Approval PDF: {}'.format(self.renewal_document.name))
+        self.current_proposal.save(version_comment='Created Approval PDF: {}'.format(self.renewal_document.name))
 
     def copiedToPermit_fields(self, proposal):
         p=proposal
@@ -406,6 +417,9 @@ def delete_documents(sender, instance, *args, **kwargs):
             pass
 
 import reversion
-reversion.register(Approval, follow=['documents'])
+reversion.register(Approval, follow=['documents', 'approval_set', 'action_logs'])
 reversion.register(ApprovalDocument)
+reversion.register(ApprovalLogDocument, follow=['documents'])
+reversion.register(ApprovalLogEntry)
+reversion.register(ApprovalUserAction)
 

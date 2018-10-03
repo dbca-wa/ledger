@@ -56,6 +56,7 @@ def send_amendment_email_notification(amendment_request, request, compliance):
     #reason = amendment_request.get_reason_display()
     reason = amendment_request.reason.reason
     url = request.build_absolute_uri(reverse('external-compliance-detail',kwargs={'compliance_pk': compliance.id}))
+    url = ''.join(url.split('-internal'))
     context = {
         'compliance': compliance,
         'reason': reason,

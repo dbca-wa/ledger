@@ -185,7 +185,7 @@ export default {
                                     result += popTemplate({
                                         text: message,
                                         tick: tick
-                                    });   
+                                    });
 
                                 }
                             }
