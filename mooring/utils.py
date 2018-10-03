@@ -12,6 +12,7 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import redirect
 from django.utils import timezone
+from dateutil.tz.tz import tzoffset
 
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
@@ -35,7 +36,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
 
         # fetch all the campsites and applicable rates for the campground
         sites_qs =  Mooringsite.objects.filter(
-                        campground=campground,
+                        mooringarea=campground,
                         campsite_class=campsite_class_id
                     )
 
@@ -81,7 +82,7 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
                             'vessel_size' : vessel_size
                         },
                         expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
-                        campground=campground
+                        mooringarea=campground
                     )
         for i in range((end_date-start_date).days):
             cb =    MooringsiteBooking.objects.create(
@@ -94,13 +95,80 @@ def create_booking_by_class(campground_id, campsite_class_id, start_date, end_da
     # On success, return the temporary booking
     return booking
 
+def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, num_mooring=0, vessel_size=0, cost_total=0, override_price=None, override_reason=None, override_reason_info=None, send_invoice=False, overridden_by=None, customer=None, updating_booking=False, override_checks=False):
+    """Create a new temporary booking in the system for a set of specific campsites."""
 
-def create_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,num_mooring=0,vessel_size=0,cost_total=0,customer=None,updating_booking=False):
+    # the CampsiteBooking table runs the risk of a race condition,
+    # wrap all this behaviour up in a transaction
+    campsite_qs = Mooringsite.objects.filter(pk__in=sites_qs)
+    with transaction.atomic():
+        # get availability for campsite, error out if booked/closed
+        availability = get_campsite_availability(campsite_qs, start_date, end_date)
+        for site_id, dates in availability.items():
+            if not override_checks:
+                if updating_booking:
+                    if not all([v[0] in ['open','tooearly'] for k, v in dates.items()]):
+                        raise ValidationError('Mooring unavailable for specified time period.')
+                else:
+                    if not all([v[0] == 'open' for k, v in dates.items()]):
+                        raise ValidationError('Mooring unavailable for specified time period.')
+            else:
+                if not all([v[0] in ['open','tooearly','closed'] for k, v in dates.items()]):
+                    raise ValidationError('Mooring unavailable for specified time period.')
+                
+        if not override_checks:
+            # Prevent booking if max people passed
+            total_people = num_adult + num_concession + num_child + num_infant
+            min_people = sum([cs.min_people for cs in campsite_qs]) 
+            max_people = sum([cs.max_people for cs in campsite_qs])
+
+            if total_people > max_people:
+                raise ValidationError('Maximum number of people exceeded for the selected campsite(s)')
+            # Prevent booking if less than min people 
+            #if total_people < min_people:
+            #    raise ValidationError('Number of people is less than the minimum allowed for the selected campsite(s)')
+
+        # Create a new temporary booking with an expiry timestamp (default 20mins)       
+        booking =   Booking.objects.create(
+                        booking_type=3,
+                        arrival=start_date,
+                        departure=end_date,
+                        details={
+                            'num_adult': num_adult,
+                            'num_concession': num_concession,
+                            'num_child': num_child,
+                            'num_infant': num_infant,
+                            'num_mooring': num_mooring,
+                            'vessel_size': vessel_size
+
+                        },
+                        cost_total = cost_total,
+                        override_price = Decimal(override_price) if (override_price is not None) else None,
+                        override_reason = override_reason,
+                        override_reason_info = override_reason_info,
+                        send_invoice = send_invoice,
+                        overridden_by = overridden_by,
+                        expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
+                        mooringarea=campsite_qs[0].mooringarea,
+                        customer = customer
+                    )
+        for cs in campsite_qs:
+            for i in range((end_date-start_date).days):
+                cb =    MooringsiteBooking.objects.create(
+                            campsite=cs,
+                            booking_type=3,
+                            date=start_date+timedelta(days=i),
+                            booking=booking
+                        )
+                        
+    # On success, return the temporary booking
+    return booking
+
+def ooolldcreate_booking_by_site(campsite_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0,num_mooring=0,vessel_size=0,cost_total=0,customer=None,updating_booking=False):
     """Create a new temporary booking in the system for a specific campsite."""
     # get campsite
     sites_qs = Mooringsite.objects.filter(pk=campsite_id)
     campsite = sites_qs.first()
-
     # TODO: date range check business logic
     # TODO: number of people check? this is modifiable later, don't bother
 
@@ -198,22 +266,69 @@ def get_open_marinas(campsites_qs, start_date, end_date):
     return set(mooring_map.keys())
 
 
+
 def get_campsite_availability(campsites_qs, start_date, end_date):
-    """Fetch the availability of each campsite in a queryset over a range of visit dates."""
+    """Fetch the availability of each mooring in a queryset over a range of visit dates."""
     # fetch all of the single-day MooringsiteBooking objects within the date range for the sites
+    start_date_time = datetime.strptime(str(start_date)+str(' 00:00'), '%Y-%m-%d %H:%M')
+    end_date_time = datetime.strptime(str(end_date)+str(' 23:59'), '%Y-%m-%d %H:%M')
     bookings_qs =   MooringsiteBooking.objects.filter(
                         campsite__in=campsites_qs,
-                        date__gte=start_date,
-                        date__lt=end_date
+                        #date__gte=start_date,
+                        #date__lt=end_date
+                        from_dt__gte=start_date_time,
+                        to_dt__lt=end_date_time,
                     ).order_by('date', 'campsite__name')
 
     # prefill all slots as 'open'
     duration = (end_date-start_date).days
-    results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
-    # strike out existing bookings
-    for b in bookings_qs:
-        results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
+    #results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
+    results = {}
+    for site in campsites_qs:
+        results[site.pk] = {}
+        for i in range(duration):
+            pass
+               
+            mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk)[0]
+            bp_result =  mooring_rate.booking_period.booking_period.all()
+            booking_period = {}
+            for bp in bp_result:
+                booking_period[bp.pk] = 'open'
+#            print start_date+timedelta(days=i)
+            results[site.pk][start_date+timedelta(days=i)] = ['open',booking_period]
+#            print site.pk
+#            print results[site.pk][start_date+timedelta(days=i)] 
+#   results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
 
+    for b in bookings_qs:
+        mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite)[0]
+        if mooring_rate:
+            for bp in mooring_rate.booking_period.booking_period.all():
+                for i in range(duration):
+                    date_rotate_forward = start_date+timedelta(days=i)
+                    start_dt = datetime.strptime(str(date_rotate_forward)+' '+str(bp.start_time), '%Y-%m-%d %H:%M:%S')
+                    finish_dt = datetime.strptime(str(date_rotate_forward)+' '+str(bp.finish_time), '%Y-%m-%d %H:%M:%S')
+                    if start_dt > finish_dt:
+                         finish_dt = finish_dt+timedelta(days=1)
+ 
+                    from_dt = b.from_dt + timedelta(hours=8)
+                    to_dt = b.to_dt + timedelta(hours=8)
+                    if from_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'): 
+                        if from_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                            if date_rotate_forward in results[b.campsite.id]:
+                                results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
+                                pass
+                    if to_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                        if to_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                            if date_rotate_forward in results[b.campsite.id]:
+                                results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
+                                pass
+                    if from_dt.strftime('%Y-%m-%d %H:%M:%S') <= start_dt.strftime('%Y-%m-%d %H:%M:%S') and to_dt.strftime('%Y-%m-%d %H:%M:%S') >= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                        if date_rotate_forward in results[b.campsite.id]:
+                            results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
+                            pass
+
+                   
     # generate a campground-to-campsite-list map
     mooring_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.mooringarea.pk == cg[0]] for cg in campsites_qs.distinct('mooringarea').values_list('mooringarea')}
     # strike out whole campground closures
@@ -290,6 +405,10 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         stop_mark = min(max(stop, start_date), end_date)
         for i in range((end_date-stop_mark).days):
             results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
+
+    print "RESULTS 2"
+    print (results)
+
     return results
 
 
@@ -306,11 +425,12 @@ def get_visit_rates(campsites_qs, start_date, end_date):
     results = {
         site.pk: {
             start_date+timedelta(days=i): {
-                'mooring':  Decimal('0.00'),
-                'adult': Decimal('0.00'),
-                'child': Decimal('0.00'),
-                'concession': Decimal('0.00'),
-                'infant': Decimal('0.00')
+                'mooring':  '0.00',
+                'adult': '0.00',
+                'child': '0.00',
+                'concession': '0.00',
+                'infant': '0.00',
+                'booking_period' : [] 
             } for i in range(duration)
         } for site in campsites_qs
     }
@@ -327,11 +447,23 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         start = max(start_date, rate.date_start)
         end = min(end_date, rate.date_end) if rate.date_end else end_date
         for i in range((end-start).days):
-            results[rate.campsite.pk][start+timedelta(days=i)]['mooring'] = rate.rate.mooring
-            results[rate.campsite.pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
-            results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
-            results[rate.campsite.pk][start+timedelta(days=i)]['child'] = rate.rate.child
-            results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = rate.rate.infant
+            print "BOOKING PERIOD 1"
+            if  rate.booking_period is None:
+                 continue
+            booking_period = rate.booking_period.booking_period.all()
+            
+            results[rate.campsite.pk][start+timedelta(days=i)]['mooring'] = str(rate.rate.mooring)
+            results[rate.campsite.pk][start+timedelta(days=i)]['adult'] = str(rate.rate.adult)
+            results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = str(rate.rate.concession)
+            results[rate.campsite.pk][start+timedelta(days=i)]['child'] = str(rate.rate.child)
+            results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = str(rate.rate.infant)
+            for b in booking_period:
+                booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'created' : b.created  }
+#                booking_period_row = {} 
+#                booking_period_row['id'] = b.id
+#                booking_period_row['period_name'] = b.period_name
+#                   , 'period_name' : b.period_name, 'small_price': str(b.small_price), 'medium_price': str(b.medium_price), 'large_price' : str(b.large_price), 'start_time' : str(b.start_time), 'finish_time' : str(b.finish_time),'all_day' : str(b.all_day), 'created' : str(b.created)  )
+                results[rate.campsite.pk][start+timedelta(days=i)]['booking_period'].append(booking_period_row)
 
     # complain if there's a Mooringsite without a MooringsiteRate
     if len(early_rates) < rates_qs.count():
@@ -342,12 +474,22 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         if start_date < rate.date_start:
             start = start_date
             end = rate.date_start
+            print "BOOKING PERIOD"
+            print rate.booking_period
             for i in range((end-start).days):
-                results[site_pk][start+timedelta(days=i)]['mooring'] = rate.rate.mooring
-                results[site_pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
-                results[site_pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
-                results[site_pk][start+timedelta(days=i)]['child'] = rate.rate.child
-                results[site_pk][start+timedelta(days=i)]['infant'] = rate.rate.infant
+                results[site_pk][start+timedelta(days=i)]['mooring'] = str(rate.rate.mooring)
+                results[site_pk][start+timedelta(days=i)]['adult'] = str(rate.rate.adult)
+                results[site_pk][start+timedelta(days=i)]['concession'] = str(rate.rate.concession)
+                results[site_pk][start+timedelta(days=i)]['child'] = str(rate.rate.child)
+                results[site_pk][start+timedelta(days=i)]['infant'] = str(rate.rate.infant)
+                if  rate.booking_period is None:
+                    continue
+                print "RATE BOOKING PERIOOD"
+                print rate.booking_period
+                for b in rate.booking_period.booking_period.all(): 
+                    booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'created' : b.created  } 
+                    results[site_pk][start+timedelta(days=i)]['booking_period'].append(booking_period_row) 
+                    
 
     return results
 
@@ -650,6 +792,77 @@ def get_diff_days(old_booking,new_booking,additional=True):
 def create_temp_bookingupdate(request,arrival,departure,booking_details,old_booking,total_price):
     # delete all the campsites in the old moving so as to transfer them to the new booking
     old_booking.campsites.all().delete()
+    booking = create_booking_by_site(booking_details['campsites'],
+            start_date = arrival,
+            end_date = departure,
+            num_adult = booking_details['num_adult'],
+            num_concession= booking_details['num_concession'],
+            num_child= booking_details['num_child'],
+            num_infant= booking_details['num_infant'],
+            num_mooring = booking_details['num_mooring'],
+            cost_total = total_price,
+            customer = old_booking.customer,
+            override_price=old_booking.override_price,
+            updating_booking = True,
+            override_checks=True
+    )
+    # Move all the vehicles to the new booking
+    for r in old_booking.regos.all():
+        r.booking = booking
+        r.save()
+    
+    lines = price_or_lineitems(request,booking,booking.campsite_id_list)
+    booking_arrival = booking.arrival.strftime('%d-%m-%Y')
+    booking_departure = booking.departure.strftime('%d-%m-%Y')
+    reservation = u'Reservation for {} confirmation PS{}'.format(
+            u'{} {}'.format(booking.customer.first_name, booking.customer.last_name), booking.id)
+    # Proceed to generate invoice
+
+    checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
+
+    # FIXME: replace with session check
+    invoice = None
+    if 'invoice=' in checkout_response.url:
+        invoice = checkout_response.url.split('invoice=', 1)[1]
+    else:
+        for h in reversed(checkout_response.history):
+            if 'invoice=' in h.url:
+                invoice = h.url.split('invoice=', 1)[1]
+                break
+    
+    # create the new invoice
+    new_invoice = internal_create_booking_invoice(booking, invoice)
+
+    # Check if the booking is a legacy booking and doesn't have an invoice
+    if old_booking.legacy_id and old_booking.invoices.count() < 1:
+        # Create a cash transaction in order to fix the outstnding invoice payment
+        CashTransaction.objects.create(
+            invoice = Invoice.objects.get(reference=new_invoice.invoice_reference),
+            amount = old_booking.cost_total,
+            type = 'move_in',
+            source = 'cash',
+            details = 'Transfer of funds from migrated booking',
+            movement_reference='Migrated Booking Funds'
+        )
+        # Update payment details for the new invoice
+        update_payments(new_invoice.invoice_reference)
+
+    # Attach new invoices to old booking
+    for i in old_booking.invoices.all():
+        inv = Invoice.objects.get(reference=i.invoice_reference)
+        inv.voided = True
+        #transfer to the new invoice
+        inv.move_funds(inv.transferable_amount,Invoice.objects.get(reference=new_invoice.invoice_reference),'Transfer of funds from {}'.format(inv.reference))
+        inv.save()
+    # Change the booking for the selected invoice
+    new_invoice.booking = old_booking
+    new_invoice.save()
+
+    return booking
+
+def iiiicreate_temp_bookingupdate(request,arrival,departure,booking_details,old_booking,total_price):
+    # delete all the campsites in the old moving so as to transfer them to the new booking
+    old_booking.campsites.all().delete()
     booking = create_booking_by_site(booking_details['campsites'][0],
             start_date = arrival,
             end_date = departure,
@@ -672,10 +885,11 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     booking_arrival = booking.arrival.strftime('%d-%m-%Y')
     booking_departure = booking.departure.strftime('%d-%m-%Y')
     reservation = "Reservation for {} from {} to {} at {}".format('{} {}'.format(booking.customer.first_name,booking.customer.last_name),booking_arrival,booking_departure,booking.mooringarea.name)
+
     # Proceed to generate invoice
     checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
     internal_create_booking_invoice(booking, checkout_response)
-
+    
     # Get the new invoice
     new_invoice = booking.invoices.first()
 
@@ -1087,7 +1301,6 @@ def internal_booking(request,booking_details,internal=True,updating=False):
                     if 'invoice=' in h.url:
                         invoice = h.url.split('invoice=', 1)[1]
                         break
-
             internal_create_booking_invoice(booking, invoice)
             delete_session_booking(request.session)
             send_booking_invoice(booking)

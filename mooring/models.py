@@ -135,9 +135,9 @@ class MooringArea(models.Model):
     )
 
     MOORING_CLASS_CHOICES = (
-        (0, 'Small'),
-        (1, 'Medium'),
-        (2, 'Large')
+        ('small', 'Small'),
+        ('medium', 'Medium'),
+        ('large','Large')
     )
 
     name = models.CharField(max_length=255, null=True)
@@ -175,7 +175,7 @@ class MooringArea(models.Model):
     vessel_beam_limit = models.IntegerField(default=0)
     vessel_weight_limit = models.IntegerField(default=0)
     mooring_physical_type = models.SmallIntegerField(choices=MOORING_PHYSICAL_TYPE_CHOICES, default=0)
-    mooring_class = models.SmallIntegerField(choices=MOORING_CLASS_CHOICES, default=0)
+    mooring_class = models.CharField(choices=MOORING_CLASS_CHOICES, default=0, max_length=20)
 
     def __str__(self):
         return self.name
@@ -208,7 +208,7 @@ class MooringArea(models.Model):
     def current_closure(self):
         closure = self._get_current_closure()
         if closure:
-            return 'Start: {} End: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y') if closure.range_end else "")
+            return 'Start: {} Reopen: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y') if closure.range_end else "")
         return ''
 
     @property
@@ -732,24 +732,24 @@ class MooringsiteBookingRange(BookingRange):
     # Methods
     # =====================================
     def _is_same(self,other):
-        if not isinstance(other, MooringsiteBookingRange) and self.id != other.id:
-            return False
-        if self.range_start == other.range_start and self.range_end == other.range_end:
-            return True
+#        if not isinstance(other, MooringsiteBookingRange) and self.id != other.id:
+#            return False
+#        if self.range_start == other.range_start and self.range_end == other.range_end:
+#            return True
         return False
 
-    def clean(self, *args, **kwargs):
-        original = None
-        # Preventing ranges within other ranges
-        within = MooringsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
-        if within:
-            raise BookingRangeWithinException('This Booking Range is within the range of another one')
-        if self.pk:
-            original = MooringsiteBookingRange.objects.get(pk=self.pk)
-            if not original.editable:
-                raise ValidationError('This Booking Range is not editable')
-            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
-                raise ValidationError('The start date can\'t be in the past')
+#    def clean(self, *args, **kwargs):
+#        original = None
+#        # Preventing ranges within other ranges
+#        within = MooringsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
+#        if within:
+#            raise BookingRangeWithinException('This Booking Range is within the range of another one')
+#        if self.pk:
+#            original = MooringsiteBookingRange.objects.get(pk=self.pk)
+#            if not original.editable:
+#                raise ValidationError('This Booking Range is not editable')
+#            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
+#                raise ValidationError('The start date can\'t be in the past')
 
     def __str__(self):
         return '{}: {} {} - {}'.format(self.campsite, self.status, self.range_start, self.range_end)
@@ -907,15 +907,16 @@ class MooringsiteBooking(models.Model):
     date = models.DateField(db_index=True)
     # ria multiple booking
     from_dt = models.DateTimeField(blank=True, null=True)
-    to_dt = models.DateTimeField(blank=True, null=True) 
+    to_dt = models.DateTimeField(blank=True, null=True)
+    amount = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False) 
     booking = models.ForeignKey('Booking',related_name="campsites", on_delete=models.CASCADE, null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
 
     def __str__(self):
         return '{} - {}'.format(self.campsite, self.date)
 
-    class Meta:
-        unique_together = (('campsite', 'date'),)
+#    class Meta:
+#        unique_together = (('campsite', 'date'),)
 
 
 class Rate(models.Model):
@@ -1025,6 +1026,7 @@ class Booking(models.Model):
     overridden_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True, related_name='overridden_bookings')
     mooringarea = models.ForeignKey('MooringArea', null=True)
     is_canceled = models.BooleanField(default=False)
+    send_invoice = models.BooleanField(default=False)
     cancellation_reason = models.TextField(null=True,blank=True)
     cancelation_time = models.DateTimeField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)
@@ -1048,11 +1050,13 @@ class Booking(models.Model):
         num_concession = self.details.get('num_concession', 0)
         num_infant = self.details.get('num_infant', 0)
         num_child = self.details.get('num_child', 0)
-        return '{} adult{}, {} concession{}, {} child{}, {} infant{}'.format(
+        num_mooring = self.details.get('num_mooring', 0)
+        return '{} adult{}, {} concession{}, {} child{}, {} infant{}, {} mooring{}'.format(
             num_adult, '' if num_adult == 1 else 's',
             num_concession, '' if num_concession == 1 else 's',
             num_child, '' if num_child == 1 else 'ren',
             num_infant, '' if num_infant == 1 else 's',
+            num_mooring, '' if num_mooring == 1 else 's',
         )
 
     @property
@@ -1062,7 +1066,8 @@ class Booking(models.Model):
             num_concession = self.details.get('num_concession', 0)
             num_infant = self.details.get('num_infant', 0)
             num_child = self.details.get('num_child', 0)
-            return num_adult + num_concession + num_infant + num_child
+            num_mooring = self.details.get('num_mooring', 0)
+            return num_adult + num_concession + num_infant + num_child + num_mooring
         return 0
 
     @property
@@ -1072,17 +1077,20 @@ class Booking(models.Model):
             num_concession = self.details.get('num_concession', 0)
             num_infant = self.details.get('num_infant', 0)
             num_child = self.details.get('num_child', 0)
+            num_mooring = self.details.get('num_mooring', 0)
             return {
                 "adults" : num_adult,
                 "concession" : num_concession,
                 "infants" : num_infant,
-                "children": num_child
+                "children": num_child,
+                "mooring" : num_mooring
             }
         return {
             "adults" : 0,
             "concession" : 0,
             "infants" : 0,
-            "children": 0
+            "children": 0,
+            "mooring" : 0,
         }
 
     @property
@@ -1149,9 +1157,9 @@ class Booking(models.Model):
             status = status.strip()
             if self.is_canceled:
                 if payment_status == 'over_paid' or payment_status == 'paid':
-                    return 'Canceled - Payment ({})'.format(status)
+                    return 'Cancelled - Payment ({})'.format(status)
                 else:
-                    return 'Canceled'
+                    return 'Cancelled'
             else:
                 return status
         return 'Paid'

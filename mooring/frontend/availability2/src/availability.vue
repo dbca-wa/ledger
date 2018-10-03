@@ -34,16 +34,17 @@
         </div>
         <div class="columns small-12 medium-12 large-12">
         <div class="row">
-                <div class="columns small-9 medium-9 large-9">
+                <div class="small-8 medium-9 large-10">
                         <div class="panel panel-default">
-                             <div class="panel-heading"> <h3 class="panel-title">Trolley: $0.00</h3></div>
+                             <div class="panel-heading"> <h3 class="panel-title">Trolley: <span id='total_trolley'>$0.00</span></h3></div>
+                              <div class='columns small-12 medium-12 large-12'> 
+                                 <div v-for="item in current_booking" class="row small-12 medium-12 large-12"><div class="columns small-12 medium-9 large-9">{{ item.item }}</div><div class="columns small-12 medium-3 large-3">${{ item.amount }}</div>  </div>
+			      </div>
                         </div>
                 </div>
-
-                <div class="columns small-3 medium-3 large-3">
-                        <a class="btn btn-primary small-12 medium-12 large-12" style=";">Check Out</a>
+                <div class="columns small-4 medium-3 large-2">
+                        <a class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'">Check Out</a>
                 </div>
-
         </div>
         </div>
 
@@ -154,7 +155,6 @@
                 </label>
             </div>           
         </div>
-
         <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
              <div v-if="mooring_vessel_size > vesselSize" class="small-12 medium-12 large-12">
             <table class="hover">
@@ -165,7 +165,7 @@
                         <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
                     </tr>
                 </thead>
-                <tbody><template v-for="site in sites" v-if="site.gearType[gearType]">
+                <tbody><template v-for="site in sites" >
                     <tr>
                         <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
@@ -178,7 +178,16 @@
                                 <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
                             </template>
                         </td>
-                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >
+                                     <div v-for="bp in day[1].booking_period">
+                                        <button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px;' v-if="bp.status == 'open'"  @click="addBooking(site.id,bp.id,bp.date)" >
+                                            <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }}</span></small>
+                                        </button>
+                                        <button class="button" v-else  style='min-width: 150px; width: 80%; margin-bottom: 2px; background-color: rgb(255, 236, 236); text-decoration: line-through;color: #000;' >
+                                             <small>{{ bp.period_name }}</small>
+                                        </button>
+                                     </div>
+                        </td>
                     </tr>
                     <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
                         <td class="site">Site: {{ line.name }}</td>
@@ -390,6 +399,7 @@ export default {
             showMoreInfo: false,
             ongoing_booking: false,
             ongoing_booking_id: null,
+            current_booking: [],
             showSecondErrorLine: true,
         };
     },
@@ -434,6 +444,36 @@ export default {
                 });
                 site.showBreakdown = true;
             }
+        },
+        addBooking: function (site_id,bp_id,date) {
+              var vm = this;
+              console.log("ADD BOOKING");
+              console.log(site_id+' : '+bp_id);
+              console.log(date);
+              var booking_start = $('#date-arrival').val();
+              var booking_finish = $('#date-departure').val();
+
+              var submitData = {
+                  site_id: site_id,
+                  bp_id: bp_id,
+                  date: date,
+                  booking_start: booking_start,
+                  booking_finish: booking_finish,
+              };
+
+              $.ajax({
+                  url: vm.parkstayUrl + '/api/booking/create', 
+                  dataType: 'json',
+                  method: 'POST',
+                  data: submitData, 
+                  success: function(data, stat, xhr) {
+                      vm.update();
+                  },
+                  error: function(xhr, stat, err) {
+                       vm.update();
+                  }
+              });
+
         },
         submitBooking: function (site) {
             var vm = this;
@@ -544,7 +584,9 @@ export default {
                         vm.mooring_vessel_size = data.vessel_size;
                         vm.max_advance_booking = data.max_advance_booking;
                         vm.max_advance_booking_days = data.max_advance_booking_days;
-
+                        vm.current_booking = data.current_booking;
+                        vm.total_booking = data.total_booking;
+                        
                         if (data.error_type != null) {
                             vm.status = 'online';
                             return;
@@ -662,7 +704,7 @@ export default {
             }
         }).data('datepicker');
         console.log('DATE PICKER END');
-
+        console.log(this.site);
         this.arrivalData.date = this.arrivalDate.toDate();
         this.arrivalData.setValue();
         this.arrivalData.fill();

@@ -148,7 +148,9 @@ def abort_booking_view(request, *args, **kwargs):
         utils.delete_session_booking(request.session)
         if change:
             # Redirect to the availability screen
-            return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
+            #return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
+            #mooring_availaiblity2_selector
+            return redirect(reverse('mooring_availaiblity2_selector') + '?site_id={}'.format(c_id))
         else:
             # Redirect to explore parks
             return redirect(settings.EXPLORE_PARKS_URL+'/map')
@@ -180,11 +182,16 @@ class MakeBookingsView(TemplateView):
 
         if booking:
             pricing_list = utils.get_visit_rates(Mooringsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
-            pricing['mooring'] = sum([x['mooring'] for x in pricing_list.values()])
-            pricing['adult'] = sum([x['adult'] for x in pricing_list.values()])
-            pricing['concession'] = sum([x['concession'] for x in pricing_list.values()])
-            pricing['child'] = sum([x['child'] for x in pricing_list.values()])
-            pricing['infant'] = sum([x['infant'] for x in pricing_list.values()])
+            print "PRIUCING LIST"
+#            print (pricing_list)
+#            for x in pricing_list.values():
+#                print x['mooring']
+#                print "---------------------------"
+            pricing['mooring'] = sum([float(x['mooring']) for x in pricing_list.values()])
+            pricing['adult'] = sum([float(x['adult']) for x in pricing_list.values()])
+            pricing['concession'] = sum([float(x['concession']) for x in pricing_list.values()])
+            pricing['child'] = sum([float(x['child']) for x in pricing_list.values()])
+            pricing['infant'] = sum([float(x['infant']) for x in pricing_list.values()])
 
 
         return render(request, self.template_name, {
@@ -267,9 +274,9 @@ class MakeBookingsView(TemplateView):
                 form.add_error(None, 'Number of people exceeded for the current camp site.')
                 return self.render_page(request, booking, form, vehicles, show_errors=True)
             # Prevent booking if less than min people 
-            if booking.num_guests < c.campsite.min_people:
-                form.add_error('Number of people is less than the minimum allowed for the current campsite.')
-                return self.render_page(request, booking, form, vehicles, show_errors=True)
+#            if booking.num_guests < c.campsite.min_people:
+#                form.add_error('Number of people is less than the minimum allowed for the current campsite.')
+#                return self.render_page(request, booking, form, vehicles, show_errors=True)
 
         # generate final pricing
         try:

@@ -40,7 +40,7 @@
             </div>
             <div class="col-md-4">
                 <div class="form-group">
-                  <label for="">Canceled</label>
+                  <label for="">Cancelled</label>
                   <select class="form-control" v-model="filterCanceled" id="filterCanceled">
                         <option value="True">Yes</option>
                         <option value="False">No</option>
@@ -569,7 +569,7 @@ export default {
                     vm.$refs.bookings_table.vmDataTable.ajax.reload();
                     swal({
                         type: 'success',
-                        title: 'Booking Canceled',
+                        title: 'Booking Cancelled',
                         html: 'Booking PS' + vm.selected_booking.id + ' has been cancelled'
                     })
                 })
@@ -676,7 +676,7 @@ export default {
                 //var fields = [...vm.dtHeaders];
                 var fields = [...fields,...vm.dtHeaders];
                 fields.splice(vm.dtHeaders.length-1,1);
-                fields = [...fields,"Adults","Concession","Children","Infants","Regos","Canceled","Cancelation Reason","Cancelation Date","Canceled By"]
+                fields = [...fields,"Adults","Concession","Children","Infants","Regos","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By"]
                 fields.splice(4,0,"Email");
                 fields.splice(5,0,"Phone");
                 fields.splice(9,0,'Amount Due')

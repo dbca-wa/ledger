@@ -14,11 +14,7 @@
                     <b>Mooring:</b>
                 </div>
                 <div class="col-sm-8">
-                {% if booking.mooringarea.site_type == 2 %}
-                    {{ booking.first_campsite.type }}
-                {% else %}
-                    {{ booking.first_campsite.name }} ({{ booking.first_campsite.type }})
-                {% endif %}
+                    {{ booking.mooringarea.name }}
                 </div>
             </div><div class="row">
                 <div class="col-sm-4">
