@@ -61,7 +61,8 @@ from mooring.models import (MooringArea,
                                 BookingVehicleRego,
                                 MooringAreaGroup,
                                 AdmissionsBooking,
-                                AdmissionsRate
+                                AdmissionsRate,
+                                BookingPeriodOption
                                 )
 
 from mooring.serialisers import (  MooringsiteBookingSerialiser,
@@ -500,13 +501,75 @@ def add_booking(request, *args, **kwargs):
     response_data = {}
     response_data['result'] = 'error'
     response_data['message'] = ''
+    booking_date = request.POST['date']
+#    booking_period_start = request.POST['booking_start']
+#    booking_period_finish = request.POST['booking_finish']
+    booking_period_start = datetime.strptime(request.POST['booking_start'], "%d/%m/%Y").date()
+    booking_period_finish = datetime.strptime(request.POST['booking_finish'], "%d/%m/%Y").date()
+
+    start_booking_date = request.POST['date']
+    finish_booking_date = request.POST['date']
+
     print (request.POST['date']) 
     print (request.POST['bp_id'])
     print (request.POST['site_id'])
 
-    booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-    if request.user.is_anonymous():
-        form = AnonymousMakeBookingsForm(request.POST)
+    print 'BOOKING ID'
+    booking = None
+    if 'ps_booking' in request.session:
+        booking_id = request.session['ps_booking']
+        if booking_id:
+             booking = Booking.objects.get(id=booking_id)
+             booking.arrival = booking_period_start
+             booking.departure = booking_period_finish
+             booking.save()
+    else:
+        mooringarea = MooringArea.objects.get(id=request.POST['site_id'])
+        booking = Booking.objects.create(mooringarea=mooringarea,booking_type=3,expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),details={},arrival=booking_period_start,departure=booking_period_finish)
+        request.session['ps_booking'] = booking.id
+        request.session.modified = True
+
+    print "CURRENT BOOKINGID"
+    print booking.id
+    print "BP"
+    print request.POST['bp_id']
+    #print BookingPeriodOption.objects.all()
+    mooringsite = Mooringsite.objects.get(id=request.POST['site_id'])
+
+
+    booking_period = BookingPeriodOption.objects.get(id=int(request.POST['bp_id'])) 
+    print 'BP RES'
+    print booking_period
+    print booking_period.start_time
+    print booking_period.finish_time
+    if booking_period.start_time > booking_period.finish_time:
+            finish_bd = datetime.strptime(finish_booking_date, "%Y-%m-%d").date()
+            finish_booking_date = str(finish_bd+timedelta(days=1))
+            print finish_bd
+
+    print "TIME" 
+    print start_booking_date
+    print finish_booking_date
+    print mooringsite.mooringarea. 
+ 
+#    MooringsiteBooking
+#    for i in range((end_date-start_date).days):
+    cb =    MooringsiteBooking.objects.create(
+                  campsite=mooringsite,
+                  booking_type=3,
+                  date=booking_date,
+                  from_dt=start_booking_date+' '+str(booking_period.start_time),
+                  to_dt=finish_booking_date+' '+str(booking_period.finish_time),
+                  booking=booking,
+                  )
+
+#    with transaction.atomic():
+#            set_session_booking(request.session,booking)
+
+
+    #booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+#    if request.user.is_anonymous():
+#        form = AnonymousMakeBookingsForm(request.POST)
 
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
@@ -1380,6 +1443,18 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #     print "DATESSS"
         #     print dates 
         # fetch availability map
+        print "MS_BOOKING"
+        ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
+        current_booking = []
+        for ms in ms_booking:
+           row = {} 
+           row['item'] = ms.campsite.name + ' from '+ms.from_dt.strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.strftime('%d/%m/%y %H:%M %p')
+           row['amount'] = '20.00'
+#           row['item'] = ms.campsite.name
+           print ms
+           current_booking.append(row)
+ 
+
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
         # create our result object, which will be returned as JSON
         result = {
@@ -1389,6 +1464,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             'map': ground.mooring_map.url if ground.mooring_map else None,
             'ongoing_booking': True if ongoing_booking else False,
             'ongoing_booking_id': ongoing_booking.id if ongoing_booking else None,
+            'current_booking': current_booking,
             'arrival': start_date.strftime('%Y/%m/%d'),
             'days': length,
             'adults': 1,

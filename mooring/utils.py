@@ -318,11 +318,17 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                             if date_rotate_forward in results[b.campsite.id]:
                                 results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
                                 pass
-                    if to_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S') and to_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                    if to_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                        if to_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                            if date_rotate_forward in results[b.campsite.id]:
+                                results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
+                                pass
+                    if from_dt.strftime('%Y-%m-%d %H:%M:%S') <= start_dt.strftime('%Y-%m-%d %H:%M:%S') and to_dt.strftime('%Y-%m-%d %H:%M:%S') >= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
                         if date_rotate_forward in results[b.campsite.id]:
                             results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
                             pass
 
+                   
     # generate a campground-to-campsite-list map
     mooring_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.mooringarea.pk == cg[0]] for cg in campsites_qs.distinct('mooringarea').values_list('mooringarea')}
     # strike out whole campground closures
@@ -442,6 +448,8 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         end = min(end_date, rate.date_end) if rate.date_end else end_date
         for i in range((end-start).days):
             print "BOOKING PERIOD 1"
+            if  rate.booking_period is None:
+                 continue
             booking_period = rate.booking_period.booking_period.all()
             
             results[rate.campsite.pk][start+timedelta(days=i)]['mooring'] = str(rate.rate.mooring)
@@ -474,7 +482,11 @@ def get_visit_rates(campsites_qs, start_date, end_date):
                 results[site_pk][start+timedelta(days=i)]['concession'] = str(rate.rate.concession)
                 results[site_pk][start+timedelta(days=i)]['child'] = str(rate.rate.child)
                 results[site_pk][start+timedelta(days=i)]['infant'] = str(rate.rate.infant)
-                for b in rate.booking_period: 
+                if  rate.booking_period is None:
+                    continue
+                print "RATE BOOKING PERIOOD"
+                print rate.booking_period
+                for b in rate.booking_period.booking_period.all(): 
                     booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'created' : b.created  } 
                     results[site_pk][start+timedelta(days=i)]['booking_period'].append(booking_period_row) 
                     
