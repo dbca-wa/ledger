@@ -5,7 +5,6 @@
     <div class="row">
         <div class="col-sm-3">
             <img class="img-thumbnail img-responsive" alt="" src="{{ booking.campground.first_image.image.url }}"/>
-            
         </div>
         <div class="col-sm-9">
             <div class="row">
@@ -13,11 +12,7 @@
                     <b>Mooring</b>
                 </div>
                 <div class="col-sm-8">
-                {% if booking.mooringarea.site_type == 2 %}
-                    {{ booking.first_campsite.type }}
-                {% else %}
-                    {{ booking.first_campsite.name }} ({{ booking.first_campsite.type }})
-                {% endif %}
+                    {{ booking.mooringarea.name }}
                 </div>
             </div><div class="row">
                 <div class="col-sm-4">

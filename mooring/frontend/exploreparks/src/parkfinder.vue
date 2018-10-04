@@ -51,6 +51,15 @@
                                     <input type="number" id="numChildren" name="num_children" v-model="numChildren" min="0" max="16"/></label>
                                 </div>
                             </div>
+                            <div class="row">
+                                <div class="small-6 columns">
+                                    <label for="num_children" class="text-right">Moorings<label>
+                                </div>
+                                <div class="small-6 columns">
+                                    <input type="number" id="numMooring" name="num_mooring" v-model="numMooring" min="0" max="16"/></label>
+                                </div>
+                            </div>
+
                        </div>
                        </div>
                      <div class="small-12 medium-12 large-4 columns">
@@ -512,10 +521,11 @@ export default {
             arrivalDate: null,
             departureDate: null,
             dateCache: null,
-            numAdults: 2,
+            numAdults: 0,
             numConcessions: 0,
             numChildren: 0,
             numInfants: 0,
+            numMooring: 1,
             gearType: 'all',
             filterParams: {
             },
@@ -580,7 +590,7 @@ export default {
         numPeople: {
             cache: false,
             get: function() {
-                var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
+                var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants + this.numMooring;
                 if (count === 1) {
                     return count +" person ▼";
                 } else {
@@ -596,6 +606,7 @@ export default {
                     'num_concession': this.numConcessions,
                     'num_children': this.numChildren,
                     'num_infants': this.numInfants,
+                    'num_mooring' : this.numMooring,
                     'gear_type': this.gearType,
                     'vessel_size' : this.vesselSize
                 };
@@ -1397,6 +1408,7 @@ export default {
                 params.num_concessions = vm.numConcessions;
                 params.num_children = vm.numChildren;
                 params.num_infants = vm.numInfants;
+                params.num_mooring = vm.numMooring;
                 params.gear_type = vm.gearType;
             }
             $.ajax({
@@ -1694,6 +1706,7 @@ export default {
                 params.num_concessions = vm.numConcessions;
                 params.num_children = vm.numChildren;
                 params.num_infants = vm.numInfants;
+                params.num_mooring = vm.numMooring;
                 params.gear_type = vm.gearType;
             }
             $.ajax({

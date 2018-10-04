@@ -40,8 +40,9 @@ class MakeBookingsForm(forms.Form):
     def clean(self):
         super(MakeBookingsForm, self).clean()
 
-        if ('num_adult' in self.cleaned_data and 'num_concession' in self.cleaned_data):
-            if (self.cleaned_data.get('num_adult')+self.cleaned_data.get('num_concession')) < 1:
+#        if ('num_adult' in self.cleaned_data and 'num_concession' in self.cleaned_data):
+        if ('num_mooring' in self.cleaned_data):
+            if (self.cleaned_data.get('num_mooring')) < 1:
                 raise forms.ValidationError('Booking requires at least 1 guest that is an adult or concession.')
 
 

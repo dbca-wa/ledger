@@ -81,7 +81,11 @@ class ViewReadonlyOfficerView(UserCanViewApplicationMixin, TemplateView):
         kwargs['application'] = serialize(application, posthook=format_application)
 
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application),
-                                          posthook=format_assessment,exclude=['application','applicationrequest_ptr'])
+                                             posthook=format_assessment,exclude=['application','applicationrequest_ptr'],
+                                             related={'assessor_group':{'related':{'members':{'exclude':['residential_address']}}},
+                                                 'officer':{'exclude':['residential_address']},
+                                                 'assigned_assessor':{'exclude':['residential_address']}})
+
 
         kwargs['payment_status'] = payment_utils.PAYMENT_STATUSES.get(payment_utils.
                                                                       get_application_payment_status(application))
@@ -114,10 +118,18 @@ class ViewReadonlyAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         assessment = get_object_or_404(Assessment, pk=self.args[1])
 
-        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment,exclude=['application','applicationrequest_ptr'])
+        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment,exclude=['application','applicationrequest_ptr'],
+                                                related={'assessor_group':{'related':{'members':{'exclude':['residential_address']}}},
+                                                    'officer':{'exclude':['residential_address']},
+                                                    'assigned_assessor':{'exclude':['residential_address']}})
 
-        kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
-                                                exclude(id=assessment.id).order_by('id'), posthook=format_assessment,exclude=['application','applicationrequest_ptr'])
+
+        kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).exclude(id=assessment.id).order_by('id'),
+                                                posthook=format_assessment,exclude=['application','applicationrequest_ptr'],
+                                                related={'assessor_group':{'related':{'members':{'exclude':['residential_address']}}},
+                                                    'officer':{'exclude':['residential_address']},
+                                                    'assigned_assessor':{'exclude':['residential_address']}})
+
 
         kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
                                                            fromm=self.request.user.get_full_name())

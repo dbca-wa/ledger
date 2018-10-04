@@ -578,16 +578,16 @@ export default {
         fetchCampsites:function () {
             let vm = this;
             if(vm.selected_arrival && vm.selected_departure){
-                vm.loading.push('fetching campsites');
+                vm.loading.push('fetching moorings');
                 vm.$http.get(api_endpoints.available_campsites(vm.booking.campground,vm.booking.arrival,vm.booking.departure)).then((response)=>{
                     vm.campsites = response.body;
                     if (vm.campsites.length >0) {
                         vm.selected_campsite =vm.campsites[0].id;
                     }
-                    vm.loading.splice('fetching campsites',1);
+                    vm.loading.splice('fetching moorings',1);
                 },(response)=>{
                     console.log(response);
-                    vm.loading.splice('fetching campsites',1);
+                    vm.loading.splice('fetching moorings',1);
                 });
             }
         },
@@ -595,30 +595,27 @@ export default {
             let vm = this;
             console.log("---fetchCampsiteClasses");
             if(vm.selected_arrival && vm.selected_departure){
-                console.log("---fetchCampsiteClasses1");
-                vm.loading.push('fetching campsite classes');
+                vm.loading.push('fetching mooring info');
                 vm.$http.get(api_endpoints. available_campsite_classes(
                     vm.booking.campground,
                     Moment(vm.booking.arrival, "YYYY-MM-DD").format("YYYY/MM/DD"),
                     Moment(vm.booking.departure, "YYYY-MM-DD").format("YYYY/MM/DD")
                     )).then((response)=>{
-                    console.log("-fetchCampsiteClasses");
-                    console.log(response.body);
                     vm.campsite_classes = response.body;
                     if (vm.campsite_classes.length >0) {
                         vm.selected_campsite =vm.campsite_classes[0].campsites[0];
                         vm.selected_campsite_class = 0;
                     }
-                    vm.loading.splice('fetching campsite classes',1);
+                    vm.loading.splice('fetching mooring info',1);
                 },(response)=>{
                     console.log(response);
-                    vm.loading.splice('fetching campsite classes',1);
+                    vm.loading.splice('fetching mooring info',1);
                 });
             }
         },
         fetchCampground:function () {
             let vm =this;
-            vm.loading.push('fetching campground');
+            vm.loading.push('fetching mooring');
             var cgId = vm.$route.params.cg;
             vm.$http.get(api_endpoints.campground(cgId)).then((response)=>{
                 console.log("fetchCampground");
@@ -630,10 +627,10 @@ export default {
                 vm.fetchCampsites();
                 vm.fetchPark();
                 vm.addEventListeners();
-                vm.loading.splice('fetching campground',1);
+                vm.loading.splice('fetching mooring',1);
             },(error)=>{
                 console.log(error);
-                vm.loading.splice('fetching campground',1);
+                vm.loading.splice('fetching mooring',1);
             });
         },
         fetchStayHistory:function () {
@@ -655,10 +652,10 @@ export default {
             vm.loading.push('fetching park');
             vm.$http.get(api_endpoints.park(vm.campground.park)).then((response)=>{
                 vm.park = response.body;
-                vm.loading.splice('fetching park',1);
+                vm.loading.splice('fetching marine park',1);
             },(error)=>{
                 console.log(error);
-                vm.loading.splice('fetching park',1);
+                vm.loading.splice('fetching marine park',1);
             });
         },
         addEventListeners:function(){
