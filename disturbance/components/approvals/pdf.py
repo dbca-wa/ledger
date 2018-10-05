@@ -217,13 +217,14 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     elements.append(understandingList)
 
     # proposal requirements
-    if proposal.requirements.exists():
+    requirements = proposal.requirements.all().exclude(is_deleted=True)
+    if requirements.exists():
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         elements.append(Paragraph('The following requirements must be satisfied for the approval of the proposal not to be withdrawn:', styles['BoldLeft']))
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
         conditionList = ListFlowable(
-            [Paragraph(a.requirement, styles['Left']) for a in proposal.requirements.order_by('order')],
+            [Paragraph(a.requirement, styles['Left']) for a in requirements.order_by('order')],
             bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
         elements.append(conditionList)
 
