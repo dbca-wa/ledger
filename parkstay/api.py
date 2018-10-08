@@ -1046,7 +1046,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                             test_bk = classes_map[key]['availability'][offset][4][0] > 0
                             test_cl = classes_map[key]['availability'][offset][4][1] > 0
                             if test_bk and test_cl:
-                                classes_map[key]['availability'][offset][1] = 'Partially Booked and Closed'
+                                classes_map[key]['availability'][offset][1] = 'Partially Booked or Closed'
                                 if classes_map[key]['availability'][offset][3] is None:
                                     classes_map[key]['availability'][offset][3] = closure_reason
                             elif test_bk:
@@ -1123,10 +1123,10 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     for offset, stat, closure_reason in [((k-start_date).days, v[0], v[1]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         bookings_map[s.name]['availability'][offset][0] = False
                         if stat == 'closed':
-                            bookings_map[s.name]['availability'][offset][1] = 'Closed & Booked' if show_all else 'Unavailable'
+                            bookings_map[s.name]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
                             bookings_map[s.name]['availability'][offset][3] = closure_reason if show_all else None
                             if any([v[0] == 'booked' for k, v in availability[s.pk].items()]):
-                                bookings_map[s.name]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
+                                bookings_map[s.name]['availability'][offset][1] = 'Booked' if show_all else 'Unavailable'
                         elif stat == 'booked':
                             bookings_map[s.name]['availability'][offset][1] = 'Booked' if show_all else 'Unavailable'
                         else:
