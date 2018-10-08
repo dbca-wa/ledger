@@ -33,7 +33,18 @@ class ViewReadonlyView(UserCanViewApplicationMixin, TemplateView):
 
         convert_documents_to_url(application.data, application.documents.all(), '')
 
-        kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['application'] = serialize(application,posthook=format_application,
+                                            related={
+                                                'applicant': {'exclude': ['residential_address','postal_address','billing_address']},
+                                                'applicant_profile':{'fields':['email','id','institution','name']},
+                                                'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']},
+                                                'licence':{'related':{
+                                                   'holder':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'issuer':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'profile':{'related': {'user': {'exclude': ['residential_address','postal_address','billing_address']}},
+						       'exclude': ['postal_address']}
+                                                   },'exclude':['holder','issuer','profile','licence_ptr']}
+                                            })
 
         if is_officer(self.request.user):
             kwargs['customer'] = application.applicant
@@ -78,7 +89,18 @@ class ViewReadonlyOfficerView(UserCanViewApplicationMixin, TemplateView):
 
         convert_documents_to_url(application.data, application.documents.all(), '')
 
-        kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['application'] = serialize(application,posthook=format_application,
+                                            related={
+                                                'applicant': {'exclude': ['residential_address','postal_address','billing_address']},
+                                                'applicant_profile':{'fields':['email','id','institution','name']},
+                                                'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']},
+                                                'licence':{'related':{
+                                                   'holder':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'issuer':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'profile':{'related': {'user': {'exclude': ['residential_address','postal_address','billing_address']}},
+						       'exclude': ['postal_address']}
+                                                   },'exclude':['holder','issuer','profile','licence_ptr']}
+                                            })
 
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application),
                                              posthook=format_assessment,exclude=['application','applicationrequest_ptr'],
@@ -113,7 +135,18 @@ class ViewReadonlyAssessorView(CanPerformAssessmentMixin, TemplateView):
 
         convert_documents_to_url(application.data, application.documents.all(), '')
 
-        kwargs['application'] = serialize(application, posthook=format_application)
+        kwargs['application'] = serialize(application,posthook=format_application,
+                                            related={
+                                                'applicant': {'exclude': ['residential_address','postal_address','billing_address']},
+                                                'applicant_profile':{'fields':['email','id','institution','name']},
+                                                'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']},
+                                                'licence':{'related':{
+                                                   'holder':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'issuer':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'profile':{'related': {'user': {'exclude': ['residential_address','postal_address','billing_address']}},
+						       'exclude': ['postal_address']}
+                                                   },'exclude':['holder','issuer','profile','licence_ptr']}
+                                            })
         kwargs['form_structure'] = application.licence_type.application_schema
 
         assessment = get_object_or_404(Assessment, pk=self.args[1])

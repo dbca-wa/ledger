@@ -53,7 +53,15 @@ class ListProfilesView(CustomerRequiredMixin, TemplateView):
             attr["auth_identity"] = instance.auth_identity
             return attr
 
-        context['data'] = serialize(Profile.objects.filter(user=self.request.user))
+        #context['data'] = serialize(Profile.objects.filter(user=self.request.user))
+        context['data'] = serialize(Profile.objects.filter(user=self.request.user),
+                           related={
+                               'user':{'exclude':['residential_address','postal_address','billing_address']},
+                               'postal_address':{
+                                   'related':{
+                                       'oscar_address':{'exclude':['user']}
+                                   },'exclude':['user']}
+                           })
 
         return context
 

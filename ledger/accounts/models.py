@@ -571,12 +571,14 @@ class ProfileListener(object):
                 address.oscar_address = oscar_address
                 address.save()
         # Clear out unused addresses
+        ''' This functionality no longer in use due to more than just
+        profile objects using the UserAddresses
         user = instance.user
         user_addr = Address.objects.filter(user=user)
         for u in user_addr:
             if not u.profiles.all():
                 u.oscar_address.delete()
-                u.delete()
+                u.delete()'''
 
 class EmailIdentityListener(object):
     """
