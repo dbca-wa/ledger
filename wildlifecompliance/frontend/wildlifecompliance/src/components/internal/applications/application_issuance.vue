@@ -181,7 +181,7 @@ import {
 from '@/utils/hooks'
 
 export default {
-    name: 'InternalApplicationConditions',
+    name: 'InternalApplicationIssuance',
     props: {
         application: Object,
         licence_activity_type_tab:Number
@@ -189,7 +189,7 @@ export default {
     data: function() {
         let vm = this;
         return {
-            panelBody: "application-conditions-"+vm._uid,
+            panelBody: "application-issuance-"+vm._uid,
             proposed_licence:{},
             licence:{
                 activity_type:[],
@@ -233,8 +233,14 @@ export default {
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_licence'),JSON.stringify(licence),{
                         emulateJSON:true,
                     }).then((response)=>{
-                        // vm.close();
-                        vm.$emit('refreshFromResponse',response);
+                        swal(
+                             'Issue activity type',
+                             'The activity type is successfully issued',
+                             'success'
+                        );
+                        vm.close();
+                        vm.$parent.refreshFromResponse(response)
+                        // vm.$emit('refreshFromResponse',response);
                     },(error)=>{
                         vm.errors = true;
                         vm.errorString = helpers.apiVueResourceError(error);

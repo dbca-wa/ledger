@@ -29,7 +29,8 @@ from wildlifecompliance.components.applications.email import (
     send_application_amendment_notification,
     send_assessment_email_notification,
     send_assessment_reminder_email,
-    send_amendment_submit_email_notification
+    send_amendment_submit_email_notification,
+    send_application_issue_notification
     )
 from wildlifecompliance.ordered_model import OrderedModel
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
@@ -736,12 +737,11 @@ class Application(RevisionedMixin):
             try:
                 #Get the assessor groups the current user is member of for the selected activity type tab
                 qs = ApplicationGroupType.objects.filter(type='assessor',licence_activity_type_id=request.data.get('selected_assessment_tab'),members__email=request.user.email)
-                print(qs)
+                
                 #For each assessor groups get the assessments of current application whose status is awaiting_assessment and mark it as complete
                 for q in qs:
                     assessments = Assessment.objects.filter(licence_activity_type_id=request.data.get('selected_assessment_tab'),assessor_group=q,status='awaiting_assessment',application=self)
-                    print('inside q in qs')
-                    print(assessments)
+                   
                     for q1 in assessments:
                         q1.status='completed'
                         q1.save()
@@ -857,6 +857,15 @@ class Application(RevisionedMixin):
         qs =Assessment.objects.filter(application = self,status='awaiting_assessment')
         return qs
 
+    @property
+    def licences(self):
+        from wildlifecompliance.components.licences.models import WildlifeLicence
+        try:
+            qs =WildlifeLicence.objects.filter(current_application = self)
+            return qs
+        except WildlifeLicence.DoesNotExist:
+            return None
+
 
     def final_decline(self,request,details):
         with transaction.atomic():
@@ -936,7 +945,6 @@ class Application(RevisionedMixin):
                     #check if parent licence is available
                     parent_licence=WildlifeLicence.objects.get(current_application=self,parent_licence__isnull=True)
                     print(parent_licence)
-                    raise
                 except WildlifeLicence.DoesNotExist:
                     #if parent licence is not available create one before proceeding
                     parent_licence=WildlifeLicence.objects.create(current_application = self)
@@ -944,7 +952,6 @@ class Application(RevisionedMixin):
                 
 
                 for item in request.data.get('activity_type'):
-
                     licence = WildlifeLicence.objects.create(
                         current_application = self,
                         parent_licence=parent_licence,
@@ -953,6 +960,23 @@ class Application(RevisionedMixin):
                         start_date= item['start_date'],
                         licence_activity_type_id=item['id']
                     )
+                    ApplicationDecisionPropose.objects.create(
+                        application = self,
+                        officer=request.user,
+                        action='issued',
+                        licence_activity_type_id=item['id']
+                    )
+                    # Log application action
+                    self.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(item['name']),request)
+                    # Log entry for organisation
+                    if self.org_applicant:
+                        self.org_applicant.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(item['name']),request)
+                    elif self.proxy_applicant:
+                        self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(item['name']),request)
+                    else:
+                        self.submitter.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(item['name']),request)
+                    send_application_issue_notification(item['name'],item['end_date'],item['start_date'],self,request)
+
                     for activity_type in  self.licence_type_data['activity_type']:
                         if activity_type["id"]==item['id']:
                             activity_type["processing_status"]="Accepted"
@@ -1325,7 +1349,7 @@ class ApplicationUserAction(UserAction):
     ACTION_DECLINE = "Decline application {}"
     ACTION_ENTER_CONDITIONS = "Entered condition for activity type {}"
     ACTION_CREATE_CONDITION_ = "Create condition {}"
-    ACTION_ISSUE_LICENCE_ = "Issue Licence for application {}"
+    ACTION_ISSUE_LICENCE_ = "Issue Licence for activity type {}"
     ACTION_DISCARD_application = "Discard application {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"

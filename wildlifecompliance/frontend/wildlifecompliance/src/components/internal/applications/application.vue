@@ -205,7 +205,7 @@
         <div class="col-md-1"></div>
         <div class="col-md-8">
             <div class="row">
-                <template v-if="application.processing_status == 'With Approver' || isFinalised">
+                <template v-if="isFinalised || isPartiallyFinalised">
                     <LicenceScreen :application="application"/>
                 </template>
                 <template v-if="isofficerfinalisation">
@@ -281,7 +281,7 @@
                             </div>
                     </div>
                 </template>
-                <template v-if="!isSendingToAssessor && !showingConditions">
+                <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised">
                     <div>
                     <ul class="nav nav-tabs">
                         <li class="active"><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
@@ -729,7 +729,42 @@ export default {
           return (this.application) ? `/api/application/${this.application.id}/assessor_save.json` : '';
         },
         isFinalised: function(){
-            return this.application.processing_status == 'Declined' || this.application.processing_status == 'Approved';
+            let vm=this;
+            var flag=0;
+            for(var i=0, len=vm.application.licence_type_data.activity_type.length; i<len; i++){
+                if(vm.application.licence_type_data.activity_type[i].processing_status == 'Declined' || vm.application.licence_type_data.activity_type[i].processing_status == 'Accepted' ){
+                    flag=flag+1;
+                }
+
+            }
+            if(flag>0 && flag==len){
+                console.log('inside is finalised true')
+                return true;
+            }
+            else{
+                console.log('inside is finalised false')
+                return false;
+            }
+            
+        },
+        isPartiallyFinalised: function(){
+            let vm=this;
+            var flag=0;
+            for(var i=0, len=vm.application.licence_type_data.activity_type.length; i<len; i++){
+                if(vm.application.licence_type_data.activity_type[i].processing_status == 'Declined' || vm.application.licence_type_data.activity_type[i].processing_status == 'Accepted' ){
+                    flag=flag+1;
+                }
+
+            }
+            if(flag>0 && flag!=len){
+                console.log('inside is partially finalised true')
+                return true;
+            }
+            else{
+                console.log('inside is partially finalised false')
+                return false;
+            }
+            
         },
         canAssess: function(){
             return this.application && this.application.assessor_mode.assessor_can_assess ? true : false;
@@ -901,7 +936,6 @@ export default {
         toggleIssue:function(){
             // this.$refs.proposed_licence.licence = helpers.copyObject(this.application.proposed_issuance_licence);
             // this.$refs.proposed_licence.state = 'final_licence';
-            console.log('Inside issue licence')
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
