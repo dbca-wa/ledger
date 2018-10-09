@@ -8,13 +8,13 @@ Dear Sir/Madam,
 {% block signature %}
 Yours sincerely,
 
-VIA Section
+{{ settings.SYSTEM_NAME_SHORT }} Section
 {% endblock %}
 
 
 
 {% block reply_statement %}
-Please do not reply directly to this email. Should you need to contact the licensing section of the Department of 
-Parks and Wildlife, please send emails to via@dpaw.wa.gov.au or call (08) 9219 9000.
+Please do not reply directly to this email. Should you need to contact the licensing section of the  
+{{ settings.DEP_NAME }}, please send emails to {{ settings.SUPPORT_EMAIL }} or call {{ settings.DEP_PHONE_SUPPORT }}.
 {% endblock %}
 

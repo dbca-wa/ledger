@@ -22,7 +22,7 @@
                             <div class="col-sm-12 top-buffer-s">
                                 <table class="table small-table">
                                     <tr>
-                                        <th>Lodgment</th>
+                                        <th>Lodgement</th>
                                         <th>Date</th>
                                         <th>Action</th>
                                     </tr>
@@ -59,7 +59,7 @@
                             <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && check_assessor()">
                                 <strong>Action</strong><br/>
                                 <button class="btn btn-primary" @click.prevent="acceptRequest()">Accept</button><br/>
-                                <button class="btn btn-primary top-buffer-s" @click.prevent="">Decline</button>
+                                <button class="btn btn-primary top-buffer-s" @click.prevent="declineRequest()">Decline</button>
                             </div>
                         </div>
                     </div>
@@ -92,7 +92,7 @@
                                     <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Letter</label>
                                         <div class="col-sm-6">
-                                            <a target="_blank" :href="access.identification"><i class="fa fa-file-pdf-o"></i>&nbsp;Letter.PDF</a>
+                                            <a target="_blank" :href="access.identification"><i class="fa fa-file-pdf-o"></i>&nbsp;Letter</a>
                                         </div>
                                     </div>   
                                     <div class="form-group" style="margin-top:50px;">
@@ -323,7 +323,7 @@ export default {
       return this.loading.length > 0;
     },
     isFinalised: function(){
-        return this.access.status == 'With Assesor' || this.access.status == 'Approved';
+        return this.access.status == 'With Assesor' || this.access.status == 'Approved' || this.access.status == 'Declined' ;
     },
   },
   methods: {
@@ -397,6 +397,28 @@ export default {
         });
 
     },
+
+    declineRequest: function() {
+        let vm = this;
+        swal({
+            title: "Decline Organisation Request",
+            text: "Are you sure you want to decline this organisation request?",
+            type: "question",
+            showCancelButton: true,
+            confirmButtonText: 'Decline'
+        }).then(() => {
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/decline')))
+            .then((response) => {
+                console.log(response);
+                vm.access = response.body;
+            }, (error) => {
+                console.log(error);
+            });
+        },(error) => {
+
+        });
+    },
+
     fetchProfile: function(){
         let vm = this;
         Vue.http.get(api_endpoints.profile).then((response) => {

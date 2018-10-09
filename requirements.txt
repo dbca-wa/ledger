@@ -1,6 +1,6 @@
 Django<1.11.0
 django-extensions==1.9.8
-git+https://github.com/dbca-wa/dpaw-utils.git@0.3a16#egg=dpaw-utils
+#git+https://github.com/dbca-wa/dpaw-utils.git@0.3a16#egg=dpaw-utils
 git+https://github.com/django-oscar/django-oscar.git@17a1f6b17aba19e3c0b095e90acc654d463e0cf9#egg=django-oscar
 social-auth-app-django==2.1.0
 #social-auth-core==1.7.0
@@ -12,6 +12,7 @@ django_bootstrap3==7.1.0
 django-braces>=1.8.1
 django-datatables-view==1.13.0
 django-reversion==2.0.13
+django-reversion-compare==0.7.5
 git+https://github.com/bruth/django-preserialize.git@11f9e822250ea3374d5cfba477a00ca886689d9f#egg=django-preserialize
 django-countries==3.4.1
 django-cron==0.5.0
@@ -33,3 +34,7 @@ unicodecsv==0.14.1
 PyPDF2==1.26.0
 django-extra-fields==0.9
 django-crispy-forms==1.7.0
+django-reset-migrations==0.3.1
+django-ckeditor==5.4.0
+djangorestframework-datatables==0.4.0
+django-confy==1.0.4

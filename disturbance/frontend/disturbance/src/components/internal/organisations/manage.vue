@@ -231,9 +231,15 @@ export default {
             comms_add_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/add_comms_log'),
 
             contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
-            proposals_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/proposals'),
-            approvals_url: api_endpoints.approvals+'?org_id='+vm.$route.params.org_id,
-            compliances_url: api_endpoints.compliances+'?org_id='+vm.$route.params.org_id,
+
+            //proposals_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/proposals'),
+            //approvals_url: api_endpoints.approvals+'?org_id='+vm.$route.params.org_id,
+            //compliances_url: api_endpoints.compliances+'?org_id='+vm.$route.params.org_id,
+
+            proposals_url:   api_endpoints.proposals_paginated_external+'&org_id='+vm.$route.params.org_id,
+            approvals_url:   api_endpoints.approvals_paginated_external+'&org_id='+vm.$route.params.org_id,
+            compliances_url: api_endpoints.compliances_paginated_external+'&org_id='+vm.$route.params.org_id,
+
             contacts_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"

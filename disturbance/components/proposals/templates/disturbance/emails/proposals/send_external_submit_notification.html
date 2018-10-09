@@ -1,0 +1,15 @@
+{%  extends 'disturbance/emails/base_email.html' %}
+
+{%  block content %}
+	Your Proposal {{ proposal.lodgement_number }} has been submitted.<br><br>
+
+	Submitter: {{ proposal.submitter.get_full_name }}<br>
+	Lodgement date: {{ proposal.lodgement_date }}
+
+    <p>
+    You can access this Proposal using the following link:
+    </p>
+    <a href="{{url}}">Access Proposal</a>
+
+
+{%  endblock %}

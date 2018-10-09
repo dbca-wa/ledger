@@ -8,6 +8,7 @@ from django.core.validators import validate_email
 from django.urls import reverse
 
 def mail_validation(backend, details, is_new=False, *args, **kwargs):
+    #import ipdb; ipdb.set_trace()
     requires_validation = backend.REQUIRES_EMAIL_VALIDATION or \
                           backend.setting('FORCE_EMAIL_VALIDATION', False)
     send_validation = details.get('email') and \
