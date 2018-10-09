@@ -744,7 +744,7 @@ export default {
             vm.arrivalPicker.datetimepicker({
                 format: 'DD/MM/YYYY',
                 minDate: Moment().startOf('day'),
-                maxDate: Moment().add(parseInt(vm.campground.max_advance_booking),'days')
+                // maxDate: Moment().add(parseInt(vm.campground.max_advance_booking),'days')
             });
             vm.departurePicker.datetimepicker({
                 format: 'DD/MM/YYYY',
