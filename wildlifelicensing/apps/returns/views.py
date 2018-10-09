@@ -263,7 +263,7 @@ class CurateReturnView(UserCanCurateReturnMixin, EnterReturnView):
     def get_context_data(self, **kwargs):
         ctx = super(CurateReturnView, self).get_context_data(**kwargs)
         ret = ctx['return']
-        ctx['return'] = serialize(ret, posthook=format_return)
+        ctx['return'] = serialize(ret, posthook=format_return, exclude=['application','applicationrequest_ptr','licence'])
 
         if ret.proxy_customer is None:
             to = ret.licence.holder

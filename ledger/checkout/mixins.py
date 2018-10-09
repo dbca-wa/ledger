@@ -72,10 +72,13 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         # If preload is enabled, fire off an unmonitored request server-side
         # FIXME: replace with basket one-time secret
         if return_preload_url:
-            requests.get('{}?invoice={}'.format(return_preload_url, invoice.reference),
-                            cookies=self.request.COOKIES)
-            # bodge for race condition: if preload updates the session, we need to update it
-            self.request.session._session_cache = self.request.session.load()
+            try:
+                requests.get('{}?invoice={}'.format(return_preload_url, invoice.reference),
+                                cookies=self.request.COOKIES)
+                # bodge for race condition: if preload updates the session, we need to update it
+                self.request.session._session_cache = self.request.session.load()
+            except requests.exceptions.ConnectionError:
+                pass
 
         if not force_redirect:
             response = HttpResponseRedirect(self.get_success_url())

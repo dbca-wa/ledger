@@ -202,8 +202,10 @@
                 {% endblock order_total %}
             </tbody>
         </table>
-        {% if invoice.payment_status != 'paid' and invoice.payment_status != 'over_paid' %}
-            <p>Your  application cannot be processed until payment is recieved.</p>
+        {% if bpay_allowed %}
+            {% if invoice.payment_status != 'paid' and invoice.payment_status != 'over_paid' %}
+                <p>{{invoice_unpaid_warning}}</p>
+            {% endif %}
         {% endif %}
 
     </div>

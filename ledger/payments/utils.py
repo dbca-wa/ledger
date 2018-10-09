@@ -8,25 +8,18 @@ from wsgiref.util import FileWrapper
 from decimal import Decimal as D
 from django.core.mail import EmailMessage
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
-from django.contrib.auth.models import AnonymousUser
 from six.moves.urllib.parse import urlparse
 #
-from ledger.basket.models import Basket
-from ledger.catalogue.models import Product
 from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode,OracleOpenPeriod 
 from oscar.core.loading import get_class
-from oscar.apps.voucher.models import Voucher
 import logging
 logger = logging.getLogger(__name__)
 
 
 OrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
-Selector = get_class('partner.strategy', 'Selector')
-selector = Selector()
 
 def isLedgerURL(url):
     ''' Check if the url is a ledger url
@@ -56,157 +49,6 @@ def systemid_check(system):
         system = system[:4]
     return system
 
-def validSystem(system_id):
-    ''' Check if the system is in the itsystems register.
-    :return: Boolean
-    '''
-    if settings.VALID_SYSTEMS:
-        return system_id in settings.VALID_SYSTEMS
-    elif settings.CMS_URL:
-        # TODO: prefetch whole systems register list, store in django cache, use that instead of doing a GET request every time
-        res = requests.get('{}?system_id={}'.format(settings.CMS_URL,system_id), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
-        try:
-            res.raise_for_status()
-            res = json.loads(res.content).get('objects')
-            if not res:
-                return False
-            return True
-        except:
-            raise
-    else:
-        logger.warn('VALID_SYSTEMS or CMS_URL not set, ledger.payments.utils.validSystem will always return true')
-        return True
-
-def calculate_excl_gst(amount):
-    percentage = D(100 - settings.LEDGER_GST)/ D(100.0)
-    return percentage * D(amount)
-
-def createBasket(product_list,owner,system,vouchers=None,force_flush=True):
-    ''' Create a basket so that a user can check it out.
-        @param product_list - [
-            {
-                "id": "<id of the product in oscar>",
-                "quantity": "<quantity of the products to be added>"
-            }
-        ]
-        @param - owner (user id or user object)
-    '''
-    try:
-        if not validSystem(system):
-            raise ValidationError('A system with the given id does not exist.')
-        old_basket = basket = None
-        valid_products = []
-        User = get_user_model()
-        # Check if owner is of class AUTH_USER_MODEL or id
-        if not isinstance(owner, AnonymousUser):
-            if not isinstance(owner, User):
-                owner = User.objects.get(id=owner)
-            # Check if owner has previous baskets
-            if owner.baskets.filter(status='Open'):
-                old_basket = owner.baskets.get(status='Open')
-
-        # Use the previously open basket if its present or create a new one
-        if old_basket:
-            if system.lower() == old_basket.system.lower() or not old_basket.system:
-                basket = old_basket
-                if force_flush:
-                    basket.flush()
-            else:
-                raise ValidationError('You have a basket that is not completed in system {}'.format(old_basket.system))
-        else:
-            basket = Basket()
-        # Set the owner and strategy being used to create the basket
-        if isinstance(owner, User):
-            basket.owner = owner
-        basket.system = system
-        basket.strategy = selector.strategy(user=owner)
-        # Check if there are products to be added to the cart and if they are valid products
-        if not product_list:
-            raise ValueError('There are no products to add to the order.')
-        for product in product_list:
-            p = Product.objects.get(id=product["id"])
-            if not product.get("quantity"):
-                product["quantity"] = 1
-            valid_products.append({'product': p, 'quantity': product["quantity"]})
-        # Add the valid products to the basket
-        for p in valid_products:
-            basket.add_product(p['product'],p['quantity'])
-        # Add vouchers to the basket
-        if vouchers is not None:
-            for v in vouchers:
-                basket.vouchers.add(Voucher.objects.get(code=v["code"]))
-        # Save the basket
-        basket.save()
-        return basket
-    except Product.DoesNotExist:
-        raise
-    except Exception as e:
-        raise
-
-def createCustomBasket(product_list,owner,system,vouchers=None,force_flush=True):
-    ''' Create a basket so that a user can check it out.
-        @param product_list - [
-            {
-                "id": "<id of the product in oscar>",
-                "quantity": "<quantity of the products to be added>"
-            }
-        ]
-        @param - owner (user id or user object)
-    '''
-    #import pdb; pdb.set_trace()
-    try:
-        if not validSystem(system):
-            raise ValidationError('A system with the given id does not exist.')
-        old_basket = basket = None
-        valid_products = []
-        User = get_user_model()
-        # Check if owner is of class AUTH_USER_MODEL or id
-        if not isinstance(owner, AnonymousUser):
-            if not isinstance(owner, User):
-                owner = User.objects.get(id=owner)
-            # Check if owner has previous baskets
-            if owner.baskets.filter(status='Open'):
-                old_basket = owner.baskets.get(status='Open')
-
-        # Use the previously open basket if its present or create a new one
-        if old_basket:
-            if system.lower() == old_basket.system.lower() or not old_basket.system:
-                basket = old_basket
-                if force_flush:
-                    basket.flush()
-            else:
-                raise ValidationError('You have a basket that is not completed in system {}'.format(old_basket.system))
-        else:
-            basket = Basket()
-        # Set the owner and strategy being used to create the basket
-        if isinstance(owner, User):
-            basket.owner = owner
-        basket.system = system
-        basket.strategy = selector.strategy(user=owner)
-        basket.custom_ledger = True
-        # Check if there are products to be added to the cart and if they are valid products
-        defaults = ('ledger_description','quantity','price_incl_tax','oracle_code')
-        for p in product_list:
-            if not all(d in p for d in defaults):
-                raise ValidationError('Please make sure that the product format is valid')
-            p['price_excl_tax'] = calculate_excl_gst(p['price_incl_tax'])
-        # Save the basket
-        basket.save()
-        # Add the valid products to the basket
-        for p in product_list:
-            basket.addNonOscarProduct(p)
-        # Save the basket (again)
-        basket.save()
-        # Add vouchers to the basket
-        if vouchers is not None:
-            for v in vouchers:
-                basket.vouchers.add(Voucher.objects.get(code=v["code"]))
-            basket.save()
-        return basket
-    except Product.DoesNotExist:
-        raise
-    except Exception as e:
-        raise
 
 #Oracle Parser
 def generateOracleParserFile(oracle_codes):
@@ -283,6 +125,8 @@ def addToInterface(date,oracle_codes,system,override):
                 amount = D(0.0), 
                 customer_name = system.system_name,
                 description = system.percentage_account_code,
+                source = system.source,
+                method = system.method,
                 comments = '{} GST/{}'.format(system.percentage_account_code,date),
                 status = 'NEW',
                 status_date = today
@@ -306,6 +150,8 @@ def addToInterface(date,oracle_codes,system,override):
                         amount = remainder_amount,
                         customer_name = system.system_name,
                         description = k,
+                        source = system.source,
+                        method = system.method,
                         comments = '{} GST/{}'.format(k,date),
                         status = 'NEW',
                         status_date = today
@@ -318,17 +164,22 @@ def addToInterface(date,oracle_codes,system,override):
                         amount = v,
                         customer_name = system.system_name,
                         description = k,
+                        source = system.source,
+                        method = system.method,
                         comments = '{} GST/{}'.format(k,date),
                         status = 'NEW',
                         status_date = today
                     )
-                    new_codes[k] = remainder_amount
+                    new_codes[k] = v
+
         if system.deduct_percentage and deduction_code.amount != 0:
             deduction_code.save()
             new_codes[deduction_code.activity_name] = deduction_code.amount
         return new_codes
     except:
         raise
+
+
 def oracle_parser(date,system,system_name,override=False):
     invoices = []
     invoice_list = []
