@@ -95,6 +95,8 @@ PS_PAYMENT_SYSTEM_ID = env('PS_PAYMENT_SYSTEM_ID', 'S516')
 if not VALID_SYSTEMS:
     VALID_SYSTEMS = [PS_PAYMENT_SYSTEM_ID]
 
+SYSTEM_NAME = env('SYSTEM_NAME', 'Mooring Rental System')
+SYSTEM_NAME_SHORT = env('SYSTEM_NAME_SHORT', 'mooring')
 CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','mooringbookings@dbca.wa.gov.au')
 DEFAULT_FROM_EMAIL = env('EMAIL_FROM','no-reply@dbca.wa.gov.au')
 EXPLORE_PARKS_URL = env('EXPLORE_PARKS_URL','https://mooring.dbca.wa.gov.au/')
