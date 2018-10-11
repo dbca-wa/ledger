@@ -3,6 +3,7 @@ import base64
 import geojson
 import decimal
 import logging
+import json
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -15,6 +16,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from pytz import timezone as pytimezone
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route, list_route,renderer_classes,authentication_classes,permission_classes
 from rest_framework.response import Response
@@ -492,14 +494,28 @@ def search_suggest(request, *args, **kwargs):
     for x in Region.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry','zoom_level'):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Region', 'id': x[0], 'name': x[1], 'zoom_level': x[3]}))
 
-
     return HttpResponse(geojson.dumps(geojson.FeatureCollection(entries)), content_type='application/json')
+
+@csrf_exempt
+def delete_booking(request, *args, **kwargs):
+    response_data = {}
+    response_data['result'] = 'success'
+    response_data['message'] = ''
+    booking = None
+    booking_item = request.POST['booking_item']
+    if 'ps_booking' in request.session:
+        booking_id = request.session['ps_booking']
+        if booking_id:
+            booking = Booking.objects.get(id=booking_id)
+            ms_booking = MooringsiteBooking.objects.get(id=booking_item,booking=booking)
+            ms_booking.delete()
+
+    return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 @csrf_exempt
 #@require_http_methods(['GET'])
 #@require_http_methods(['POST'])
 def add_booking(request, *args, **kwargs):
-    import json
     response_data = {}
     response_data['result'] = 'error'
     response_data['message'] = ''
@@ -577,6 +593,9 @@ def add_booking(request, *args, **kwargs):
                   booking=booking,
                   amount=amount
                   )
+
+    response_data['result'] = 'success'
+    response_data['message'] = ''
 
 #    with transaction.atomic():
 #            set_session_booking(request.session,booking)
@@ -1463,8 +1482,13 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         current_booking = []
         total_price = Decimal('0.00')
         for ms in ms_booking:
-           row = {} 
-           row['item'] = ms.campsite.name + ' from '+ms.from_dt.strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.strftime('%d/%m/%y %H:%M %p')
+           row = {}
+           row['id'] = ms.id
+           print "UTC TIME"
+           print datetime.now(pytimezone('Australia/Perth'))
+           print ms.from_dt
+           #print ms.from_dt.astimezone(pytimezone('Australia/Perth'))
+           row['item'] = ms.campsite.name + ' from '+ms.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')
            row['amount'] = str(ms.amount)
 #           row['item'] = ms.campsite.name
            total_price = total_price +ms.amount
@@ -1641,8 +1665,9 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 
                 #print [v[2][start_date+timedelta(days=i)]['mooring'] for i in range(length)]
                 site = {
-                    'name': k.name,
+                    'name': k.mooringarea.name,
                     'mooring_class' : k.mooringarea.mooring_class,
+                    'mooring_park': k.mooringarea.park.name,
                     'id': v[0],
                     'type': ground.mooring_type,
                     'class': v[1].pk,

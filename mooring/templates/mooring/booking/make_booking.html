@@ -22,7 +22,6 @@
     </style>
 {% endblock %}
 {% block content %}
-
 <div id="addBooking">
 {% if not booking %}
     <div class="container">
@@ -69,7 +68,46 @@
                             {% endif %}
                             <h3 class="text-primary">Booking for</h3>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-12">
+                             <div class="col-md-2">
+                            	<strong>Mooring</strong>
+                              </div>
+                               <div class="col-md-3">
+                                 <strong>From</strong>
+                               </div>
+                                <div class="col-md-2">
+                              		&nbsp; 
+                                </div>
+                               <div class="col-md-3">
+                                  <strong>To</strong>
+                               </div>
+                              <div class="col-md-2">
+				  <strong>Price</strong>
+                              </div>
+
+
+
+
+		            {% for bm in booking_mooring %}
+                              <div class="col-md-2">
+                              {{ bm.campsite.mooringarea.name }} 
+			      </div>
+                               <div class="col-md-3">
+                                 {{ bm.from_dt }} 
+                               </div>
+                                <div class="col-md-2">
+				to
+				</div>
+                               <div class="col-md-3">
+                                  {{ bm.to_dt }}
+			       </div>
+                              <div class="col-md-2">
+                                ${{ bm.amount }}
+			      </div>
+	
+			    {% endfor %}
+			</div>
+                        <div class="col-md-2" style='display:none'>
                               <img alt="campground"  class="img-thumbnail img-responsive" src="{{ booking.campground.first_image.image.url }}" style='display:none'>
                               <p class="pricing" v-cloak >
                             {% verbatim %}
@@ -78,7 +116,7 @@
                                   <br> <span class="text-muted">Per day</span>
                               </p>
                         </div>
-                        <div class="col-md-10">
+                        <div class="col-md-10" style='display:none'>
                             <div class="row form-horizontal">
                                 <div class="col-md-12">
                                     <div class="form-group">
@@ -345,7 +383,7 @@
             concessionWarning: false,
             vehicleCount: 1,
             toc: false,
-            booking_id: {{ booking.id }}
+            booking_id: {{ booking.id }},
         },
         filters:{
             formatMoney:function(n,c, d, t){
@@ -412,6 +450,8 @@
             calculateTotal: function () {
                 var vm = this;
                 var form = document.forms.addBookingForm;
+		console.log("BOOKIGN MOO");
+                // console.log(vm.booking_mooring);	
 
                 vm.entryFee = 0;
                 vm.total = 0;
@@ -422,32 +462,32 @@
                 // vm.total += (parseInt(form.num_child.value) || 0)*vm.pricing.child;
                 // vm.total += (parseInt(form.num_infant.value) || 0)*vm.pricing.infant;
                 
-                vm.total += vm.pricing.mooring;
+//                vm.total += vm.pricing.mooring;
                 // generate per night rate the ugly way
                 // (price can vary based on date, so this is an approximate measure)
-                vm.perDayFee = vm.total/{{ booking.num_days }};
+//                vm.perDayFee = vm.total/{{ booking.num_days }};
 
                 // generate + add park entry fees
-                vm.vehicles.forEach(function (el) {
-                    if (el[2]) {
-                        switch(el[0]) {
-                            case '1':
-                                vm.entryFee += vm.pricing.vehicleConc;
-                                break;
-                            case '2':
-                                vm.entryFee += vm.pricing.motorcycle;
-                                break;
-                            case '0':
-                            default:
-                                vm.entryFee += vm.pricing.vehicle;
-                                break;
-                        }
-                    }
-                });
-                vm.total += vm.entryFee;
-
+ //               vm.vehicles.forEach(function (el) {
+//                    if (el[2]) {
+//                        switch(el[0]) {
+//                            case '1':
+//                                vm.entryFee += vm.pricing.vehicleConc;
+//                                break;
+//                            case '2':
+//                                vm.entryFee += vm.pricing.motorcycle;
+//                                break;
+//                            case '0':
+//                            default:
+//                                vm.entryFee += vm.pricing.vehicle;
+//                                break;
+//                        }
+//                    }
+//                });
+//                vm.total += vm.entryFee;
+                vm.total = '{{ booking_total }}';
                 // show concession warning text if the number > 0
-                vm.concessionWarning = (parseInt(form.num_concession.value) > 0);
+//                vm.concessionWarning = (parseInt(form.num_concession.value) > 0);
                 return;
             },
             validate: function (e) {

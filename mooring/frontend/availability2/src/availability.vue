@@ -36,9 +36,13 @@
         <div class="row">
                 <div class="small-8 medium-9 large-10">
                         <div class="panel panel-default">
-                             <div class="panel-heading"> <h3 class="panel-title">Trolley: <span id='total_trolley'>$0.00</span></h3></div>
+                             <div class="panel-heading"> <h3 class="panel-title">Trolley: <span id='total_trolley'>${{ total_booking }}</span></h3></div>
                               <div class='columns small-12 medium-12 large-12'> 
-                                 <div v-for="item in current_booking" class="row small-12 medium-12 large-12"><div class="columns small-12 medium-9 large-9">{{ item.item }}</div><div class="columns small-12 medium-3 large-3">${{ item.amount }}</div>  </div>
+                                 <div v-for="item in current_booking" class="row small-12 medium-12 large-12">
+                                         <div class="columns small-12 medium-9 large-9">{{ item.item }}</div>
+                                         <div class="columns small-12 medium-2 large-2">${{ item.amount }}</div>
+                                         <div class="columns small-12 medium-1 large-1"><a style='color: red; opacity: 1;' type="button" class="close" @click="deleteBooking(item.id)">x</a></div>
+                                 </div>
 			      </div>
                         </div>
                 </div>
@@ -167,7 +171,7 @@
                 </thead>
                 <tbody><template v-for="site in sites" >
                     <tr>
-                        <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
+                        <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i></td>
                         <td class="book">
                             <template v-if="site.price">
                                 <button v-if="!ongoing_booking" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
@@ -400,6 +404,7 @@ export default {
             ongoing_booking: false,
             ongoing_booking_id: null,
             current_booking: [],
+            total_booking: '0.00',
             showSecondErrorLine: true,
         };
     },
@@ -445,6 +450,27 @@ export default {
                 site.showBreakdown = true;
             }
         },
+        deleteBooking: function(booking_item_id) {
+              var vm = this;
+              var submitData = {
+                  booking_item: booking_item_id,
+              };
+
+              $.ajax({
+                  url: vm.parkstayUrl + '/api/booking/delete',
+                  dataType: 'json',
+                  method: 'POST',
+                  data: submitData,
+                  success: function(data, stat, xhr) {
+                      vm.update();
+                  },
+                  error: function(xhr, stat, err) {
+                       vm.update();
+                  }
+              });
+
+
+	},
         addBooking: function (site_id,bp_id,date) {
               var vm = this;
               console.log("ADD BOOKING");

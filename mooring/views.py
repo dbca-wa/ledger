@@ -162,6 +162,9 @@ class MakeBookingsView(TemplateView):
     template_name = 'mooring/booking/make_booking.html'
 
     def render_page(self, request, booking, form, vehicles, show_errors=False):
+        print "RENDER PAGE" 
+        booking_mooring = None
+        booking_total = '0.00'
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
         expiry = booking.expiry_time.isoformat() if booking else ''
@@ -181,6 +184,8 @@ class MakeBookingsView(TemplateView):
         }
 
         if booking:
+            booking_mooring = MooringsiteBooking.objects.filter(booking=booking)
+            booking_total = sum(Decimal(i.amount) for i in booking_mooring)
             pricing_list = utils.get_visit_rates(Mooringsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
             print "PRIUCING LIST"
 #            print (pricing_list)
@@ -198,17 +203,23 @@ class MakeBookingsView(TemplateView):
             'form': form, 
             'vehicles': vehicles,
             'booking': booking,
+            'booking_mooring': booking_mooring,
+            'booking_total' : booking_total,
             'campsite': campsite,
             'expiry': expiry,
             'timer': timer,
             'pricing': pricing,
             'show_errors': show_errors
+         
         })
 
 
     def get(self, request, *args, **kwargs):
         # TODO: find campsites related to campground
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+#        booking_mooring = MooringsiteBooking.objects.filter(booking=booking)
+#        print "GET BOOKING"
+#        print booking
         form_context = {
             'num_adult': booking.details.get('num_adult', 0) if booking else 0,
             'num_concession': booking.details.get('num_concession', 0) if booking else 0,
@@ -243,7 +254,6 @@ class MakeBookingsView(TemplateView):
         # re-render the page if the form doesn't validate
         if (not form.is_valid()) or (not vehicles.is_valid()):
             return self.render_page(request, booking, form, vehicles, show_errors=True)
-
         # update the booking object with information from the form
         if not booking.details:
             booking.details = {}
@@ -277,10 +287,11 @@ class MakeBookingsView(TemplateView):
 #            if booking.num_guests < c.campsite.min_people:
 #                form.add_error('Number of people is less than the minimum allowed for the current campsite.')
 #                return self.render_page(request, booking, form, vehicles, show_errors=True)
-
         # generate final pricing
+        lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
         try:
-            lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
+            pass
+#            lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
         except Exception as e:
             form.add_error(None, '{} Please contact Marine Park and Visitors services with this error message and the time of the request.'.format(str(e)))
             return self.render_page(request, booking, form, vehicles, show_errors=True)
@@ -357,7 +368,7 @@ class AdmissionsBookingSuccessView(TemplateView):
                     logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
                     return redirect('admissions')
 
-                if inv.system not in ['0019']:
+                if inv.system not in ['S516']:
                     logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                     return redirect('admissions')
 

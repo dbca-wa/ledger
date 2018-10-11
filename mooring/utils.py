@@ -13,7 +13,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import redirect
 from django.utils import timezone
 from dateutil.tz.tz import tzoffset
-
+from pytz import timezone as pytimezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
@@ -278,8 +278,12 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                         #date__lt=end_date
                         from_dt__gte=start_date_time,
                         to_dt__lt=end_date_time,
-                    ).order_by('date', 'campsite__name')
-
+                        #booking__expiry_time__gte=datetime.now()
+                    ).order_by('date', 'campsite__name') 
+    # booking__expiry_time__gte=datetime.now()
+    booking_qs = None
+    print "BOOKING QS"
+    print bookings_qs
     # prefill all slots as 'open'
     duration = (end_date-start_date).days
     #results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
@@ -301,6 +305,12 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
 #   results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
 
     for b in bookings_qs:
+         
+        # Release booking availablity on Expired Bookings
+        if b.booking_type == 3:
+             if b.booking.expiry_time is not None:
+                 if b.booking.expiry_time < datetime.now(tz=timezone.utc):
+                    continue
         mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite)[0]
         if mooring_rate:
             for bp in mooring_rate.booking_period.booking_period.all():
@@ -406,7 +416,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         for i in range((end_date-stop_mark).days):
             results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
 
-    print "RESULTS 2"
     print (results)
 
     return results
@@ -447,7 +456,6 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         start = max(start_date, rate.date_start)
         end = min(end_date, rate.date_end) if rate.date_end else end_date
         for i in range((end-start).days):
-            print "BOOKING PERIOD 1"
             if  rate.booking_period is None:
                  continue
             booking_period = rate.booking_period.booking_period.all()
@@ -474,8 +482,6 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         if start_date < rate.date_start:
             start = start_date
             end = rate.date_start
-            print "BOOKING PERIOD"
-            print rate.booking_period
             for i in range((end-start).days):
                 results[site_pk][start+timedelta(days=i)]['mooring'] = str(rate.rate.mooring)
                 results[site_pk][start+timedelta(days=i)]['adult'] = str(rate.rate.adult)
@@ -484,8 +490,6 @@ def get_visit_rates(campsites_qs, start_date, end_date):
                 results[site_pk][start+timedelta(days=i)]['infant'] = str(rate.rate.infant)
                 if  rate.booking_period is None:
                     continue
-                print "RATE BOOKING PERIOOD"
-                print rate.booking_period
                 for b in rate.booking_period.booking_period.all(): 
                     booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'created' : b.created  } 
                     results[site_pk][start+timedelta(days=i)]['booking_period'].append(booking_period_row) 
@@ -590,8 +594,25 @@ def get_park_entry_rate(request,start_date):
             res = serializer.data[0]
     return res
 
-
 def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
+    total_price = Decimal(0)
+    booking_mooring = MooringsiteBooking.objects.filter(booking=booking)
+    invoice_lines = []
+    print "---price_or_lineitems---"
+    if lines:
+        for bm in booking_mooring: 
+           print "BM"
+           print bm.campsite.mooringarea.name
+           print str(bm.from_dt)
+           print str(bm.to_dt)
+           print bm.campsite.mooringarea.oracle_code
+           invoice_lines.append({'ledger_description':'Mooring {} ({} - {})'.format(bm.campsite.mooringarea.name,bm.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),bm.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p')),"quantity":1,"price_incl_tax":bm.amount,"oracle_code":bm.campsite.mooringarea.oracle_code})
+        return invoice_lines
+    else:
+        return total_price
+
+
+def old_price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
     total_price = Decimal(0)
     rate_list = {}
     invoice_lines = []
