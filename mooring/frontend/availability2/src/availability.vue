@@ -503,6 +503,8 @@ export default {
 
         },
         submitBooking: function (site) {
+            alert('not working yet');
+            return;
             var vm = this;
             if (vm.vesselSize > 0 ) { 
             } else {
