@@ -530,7 +530,7 @@ def add_booking(request, *args, **kwargs):
 
     print (request.POST['date']) 
     print (request.POST['bp_id'])
-    print (request.POST['site_id'])
+    print (request.POST['mooring_id'])
 
     print 'BOOKING ID'
     booking = None
@@ -542,7 +542,7 @@ def add_booking(request, *args, **kwargs):
              booking.departure = booking_period_finish
              booking.save()
     else:
-        mooringarea = MooringArea.objects.get(id=request.POST['site_id'])
+        mooringarea = MooringArea.objects.get(id=request.POST['mooring_id'])
         booking = Booking.objects.create(mooringarea=mooringarea,booking_type=3,expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),details={},arrival=booking_period_start,departure=booking_period_finish)
         request.session['ps_booking'] = booking.id
         request.session.modified = True
@@ -1669,6 +1669,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     'mooring_class' : k.mooringarea.mooring_class,
                     'mooring_park': k.mooringarea.park.name,
                     'id': v[0],
+                    'mooring_id': k.mooringarea.id,
                     'type': ground.mooring_type,
                     'class': v[1].pk,
                     'price' : '0.00',

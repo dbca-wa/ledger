@@ -184,7 +184,7 @@
                         </td>
                         <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >
                                      <div v-for="bp in day[1].booking_period">
-                                        <button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px;' v-if="bp.status == 'open'"  @click="addBooking(site.id,bp.id,bp.date)" >
+                                        <button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px;' v-if="bp.status == 'open'"  @click="addBooking(site.id,site.mooring_id,bp.id,bp.date)" >
                                             <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }}</span></small>
                                         </button>
                                         <button class="button" v-else  style='min-width: 150px; width: 80%; margin-bottom: 2px; background-color: rgb(255, 236, 236); text-decoration: line-through;color: #000;' >
@@ -471,16 +471,17 @@ export default {
 
 
 	},
-        addBooking: function (site_id,bp_id,date) {
+        addBooking: function (site_id, mooring_id,bp_id,date) {
               var vm = this;
               console.log("ADD BOOKING");
-              console.log(site_id+' : '+bp_id);
+              console.log(mooring_id+' : '+bp_id);
               console.log(date);
               var booking_start = $('#date-arrival').val();
               var booking_finish = $('#date-departure').val();
 
               var submitData = {
                   site_id: site_id,
+                  mooring_id: mooring_id,
                   bp_id: bp_id,
                   date: date,
                   booking_start: booking_start,
