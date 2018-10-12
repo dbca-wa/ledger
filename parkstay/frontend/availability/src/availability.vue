@@ -379,10 +379,10 @@ export default {
             var submitData = {
                 arrival: vm.arrivalDateString,
                 departure: vm.departureDateString,
-                num_adult: vm.numAdults,
-                num_child: vm.numChildren,
-                num_concession: vm.numConcessions,
-                num_infant: vm.numInfants,
+                num_adult: parseInt(vm.numAdults) ? parseInt(vm.numAdults) : 0,
+                num_child: parseInt(vm.numChildren) ? parseInt(vm.numChildren) : 0,
+                num_concession: parseInt(vm.numConcessions) ? parseInt(vm.numConcessions) : 0,
+                num_infant: parseInt(vm.numInfants) ? parseInt(vm.numInfants) : 0,
             };
             if (site.type == 0) { // per site listing
                 submitData.campsite = site.id;
