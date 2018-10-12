@@ -146,7 +146,6 @@ export default {
             var url = null;
             if (vm.level == 'park') {
                 url = api_endpoints.park_entry_rate(data.rate_id);
-                console.log(url);
                 $.ajax({
                      beforeSend: function(xhrObj) {
                         xhrObj.setRequestHeader("Content-Type", "application/json");
@@ -236,7 +235,6 @@ export default {
         },
         sendData: function(url,method,data) {
             let vm = this;
-            console.log(data);
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");

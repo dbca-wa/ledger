@@ -45,6 +45,8 @@ router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
 router.register(r'users',api.UsersViewSet)
 router.register(r'contacts',api.ContactViewSet)
 router.register(r'countries', api.CountryViewSet)
+router.register(r'bookingperiodoptions', api.BookingPeriodOptionsViewSet)
+router.register(r'bookingperiod', api.BookingPeriodViewSet)
 
 api_patterns = [
     url(r'^api/profile$',api.GetProfile.as_view(), name='get-profile'),
@@ -82,6 +84,7 @@ urlpatterns = [
     url(r'^dashboard/bookings$', views.DashboardView.as_view(), name='dash-bookings'),
     url(r'^dashboard/bulkpricing$', views.DashboardView.as_view(), name='dash-bulkpricing'),
     url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
+    url(r'^dashboard/bookingperiod', views.BookingPeriodView.as_view(), name='dash-bookingperiod'),
     url(r'^booking/abort$', views.abort_booking_view, name='public_abort_booking'),
     url(r'^booking/', views.MakeBookingsView.as_view(), name='public_make_booking'),
     url(r'^mybookings/', views.MyBookingsView.as_view(), name='public_my_bookings'),

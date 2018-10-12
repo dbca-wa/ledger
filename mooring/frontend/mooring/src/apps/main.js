@@ -21,6 +21,7 @@ import Router from 'vue-router'
 import Campsite_type_dash from '../components/campsites-types/campsite-types-dash.vue'
 import Campsite_type from '../components/campsites-types/campsite-type.vue'
 import Bulkpricing from '../components/bulkpricing/bulkpricing.vue'
+import booking_period from '../components/bookingperiods/newPeriod.vue'
 import Profile from '../components/user/profile.vue'
 import alert from '../components/utils/alert.vue'
 import store from './store'
@@ -76,6 +77,16 @@ const routes = [
                         path:'campsite-types',
                         name:'campsite-types',
                         component: Campsite_type_dash
+                    },
+                    {
+                        path: 'bookingperiod',
+                        name: 'booking-period',
+                        component: booking_period
+                    },
+                    {
+                        path: 'bookingperiod/:id',
+                        name: 'booking-period-detail',
+                        component: booking_period
                     },
                     {
                         path:'campsite-type',

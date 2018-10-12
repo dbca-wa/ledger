@@ -33,7 +33,9 @@ from mooring.models import (MooringAreaPriceHistory,
                                 BookingVehicleRego,
                                 BookingHistory,
                                 AdmissionsBooking,
-                                AdmissionsRate
+                                AdmissionsRate,
+                                BookingPeriodOption,
+                                BookingPeriod
                            )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -654,6 +656,21 @@ class MarinaEntryRateSerializer(serializers.ModelSerializer):
         super(MarinaEntryRateSerializer, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['reason'] = PriceReasonSerializer(read_only=True)
+
+class BookingPeriodOptionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookingPeriodOption
+        fields = ('id', 'period_name', 'small_price', 'medium_price', 'large_price', 'start_time', 'finish_time')
+
+class BookingPeriodSerializer(serializers.ModelSerializer):
+    booking_period = BookingPeriodOptionsSerializer(many=True, required=False)
+    class Meta:
+        model = BookingPeriod
+        fields = ('id', 'name', 'booking_period')
+        depth = 1
+
+
+
 # Reasons
 # ============================
 class ClosureReasonSerializer(serializers.ModelSerializer):

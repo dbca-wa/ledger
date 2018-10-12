@@ -495,6 +495,8 @@ class AdmissionFeesView(TemplateView):
 class AdmissionsCostView(TemplateView):
     template_name = 'mooring/admissions/admissions_cost.html'
 
+class BookingPeriodView(TemplateView):
+    template_name = 'mooring/dash/dash_booking_period.html'
 
 class MarinastayRoutingView(TemplateView):
     template_name = 'mooring/index.html'

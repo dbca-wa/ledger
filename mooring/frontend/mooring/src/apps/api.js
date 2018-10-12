@@ -159,5 +159,9 @@ module.exports = {
        return  encodeURI(process.env.PARKSTAY_URL + "/api/users.json?q="+q);
    },
    profile: process.env.PARKSTAY_URL + "/api/profile",
-   contacts:process.env.PARKSTAY_URL + "/api/contacts.json"
+   contacts:process.env.PARKSTAY_URL + "/api/contacts.json",
+   //Must end .json otherwise will effect other urls generated based on removing the .json.
+   booking_period_options: process.env.PARKSTAY_URL + "/api/bookingperiodoptions.json",
+   booking_period : process.env.PARKSTAY_URL + "/api/bookingperiod.json"
+   
 };

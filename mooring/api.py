@@ -64,7 +64,9 @@ from mooring.models import (MooringArea,
                                 AdmissionsBooking,
                                 AdmissionsRate,
                                 BookingPeriodOption,
-                                AdmissionsBookingInvoice
+                                AdmissionsBookingInvoice,
+                                BookingPeriodOption,
+                                BookingPeriod
                                 )
 
 from mooring.serialisers import (  MooringsiteBookingSerialiser,
@@ -118,7 +120,9 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     BookingHistorySerializer,
                                     MooringAreaGroupSerializer,
                                     AdmissionsBookingSerializer,
-                                    AdmissionsRateSerializer
+                                    AdmissionsRateSerializer,
+                                    BookingPeriodOptionsSerializer,
+                                    BookingPeriodSerializer
                                     )
 from mooring.helpers import is_officer, is_customer
 from mooring import reports 
@@ -2794,6 +2798,70 @@ class MooringsiteBookingRangeViewset(BookingRangeViewset):
 class RateViewset(viewsets.ModelViewSet):
     queryset = Rate.objects.all()
     serializer_class = RateSerializer
+
+class BookingPeriodOptionsViewSet(viewsets.ModelViewSet):
+    queryset = BookingPeriodOption.objects.all().order_by('id')
+    serializer_class = BookingPeriodOptionsSerializer
+
+    def list(self, request, *args, **kwargs):
+        q = request.GET.get('q') if request.GET.get('q') else None
+        qs = BookingPeriodOption.objects.all().order_by('pk')
+        if q:
+            qs = qs.filter(period_name__icontains=q)
+        serializer = BookingPeriodOptionsSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if(BookingPeriod.objects.filter(booking_period=instance.id)):
+            # Needs ignoring
+            return Response('Error in use.', status.HTTP_405_METHOD_NOT_ALLOWED)
+        else:
+            self.perform_destroy(instance)
+            return Response(status.HTTP_200_OK)
+
+class BookingPeriodViewSet(viewsets.ModelViewSet):
+    queryset = BookingPeriod.objects.all()
+    serializer_class = BookingPeriodSerializer
+
+    def list(self, request, *args, **kwargs):
+        qs = BookingPeriod.objects.all().order_by('pk')
+        #Filtering happends here
+        serializer = BookingPeriodSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = BookingPeriodSerializer(data={'name':request.data['name']})
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            for val in request.data['booking_period']:
+                option = BookingPeriodOption.objects.get(pk=val)
+                if option:
+                    instance.booking_period.add(option)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            raise
+        
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = BookingPeriodSerializer(instance,data={'name':request.data['name']},partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            instance.booking_period.clear()
+            for val in request.data['booking_period']:
+                option = BookingPeriodOption.objects.get(pk=val)
+                if option:
+                    instance.booking_period.add(option)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
 
 # Reasons
 # =========================

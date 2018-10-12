@@ -151,7 +151,6 @@ export default {
             var url = null;
             if (vm.level == 'park') {
                 url = api_endpoints.park_entry_rate(data.rate_id);
-                console.log(url);
                 $.ajax({
                      beforeSend: function(xhrObj) {
                         xhrObj.setRequestHeader("Content-Type", "application/json");
@@ -162,7 +161,6 @@ export default {
                     xhrFields: { withCredentials:true },
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')}
                 }).done(function(msg) {
-                    console.log("done");
                     vm.$refs.history_dt.vmDataTable.ajax.reload();
                 });
             }
@@ -186,7 +184,6 @@ export default {
             return api_endpoints.editCampsiteClassPrice(this.object_id);
         },
         updateHistory: function() {
-            console.log('UPDATE HIST');
             var vm=this;
             if (this.level == 'campsite') {
                 this.price.campsite = this.object_id;
@@ -263,7 +260,6 @@ export default {
             vm.$refs.history_dt.vmDataTable.on('click','.editPrice', function(e) {
                 e.preventDefault();
                 var rate = $(this).data('rate');
-                console.log(rate);
                 if (vm.level == 'park') {
                     vm.$http.get(api_endpoints.park_entry_rate(rate)).then((response)=>{
                         vm.parkPrice = response.body;
@@ -295,10 +291,8 @@ export default {
                     vm.deleteHistory = data;
                 }
                 else{
-                    console.log( $(btn).data('rate'));
                     vm.deleteHistory = $(btn).data('rate');
                 }
-
                 bus.$emit('showAlert', 'deleteHistory');
             });
         },
