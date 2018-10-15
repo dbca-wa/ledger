@@ -510,10 +510,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET',])
-    def get_proposed_licence(self, request, *args, **kwargs):
+    def get_proposed_decisions(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            qs = instance.decisions.filter(action='propose_issue')
+            qs=instance.get_proposed_decisions(request)
+            # qs = instance.decisions.filter(action='propose_issue')
+            # print(qs)
             serializer = ApplicationProposedIssueSerializer(qs,many=True)
             return Response(serializer.data) 
         except serializers.ValidationError:

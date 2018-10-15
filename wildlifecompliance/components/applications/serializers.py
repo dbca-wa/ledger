@@ -513,15 +513,19 @@ class ApplicationStandardConditionSerializer(serializers.ModelSerializer):
         fields = ('id','code','text')
 
 class ApplicationProposedIssueSerializer(serializers.ModelSerializer):
-    action = serializers.SerializerMethodField(read_only=True)
+    proposed_action = serializers.SerializerMethodField(read_only=True)
+    decision_action = serializers.SerializerMethodField(read_only=True)
     licence_activity_type = ActivityTypeserializer()
     
     class Meta:
         model = ApplicationDecisionPropose
         fields = '__all__'
 
-    def get_action(self,obj):
-        return obj.get_action_display()
+    def get_proposed_action(self,obj):
+        return obj.get_proposed_action_display()
+
+    def get_decision_action(self,obj):
+        return obj.get_decision_action_display()
 
     
 
