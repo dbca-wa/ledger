@@ -336,6 +336,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     assessor_data = serializers.SerializerMethodField()
     latest_referrals = ApplicationReferralSerializer(many=True) 
     allowed_assessors = EmailUserSerializer(many=True)
+    licences = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -373,6 +374,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                 'assessor_data',
                 'comment_data',
                 'latest_referrals',
+                'licences',
                 'allowed_assessors',
                 'proposed_issuance_licence',
                 'proposed_decline_status',
@@ -411,6 +413,22 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
 
     def get_assessor_data(self,obj):
         return obj.assessor_data
+
+    def get_licences(self, obj):
+        licence_data=[]
+        qs = obj.licences
+        
+        if qs.exists():
+            qs = qs.filter(status = 'current')
+            for item in obj.licences:
+                # print(item)
+                # print(item.status)
+                print(item.licence_activity_type_id)
+                # print(item.parent_licence)
+                
+                # amendment_request_data.append({"licence_activity_type":str(item.licence_activity_type),"id":item.licence_activity_type.id})
+                licence_data.append({"licence_activity_type":str(item.licence_activity_type),"licence_activity_type_id":item.licence_activity_type_id,"start_date":item.start_date,"expiry_date":item.expiry_date})
+        return licence_data
 
 class ReferralApplicationSerializer(InternalApplicationSerializer):
     def get_assessor_mode(self,obj):
@@ -495,15 +513,19 @@ class ApplicationStandardConditionSerializer(serializers.ModelSerializer):
         fields = ('id','code','text')
 
 class ApplicationProposedIssueSerializer(serializers.ModelSerializer):
-    action = serializers.SerializerMethodField(read_only=True)
+    proposed_action = serializers.SerializerMethodField(read_only=True)
+    decision_action = serializers.SerializerMethodField(read_only=True)
     licence_activity_type = ActivityTypeserializer()
     
     class Meta:
         model = ApplicationDecisionPropose
         fields = '__all__'
 
-    def get_action(self,obj):
-        return obj.get_action_display()
+    def get_proposed_action(self,obj):
+        return obj.get_proposed_action_display()
+
+    def get_decision_action(self,obj):
+        return obj.get_decision_action_display()
 
     
 
