@@ -16,6 +16,14 @@
                                         <div class="form-group">
                                             <div class="row">
                                                 <div class="col-sm-3">
+                                                    <input type="radio"  id="issue" name="licence_category" v-model="licence.activity_type[index].final_status"  value="Issue" > Issue
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <input type="radio"  id="decline" name="licence_category" v-model="licence.activity_type[index].final_status"  value="Decline" > Decline
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-3">
                                                     
                                                     <label class="control-label pull-left">Proposed Start Date</label>
                                                 </div>
@@ -181,7 +189,7 @@ import {
 from '@/utils/hooks'
 
 export default {
-    name: 'InternalApplicationConditions',
+    name: 'InternalApplicationIssuance',
     props: {
         application: Object,
         licence_activity_type_tab:Number
@@ -189,7 +197,7 @@ export default {
     data: function() {
         let vm = this;
         return {
-            panelBody: "application-conditions-"+vm._uid,
+            panelBody: "application-issuance-"+vm._uid,
             proposed_licence:{},
             licence:{
                 activity_type:[],
@@ -233,8 +241,14 @@ export default {
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_licence'),JSON.stringify(licence),{
                         emulateJSON:true,
                     }).then((response)=>{
-                        // vm.close();
-                        vm.$emit('refreshFromResponse',response);
+                        swal(
+                             'Issue activity type',
+                             'The activity type is successfully issued',
+                             'success'
+                        );
+                        vm.close();
+                        vm.$parent.refreshFromResponse(response)
+                        // vm.$emit('refreshFromResponse',response);
                     },(error)=>{
                         vm.errors = true;
                         vm.errorString = helpers.apiVueResourceError(error);
@@ -242,14 +256,22 @@ export default {
         },
         initialiseLicenceDetails(){
             let vm=this;
+            var final_status=null
             console.log('from fetch licence')
             console.log(vm.application.id_check_status)
             for(var i=0, len=vm.proposed_licence.length; i<len; i++){
+                if (vm.proposed_licence[i].proposed_action =='Propose Issue'){
+                    final_status="Issue"
+                }
+                if (vm.proposed_licence[i].proposed_action =='Propose Decline'){
+                    final_status="Decline"
+                }
                 vm.licence.activity_type.push({
                                         id:         vm.proposed_licence[i].licence_activity_type.id,
                                         name:       vm.proposed_licence[i].licence_activity_type.name,
                                         start_date: vm.proposed_licence[i].proposed_start_date,
-                                        end_date: vm.proposed_licence[i].proposed_end_date
+                                        end_date: vm.proposed_licence[i].proposed_end_date,
+                                        final_status:final_status
                                     })
             }
             if(vm.application.id_check_status == 'Accepted'){
@@ -269,7 +291,7 @@ export default {
         fetchProposeIssue(){
             let vm = this;
             
-           vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/get_proposed_licence')))
+           vm.$http.get(helpers.add_endpoint_join(api_endpoints.applications,(vm.application.id+'/get_proposed_decisions/')))
             .then((response) => {
                 vm.proposed_licence = response.body;
                 // console.log(vm.proposed_licence)

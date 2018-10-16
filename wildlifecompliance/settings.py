@@ -75,6 +75,7 @@ if DEV_STATIC and not DEV_STATIC_URL:
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None 
 
 # Department details
+SYSTEM_NAME = env('SYSTEM_NAME', 'Wildlife Compliance System')
 SYSTEM_EMAIL = env('SYSTEM_EMAIL','wildlifecompliance@dbca.wa.gov.au')
 WC_PAYMENT_SYSTEM_ID = env('WC_PAYMENT_SYSTEM_ID', 'S999')
 if not VALID_SYSTEMS:

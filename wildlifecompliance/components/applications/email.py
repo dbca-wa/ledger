@@ -42,6 +42,16 @@ class ApplicationAmendmentRequestNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/send_application_amendment_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_amendment_notification.txt'
 
+class ApplicationIssueNotificationEmail(TemplateEmailBase):
+    subject = 'A licence activity has been issued for your application.'
+    html_template = 'wildlifecompliance/emails/send_application_issue_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_application_issue_notification.txt'
+
+class ApplicationDeclineNotificationEmail(TemplateEmailBase):
+    subject = 'A licence activity has been declined for your application.'
+    html_template = 'wildlifecompliance/emails/send_application_decline_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_application_decline_notification.txt'
+
 class ApplicationAssessmentRequestedEmail(TemplateEmailBase):
     subject = 'Wildlife licensing assessment required'
     html_template = 'wildlifecompliance/emails/send_application_assessment_request_notification.html'
@@ -183,6 +193,44 @@ def send_application_amendment_notification(amendment,application,request):
     }
 
     msg = email.send(application.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
+
+def send_application_issue_notification(activity_type_name,expiry_date,start_date,application,request):
+    # An email to internal users notifying about new application is submitted
+    email = ApplicationIssueNotificationEmail()
+    
+    url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
+    context = {
+        'application': application,
+        'activity_type_name': activity_type_name,
+        'expiry_date':expiry_date,
+        'start_date':start_date,
+        'url': url
+    }
+
+    msg = email.send(application.submitter.email, context=context)
+        
+
+    # msg = email.send(application.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
+
+def send_application_decline_notification(activity_type_name,application,request):
+    # An email to internal users notifying about new application is submitted
+    email = ApplicationDeclineNotificationEmail()
+    
+    url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
+    context = {
+        'application': application,
+        'activity_type_name': activity_type_name,
+        'url': url
+    }
+
+    msg = email.send(application.submitter.email, context=context)
+        
+
+    # msg = email.send(application.submitter.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
 

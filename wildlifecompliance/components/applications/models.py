@@ -29,7 +29,9 @@ from wildlifecompliance.components.applications.email import (
     send_application_amendment_notification,
     send_assessment_email_notification,
     send_assessment_reminder_email,
-    send_amendment_submit_email_notification
+    send_amendment_submit_email_notification,
+    send_application_issue_notification,
+    send_application_decline_notification
     )
 from wildlifecompliance.ordered_model import OrderedModel
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
@@ -736,15 +738,23 @@ class Application(RevisionedMixin):
             try:
                 #Get the assessor groups the current user is member of for the selected activity type tab
                 qs = ApplicationGroupType.objects.filter(type='assessor',licence_activity_type_id=request.data.get('selected_assessment_tab'),members__email=request.user.email)
-                print(qs)
+                
                 #For each assessor groups get the assessments of current application whose status is awaiting_assessment and mark it as complete
                 for q in qs:
                     assessments = Assessment.objects.filter(licence_activity_type_id=request.data.get('selected_assessment_tab'),assessor_group=q,status='awaiting_assessment',application=self)
-                    print('inside q in qs')
-                    print(assessments)
+                   
                     for q1 in assessments:
                         q1.status='completed'
                         q1.save()
+                        # Log application action
+                        self.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q),request)
+                        # Log entry for organisation
+                        if self.org_applicant:
+                            self.org_applicant.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q),request)
+                        elif self.proxy_applicant:
+                            self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q),request)
+                        else:
+                            self.submitter.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q),request)
                 #check if this is the last assessment for current applicatio,Change the processing status only if it is the last assessment
                 if not Assessment.objects.filter(application=self, licence_activity_type=request.data.get('selected_assessment_tab'),status='awaiting_assessment').exists():
                     for activity_type in  self.licence_type_data['activity_type']:
@@ -760,6 +770,10 @@ class Application(RevisionedMixin):
         	       #      if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
         	       #          activity_type["processing_status"]="With Officer-Conditions"
         	       #          self.save()
+
+
+        	    
+
             except:
                 raise
 
@@ -779,7 +793,7 @@ class Application(RevisionedMixin):
                     ApplicationDecisionPropose.objects.update_or_create(
                         application = self,
                         officer=request.user,
-                        action='propose_decline',
+                        proposed_action='propose_decline',
                         reason=details.get('reason'),
                         cc_email=details.get('cc_email',None),
                         licence_activity_type_id=item1
@@ -844,6 +858,27 @@ class Application(RevisionedMixin):
         qs =Assessment.objects.filter(application = self,status='awaiting_assessment')
         return qs
 
+    @property
+    def licences(self):
+        from wildlifecompliance.components.licences.models import WildlifeLicence
+        try:
+            qs =WildlifeLicence.objects.filter(current_application = self)
+            return qs
+        except WildlifeLicence.DoesNotExist:
+            return None
+
+    def get_proposed_decisions(self,request):
+        with transaction.atomic():
+            try:
+            	proposed_states = ['propose_decline','propose_issue'] 
+                qs=ApplicationDecisionPropose.objects.filter(application=self,proposed_action__in =proposed_states)
+                for q in qs:
+                	if ApplicationDecisionPropose.objects.filter(application=self,licence_activity_type=q.licence_activity_type,decision_action__isnull=False).exists():
+                		qs.exclude(id=q.id)
+                return qs
+            except:
+                raise
+
 
     def final_decline(self,request,details):
         with transaction.atomic():
@@ -882,14 +917,7 @@ class Application(RevisionedMixin):
                     ApplicationDecisionPropose.objects.get(application=self, licence_activity_type_id=details.get('licence_activity_type_id'))
                     raise ValidationError('This activity type has already been proposed to issue')
                 except ApplicationDecisionPropose.DoesNotExist:
-                    ApplicationDecisionPropose.objects.update_or_create(
-                        application = self,
-                        officer=request.user,
-                        action='propose_issue',
-                        reason=details.get('details'),
-                        cc_email=details.get('cc_email',None),
-                        licence_activity_type_id=details.get('licence_activity_type_id')
-                    )
+                    ApplicationDecisionPropose.objects.update_or_create(application = self,officer=request.user,proposed_action='propose_issue',reason=details.get('details'),cc_email=details.get('cc_email',None),proposed_start_date=details.get('start_date',None),proposed_end_date=details.get('expiry_date',None),licence_activity_type_id=details.get('licence_activity_type_id'))
                     for activity_type in  self.licence_type_data['activity_type']:
                         if activity_type["id"]==details.get('licence_activity_type_id'):
                             activity_type["processing_status"]="With Officer-Finalisation"
@@ -917,79 +945,69 @@ class Application(RevisionedMixin):
                 #     raise ValidationError('You cannot issue the licence if it is not with an approver')
                 # if not self.applicant.organisation.postal_address:
                 #     raise ValidationError('The applicant needs to have set their postal address before approving this application.')
-                try:
-                    #check if parent licence is available
-                    parent_licence=WildlifeLicence.objects.get(current_application=self,parent_licence__isnull=True)
-                    print(parent_licence)
-                    raise
-                except WildlifeLicence.DoesNotExist:
-                    #if parent licence is not available create one before proceeding
-                    parent_licence=WildlifeLicence.objects.create(current_application = self)
-                    print(parent_licence)
                 
 
                 for item in request.data.get('activity_type'):
+                    if item['final_status'] == "Issue":
+                        try:
+		                    #check if parent licence is available
+		                    parent_licence=WildlifeLicence.objects.get(current_application=self,parent_licence__isnull=True)
+                        except WildlifeLicence.DoesNotExist:
+		                    #if parent licence is not available create one before proceeding
+		                    parent_licence=WildlifeLicence.objects.create(current_application = self)
 
-                    licence = WildlifeLicence.objects.create(
-                        current_application = self,
-                        parent_licence=parent_licence,
-                        issue_date= timezone.now(),
-                        expiry_date=item['end_date'],
-                        start_date= item['start_date'],
-                        licence_activity_type_id=item['id']
-                    )
-                    for activity_type in  self.licence_type_data['activity_type']:
-                        if activity_type["id"]==item['id']:
-                            activity_type["processing_status"]="Accepted"
-                            self.save()
+                        licence = WildlifeLicence.objects.create(
+                            current_application = self,
+                            parent_licence=parent_licence,
+                            issue_date= timezone.now(),
+                            expiry_date=item['end_date'],
+                            start_date= item['start_date'],
+                            licence_activity_type_id=item['id']
+                        )
+                        ApplicationDecisionPropose.objects.create(
+                            application = self,
+                            officer=request.user,
+                            decision_action='issued',
+                            licence_activity_type_id=item['id']
+                        )
+                        # Log application action
+                        self.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(item['name']),request)
+                        # Log entry for organisation
+                        if self.org_applicant:
+                            self.org_applicant.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(item['name']),request)
+                        elif self.proxy_applicant:
+                            self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(item['name']),request)
+                        else:
+                            self.submitter.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(item['name']),request)
+                        send_application_issue_notification(item['name'],item['end_date'],item['start_date'],self,request)
 
-                # self.proposed_issuance_licence = {
-                #     'start_date' : details.get('start_date').strftime('%d/%m/%Y'),
-                #     'expiry_date' : details.get('expiry_date').strftime('%d/%m/%Y'),
-                #     'details': details.get('details'),
-                #     'cc_email':details.get('cc_email')
-                # }
-                # self.proposed_decline_status = False
-                # self.processing_status = 'approved'
-                # self.customer_status = 'approved'
-                # # Log application action
-                # self.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(self.id),request)
-                # # Log entry for organisation
-                # self.applicant.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(self.id),request)
+                        for activity_type in  self.licence_type_data['activity_type']:
+                            if activity_type["id"]==item['id']:
+                                activity_type["processing_status"]="Accepted"
+                                self.save()
+                    else:
+                        ApplicationDecisionPropose.objects.create(
+                            application = self,
+                            officer=request.user,
+                            decision_action='declined',
+                            licence_activity_type_id=item['id']
+                        )
+                        # Log application action
+                        self.log_user_action(ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(item['name']),request)
+                        # Log entry for organisation
+                        if self.org_applicant:
+                            self.org_applicant.log_user_action(ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(item['name']),request)
+                        elif self.proxy_applicant:
+                            self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(item['name']),request)
+                        else:
+                            self.submitter.log_user_action(ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(item['name']),request)
+                        send_application_decline_notification(item['name'],self,request)
 
-                # if self.processing_status == 'approved':
-                #     # TODO if it is an ammendment application then check appropriately
-                #     checking_application = self
-                #     licence,created = WildlifeLicence.objects.update_or_create(
-                #         current_application = checking_application,
-                #         defaults = {
-                #             'activity' : self.activity,
-                #             'region' : self.region, 
-                #             'tenure' : self.tenure, 
-                #             'title' : self.title,
-                #             'issue_date' : timezone.now(),
-                #             'expiry_date' : details.get('expiry_date'),
-                #             'start_date' : details.get('start_date'),
-                #             'applicant' : self.applicant 
-                #             #'extracted_fields' = JSONField(blank=True, null=True)
-                #         }
-                #     )
-                #     # Generate returns 
-                #     self.generate_returns(licence)
-                #     if created:
-                #         # Log creation
-                #         # Generate the document
-                #         licence.generate_doc()
-                #         # send the doc and log in licence and org
-                #     else:
-                #         # Log update
-                #         licence.replaced_by = request.user
-                #         # Generate the document
-                #         licence.generate_doc()
-                #         # send the doc and log in licence and org
-                #     self.licence = licence
-                # self.save()
-        
+                        for activity_type in  self.licence_type_data['activity_type']:
+                            if activity_type["id"]==item['id']:
+                                activity_type["processing_status"]="Declined"
+                                self.save()
+
             except:
                 raise
 
@@ -1179,7 +1197,7 @@ class Assessment(ApplicationRequest):
                         self.application.save()
                 self.save()
                 # Create a log entry for the application
-                self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RECALLED,request)
+                self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RECALLED.format(self.assessor_group),request)
             except:
                 raise
 
@@ -1194,7 +1212,7 @@ class Assessment(ApplicationRequest):
                         self.application.save()
                 self.save()
                 # Create a log entry for the application
-                self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RESENT,request)
+                self.application.log_user_action(ApplicationUserAction.ACTION_ASSESSMENT_RESENT.format(self.assessor_group),request)
             except:
                 raise
 
@@ -1217,9 +1235,10 @@ class ApplicationDeclinedDetails(models.Model):
         app_label = 'wildlifecompliance'
 
 class ApplicationDecisionPropose(models.Model):
-    ACTION_CHOICES = (('default','Default'),('propose_decline', 'Propose Decline'), ('declined', 'Declined'),
-                      ('propose_issue', 'Propose Issue'),('issued','Issued'))
-    action = models.CharField('Action', max_length=20, choices=ACTION_CHOICES, default=ACTION_CHOICES[0][0])
+    PROPOSED_ACTION_CHOICES = (('default','Default'),('propose_decline', 'Propose Decline'),('propose_issue', 'Propose Issue'))
+    DECISION_ACTION_CHOICES = (('default','Default'), ('declined', 'Declined'),('issued','Issued'))
+    proposed_action = models.CharField('Action', max_length=20, choices=PROPOSED_ACTION_CHOICES, default=PROPOSED_ACTION_CHOICES[0][0])
+    decision_action = models.CharField('Action', max_length=20, choices=DECISION_ACTION_CHOICES, default=DECISION_ACTION_CHOICES[0][0])
     application = models.ForeignKey(Application,related_name='decisions')
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
@@ -1232,7 +1251,6 @@ class ApplicationDecisionPropose(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
-        
 
 
 @python_2_unicode_compatible
@@ -1304,12 +1322,14 @@ class ApplicationUserAction(UserAction):
     ACTION_ID_REQUEST_AMENDMENTS_SUBMIT="Amendment submitted by {}"
     ACTION_SEND_FOR_ASSESSMENT_TO_ = "Sent for assessment to {}"
     ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
-    ACTION_ASSESSMENT_RECALLED="Assessment recalled"
-    ACTION_ASSESSMENT_RESENT="Assessment Resent"
+    ACTION_ASSESSMENT_RECALLED="Assessment recalled {}"
+    ACTION_ASSESSMENT_RESENT="Assessment Resent {}"
+    ACTION_ASSESSMENT_COMPLETE="Assessment Completed for group {} "
     ACTION_DECLINE = "Decline application {}"
-    ACTION_ENTER_CONDITIONS = "Enter condition"
+    ACTION_ENTER_CONDITIONS = "Entered condition for activity type {}"
     ACTION_CREATE_CONDITION_ = "Create condition {}"
-    ACTION_ISSUE_LICENCE_ = "Issue Licence for application {}"
+    ACTION_ISSUE_LICENCE_ = "Issue Licence for activity type {}"
+    ACTION_DECLINE_LICENCE_ = "Decline Licence for activity type {}"
     ACTION_DISCARD_application = "Discard application {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
