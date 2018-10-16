@@ -419,8 +419,6 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
     from parkstay.serialisers import CampsiteSerialiser
     campsites = get_campsite_availability(campsite_qs, start_date, end_date)
     available = []
-    # for camp in campsites:
-    #     avail_list = [item for sublist in campsites[camp].values() for item in sublist]
 
     for site_id, dates in campsites.items():
         some_booked = any([v[0] == 'booked' for k, v in dates.items()]) 
@@ -447,8 +445,6 @@ def get_available_campsites_list_booking(campsite_qs,request, start_date, end_da
     from parkstay.serialisers import CampsiteSerialiser
     campsites = get_campsite_availability(campsite_qs, start_date, end_date)
     available = []
-    # for camp in campsites:
-    #     avail_list = [item for sublist in campsites[camp].values() for item in sublist]
 
     for site_id, dates in campsites.items():
         some_booked = any([v[0] == 'booked' for k, v in dates.items()]) 
