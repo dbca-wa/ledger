@@ -1,0 +1,12 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Approval has been expired:
+
+    Approval : {{ approval.lodgement_number}}
+
+    Proposal : {{ proposal.lodgement_number}}
+
+    
+
+{%  endblock %}
