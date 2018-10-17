@@ -1,9 +1,5 @@
 <template lang="html">
     <div>
-        <div id="scrollspy-heading" class="col-lg-12" >
-            <h4>Commercial Operator - {{proposal.application_type}} application: {{proposal.lodgement_number}}</h4>
-        </div>
-
         <div class="col-md-3" >
             <div class="panel panel-default fixed">
               <div class="panel-heading">
@@ -57,48 +53,80 @@
 
             </ul>
             <div class="tab-content" id="pills-tabContent">
-              <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">... Applicant </div>
-              <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">... Activities Land</div>
-              <div class="tab-pane fade" id="pills-activities-marine" role="tabpanel" aria-labelledby="pills-activities-marine-tab">... Activities Marine</div>
-              <div class="tab-pane fade" id="pills-other-details" role="tabpanel" aria-labelledby="pills-other-details-tab">... Other Details</div>
-              <div class="tab-pane fade" id="pills-online-training" role="tabpanel" aria-labelledby="pills-online-training-tab">... Online Training</div>
-              <div class="tab-pane fade" id="pills-payment" role="tabpanel" aria-labelledby="pills-payment-tab">... Payment</div>
-              <div class="tab-pane fade" id="pills-confirm" role="tabpanel" aria-labelledby="pills-confirm-tab">... Confirmation</div>
-            </div>
-
-
-        <!--
-        <Proposal v-if="proposal" :proposal="proposal" id="proposalStart">
-            <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-            <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
-            <input type='hidden' name="proposal_id" :value="1" />
-            <div class="row" style="margin-bottom: 50px">
-              <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
-              <div class="navbar-inner">
-                <div v-if="!proposal.readonly" class="container">
-                  <p class="pull-right" style="margin-top:5px;">
-                    <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
-                    <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                    <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
-
-                    <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
-                  </p>
-                </div>
-                <div v-else class="container">
-                  <p class="pull-right" style="margin-top:5px;">
-                    <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
-                  </p>
-                </div>
+              <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab"> 
+                <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
               </div>
-              </div>  
+              <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
+                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand"></ActivitiesLand>
+              </div>
+              <div class="tab-pane fade" id="pills-activities-marine" role="tabpanel" aria-labelledby="pills-activities-marine-tab">
+                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine"></ActivitiesMarine>
+              </div>
+              <div class="tab-pane fade" id="pills-other-details" role="tabpanel" aria-labelledby="pills-other-details-tab">
+                <OtherDetails :proposal="proposal" id="proposalStartOtherDetails"></OtherDetails>
+              </div>
+              <div class="tab-pane fade" id="pills-online-training" role="tabpanel" aria-labelledby="pills-online-training-tab">
+                <OnlineTraining :proposal="proposal" id="proposalStartOnlineTraining"></OnlineTraining>
+              </div>
+              <div class="tab-pane fade" id="pills-payment" role="tabpanel" aria-labelledby="pills-payment-tab">
+                <Payment :proposal="proposal" id="proposalStartPayment"></Payment>
+              </div>
+              <div class="tab-pane fade" id="pills-confirm" role="tabpanel" aria-labelledby="pills-confirm-tab">
+                <Confirmation :proposal="proposal" id="proposalStartConfirmation"></Confirmation>
+              </div>
             </div>
-        </Proposal>           
-        -->
-
+        </div>
     </div>
 </template>
 
 <script>
+    import Applicant from '@/components/external/tclass/applicant.vue'
+    import ActivitiesLand from '@/components/external/tclass/activities_land.vue'
+    import ActivitiesMarine from '@/components/external/tclass/activities_marine.vue'
+    import OtherDetails from '@/components/external/tclass/other_details.vue'
+    import OnlineTraining from '@/components/external/tclass/online_training.vue'
+    import Payment from '@/components/external/tclass/payment.vue'
+    import Confirmation from '@/components/external/tclass/confirmation.vue'
+    export default {
+        props:{
+            proposal:{
+                type: Object,
+                required:true
+            },
+            withSectionsSelector:{
+                type: Boolean,
+                default: true
+            },
+            form_width: {
+                type: String,
+                default: 'col-md-9'
+            }
+        },
+        data:function () {
+            return{
+                values:null
+            }
+        },
+        components: {
+            Applicant,
+            ActivitiesLand,
+            ActivitiesMarine,
+            OtherDetails,
+            OnlineTraining,
+            Payment,
+            Confirmation
+        },
+        methods:{
+        },
+        mounted: function() {
+            let vm = this;
+            $('#pills-tab a[href="#pills-applicant"]').tab('show');
+            vm.form = document.forms.new_proposal;
+            //window.addEventListener('beforeunload', vm.leaving);
+            //indow.addEventListener('onblur', vm.leaving);
+        }
+ 
+    }
 </script>
 
 <style lang="css" scoped>
@@ -112,5 +140,21 @@
         position: fixed;
         top:56px;
     }
+
+    .nav-item {
+        background-color: rgb(200,200,200,0.8) !important;
+    }
+
+    .nav-item>li>a {
+        background-color: yellow !important;
+        color: #fff;
+    }
+
+    .nav-item>li.active>a, .nav-item>li.active>a:hover, .nav-item>li.active>a:focus {
+      color: white;
+      background-color: blue;
+      border: 1px solid #888888;
+    }
+
 </style>
 

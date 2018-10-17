@@ -1,11 +1,11 @@
 <template lang="html">
     <div class="container" >
         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-          <div v-if="!proposal_readonly">
-            <div v-if="hasAmendmentRequest" class="row" style="color:red;">
-                <div class="col-lg-12 pull-right">
-                  <div class="panel panel-default">
-                    <div class="panel-heading">
+            <div v-if="!proposal_readonly">
+              <div v-if="hasAmendmentRequest" class="row" style="color:red;">
+                  <div class="col-lg-12 pull-right">
+                    <div class="panel panel-default">
+                      <div class="panel-heading">
                         <h3 class="panel-title" style="color:red;">An amendment has been requested for this Proposal
                           <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                 <span class="glyphicon glyphicon-chevron-down pull-right "></span>
@@ -32,114 +32,45 @@
                 </ul>
             </div>
 
-			<div id="scrollspy-heading" class="col-lg-12" >
+			<div v-if="proposal" id="scrollspy-heading" class="col-lg-12" >
                	<h4>Commercial Operator - {{proposal.application_type}} application: {{proposal.lodgement_number}}</h4>
             </div>
 
-			<div class="col-md-3" >
-				<div class="panel panel-default fixed">
-				  <div class="panel-heading">
-					<h5>Sections</h5>
-				  </div>
-				  <div class="panel-body" style="padding:0">
-					  <ul class="list-group" id="scrollspy-section" style="margin-bottom:0">
+            <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"></ProposalTClass>
+            <ProposalFilming v-else-if="proposal && proposal.application_type=='Filming'" :proposal="proposal" id="proposalStart"></ProposalFilming>
+            <ProposalEvent v-else-if="proposal && proposal.application_type=='Event'" :proposal="proposal" id="proposalStart"></ProposalEvent>
 
-					  </ul>
-				  </div>
-				</div>
-			</div>
-
-            <div class="col-md-9">
-				<ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-				  <li class="nav-item">
-					<a class="nav-link active" id="pills-applicant-tab" data-toggle="pill" href="#pills-applicant" role="tab" aria-controls="pills-applicant" aria-selected="true">
-					  1. Applicant
-					</a>
-				  </li>
-				  <li class="nav-item">
-					<a class="nav-link" id="pills-activities-land-tab" data-toggle="pill" href="#pills-activities-land" role="tab" aria-controls="pills-activities-land" aria-selected="false">
-					  2. Activities (land)
-					</a>
-				  </li>
-				  <li class="nav-item">
-					<a class="nav-link" id="pills-activities-marine-tab" data-toggle="pill" href="#pills-activities-marine" role="tab" aria-controls="pills-activities-marine" aria-selected="false">
-					  3. Activities (marine)
-					</a>
-				  </li>
-				  <li class="nav-item">
-					<a class="nav-link" id="pills-other-details-tab" data-toggle="pill" href="#pills-other-details" role="tab" aria-controls="pills-other-details" aria-selected="false">
-					  4. Other Details
-					</a>
-				  </li>
-				  <li class="nav-item">
-					<a class="nav-link" id="pills-online-training-tab" data-toggle="pill" href="#pills-online-training" role="tab" aria-controls="pills-online-training" aria-selected="false">
-					  5. Online Training
-					</a>
-				  </li>
-				  <li class="nav-item">
-					<a class="nav-link" id="pills-payment-tab" data-toggle="pill" href="#pills-payment" role="tab" aria-controls="pills-payment" aria-selected="false">
-					  6. Payment
-					</a>
-				  </li>
-				  <li class="nav-item">
-					<a class="nav-link" id="pills-confirm-tab" data-toggle="pill" href="#pills-confirm" role="tab" aria-controls="pills-confirm" aria-selected="false">
-					  7. Confirmation
-					</a>
-				  </li>
-
-				</ul>
-				<div class="tab-content" id="pills-tabContent">
-				  <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">... Applicant </div>
-				  <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">... Activities Land</div>
-				  <div class="tab-pane fade" id="pills-activities-marine" role="tabpanel" aria-labelledby="pills-activities-marine-tab">... Activities Marine</div>
-				  <div class="tab-pane fade" id="pills-other-details" role="tabpanel" aria-labelledby="pills-other-details-tab">... Other Details</div>
-				  <div class="tab-pane fade" id="pills-online-training" role="tabpanel" aria-labelledby="pills-online-training-tab">... Online Training</div>
-				  <div class="tab-pane fade" id="pills-payment" role="tabpanel" aria-labelledby="pills-payment-tab">... Payment</div>
-				  <div class="tab-pane fade" id="pills-confirm" role="tabpanel" aria-labelledby="pills-confirm-tab">... Confirmation</div>
-				</div>
-            </div>
-
-
-			<!--
-            <Proposal v-if="proposal" :proposal="proposal" id="proposalStart">
+            <div>
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
+
                 <div class="row" style="margin-bottom: 50px">
-                  <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
-                  <div class="navbar-inner">
-                    <div v-if="!proposal.readonly" class="container">
-                      <p class="pull-right" style="margin-top:5px;">
-                        <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
-                        <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                        <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+						<div v-if="proposal && !proposal.readonly" class="container">
+						  <p class="pull-right" style="margin-top:5px;">
+							<input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
+							<input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+							<input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
 
-                        <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
-                      </p>
-                    </div>
-                    <div v-else class="container">
-                      <p class="pull-right" style="margin-top:5px;">
-                        <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
-                      </p>
-                    </div>
-                  </div>
-                  </div>  
+							<input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
+						  </p>
+						</div>
+						<div v-else class="container">
+						  <p class="pull-right" style="margin-top:5px;">
+							<router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
+						  </p>
+						</div>
                 </div>
-            </Proposal>           
+            </div>
 
-			<nav class="nav nav-pills nav-fill">
-			  <a class="nav-item nav-link active" href="#">Active</a>
-			  <a class="nav-item nav-link" href="#">Link</a>
-			  <a class="nav-item nav-link" href="#">Link</a>
-			  <a class="nav-item nav-link disabled" href="#">Disabled</a>
-			</nav>
-			-->
-
-        </form>
+		</form>
     </div>
 </template>
 <script>
-import Proposal from '../form.vue'
+//import Proposal from '../form.vue'
+import ProposalTClass from '../form_tclass.vue'
+import ProposalFilming from '../form_tclass.vue'
+import ProposalEvent from '../form_tclass.vue'
 import Vue from 'vue' 
 import {
   api_endpoints,
@@ -163,7 +94,9 @@ export default {
     }
   },
   components: {
-      Proposal
+      ProposalTClass,
+      ProposalFilming,
+      ProposalEvent
   },
   computed: {
     isLoading: function() {
@@ -346,15 +279,6 @@ export default {
         });
 
         return vm.missing_fields.length
-
-        /*
-        if (emptyFields === 0) {
-            $('#form').submit();
-        } else {
-            $('#error').show();
-            return false;
-        }
-        */
     },
 
 
@@ -398,64 +322,6 @@ export default {
         },(error) => {
         });
     },
-
-//    _submit: function(){
-//        let vm = this;
-//
-//        swal({
-//            title: "Submit Proposal",
-//            text: "Are you sure you want to submit this proposal?",
-//            type: "question",
-//            showCancelButton: true,
-//            confirmButtonText: 'Submit'
-//        }).then(() => {
-//            let formData = new FormData(vm.form);
-//            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
-//                vm.proposal = res.body;
-//
-//                if ('missing_fields' in vm.proposal) {
-//                    var missing_text = '';
-//                    for (var i = 0; i < vm.proposal.missing_fields.length; i++) {
-//                        missing_text = missing_text + i + ". " + vm.proposal.missing_fields[i].label + '<br>'
-//                    }
-//                    //vm.proposal.missing_fields.forEach(function(field) {
-//                        //missing_text = missing_text + field.label + '<br>'
-//                    //});
-//                    swal({
-//                        title: "Required field(s) are missing",
-//                        html: missing_text,
-//                        confirmButtonText: 'Submit',
-//                        type: 'warning',
-//                    }).then(() => {
-//                        //vm.form = document.forms.new_proposal;
-//                        //vm.$router.go();
-//                        this.highlight_missing_fields(vm.proposal.missing_fields);
-//                        //this.proposal = vm.proposal;
-//
-//                        vm.$router.push({
-//                            name: 'draft_proposal',
-//                            params: { proposal_id:vm.proposal.id}
-//                            //params: { proposal: vm.proposal} 
-//                        });
-//
-//                    });
-//                } else {
-//
-//                    vm.$router.push({
-//                        name: 'submit_proposal',
-//                        params: { proposal: vm.proposal} 
-//                    });
-//                }
-//            },err=>{
-//                swal(
-//                    'Submit Error',
-//                    helpers.apiVueResourceError(err),
-//                    'error'
-//                )
-//            });
-//        },(error) => {
-//        });
-//    }
 
   },
 
@@ -509,18 +375,4 @@ export default {
 </script>
 
 <style lang="css" scoped>
-.nav-item {
-    background-color: rgb(200,200,200,0.8) !important;
-}
-
-.nav-item>li>a {
-    background-color: yellow !important;
-    color: #fff;
-}
-
-.nav-item>li.active>a, .nav-item>li.active>a:hover, .nav-item>li.active>a:focus {
-  color: white;
-  background-color: blue;
-  border: 1px solid #888888;
-}
 </style>
