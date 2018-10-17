@@ -108,31 +108,6 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleOfficerConditions()">Back to Officer Review</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-info top-buffer-s" @click.prevent="toggleConditions()">Propose Conditions</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="">Return to Conditions</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
                                                     <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="finalDecline()">Decline</button>
                                                 </div>
                                             </div>
@@ -554,7 +529,12 @@
                                             <div class="navbar-inner">
                                                 <div class="container">
                                                     <p class="pull-right" style="margin-top:5px;">
-                                                        <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
+                                                        <button class="btn btn-success" @click.prevent="">Return to Conditions</button>
+                                                        <button class="btn btn-warning" @click.prevent="toggleOfficerConditions()">Back to Officer Review</button>
+                                                        <button class="btn btn-warning" @click.prevent="proposedDecline()">Propose Decline</button>
+                                                        <button class="btn btn-warning" @click.prevent="proposedLicence()">Propose Issue</button>
+                                                        <button class="btn btn-info" @click.prevent="toggleConditions()">Propose Conditions</button>
+                                                        <button class="btn btn-primary" @click.prevent="save()">Save Changes</button>
                                                     </p>
                                                 </div>
                                             </div>
