@@ -132,7 +132,7 @@
                                                 <td class="site"> {{c.name}} - {{c.type}} </td>
                                                 <td class="site"> {{c.status}} </td>
                                                 <td class="numBook">
-                                                    <input class="checkbox" type="checkbox" :value="c.id" :disabled="c.status=='booked'" v-model="multibook_selected" @change="updatePrices()" number>
+                                                    <input class="checkbox" type="checkbox" :value="c.id" :disabled="c.status=='booked' || c.status=='closed & booked'" v-model="multibook_selected" @change="updatePrices()" number>
                                                 </td>
                                             </tr></template>
                                         </tbody>
@@ -542,7 +542,7 @@ export default {
                stat.push(el.status);      
             }); 
             return stat.find(function(value, index){
-                if (value == "booked"){
+                if (value == "booked" || value == "closed & booked"){
                     return true;
                 }
             });          
