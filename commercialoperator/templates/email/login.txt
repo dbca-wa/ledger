@@ -1,0 +1,7 @@
+Dear Sir/Madam,
+
+Click this link to sign in: {{ login_url }}
+
+Best regards,
+
+{{system_name}} Section

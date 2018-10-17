@@ -1,0 +1,13 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    The Proposal {{ proposal.lodgement_number }} has been sent back by approver.
+
+    Approver comments: {{ approver_comment }}
+
+    You can access this Proposal using the following link:
+
+    <a href="{{url}}">Access Proposal</a>
+
+
+{%  endblock %}
