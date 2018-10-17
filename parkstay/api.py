@@ -1055,8 +1055,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                             test_bk = classes_map[key]['availability'][offset][4][0] > 0
                             test_cl = classes_map[key]['availability'][offset][4][1] > 0
                             test_clbk = classes_map[key]['availability'][offset][4][2] > 0
-                            if test_bk and test_cl and test_clbk:
-                                classes_map[key]['availability'][offset][1] = 'Partially Booked or Closed'
+                            if test_clbk or (test_bk and test_cl):
+                                classes_map[key]['availability'][offset][1] = 'Partially Closed or Booked'
                                 if classes_map[key]['availability'][offset][3] is None:
                                     classes_map[key]['availability'][offset][3] = closure_reason
                             elif test_bk:
