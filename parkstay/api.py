@@ -870,7 +870,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             available_serializers = []
             for k,v in available.items():
                 s = CampsiteClassSerializer(CampsiteClass.objects.get(id=k),context={'request':request},method='get').data
-                s['campsites'] = [c_id for c_id, stat in v.items() if stat != 'closed & booked' or (stat != 'booked' and stat !='closed')]
+                s['campsites'] = [c_id for c_id, stat in v.items() if stat != 'closed & booked' and stat != 'booked' and stat !='closed']
                 counts = {'open': 0, 'closed': 0, 'booked': 0, 'closed & booked':0}
                 for c_id, stat in v.items():
                     counts[stat] += 1
@@ -1038,13 +1038,13 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         classes_map[key]['availability'][offset][4][book_offset] += 1
                         # if the number of booked entries equals the size of the class, it's fully booked
                         if classes_map[key]['availability'][offset][4][0] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Fully Booked' 
+                            classes_map[key]['availability'][offset][1] = 'Booked' 
                         # if the number of closed entries equals the size of the class, it's closed (admin) or unavailable (user)
                         elif classes_map[key]['availability'][offset][4][1] == class_sizes[key]:
                             classes_map[key]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
                             classes_map[key]['availability'][offset][3] = closure_reason if show_all else None
                         elif classes_map[key]['availability'][offset][4][2] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Closed & Booked' if show_all else 'Unavailable'
+                            classes_map[key]['availability'][offset][1] = 'Closures/Bookings' if show_all else 'Unavailable'
                             classes_map[key]['availability'][offset][3] = closure_reason if show_all else None 
                         # if all of the entries are closed, it's unavailable (user)
                         elif not show_all and (classes_map[key]['availability'][offset][4][0] + classes_map[key]['availability'][offset][4][1] == class_sizes[key]):
@@ -1056,17 +1056,17 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                             test_cl = classes_map[key]['availability'][offset][4][1] > 0
                             test_clbk = classes_map[key]['availability'][offset][4][2] > 0
                             if test_clbk or (test_bk and test_cl):
-                                classes_map[key]['availability'][offset][1] = 'Partially Closed or Booked'
+                                classes_map[key]['availability'][offset][1] = 'Closures/Bookings'
                                 if classes_map[key]['availability'][offset][3] is None:
                                     classes_map[key]['availability'][offset][3] = closure_reason
                             elif test_bk:
-                                classes_map[key]['availability'][offset][1] = 'Partially Booked'
+                                classes_map[key]['availability'][offset][1] = 'Some Booked'
                             elif test_cl:
-                                classes_map[key]['availability'][offset][1] = 'Partially Closed'
+                                classes_map[key]['availability'][offset][1] = 'Some Closed'
                                 if classes_map[key]['availability'][offset][3] is None:
                                     classes_map[key]['availability'][offset][3] = closure_reason
                             elif test_clbk:
-                                classes_map[key]['availability'][offset][1] = 'Partially Closed or Booked'
+                                classes_map[key]['availability'][offset][1] = 'Closures/Bookings'
                                 if classes_map[key]['availability'][offset][3] is None:
                                     classes_map[key]['availability'][offset][3] = closure_reason
 
