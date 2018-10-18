@@ -293,47 +293,23 @@ class SpecialFieldsSearch(object):
 def save_proponent_data(instance,request,viewset):
     with transaction.atomic():
         try:
-            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
-            extracted_fields,special_fields = create_data_from_form(instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
-            instance.data = extracted_fields
-            #import ipdb; ipdb.set_trace()
-            data = {
-                #'region': special_fields.get('isRegionColumnForDashboard',None),
-                'title': special_fields.get('isTitleColumnForDashboard',None),
-                'activity': special_fields.get('isActivityColumnForDashboard',None),
-
-                'data': extracted_fields,
-                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
-                'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
-               # 'lodgement_sequence': 1 if instance.lodgement_sequence == 0 else instance.lodgement_sequence,
-
-            }
+#            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
+#            extracted_fields,special_fields = create_data_from_form(instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
+#            instance.data = extracted_fields
+#            #import ipdb; ipdb.set_trace()
+#            data = {
+#                #'region': special_fields.get('isRegionColumnForDashboard',None),
+#                'title': special_fields.get('isTitleColumnForDashboard',None),
+#                'activity': special_fields.get('isActivityColumnForDashboard',None),
+#
+#                'data': extracted_fields,
+#                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
+#                'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
+#            }
+            data = {}
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
-            # Save Documents
-#            for f in request.FILES:
-#                try:
-#                    #document = instance.documents.get(name=str(request.FILES[f]))
-#                    document = instance.documents.get(input_name=f)
-#                except ProposalDocument.DoesNotExist:
-#                    document = instance.documents.get_or_create(input_name=f)[0]
-#                document.name = str(request.FILES[f])
-#                if document._file and os.path.isfile(document._file.path):
-#                    os.remove(document._file.path)
-#                document._file = request.FILES[f]
-#                document.save()
-
-#            for f in request.FILES:
-#                #import ipdb; ipdb; ipdb.set_trace()
-#                try:
-#					document = instance.documents.get(input_name=f, name=request.FILES[f].name)
-#                except ProposalDocument.DoesNotExist:
-#					document = instance.documents.get_or_create(input_name=f, name=request.FILES[f].name)[0]
-#                document._file = request.FILES[f]
-#                document.save()
-
-            # End Save Documents
         except:
             raise
 

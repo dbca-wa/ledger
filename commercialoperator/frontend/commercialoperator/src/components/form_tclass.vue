@@ -80,13 +80,13 @@
 </template>
 
 <script>
-    import Applicant from '@/components/external/tclass/applicant.vue'
-    import ActivitiesLand from '@/components/external/tclass/activities_land.vue'
-    import ActivitiesMarine from '@/components/external/tclass/activities_marine.vue'
-    import OtherDetails from '@/components/external/tclass/other_details.vue'
-    import OnlineTraining from '@/components/external/tclass/online_training.vue'
-    import Payment from '@/components/external/tclass/payment.vue'
-    import Confirmation from '@/components/external/tclass/confirmation.vue'
+    import Applicant from '@/components/common/tclass/applicant.vue'
+    import ActivitiesLand from '@/components/common/tclass/activities_land.vue'
+    import ActivitiesMarine from '@/components/common/tclass/activities_marine.vue'
+    import OtherDetails from '@/components/common/tclass/other_details.vue'
+    import OnlineTraining from '@/components/common/tclass/online_training.vue'
+    import Payment from '@/components/common/tclass/payment.vue'
+    import Confirmation from '@/components/common/tclass/confirmation.vue'
     export default {
         props:{
             proposal:{

@@ -10,7 +10,10 @@ from commercialoperator.components.proposals.models import (
                                     ProposalStandardRequirement,
                                     ProposalDeclinedDetails,
                                     AmendmentRequest,
-                                    AmendmentReason
+                                    AmendmentReason,
+                                    ProposalApplicantDetails,
+                                    ProposalActivitiesLand,
+                                    ProposalActivitiesMarine,
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -37,11 +40,29 @@ class EmailUserSerializer(serializers.ModelSerializer):
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
 
+class ProposalApplicantDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProposalApplicantDetails
+        fields = ('id','first_name')
+
+class ProposalActivitiesLandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProposalActivitiesLand
+        fields = ('id','activities_land')
+
+class ProposalActivitiesMarineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProposalActivitiesMarine
+        fields = ('id','activities_marine')
+
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
     proposal_type = serializers.SerializerMethodField()
     allowed_assessors = EmailUserSerializer(many=True)
+    applicant_details = ProposalApplicantDetailsSerializer()
+    activities_land = ProposalActivitiesLandSerializer()
+    activities_marine = ProposalActivitiesMarineSerializer()
 
     get_history = serializers.ReadOnlyField()
 
@@ -89,7 +110,12 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'lodgement_sequence',
                 'can_officer_process',
                 'allowed_assessors',
-                'proposal_type'
+                'proposal_type',
+
+                # tab field models
+                'applicant_details',
+                'activities_land',
+                'activities_marine',
                 )
         read_only_fields=('documents',)
 
@@ -244,8 +270,18 @@ class ProposalSerializer(BaseProposalSerializer):
     def get_readonly(self,obj):
         return obj.can_user_view
 
+#class ProposalApplicantDetailsSerializer(serializers.ModelSerializer):
+#
+#    class Meta:
+#        model = ProposalApplicantDetails
+#        fields = (
+#                'id',
+#                'first_name',
+#                )
+
 class SaveProposalSerializer(BaseProposalSerializer):
     assessor_data = serializers.JSONField(required=False)
+    #applicant_details = ProposalApplicantDetailsSerializer(required=False)
 
     class Meta:
         model = Proposal
@@ -281,6 +317,9 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'lodgement_number',
                 'lodgement_sequence',
                 'can_officer_process',
+                'applicant_details',
+                #'activities_land',
+                #'activities_marine',
                 )
         read_only_fields=('documents','requirements')
 
@@ -516,7 +555,7 @@ class ProposedApprovalSerializer(serializers.Serializer):
 class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False)
-   
+
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
     #reason = serializers.SerializerMethodField()

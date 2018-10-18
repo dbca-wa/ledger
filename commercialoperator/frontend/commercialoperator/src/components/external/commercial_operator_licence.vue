@@ -69,8 +69,8 @@
 <script>
 //import Proposal from '../form.vue'
 import ProposalTClass from '../form_tclass.vue'
-import ProposalFilming from '../form_tclass.vue'
-import ProposalEvent from '../form_tclass.vue'
+import ProposalFilming from '../form_filming.vue'
+import ProposalEvent from '../form_event.vue'
 import Vue from 'vue' 
 import {
   api_endpoints,

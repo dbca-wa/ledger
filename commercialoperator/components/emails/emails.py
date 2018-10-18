@@ -83,7 +83,8 @@ class TemplateEmailBase(object):
                                      attachments=_attachments, cc=cc, bcc=bcc)
         msg.attach_alternative(html_body, 'text/html')
         try:
-            msg.send(fail_silently=False)
+            if not settings.DISABLE_EMAIL:
+                msg.send(fail_silently=False)
             return msg
         except Exception as e:
             logger.exception("Error while sending email to {}: {}".format(to_addresses, e))

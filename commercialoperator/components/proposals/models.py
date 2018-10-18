@@ -193,6 +193,28 @@ class ProposalDocument(Document):
     class Meta:
         app_label = 'commercialoperator'
 
+
+class ProposalApplicantDetails(models.Model):
+    first_name = models.CharField(max_length=24, blank=True, default='')
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
+class ProposalActivitiesLand(models.Model):
+    activities_land = models.CharField(max_length=24, blank=True, default='')
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
+class ProposalActivitiesMarine(models.Model):
+    activities_marine = models.CharField(max_length=24, blank=True, default='')
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
 class Proposal(RevisionedMixin):
 #class Proposal(models.Model):
 
@@ -221,7 +243,7 @@ class Proposal(RevisionedMixin):
     PROCESSING_STATUS_WITH_APPROVER = 'with_approver'
     PROCESSING_STATUS_RENEWAL = 'renewal'
     PROCESSING_STATUS_LICENCE_AMENDMENT = 'licence_amendment'
-    PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE = 'awaiting_applicant_response'
+    PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE = 'awaiting_applicant_respone'
     PROCESSING_STATUS_AWAITING_ASSESSOR_RESPONSE = 'awaiting_assessor_response'
     PROCESSING_STATUS_AWAITING_RESPONSES = 'awaiting_responses'
     PROCESSING_STATUS_READY_FOR_CONDITIONS = 'ready_for_conditions'
@@ -330,6 +352,11 @@ class Proposal(RevisionedMixin):
     approval_level = models.CharField('Activity matrix approval level', max_length=255,null=True,blank=True)
     approval_level_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='approval_level_document')
     approval_comment = models.TextField(blank=True)
+
+    applicant_details = models.OneToOneField(ProposalApplicantDetails, blank=True, null=True) #, related_name='applicant_details')
+    activities_land = models.OneToOneField(ProposalActivitiesLand, blank=True, null=True) #, related_name='activities_land')
+    activities_marine = models.OneToOneField(ProposalActivitiesMarine, blank=True, null=True) #, related_name='activities_marine')
+
 
     class Meta:
         app_label = 'commercialoperator'
@@ -490,7 +517,7 @@ class Proposal(RevisionedMixin):
             raise exceptions.ProposalNotComplete()
         missing_fields = []
         required_fields = {
-            'region':'Region/District',
+        #    'region':'Region/District',
         #    'title': 'Title',
         #    'activity': 'Activity'
         }
@@ -599,6 +626,8 @@ class Proposal(RevisionedMixin):
                 ret1 = send_submit_email_notification(request, self)
                 ret2 = send_external_submit_email_notification(request, self)
 
+                import ipdb; ipdb.set_trace()
+                self.save_form_tabs(request)
                 if ret1 and ret2:
                     self.processing_status = 'with_assessor'
                     self.customer_status = 'with_assessor'
@@ -608,6 +637,12 @@ class Proposal(RevisionedMixin):
                     raise ValidationError('An error occurred while submitting proposal (Submit email notifications failed)')
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
+
+    def save_form_tabs(self,request):
+        self.applicant_details = ProposalApplicantDetails.objects.create(first_name=request.data['first_name'])
+        self.activities_land = ProposalActivitiesLand.objects.create(activities_land=request.data['activities_land'])
+        self.activities_marine = ProposalActivitiesMarine.objects.create(activities_marine=request.data['activities_marine'])
+        #self.save()
 
     def update(self,request,viewset):
         from commercialoperator.components.proposals.utils import save_proponent_data
