@@ -574,28 +574,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-
-    @detail_route(methods=['POST',])
-    def final_decline(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = PropedDeclineSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance.final_decline(request,serializer.validated_data)
-            serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e,'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
     @detail_route(methods=['post'])
     def assesor_send_referral(self, request, *args, **kwargs):
         try:

@@ -108,12 +108,7 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="finalDecline()">Decline</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue</button>
+                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
                                                 </div>
                                             </div>
                                         </template>
@@ -131,28 +126,6 @@
                                             </div>
                                             
                                         </template>
-                                       <!--  <template v-if="assessmentComplete">
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <strong>Action</strong><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Resend To Assessor</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
-                                                </div>
-                                            </div>
-                                        </template> -->
                                         <template v-if="showingConditions">
                                             <div class="row">
                                                 <div class="col-sm-12">
@@ -888,25 +861,6 @@ export default {
             this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
-        finalDecline:function(){
-            let vm=this;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_decline'),JSON.stringify(licence),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        swal(
-                             'Issue activity type',
-                             'The activity type is successfully issued',
-                             'success'
-                        );
-                        vm.close();
-                        vm.$parent.refreshFromResponse(response)
-                        // vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
-
-        },
         sendtoAssessor: function(item1){
             let vm=this;
             // var selectedTabTitle = $("#tabs-section li.active");
@@ -941,10 +895,6 @@ export default {
             this.isOfficerConditions=false;
             this.assessmentComplete=false;
             this.isofficerfinalisation=true
-        },
-        declineApplication:function(){
-            this.$refs.proposed_decline.decline = helpers.copyObject(this.application.applicationdeclineddetails);
-            this.$refs.proposed_decline.isModalOpen = true;
         },
         acceptIdRequest: function() {
             let vm = this;

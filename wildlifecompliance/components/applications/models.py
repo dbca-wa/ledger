@@ -879,30 +879,6 @@ class Application(RevisionedMixin):
             except:
                 raise
 
-
-    def final_decline(self,request,details):
-        with transaction.atomic():
-            try:
-                if not self.can_assess(request.user):
-                    raise exceptions.ApplicationNotAuthorized()
-                if self.processing_status != 'with_approver':
-                    raise ValidationError('You cannot decline if it is not with approver')
-
-                ApplicationDeclinedDetails.objects.update_or_create(
-                    application = self,
-                    defaults={'officer':request.user,'reason':details.get('reason'),'cc_email':details.get('cc_email',None)}
-                )
-                self.proposed_decline_status = True
-                self.processing_status = 'declined'
-                self.customer_status = 'declined'
-                self.save()
-                # Log application action
-                self.log_user_action(ApplicationUserAction.ACTION_DECLINE.format(self.id),request)
-                # Log entry for organisation
-                self.applicant.log_user_action(ApplicationUserAction.ACTION_DECLINE.format(self.id),request)
-            except:
-                raise
-
     def proposed_licence(self,request,details):
         with transaction.atomic():
             try:
