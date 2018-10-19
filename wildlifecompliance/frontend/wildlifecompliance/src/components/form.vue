@@ -87,6 +87,8 @@ from '@/utils/hooks'
 
             }
             
+            $('#tabs-section li:first-child a').tab('show')       // set the first tab if exist
+
             if (this.withSectionsSelector){
                 
                 Renderer.sections.map(sec => {
