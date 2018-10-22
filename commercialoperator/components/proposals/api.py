@@ -1034,6 +1034,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 ],
             }
             serializer = SaveProposalSerializer(data=data)
+            import ipdb; ipdb.set_trace()
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)

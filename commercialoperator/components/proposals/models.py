@@ -49,7 +49,7 @@ class ProposalType(models.Model):
     description = models.CharField(max_length=256, blank=True, null=True)
     #name = models.CharField(verbose_name='Application name (eg. commercialoperator, Apiary)', max_length=24, choices=application_type_choicelist(), default=application_type_choicelist()[0][0])
     name = models.CharField(verbose_name='Application name (eg. T Class, Filming, Event)', max_length=64, choices=application_type_choicelist(), default='T Class')
-    schema = JSONField()
+    schema = JSONField(default=[{}])
     #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
     #site = models.OneToOneField(Site, default='1')
     replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)

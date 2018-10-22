@@ -60,9 +60,10 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     documents_url = serializers.SerializerMethodField()
     proposal_type = serializers.SerializerMethodField()
     allowed_assessors = EmailUserSerializer(many=True)
-    applicant_details = ProposalApplicantDetailsSerializer()
-    activities_land = ProposalActivitiesLandSerializer()
-    activities_marine = ProposalActivitiesMarineSerializer()
+
+    applicant_details = ProposalApplicantDetailsSerializer(required=False)
+    activities_land = ProposalActivitiesLandSerializer(required=False)
+    activities_marine = ProposalActivitiesMarineSerializer(required=False)
 
     get_history = serializers.ReadOnlyField()
 
