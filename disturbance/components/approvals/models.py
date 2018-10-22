@@ -247,6 +247,7 @@ class Approval(RevisionedMixin):
                 self.cancellation_details = details.get('cancellation_details')
                 cancellation_date = datetime.datetime.strptime(self.cancellation_date,'%Y-%m-%d')
                 cancellation_date = cancellation_date.date()
+                self.cancellation_date = cancellation_date
                 today = timezone.now().date()
                 if cancellation_date <= today:
                     if not self.status == 'cancelled':
@@ -255,6 +256,7 @@ class Approval(RevisionedMixin):
                         send_approval_cancel_email_notification(self)
                 else:
                     self.set_to_cancel = True
+                #import ipdb; ipdb.set_trace()
                 self.save()
                 # Log proposal action
                 self.log_user_action(ApprovalUserAction.ACTION_CANCEL_APPROVAL.format(self.id),request)
