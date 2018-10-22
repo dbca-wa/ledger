@@ -108,7 +108,7 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
+                                                    <button v-if="canIssueDecline" style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
                                                 </div>
                                             </div>
                                         </template>
@@ -503,11 +503,11 @@
                                             <div class="navbar-inner">
                                                 <div class="container">
                                                     <p class="pull-right" style="margin-top:5px;">
-                                                        <button v-if="canReturnToConditions" class="btn btn-success" @click.prevent="">Return to Conditions</button>
-                                                        <button v-if="canBackToOfficerReview" class="btn btn-warning" @click.prevent="toggleOfficerConditions()">Back to Officer Review</button>
+                                                        <button v-if="canReturnToConditions" class="btn btn-success" @click.prevent="returnToOfficerConditions()">Return to Conditions</button>
+                                                        <button v-if="canOfficerReviewConditions" class="btn btn-warning" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
                                                         <button v-if="canProposeDecline" class="btn btn-warning" @click.prevent="proposedDecline()">Propose Decline</button>
                                                         <button v-if="canProposeIssue" class="btn btn-warning" @click.prevent="proposedLicence()">Propose Issue</button>
-                                                        <button v-if="canProposeConditions" class="btn btn-info" @click.prevent="toggleConditions()">Propose Conditions</button>
+                                                        <button v-if="canCompleteAssessment" class="btn btn-info" @click.prevent="toggleConditions()">Complete Assessment</button>
                                                         <button class="btn btn-primary" @click.prevent="save()">Save Changes</button>
                                                     </p>
                                                 </div>
@@ -662,23 +662,40 @@ export default {
     watch: {
     },
     computed: {
-        selectedTabIdNotNull: function(){
+        selectedTabId: function(){
             return this.selected_activity_type_tab_id;
         },
-        canReturnToConditions: function(){
-            return this.selectedTabIdNotNull ? true : false;
+        selectedActivityType: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].id == this.selectedTabId){
+                    return activity_types_list[i];
+                }
+            }
         },
-        canBackToOfficerReview: function(){
-            return this.selectedTabIdNotNull ? true : false;
+        canIssueDecline: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer-Finalisation'){
+                    return true;
+                }
+            }
+            return false;
+        },
+        canReturnToConditions: function(){
+            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Finalisation' ? true : false;
+        },
+        canOfficerReviewConditions: function(){
+            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Finalisation' ? true : false;
         },
         canProposeDecline: function(){
-            return this.selectedTabIdNotNull ? true : false;
+            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Conditions' ? true : false;
         },
         canProposeIssue: function(){
-            return this.selectedTabIdNotNull ? true : false;
+            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Conditions' ? true : false;
         },
-        canProposeConditions: function(){
-            return this.selectedTabIdNotNull ? true : false;
+        canCompleteAssessment: function(){
+            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Assessor' ? true : false;
         },
         contactsURL: function(){
             return this.application!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.application.org_applicant.id+'/contacts') : '';
@@ -1077,6 +1094,14 @@ export default {
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
             
             this.selected_assessment_tab=tab_id
+        },
+        returnToOfficerConditions: function(activity_type_id){
+            this.selectedActivityType.processing_status = 'With Officer-Conditions';
+            swal(
+                 'Update Status',
+                 'The activity type has been returned to With Officer - Conditions.',
+                 'success'
+            );
         },
         toggleOfficerConditions:function(){
             this.showingApplication = false;
