@@ -353,9 +353,30 @@ class Proposal(RevisionedMixin):
     approval_level_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='approval_level_document')
     approval_comment = models.TextField(blank=True)
 
+    # common
     applicant_details = models.OneToOneField(ProposalApplicantDetails, blank=True, null=True) #, related_name='applicant_details')
+    #payment = models.OneToOneField(ProposalPayment, blank=True, null=True)
+    #confirmation = models.OneToOneField(ProposalConfirmation, blank=True, null=True)
+
+    # T Class
     activities_land = models.OneToOneField(ProposalActivitiesLand, blank=True, null=True) #, related_name='activities_land')
     activities_marine = models.OneToOneField(ProposalActivitiesMarine, blank=True, null=True) #, related_name='activities_marine')
+    #other_details = models.OneToOneField(ProposalOtherDetails, blank=True, null=True)
+    #online_training = models.OneToOneField(ProposalOnlineTraining, blank=True, null=True)
+
+    # Filming
+    #activity = models.OneToOneField(ProposalActivity, blank=True, null=True)
+    #access = models.OneToOneField(ProposalAccess, blank=True, null=True)
+    #equipment = models.OneToOneField(ProposalEquipment, blank=True, null=True)
+    #other_details = models.OneToOneField(ProposalOtherDetails, blank=True, null=True)
+    #online_training = models.OneToOneField(ProposalOnlineTraining, blank=True, null=True)
+
+    # Event
+    #activities = models.OneToOneField(ProposalActivities, blank=True, null=True)
+    #event_management = models.OneToOneField(ProposalEventManagement, blank=True, null=True)
+    #vehicles_vessels = models.OneToOneField(ProposalVehiclesVessels, blank=True, null=True)
+    #other_details = models.OneToOneField(ProposalOtherDetails, blank=True, null=True)
+    #online_training = models.OneToOneField(ProposalOnlineTraining, blank=True, null=True)
 
 
     class Meta:
@@ -626,7 +647,7 @@ class Proposal(RevisionedMixin):
                 ret1 = send_submit_email_notification(request, self)
                 ret2 = send_external_submit_email_notification(request, self)
 
-                import ipdb; ipdb.set_trace()
+                #import ipdb; ipdb.set_trace()
                 self.save_form_tabs(request)
                 if ret1 and ret2:
                     self.processing_status = 'with_assessor'

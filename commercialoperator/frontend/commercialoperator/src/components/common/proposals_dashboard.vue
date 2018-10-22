@@ -152,7 +152,7 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
+                "Number","Application Type","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
                 //"LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
             ],
 
@@ -187,6 +187,10 @@ export default {
                         },
                         name: "id, lodgement_number",
                     },
+                    {
+						data: "application_type",
+						name: "application_type"
+					},
                     {
                         data: "region",
                         'render': function (value) {
@@ -319,7 +323,7 @@ export default {
                 */
             },
             proposal_headers:[
-                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
+                "Number","Application Type","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
                 //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
             ],
             proposal_options:{
@@ -353,6 +357,10 @@ export default {
                         //name: "lodgement_number",
                         data: "id, lodgement_number"
                     },
+                    {
+						data: "application_type",
+						name: "application_type"
+					},
                     {
                         data: "region",
                         'render': function (value) {

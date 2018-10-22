@@ -1,6 +1,11 @@
 <template lang="html">
     <div>
-      Activities Marine: <input type="text" name="activities_marine"><br>
+      <div v-if="proposal.processing_status=='Draft'">
+        Activities Marine: <input type="text" name="activities_marine" :value="proposal.activities_marine.activities_marine"><br>
+      </div>
+      <div v-else>
+        Activities Marine: <input readonly="readonly" type="text" name="activities_marine" :value="proposal.activities_marine.activities_marine"><br>
+      </div>
     </div>
 </template>
 
