@@ -1,0 +1,12 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Approval is due for renewal:
+
+    Approval : {{ approval.lodgement_number}}
+    Proposal : {{ proposal.lodgement_number}}
+
+    Please find the attached renewal notice.
+
+   
+{%  endblock %}

@@ -1,0 +1,14 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Approval has been suspended:
+
+    Approval : {{ approval.lodgement_number}}
+
+    Suspension Details : {{details}}    
+
+    From Date : {{from_date}}
+
+    To Date : {{to_date}}
+
+{%  endblock %}

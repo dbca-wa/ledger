@@ -1,0 +1,18 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+	The Proposal {{ proposal.lodgement_number }} has been submitted and can be assessed.
+
+	<p>
+	Region: {{proposal.region}}<br>
+	Activity: {{proposal.activity}}
+	</p>
+
+
+    <p>
+    You can access this Proposal using the following link:
+    </p>
+    <a href="{{url}}">Access Proposal</a>
+
+
+{%  endblock %}
