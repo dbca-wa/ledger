@@ -497,16 +497,17 @@
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                                     <input type='hidden' name="application_id" :value="1" />
+                                    <input type='hidden' id="selected_activity_type_tab_id" v-model="selected_activity_type_tab_id" :value=0 />
                                     <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
                                         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                                             <div class="navbar-inner">
                                                 <div class="container">
                                                     <p class="pull-right" style="margin-top:5px;">
-                                                        <button class="btn btn-success" @click.prevent="">Return to Conditions</button>
-                                                        <button class="btn btn-warning" @click.prevent="toggleOfficerConditions()">Back to Officer Review</button>
-                                                        <button class="btn btn-warning" @click.prevent="proposedDecline()">Propose Decline</button>
-                                                        <button class="btn btn-warning" @click.prevent="proposedLicence()">Propose Issue</button>
-                                                        <button class="btn btn-info" @click.prevent="toggleConditions()">Propose Conditions</button>
+                                                        <button v-if="canReturnToConditions" class="btn btn-success" @click.prevent="">Return to Conditions</button>
+                                                        <button v-if="canBackToOfficerReview" class="btn btn-warning" @click.prevent="toggleOfficerConditions()">Back to Officer Review</button>
+                                                        <button v-if="canProposeDecline" class="btn btn-warning" @click.prevent="proposedDecline()">Propose Decline</button>
+                                                        <button v-if="canProposeIssue" class="btn btn-warning" @click.prevent="proposedLicence()">Propose Issue</button>
+                                                        <button v-if="canProposeConditions" class="btn btn-info" @click.prevent="toggleConditions()">Propose Conditions</button>
                                                         <button class="btn btn-primary" @click.prevent="save()">Save Changes</button>
                                                     </p>
                                                 </div>
@@ -577,6 +578,7 @@ export default {
             selected_referral: '',
             selected_assessment_tab:null,
             selected_assessment_id:null,
+            selected_activity_type_tab_id:null,
             form: null,
             members: [],
             department_users : [],
@@ -660,6 +662,24 @@ export default {
     watch: {
     },
     computed: {
+        selectedTabIdNotNull: function(){
+            return this.selected_activity_type_tab_id;
+        },
+        canReturnToConditions: function(){
+            return this.selectedTabIdNotNull ? true : false;
+        },
+        canBackToOfficerReview: function(){
+            return this.selectedTabIdNotNull ? true : false;
+        },
+        canProposeDecline: function(){
+            return this.selectedTabIdNotNull ? true : false;
+        },
+        canProposeIssue: function(){
+            return this.selectedTabIdNotNull ? true : false;
+        },
+        canProposeConditions: function(){
+            return this.selectedTabIdNotNull ? true : false;
+        },
         contactsURL: function(){
             return this.application!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.application.org_applicant.id+'/contacts') : '';
         },
@@ -763,7 +783,7 @@ export default {
         },
         canSeeSubmission: function(){
             return this.application && (this.application.processing_status != 'With Assessor (Conditions)' && this.application.processing_status != 'With Approver' && !this.isFinalised)
-        }
+        },
     },
     methods: {
         
@@ -1026,7 +1046,6 @@ export default {
             vm.showingApplication = false;
             vm.showingConditions=false;
         },
-        
         save: function(e) {
           let vm = this;
           let formData = new FormData(vm.form);
@@ -1058,7 +1077,6 @@ export default {
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
             
             this.selected_assessment_tab=tab_id
-
         },
         toggleOfficerConditions:function(){
             this.showingApplication = false;
@@ -1401,7 +1419,7 @@ export default {
                     'error'
                 )
             });
-        }        
+        },
     },
     mounted: function() {
         let vm = this;
@@ -1500,6 +1518,7 @@ export default {
             });
     }
 }
+
 </script>
 <style scoped>
 .top-buffer-s {

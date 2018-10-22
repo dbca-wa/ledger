@@ -51,7 +51,7 @@ from '@/utils/hooks'
                     this.values = this.application.data[0]
                 }
 
-            }
+            },
 
         },
         created:function () {
@@ -59,6 +59,7 @@ from '@/utils/hooks'
             this.mapDataToApplication();
         },
         mounted:function () {
+
             this.amendment_request_id=this.application.amendment_requests
             
             var tabs=Renderer.tabs_list
@@ -82,7 +83,7 @@ from '@/utils/hooks'
             }
             else{
                 tabs.map(tsec => {
-                    $('#tabs-section').append(`<li><a data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
+                    $('#tabs-section').append(`<li><a onclick="vue.setSelectedTabId(this)" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
                 });
 
             }
