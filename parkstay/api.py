@@ -1006,8 +1006,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             # make a map of class IDs to site IDs
             for s in sites_qs:
                 rate = rates_map[s.campsite_class.pk]
-                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)]] for i in range(length)]
-
+                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], None] for i in range(length)]
             # store number of campsites in each class
             class_sizes = {k: len(v) for k, v in class_sites_map.items()}
 
@@ -1026,6 +1025,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         # update the per-site availability
                         classes_map[key]['breakdown'][s.name][offset][0] = False
                         classes_map[key]['breakdown'][s.name][offset][1] = stat if show_all else 'Unavailable'
+                        classes_map[key]['breakdown'][s.name][offset][3] = closure_reason if show_all else None
 
                         # update the class availability status
                         if stat == 'booked':
