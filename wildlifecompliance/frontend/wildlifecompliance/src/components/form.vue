@@ -87,8 +87,6 @@ from '@/utils/hooks'
 
             }
             
-            $('#tabs-section li:first-child a').tab('show')       // set the first tab if exist
-
             if (this.withSectionsSelector){
                 
                 Renderer.sections.map(sec => {
@@ -116,7 +114,9 @@ from '@/utils/hooks'
 
             }
 
-                
+            // Initialise by setting all first tabs.
+            $('#tabs-section li:first-child a').tab('show');
+            $('#tabs-main li:first-child a').tab('show');
         },
         render(h) {
             let vm =this;
