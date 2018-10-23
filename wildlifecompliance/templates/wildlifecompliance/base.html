@@ -91,6 +91,7 @@
                                             <ul class="dropdown-menu">
                                                 {% if request.user.is_staff %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                                    <li><a href="/external">External</a></li>
                                                     <li role="separator" class="divider"></li>
                                                 {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>

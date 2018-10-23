@@ -441,16 +441,18 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
-    def switch_status(self, request, *args, **kwargs):
+    def update_activity_status(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            print(request.data)
+            activity_id = request.data.get('activity_id')
             status = request.data.get('status')
-            if not status:
-                raise serializers.ValidationError('Status is required')
+            if not status or not activity_id:
+                raise serializers.ValidationError('Status and activity id is required')
             else:
-                if not status in ['with_assessor','with_assessor_conditions','with_approver']:
+                if status not in Application.ACTIVITY_PROCESSING_STATUS_CHOICES:
                     raise serializers.ValidationError('The status provided is not allowed')
-            instance.move_to_status(request,status)
+            instance.update_activity_status(request,activity_id,status)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 
         except serializers.ValidationError:
@@ -560,28 +562,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             # print(serializer.validated_data)
             instance.proposed_decline(request,serializer.validated_data)
-            serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e,'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-
-    @detail_route(methods=['POST',])
-    def final_decline(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = PropedDeclineSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance.final_decline(request,serializer.validated_data)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 
         except serializers.ValidationError:

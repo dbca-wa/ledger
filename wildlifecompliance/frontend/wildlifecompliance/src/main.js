@@ -40,13 +40,20 @@ Vue.filter('toCurrency', function(value) {
             });
 
 /* eslint-disable no-new */
-new Vue( {
-  el: '#app',
-  router,
-  template: '<App/>',
-  components: {
-    App
-  }
-} )
+window.vue = new Vue( {
+    el: '#app',
+    router,
+    template: '<App/>',
+    components: {
+        App
+    },
+    methods:{
+        setSelectedTabId: function(target) {
+            var tab_id = target.href.split('#')[1];
+            this.$children[0].$children[0].$children[0].$children[0].$children[0].selected_activity_type_tab_id = parseInt(tab_id);
+            return parseInt(tab_id);
+        },
+    },
+})
 
 Vue.config.devtools = true
