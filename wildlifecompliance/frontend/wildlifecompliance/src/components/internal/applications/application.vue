@@ -503,7 +503,7 @@
                                             <div class="navbar-inner">
                                                 <div class="container">
                                                     <p class="pull-right" style="margin-top:5px;">
-                                                        <button v-if="canReturnToConditions" class="btn btn-success" @click.prevent="returnToOfficerConditions()">Return to Conditions</button>
+                                                        <button v-if="canReturnToConditions" class="btn btn-success" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
                                                         <button v-if="canOfficerReviewConditions" class="btn btn-warning" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
                                                         <button v-if="canProposeDecline" class="btn btn-warning" @click.prevent="proposedDecline()">Propose Decline</button>
                                                         <button v-if="canProposeIssue" class="btn btn-warning" @click.prevent="proposedLicence()">Propose Issue</button>
@@ -810,16 +810,11 @@ export default {
             // Listeners for Send to Assessor datatable actions
             if (vm.$refs.assessorDatatable) {
                 for (var i=0; i < vm.$refs.assessorDatatable.length; i++) {
-                    console.log('printing datatable in loop');
-                    console.log(datatable);
                     vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_remind',(e) => {
-                    console.log("inside assessment remind")
-                    e.preventDefault();
+                        e.preventDefault();
 
-                    let assessment_id = $(e.target).data('assessmentid');
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
-                    console.log(e.target.parentElement);
-                        console.log('successful')
+                        let assessment_id = $(e.target).data('assessmentid');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
                             //vm.$parent.loading.splice('processing contact',1);
                             swal(
                                  'Sent',
@@ -837,11 +832,10 @@ export default {
                     });
 
                     vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_resend',(e) => {
-                    e.preventDefault();
+                        e.preventDefault();
 
-                    let assessment_id = $(e.target).data('assessmentid');
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/resend_assessment'))).then((response)=>{
-                        console.log('successful')
+                        let assessment_id = $(e.target).data('assessmentid');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/resend_assessment'))).then((response)=>{
                             //vm.$parent.loading.splice('processing contact',1);
                             swal(
                                  'Sent',
@@ -859,12 +853,10 @@ export default {
                     });
 
                     vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_recall',(e) => {
-                    console.log("inside assessment remind")
-                    e.preventDefault();
+                        e.preventDefault();
 
-                    let assessment_id = $(e.target).data('assessmentid');
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/recall_assessment'))).then((response)=>{
-                        console.log('successful')
+                        let assessment_id = $(e.target).data('assessmentid');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/recall_assessment'))).then((response)=>{
                             //vm.$parent.loading.splice('processing contact',1);
                             swal(
                                  'Success',
@@ -1095,13 +1087,9 @@ export default {
             
             this.selected_assessment_tab=tab_id
         },
-        returnToOfficerConditions: function(activity_type_id){
-            this.selectedActivityType.processing_status = 'With Officer-Conditions';
-            swal(
-                 'Update Status',
-                 'The activity type has been returned to With Officer - Conditions.',
-                 'success'
-            );
+        returnToOfficerConditions: function(){
+            let vm = this;
+            vm.updateActivityStatus(vm.selectedActivityType.id,'With Officer-Conditions');
         },
         toggleOfficerConditions:function(){
             this.showingApplication = false;
@@ -1243,21 +1231,23 @@ export default {
                 });
             }
         },
-        switchStatus: function(status){
+        updateActivityStatus: function(activity_id, status){
             let vm = this;
-            vm.isSendingToAssessor = !vm.isSendingToAssessor;
-            let data = {'status': status}
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/switch_status')),JSON.stringify(data),{
+            //vm.isSendingToAssessor = !vm.isSendingToAssessor;
+            let data = {
+                'activity_id' : activity_id,
+                'status': status
+            }
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/update_activity_status')),JSON.stringify(data),{
                 emulateJSON:true,
-            })
-            .then((response) => {
+            }).then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);
                 vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                vm.$nextTick(() => {
-                    vm.initialiseAssignedOfficerSelect(true);
-                    vm.updateAssignedOfficerSelect();
-                });
+//                vm.$nextTick(() => {
+//                    vm.initialiseAssignedOfficerSelect(true);
+//                    vm.updateAssignedOfficerSelect();
+//                });
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
                 vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};

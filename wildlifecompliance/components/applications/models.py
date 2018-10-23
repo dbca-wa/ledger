@@ -232,6 +232,9 @@ class Application(RevisionedMixin):
                                  ('under_review', 'Under Review'),
                                  )
 
+    ACTIVITY_PROCESSING_STATUS_CHOICES = ['Draft','With Officer','With Assessor','With Officer-Conditions',
+                                          'With Officer-Finalisation','Accepted','Declined']
+
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
                                ('updated', 'Updated'), ('accepted', 'Accepted'))
 
@@ -718,18 +721,21 @@ class Application(RevisionedMixin):
             except:
                 raise
 
-    def move_to_status(self,request,status):
-        if not self.can_assess(request.user):
-            raise exceptions.ApplicationNotAuthorized()
-        if status in ['with_assessor','with_assessor_conditions','with_approver']:
-            # Code from disturbance
-            # if self.processing_status == 'with_referral' or self.can_user_edit:
-            #     raise ValidationError('You cannot change the current status at this time')
-            if self.processing_status != status:
-                self.processing_status = status
-                self.save()
-        else:
-            raise ValidationError('The provided status cannot be found.')
+    def update_activity_status(self,request,activity_id,status):
+        with transaction.atomic():
+            try:
+                # if not self.can_assess(request.user):
+                #     raise exceptions.ApplicationNotAuthorized()
+                if status in Application.ACTIVITY_PROCESSING_STATUS_CHOICES:
+                    for activity_type in self.licence_type_data['activity_type']:
+                        if activity_type["id"] == int(activity_id) and activity_type["processing_status"] != status:
+                            activity_type["processing_status"] = status
+                            self.save()
+                            ApplicationDecisionPropose.objects.get(application_id=self.id,licence_activity_type_id=int(activity_id)).delete()
+                else:
+                    raise ValidationError('The provided status cannot be found.')
+            except:
+                raise
 
     
 
@@ -803,7 +809,7 @@ class Application(RevisionedMixin):
                     for activity_type in  self.licence_type_data['activity_type']:
                         if activity_type["id"]==item:
                             activity_type["proposed_decline"]=True
-                            activity_type["processing_status"]="With Officer Finalisation"
+                            activity_type["processing_status"]="With Officer-Finalisation"
                             self.save()
 
                 # Log application action

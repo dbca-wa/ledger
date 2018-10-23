@@ -441,16 +441,18 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
-    def switch_status(self, request, *args, **kwargs):
+    def update_activity_status(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            print(request.data)
+            activity_id = request.data.get('activity_id')
             status = request.data.get('status')
-            if not status:
-                raise serializers.ValidationError('Status is required')
+            if not status or not activity_id:
+                raise serializers.ValidationError('Status and activity id is required')
             else:
-                if not status in ['with_assessor','with_assessor_conditions','with_approver']:
+                if status not in Application.ACTIVITY_PROCESSING_STATUS_CHOICES:
                     raise serializers.ValidationError('The status provided is not allowed')
-            instance.move_to_status(request,status)
+            instance.update_activity_status(request,activity_id,status)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 
         except serializers.ValidationError:
