@@ -33,7 +33,7 @@ router.register(r'booking',api.BookingViewSet)
 router.register(r'admissionsbooking',api.AdmissionsBookingViewSet)
 router.register(r'mooring_booking_ranges',api.MooringAreaBookingRangeViewset)
 router.register(r'mooringsite_booking_ranges',api.MooringsiteBookingRangeViewset)
-router.register(r'mooringsite_rate',api.MooringsiteRateViewSet)
+# router.register(r'mooringsite_rate',api.MooringsiteRateViewSet)
 router.register(r'mooringsites_stay_history',api.MooringsiteStayHistoryViewSet)
 router.register(r'mooring_stay_history',api.MooringAreaStayHistoryViewSet)
 router.register(r'rates',api.RateViewset)
@@ -45,8 +45,9 @@ router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
 router.register(r'users',api.UsersViewSet)
 router.register(r'contacts',api.ContactViewSet)
 router.register(r'countries', api.CountryViewSet)
-router.register(r'bookingperiodoptions', api.BookingPeriodOptionsViewSet)
-router.register(r'bookingperiod', api.BookingPeriodViewSet)
+router.register(r'bookingPeriodOptions', api.BookingPeriodOptionsViewSet)
+router.register(r'bookingPeriod', api.BookingPeriodViewSet)
+router.register(r'registeredVessels', api.RegisteredVesselsViewSet)
 
 api_patterns = [
     url(r'^api/profile$',api.GetProfile.as_view(), name='get-profile'),
@@ -64,6 +65,7 @@ api_patterns = [
     url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
     url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
     url(r'^api/booking/create$', api.add_booking,name='add_booking'),
+    url(r'^api/booking/delete$', api.delete_booking,name='del_booking'),
     url(r'^api/',include(router.urls))
 ]
 

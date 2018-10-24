@@ -190,6 +190,11 @@
         </modal>
         <modal :large="true" @cancel="closeDelConfirmModal()" class="modal fade" data-backdrop="true" :force="true" id="deleteConfirmModal">
             <h4 slot="title">Delete {{ delName }}</h4>
+            <div class="row">
+                <div class="col-md-12" v-if="errorMsgDel">
+                    <div class="errorMsgDiv" id="modalErrorDelete">{{ errorMsgDel }}</div>
+                </div>
+            </div>
             <div class="row" style="text-align:center;">
                 <p>Are you sure you would like to delete {{delName}}?
             </div>
@@ -235,6 +240,7 @@ export default {
             editing: false,
             errorMsg: "",
             errorMsgDelete: '',
+            errorMsgDel: '',
             loadId: '',
             loadName: '',
             delId: '',
@@ -268,10 +274,11 @@ export default {
                     data: 'booking_period',
                     mRender: function(data, type, full) {
                         if (data){
-                            var names = "";
+                            var names = "<td>";
                             for(var i = 0; i < full.booking_period.length; i++){
-                                names += full.booking_period[i].period_name + ", ";
+                                names += full.booking_period[i].period_name + "<br/>";
                             }
+                            names += "</td>";
                             return names;
                         }
                         return '';
@@ -296,6 +303,22 @@ export default {
           'booking_period_options'
         ]),
     },
+    watch: {
+        booking_period_options: function(val){
+            let vm = this;
+            setTimeout( function(){
+                //Because this is using the custom adapter (see addEventListeners for more info)
+                //the text value must be assigned in order for the name to display in the dropdown.
+                for(var i = 0; i < vm.booking_period_options.length; i++){
+                    vm.booking_period_options[i].text = vm.booking_period_options[i].period_name;
+                }
+                //Then trigger the change of data on all 3 dropdowns.
+                $(vm.$refs.periodOptions).data('select2').dataAdapter.updateOptions(vm.booking_period_options);
+                $(vm.$refs.periodOptionsDelete).data('select2').dataAdapter.updateOptions(vm.booking_period_options);
+                $(vm.$refs.periodOptionsModal).data('select2').dataAdapter.updateOptions(vm.booking_period_options);
+            }, 200);
+        }
+    },
     methods: {
         fetchBookingPeriodOptions: function(){
             let vm = this;
@@ -303,16 +326,15 @@ export default {
         },
         setPeriodEditorFields: function(){
             let vm = this;
-            var url = api_endpoints.booking_period;
-            var urlGet = url.slice(0, -5);
-            urlGet += "/" + vm.loadId + "/";
+            var url = api_endpoints.booking_period_edit(vm.loadId);
+            //Loading and populating the fields for the period user is editing.
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
                     xhrObj.setRequestHeader("Accept", "application/json");
                 },
                 method: "GET",
-                url: urlGet,
+                url: url,
                 xhrFields: { withCredentials:true },
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(data){
@@ -404,6 +426,7 @@ export default {
             $('#deleteConfirmModal').modal('hide');
             vm.delName = null;
             vm.delId = null;
+            vm.errorMsgDel = null;
         },
         closeEditPeriodModal: function(){
             let vm = this;
@@ -489,15 +512,14 @@ export default {
         },
         deleteOptionData: function(){
             let vm = this;
-            var url = api_endpoints.booking_period_options;
-            var urlDelete = url.slice(0, -5);
+            var url = api_endpoints.booking_period_options_edit(vm.deletingId);
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
                     xhrObj.setRequestHeader("Accept", "application/json");
                 },
                 method: "DELETE",
-                url: urlDelete + "/" + vm.deletingId + "/",
+                url: url,
                 xhrFields: { withCredentials:true },
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(msg){
@@ -506,9 +528,11 @@ export default {
                     vm.deletingId = "";
                 },
                 error: function(resp){
-                    if(resp.status == 405){
+                    if(resp.status == 500 && resp.responseJSON == "Error in use."){
                         //Need to display error message.
                         vm.errorMsgDelete = "This option is currently used in a period. Please remove before deleting."
+                    } else {
+                        vm.errorMsgDelete = "There was an error, please try again later or speak with a super user."
                     }
                 }
             });
@@ -531,11 +555,12 @@ export default {
                     'start_time': vm.optionsStartTime,
                     'finish_time': vm.optionsFinishTime
                 }
-                var url = api_endpoints.booking_period_options;
+                
                 if(vm.editing){
-                    url = url.slice(0, -5) + "/" + vm.editingId + "/";
+                    var url = api_endpoints.booking_period_options_edit(vm.editingId);
                     var method = "PUT";
                 } else {
+                    var url = api_endpoints.booking_period_options;
                     var method = "POST";
                 }
                 $.ajax({
@@ -549,6 +574,8 @@ export default {
                     data: JSON.stringify(data),
                     headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                     success: function(msg){
+                        //On success; refresh the table, get the new options, close the modal
+                        //and clear any data in it.
                         vm.$refs.optionsTable.vmDataTable.ajax.reload();
                         vm.fetchBookingPeriodOptions();
                         vm.closeEditOptionModal();
@@ -561,25 +588,30 @@ export default {
         },
         deletePeriod: function(){
             let vm = this;
-            var url = api_endpoints.booking_period;
-            var urlDelete = url.slice(0, -5);
+            var url = api_endpoints.booking_period_edit(vm.delId);
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
                     xhrObj.setRequestHeader("Accept", "application/json");
                 },
                 method: "DELETE",
-                url: urlDelete + "/" + vm.delId + "/",
+                url: url,
                 xhrFields: { withCredentials:true },
                 headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                 success: function(msg){
+                    //On success; refresh the table, get the new options and close the modal.
                     vm.fetchBookingPeriodOptions();
                     vm.$refs.optionsTable.vmDataTable.ajax.reload();
                     vm.closeDelConfirmModal();
                     vm.delId = "";
                 },
                 error: function(resp){
-                    
+                    //Need to display error message.
+                    if(resp.status == 500 && resp.responseText.slice(0,14) == "ProtectedError"){
+                        vm.errorMsgDel = "This period is currently used for a mooring site rate. Please remove before deleting."
+                    } else {
+                        vm.errorMsgDel = "There was an error, please try again later or speak with a super user."
+                    }
                 }
             });
         },
@@ -590,11 +622,12 @@ export default {
                 'name': vm.loadName,
                 'booking_period': vm.periodOptions
             }
-            var url = api_endpoints.booking_period;
+            
             if(vm.editing){
-                url = url.slice(0, -5) + "/" + vm.loadId + "/";
+                var url = api_endpoints.booking_period_edit(vm.loadId);
                 var method = "PUT";
             } else {
+                var url = api_endpoints.booking_period;
                 var method = "POST"
             }   
             $.ajax({
@@ -617,6 +650,32 @@ export default {
         },
         addEventListeners: function(){
             let vm = this;
+            //This is a custom adapter that allows for dynamic refreshing of data.
+            //Select 4.0.3 does not currently have a way of updating data properly.
+            //Without using this we can add a new option and that would appear,
+            //however if we change the name of a period option it would still have
+            //the old text in the option in the dropdown in the edit selector (for options)
+            //or the delete selector (for options). The multi-select seems to work, 
+            //populating the correct word and the options are correct. However all
+            //3 need to be updated.
+            $.fn.select2.amd.define('select2/data/customAdapter',
+                ['select2/data/array', 'select2/utils'],
+                function(ArrayAdapter, Utils){
+                    function CustomDataAdapter($element, options){
+                        CustomDataAdapter.__super__.constructor.call(this, $element, options);
+                    }
+                    Utils.Extend(CustomDataAdapter, ArrayAdapter);
+                    CustomDataAdapter.prototype.updateOptions = function (data) {
+                        this.$element.find('option').remove(); //remove all options
+                        this.addOptions(this.convertToOptions(data));
+                    }
+                    return CustomDataAdapter;
+                }
+            );
+            var customAdapter = $.fn.select2.amd.require('select2/data/customAdapter'); //For use in select2 initialisation.
+
+            //Launches the edit period modal from the datatable. This can be from clicking
+            //the ID or the edit under actions.
             vm.$refs.optionsTable.vmDataTable.on('click','.editPeriod', function(e) {
                 e.preventDefault();
                 vm.loadId = e.currentTarget.dataset.rate;
@@ -626,20 +685,19 @@ export default {
                     $('#editPeriodModal').modal('show');
                 }
             });
+            //Launches the delete confirm modal from the datatable.
             vm.$refs.optionsTable.vmDataTable.on('click','.deletePeriod', function(e) {
                 e.preventDefault();
                 vm.delId = e.currentTarget.dataset.rate;
                 if(vm.delId){
-                    var url = api_endpoints.booking_period;
-                    var urlGet = url.slice(0, -5);
-                    urlGet += "/" + vm.delId + "/";
+                    var url = api_endpoints.booking_period_edit(vm.delId);
                     $.ajax({
                         beforeSend: function(xhrObj) {
                             xhrObj.setRequestHeader("Content-Type", "application/json");
                             xhrObj.setRequestHeader("Accept", "application/json");
                         },
                         method: "GET",
-                        url: urlGet,
+                        url: url,
                         xhrFields: { withCredentials:true },
                         headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
                         success: function(data){
@@ -652,9 +710,10 @@ export default {
                 }
             });
 
-            /* Period options Selector*/
+            // Period options on the edit or new period modal.
             $(vm.$refs.periodOptions).select2({
-                "theme": "bootstrap"
+                "theme": "bootstrap",
+                dataAdapter: customAdapter,
             }).
             on("select2:select",function (e) {
                 var selected = $(e.currentTarget);
@@ -689,6 +748,7 @@ export default {
             //Period options in the selector modal for editing.
             $(vm.$refs.periodOptionsModal).select2({
                 "theme": "bootstrap",
+                dataAdapter: customAdapter,
             }).
             on("select2:select",function (e) {
                 var selected = $(e.currentTarget);
@@ -701,6 +761,7 @@ export default {
             //Period options for the delete modal.
             $(vm.$refs.periodOptionsDelete).select2({
                 "theme": "bootstrap",
+                dataAdapter: customAdapter,
             }).
             on("select2:select",function (e) {
                 var selected = $(e.currentTarget);
@@ -731,23 +792,13 @@ export default {
     background-color: #F2DEDE;
     color: #C78382;
     border-color: #EBCCD1;
-    height:50px;
+    display: block;
+    overflow: auto;
     border-style:solid;
     border-width:2px;
     border-radius: 10px;
     padding:10px;
     font-size:12pt;
     margin-bottom:20px;
-}
-/* .select2-container{
-    
-    z-index: 0;
-} */
-.select2-container--open{
-    /* Very important for asthetics, without this the periods selector in the 
-    main screen will be usable when not disabled behind the selector modal
-    dropdown. When is it disabled this setting stops the not-allowed cursor
-    appearing. */
-    z-index: 9999999;
 }
 </style>

@@ -35,7 +35,8 @@ from mooring.models import (MooringAreaPriceHistory,
                                 AdmissionsBooking,
                                 AdmissionsRate,
                                 BookingPeriodOption,
-                                BookingPeriod
+                                BookingPeriod,
+                                RegisteredVessels
                            )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -583,6 +584,7 @@ class RateDetailSerializer(serializers.Serializer):
     reason = serializers.IntegerField()
     details = serializers.CharField(required=False,allow_blank=True)
     campsite = serializers.IntegerField(required=False)
+    booking_period_id = serializers.IntegerField(required=False)
 
     def validate_rate(self, value):
         if value:
@@ -597,12 +599,24 @@ class RateDetailSerializer(serializers.Serializer):
             raise serializers.ValidationError('Details required if reason is other.')
         return obj
 
+class BookingPeriodOptionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookingPeriodOption
+        fields = ('id', 'period_name', 'small_price', 'medium_price', 'large_price', 'start_time', 'finish_time')
+
+class BookingPeriodSerializer(serializers.ModelSerializer):
+    booking_period = BookingPeriodOptionsSerializer(many=True, required=False)
+    class Meta:
+        model = BookingPeriod
+        fields = ('id', 'name', 'booking_period')
+        depth = 1
+
 class MooringAreaPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
     details = serializers.CharField(required=False,allow_blank=True)
     class Meta:
         model = MooringAreaPriceHistory
-        fields = ('id','date_start','date_end','rate_id','mooring','adult','concession','child','infant','editable','deletable','reason','details')
+        fields = ('id','date_start','date_end','rate_id','mooring','adult','concession','child','infant','editable','deletable','reason','details', 'booking_period_id')
         read_only_fields = ('id','editable','deletable','mooring','adult','concession','child','infant')
 
     def validate(self,obj):
@@ -657,18 +671,11 @@ class MarinaEntryRateSerializer(serializers.ModelSerializer):
         if method == 'get':
             self.fields['reason'] = PriceReasonSerializer(read_only=True)
 
-class BookingPeriodOptionsSerializer(serializers.ModelSerializer):
+class RegisteredVesselsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = BookingPeriodOption
-        fields = ('id', 'period_name', 'small_price', 'medium_price', 'large_price', 'start_time', 'finish_time')
-
-class BookingPeriodSerializer(serializers.ModelSerializer):
-    booking_period = BookingPeriodOptionsSerializer(many=True, required=False)
-    class Meta:
-        model = BookingPeriod
-        fields = ('id', 'name', 'booking_period')
-        depth = 1
-
+        model = RegisteredVessels
+        fields = ("id", "rego_no", "vessel_size", "vessel_draft", "vessel_beam", "vessel_weight", "admissionsPaid")
+        
 
 
 # Reasons

@@ -157,11 +157,17 @@ module.exports = {
     users: process.env.PARKSTAY_URL + "/api/users.json",
     usersLookup: function (q) {
        return  encodeURI(process.env.PARKSTAY_URL + "/api/users.json?q="+q);
-   },
-   profile: process.env.PARKSTAY_URL + "/api/profile",
-   contacts:process.env.PARKSTAY_URL + "/api/contacts.json",
-   //Must end .json otherwise will effect other urls generated based on removing the .json.
-   booking_period_options: process.env.PARKSTAY_URL + "/api/bookingperiodoptions.json",
-   booking_period : process.env.PARKSTAY_URL + "/api/bookingperiod.json"
+    },
+    profile: process.env.PARKSTAY_URL + "/api/profile",
+    contacts:process.env.PARKSTAY_URL + "/api/contacts.json",
+    //Must end .json otherwise will effect other urls generated based on removing the .json.
+    booking_period_options: process.env.PARKSTAY_URL + "/api/bookingPeriodOptions.json",
+    booking_period : process.env.PARKSTAY_URL + "/api/bookingPeriod.json",
+    booking_period_edit : function(id){
+        return process.env.PARKSTAY_URL + "/api/bookingPeriod/" + id + "/";
+    },
+    booking_period_options_edit : function(id){
+        return process.env.PARKSTAY_URL + "/api/bookingPeriodOptions/" + id + "/";
+    },
    
 };

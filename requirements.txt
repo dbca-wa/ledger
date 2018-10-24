@@ -33,3 +33,4 @@ unicodecsv==0.14.1
 PyPDF2==1.26.0
 django-extra-fields==0.9
 django-crispy-forms==1.7.0
+mixer==6.0.1

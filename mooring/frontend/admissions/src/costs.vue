@@ -3,7 +3,7 @@
        <div class="container">
            <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 style="text-align:center;">Admission Fees</h3>
+                    <h1 style="text-align:center;">Admission Fees</h1>
                 </div>
                 <div class="panel-body">
                     <div class="col-lg-12">

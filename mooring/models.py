@@ -167,7 +167,7 @@ class MooringArea(models.Model):
     dog_permitted = models.BooleanField(default=False)
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
-    max_advance_booking = models.IntegerField(default =180)
+    max_advance_booking = models.IntegerField(default=180)
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
     mooring_map = models.FileField(upload_to=update_mooring_map_filename,null=True,blank=True)
     vessel_size_limit = models.IntegerField(default=0)
@@ -1444,6 +1444,22 @@ class MarinaEntryRate(models.Model):
         today = datetime.now().date()
         return (self.period_start > today and not self.period_end) or ( self.period_start > today <= self.period_end)
 
+class RegisteredVessels(models.Model):
+    rego_no = models.CharField(max_length=200)
+    vessel_size = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    vessel_draft = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    vessel_beam = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    vessel_weight = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    sticker_l = models.IntegerField(default=0)
+    sticker_au = models.IntegerField(default=0)
+    sticker_an = models.IntegerField(default=0)
+    expiry_l = models.DateField(null=True, blank=True)
+    expiry_au = models.DateField(null=True, blank=True)
+    expiry_an = models.DateField(null=True, blank=True)
+
+    @property
+    def admissionsPaid(self):
+        return True
 
 # REASON MODELS
 # =====================================
@@ -1883,7 +1899,7 @@ class MooringsiteRateListener(object):
         else:
             try:
                 within = MooringsiteRate.objects.get(Q(campsite=instance.campsite),Q(date_start__lte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) )
-                within.date_end = instance.date_start - timedelta(days=2)
+                within.date_end = instance.date_start - timedelta(days=1)
                 within.save()
             except MooringsiteRate.DoesNotExist:
                 pass
@@ -1891,7 +1907,7 @@ class MooringsiteRateListener(object):
             x = MooringsiteRate.objects.filter(Q(campsite=instance.campsite),Q(date_start__gte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) ).order_by('date_start')
             if x:
                 x = x[0]
-                instance.date_end = x.date_start - timedelta(days=2)
+                instance.date_end = x.date_start - timedelta(days=1)
 
     @staticmethod
     @receiver(pre_delete, sender=MooringsiteRate)

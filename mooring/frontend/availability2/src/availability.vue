@@ -36,9 +36,13 @@
         <div class="row">
                 <div class="small-8 medium-9 large-10">
                         <div class="panel panel-default">
-                             <div class="panel-heading"> <h3 class="panel-title">Trolley: <span id='total_trolley'>$0.00</span></h3></div>
+                             <div class="panel-heading"> <h3 class="panel-title">Trolley: <span id='total_trolley'>${{ total_booking }}</span></h3></div>
                               <div class='columns small-12 medium-12 large-12'> 
-                                 <div v-for="item in current_booking" class="row small-12 medium-12 large-12"><div class="columns small-12 medium-9 large-9">{{ item.item }}</div><div class="columns small-12 medium-3 large-3">${{ item.amount }}</div>  </div>
+                                 <div v-for="item in current_booking" class="row small-12 medium-12 large-12">
+                                         <div class="columns small-12 medium-9 large-9">{{ item.item }}</div>
+                                         <div class="columns small-12 medium-2 large-2">${{ item.amount }}</div>
+                                         <div class="columns small-12 medium-1 large-1"><a style='color: red; opacity: 1;' type="button" class="close" @click="deleteBooking(item.id)">x</a></div>
+                                 </div>
 			      </div>
                         </div>
                 </div>
@@ -73,7 +77,7 @@
             </div>
         </div>
         <div class="row" v-show="status == 'online'">
-            <div v-if="long_description" class="columns small-12 medium-12 large-12">
+            <div v-if="long_description" class="columns small-12 medium-12 large-12" style='display:none'>
                 <div class="row">
                     <div class="columns small-6 medium-6 large-3">
                         <button type="button" class="button formButton" @click="toggleMoreInfo">
@@ -167,7 +171,7 @@
                 </thead>
                 <tbody><template v-for="site in sites" >
                     <tr>
-                        <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
+                        <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i></td>
                         <td class="book">
                             <template v-if="site.price">
                                 <button v-if="!ongoing_booking" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
@@ -180,7 +184,7 @@
                         </td>
                         <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >
                                      <div v-for="bp in day[1].booking_period">
-                                        <button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px;' v-if="bp.status == 'open'"  @click="addBooking(site.id,bp.id,bp.date)" >
+                                        <button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px;' v-if="bp.status == 'open'"  @click="addBooking(site.id,site.mooring_id,bp.id,bp.date)" >
                                             <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }}</span></small>
                                         </button>
                                         <button class="button" v-else  style='min-width: 150px; width: 80%; margin-bottom: 2px; background-color: rgb(255, 236, 236); text-decoration: line-through;color: #000;' >
@@ -400,6 +404,7 @@ export default {
             ongoing_booking: false,
             ongoing_booking_id: null,
             current_booking: [],
+            total_booking: '0.00',
             showSecondErrorLine: true,
         };
     },
@@ -445,16 +450,38 @@ export default {
                 site.showBreakdown = true;
             }
         },
-        addBooking: function (site_id,bp_id,date) {
+        deleteBooking: function(booking_item_id) {
+              var vm = this;
+              var submitData = {
+                  booking_item: booking_item_id,
+              };
+
+              $.ajax({
+                  url: vm.parkstayUrl + '/api/booking/delete',
+                  dataType: 'json',
+                  method: 'POST',
+                  data: submitData,
+                  success: function(data, stat, xhr) {
+                      vm.update();
+                  },
+                  error: function(xhr, stat, err) {
+                       vm.update();
+                  }
+              });
+
+
+	},
+        addBooking: function (site_id, mooring_id,bp_id,date) {
               var vm = this;
               console.log("ADD BOOKING");
-              console.log(site_id+' : '+bp_id);
+              console.log(mooring_id+' : '+bp_id);
               console.log(date);
               var booking_start = $('#date-arrival').val();
               var booking_finish = $('#date-departure').val();
 
               var submitData = {
                   site_id: site_id,
+                  mooring_id: mooring_id,
                   bp_id: bp_id,
                   date: date,
                   booking_start: booking_start,
@@ -476,6 +503,8 @@ export default {
 
         },
         submitBooking: function (site) {
+            alert('not working yet');
+            return;
             var vm = this;
             if (vm.vesselSize > 0 ) { 
             } else {
@@ -594,7 +623,7 @@ export default {
 
                         if (data.sites == null) { 
                           return;
-			}
+			            }
 
                         if (data.sites.length == 0) {
                             vm.status = 'empty';
