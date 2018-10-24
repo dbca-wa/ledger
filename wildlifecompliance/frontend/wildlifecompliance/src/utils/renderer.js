@@ -150,18 +150,16 @@ module.exports = {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
                 _elements.push(
-                 
-                    <div class="tab-pane fade in active" id={c.id}>
+                    <div class="tab-pane fade" id={c.id}>
                         {c.children.map(d=>{
                             return (
                                 <div>
                                     {this.renderChildren(h,d,value)}
                                 </div>
                             )
-                         })}
+                        })}
                     </div>
-                 )
-                this.tabs_list.pop({name:c.name,label:c.label,id:c.id});
+                )
                 this.tabs_list.push({name:c.name,label:c.label,id:c.id});
                 break;
             case 'checkbox':
