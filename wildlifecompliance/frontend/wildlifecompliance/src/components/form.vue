@@ -116,8 +116,8 @@ from '@/utils/hooks'
             }
 
             // Initialise by setting all first tabs.
-            $('#tabs-section li:first-child a').tab('show');
-            $('#tabs-main li:first-child a').tab('show');
+            $('#tabs-section li:first-child a').click();
+            $('#tabs-main li:first-child a').click();
         },
         render(h) {
             let vm =this;
