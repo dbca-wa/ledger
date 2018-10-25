@@ -191,13 +191,13 @@
                 </template>
                 <template v-if="isSendingToAssessor && !showingConditions">
                     <div>
-                        <ul class="nav nav-tabs">
-                            <li v-for="(item1,index) in application.licence_type_data.activity_type" class="active"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                        <ul class="nav nav-tabs" id="assessortabs">
+                            <li v-for="(item1,index) in application.licence_type_data.activity_type"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
                         </ul>
                     </div>
                         
                     <div class="tab-content">
-                            <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" class="tab-pane fade in active">
+                            <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" class="tab-pane fade">
                                 <div>
                                         <div class="panel panel-default">
                                             <div class="panel-heading">
@@ -231,8 +231,8 @@
                 </template>
                 <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised">
                     <div>
-                    <ul class="nav nav-tabs" id="tabs-main">
-                        <li><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
                         <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
                     </ul>
                     <div class="tab-content">
