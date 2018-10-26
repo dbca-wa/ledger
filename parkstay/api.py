@@ -1798,6 +1798,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_concession' : guests['concession'],
                 'num_child' : guests['children'],
                 'num_infant' : guests['infants'],
+                'regos': request.data['entryFees']['regos'],
             }
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)
