@@ -197,7 +197,7 @@ class BaseAddress(models.Model):
         return zlib.crc32(self.summary.strip().upper().encode('UTF8'))
 
 class Address(BaseAddress):
-    user = models.ForeignKey('EmailUser', related_name='profile_adresses')
+    user = models.ForeignKey('EmailUser', related_name='profile_addresses')
     oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses')
     class Meta:
         verbose_name_plural = 'addresses'
