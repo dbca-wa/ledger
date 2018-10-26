@@ -1052,7 +1052,6 @@ export default {
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
             vm.showingConditions = false;
-            $('#tabs-assessor li:first-child a').click();
         },
         save: function(e) {
           let vm = this;
