@@ -10,7 +10,7 @@ from commercialoperator.components.organisations.models import (
                                 OrganisationLogEntry,
                                 ledger_organisation,
                             )
-from commercialoperator.components.organisations.utils import can_manage_org
+from commercialoperator.components.organisations.utils import can_manage_org, can_admin_org,is_consultant
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
 
@@ -70,7 +70,8 @@ class OrganisationSerializer(serializers.ModelSerializer):
         user =  self.context['request'].user
         # Check if the request user is among the first five delegates in the organisation
         if can_manage_org(obj,user):
-            return {'one': obj.pin_one, 'two': obj.pin_two}
+            return {'one': obj.admin_pin_one, 'two': obj.admin_pin_two,
+                    'three': obj.user_pin_one, 'four': obj.user_pin_two}
         else:
             return None
 
@@ -80,9 +81,18 @@ class DetailsSerializer(serializers.ModelSerializer):
         fields = ('id','name')
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
+    user_status= serializers.SerializerMethodField()
+    user_role= serializers.SerializerMethodField()
+
     class Meta:
         model = OrganisationContact
         fields = '__all__'
+
+    def get_user_status(self,obj):
+        return obj.get_user_status_display()
+
+    def get_user_role(self,obj):
+        return obj.get_user_role_display()
 
 class OrgRequestRequesterSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
@@ -169,3 +179,43 @@ class OrganisationUnlinkUserSerializer(serializers.Serializer):
             raise serializers.ValidationError('The user you want to unlink does not exist.')
         return obj
         
+class MyOrganisationsSerializer(serializers.ModelSerializer):
+    is_admin = serializers.SerializerMethodField(read_only=True)
+    is_consultant = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Organisation
+        fields = (
+            'id',
+            'name',
+            'abn',
+            'is_admin',
+            'is_consultant'
+        )
+
+    def get_is_consultant(self, obj):
+        user = self.context['request'].user
+        # Check if the request user is among the first five delegates in the organisation
+        return is_consultant(obj, user)
+
+    def get_is_admin(self, obj):
+        user = self.context['request'].user
+        # Check if the request user is among the first five delegates in the organisation
+        return can_admin_org(obj, user)
+
+class OrgUserAcceptSerializer(serializers.Serializer):
+
+    first_name = serializers.CharField()
+    last_name =serializers.CharField()
+    email= serializers.EmailField()
+    mobile_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
+    def validate(self, data):
+        '''
+        Check for either mobile number or phone number
+        '''
+        if not (data['mobile_number'] or data['phone_number']):
+            raise serializers.ValidationError("User must have an associated phone number or mobile number.")
+        return data
+

@@ -21,5 +21,29 @@ def can_manage_org(organisation,user):
         return True 
     return False
 
+def can_admin_org(organisation,user):
+    from commercialoperator.components.organisations.models import Organisation, OrganisationAccessGroup,UserDelegation,OrganisationContact
+    from ledger.accounts.models import EmailUser
+    try:
+        org_contact=OrganisationContact.objects.get(organisation_id=organisation,email=user.email)
+        # if org_contact.can_edit
+
+        return org_contact.can_edit
+    except OrganisationContact.DoesNotExist:
+        pass
+    return False
+
+def is_consultant(organisation,user):
+    from commercialoperator.components.organisations.models import Organisation, OrganisationAccessGroup,UserDelegation,OrganisationContact
+    from ledger.accounts.models import EmailUser
+    try:
+        org_contact=OrganisationContact.objects.get(organisation_id=organisation,email=user.email)
+        # if org_contact.can_edit
+
+        return org_contact.check_consultant
+    except OrganisationContact.DoesNotExist:
+        pass
+    return False
+
 def random_generator(size=12, chars=string.digits):
     return ''.join(random.choice(chars) for _ in range(size))

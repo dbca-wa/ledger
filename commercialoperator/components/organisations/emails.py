@@ -35,6 +35,102 @@ class OrganisationUnlinkNotificationEmail(TemplateEmailBase):
     html_template = 'commercialoperator/emails/organisation_unlink_notification.html'
     txt_template = 'commercialoperator/emails/organisation_unlink_notification.txt'
 
+class OrganisationContactAdminUserNotificationEmail(TemplateEmailBase):
+    subject = 'You have been linked as Company Admin Role.'
+    html_template = 'commercialoperator/emails/organisation_contact_admin_notification.html'
+    txt_template = 'commercialoperator/emails/organisation_contact_admin_notification.txt'
+
+class OrganisationContactUserNotificationEmail(TemplateEmailBase):
+    subject = 'You have been linked as Company User Role.'
+    html_template = 'commercialoperator/emails/organisation_contact_user_notification.html'
+    txt_template = 'commercialoperator/emails/organisation_contact_user_notification.txt'
+
+class OrganisationContactSuspendNotificationEmail(TemplateEmailBase):
+    subject = 'You have been suspended as Company User.'
+    html_template = 'commercialoperator/emails/organisation_contact_suspend_notification.html'
+    txt_template = 'commercialoperator/emails/organisation_contact_suspend_notification.txt'
+
+class OrganisationContactReinstateNotificationEmail(TemplateEmailBase):
+    subject = 'You have been Reinstated as Company User.'
+    html_template = 'commercialoperator/emails/organisation_contact_reinstate_notification.html'
+    txt_template = 'commercialoperator/emails/organisation_contact_reinstate_notification.txt'
+
+class OrganisationContactDeclineNotificationEmail(TemplateEmailBase):
+    subject = 'Your organisation link request has been declined.'
+    html_template = 'commercialoperator/emails/organisation_contact_decline_notification.html'
+    txt_template = 'commercialoperator/emails/organisation_contact_decline_notification.txt'
+
+
+def send_organisation_reinstate_email_notification(linked_user,linked_by,organisation,request):
+    email = OrganisationContactReinstateNotificationEmail()
+
+    context = {
+        'user': linked_user,
+        'linked_by': linked_by,
+        'organisation': organisation
+    }
+
+    msg = email.send(linked_user.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, linked_user, sender=sender)
+
+
+def send_organisation_contact_suspend_email_notification(linked_user,linked_by,organisation,request):
+    email = OrganisationContactSuspendNotificationEmail()
+
+    context = {
+        'user': linked_user,
+        'linked_by': linked_by,
+        'organisation': organisation
+    }
+
+    msg = email.send(linked_user.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, linked_user, sender=sender)
+
+def send_organisation_contact_decline_email_notification(user_contact,deleted_by,organisation,request):
+    email = OrganisationContactDeclineNotificationEmail()
+
+    context = {
+        'user': user_contact,
+        'linked_by': deleted_by,
+        'organisation': organisation
+    }
+
+    msg = email.send(user_contact.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, user_contact, sender=sender)
+
+
+
+def send_organisation_contact_user_email_notification(linked_user,linked_by,organisation,request):
+    email = OrganisationContactUserNotificationEmail()
+
+    context = {
+        'user': linked_user,
+        'linked_by': linked_by,
+        'organisation': organisation
+    }
+
+    msg = email.send(linked_user.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, linked_user, sender=sender)
+
+
+def send_organisation_contact_adminuser_email_notification(linked_user,linked_by,organisation,request):
+    email = OrganisationContactAdminUserNotificationEmail()
+
+    context = {
+        'user': linked_user,
+        'linked_by': linked_by,
+        'organisation': organisation
+    }
+
+    msg = email.send(linked_user.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, linked_user, sender=sender)
+
+
 def send_organisation_link_email_notification(linked_user,linked_by,organisation,request):
     email = OrganisationLinkNotificationEmail()
 
