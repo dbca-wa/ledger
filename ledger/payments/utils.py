@@ -109,68 +109,69 @@ def addToInterface(date,oracle_codes,system,override):
                 raise ValidationError('There is currently no open period for transactions done on {}'.format(trans_date))
 
         # Check if the system deducts a percentage and sends to another oracle account code
-        if system.deduct_percentage and ( not system.percentage or not system.percentage_account_code):
-            raise Exception('Deduction Percentage and an oracle account are required if deduction is enabled.')
+        deductions = OracleInterfaceDeduction.objects.all()
+        for deduction in deductions:        
+            if system.deduct_percentage and ( not deduction.percentage or not deduction.percentage_account_code):
+                raise Exception('Deduction Percentage and an oracle account are required if deduction is enabled.')
 
-        deduction_code = None
-        if system.deduct_percentage:
-            try:
-                OracleAccountCode.objects.filter(active_receivables_activities=system.percentage_account_code)
-            except OracleAccountCode.DoesNotExist:
-                raise ValidationError('The account code setup for oracle deduction does not exist.')
-            # Add the deducted amount to the oracle code specified in the system table
-            deduction_code = OracleInterface(
-                receipt_date = trans_date,
-                activity_name = system.percentage_account_code,
-                amount = D(0.0), 
-                customer_name = system.system_name,
-                description = system.percentage_account_code,
-                source = system.source,
-                method = system.method,
-                comments = '{} GST/{}'.format(system.percentage_account_code,date),
-                status = 'NEW',
-                status_date = today
-            )
-            deduction_code.save()
-        for k,v in oracle_codes.items():
-            if v != 0:
-                found = OracleAccountCode.objects.filter(active_receivables_activities=k)
-                if not found:
-                    raise ValidationError('{} is not a valid account code'.format(k)) 
-                
-                if system.deduct_percentage:
-                    initial_amount = D(v)
-                    remainder_amount = ((100 - system.percentage)/ D(100)) * initial_amount
-
-                    deduction_code.amount += initial_amount - remainder_amount
-                    # Add the remainaing amount to the intial oracle account code
-                    OracleInterface.objects.create(
-                        receipt_date = trans_date,
-                        activity_name = k,
-                        amount = remainder_amount,
-                        customer_name = system.system_name,
-                        description = k,
-                        source = system.source,
-                        method = system.method,
-                        comments = '{} GST/{}'.format(k,date),
-                        status = 'NEW',
-                        status_date = today
-                    )
-                    new_codes[k] = remainder_amount 
-                else:
-                    OracleInterface.objects.create(
-                        receipt_date = trans_date,
-                        activity_name = k,
-                        amount = v,
-                        customer_name = system.system_name,
-                        description = k,
-                        source = system.source,
-                        method = system.method,
-                        comments = '{} GST/{}'.format(k,date),
-                        status = 'NEW',
-                        status_date = today
-                    )
-                    new_codes[k] = v
+            deduction_code = None
+            if system.deduct_percentage:
+                try:
+                    OracleAccountCode.objects.filter(active_receivables_activities=deduction.percentage_account_code)
+                except OracleAccountCode.DoesNotExist:
+                    raise ValidationError('The account code setup for oracle deduction does not exist.')
+                # Add the deducted amount to the oracle code specified in the system table
+                deduction_code = OracleInterface(
+                    receipt_date = trans_date,
+                    activity_name = deduction.percentage_account_code,
+                    amount = D(0.0), 
+                    customer_name = system.system_name,
+                    description = deduction.percentage_account_code,
+                    source = system.source,
+                    method = system.method,
+                    comments = '{} GST/{}'.format(deduction.percentage_account_code,date),
+                    status = 'NEW',
+                    status_date = today
+                )
+                deduction_code.save()
+            for k,v in oracle_codes.items():
+                if v != 0:
+                    found = OracleAccountCode.objects.filter(active_receivables_activities=k)
+                    if not found:
+                        raise ValidationError('{} is not a valid account code'.format(k)) 
+                    
+                    if system.deduct_percentage:
+                        initial_amount = D(v)
+                        remainder_amount = ((100 - deduction.percentage)/ D(100)) * initial_amount
+                        deduction_code.amount += initial_amount - remainder_amount
+                        # Add the remainaing amount to the intial oracle account code
+                        OracleInterface.objects.create(
+                            receipt_date = trans_date,
+                            activity_name = k,
+                            amount = remainder_amount,
+                            customer_name = system.system_name,
+                            description = k,
+                            source = system.source,
+                            method = system.method,
+                            comments = '{} GST/{}'.format(k,date),
+                            status = 'NEW',
+                            status_date = today
+                        )
+                        new_codes[k] = remainder_amount 
+                    else:
+                        OracleInterface.objects.create(
+                            receipt_date = trans_date,
+                            activity_name = k,
+                            amount = v,
+                            customer_name = system.system_name,
+                            description = k,
+                            source = system.source,
+                            method = system.method,
+                            comments = '{} GST/{}'.format(k,date),
+                            status = 'NEW',
+                            status_date = today
+                        )
+                        new_codes[k] = v
 
         if system.deduct_percentage and deduction_code.amount != 0:
             deduction_code.save()
