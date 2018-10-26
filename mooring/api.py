@@ -554,7 +554,6 @@ def add_booking(request, *args, **kwargs):
     #print BookingPeriodOption.objects.all()
     mooringsite = Mooringsite.objects.get(id=request.POST['site_id'])
 
-
     booking_period = BookingPeriodOption.objects.get(id=int(request.POST['bp_id'])) 
     print 'BP RES'
     print booking_period
@@ -584,7 +583,28 @@ def add_booking(request, *args, **kwargs):
     print amount 
 #    MooringsiteBooking
 #    for i in range((end_date-start_date).days):
-    cb =    MooringsiteBooking.objects.create(
+    print "VALIDATE BOOKING"
+
+    from_dt_utc = datetime.strptime(str(start_booking_date)+' '+str(booking_period.start_time), '%Y-%m-%d %H:%M:%S') - timedelta(hours=8)
+    to_dt_utc =  datetime.strptime(str(finish_booking_date)+' '+str(booking_period.finish_time), '%Y-%m-%d %H:%M:%S') - timedelta(hours=8)
+    from_dt_utc = from_dt_utc.replace(tzinfo=timezone.utc).isoformat()
+    to_dt_utc =  to_dt_utc.replace(tzinfo=timezone.utc).isoformat()
+    #to_dt__lte=to_dt_utc
+    validate_temp_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc,booking__expiry_time__gte=datetime.today(), booking_type=3).count()
+    validate_existing_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc).exclude(booking_type=3).count()
+
+    if validate_temp_booking > 0 or validate_existing_booking > 0:
+        response_data['result'] = 'error'
+        response_data['message'] = 'Error '+str(validate_temp_booking)+' '+str(validate_existing_booking)
+    #validate_booking = MooringsiteBooking.objects.filter(campsite=mooringsite)
+    #for v in validate_booking:
+    #    print (v.campsite.id)
+    #    print (v.from_dt)
+    #    print (v.to_dt)
+ 
+    #print "END VAL"
+    else:
+        cb =    MooringsiteBooking.objects.create(
                   campsite=mooringsite,
                   booking_type=3,
                   date=booking_date,
@@ -594,8 +614,8 @@ def add_booking(request, *args, **kwargs):
                   amount=amount
                   )
 
-    response_data['result'] = 'success'
-    response_data['message'] = ''
+        response_data['result'] = 'success'
+        response_data['message'] = ''
 
 #    with transaction.atomic():
 #            set_session_booking(request.session,booking)
@@ -1402,6 +1422,14 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         ground = self.get_object()
         # check if the user has an ongoing booking
         ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        print "---expiry_time----"
+        timer = None
+        expiry = None
+        if ongoing_booking:
+            #expiry_time = ongoing_booking.expiry_time
+            timer = (ongoing_booking.expiry_time-timezone.now()).seconds if ongoing_booking else -1
+            expiry = ongoing_booking.expiry_time.isoformat() if ongoing_booking else ''
+        distance_radius = request.GET.get('distance_radius', 0)
         # Validate parameters
         data = {
             "arrival" : request.GET.get('arrival'),
@@ -1411,7 +1439,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
             "gear_type" : request.GET.get('gear_type', 'all'),
-            "vessel_size" : request.GET.get('vessel_size', 0)
+            "vessel_size" : request.GET.get('vessel_size', 0),
+#            "distance_radius" : request.GET.get('distance_radius', 0)
         }
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -1424,6 +1453,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         num_infant = serializer.validated_data['num_infant']
         gear_type = serializer.validated_data['gear_type']
         vessel_size = serializer.validated_data['vessel_size']
+ #       distance_radius = serializer.validated_data['distance_radius']
 
         # if campground doesn't support online bookings, abort!
         if ground.mooring_type != 0:
@@ -1452,7 +1482,13 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         if gear_type != 'all':
             context[gear_type] = True
 #        sites_qs = Mooringsite.objects.filter(mooringarea=ground).filter(**context)
+#        radius = int(distance_radius)
         radius = int(100)
+        if int(distance_radius) > 0:
+            radius = int(distance_radius)
+        #print "RADIUS"
+        #print distance_radius
+        #print radius
 #       sites_qs = Mooringsite.objects.all().filter(**context)
         sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
 #        print "sites_qs"
@@ -1477,16 +1513,12 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #     print "DATESSS"
         #     print dates 
         # fetch availability map
-        print "MS_BOOKING"
         ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
         current_booking = []
         total_price = Decimal('0.00')
         for ms in ms_booking:
            row = {}
            row['id'] = ms.id
-           print "UTC TIME"
-           print datetime.now(pytimezone('Australia/Perth'))
-           print ms.from_dt
            #print ms.from_dt.astimezone(pytimezone('Australia/Perth'))
            row['item'] = ms.campsite.name + ' from '+ms.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')
            row['amount'] = str(ms.amount)
@@ -1504,6 +1536,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             'map': ground.mooring_map.url if ground.mooring_map else None,
             'ongoing_booking': True if ongoing_booking else False,
             'ongoing_booking_id': ongoing_booking.id if ongoing_booking else None,
+            'expiry': expiry,
+            'timer': timer,
             'current_booking': current_booking,
             'total_booking': str(total_price),
             'arrival': start_date.strftime('%Y/%m/%d'),
@@ -1628,9 +1662,11 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         # don't group by class, list individual sites
         else:
             sites_qs = sites_qs.order_by('name')
+            
             # from our campsite queryset, generate a digest for each site
             sites_map = OrderedDict([(s, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
-
+            for s in sites_map:
+                 print s
             bookings_map = {}
             # make an entry under sites for each site
             for k, v in sites_map.items():

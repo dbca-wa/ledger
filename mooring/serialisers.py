@@ -59,6 +59,7 @@ class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     num_mooring = serializers.IntegerField(default=0)
     gear_type = serializers.ChoiceField(choices=('all', 'tent', 'caravan', 'campervan'), default='all')
     vessel_size = serializers.IntegerField(default=0)
+    #distance_radius = serializers.IntegerField(default=0)
 
 class MooringsiteBookingSerializer(serializers.Serializer):
     """Serializer used by the booking creation process."""

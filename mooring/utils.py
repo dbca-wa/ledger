@@ -272,6 +272,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
     # fetch all of the single-day MooringsiteBooking objects within the date range for the sites
     start_date_time = datetime.strptime(str(start_date)+str(' 00:00'), '%Y-%m-%d %H:%M')
     end_date_time = datetime.strptime(str(end_date)+str(' 23:59'), '%Y-%m-%d %H:%M')
+
     bookings_qs =   MooringsiteBooking.objects.filter(
                         campsite__in=campsites_qs,
                         #date__gte=start_date,
@@ -279,14 +280,14 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                         from_dt__gte=start_date_time,
                         to_dt__lt=end_date_time,
                         #booking__expiry_time__gte=datetime.now()
-                    ).order_by('date', 'campsite__name') 
+                    ).order_by('date', 'campsite__name')
+ 
     # booking__expiry_time__gte=datetime.now()
     booking_qs = None
-    print "BOOKING QS"
-    print bookings_qs
     # prefill all slots as 'open'
     duration = (end_date-start_date).days
     #results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
+
     results = {}
     for site in campsites_qs:
         results[site.pk] = {}
@@ -298,11 +299,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
             booking_period = {}
             for bp in bp_result:
                 booking_period[bp.pk] = 'open'
-#            print start_date+timedelta(days=i)
             results[site.pk][start_date+timedelta(days=i)] = ['open',booking_period]
-#            print site.pk
-#            print results[site.pk][start_date+timedelta(days=i)] 
-#   results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
 
     for b in bookings_qs:
          
@@ -311,8 +308,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
              if b.booking.expiry_time is not None:
                  if b.booking.expiry_time < datetime.now(tz=timezone.utc):
                     continue
-        mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite)[0]
+        mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite).order_by('-date_start')[0]
         if mooring_rate:
+            #print (b.campsite)
             for bp in mooring_rate.booking_period.booking_period.all():
                 for i in range(duration):
                     date_rotate_forward = start_date+timedelta(days=i)
@@ -323,7 +321,8 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
  
                     from_dt = b.from_dt + timedelta(hours=8)
                     to_dt = b.to_dt + timedelta(hours=8)
-                    if from_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'): 
+
+                    if from_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
                         if from_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
                             if date_rotate_forward in results[b.campsite.id]:
                                 results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
@@ -390,6 +389,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
             for key, val in results.items():
                 val[start_date+timedelta(days=i)][0] = 'tooearly'
 
+    #print "COUNT"
+    #campsites_qs.count()
+
     # strike out days after the max_advance_booking
     for site in campsites_qs:
         stop = today + timedelta(days=site.mooringarea.max_advance_booking)
@@ -398,7 +400,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
             for i in range((end_date-stop_mark).days):
                 results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
     # Get the current stay history
-    stay_history = MooringAreaStayHistory.objects.filter(
+    stay_history = None
+    if campsites_qs.count() > 0:
+         stay_history = MooringAreaStayHistory.objects.filter(
                     Q(range_start__lte=start_date,range_end__gte=start_date)|# filter start date is within period
                     Q(range_start__lte=end_date,range_end__gte=end_date)|# filter end date is within period
                     Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
