@@ -51,13 +51,20 @@ class OracleInterfaceSystem(models.Model):
     system_name = models.CharField(max_length=128)
     enabled = models.BooleanField(default=False)
     deduct_percentage = models.BooleanField(default=False)
-    percentage = models.PositiveIntegerField(validators=[MaxValueValidator(99), MinValueValidator(1)],null=True,blank=True)
-    percentage_account_code = models.CharField(max_length=50,null=True,blank=True)
     source = models.CharField(max_length=30)
     method = models.CharField(max_length=30)
 
     def __str__(self):
         return '{} - {}'.format(self.system_name, self.system_id)
+
+class OracleInterfaceDeduction(models.Model):
+    oisystem = models.ForeignKey(OracleInterfaceSystem, related_name='deductions')
+    percentage = models.PositiveIntegerField(validators=[MaxValueValidator(99), MinValueValidator(0)],null=True,blank=True)
+    percentage_account_code = models.CharField(max_length=50,null=True,blank=True)
+    destination_account_code = models.CharField(max_length=50,null=True,blank=True)
+
+    def __str__(self):
+        return '{} - {}'.format(self.oisystem, self.destination_account_code)
 
 class OracleInterfaceRecipient(models.Model):
     system = models.ForeignKey(OracleInterfaceSystem,related_name='recipients')
