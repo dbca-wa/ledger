@@ -12,7 +12,7 @@
                     <div class="col-md-4">
                         <select name="rate" v-model="selected_rate" class="form-control">
                             <option value="">Manual Entry</option>
-                            <option v-for="r in rates":value="r.id">{{r.name}}</option>
+                            <option v-for="r in rates" :value="r.id">{{r.name}}</option>
                         </select>
                     </div>
                 </div>

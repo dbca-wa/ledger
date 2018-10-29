@@ -33,7 +33,7 @@ router.register(r'booking',api.BookingViewSet)
 router.register(r'admissionsbooking',api.AdmissionsBookingViewSet)
 router.register(r'mooring_booking_ranges',api.MooringAreaBookingRangeViewset)
 router.register(r'mooringsite_booking_ranges',api.MooringsiteBookingRangeViewset)
-router.register(r'mooringsite_rate',api.MooringsiteRateViewSet)
+# router.register(r'mooringsite_rate',api.MooringsiteRateViewSet)
 router.register(r'mooringsites_stay_history',api.MooringsiteStayHistoryViewSet)
 router.register(r'mooring_stay_history',api.MooringAreaStayHistoryViewSet)
 router.register(r'rates',api.RateViewset)
@@ -45,6 +45,9 @@ router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
 router.register(r'users',api.UsersViewSet)
 router.register(r'contacts',api.ContactViewSet)
 router.register(r'countries', api.CountryViewSet)
+router.register(r'bookingPeriodOptions', api.BookingPeriodOptionsViewSet)
+router.register(r'bookingPeriod', api.BookingPeriodViewSet)
+router.register(r'registeredVessels', api.RegisteredVesselsViewSet)
 
 api_patterns = [
     url(r'^api/profile$',api.GetProfile.as_view(), name='get-profile'),
@@ -83,6 +86,7 @@ urlpatterns = [
     url(r'^dashboard/bookings$', views.DashboardView.as_view(), name='dash-bookings'),
     url(r'^dashboard/bulkpricing$', views.DashboardView.as_view(), name='dash-bulkpricing'),
     url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
+    url(r'^dashboard/bookingperiod', views.BookingPeriodView.as_view(), name='dash-bookingperiod'),
     url(r'^booking/abort$', views.abort_booking_view, name='public_abort_booking'),
     url(r'^booking/', views.MakeBookingsView.as_view(), name='public_make_booking'),
     url(r'^mybookings/', views.MyBookingsView.as_view(), name='public_my_bookings'),

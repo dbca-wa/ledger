@@ -69,7 +69,7 @@ export default {
             type:Array,
             default:function () {
 //                return ['Period Start', 'Period End', 'Adult Price', 'Concession Price', 'Child Price', 'Comment', 'Action'];
-                return ['Period Start', 'Period End', 'Mooring Price', 'Comment', 'Action'];
+                return ['Period Start', 'Period End', 'Booking Period', 'Comment', 'Action'];
             }
         }
     },
@@ -146,7 +146,6 @@ export default {
             var url = null;
             if (vm.level == 'park') {
                 url = api_endpoints.park_entry_rate(data.rate_id);
-                console.log(url);
                 $.ajax({
                      beforeSend: function(xhrObj) {
                         xhrObj.setRequestHeader("Content-Type", "application/json");
@@ -215,6 +214,7 @@ export default {
         },
         addHistory: function() {
             if (this.level == 'campsite'){ this.price.campsite = this.object_id; }
+            else if (this.level == 'campground'){ this.price.mooring = '0.00';}
             this.sendData(this.getAddURL(),'POST',JSON.stringify(this.price));
         },
         updateHistory: function() {
@@ -236,7 +236,6 @@ export default {
         },
         sendData: function(url,method,data) {
             let vm = this;
-            console.log(data);
             $.ajax({
                 beforeSend: function(xhrObj) {
                     xhrObj.setRequestHeader("Content-Type", "application/json");
@@ -280,13 +279,16 @@ export default {
                     var end = $(this).data('date_end');
                     var reason = $(this).data('reason');
                     var details = $(this).data('details');
+                    var booking_period_id = $(this).data('booking_period_id');
                     vm.$refs.historyModal.selected_rate= rate;
                     vm.price.period_start = Moment(start).format('D/MM/YYYY');
+                    vm.price.booking_period_id = booking_period_id;
                     vm.price.original = {
                         'date_start': start,
                         'rate_id': rate,
                         'reason': reason,
-                        'details': details
+                        'details': details,
+                        'booking_period_id': booking_period_id
                     };
                     end != null ? vm.price.date_end : '';
                     vm.showHistory();
@@ -307,6 +309,7 @@ export default {
                     var data = {
                         'date_start':$(btn).data('date_start'),
                         'rate_id':$(btn).data('rate'),
+                        'booking_period_id': $(btn).data('booking_period_id')
                     };
                     $(btn).data('date_end') != null ? data.date_end = $(btn).data('date_end'): '';
                     vm.deleteHistory = data;

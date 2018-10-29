@@ -506,6 +506,15 @@ class AdmissionFeesView(TemplateView):
 class AdmissionsCostView(TemplateView):
     template_name = 'mooring/admissions/admissions_cost.html'
 
+    def get(self, *args, **kwargs):
+        if self.request.user.is_authenticated():
+            if self.request.user.is_staff:
+                return render(self.request, self.template_name)
+            return redirect('ps_home')
+        return redirect('ps_home')
+
+class BookingPeriodView(TemplateView):
+    template_name = 'mooring/dash/dash_booking_period.html'
 
 class MarinastayRoutingView(TemplateView):
     template_name = 'mooring/index.html'

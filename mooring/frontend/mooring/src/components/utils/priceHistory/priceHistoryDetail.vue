@@ -4,7 +4,22 @@
     <div class="modal-body">
         <form name="priceForm" class="form-horizontal">
 			<alert :show.sync="showError" type="danger">{{errorString}}</alert>
+
             <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Booking Period:</label>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="period" v-model="priceHistory.booking_period_id" class="form-control">
+                            <option v-for="per in booking_periods" :value="per.id"> {{ per.name }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row" style="display:none;">
                 <div class="form-group">
                     <div class="col-md-2">
                         <label><i class="fa fa-question-circle"data-toggle="tooltip" data-placement="bottom" title="Select a rate to prefill the price fields otherwise use the manual entry"></i>Select Rate: </label>
@@ -17,7 +32,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row" style="display:none;">
                 <div class="form-group">
                     <div class="col-md-2">
                         <label>Mooring Price: </label>
@@ -105,6 +120,7 @@ import bootstrapModal from '../bootstrap-modal.vue'
 import reason from '../reasons.vue'
 import { $, datetimepicker,api_endpoints, validate, helpers, bus } from '../../../hooks'
 import alert from '../alert.vue'
+import { mapGetters } from 'vuex'
 module.exports = {
     name: 'PriceHistoryDetail',
     props: {
@@ -117,6 +133,7 @@ module.exports = {
         let vm = this;
         return {
             id:'',
+            booking_period_id: '',
             selected_rate: '',
             title: '',
             rates: [],
@@ -132,6 +149,9 @@ module.exports = {
         }
     },
     computed: {
+        ...mapGetters([
+          'booking_periods'
+        ]),
         showError: function() {
             var vm = this;
             return vm.errors;
@@ -191,6 +211,7 @@ module.exports = {
             this.selected_rate = '';
             this.priceHistory.period_start= '';
             this.priceHistory.details= '';
+            this.priceHistory.booking_period_id = '';
 
             this.errorString = '';
             this.isOpen = false;
@@ -214,10 +235,11 @@ module.exports = {
             let vm = this;
             $(vm.form).validate({
                 rules: {
-                    adult: "required",
-                    concession: "required",
-                    child: "required",
-                    infant:"required",
+                    // adult: "required",
+                    // concession: "required",
+                    // child: "required",
+                    // infant:"required",
+                    booking_period_id:"required",
                     period_start: "required",
                     details: {
                         required: {
@@ -238,8 +260,9 @@ module.exports = {
                     concession: "Enter a concession rate",
                     child: "Enter a child rate",
                     infant: "Enter a infant rate",
+                    booking_period_id: "Select a booking period",
                     period_start: "Enter a start date",
-                    details: "Details required if Other reason is selected"
+                    details: "Details required if other reason is selected"
                 },
                 showErrors: function(errorMap, errorList) {
 
@@ -267,6 +290,7 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
+        vm.$store.dispatch("fetchBookingPeriods");
         $('[data-toggle="tooltip"]').tooltip()
         vm.form = document.forms.priceForm;
         var picker = $(vm.form.period_start).closest('.date');

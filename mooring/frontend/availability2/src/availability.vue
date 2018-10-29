@@ -743,7 +743,7 @@ export default {
 
                         if (data.sites == null) { 
                           return;
-			}
+			            }
 
                         if (data.sites.length == 0) {
                             vm.status = 'empty';

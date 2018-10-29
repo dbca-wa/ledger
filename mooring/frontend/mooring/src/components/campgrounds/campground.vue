@@ -79,6 +79,7 @@ import {
     helpers
 }
 from '../../hooks.js'
+import { mapGetters } from 'vuex'
 
 $.extend($.fn.dataTableExt.oSort, {
     "extract-date-pre": function(value){
@@ -111,6 +112,9 @@ export default {
         "bulk-close-campsites":bulkCloseCampsites
     },
     computed: {
+        ...mapGetters([
+          'booking_periods'
+        ]),
         closureHistoryURL: function() {
             return api_endpoints.status_history(this.$route.params.id);
         },
@@ -171,7 +175,14 @@ export default {
                     }
 
                 }, {
-                    data: 'mooring'
+                    data: 'period_name',
+                    mRender: function(data, type, full){
+                        if(data){
+                            return data;
+                        } else {
+                            return "";
+                        }
+                    }
 //                }, {
 //                    data: 'concession'
 //                }, {
@@ -189,15 +200,16 @@ export default {
                     mRender: function(data, type, full) {
                         if (data) {
                             var id = full.id;
-                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" data-reason=\"__REASON__\" data-details=\"__DETAILS__\">Edit</a><br/>"
+                            var column = "<td ><a href='#' class='editPrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" data-reason=\"__REASON__\" data-details=\"__DETAILS__\" data-booking_period_id=\"__BOOKING__\">Edit</a><br/>"
                             if (full.deletable){
-                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" data-reason=\"__REASON__\" data-details=\"__DETAILS__\">Delete</a></td>";
+                                column += "<a href='#' class='deletePrice' data-date_start=\"__START__\"  data-date_end=\"__END__\"  data-rate=\"__RATE__\" data-reason=\"__REASON__\" data-details=\"__DETAILS__\" data-booking_period_id=\"__BOOKING__\">Delete</a></td>";
                             }
                             column = column.replace(/__START__/g, full.date_start)
                             column = column.replace(/__END__/g, full.date_end)
                             column = column.replace(/__RATE__/g, full.rate_id)
                             column = column.replace(/__REASON__/g, full.reason)
                             column = column.replace(/__DETAILS__/g, full.details)
+                            column = column.replace(/__BOOKING__/g, full.booking_period_id)
                             return column
                         }
                         else {
@@ -400,6 +412,7 @@ export default {
     },
     mounted: function() {
         var vm = this;
+        vm.$store.dispatch("fetchBookingPeriods");
         vm.$refs.cg_campsites_dt.vmDataTable.on('click', '.detailRoute', function(e) {
             e.preventDefault();
             var id = $(this).attr('data-campsite');

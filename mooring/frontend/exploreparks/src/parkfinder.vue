@@ -62,9 +62,6 @@
 
                        </div>
                        </div>
-                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Vessel Size (meters) <input id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
-                      </div>
                     <div class="small-12 medium-12 large-12 columns">
                         <label><input type="checkbox" v-model="bookableOnly"/> Show bookable moorings only</label>
                     </div>
@@ -75,25 +72,20 @@
                 </div>
                 <div class="row">
                          <div class="small-12 medium-12 large-6 columns">
-                           <label>Vessel Registration  <input id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" /></label>
+                           <label>Vessel Registration  <input v-on:blur="searchRego()" v-model="vesselRego" id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" /></label>
                          </div>
                          <div class="small-12 medium-12 large-6 columns">
-                            <label>Vessel Size (meters) <input id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
+                            <label>Vessel Size (meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
                          </div>
                          <div class="small-12 medium-12 large-6 columns">
-                            <label>Vessel Draft (meters) <input id="vesselDraft" name="vessel_draft" type="number" placeholder="10" /></label>
+                            <label>Vessel Draft (meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" /></label>
                          </div>
                          <div class="small-12 medium-12 large-6 columns">
-                            <label>Vessel Beams (meters)  <input id="vesselBeam" name="vessel_beams" type="number" placeholder="3" /></label>
+                            <label>Vessel Beams (meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" /></label>
                          </div>
                          <div class="small-12 medium-12 large-6 columns">
-                            <label>Vessel Weight (tons)  <input id="vesselWeight" name="vessel_weight" type="number" placeholder="2" /></label>
+                            <label>Vessel Weight (tons)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" /></label>
                          </div>
-                 </div>
-                 <div class="row">
-                       <div class="small-12 medium-12 large-12 columns">
-                            <label><input type="checkbox" v-model="bookableOnly"/> Show bookable moorings only</label>
-                       </div>
                  </div>
                  <div class="row">
                      <div class="small-12 columns">
@@ -608,6 +600,7 @@ export default {
             anchorPins: null,
             anchorGroups: {},
             anchorPinsActive: [],
+            vesselRego: '',
             vesselSize: 0,
             vesselDraft: 0,
             vesselBeam: 0,
@@ -686,6 +679,37 @@ export default {
         }
     },
     methods: {
+        searchRego: function(){
+            let vm = this;
+            var reg = vm.vesselRego;
+            var data = {
+                'rego': reg
+            }
+            if(reg){
+                $.ajax({
+                    url: process.env.PARKSTAY_URL + "/api/registeredVessels/",
+                    dataType: 'json',
+                    data: data,
+                    method: 'GET',
+                    success: function(data, stat, xhr) {
+                        if(data[0]){
+                            vm.vesselWeight = data[0].vessel_weight;
+                            vm.vesselBeam = data[0].vessel_beam;
+                            vm.vesselSize = data[0].vessel_size;
+                            vm.vesselDraft = data[0].vessel_draft;
+                            var d = new Date();
+                            d.setTime(d.getTime() + (1*60*60*1000));
+                            document.cookie = "vessel_rego=" + reg + ";expires=" + d.toUTCString() + ";path=/;";
+                        } else {
+                            console.log("Registration was not found.");
+                            if (document.cookie.split('vessel_rego=').length==2 && (!this.vesselRego || this.vesselRego == "")){
+                                document.cookie = "vessel_rego=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                            }
+                        }
+                    }
+                });
+            }
+        },
         weightBeam: function(f){
             if (f.mooring_physical_type == 0){
                 if (f.vessel_weight_limit >= this.vesselWeight){
@@ -1311,19 +1335,22 @@ export default {
               return vectorLayer;
       },
       BookNow: function() { 
-       var vessel_size = $('#vesselSize').val();
-       if (vessel_size > 0 ) {
-       } else {
-                swal({
-                  title: 'Missing Vessel Size',
-                  text: "Please enter vessel size:",
-                  type: 'warning',
-                  showCancelButton: false,
-                  confirmButtonText: 'OK',
-                  showLoaderOnConfirm: true,
-                  allowOutsideClick: false
-                })
-       }
+        var vessel_size = $('#vesselSize').val();
+        if (vessel_size > 0 ) {
+        } else {
+            swal({
+            title: 'Missing Vessel Size',
+            text: "Please enter vessel size:",
+            type: 'warning',
+            showCancelButton: false,
+            confirmButtonText: 'OK',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: false
+            })
+        }
+        if (document.cookie.split('vessel_rego=').length==2 && (!this.vesselRego || this.vesselRego == "")){
+            document.cookie = "vessel_rego=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        }
       },
       loadMap: function() {
 

@@ -66,7 +66,10 @@ from mooring.models import (MooringArea,
                                 AdmissionsBooking,
                                 AdmissionsRate,
                                 BookingPeriodOption,
-                                AdmissionsBookingInvoice
+                                AdmissionsBookingInvoice,
+                                BookingPeriodOption,
+                                BookingPeriod,
+                                RegisteredVessels
                                 )
 
 from mooring.serialisers import (  MooringsiteBookingSerialiser,
@@ -120,7 +123,10 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     BookingHistorySerializer,
                                     MooringAreaGroupSerializer,
                                     AdmissionsBookingSerializer,
-                                    AdmissionsRateSerializer
+                                    AdmissionsRateSerializer,
+                                    BookingPeriodOptionsSerializer,
+                                    BookingPeriodSerializer,
+                                    RegisteredVesselsSerializer
                                     )
 from mooring.helpers import is_officer, is_customer
 from mooring import reports 
@@ -913,16 +919,28 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
 #                rate = Rate.objects.get_or_create(mooring=serializer.validated_data['mooring'],adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
 #                rate = Rate.objects.get_or_create(mooring=serializer.validated_data['mooring'],adult='0.00',concession='0.00',child='0.00',infant='0.00')[0]
                 rate = Rate.objects.get_or_create(mooring=serializer.validated_data['mooring'])[0]
+
             if rate:
-                serializer.validated_data['rate']= rate
+                try:
+                    booking = BookingPeriod.objects.get(pk=serializer.validated_data.get('booking_period_id', None))
+                except BookingPeriod.DoesNotExist as e:
+                    raise serializers.ValidationError('The selected booking period does not exist')
+                if booking:
+                    period = booking
+                else:
+                    period = None
+                serializer.validated_data['rate']=rate
                 data = {
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
-                    'reason': PriceReason.objects.get(pk = serializer.validated_data['reason']),
+                    'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
                     'details': serializer.validated_data.get('details',None),
+                    'booking_period': period,
                     'update_level': 0
                 }
+                # This line creates the end date of previous price.
                 self.get_object().createMooringsitePriceHistory(data)
+
             price_history = MooringAreaPriceHistory.objects.filter(id=self.get_object().id)
             serializer = MooringAreaPriceHistorySerializer(price_history,many=True,context={'request':request})
             res = serializer.data
@@ -957,15 +975,25 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 #rate = Rate.objects.get_or_create(adult=serializer.validated_data['adult'],concession=serializer.validated_data['concession'],child=serializer.validated_data['child'],infant=serializer.validated_data['infant'])[0]
                 rate = Rate.objects.get_or_create(mooring=serializer.validated_data['mooring'])[0]
             if rate:
+                try:
+                    booking = BookingPeriod.objects.get(pk=serializer.validated_data.get('booking_period_id', None))
+                except BookingPeriod.DoesNotExist as e:
+                    raise serializers.ValidationError('The selected booking period does not exist')
+                if booking:
+                    period = booking
+                else:
+                    period = None
                 serializer.validated_data['rate']= rate
                 new_data = {
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
                     'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
                     'details': serializer.validated_data.get('details',None),
+                    'booking_period': period,
                     'update_level': 0
                 }
                 self.get_object().updatePriceHistory(dict(original_serializer.validated_data),new_data)
+
             price_history = MooringAreaPriceHistory.objects.filter(id=self.get_object().id)
             serializer = MooringAreaPriceHistorySerializer(price_history,many=True,context={'request':request})
             res = serializer.data
@@ -1048,7 +1076,11 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             
             serializer = MooringAreaPriceHistorySerializer(price_history,many=True,context={'request':request})
             res = serializer.data
-
+            for line in res:
+                for k, v in line.items():
+                    if k == "booking_period_id":
+                        period = BookingPeriod.objects.get(pk=v)
+                        line['period_name'] = period.name
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise
@@ -2788,34 +2820,7 @@ class MooringsiteRateViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
-            rate = None
-            rate_serializer = RateDetailSerializer(data=request.data)
-            rate_serializer.is_valid(raise_exception=True)
-            rate_id = rate_serializer.validated_data.get('rate',None)
-            if rate_id:
-                try:
-                    rate = Rate.objects.get(id=rate_id)
-                except Rate.DoesNotExist as e :
-                    raise serializers.ValidationError('The selected rate does not exist')
-            else:
-                rate = Rate.objects.get_or_create(adult=rate_serializer.validated_data['adult'],concession=rate_serializer.validated_data['concession'],child=rate_serializer.validated_data['child'])[0]
-                pass
-            if rate:
-                data = {
-                    'rate': rate.id,
-                    'date_start': rate_serializer.validated_data['period_start'],
-                    'campsite': rate_serializer.validated_data['campsite'],
-                    'reason': rate_serializer.validated_data['reason'],
-                    'update_level': 2
-                }
-                instance = self.get_object()
-                partial = kwargs.pop('partial', False)
-                serializer = self.get_serializer(instance,data=data,partial=partial)
-                serializer.is_valid(raise_exception=True)
-                self.perform_update(serializer)
-
-                return Response(serializer.data, status=http_status)
-
+            print(request.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -2823,6 +2828,46 @@ class MooringsiteRateViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             raise serializers.ValidationError(str(e))
+
+        # Below is no longer used as we have switched to booking periods.
+        # Leaving this in for now but will be cleared up in the future.
+        # try:
+        #     http_status = status.HTTP_200_OK
+        #     rate = None
+        #     rate_serializer = RateDetailSerializer(data=request.data)
+        #     rate_serializer.is_valid(raise_exception=True)
+        #     rate_id = rate_serializer.validated_data.get('rate',None)
+        #     if rate_id:
+        #         try:
+        #             rate = Rate.objects.get(id=rate_id)
+        #         except Rate.DoesNotExist as e :
+        #             raise serializers.ValidationError('The selected rate does not exist')
+        #     else:
+        #         rate = Rate.objects.get_or_create(adult=rate_serializer.validated_data['adult'],concession=rate_serializer.validated_data['concession'],child=rate_serializer.validated_data['child'])[0]
+        #         pass
+        #     if rate:
+        #         data = {
+        #             'rate': rate.id,
+        #             'date_start': rate_serializer.validated_data['period_start'],
+        #             'campsite': rate_serializer.validated_data['campsite'],
+        #             'reason': rate_serializer.validated_data['reason'],
+        #             'update_level': 2
+        #         }
+        #         instance = self.get_object()
+        #         partial = kwargs.pop('partial', False)
+        #         serializer = self.get_serializer(instance,data=data,partial=partial)
+        #         serializer.is_valid(raise_exception=True)
+        #         self.perform_update(serializer)
+
+        #         return Response(serializer.data, status=http_status)
+
+        # except serializers.ValidationError:
+        #     print(traceback.print_exc())
+        #     raise
+        # except ValidationError as e:
+        #     raise serializers.ValidationError(repr(e.error_dict))
+        # except Exception as e:
+        #     raise serializers.ValidationError(str(e))
 
 class BookingRangeViewset(viewsets.ModelViewSet):
 
@@ -2861,6 +2906,87 @@ class MooringsiteBookingRangeViewset(BookingRangeViewset):
 class RateViewset(viewsets.ModelViewSet):
     queryset = Rate.objects.all()
     serializer_class = RateSerializer
+
+class BookingPeriodOptionsViewSet(viewsets.ModelViewSet):
+    queryset = BookingPeriodOption.objects.all().order_by('id')
+    serializer_class = BookingPeriodOptionsSerializer
+
+    def list(self, request, *args, **kwargs):
+        q = request.GET.get('q') if request.GET.get('q') else None
+        qs = BookingPeriodOption.objects.all().order_by('pk')
+        if q:
+            qs = qs.filter(period_name__icontains=q)
+        serializer = BookingPeriodOptionsSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if(BookingPeriod.objects.filter(booking_period=instance.id)):
+            # Needs ignoring
+            return Response('Error in use.', status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            self.perform_destroy(instance)
+            return Response(status.HTTP_200_OK)
+
+class BookingPeriodViewSet(viewsets.ModelViewSet):
+    queryset = BookingPeriod.objects.all()
+    serializer_class = BookingPeriodSerializer
+
+    def list(self, request, *args, **kwargs):
+        qs = BookingPeriod.objects.all().order_by('pk')
+        serializer = BookingPeriodSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = BookingPeriodSerializer(data={'name':request.data['name']})
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            for val in request.data['booking_period']:
+                option = BookingPeriodOption.objects.get(pk=val)
+                if option:
+                    instance.booking_period.add(option)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            raise
+        
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = BookingPeriodSerializer(instance,data={'name':request.data['name']},partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            instance.booking_period.clear()
+            for val in request.data['booking_period']:
+                option = BookingPeriodOption.objects.get(pk=val)
+                if option:
+                    instance.booking_period.add(option)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+class RegisteredVesselsViewSet(viewsets.ModelViewSet):
+    queryset = RegisteredVessels.objects.all()
+    serializer_class = RegisteredVesselsSerializer
+
+    def list(self, request, *args, **kwargs):
+        rego = request.GET.get('rego') if request.GET.get('rego') else None
+        queryset = self.get_queryset()
+        if rego:
+            queryset = queryset.filter(rego_no=rego)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance,method='get')
+        return Response(serializer.data)
+
 
 # Reasons
 # =========================

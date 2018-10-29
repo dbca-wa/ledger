@@ -361,7 +361,8 @@
 <script type="text/javascript">
     var book = new Vue({
         el: '#addBooking',
-        data: {
+        data: function() {
+            return {
             expiry: moment('{{ expiry|escapejs }}'),
             timer: {{ timer }},
             pricing: {
@@ -384,6 +385,7 @@
             vehicleCount: 1,
             toc: false,
             booking_id: {{ booking.id }},
+            }
         },
         filters:{
             formatMoney:function(n,c, d, t){
@@ -450,7 +452,6 @@
             calculateTotal: function () {
                 var vm = this;
                 var form = document.forms.addBookingForm;
-		console.log("BOOKIGN MOO");
                 // console.log(vm.booking_mooring);	
 
                 vm.entryFee = 0;
@@ -575,6 +576,13 @@
                 }
                 catch(e){
                 }
+            }
+            //Set the rego if entered.
+            var x = document.cookie.split('vessel_rego=');
+            if(x.length == 2){
+                var secondHalf = x[1].split(';');
+                var rego = secondHalf[0];
+                vm.vehicles = [[0, rego, true]];
             }
             vm.calculateTotal();
         }

@@ -170,3 +170,9 @@ admin.site.register(models.Rate)
 #admin.site.register(models.Region)
 #admin.site.register(models.District)
 admin.site.register(models.PromoArea)
+
+@admin.register(models.RegisteredVessels)
+class RegisteredVessels(admin.ModelAdmin):
+    lsit_display = ('rego_no', )
+    ordering = ('rego_no',)
+    search_fields = ('rego_no',)
