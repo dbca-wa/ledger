@@ -1678,6 +1678,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 
 
                 availability_map = []
+                date_rotate = start_date
                 for i in range(length):
                      bp_new = []
                      date_rotate = start_date+timedelta(days=i)
@@ -1687,16 +1688,20 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                      if date_rotate in availability[v[0]]:
                          avbp_map = availability[v[0]][date_rotate][1]
                      #[start_date+timedelta(days=i)]
-                     for bp in v[2][start_date+timedelta(days=i)]['booking_period']:
+                     for bp in v[2][date_rotate]['booking_period']:
                          bp['status'] = 'open'
                          bp['date'] = str(date_rotate)
+
                          if avbp_map:
                             if bp['id'] in avbp_map:
                                bp['status'] = avbp_map[bp['id']]
-                         bp_new.append(bp)      
-                     v[2][start_date+timedelta(days=i)]['booking_period'] = bp_new
+                         bp_new.append(bp) 
+                         if datetime.strptime(str(date_rotate), '%Y-%m-%d') <= datetime.now():
+                               bp['status'] = 'closed'
+                     v[2][date_rotate]['booking_period'] = bp_new
  
-                     availability_map.append([True, v[2][start_date+timedelta(days=i)], v[2][start_date+timedelta(days=i)]])
+                     availability_map.append([True, v[2][date_rotate], v[2][date_rotate]])
+                     #date_rotate = start_date+timedelta(days=i)
 #                print availability_map
 
                 #print [v[2][start_date+timedelta(days=i)]['mooring'] for i in range(length)]

@@ -783,6 +783,7 @@ export default {
                                 vm.mooring_book_row_price[index] = '0.00';
                                 for (avail_index = 0; avail_index < vm.sites[index].availability.length; ++avail_index) {
                                         var booking_period = vm.sites[index].availability[avail_index][1].booking_period;  
+                                        if (booking_period.length > 0) { 
                                         if (vm.sites[index].mooring_class == 'small') {
                                               var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].small_price);
 				              vm.mooring_book_row_price[index] = total.toFixed(2);
@@ -793,13 +794,18 @@ export default {
                                               var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].large_price);
 					      vm.mooring_book_row_price[index] = total.toFixed(2);
 					}
+                                        
 
                                         if (booking_period.length > 1) { 
                                                 vm.mooring_book_row[index] = false;
 					} else {
+                                             
 					     if (booking_period[0].status == 'closed') {
 							vm.mooring_book_row[index] = false;	
 					     }
+					}
+                                        } else {
+						vm.mooring_book_row[index] = false;
 					}
                                         console.log(vm.sites[index].availability[avail_index][1]);
 				}
