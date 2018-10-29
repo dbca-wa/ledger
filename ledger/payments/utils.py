@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
 from six.moves.urllib.parse import urlparse
 #
-from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode,OracleOpenPeriod 
+from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction 
 from oscar.core.loading import get_class
 import logging
 logger = logging.getLogger(__name__)
