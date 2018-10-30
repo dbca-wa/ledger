@@ -28,7 +28,7 @@
                                             <div class="col-md-8" v-if="campsites.length > 0"></div>
                                             <div class="col-md-8" >
                                                 <select class="form-control" style="width: 100%;" id="multi-campsites" name="campground" placeholder="" multiple v-model="selected_campsites">
-                                                    <option v-for="c in campsites" v-bind:value="c.id">{{c.name}}</option>
+                                                    <option v-for="c in campsites" v-bind:value="c.id">{{c.name}} - {{c.status}}</option>
                                                 </select>
                                             </div>                                           
                                             <div class="col-md-8" v-else>
