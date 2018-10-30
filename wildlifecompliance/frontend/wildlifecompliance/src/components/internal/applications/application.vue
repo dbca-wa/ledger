@@ -90,60 +90,45 @@
                                 </div>
                             </template>
                               <div class="col-sm-12 top-buffer-s" >
-                                        <template v-if="showingApplication">
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <strong>Action</strong><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Send to Assessor</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button v-if="canIssueDecline" style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
-                                                </div>
-                                            </div>
-                                        </template>
-
-                                        <template v-if="isSendingToAssessor">
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <strong>Action</strong><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
-                                                </div>
-                                            </div>
-                                            
-                                        </template>
-                                        <template v-if="showingConditions">
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <strong>Action</strong><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeAssessment()">Complete Assessment</button><br/>
-                                                </div>
-                                            </div>
-                                            
-                                        </template>
+                                <template v-if="showingApplication">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
+                                    <div v-if="!applicationIsDraft" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Send to Assessor</button><br/>
+                                        </div>
+                                    </div>
+                                    <div v-if="!applicationIsDraft" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
+                                        </div>
+                                    </div>
+                                    <div v-if="canIssueDecline" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <div v-if="isSendingToAssessor"class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
+                                        </div>
+                                    </div>
+                                    <div v-if="showingConditions"class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
+                                        </div>
+                                    </div>
+                                    <div v-if="showingConditions"class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeAssessment()">Complete Assessment</button><br/>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -191,48 +176,48 @@
                 </template>
                 <template v-if="isSendingToAssessor && !showingConditions">
                     <div>
-                        <ul class="nav nav-tabs" id="assessortabs">
+                        <ul id="tabs-assessor" class="nav nav-tabs">
                             <li v-for="(item1,index) in application.licence_type_data.activity_type"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
                         </ul>
                     </div>
                         
                     <div class="tab-content">
-                            <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" class="tab-pane fade">
+                            <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" class="tab-pane fade in">
                                 <div>
-                                        <div class="panel panel-default">
-                                            <div class="panel-heading">
-                                                <h3 class="panel-title">Send to Assessor
-                                                    <a class="panelClicker" :href="`#${item1.id}`+assessorsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="assessorsBody">
-                                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                                    </a>
-                                                </h3>
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading">
+                                            <h3 class="panel-title">Send to Assessor
+                                                <a class="panelClicker" :href="`#${item1.id}`+assessorsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="assessorsBody">
+                                                    <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                                </a>
+                                            </h3>
+                                        </div>
+                                        <div class="panel-body panel-collapse collapse in" :id="`${item1.id}`+assessorsBody">
+                                            <div class="row">
+                                               <div class="col-sm-10" style="margin-bottom: 10px">
+                                                        <label class="control-label pull-left"  for="Name">Assessor Group</label>
+                                                        <select class="form-control" v-model="selectedAssessor">
+                                                            <option v-for="assessor in assessorGroup" :id="assessor.id"
+                                                            :value="assessor" v-if="application.licence_type_data.id == assessor.licence_class && item1.id == assessor.licence_activity_type">{{assessor.display_name}}</option>
+                                                        </select>
+                                                </div>
+                                                <div class="col-sm-2">
+                                                    <a class="btn btn-primary" style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)">Send</a>
+                                                </div>
                                             </div>
-                                            <div class="panel-body panel-collapse collapse in" :id="`${item1.id}`+assessorsBody">
-                                                        <div class="row">
-                                                           <div class="col-sm-10" style="margin-bottom: 10px">
-                                                                    <label class="control-label pull-left"  for="Name">Assessor Group</label>
-                                                                    <select class="form-control" v-model="selectedAssessor">
-                                                                        <option v-for="assessor in assessorGroup" :id="assessor.id" 
-                                                                        :value="assessor" v-if="application.licence_type_data.id == assessor.licence_class && item1.id == assessor.licence_activity_type">{{assessor.display_name}}</option>
-                                                                    </select>
-                                                            </div> 
-                                                            <div class="col-sm-2">
-                                                                <a class="btn btn-primary" style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)">Send</a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row">
-                                                            <datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options[`${item1.id}`]" :dtHeaders="assessors_headers" />
-                                                        </div>
+                                            <div class="row">
+                                                <datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options[`${item1.id}`]" :dtHeaders="assessors_headers" />
                                             </div>
                                         </div>
+                                    </div>
                                 </div>
                             </div>
                     </div>
                 </template>
                 <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised">
                     <div>
-                    <ul class="nav nav-tabs">
-                        <li class="active"><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
+                    <ul class="nav nav-tabs" id="tabs-main">
+                        <li><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
                         <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
                     </ul>
                     <div class="tab-content">
@@ -507,8 +492,8 @@
                                                         <button v-if="canOfficerReviewConditions" class="btn btn-warning" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
                                                         <button v-if="canProposeDecline" class="btn btn-warning" @click.prevent="proposedDecline()">Propose Decline</button>
                                                         <button v-if="canProposeIssue" class="btn btn-warning" @click.prevent="proposedLicence()">Propose Issue</button>
-                                                        <button v-if="canCompleteAssessment" class="btn btn-info" @click.prevent="toggleConditions()">Complete Assessment</button>
-                                                        <button class="btn btn-primary" @click.prevent="save()">Save Changes</button>
+                                                        <button v-if="canCompleteAssessment" class="btn btn-info" @click.prevent="toggleConditions()">Assess</button>
+                                                        <button v-if="!applicationIsDraft" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
                                                     </p>
                                                 </div>
                                             </div>
@@ -662,6 +647,9 @@ export default {
     watch: {
     },
     computed: {
+        applicationIsDraft: function(){
+            return this.application.processing_status == 'Draft';
+        },
         selectedTabId: function(){
             return this.selected_activity_type_tab_id;
         },
@@ -677,6 +665,15 @@ export default {
             var activity_types_list = this.application.licence_type_data.activity_type
             for(var i=0;i<activity_types_list.length;i++){
                 if(activity_types_list[i].processing_status == 'With Officer-Finalisation'){
+                    return true;
+                }
+            }
+            return false;
+        },
+        canRequestAmendment: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer'){
                     return true;
                 }
             }
@@ -1051,9 +1048,10 @@ export default {
         },
         togglesendtoAssessor:function(){
             let vm=this;
+            $('#tabs-main li').removeClass('active');
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
-            vm.showingConditions=false;
+            vm.showingConditions = false;
         },
         save: function(e) {
           let vm = this;

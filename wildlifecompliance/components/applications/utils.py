@@ -356,7 +356,7 @@ def get_activity_type_schema(licence_class_data):
         wl_activity_type_id = item['id']
         activity_type_obj = WildlifeLicenceActivityType.objects.get(id = wl_activity_type_id)
         item["name"]=activity_type_obj.name
-        item["processing_status"]="draft"
+        item["processing_status"]="Draft"
         item["proposed_decline"]=False
 
         for index1, item1 in enumerate(item['activity']):
@@ -372,7 +372,7 @@ def get_activity_type_schema(licence_class_data):
                   "id":activity_type_obj.id,
                   "label":activity_type_obj.name,
                   "name":activity_type_obj.name,
-                  "status":"draft",
+                  "status":"Draft",
                   "children":schema_activity
                 })
         # print(schema_tab)
