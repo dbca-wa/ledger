@@ -177,12 +177,12 @@
                 <template v-if="isSendingToAssessor && !showingConditions">
                     <div>
                         <ul id="tabs-assessor" class="nav nav-tabs">
-                            <li v-for="(item1,index) in application.licence_type_data.activity_type"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in application.licence_type_data.activity_type" :class="setAssessorTab(index)"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
                         </ul>
                     </div>
                         
                     <div class="tab-content">
-                            <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" class="tab-pane fade in">
+                            <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" :class="setAssessorTabContent(index)">
                                 <div>
                                     <div class="panel panel-default">
                                         <div class="panel-heading">
@@ -898,6 +898,12 @@ export default {
             this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name;
             this.$refs.send_to_assessor.assessment.text='';
             this.$refs.send_to_assessor.isModalOpen=true;
+        },
+        setAssessorTab(_index){
+            return _index === 0 ? 'active' : '';
+        },
+        setAssessorTabContent(_index){
+            return _index === 0 ? 'tab-pane fade in active' : 'tab-pane fade in';
         },
         proposedLicence: function(){
             var activity_type_name=[]
