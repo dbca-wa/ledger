@@ -63,6 +63,9 @@ class OracleInterfaceDeduction(models.Model):
     percentage_account_code = models.CharField(max_length=50,null=True,blank=True)
     destination_account_code = models.CharField(max_length=50,null=True,blank=True)
 
+    class Meta:
+        unique_together = ('oisystem', 'percentage_account_code', 'destination_account_code')
+
     def __str__(self):
         return '{} - {}'.format(self.oisystem, self.destination_account_code)
 
