@@ -423,7 +423,7 @@ export default {
             required_fields.each(function() {
             if (this.value == '') {
                     //var text = $('#'+id).text()
-                    console.log(this);
+                    //console.log(this);
                     vm.errorListContact.push('Value not provided: ' + this.name)
                     vm.missing_fields.push({id: this.id});
                 }

@@ -63,7 +63,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_contact_details(self,obj):
         if obj.mobile_number and obj.email:
             return True
-        elif obj.mobile_number and obj.phone_number:
+        elif obj.email and obj.phone_number:
             return True
         else:
             return False
