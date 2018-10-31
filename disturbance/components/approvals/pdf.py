@@ -280,10 +280,16 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     #                                      styles['Left'])] + address_paragraphs]],
     #                         colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
     #                         style=approval_table_style))
+    if user.phone_number:
+        contact_number = user.phone_number
+    elif user.mobile_number:
+        contact_number = user.mobile_number
+    else:
+        contact_number= settings.DEP_PHONE
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Paragraph('Should you have any queries about this approval, please contact {} {}, '
-                                'on {} or by email at {}'.format(user.first_name, user.last_name, settings.DEP_PHONE, user.email), styles['Left']))
+                                'on {} or by email at {}'.format(user.first_name, user.last_name, contact_number, user.email), styles['Left']))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Paragraph('To provide feedback on the system used to submit the approval or update contact details, please '
         'contact {} Works Coordinator - {}'.format(settings.SYSTEM_NAME_SHORT, settings.SUPPORT_EMAIL), styles['Left']))

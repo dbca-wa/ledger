@@ -167,7 +167,7 @@
                   <div class="panel-body collapse" :id="oBody">
                       <form class="form-horizontal" name="orgForm" method="post">
                           <div class="form-group">
-                            <label for="" class="col-sm-5 control-label">Do you manage approvals on behalf of an organisation?</label>
+                            <label for="" class="col-sm-5 control-label">Are you responsible for preparing proposals on behalf of an organisation?</label>
                             <div class="col-sm-4">
                                 <label class="radio-inline">
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
@@ -423,7 +423,7 @@ export default {
             required_fields.each(function() {
             if (this.value == '') {
                     //var text = $('#'+id).text()
-                    console.log(this);
+                    //console.log(this);
                     vm.errorListContact.push('Value not provided: ' + this.name)
                     vm.missing_fields.push({id: this.id});
                 }

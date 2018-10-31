@@ -578,11 +578,13 @@ export default {
             let vm = this;         
             
             var assessor = proposal.allowed_assessors.filter(function(elem){
-                    return(elem.id=vm.profile.id)
+                    return(elem.id==vm.profile.id)
                 });
                 
-            if (assessor.length > 0)
+            if (assessor.length > 0){
+                console.log(proposal.id, assessor)
                 return true;
+            }
             else
                 return false;       
             
