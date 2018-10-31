@@ -38,10 +38,24 @@ class EnterConditionsView(OfficerRequiredMixin, TemplateView):
         convert_documents_to_url(application.data, application.documents.all(), '')
 
         #kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
+        kwargs['application'] = serialize(application,posthook=format_application,
+                                            related={
+                                                'applicant': {'exclude': ['residential_address','postal_address','billing_address']},
+                                                'applicant_profile':{'fields':['email','id','institution','name']},
+                                                'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']},
+                                                'licence':{'related':{
+                                                   'holder':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'issuer':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'profile':{'related': {'user': {'exclude': ['residential_address','postal_address','billing_address']}},
+						       'exclude': ['postal_address']}
+                                                   },'exclude':['holder','issuer','profile','licence_ptr']}
+                                            })
         kwargs['form_structure'] = application.licence_type.application_schema
         kwargs['assessments'] = serialize(Assessment.objects.filter(application=application),
-                                          posthook=format_assessment,exclude=['application','applicationrequest_ptr'])
+                                          posthook=format_assessment,exclude=['application','applicationrequest_ptr'],
+                                          related={'assessor_group':{'related':{'members':{'exclude':['residential_address']}}},
+                                              'officer':{'exclude':['residential_address']},
+                                              'assigned_assessor':{'exclude':['residential_address']}})
 
         kwargs['log_entry_form'] = ApplicationLogEntryForm(to=get_log_entry_to(application),
                                                            fromm=self.request.user.get_full_name())
@@ -94,13 +108,32 @@ class EnterConditionsAssessorView(CanPerformAssessmentMixin, TemplateView):
         convert_documents_to_url(application.data, application.documents.all(), '')
 
         #kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']}})
+        kwargs['application'] = serialize(application,posthook=format_application,
+                                            related={
+                                                'applicant': {'exclude': ['residential_address','postal_address','billing_address']},
+                                                'applicant_profile':{'fields':['email','id','institution','name']},
+                                                'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']},
+                                                'licence':{'related':{
+                                                   'holder':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'issuer':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'profile':{'related': {'user': {'exclude': ['residential_address','postal_address','billing_address']}},
+						       'exclude': ['postal_address']}
+                                                   },'exclude':['holder','issuer','profile','licence_ptr']}
+                                            })
         kwargs['form_structure'] = application.licence_type.application_schema
 
-        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment,exclude=['application','applicationrequest_ptr'])
+        kwargs['assessment'] = serialize(assessment, post_hook=format_assessment,
+                                            exclude=['application','applicationrequest_ptr'],
+                                            related={'assessor_group':{'related':{'members':{'exclude':['residential_address']}}},
+                                                'officer':{'exclude':['residential_address']},
+                                                'assigned_assessor':{'exclude':['residential_address']}})
 
         kwargs['other_assessments'] = serialize(Assessment.objects.filter(application=application).
-                                                exclude(id=assessment.id).order_by('id'), posthook=format_assessment,exclude=['application','applicationrequest_ptr'])
+						exclude(id=assessment.id).order_by('id'),
+                                                posthook=format_assessment,exclude=['application','applicationrequest_ptr'],
+                                                related={'assessor_group':{'related':{'members':{'exclude':['residential_address']}}},
+                                                    'officer':{'exclude':['residential_address']},
+                                                    'assigned_assessor':{'exclude':['residential_address']}})
 
         assessors = [{'id': assessor.id, 'text': assessor.get_full_name()} for assessor in
                      assessment.assessor_group.members.all().order_by('first_name')]

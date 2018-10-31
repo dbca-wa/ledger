@@ -30,7 +30,7 @@ class EmailBase(object):
     def send_to_user(self, user, context=None):
         return self.send(user.email, context=context)
 
-    def send(self, to_addresses, from_address=None, context=None, attachments=None, cc=None, bcc=None):
+    def send(self, to_addresses, from_address=None, context=None, attachments=None, cc=None, bcc=None, reply_to=None):
         """
         Send an email using EmailMultiAlternatives with text and html.
         :param to_addresses: a string or a list of addresses
@@ -41,6 +41,7 @@ class EmailBase(object):
                or Documents
         :param bcc:
         :param cc:
+        :param reply_to:
         :return:
         """
         # The next line will throw a TemplateDoesNotExist if html template cannot be found
@@ -56,6 +57,8 @@ class EmailBase(object):
         # build message
         if isinstance(to_addresses, six.string_types):
             to_addresses = [to_addresses]
+        if isinstance(reply_to, six.string_types):
+            reply_to = [reply_to]
         if attachments is None:
             attachments = []
         if attachments is not None and not isinstance(attachments, list):
@@ -75,7 +78,7 @@ class EmailBase(object):
             else:
                 _attachments.append(attachment)
         msg = EmailMultiAlternatives(self.subject, txt_body, from_email=from_address, to=to_addresses,
-                                     attachments=_attachments, cc=cc, bcc=bcc)
+                                     attachments=_attachments, cc=cc, bcc=bcc, reply_to=reply_to)
         msg.attach_alternative(html_body, 'text/html')
         try:
             msg.send(fail_silently=False)

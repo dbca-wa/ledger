@@ -37,7 +37,7 @@
                             <span><strong>Campground</strong> : {{booking.campground_name}}</span>
                         </div>
                         <div class="col-sm-8">
-                            <span><strong>Camp Site (Type)</strong> : {{booking.campground_site_type}}</span>
+                            <label>Camp Site (Type): {{CampSiteType}} </label>
                         </div>
                     </div>
                     <div class="row" style="margin-top:10px;">
@@ -87,8 +87,10 @@ export default {
         return {
             isModalOpen:false,
             booking: {
-                guests: {}
+                guests: {},
+                campground_site_type:""
             },
+            firstTimeTableLoad: true,
             dtHeaders:["Change Date","Arrival","Departure","Campground","Camp Site","Updated By","Details"],
             dtOptions:{
                 language: {
@@ -170,11 +172,16 @@ export default {
                         orderable:false,
                         searchable:false,
                         mRender:function(data,type,full){
-                            if (vm.booking.campsite_names.sort().join(',') == data.sort().join(',')){
-                                return `<span style="color:green;">${data}</span>`;
+                            var resultList = data.sort().join(',');
+                            var max_length = 10;
+                            var popover_class = (resultList.length > max_length) ? "class='name_popover'" : "";
+                            var name = (resultList.length > max_length) ? resultList.substring(0,max_length-1)+'...' : resultList;
+                            var column = '<div '+popover_class+'tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div>';                            
+                            if (vm.booking.campsite_names == resultList){
+                                return `<span style="color:green;">${column.replace('__NAME__', resultList)}</span>`;
                             }
                             else{
-                                return `<span style="color:red;">${data}</span>`;
+                                return `<span style="color:red;">${column.replace('__NAME__', resultList)}</span>`;
                             }
                         }
                     },
@@ -194,6 +201,27 @@ export default {
         }
     },
     computed: {
+        CampSiteType: function(){
+            var typeCondensed = {};
+            var resultList = [];
+            for (var i = 0; i < this.booking.campground_site_type.length; i++) {
+            if (this.booking.campground_site_type[i].campground_type === 0) {
+                resultList.push(this.booking.campground_site_type[i].name);
+                continue;
+            }
+            if (typeCondensed[this.booking.campground_site_type[i].type] == undefined) {
+                typeCondensed[this.booking.campground_site_type[i].type] = 0;
+            }            
+            typeCondensed[this.booking.campground_site_type[i].type] += 1;
+            }
+            for (var index in typeCondensed) {
+            var count = typeCondensed[index];
+            var site_type = index.split(':', 1)[0];
+            resultList.push(`${count}x ${site_type}`);
+            }
+            var resultString = resultList.join(", ");
+            return resultString;
+        }        
     },
     watch:{
         booking_id(){
@@ -275,28 +303,34 @@ export default {
             '</table>';
         },
         addEventListeners(){
-            let vm = this;
-
-            vm.$refs.booking_history_table.vmDataTable.on('click', 'td.details-control', function () {
-                var tr = $(this).closest('tr');
-                var row = vm.$refs.booking_history_table.vmDataTable.row( tr );
-         
-                if ( row.child.isShown() ) {
-                    // This row is already open - close it
-                    row.child.hide();
-                    tr.removeClass('shown');
-                }
-                else {
-                    // Open this row
-                    row.child( vm.format(row.data()) ).show();
-                    tr.addClass('shown');
-                }
-            } ); 
+            let vm = this;           
+            if (vm.firstTimeTableLoad) {
+                vm.firstTimeTableLoad = false;
+                vm.$refs.booking_history_table.vmDataTable.on('click', 'td.details-control', function () {
+                    var tr = $(this).closest('tr');
+                    var row = vm.$refs.booking_history_table.vmDataTable.row( tr );
+                
+                    if ( row.child.isShown() ) {
+                        // This row is already open - close it
+                        row.child.hide();
+                        tr.removeClass('shown');
+                    }
+                    else {
+                        // Open this row
+                        row.child( vm.format(row.data()) ).show();
+                        tr.addClass('shown');
+                    }
+                });
+            }
+            helpers.namePopover($,vm.$refs.booking_history_table.vmDataTable);
         }
    },
-   mounted:function () {
+   mounted: function () {
        let vm =this;
-   }
+       vm.$nextTick(function() {
+           console.log(vm.$refs);
+        });
+    }
 }
 </script>
 

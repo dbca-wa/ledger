@@ -4,6 +4,7 @@ venv/
 venv2/
 node_modules/
 cronjobs
+mooring/cache/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -98,3 +99,6 @@ disturbance/static/disturbance_vue/static/js/app.js
 disturbance/static/disturbance_vue/static/js/manifest.js
 disturbance/static/disturbance_vue/static/js/vendor.js
 disturbance/static/disturbance_vue/static/js/babel-polyfill.js
+
+# npm locks
+*-lock.json

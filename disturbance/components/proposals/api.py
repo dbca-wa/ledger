@@ -1215,7 +1215,6 @@ class ReferralViewSet(viewsets.ModelViewSet):
             if hasattr(e,'error_dict'):
                 raise serializers.ValidationError(repr(e.error_dict))
             else:
-                print e
                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
@@ -1323,7 +1322,6 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             if hasattr(e,'error_dict'):
                 raise serializers.ValidationError(repr(e.error_dict))
             else:
-                print e
                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())

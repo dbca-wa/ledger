@@ -92,22 +92,6 @@ def _create_letter_header_footer(canvas, doc):
     canvas.drawImage(dpaw_header_logo, LETTER_HEADER_MARGIN, current_y - LETTER_IMAGE_HEIGHT,
                      width=LETTER_IMAGE_WIDTH, height=LETTER_IMAGE_HEIGHT)
 
-    # footer
-    current_x = PAGE_WIDTH - LETTER_HEADER_MARGIN
-    current_y = LETTER_HEADER_MARGIN
-
-    canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
-    canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
-
-    canvas.drawRightString(current_x, current_y, DPAW_URL)
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE,
-                           'Phone: {} Fax: {} Email: {}'.format(DPAW_PHONE, DPAW_FAX, DPAW_EMAIL))
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 2, DPAW_PO_BOX)
-
-    canvas.setFont(BOLD_ITALIC_FONTNAME, SMALL_FONTSIZE)
-
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
-
 
 def create_confirmation(confirmation_buffer, booking):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
@@ -132,11 +116,20 @@ def create_confirmation(confirmation_buffer, booking):
     table_data.append([Paragraph('Campground', styles['BoldLeft']), Paragraph('{}, {}'.format(booking.campground.name, booking.campground.park.name), styles['BoldLeft'])])
     
     if booking.first_campsite_list:
-        campsite = ""
-        for item in booking.first_campsite_list:
-            campsite += ' {}{}'.format('{} - '.format(item.name if item else ""),'({})'.format(item.type if item.type else ""))
+        campsites = []
+        if booking.campground.site_type == 0:
+            for item in booking.first_campsite_list:
+                campsites.append(item.name if item else "" )
+        elif booking.campground.site_type == 1 or 2:
+            for item in booking.first_campsite_list:
+                campsites.append(item.type.split(':',1)[0] if item else "")
+        campsite = ', '.join(campsites)
+        result = {x:campsites.count(x) for x in campsites}
+        for key, value in result.items():
+            campsite = ', '.join(['%sx %s' % (value, key) for (key, value) in result.items()])
 
-    #campsite = u'{}'.format(booking.first_campsite_list) if booking.campground.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
+                 
+
     table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
     
     table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph(booking.stay_dates, styles['Left'])])

@@ -1,0 +1,33 @@
+{%  extends 'mooring/email/base_email.html' %}
+
+{% block greetings %}
+<p>{{booking.details.first_name}} {{booking.details.last_name}},</p>
+{% endblock %}
+
+{% block content %}
+<p>Print or save this confirmation for presentation on arrival and at any time during your stay.</p>
+
+<p>Arrival: {{booking.arrival|date:"d/m/Y"}}</p>
+<p>Departure: {{booking.departure|date:"d/m/Y"}}</p>
+
+<p>Mooring: {{booking.mooringarea.name }}, {{ booking.mooringarea.park.name }}</p>
+
+{% for v in booking.vehicle_payment_status %}
+{% if not v.Paid %}
+    <p>Vessel: {{v.Rego}}</p>
+{% else %}
+    <p>Vessel: {{v.Rego}}</p>
+{% endif %}
+{% endfor %}
+
+<p>Phone Number: {{phone_number}}</p>
+<br />
+
+<p>Contact us about your booking</p>
+<p>{{campground_email}}</p>
+{% if booking.mooringarea.telephone %}
+<p>{{booking.mooringarea.telephone}}</p>
+{% endif %}
+<br />
+
+{% endblock %}

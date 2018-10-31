@@ -300,12 +300,10 @@ export default {
     },
     alertText: function() {
         let vm = this;
-		if (vm.selected_application_name == 'Disturbance') {
-        	return "a disturbance";
-		} else if (vm.selected_application_name == 'Western Power Maintenance') {
-        	return "a Western Power Maintenance";
-		} else if (vm.selected_application_name == 'Apiary') {
-        	return "an apiary";
+		if (vm.selected_application_name == 'Apiary') {
+        	return "an " + vm.selected_application_name.toLowerCase();
+		} else {
+        	return "a " + vm.selected_application_name.toLowerCase();
 		}
 	},
     createProposal:function () {
@@ -336,7 +334,8 @@ export default {
     },
     isDisabled: function() {
         let vm = this;
-        if (vm.selected_application_name == 'Disturbance' || vm.selected_application_name == 'Western Power Maintenance') {
+
+        if (vm.selected_application_name != 'Apiary') {
             if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.approval_level == ''){
                 return true;
             }
@@ -414,10 +413,13 @@ export default {
         //this.chainedSelectActivities(application_id);
         //this.chainedSelectActivities(application_id);
 
-        if (vm.selected_application_name == 'Disturbance' || vm.selected_application_name == 'Western Power Maintenance') {
+        if (vm.selected_application_name == 'Apiary') {
+            vm.display_region_selectbox = false;
+            vm.display_activity_matrix_selectbox = false;
+        }  else {
             vm.display_region_selectbox = true;
             vm.display_activity_matrix_selectbox = true;
-        } 
+        }
 
     },
 
