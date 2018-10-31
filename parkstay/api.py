@@ -1655,8 +1655,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                     bk['override_reason_info'] = booking.override_reason_info
                 if booking.send_invoice:
                     bk['send_invoice'] = booking.send_invoice
-                if booking.override_price:
-                    discount = booking.discount
+                if booking.override_price >= 0:
+                    bk['discount'] = booking.discount
                 if not booking.paid:
                     bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
                 if booking.customer:
