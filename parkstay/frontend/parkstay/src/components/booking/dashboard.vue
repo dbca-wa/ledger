@@ -638,9 +638,11 @@ export default {
           fields.splice(4, 0, "Email");
           fields.splice(5, 0, "Phone");
           fields.splice(9, 0, "Booking Total");
-          fields.splice(10, 0, "Amount Paid");
-          fields.splice(22, 0, "Booking Type");
-          fields.splice(23, 0, "Override Reason");
+          fields.splice(10, 0, "Booking Override Price");
+          fields.splice(11, 0, "Override Reason");
+          fields.splice(12, 0, "Amount Paid");
+          fields.splice(24, 0, "Booking Type");
+          
           var booking_types = {
             0: "Reception booking",
             1: "Internet booking",
@@ -705,27 +707,33 @@ export default {
                   bk[field] = booking.cost_total;
                   break;
                 case 10:
-                  bk[field] = booking.amount_paid;
+                  bk[field] = booking.cost_total - booking.discount;
                   break;
                 case 11:
-                  bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
+                  bk[field] = booking.override_reason;
                   break;
                 case 12:
-                  bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
+                  bk[field] = booking.amount_paid;
                   break;
                 case 13:
-                  bk[field] = booking.guests.adults;
+                  bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
                   break;
                 case 14:
-                  bk[field] = booking.guests.concession;
+                  bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
                   break;
                 case 15:
-                  bk[field] = booking.guests.children;
+                  bk[field] = booking.guests.adults;
                   break;
                 case 16:
-                  bk[field] = booking.guests.infants;
+                  bk[field] = booking.guests.concession;
                   break;
                 case 17:
+                  bk[field] = booking.guests.children;
+                  break;
+                case 18:
+                  bk[field] = booking.guests.infants;
+                  break;
+                case 19:
                   bk[field] = booking.vehicle_payment_status
                     .map(r => {
                       var val = Object.keys(r).map(k => {
@@ -748,23 +756,23 @@ export default {
                     })
                     .join(" | ");
                   break;
-                case 18:
+                case 20:
                   bk[field] = booking.is_canceled;
                   break;
-                case 19:
+                case 21:
                   bk[field] = booking.cancelation_reason;
                   break;
-                case 20:
+                case 22:
                   bk[field] = booking.cancelation_time
                     ? Moment(booking.cancelation_time).format(
                         "DD/MM/YYYY HH:mm:ss"
                       )
                     : "";
                   break;
-                case 21:
+                case 23:
                   bk[field] = booking.canceled_by;
                   break;
-                case 22:
+                case 24:
                   if (
                     typeof booking_types[booking.booking_type] !== "undefined"
                   ) {
@@ -772,9 +780,6 @@ export default {
                   } else {
                     bk[field] = booking.booking_type;
                   }
-                  break;
-                case 23:
-                  bk[field] = booking.override_reason;
                   break;
               }
             });
