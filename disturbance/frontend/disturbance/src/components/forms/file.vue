@@ -3,7 +3,7 @@
         <div class="form-group">
 
             <!-- using num_files to determine if files have been uploaded for this question/label (used in disturbance/frontend/disturbance/src/components/external/proposal.vue) -->
-            <label :id="id" :num_files="documents.length">{{label}}</label>
+            <label :id="id" :num_files="num_documents()">{{label}}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
@@ -30,15 +30,20 @@
                 <div v-for="v in documents">
                     <p>
                         File: <a :href="v.file" target="_blank">{{v.name}}</a> &nbsp;
-                        <span v-if="!readonly">
+                        <span v-if="!readonly && v.can_delete">
                             <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
+                        </span>
+                        <span v-else>
+                            <span v-if="!assessorMode">
+                                <i class="fa fa-info-circle" aria-hidden="true" title="Previously submitted documents cannot be deleted" style="cursor: pointer;"></i>
+                            </span>
                         </span>
                     </p>
                 </div>
                 <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
-                <div v-if="isRepeatable || (!isRepeatable && documents.length==0)">
+                <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
                     <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/>
                 </div>
             </div>
@@ -79,7 +84,15 @@ export default {
         },
         fileTypes:{
             default:function () {
-                return "image/*,application/pdf,text/csv,application/msword"
+                var file_types = 
+                    "image/*," + 
+                    "video/*," +
+                    "audio/*," +
+                    "application/pdf,text/csv,application/msword,application/vnd.ms-excel,application/x-msaccess," +
+                    "application/x-7z-compressed,application/x-bzip,application/x-bzip2,application/zip," + 
+                    ".dbf,.gdb,.gpx,.prj,.shp,.shx," + 
+                    ".json,.kml,.gpx";
+                return file_types;
             }
         },
         isRepeatable:Boolean,
@@ -224,7 +237,15 @@ export default {
                 },err=>{
                 });
 
-        }
+        },
+
+        num_documents: function() {
+            let vm = this;
+            if (vm.documents) {
+                return vm.documents.length;
+            }
+            return 0;
+        },
 
     },
     mounted:function () {

@@ -26,7 +26,8 @@ class InvoiceDetailView(generic.DetailView):
     
     def get_context_data(self, **kwargs):
         ctx = super(InvoiceDetailView, self).get_context_data(**kwargs)
-        # Add more context here
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
+        ctx['invoice_unpaid_warning'] = settings.INVOICE_UNPAID_WARNING
         return ctx
     
 

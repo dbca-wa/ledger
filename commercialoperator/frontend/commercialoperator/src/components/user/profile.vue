@@ -175,6 +175,9 @@
                                 <label class="radio-inline">
                                   <input :disabled="hasOrgs" type="radio" name="behalf_of_org" v-model="managesOrg" value="No" > No
                                 </label>
+                                <label class="radio-inline">
+                                  <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Consultant"> Yes, as a consultant
+                                </label>
                             </div>
                           </div>
                           <div class="form-group" v-if="managesOrg=='Yes'">
@@ -182,6 +185,7 @@
                                 <button class="btn btn-primary pull-right" v-if="hasOrgs && !addingCompany" @click.prevent="addCompany()">Add Another Organisation</button>   
                             </div>
                           </div>
+
                           <div v-for="org in profile.commercialoperator_organisations">
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
@@ -209,6 +213,45 @@
                                 <lable>&nbsp;Pending for approval</lable>
                               </div>
                           </div>
+
+                           <div v-if="managesOrg=='Consultant'">
+                              <h3>New Organisation (as consultant)</h3>
+                              <div class="form-group">
+                                  <label for="" class="col-sm-2 control-label" >Organisation</label>
+                                  <div class="col-sm-6">
+                                      <input type="text" class="form-control" name="organisation" v-model="newOrg.name" placeholder="">
+                                  </div>
+                              </div>
+                              <div class="form-group">
+                                  <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                  <div class="col-sm-6">
+                                      <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="">
+                                  </div>
+                                  <div class="col-sm-2">
+                                      <button @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
+                                  </div>
+                              </div>
+                              <div class="form-group" v-if="newOrg.detailsChecked">
+                                    <label class="col-sm-12" style="text-align:left;">
+                                      Please upload a letter on organisation letter head stating that you are a consultant for the organisation.
+                                        <span class="btn btn-info btn-file">
+                                            Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                        </span>
+                                        <span  style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
+                                    </label>
+                                    </br>
+
+                                    <label for="" class="col-sm-10 control-label" style="text-align:left;">You will be notified by email once the Department has checked the organisation details.
+                                    </label>
+
+
+                                    <div class="col-sm-12">
+                                      <button v-if="!registeringOrg" @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
+                                      <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
+                                    </div>
+                              </div>
+                           </div>
+
 
                           <div style="margin-top:15px;" v-if="addingCompany">
                               <h3> New Organisation</h3>
@@ -286,6 +329,8 @@ export default {
             cBody: 'cBody'+vm._uid,
             oBody: 'oBody'+vm._uid,
             profile: {
+              first_name: '',
+                last_name: '',
                 commercialoperator_organisations:[],
                 residential_address : {}
             },
@@ -317,13 +362,26 @@ export default {
     },
     watch: {
         managesOrg: function() {
+            if (this.managesOrg == 'Yes'){
+              this.newOrg.detailsChecked = false;
+              this.role = 'employee'
+            } else if (this.managesOrg == 'Consultant'){
+              this.newOrg.detailsChecked = false;
+              this.role ='consultant'
+            }else{this.role = null
+              this.newOrg.detailsChecked = false;
+            }
+
             if (this.managesOrg  == 'Yes' && !this.hasOrgs && this.newOrg){
                  this.addCompany()
             } else if (this.managesOrg == 'No' && this.newOrg){
                 this.resetNewOrg();
                 this.uploadedFile = null;
                 this.addingCompany = false;
-            } 
+            } else {
+                this.addCompany()
+                this.addingCompany=false
+            }
         },
     },
     computed: {
@@ -527,7 +585,7 @@ export default {
                 if (response.body.valid){
                     swal(
                         'Validate Pins',
-                        'The pins you entered have been validated and you have now been linked to this organisation.',
+                        'The pins you entered have been validated and your request will be processed by Organisation Administrator.',
                         'success'
                     )
                     vm.registeringOrg = false;
@@ -557,26 +615,47 @@ export default {
         orgRequest: function() {
             let vm = this;
             vm.registeringOrg = true;
-            let data = new FormData()
-            data.append('name', vm.newOrg.name)
-            data.append('abn', vm.newOrg.abn)
-            data.append('identification', vm.uploadedFile)
-            vm.$http.post(api_endpoints.organisation_requests,data,{
-                emulateJSON:true
-            }).then((response) => {
+            let data = new FormData();
+            data.append('name', vm.newOrg.name);
+            data.append('abn', vm.newOrg.abn);
+            data.append('identification', vm.uploadedFile);
+            data.append('role',vm.role);
+            if (vm.newOrg.name == '' || vm.newOrg.abn == '' || vm.uploadedFile == null){
                 vm.registeringOrg = false;
-                vm.uploadedFile = null;
-                vm.addingCompany = false;
-                vm.resetNewOrg();
                 swal(
-                    'Sent',
-                    'Your organisation request has been successfuly submited.',
-                    'success'
+                    'Error submitting organisation request',
+                    'Please enter the organisation details and attach a file before submitting your request.',
+                    'error'
                 )
-            }, (error) => {
-                vm.registeringOrg = false;
-                console.log(error);
-            });
+            } else {
+                vm.$http.post(api_endpoints.organisation_requests,data,{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    swal({
+                        title: 'Sent',
+                        html: 'Your organisation request has been successfully submitted.',
+                        type: 'success',
+                    }).then(() => {
+                        window.location.reload(true);
+                    });
+                }, (error) => {
+                    console.log(error);
+                    vm.registeringOrg = false;
+                    let error_msg = '<br/>';
+                    for (var key in error.body) {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                    swal(
+                        'Error submitting organisation request',
+                        error_msg,
+                        'error'
+                    );
+                });
+            }
 
         },
         toggleSection: function (e) {
@@ -610,7 +689,7 @@ export default {
                 showCancelButton: true,
                 confirmButtonText: 'Accept'
             }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),{'user':vm.profile.id},{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),JSON.stringify(vm.profile),{
                     emulateJSON:true
                 }).then((response) => {
                     Vue.http.get(api_endpoints.profile).then((response) => {

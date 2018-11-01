@@ -91,6 +91,7 @@ LOGGING['loggers']['booking_checkout'] = {
             'level': 'INFO'
         }
 
+SYSTEM_NAME = env('SYSTEM_NAME', 'Parkstay WA')
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
 PS_PAYMENT_SYSTEM_ID = env('PS_PAYMENT_SYSTEM_ID', 'S019')

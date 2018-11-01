@@ -4,6 +4,7 @@ venv/
 venv2/
 node_modules/
 cronjobs
+mooring/cache/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -93,8 +94,13 @@ importo.py
 *.djcache
 uwsgi.ini
 
+
+# npm locks
+*-lock.json
+
 commercialoperator/static/commercialoperator_vue/static/css/app.css
 commercialoperator/static/commercialoperator_vue/static/js/app.js
 commercialoperator/static/commercialoperator_vue/static/js/manifest.js
 commercialoperator/static/commercialoperator_vue/static/js/vendor.js
 commercialoperator/static/commercialoperator_vue/static/js/babel-polyfill.js
+

@@ -13,6 +13,7 @@ from django.db.models.signals import post_delete, pre_save, post_save
 from django.core.exceptions import ValidationError
 
 from reversion import revisions
+from reversion.models import Version
 from django_countries.fields import CountryField
 
 from social_django.models import UserSocialAuth
@@ -421,11 +422,13 @@ class RevisionedMixin(models.Model):
 
     @property
     def created_date(self):
-        return revisions.get_for_object(self).last().revision.date_created
+        #return revisions.get_for_object(self).last().revision.date_created
+        return Version.objects.get_for_object(self).last().revision.date_created
 
     @property
     def modified_date(self):
-        return revisions.get_for_object(self).first().revision.date_created
+        #return revisions.get_for_object(self).first().revision.date_created
+        return Version.objects.get_for_object(self).first().revision.date_created
 
     class Meta:
         abstract = True
@@ -571,12 +574,14 @@ class ProfileListener(object):
                 address.oscar_address = oscar_address
                 address.save()
         # Clear out unused addresses
+        ''' This functionality no longer in use due to more than just
+        profile objects using the UserAddresses
         user = instance.user
         user_addr = Address.objects.filter(user=user)
         for u in user_addr:
             if not u.profiles.all():
                 u.oscar_address.delete()
-                u.delete()
+                u.delete()'''
 
 class EmailIdentityListener(object):
     """

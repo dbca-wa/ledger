@@ -49,11 +49,13 @@
                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
 
-                        <input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                        <input v-if="!isSubmitting" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                        <button v-else disabled class="btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
                         <!-- <input type="submit" class="btn btn-primary" value="Submit"/> -->
 
                         <!-- hidden 'save_and_continue_btn' used to allow File (file.vue component) to trigger save -->
                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
+                        
                       </p>
                     </div>
                     <div v-else class="container">
@@ -87,6 +89,7 @@ export default {
       proposal_readonly: true,
       hasAmendmentRequest: false,
       submitting: false,
+      submittingProposal: false,
       newText: "",
       pBody: 'pBody',
       missing_fields: [],
@@ -98,6 +101,9 @@ export default {
   computed: {
     isLoading: function() {
       return this.loading.length > 0
+    },
+    isSubmitting: function() {
+      return this.submittingProposal;
     },
     csrf_token: function() {
       return helpers.getCookie('csrftoken')
@@ -193,7 +199,8 @@ export default {
         // get all required fields, that are not hidden in the DOM
         //var hidden_fields = $('input[type=text]:hidden, textarea:hidden, input[type=checkbox]:hidden, input[type=radio]:hidden, input[type=file]:hidden');
         //hidden_fields.prop('required', null);
-        var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required').not(':hidden');
+        //var required_fields = $('select:required').not(':hidden');
+        var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden');
 
         // loop through all (non-hidden) required fields, and check data has been entered
         required_fields.each(function() {
@@ -214,6 +221,15 @@ export default {
                 if ($("[class="+this.classList['value']+"]:checked").length == 0) {
                     var text = $('#'+id).text()
                     console.log('checkbox not checked: ' + this.type + ' ' + text)
+                    vm.missing_fields.push({id: id, label: text});
+                }
+            }
+
+            if (this.type == 'select-one') {
+                if ($(this).val() == '') {
+                    var text = $('#'+id).text()  // this is the (question) label
+                    var id = 'id_' + $(this).prop('name'); // the label id
+                    console.log('selector not selected: ' + this.type + ' ' + text)
                     vm.missing_fields.push({id: id, label: text});
                 }
             }
@@ -280,6 +296,7 @@ export default {
 
     submit: function(){
         let vm = this;
+        let formData = new FormData(vm.form);
 
         var num_missing_fields = vm.validate()
         if (num_missing_fields > 0) {
@@ -293,7 +310,7 @@ export default {
 
         // remove the confirm prompt when navigating away from window (on button 'Submit' click)
         vm.submitting = true;
-
+        
         swal({
             title: "Submit Proposal",
             text: "Are you sure you want to submit this proposal?",
@@ -301,7 +318,7 @@ export default {
             showCancelButton: true,
             confirmButtonText: 'Submit'
         }).then(() => {
-            let formData = new FormData(vm.form);
+          vm.submittingProposal = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
                 vm.proposal = res.body;
                 vm.$router.push({
@@ -317,6 +334,7 @@ export default {
             });
         },(error) => {
         });
+        //vm.submittingProposal= false;
     },
 
 //    _submit: function(){

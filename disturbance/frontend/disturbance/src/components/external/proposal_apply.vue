@@ -302,6 +302,8 @@ export default {
         let vm = this;
 		if (vm.selected_application_name == 'Disturbance') {
         	return "a disturbance";
+		} else if (vm.selected_application_name == 'Western Power Maintenance') {
+        	return "a Western Power Maintenance";
 		} else if (vm.selected_application_name == 'Apiary') {
         	return "an apiary";
 		}
@@ -334,17 +336,16 @@ export default {
     },
     isDisabled: function() {
         let vm = this;
-        if (vm.selected_application_name == 'Disturbance') {
-            //if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.selected_district == '' || vm.approval_level == ''){
+        if (vm.selected_application_name == 'Disturbance' || vm.selected_application_name == 'Western Power Maintenance') {
             if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.approval_level == ''){
-	    		return true;
+                return true;
             }
         } else {
             if (vm.behalf_of == '' || vm.selected_application_id == ''){
-	    		return true;
+                return true;
             }
         }
-		return false;
+        return false;
     },
 	fetchRegions: function(){
 		let vm = this;
@@ -413,7 +414,7 @@ export default {
         //this.chainedSelectActivities(application_id);
         //this.chainedSelectActivities(application_id);
 
-        if (vm.selected_application_name == 'Disturbance') {
+        if (vm.selected_application_name == 'Disturbance' || vm.selected_application_name == 'Western Power Maintenance') {
             vm.display_region_selectbox = true;
             vm.display_activity_matrix_selectbox = true;
         } 
@@ -429,9 +430,10 @@ export default {
 
 		vm.$http.get(api_endpoints.activity_matrix).then((response) => {
 				this.activity_matrix = response.body[0].schema[0];
+				this.keys_ordered = response.body[0].ordered;
 				//console.log('this.activity_matrix ' + response.body[0].schema);
 
-                var keys = Object.keys(this.activity_matrix);
+                var keys = this.keys_ordered ? Object.keys(this.activity_matrix).sort() : Object.keys(this.activity_matrix)
                 for (var i = 0; i < keys.length; i++) {
                     this.activities.push( {text: keys[i], value: keys[i]} );
                 }
@@ -534,8 +536,13 @@ export default {
             if (sub_activities[activity_name].length > 0) {
                 if ('pass' in sub_activities[activity_name][0]) {
                     return [sub_activities[activity_name], "pass"];
+
                 } else if ('null' in sub_activities[activity_name][0]) {
-                    var approval_level = sub_activities[activity_name]['sub_matrix'][0]['null'][0];
+                    if (sub_activities[activity_name]['sub_matrix'] == null) {
+                        var approval_level = sub_activities[activity_name][0]['null'][0][0];
+                    } else {
+                        var approval_level = sub_activities[activity_name]['sub_matrix'][0]['null'][0];
+                    }
                     return [approval_level, "null"];
                     //return [sub_activities[activity_name], "null"];
                 }

@@ -20,9 +20,9 @@ def is_email_auth_backend(request):
     # Return True if user logged in via social_auth (i.e. an external user signing in with a login-token)
     return 'EmailAuth' in request.session.get('_auth_user_backend')
 
-def is_officer(request):
-    #return request.user.is_authenticated() and is_model_backend(request) and (belongs_to(request.user, 'Disturbance Officers') or request.user.is_superuser)
-    return request.user.is_authenticated() and in_dbca_domain(request) and (belongs_to(request.user, 'Disturbance Officers') or request.user.is_superuser)
+def is_disturbance_admin(request):
+    #return request.user.is_authenticated() and is_model_backend(request) and in_dbca_domain(request) and (belongs_to(request.user, 'Disturbance Admin') or request.user.is_superuser)
+    return request.user.is_authenticated() and is_model_backend(request) and in_dbca_domain(request) and (belongs_to(request.user, 'Disturbance Admin'))
 
 def in_dbca_domain(request):
     user = request.user
@@ -42,7 +42,7 @@ def is_customer(request):
     return request.user.is_authenticated() and is_email_auth_backend(request)
 
 def is_internal(request):
-    return is_officer(request) or is_departmentUser(request)
+    return is_departmentUser(request)
 
 def get_all_officers():
-    return EmailUser.objects.filter(groups__name='Disturbance Officers')
+    return EmailUser.objects.filter(groups__name='Disturbance Admin')

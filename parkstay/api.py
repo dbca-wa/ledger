@@ -364,12 +364,10 @@ class CampgroundStayHistoryViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
-
 class CampgroundMapViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campground.objects.exclude(campground_type=3).annotate(Min('campsites__rates__rate__adult'))
     serializer_class = CampgroundMapSerializer
     permission_classes = []
-
 
 class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Campground.objects.exclude(campground_type=3)
@@ -400,10 +398,10 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
             sites = Campsite.objects.filter(**context)
             ground_ids = utils.get_open_campgrounds(sites, scrubbed['arrival'], scrubbed['departure'])
-
+           
         else: # show all of the campgrounds with campsites
             ground_ids = set((x[0] for x in Campsite.objects.filter(**context).values_list('campground')))
-
+            
             # we need to be tricky here. for the default search (all, no timestamps),
             # we want to include all of the "campgrounds" that don't have any campsites in the model! (e.g. third party)
             if scrubbed['gear_type'] == 'all':
@@ -762,7 +760,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
     def campsites(self, request, format='json', pk=None):
         try:
             http_status = status.HTTP_200_OK
-            serializer = CampsiteSerialiser(self.get_object().campsites,many=True,context={'request':request})
+            serializer = CampsiteSerialiser(self.get_object().campsites,many=True,context={'request':request,'status': None})
             res = serializer.data
 
             return Response(res,status=http_status)
@@ -872,8 +870,13 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             available_serializers = []
             for k,v in available.items():
                 s = CampsiteClassSerializer(CampsiteClass.objects.get(id=k),context={'request':request},method='get').data
-                s['campsites'] = [c.id for c in v]
-                available_serializers.append(s)
+                s['campsites'] = [c_id for c_id, stat in v.items() if stat != 'closed & booked' and stat != 'booked' and stat !='closed']
+                counts = {'open': 0, 'closed': 0, 'booked': 0, 'closed & booked':0}
+                for c_id, stat in v.items():
+                    counts[stat] += 1
+                s['status'] = ', '.join(['{} {}'.format(stat, type) for type, stat in counts.items() if stat])
+                available_serializers.append(s)            
+            available_serializers.sort(key=lambda x: x['name'])
             data = available_serializers
 
             return Response(data,status=http_status)
@@ -917,19 +920,13 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         num_child = serializer.validated_data['num_child']
         num_infant = serializer.validated_data['num_infant']
         gear_type = serializer.validated_data['gear_type']
-        
+
         # if campground doesn't support online bookings, abort!
         if ground.campground_type != 0:
             return Response({'error': 'Campground doesn\'t support online bookings'}, status=400)
 
-        #if not ground._is_open(start_date):
-        #    return Response({'closed': 'Campground is closed for your selected dates'}, status=status.HTTP_400_BAD_REQUEST)
-
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date-start_date).days)
-        #if length > settings.PS_MAX_BOOKING_LENGTH:
-        #    length = settings.PS_MAX_BOOKING_LENGTH
-        #    end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
 
         # fetch all the campsites and applicable rates for the campground
         context = {}
@@ -947,7 +944,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # fetch availability map
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
-        
+       
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,
@@ -970,7 +967,6 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         if ground.site_type in (1, 2):
             # from our campsite queryset, generate a distinct list of campsite classes
             classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name', 'tent', 'campervan', 'caravan')]
-
             classes_map = {}
             bookings_map = {}
 
@@ -989,21 +985,21 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
 
             # make an entry under sites for each campsite class
-            for c in classes:
+            for c in classes:                
                 rate = rates_map[c[1]]
                 site = {
                     'name': c[2],
-                    'id': None,
+                    'id': None, 
                     'type': c[1],
                     'price': '${}'.format(sum(rate.values())) if not show_all else False,
-                    'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], [0, 0]] for i in range(length)],
+                    'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], None, [0, 0, 0]] for i in range(length)],
                     'breakdown': OrderedDict(),
                     'gearType': {
                         'tent': c[3],
                         'campervan': c[4],
                         'caravan': c[5]
-                    }
-                }
+                    }                   
+                }           
                 result['sites'].append(site)
                 classes_map[c[1]] = site
 
@@ -1026,22 +1022,53 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         class_sites_map[key].remove(s.pk)
 
                     # update the days that are non-open
-                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                    for offset, stat, closure_reason in [((k-start_date).days, v[0], v[1]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         # update the per-site availability
                         classes_map[key]['breakdown'][s.name][offset][0] = False
-                        classes_map[key]['breakdown'][s.name][offset][1] = 'Booked' if (stat == 'booked') else 'Unavailable'
+                        classes_map[key]['breakdown'][s.name][offset][1] = stat if show_all else 'Unavailable'
 
                         # update the class availability status
-                        book_offset = 0 if (stat == 'booked') else 1
-                        classes_map[key]['availability'][offset][3][book_offset] += 1
-                        if classes_map[key]['availability'][offset][3][0] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Fully Booked'
-                        elif classes_map[key]['availability'][offset][3][1] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Unavailable'
-                        elif classes_map[key]['availability'][offset][3][0] >= classes_map[key]['availability'][offset][3][1]:
-                            classes_map[key]['availability'][offset][1] = 'Partially Booked'
+                        if stat == 'booked':
+                            book_offset = 0
+                        elif stat == 'closed':
+                            book_offset = 1
                         else:
-                            classes_map[key]['availability'][offset][1] = 'Partially Unavailable'
+                            book_offset = 2
+
+                        classes_map[key]['availability'][offset][4][book_offset] += 1
+                        # if the number of booked entries equals the size of the class, it's fully booked
+                        if classes_map[key]['availability'][offset][4][0] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Booked' 
+                        # if the number of closed entries equals the size of the class, it's closed (admin) or unavailable (user)
+                        elif classes_map[key]['availability'][offset][4][1] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
+                            classes_map[key]['availability'][offset][3] = closure_reason if show_all else None
+                        elif classes_map[key]['availability'][offset][4][2] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Closures/Bookings' if show_all else 'Unavailable'
+                            classes_map[key]['availability'][offset][3] = closure_reason if show_all else None 
+                        # if all of the entries are closed, it's unavailable (user)
+                        elif not show_all and (classes_map[key]['availability'][offset][4][0] + classes_map[key]['availability'][offset][4][1] == class_sizes[key]):
+                            classes_map[key]['availability'][offset][1] = 'Unavailable'
+                        # for admin view, we show some text even if there are slots available.
+                        elif show_all:
+                            # check if there are any booked or closed entries and change the message accordingly
+                            test_bk = classes_map[key]['availability'][offset][4][0] > 0
+                            test_cl = classes_map[key]['availability'][offset][4][1] > 0
+                            test_clbk = classes_map[key]['availability'][offset][4][2] > 0
+                            if test_clbk or (test_bk and test_cl):
+                                classes_map[key]['availability'][offset][1] = 'Closures/Bookings'
+                                if classes_map[key]['availability'][offset][3] is None:
+                                    classes_map[key]['availability'][offset][3] = closure_reason
+                            elif test_bk:
+                                classes_map[key]['availability'][offset][1] = 'Some Booked'
+                            elif test_cl:
+                                classes_map[key]['availability'][offset][1] = 'Some Closed'
+                                if classes_map[key]['availability'][offset][3] is None:
+                                    classes_map[key]['availability'][offset][3] = closure_reason
+                            elif test_clbk:
+                                classes_map[key]['availability'][offset][1] = 'Closures/Bookings'
+                                if classes_map[key]['availability'][offset][3] is None:
+                                    classes_map[key]['availability'][offset][3] = closure_reason
 
                         # tentatively flag campsite class as unavailable
                         classes_map[key]['availability'][offset][0] = False
@@ -1080,7 +1107,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             # from our campsite queryset, generate a digest for each site
             sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
             bookings_map = {}
-
+        
             # make an entry under sites for each site
             for k, v in sites_map.items():
                 site = {
@@ -1089,7 +1116,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'type': ground.campground_type,
                     'class': v[1].pk,
                     'price': '${}'.format(sum(v[2].values())) if not show_all else False,
-                    'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)]] for i in range(length)],
+                    'availability': [[True, '${}'.format(v[2][start_date+timedelta(days=i)]), v[2][start_date+timedelta(days=i)], None] for i in range(length)],
                     'gearType': {
                         'tent': v[3],
                         'campervan': v[4],
@@ -1101,18 +1128,22 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                 if v[1].pk not in result['classes']:
                     result['classes'][v[1].pk] = v[1].name
 
-
+        
             # update results based on availability map
             for s in sites_qs:
                 # if there's not a free run of slots
                 if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
                     # update the days that are non-open
-                    for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
+                    for offset, stat, closure_reason in [((k-start_date).days, v[0], v[1]) for k, v in availability[s.pk].items() if v[0] != 'open']:
                         bookings_map[s.name]['availability'][offset][0] = False
                         if stat == 'closed':
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                            bookings_map[s.name]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
+                            bookings_map[s.name]['availability'][offset][3] = closure_reason if show_all else None
+                        elif stat == 'closed & booked':
+                            bookings_map[s.name]['availability'][offset][1] = 'Closed & Booked' if show_all else 'Unavailable'
+                            bookings_map[s.name]['availability'][offset][3] = closure_reason if show_all else None                           
                         elif stat == 'booked':
-                            bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
+                            bookings_map[s.name]['availability'][offset][1] = 'Booked' if show_all else 'Unavailable'
                         else:
                             bookings_map[s.name]['availability'][offset][1] = 'Unavailable'
 
@@ -1578,7 +1609,6 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['start'] = start
 
             sql += ';'
-            #print(sql)
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from parkstay_booking ");
@@ -1621,6 +1651,12 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['lastname'] = booking.details.get('last_name','')
                 if  booking.override_reason:                        
                     bk['override_reason'] = booking.override_reason.text
+                if booking.override_reason_info:
+                    bk['override_reason_info'] = booking.override_reason_info
+                if booking.send_invoice:
+                    bk['send_invoice'] = booking.send_invoice
+                if booking.override_price:
+                    discount = booking.discount
                 if not booking.paid:
                     bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
                 if booking.customer:
@@ -1639,7 +1675,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                         for item in first_campsite_list:
                             campground_site_type.append ({
                                 "name": '{}'.format(item.name if item else ""),
-                                "type": '{}'.format(item.type if item.type else "")
+                                "type": '{}'.format(item.type if item.type else ""),
+                                "campground_type": item.campground.site_type,
                                 })
                         bk['campground_site_type'] = campground_site_type
                 else:
@@ -1682,6 +1719,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             regos = request.data['regos']
             override_price = serializer.validated_data.get('override_price', None)
             override_reason = serializer.validated_data.get('override_reason', None)
+            override_reason_info = serializer.validated_data.get('override_reason_info', None)
+            send_invoice = serializer.validated_data.get('send_invoice', False)
             overridden_by = None if (override_price is None) else request.user
             try:
                 emailUser = request.data['customer']
@@ -1713,6 +1752,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'cost_total' : costs['total'],
                 'override_price' : override_price,
                 'override_reason' : override_reason,
+                'override_reason_info' : override_reason_info,
+                'send_invoice' : send_invoice,
                 'overridden_by': overridden_by,
                 'customer' : customer,
                 'first_name': emailUser['first_name'],
@@ -1738,7 +1779,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             if userCreated:
                 customer.delete()
             print(traceback.print_exc())
-            raise serializers.ValidationError(str(e[0]))
+            raise serializers.ValidationError(str(e))
 
     def update(self, request, *args, **kwargs):
         try:
@@ -1748,9 +1789,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             start_date = datetime.strptime(request.data['arrival'],'%d/%m/%Y').date()
             end_date = datetime.strptime(request.data['departure'],'%d/%m/%Y').date()
             guests = request.data['guests']
-
             booking_details = {
-                'campsites':request.data['campsites'],
+                'campsites': request.data['campsites'],
                 'start_date' : start_date,
                 'campground' : request.data['campground'],
                 'end_date' : end_date,
@@ -1761,7 +1801,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             }
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)
-
             return Response(serializer.data, status=http_status)
 
         except serializers.ValidationError:
@@ -1876,7 +1915,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['GET'])
     def history(self, request, *args, **kwargs):
-        http_status = status.HTTP_200_OK
+        http_status = status.HTTP_200_OK              
         try:
             history = self.get_object().history.all()
             data = BookingHistorySerializer(history,many=True).data
@@ -1909,7 +1948,6 @@ class CampsiteRateViewSet(viewsets.ModelViewSet):
                     raise serializers.ValidationError('The selected rate does not exist')
             else:
                 rate = Rate.objects.get_or_create(adult=rate_serializer.validated_data['adult'],concession=rate_serializer.validated_data['concession'],child=rate_serializer.validated_data['child'])[0]
-            print(rate_serializer.validated_data)
             if rate:
                 data = {
                     'rate': rate.id,
@@ -2126,7 +2164,6 @@ class BulkPricingView(generics.CreateAPIView):
             http_status = status.HTTP_200_OK
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            print(serializer.validated_data)
 
             rate_id = serializer.data.get('rate',None)
             if rate_id:

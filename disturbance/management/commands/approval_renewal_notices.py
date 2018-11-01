@@ -7,26 +7,30 @@ from datetime import date, timedelta
 from disturbance.components.approvals.email import (
     send_approval_renewal_email_notification,)
 
-
-
 import itertools
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 class Command(BaseCommand):
-    help = 'Send Approval renewal notice when approval is due expire in 30 days'
+    help = 'Send Approval renewal notice when approval is due to expire in 30 days'
 
     def handle(self, *args, **options):
         try:
-            user = EmailUser.objects.get(email__icontains='cron')
+            user = EmailUser.objects.get(email='cron@dbca.wa.gov.au')
         except:
-            user = user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
+            user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
 
-        expiry_notification_date = date.today() + timedelta(days=30)
+        today = timezone.localtime(timezone.now()).date()
+        expiry_notification_date = today + timedelta(days=30)
         renewal_conditions = {
             'expiry_date__lte': expiry_notification_date,
             'renewal_sent': False,
             'replaced_by__isnull': True
         }
 
+        logger.info('Running command {}'.format(__name__))
         for a in Approval.objects.filter(**renewal_conditions):
             if a.status == 'current' or a.status == 'suspended':
                 try:
@@ -34,6 +38,8 @@ class Command(BaseCommand):
                     send_approval_renewal_email_notification(a)
                     a.renewal_sent = True
                     a.save()
-                    print('Renewal notice sent for Approval {}'.format(a.id))
+                    logger.info('Renewal notice sent for Approval {}'.format(a.id))
                 except:
-                    print('Error sending renewal notice for Approval {}'.format(a.id))
+                    logger.info('Error sending renewal notice for Approval {}'.format(a.id))
+
+        logger.info('Command {} completed'.format(__name__))

@@ -13,6 +13,7 @@ import Campsite from '../components/campsites/campsite.vue'
 import firstLevelSearch from '../components/booking/first-level-search.vue'
 import bookingDashboard from '../components/booking/dashboard.vue'
 import addBooking from '../components/booking/addbooking.vue'
+import bookingCloseClasses from '../components/booking/booking-close-classes.vue'
 import BookingIndex from '../components/booking/index.vue'
 import editBooking from '../components/booking/changebooking2.vue'
 import page_404 from '../components/utils/404.vue'
@@ -107,9 +108,6 @@ const routes = [
                         ]
                     },{
                         path:'bookings',
-                        /*component: {
-                            render (c) { return c('router-view') }
-                        },*/
                         component: BookingIndex,
                         children:[
                             {
@@ -123,14 +121,14 @@ const routes = [
                                 component: addBooking,
                             },
                             {
+                                path: 'add/:cg/close_booking/',
+                                name: 'booking-close-classes',
+                                component: bookingCloseClasses,
+                            },
+                            {
                                 path: 'edit/:booking_id',
                                 name: 'edit-booking',
                                 component: editBooking
-                                /*beforeEnter:(to,from,next) => {
-                                    store.commit('SET_LOADER_STATE',true);
-                                    store.commit('SET_LOADER_TEXT','Loading Booking');
-                                    next();
-                                }*/
                             },
                         ]
                     },

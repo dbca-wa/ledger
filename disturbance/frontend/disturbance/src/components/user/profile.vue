@@ -30,16 +30,17 @@
                   </div>
                   <div class="panel-body collapse in" :id="pBody">
                       <form class="form-horizontal" name="personal_form" method="post">
+                        <alert v-if="showPersonalError" type="danger" style="color:red"><div v-for="item in errorListPersonal"><strong>{{item}}</strong></div></alert>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Given name(s)</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="profile.first_name">
+                                <input type="text" class="form-control" id="first_name" name="Given name" placeholder="" v-model="profile.first_name" required="">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Surname</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="last_name" placeholder="" v-model="profile.last_name">
+                                <input type="text" class="form-control" id="surname" name="Surname" placeholder="" v-model="profile.last_name">
                             </div>
                           </div>
                           <div class="form-group">
@@ -67,32 +68,33 @@
                   </div>
                   <div v-if="loading.length == 0" class="panel-body collapse" :id="adBody">
                       <form class="form-horizontal" action="index.html" method="post">
+                        <alert v-if="showAddressError" type="danger" style="color:red"><div v-for="item in errorListAddress"><strong>{{item}}</strong></div></alert>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Street</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="street" placeholder="" v-model="profile.residential_address.line1">
+                                <input type="text" class="form-control" id="line1" name="Street" placeholder="" v-model="profile.residential_address.line1">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="profile.residential_address.locality">
+                                <input type="text" class="form-control" id="locality" name="Town/Suburb" placeholder="" v-model="profile.residential_address.locality">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">State</label>
                             <div class="col-sm-3">
-                                <input type="text" class="form-control" name="country" placeholder="" v-model="profile.residential_address.state">
+                                <input type="text" class="form-control" id="state" name="State" placeholder="" v-model="profile.residential_address.state">
                             </div>
                             <label for="" class="col-sm-1 control-label">Postcode</label>
                             <div class="col-sm-2">
-                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="profile.residential_address.postcode">
+                                <input type="text" class="form-control" id="postcode" name="Postcode" placeholder="" v-model="profile.residential_address.postcode">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Country</label>
                             <div class="col-sm-4">
-                                <select class="form-control" name="country" v-model="profile.residential_address.country">
+                                <select class="form-control" id="country" name="Country" v-model="profile.residential_address.country">
                                     <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
                                 </select>
                             </div>
@@ -122,22 +124,23 @@
                   </div>
                   <div class="panel-body collapse" :id="cBody">
                       <form class="form-horizontal" action="index.html" method="post">
+                        <alert v-if="showContactError" type="danger" style="color:red"><div v-for="item in errorListContact"><strong>{{item}}</strong></div></alert>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Phone (work)</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="phone" placeholder="" v-model="profile.phone_number">
+                                <input type="text" class="form-control" id="phone" name="Phone" placeholder="" v-model="profile.phone_number">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Mobile</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="mobile" placeholder="" v-model="profile.mobile_number">
+                                <input type="text" class="form-control" id="mobile" name="Mobile" placeholder="" v-model="profile.mobile_number">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Email</label>
                             <div class="col-sm-6">
-                                <input type="email" class="form-control" name="email" placeholder="" v-model="profile.email">
+                                <input type="email" class="form-control" id="email" name="Email" placeholder="" v-model="profile.email">
                             </div>
                           </div>
                           <div class="form-group">
@@ -218,10 +221,10 @@
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
                                 <div class="col-sm-6">
-                                    <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="">
+                                    <input type="number" class="form-control" name="abn" v-model.number="newOrg.abn" placeholder="" style="width: 40%">
                                 </div>
                                 <div class="col-sm-2">
-                                    <button @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
+                                    <button :disabled="!isNewOrgDetails" @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
                                 </div>
                               </div>
                               <div class="form-group" v-if="newOrg.exists && newOrg.detailsChecked">
@@ -247,14 +250,15 @@
                                     This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this origanisation.</br>
                                   </label>
                                   <div class="col-sm-12">
-                                    <span class="btn btn-info btn-file pull-left">
+                                    <span class="btn btn-primary btn-file pull-left">
                                         Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                     </span>
                                     <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                                   </div>
                                   <label for="" class="col-sm-10 control-label" style="text-align:left;">You will be notified by email once the Department has checked the organisation details.</label>
                                   <div class="col-sm-12">
-                                    <button v-if="!registeringOrg" @click.prevent="orgRequest()" class="btn btn-primary pull-right">Submit</button>
+                                    <button v-if="!completedProfile" disabled title="Please complete details" class="btn btn-primary pull-right">Submit</button>
+                                    <button v-else-if="!registeringOrg" :disabled="!isFileUploaded" @click.prevent="orgRequest()" class="btn btn-primary pull-right">Submit</button>
                                     <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
                                   </div>
                               </div>
@@ -302,6 +306,13 @@ export default {
             updatingContact: false,
             registeringOrg: false,
             orgRequest_list: [],
+            missing_fields: [],
+            errorListPersonal:[],
+            showPersonalError: false,
+            errorListAddress:[],
+            showAddressError: false,
+            errorListContact:[],
+            showContactError: false,
         }
     },
     watch: {
@@ -313,7 +324,7 @@ export default {
                 this.uploadedFile = null;
                 this.addingCompany = false;
             } 
-        }
+        },
     },
     computed: {
         hasOrgs: function() {
@@ -321,6 +332,12 @@ export default {
         },
         uploadedFileName: function() {
             return this.uploadedFile != null ? this.uploadedFile.name: '';
+        },
+        isFileUploaded: function() {
+            return this.uploadedFile != null ? true: false;
+        },
+        isNewOrgDetails: function() {
+            return this.newOrg && this.newOrg.name != '' && this.newOrg.abn != '' ? true: false;
         },
         showCompletion: function() {
             return this.$route.name == 'first-time'
@@ -359,11 +376,33 @@ export default {
         },
         updatePersonal: function() {
             let vm = this;
+            vm.missing_fields = [];
+            var required_fields=[];
+            vm.errorListPersonal=[];
+            required_fields = $('#first_name, #surname')
+            vm.missing_fields = [];
+            required_fields.each(function() {
+            if (this.value == '') {
+                    //var text = $('#'+id).text()
+                    //console.log(this);
+                    vm.errorListPersonal.push('Value not provided: ' + this.name)
+                    vm.missing_fields.push({id: this.id});
+                }
+            });
+
+            if (vm.missing_fields.length > 0)
+            {
+              vm.showPersonalError = true;
+              //console.log(vm.showPersonalError)
+            }
+            else
+            {
+              vm.showPersonalError = false;
             vm.updatingPersonal = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
+                //console.log(response);
                 vm.updatingPersonal = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
@@ -371,9 +410,34 @@ export default {
                 console.log(error);
                 vm.updatingPersonal = false;
             });
+          }
         },
+        
         updateContact: function() {
             let vm = this;
+            vm.missing_fields = [];
+            var required_fields=[];
+            vm.errorListContact=[];
+            required_fields = $('#email')
+            vm.missing_fields = [];
+            required_fields.each(function() {
+            if (this.value == '') {
+                    //var text = $('#'+id).text()
+                    console.log(this);
+                    vm.errorListContact.push('Value not provided: ' + this.name)
+                    vm.missing_fields.push({id: this.id});
+                }
+            });
+            if (vm.profile.mobile_number == '' || vm.profile.phone_number ==''){
+              vm.errorListContact.push('Value not provided: mobile/ Phone number')
+              vm.missing_fields.push({id: $('#mobile').id});
+            }
+            if (vm.missing_fields.length > 0)
+            {
+              vm.showContactError = true;
+            }
+            else{
+              vm.showContactError = false;
             vm.updatingContact = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_contact')),JSON.stringify(vm.profile),{
                 emulateJSON:true
@@ -386,14 +450,37 @@ export default {
                 console.log(error);
                 vm.updatingContact = false;
             });
+          }
         },
         updateAddress: function() {
             let vm = this;
+
+            vm.missing_fields = [];
+            var required_fields=[];
+            vm.errorListAddress=[];
+            required_fields = $('#postcode, #line1, #locality, #country, #state')
+            vm.missing_fields = [];
+            required_fields.each(function() {
+            if (this.value == '') {
+                    //var text = $('#'+id).text()
+                    vm.errorListAddress.push('Value not provided: ' + this.name)
+                    vm.missing_fields.push({id: this.id});
+                }
+            });
+
+            if (vm.missing_fields.length > 0)
+            {
+              vm.showAddressError = true;
+            }
+            else{
+              vm.showAddressError = false;
+            
+
             vm.updatingAddress = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_address')),JSON.stringify(vm.profile.residential_address),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
+                //console.log(response);
                 vm.updatingAddress = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
@@ -401,13 +488,15 @@ export default {
                 console.log(error);
                 vm.updatingAddress = false;
             });
+          }
         },
         checkOrganisation: function() {
             let vm = this;
+            //this.newOrg.abn = this.newOrg.abn.replace(/\s+/g,'');
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,'existance'),JSON.stringify(this.newOrg),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
+                //console.log(response);
                 this.newOrg.exists = response.body.exists;
                 this.newOrg.detailsChecked = true;
                 this.newOrg.id = response.body.id;
@@ -493,10 +582,10 @@ export default {
         toggleSection: function (e) {
             let el = e.target;
             let chev = null;
-            console.log(el);
+            //console.log(el);
             $(el).on('click', function (event) {
                 chev = $(this);
-                console.log(chev);
+                //console.log(chev);
                 $(chev).toggleClass('glyphicon-chevron-down glyphicon-chevron-up');
             })
         },
@@ -507,7 +596,7 @@ export default {
                 vm.countries = response.body;
                 vm.loading.splice('fetching countries',1);
             },(response)=>{
-                console.log(response);
+                //console.log(response);
                 vm.loading.splice('fetching countries',1);
             });
         },

@@ -8,6 +8,7 @@ SUPERVISOR_STOP_CMD = env('SUPERVISOR_STOP_CMD')
 SYSTEM_MAINTENANCE_WARNING = env('SYSTEM_MAINTENANCE_WARNING', 24) # hours
 
 INSTALLED_APPS += [
+    'reversion_compare',
     'bootstrap3',
     'disturbance',
     'disturbance.components.main',
@@ -18,10 +19,13 @@ INSTALLED_APPS += [
     'disturbance.components.compliances',
     'taggit',
     'rest_framework',
+    'rest_framework_datatables',
     'rest_framework_gis',
     'reset_migrations',
     'ckeditor',
 ]
+
+ADD_REVERSION_ADMIN=True
 
 # maximum number of days allowed for a booking
 WSGI_APPLICATION = 'disturbance.wsgi.application'
@@ -34,11 +38,27 @@ WSGI_APPLICATION = 'disturbance.wsgi.application'
 
 #REST_FRAMEWORK = {
 #    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-#        'PAGE_SIZE': 3
+#    #'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+#        'PAGE_SIZE': 5
 #}
 
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework_datatables.renderers.DatatablesRenderer',
+    ),
+    #'DEFAULT_FILTER_BACKENDS': (
+    #    'rest_framework_datatables.filters.DatatablesFilterBackend',
+    #),
+    #'DEFAULT_PAGINATION_CLASS': 'rest_framework_datatables.pagination.DatatablesPageNumberPagination',
+    #'PAGE_SIZE': 20,
+}
+
+
 MIDDLEWARE_CLASSES += [
-    'disturbance.middleware.FirstTimeNagScreenMiddleware'
+    'disturbance.middleware.FirstTimeNagScreenMiddleware',
+    'reversion.middleware.RevisionMiddleware'
 ]
 
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'disturbance', 'templates'))
@@ -69,13 +89,20 @@ if DEV_STATIC and not DEV_STATIC_URL:
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # Department details
-VIA_EMAIL = env('VIA_EMAIL','via@dbca.wa.gov.au')
-DEP_URL = env('DEP_URL','www.dbca.wa.gov.au')
+SYSTEM_NAME = env('SYSTEM_NAME', 'Disturbance Approval System')
+SYSTEM_NAME_SHORT = env('SYSTEM_NAME_SHORT', 'DAS')
+SITE_PREFIX = env('SITE_PREFIX')
+SITE_DOMAIN = env('SITE_DOMAIN')
+SUPPORT_EMAIL = env('SUPPORT_EMAIL', SYSTEM_NAME_SHORT.lower() + '@' + SITE_DOMAIN)
+DEP_URL = env('DEP_URL','www.' + SITE_DOMAIN)
 DEP_PHONE = env('DEP_PHONE','(08) 9219 9831')
+DEP_PHONE_SUPPORT = env('DEP_PHONE_SUPPORT','(08) 9219 9000')
 DEP_FAX = env('DEP_FAX','(08) 9423 8242')
 DEP_POSTAL = env('DEP_POSTAL','Locked Bag 104, Bentley Delivery Centre, Western Australia 6983')
-DEP_NAME = env('DEP_NAME','Department of Biodiversity,Conservation and Attractions')
-SITE_URL = env('SITE_URL','https://via-uat.dpaw.wa.gov.au')
+DEP_NAME = env('DEP_NAME','Department of Biodiversity, Conservation and Attractions')
+DEP_NAME_SHORT = env('DEP_NAME_SHORT','DBCA')
+SITE_URL = env('SITE_URL', 'https://' + SITE_PREFIX + '.' + SITE_DOMAIN)
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', 'no-reply@' + SITE_DOMAIN)
 TENURE_SECTION = env('TENURE_SECTION', None)
 
 BASE_URL=env('BASE_URL')

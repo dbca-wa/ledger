@@ -3,7 +3,9 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import View, TemplateView
 from disturbance.components.proposals.utils import create_data_from_form
-from disturbance.components.proposals.models import Proposal
+from disturbance.components.proposals.models import Proposal, Referral, ProposalType, HelpPage
+from disturbance.components.approvals.models import Approval
+from disturbance.components.compliances.models import Compliance
 import json,traceback
 
 class ProposalView(TemplateView):
@@ -24,3 +26,54 @@ class ProposalView(TemplateView):
         except:
             traceback.print_exc
             return JsonResponse({error:"something went wrong"},safe=False,status=400)
+
+
+from reversion_compare.views import HistoryCompareDetailView
+class ProposalHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare
+    """
+    model = Proposal
+    template_name = 'disturbance/reversion_history.html'
+
+class ReferralHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare
+    """
+    model = Referral
+    template_name = 'disturbance/reversion_history.html'
+
+
+class ApprovalHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare
+    """
+    model = Approval
+    template_name = 'disturbance/reversion_history.html'
+
+
+class ComplianceHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare
+    """
+    model = Compliance
+    template_name = 'disturbance/reversion_history.html'
+
+
+
+class ProposalTypeHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare
+    """
+    model = ProposalType
+    template_name = 'disturbance/reversion_history.html'
+
+
+class HelpPageHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare
+    """
+    model = HelpPage
+    template_name = 'disturbance/reversion_history.html'
+
+

@@ -824,9 +824,9 @@ export default {
 
         this.arrivalEl = $('#dateArrival');
         this.departureEl = $('#dateDeparture');
-
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
+            endDate: moment(this.arrivalEl).add(180, 'days').toDate(),
             onRender: function (date) {
                 // disallow start dates before today
                 return date.valueOf() < now.valueOf() ? 'disabled': '';

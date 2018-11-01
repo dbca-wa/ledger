@@ -1,7 +1,9 @@
-from oscar.apps.checkout.session import CheckoutSessionMixin as CoreCheckoutSessionMixin
 from oscar.apps.checkout import exceptions
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+from oscar.core.loading import get_class
+
+CoreCheckoutSessionMixin = get_class('checkout.session', 'CheckoutSessionMixin')
 
 class CheckoutSessionMixin(CoreCheckoutSessionMixin):
 
@@ -87,6 +89,26 @@ class CheckoutSessionMixin(CoreCheckoutSessionMixin):
                 url=reverse('checkout:shipping-address'),
                 message=_("Your previously chosen shipping address is "
                           "no longer valid.  Please choose another one")
+            )
+
+    def check_payment_data_is_captured(self, request):
+        # this method only ever gets invoked when visiting checkout:preview
+
+        # let POST requests through
+        if request.method == 'POST':
+            return
+
+        # bounce requests without a payment method set
+        if not self.checkout_session.payment_method():
+            raise exceptions.FailedPreCondition(
+                url=reverse('checkout:payment-details'),
+            )
+
+        # bounce requests which specify a card,
+        # as the CC info only exists on the page and not in the DB
+        if self.checkout_session.payment_method() == 'card':
+            raise exceptions.FailedPreCondition(
+                url=reverse('checkout:payment-details'),
             )
 
     def build_submission(self, **kwargs):

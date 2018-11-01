@@ -27,6 +27,10 @@ def host_reverse(name, args=None, kwargs=None):
     return "{}{}".format(settings.DEFAULT_HOST, reverse(name, args=args, kwargs=kwargs))
 
 
+def pdf_host_reverse(name, args=None, kwargs=None):
+    return "{}{}".format(settings.WL_PDF_URL, reverse(name, args=args, kwargs=kwargs))
+
+
 class TemplateEmailBase(object):
     subject = ''
     html_template = 'wl/emails/base_email.html'

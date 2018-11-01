@@ -233,13 +233,22 @@ class MakeBookingsView(TemplateView):
         VEHICLE_CHOICES = {'0': 'vehicle', '1': 'concession', '2': 'motorbike'}
         BookingVehicleRego.objects.filter(booking=booking).delete()
         for vehicle in vehicles:
-            BookingVehicleRego.objects.create(
+            obj_check = BookingVehicleRego.objects.filter(booking = booking,
+            rego = vehicle.cleaned_data.get('vehicle_rego'),
+            type=VEHICLE_CHOICES[vehicle.cleaned_data.get('vehicle_type')],
+            entry_fee=vehicle.cleaned_data.get('entry_fee')).exists()
+
+            if(not obj_check):
+                BookingVehicleRego.objects.create(
                     booking=booking, 
                     rego=vehicle.cleaned_data.get('vehicle_rego'), 
                     type=VEHICLE_CHOICES[vehicle.cleaned_data.get('vehicle_type')],
                     entry_fee=vehicle.cleaned_data.get('entry_fee')
-            )
-
+                )
+            else:
+                form.add_error(None, 'Duplicate regos not permitted.If unknown add number, e.g. Hire1, Hire2.')
+                return self.render_page(request, booking, form, vehicles,show_errors=True)
+       
         # Check if number of people is exceeded in any of the campsites
         for c in booking.campsites.all():
             if booking.num_guests > c.campsite.max_people:
@@ -287,27 +296,12 @@ class MakeBookingsView(TemplateView):
         booking.save()
 
         # generate invoice
-        reservation = u"Reservation for {} from {} to {} at {}".format(
-               u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
-                booking.arrival.strftime('%d-%m-%Y'),
-                booking.departure.strftime('%d-%m-%Y'),
-                booking.campground.name
-        )
+        reservation = u"Reservation for {} confirmation {}".format(u'{} {}'.format(booking.customer.first_name, booking.customer.last_name), booking.id)
         
         logger.info(u'{} built booking {} and handing over to payment gateway'.format(u'User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else u'An anonymous user',booking.id))
 
-        response = utils.checkout(request, booking, lines, invoice_text=reservation)
-        result =  HttpResponse(
-            content=response.content,
-            status=response.status_code,
-            content_type=response.headers['Content-Type'],
-        )
+        result = utils.checkout(request, booking, lines, invoice_text=reservation)
 
-        # if we're anonymous add the basket cookie to the current session
-        if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
-            basket_cookie = response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN]
-            result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_cookie)
-        
         return result
 
 

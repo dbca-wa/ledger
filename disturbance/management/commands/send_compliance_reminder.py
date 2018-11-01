@@ -5,26 +5,27 @@ from disturbance.components.compliances.models import Compliance
 from ledger.accounts.models import EmailUser
 import datetime
 
-
-
 import itertools
 
+import logging
+logger = logging.getLogger(__name__)
+
 class Command(BaseCommand):
-    help = 'Send reminder notification for compliances which has past due dates'
+    help = 'Send notification emails for compliances which has past due dates, and also reminder notification emails for those that are within the daterange prior to due_date (eg. within 14 days of due date)'
 
     def handle(self, *args, **options):
         try:
-            user = EmailUser.objects.get(email__icontains='cron')
+            user = EmailUser.objects.get(email='cron@dbca.wa.gov.au')
         except:
-            user = user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
+            user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
 
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now()).date()
+        logger.info('Running command {}'.format(__name__))
         for c in Compliance.objects.filter(processing_status = 'due'):
-            if c.due_date < today:
-                if c.lodgement_date==None:
-                    try:
-                        c.send_reminder(user)
-                        c.save()
-                        print('Reminder sent for Compliance {} '.format(c.id))
-                    except:
-                        print('Error sending Reminder Compliance {} '.format(c.id))
+            try:
+                c.send_reminder(user)
+                c.save()
+            except Exception as e:
+                logger.info('Error sending Reminder Compliance {}\n{}'.format(c.lodgement_number, e))
+
+        logger.info('Command {} completed'.format(__name__))

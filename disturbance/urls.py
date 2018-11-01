@@ -5,6 +5,7 @@ from rest_framework import routers
 from disturbance import views
 from disturbance.admin import disturbance_admin_site
 from disturbance.components.proposals import views as proposal_views
+from disturbance.components.organisations import views as organisation_views
 
 from disturbance.components.users import api as users_api
 from disturbance.components.organisations import api as org_api
@@ -19,6 +20,9 @@ from ledger.urls import urlpatterns as ledger_patterns
 router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
 router.register(r'proposal',proposal_api.ProposalViewSet)
+router.register(r'proposal_paginated',proposal_api.ProposalPaginatedViewSet)
+router.register(r'approval_paginated',approval_api.ApprovalPaginatedViewSet)
+router.register(r'compliance_paginated',compliances_api.CompliancePaginatedViewSet)
 router.register(r'referrals',proposal_api.ReferralViewSet)
 router.register(r'approvals',approval_api.ApprovalViewSet)
 router.register(r'compliances',compliances_api.ComplianceViewSet)
@@ -53,6 +57,8 @@ urlpatterns = [
     url(r'^admin/', disturbance_admin_site.urls),
     url(r'', include(api_patterns)),
     url(r'^$', views.DisturbanceRoutingView.as_view(), name='ds_home'),
+    url(r'^contact/', views.DisturbanceContactView.as_view(), name='ds_contact'),
+    url(r'^further_info/', views.DisturbanceFurtherInformationView.as_view(), name='ds_further_info'),
     url(r'^internal/', views.InternalView.as_view(), name='internal'),
     url(r'^internal/proposal/(?P<proposal_pk>\d+)/referral/(?P<referral_pk>\d+)/$', views.ReferralView.as_view(), name='internal-referral-detail'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),
@@ -71,6 +77,15 @@ urlpatterns = [
     url(r'^internal/compliance/(?P<compliance_pk>\d+)/$', views.InternalComplianceView.as_view(), name='internal-compliance-detail'),
 
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
+    # reversion history-compare
+    url(r'^history/proposal/(?P<pk>\d+)/$', proposal_views.ProposalHistoryCompareView.as_view(), name='proposal_history'),
+    url(r'^history/referral/(?P<pk>\d+)/$', proposal_views.ReferralHistoryCompareView.as_view(), name='referral_history'),
+    url(r'^history/approval/(?P<pk>\d+)/$', proposal_views.ApprovalHistoryCompareView.as_view(), name='approval_history'),
+    url(r'^history/compliance/(?P<pk>\d+)/$', proposal_views.ComplianceHistoryCompareView.as_view(), name='compliance_history'),
+    url(r'^history/proposaltype/(?P<pk>\d+)/$', proposal_views.ProposalTypeHistoryCompareView.as_view(), name='proposaltype_history'),
+    url(r'^history/helppage/(?P<pk>\d+)/$', proposal_views.HelpPageHistoryCompareView.as_view(), name='helppage_history'),
+    url(r'^history/organisation/(?P<pk>\d+)/$', organisation_views.OrganisationHistoryCompareView.as_view(), name='organisation_history'),
+
 ] + ledger_patterns
 
 if settings.DEBUG:  # Serve media locally in development.

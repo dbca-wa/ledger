@@ -22,8 +22,12 @@ from disturbance.components.main.models import CommunicationsLogEntry, UserActio
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
-from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification
+from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
 import copy
+import subprocess
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def update_proposal_doc_filename(instance, filename):
@@ -33,16 +37,20 @@ def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
 
 def application_type_choicelist():
-    return [( (choice.name), (choice.name) ) for choice in ApplicationType.objects.all()]
+    try:
+        return [( (choice.name), (choice.name) ) for choice in ApplicationType.objects.filter(visible=True)]
+    except:
+        # required because on first DB tables creation, there are no ApplicationType objects -- setting a default value
+        return ( ('Disturbance', 'Disturbance'), )
 
 class ProposalType(models.Model):
     #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24)
     #application_type = models.ForeignKey(ApplicationType, related_name='aplication_types')
     description = models.CharField(max_length=256, blank=True, null=True)
     #name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=application_type_choicelist(), default=application_type_choicelist()[0][0])
-    name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=24, choices=application_type_choicelist(), default='Disturbance')
+    name = models.CharField(verbose_name='Application name (eg. Disturbance, Apiary)', max_length=64, choices=application_type_choicelist(), default='Disturbance')
     schema = JSONField()
-    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
+    #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
     #site = models.OneToOneField(Site, default='1')
     replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
@@ -175,11 +183,18 @@ class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
     _file = models.FileField(upload_to=update_proposal_doc_filename)
     input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+
+    def delete(self):
+        if self.can_delete:
+            return super(ProposalDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
 
     class Meta:
         app_label = 'disturbance'
 
 class Proposal(RevisionedMixin):
+#class Proposal(models.Model):
 
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
                                ('with_assessor', 'Under Review'),
@@ -256,7 +271,7 @@ class Proposal(RevisionedMixin):
 #    )
 
     APPLICATION_TYPE_CHOICES = (
-        ('new_licence', 'New Licence'),
+        ('new_proposal', 'New Proposal'),
         ('amendment', 'Amendment'),
         ('renewal', 'Renewal'),
     )
@@ -278,13 +293,14 @@ class Proposal(RevisionedMixin):
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
-    lodgement_date = models.DateField(blank=True, null=True)
+    #lodgement_date = models.DateField(blank=True, null=True)
+    lodgement_date = models.DateTimeField(blank=True, null=True)
 
     proxy_applicant = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proxy')
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals')
 
-    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_assigned')
-    assigned_approver = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_approvals')
+    assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_assigned', on_delete=models.SET_NULL)
+    assigned_approver = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_proposals_approvals', on_delete=models.SET_NULL)
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[1][0])
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
@@ -313,6 +329,7 @@ class Proposal(RevisionedMixin):
     application_type = models.ForeignKey(ApplicationType)
     approval_level = models.CharField('Activity matrix approval level', max_length=255,null=True,blank=True)
     approval_level_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='approval_level_document')
+    approval_comment = models.TextField(blank=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -415,6 +432,11 @@ class Proposal(RevisionedMixin):
         return group.members.all() if group else []
 
     @property
+    def compliance_assessors(self):
+        group = self.__assessor_group()
+        return group.members.all() if group else []
+
+    @property
     def can_officer_process(self):
         """
         :return: True if the application is in one of the processable status for Assessor role.
@@ -445,6 +467,7 @@ class Proposal(RevisionedMixin):
         default_group = ProposalAssessorGroup.objects.get(default=True)
 
         return default_group
+
 
     def __approver_group(self):
         # TODO get list of approver groups based on region and activity
@@ -512,6 +535,24 @@ class Proposal(RevisionedMixin):
         else:
             return False
 
+    def assessor_comments_view(self,user):
+
+        if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements' or self.processing_status == 'with_approver':
+            try:
+                referral = Referral.objects.get(proposal=self,referral=user)
+            except:
+                referral = None
+            if referral:
+                return True
+            elif self.__assessor_group() in user.proposalassessorgroup_set.all():
+                return True
+            elif self.__approver_group() in user.proposalapprovergroup_set.all():
+                return True
+            else:
+                return False
+        else:
+            return False
+
     def has_assessor_mode(self,user):
         status_without_assessor = ['with_approver','approved','declined','draft']
         if self.processing_status in status_without_assessor:
@@ -539,10 +580,9 @@ class Proposal(RevisionedMixin):
                 if missing_fields:
                     error_text = 'The proposal has these missing fields, {}'.format(','.join(missing_fields))
                     raise exceptions.ProposalMissingFields(detail=error_text)
-                self.processing_status = 'with_assessor'
-                self.customer_status = 'with_assessor'
                 self.submitter = request.user
-                self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                self.lodgement_date = timezone.now()
                 if (self.amendment_requests):
                     qs = self.amendment_requests.filter(status = "requested")
                     if (qs):
@@ -550,14 +590,22 @@ class Proposal(RevisionedMixin):
                             q.status = 'amended'
                             q.save()
 
-                self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 # Create a log entry for the organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
 
-                send_submit_email_notification(request, self)
-                send_external_submit_email_notification(request, self)
+                #import ipdb; ipdb.set_trace()
+                ret1 = send_submit_email_notification(request, self)
+                ret2 = send_external_submit_email_notification(request, self)
+
+                if ret1 and ret2:
+                    self.processing_status = 'with_assessor'
+                    self.customer_status = 'with_assessor'
+                    self.documents.all().update(can_delete=False)
+                    self.save()
+                else:
+                    raise ValidationError('An error occurred while submitting proposal (Submit email notifications failed)')
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
@@ -642,30 +690,34 @@ class Proposal(RevisionedMixin):
                         # Create a log entry for the organisation
                         self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
             except:
-                raise 
+                raise
 
     def assing_approval_level_document(self, request):
         with transaction.atomic():
             try:
-                if request.data['approval_level_document'] != 'null':
+                approval_level_document = request.data['approval_level_document']
+                if approval_level_document != 'null':
                     try:
-                        document = self.documents.get(input_name=str(request.data['approval_level_document']))
+                        document = self.documents.get(input_name=str(approval_level_document))
                     except ProposalDocument.DoesNotExist:
-                        document = self.documents.get_or_create(input_name=str(request.data['approval_level_document']))[0]
-                    document.name = str(request.data['approval_level_document'])   
-                    if document._file and os.path.isfile(document._file.path):
-                        os.remove(document._file.path)
-                    document._file = request.data['approval_level_document']
+                        document = self.documents.get_or_create(input_name=str(approval_level_document), name=str(approval_level_document))[0]
+                    document.name = str(approval_level_document)
+                    # commenting out below tow lines - we want to retain all past attachments - reversion can use them
+                    #if document._file and os.path.isfile(document._file.path):
+                    #    os.remove(document._file.path)
+                    document._file = approval_level_document
                     document.save()
                     d=ProposalDocument.objects.get(id=document.id)
                     self.approval_level_document = d
+                    comment = 'Approval Level Document Added: {}'.format(document.name)
                 else:
                     self.approval_level_document = None
-                self.save()
-                #instance.save()
+                    comment = 'Approval Level Document Deleted: {}'.format(request.data['approval_level_document_name'])
+                #self.save()
+                self.save(version_comment=comment) # to allow revision to be added to reversion history
                 self.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
                 # Create a log entry for the organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)            
+                self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
                 return self
             except:
                 raise
@@ -694,13 +746,18 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
-    def move_to_status(self,request,status):
+    def move_to_status(self,request,status, approver_comment):
         if not self.can_assess(request.user):
             raise exceptions.ProposalNotAuthorized()
         if status in ['with_assessor','with_assessor_requirements','with_approver']:
             if self.processing_status == 'with_referral' or self.can_user_edit:
                 raise ValidationError('You cannot change the current status at this time')
             if self.processing_status != status:
+                if self.processing_status =='with_approver':
+                    if approver_comment:
+                        self.approver_comment = approver_comment
+                        self.save()
+                        send_proposal_approver_sendback_email_notification(request, self)
                 self.processing_status = status
                 self.save()
 
@@ -722,6 +779,8 @@ class Proposal(RevisionedMixin):
                 self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_REISSUE_APPROVAL.format(self.id),request)
+            else:
+                raise ValidationError('Cannot reissue Approval')
         else:
             raise ValidationError('Cannot reissue Approval')
 
@@ -740,7 +799,8 @@ class Proposal(RevisionedMixin):
                     defaults={'officer': request.user, 'reason': reason, 'cc_email': details.get('cc_email',None)}
                 )
                 self.proposed_decline_status = True
-                self.move_to_status(request,'with_approver')
+                approver_comment = ''
+                self.move_to_status(request,'with_approver', approver_comment)
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 # Log entry for organisation
@@ -788,7 +848,8 @@ class Proposal(RevisionedMixin):
                     'cc_email':details.get('cc_email')
                 }
                 self.proposed_decline_status = False
-                self.move_to_status(request,'with_approver')
+                approver_comment = ''
+                self.move_to_status(request,'with_approver', approver_comment)
                 self.assigned_officer = None
                 self.save()
                 # Log proposal action
@@ -850,6 +911,7 @@ class Proposal(RevisionedMixin):
                             if created:
                                 previous_approval.replaced_by = approval
                                 previous_approval.save()
+
                     elif self.proposal_type == 'amendment':
                         if self.previous_application:
                             previous_approval = self.previous_application.approval
@@ -894,17 +956,17 @@ class Proposal(RevisionedMixin):
                             approval_compliances = Compliance.objects.filter(approval= previous_approval, proposal = self.previous_application, processing_status='future')
                             if approval_compliances:
                                 for c in approval_compliances:
-                                    c.delete()  
+                                    c.delete()
                         # Log creation
                         # Generate the document
-                        approval.generate_doc()
+                        approval.generate_doc(request.user)
                         self.generate_compliances(approval, request)
                         # send the doc and log in approval and org
                     else:
                         #approval.replaced_by = request.user
                         approval.replaced_by = self.approval
                         # Generate the document
-                        approval.generate_doc()
+                        approval.generate_doc(request.user)
                         #Delete the future compliances if Approval is reissued and generate the compliances again.
                         approval_compliances = Compliance.objects.filter(approval= approval, proposal = self, processing_status='future')
                         if approval_compliances:
@@ -918,7 +980,8 @@ class Proposal(RevisionedMixin):
                     self.approval = approval
                 #send Proposal approval email with attachment
                 send_proposal_approval_email_notification(self,request)
-                self.save()
+                self.save(version_comment='Final Approval: {}'.format(self.approval.lodgement_number))
+                self.approval.documents.all().update(can_delete=False)
 
             except:
                 raise
@@ -961,7 +1024,33 @@ class Proposal(RevisionedMixin):
         today = timezone.now().date()
         timedelta = datetime.timedelta
         from disturbance.components.compliances.models import Compliance, ComplianceUserAction
-        for req in self.requirements.all():
+        #For amendment type of Proposal, check for copied requirements from previous proposal
+        if self.proposal_type == 'amendment':
+            try:
+                for r in self.requirements.filter(copied_from__isnull=False):
+                    cs=[]
+                    cs=Compliance.objects.filter(requirement=r.copied_from, proposal=self.previous_application, processing_status='due')
+                    if cs:
+                        if r.is_deleted == True:
+                            for c in cs:
+                                c.processing_status='discarded'
+                                c.customer_status = 'discarded'
+                                c.reminder_sent=True
+                                c.post_reminder_sent=True
+                                c.save()
+                        if r.is_deleted == False:
+                            for c in cs:
+                                c.proposal= self
+                                c.approval=approval
+                                c.requirement=r
+                                c.save()
+            except:
+                raise
+        #requirement_set= self.requirements.filter(copied_from__isnull=True).exclude(is_deleted=True)
+        requirement_set= self.requirements.all().exclude(is_deleted=True)
+
+        #for req in self.requirements.all():
+        for req in requirement_set:
             try:
                 if req.due_date and req.due_date >= today:
                     current_date = req.due_date
@@ -1031,7 +1120,8 @@ class Proposal(RevisionedMixin):
                 #Log entry for approval
                 from disturbance.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_RENEW_APPROVAL.format(self.approval.id),request)
-                proposal.save()
+                proposal.save(version_comment='New Amendment/Renewal Proposal created, from origin {}'.format(proposal.previous_application_id))
+                #proposal.save()
             return proposal
 
     def amend_approval(self,request):
@@ -1056,10 +1146,14 @@ class Proposal(RevisionedMixin):
                 proposal.submitter = request.user
                 proposal.previous_application = self
                 #copy all the requirements from the previous proposal
-                req=self.requirements.all()
+                #req=self.requirements.all()
+                req=self.requirements.all().exclude(is_deleted=True)
+                from copy import deepcopy
                 if req:
                     for r in req:
+                        old_r = deepcopy(r)
                         r.proposal = proposal
+                        r.copied_from=old_r
                         r.id = None
                         r.save()
                 # Create a log entry for the proposal
@@ -1069,7 +1163,8 @@ class Proposal(RevisionedMixin):
                 #Log entry for approval
                 from disturbance.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_AMEND_APPROVAL.format(self.approval.id),request)
-                proposal.save()
+                proposal.save(version_comment='New Amendment/Renewal Proposal created, from origin {}'.format(proposal.previous_application_id))
+                #proposal.save()
             return proposal
 
 
@@ -1115,6 +1210,11 @@ class AmendmentReason(models.Model):
 
     class Meta:
         app_label = 'disturbance'
+        verbose_name = "Proposal Amendment Reason" # display name in Admin
+        verbose_name_plural = "Proposal Amendment Reasons"
+
+    def __str__(self):
+        return self.reason
 
 
 class AmendmentRequest(ProposalRequest):
@@ -1122,21 +1222,23 @@ class AmendmentRequest(ProposalRequest):
     #REASON_CHOICES = (('insufficient_detail', 'The information provided was insufficient'),
     #                  ('missing_information', 'There was missing information'),
     #                  ('other', 'Other'))
-    try:
-        # model requires some choices if AmendmentReason does not yet exist or is empty
-        REASON_CHOICES = list(AmendmentReason.objects.values_list('id', 'reason'))
-        if not REASON_CHOICES:
-            REASON_CHOICES = ((0, 'The information provided was insufficient'),
-                              (1, 'There was missing information'),
-                              (2, 'Other'))
-    except:
-        REASON_CHOICES = ((0, 'The information provided was insufficient'),
-                          (1, 'There was missing information'),
-                          (2, 'Other'))
+    # try:
+    #     # model requires some choices if AmendmentReason does not yet exist or is empty
+    #     REASON_CHOICES = list(AmendmentReason.objects.values_list('id', 'reason'))
+    #     if not REASON_CHOICES:
+    #         REASON_CHOICES = ((0, 'The information provided was insufficient'),
+    #                           (1, 'There was missing information'),
+    #                           (2, 'Other'))
+    # except:
+    #     REASON_CHOICES = ((0, 'The information provided was insufficient'),
+    #                       (1, 'There was missing information'),
+    #                       (2, 'Other'))
 
 
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
-    reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
+    #reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
+    reason = models.ForeignKey(AmendmentReason, blank=True, null=True)
+    #reason = models.ForeignKey(AmendmentReason)
 
     class Meta:
         app_label = 'disturbance'
@@ -1159,6 +1261,7 @@ class AmendmentRequest(ProposalRequest):
                     proposal.applicant.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
 
                     # send email
+
                     send_amendment_email_notification(self,request, proposal)
 
                 self.save()
@@ -1188,6 +1291,7 @@ class ProposalDeclinedDetails(models.Model):
         app_label = 'disturbance'
 
 @python_2_unicode_compatible
+#class ProposalStandardRequirement(models.Model):
 class ProposalStandardRequirement(RevisionedMixin):
     text = models.TextField()
     code = models.CharField(max_length=10, unique=True)
@@ -1209,6 +1313,8 @@ class ProposalRequirement(OrderedModel):
     recurrence = models.BooleanField(default=False)
     recurrence_pattern = models.SmallIntegerField(choices=RECURRENCE_PATTERNS,default=1)
     recurrence_schedule = models.IntegerField(null=True,blank=True)
+    copied_from = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
     #order = models.IntegerField(default=1)
 
     class Meta:
@@ -1314,6 +1420,18 @@ class Referral(models.Model):
         return 'Proposal {} - Referral {}'.format(self.proposal.id,self.id)
 
     # Methods
+    @property
+    def latest_referrals(self):
+        return Referral.objects.filter(sent_by=self.referral, proposal=self.proposal)[:2]
+
+    @property
+    def can_be_completed(self):
+        #Referral cannot be completed until second level referral sent by referral has been completed/recalled
+        qs=Referral.objects.filter(sent_by=self.referral, proposal=self.proposal, processing_status='with_referral')
+        if qs:
+            return False
+        else:
+            return True
 
     def recall(self,request):
         with transaction.atomic():
@@ -1395,6 +1513,9 @@ class Referral(models.Model):
                             user.first_name = department_user['given_name']
                             user.last_name = department_user['surname']
                             user.save()
+                    qs=Referral.objects.filter(sent_by=user, proposal=self.proposal)
+                    if qs:
+                        raise ValidationError('You cannot send referral to this user')
                     try:
                         Referral.objects.get(referral=user,proposal=self.proposal)
                         raise ValidationError('A referral has already been sent to this user')
@@ -1408,9 +1529,9 @@ class Referral(models.Model):
                             text=referral_text
                         )
                     # Create a log entry for the proposal
-                    self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     # Create a log entry for the organisation
-                    self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     # send email
                     send_referral_email_notification(referral,request)
                 else:
@@ -1474,15 +1595,20 @@ def clone_proposal_with_status_reset(proposal):
                 #proposal.previous_application = Proposal.objects.get(id=original_proposal_id)
 
                 proposal.id = None
+                proposal.approval_level_document = None
 
                 proposal.save(no_revision=True)
-
 
                 # clone documents
                 for proposal_document in ProposalDocument.objects.filter(proposal=original_proposal_id):
                     proposal_document.proposal = proposal
                     proposal_document.id = None
+                    proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
+                    proposal_document.can_delete = True
                     proposal_document.save()
+
+                # copy documents on file system and reset can_delete flag
+                subprocess.call('cp -pr media/proposals/{} media/proposals/{}'.format(original_proposal_id, proposal.id), shell=True)
 
                 return proposal
             except:
@@ -1588,4 +1714,21 @@ class HelpPage(models.Model):
     class Meta:
         app_label = 'disturbance'
         unique_together = ('application_type', 'help_type', 'version')
+
+
+import reversion
+reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals',])
+reversion.register(ProposalType)
+reversion.register(ProposalRequirement)            # related_name=requirements
+reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
+reversion.register(ProposalDocument)               # related_name=documents
+reversion.register(ProposalLogEntry)
+reversion.register(ProposalUserAction)
+reversion.register(ComplianceRequest)
+reversion.register(AmendmentRequest)
+reversion.register(Assessment)
+reversion.register(Referral)
+reversion.register(HelpPage)
+reversion.register(ApplicationType)
+
 

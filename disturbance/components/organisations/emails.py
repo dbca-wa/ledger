@@ -9,7 +9,7 @@ from disturbance.components.emails.emails import TemplateEmailBase
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_NAME = 'VIA Automated Message'
+SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation request has been accepted.'
     html_template = 'disturbance/emails/organisation_request_accept_notification.html'
@@ -75,10 +75,15 @@ def send_organisation_request_accept_email_notification(org_request,organisation
 
 def send_org_access_group_request_accept_email_notification(org_request, request, recipient_list):
     email = OrganisationAccessGroupRequestAcceptNotificationEmail()
+
+    url = request.build_absolute_uri('/internal/organisations/access/{}'.format(org_request.id))
+    if "-internal" not in url:
+        url = '-internal.{}'.format(settings.SITE_DOMAIN).join(url.split('.' + settings.SITE_DOMAIN))
+
     context = {
         'name': request.data.get('name'),
         'abn': request.data.get('abn'),
-        'url': request.build_absolute_uri('/internal/organisations/access/{}'.format(org_request.id)),
+        'url': url,
     }
 
     msg = email.send(recipient_list, context=context)

@@ -224,7 +224,7 @@ def create_helppage_object(application_type='Disturbance', help_type=HelpPage.HE
 		print 'proposal type: {} does not exist, maybe!'.format(application_type, e)
 
 
- 	help_text = 'help_text' if help_type==HelpPage.HELP_TEXT_EXTERNAL else 'help_text_assessor'
+ 	help_text = 'help_text_url' if help_type==HelpPage.HELP_TEXT_EXTERNAL else 'help_text_assessor_url'
 	help_list = search_keys(proposal_type.schema, search_list=[help_text,'label'])
 	richtext = create_richtext_help(help_list, help_text)
 

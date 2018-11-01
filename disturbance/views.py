@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 
 from datetime import datetime, timedelta
 
-from disturbance.helpers import is_officer, is_internal
+from disturbance.helpers import is_internal
 from disturbance.forms import *
 from disturbance.components.proposals.models import Referral, Proposal, HelpPage
 from disturbance.components.compliances.models import Compliance
@@ -64,6 +64,12 @@ class DisturbanceRoutingView(TemplateView):
             return redirect('external')
         kwargs['form'] = LoginForm
         return super(DisturbanceRoutingView, self).get(*args, **kwargs)
+
+class DisturbanceContactView(TemplateView):
+    template_name = 'disturbance/contact.html'
+
+class DisturbanceFurtherInformationView(TemplateView):
+    template_name = 'disturbance/further_info.html'
 
 class InternalProposalView(DetailView):
     #template_name = 'disturbance/index.html'

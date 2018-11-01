@@ -33,7 +33,7 @@
                                 <label for="">Status</label>
                                 <select class="form-control" v-model="filterProposalStatus">
                                     <option value="All">All</option>
-                                    <option v-for="s in proposal_status" :value="s">{{s}}</option>
+                                    <option v-for="s in proposal_status" :value="s.value">{{s.name}}</option>
                                 </select>
                             </div>
                         </div>
@@ -106,7 +106,7 @@ export default {
         url:{
             type: String,
             required: true
-        }
+        },
     },
     data() {
         let vm = this;
@@ -130,20 +130,51 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
+            external_status:[
+                {value: 'draft', name: 'Draft'},
+                {value: 'with_assessor', name: 'Under Review'},
+                {value: 'approved', name: 'Approved'},
+                {value: 'declined', name: 'Declined'},
+                {value: 'discarded', name: 'Discarded'},
+            ],
+            internal_status:[
+                {value: 'draft', name: 'Draft'},
+                {value: 'with_assessor', name: 'With Assessor'},
+                {value: 'with_referral', name: 'With Referral'},
+                {value: 'with_assessor_requirements', name: 'With Assessor (Requirements)'},
+                {value: 'with_approver', name: 'With Approver'},
+                {value: 'approved', name: 'Approved'},
+                {value: 'declined', name: 'Declined'},
+                {value: 'discarded', name: 'Discarded'},
+            ],
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
             proposal_status: [],
-            proposal_ex_headers:["Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"],
+            proposal_ex_headers:[
+                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
+                //"LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
+            ],
+
             proposal_ex_options:{
                 autoWidth: false,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                serverSide: true,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data',
+
+                    // adding extra GET params for Custom filtering
+                    "data": function ( d ) {
+                        d.regions = vm.filterProposalRegion.join();
+                        d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+        		    }
+
                 },
                 dom: 'lBfrtip',
                 buttons:[
@@ -153,16 +184,21 @@ export default {
                         data: "id",
                         mRender:function(data,type,full){
                             return full.lodgement_number;
-                        }
+                        },
+                        name: "id, lodgement_number",
                     },
                     {
                         data: "region",
                         'render': function (value) {
                             return helpers.dtPopover(value);
                         },
-                        'createdCell': helpers.dtPopoverCellFn
+                        'createdCell': helpers.dtPopoverCellFn,
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
-                    {data: "activity"},
+                    {
+						data: "activity",
+						name: "activity"
+					},
                     {
                         data: "title",
                         'render': function (value) {
@@ -177,22 +213,29 @@ export default {
                                 return `${data.first_name} ${data.last_name}`;
                             }
                             return ''
-                        }
+                        },
+                        name: "submitter__email",
                     },
-                    {data: "applicant"},
+                    {
+                        data: "applicant",
+                        name: "applicant__organisation__name",
+                    },
                     {
                         data: "customer_status",
-                        mRender:function(data,type,full){
-                            return vm.level == 'internal' ? full.processing_status: data; //Fix the issue with External dashboard Status dropdown shoing internal statuses.
-                        }
+                        //mRender:function(data,type,full){
+                        //    return vm.level == 'internal' ? full.processing_status: data; //Fix the issue with External dashboard Status dropdown shoing internal statuses.
+                        //},
+                        name: "customer_status",
                     },
                     {
                         data: "lodgement_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
                     {
+                        data: "",
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
@@ -216,10 +259,15 @@ export default {
                                 }
                             }
                             return links;
-                        }
+                        },
+                        name: '',
+                        searchable: false,
+                        orderable: false
                     }
+
                 ],
                 processing: true,
+                /*
                 initComplete: function () {
                     // Grab Regions from the data in the table
                     var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
@@ -268,17 +316,30 @@ export default {
                         vm.proposal_status = statusTitles;
                     });
                 }
+                */
             },
-            proposal_headers:["Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action"],
+            proposal_headers:[
+                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
+                //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
+            ],
             proposal_options:{
                 autoWidth: false,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                serverSide: true,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data',
+
+                    // adding extra GET params for Custom filtering
+                    "data": function ( d ) {
+                        d.regions = vm.filterProposalRegion.join();
+                        d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+        		    }
                 },
                 dom: 'lBfrtip',
                 buttons:[
@@ -288,14 +349,17 @@ export default {
                         data: "id",
                         mRender:function(data,type,full){
                             return full.lodgement_number;
-                        }
+                        },
+                        //name: "lodgement_number",
+                        data: "id, lodgement_number"
                     },
                     {
                         data: "region",
                         'render': function (value) {
                             return helpers.dtPopover(value);
                         },
-                        'createdCell': helpers.dtPopoverCellFn
+                        'createdCell': helpers.dtPopoverCellFn,
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
                     {data: "activity"},
                     {
@@ -312,23 +376,35 @@ export default {
                                 return `${data.first_name} ${data.last_name}`;
                             }
                             return ''
-                        }
+                        },
+                        name: "submitter__email",
                     },
-                    {data: "applicant"},
+                    {
+                        data: "applicant",
+                        name: "applicant__organisation__name",
+                    },
                     {
                         data: "processing_status",
-                        mRender:function(data,type,full){
-                            return vm.level == 'external' ? full.customer_status: data;
-                        }
+                        //mRender:function(data,type,full){
+                        //    return vm.level == 'external' ? full.customer_status: data;
+                        //},
+                        name: "processing_status",
                     },
                     {
                         data: "lodgement_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                            //return data != '' && data != null ? moment(data): '';
+                        },
+                        //name: "assigned_officer__first_name, assigned_officer__last_name",
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
-                    {data: "assigned_officer"},
                     {
+                        data: "assigned_officer",
+                        name: "assigned_officer__first_name, assigned_officer__last_name",
+                    },
+                    {
+                        data: '',
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
@@ -350,10 +426,15 @@ export default {
                                 }
                             }
                             return links;
-                        }
+                        },
+                        name: '',
+                        searchable: false,
+                        orderable: false
                     }
+
                 ],
                 processing: true,
+                /*
                 initComplete: function () {
                     // Grab Regions from the data in the table
                     var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
@@ -405,6 +486,7 @@ export default {
                     // Fix the table rendering columns
                     vm.$refs.proposal_datatable.vmDataTable.columns.adjust().responsive.recalc();
                 }
+                */
             }
         }
     },
@@ -412,12 +494,26 @@ export default {
         datatable
     },
     watch:{
+        filterProposalRegion: function(){
+            this.$refs.proposal_datatable.vmDataTable.draw();
+            //let vm = this;
+            //vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion.join()).draw();
+        },
         filterProposalActivity: function() {
             let vm = this;
             if (vm.filterProposalActivity!= 'All') {
                 vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalActivity).draw();
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
+            }
+        },
+        filterProposalSubmitter: function(){
+            //this.$refs.proposal_datatable.vmDataTable.draw();
+            let vm = this;
+            if (vm.filterProposalSubmitter!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalSubmitter).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
             }
         },
         filterProposalStatus: function() {
@@ -427,12 +523,6 @@ export default {
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
             }
-        },
-        filterProposalRegion: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
-        },
-        filterProposalSubmitter: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
         },
         filterProposalLodgedFrom: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
@@ -451,6 +541,23 @@ export default {
         
     },
     methods:{
+        fetchFilterLists: function(){
+            let vm = this;
+
+            //vm.$http.get('/api/list_proposal/filter_list/').then((response) => {
+            vm.$http.get(api_endpoints.filter_list).then((response) => {
+                vm.proposal_regions = response.body.regions;
+                //vm.proposal_districts = response.body.districts;
+                vm.proposal_activityTitles = response.body.activities;
+                vm.proposal_submitters = response.body.submitters;
+                //vm.proposal_status = vm.level == 'internal' ? response.body.processing_status_choices: response.body.customer_status_choices;
+                vm.proposal_status = vm.level == 'internal' ? vm.internal_status: vm.external_status;
+            },(error) => {
+                console.log(error);
+            })
+            //console.log(vm.regions);
+        },
+
         discardProposal:function (proposal_id) {
             let vm = this;
             swal({
@@ -633,8 +740,9 @@ export default {
 
 
     mounted: function(){
+        this.fetchFilterLists();
         this.fetchProfile();
-        let vm = this;        
+        let vm = this;
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {

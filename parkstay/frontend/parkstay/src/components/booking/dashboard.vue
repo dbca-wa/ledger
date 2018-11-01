@@ -219,36 +219,36 @@ export default {
           {
             data: "campground_site_type",
             mRender: function(data, type, full) {
-              var test = "";
-              if (data.length == 1) {
-                //var max_length = 15;
-                //var name = (test.length > max_length) ? test.substring(0,max_length-1)+'...' : data;
-                var name = data[0].type;
-                var column = "<td>" + name + "</td>";
-                return column;
-              } else if (data.length > 1) {
-                var results = {};
-                for (var i = 0; i < data.length; i++) {
-                  if (results[data[i].type] == undefined) {
-                    results[data[i].type] = 0;
-                  }
-                  results[data[i].type] += 1;
+              var typeCondensed = {};
+              var resultList = [];
+              for (var i = 0; i < data.length; i++) {
+                if (data[i].campground_type === 0) {
+                  resultList.push(data[i].name);
+                  continue;
                 }
-                var resultList = [];
-                for (var index in results) {
-                  resultList.push(`${results[index]}x ${index}`);
-                }
+                if (typeCondensed[data[i].type] == undefined) {
+                  typeCondensed[data[i].type] = 0;
+                }                
+                typeCondensed[data[i].type] += 1;
+              }
+              for (var index in typeCondensed) {
+                var count = typeCondensed[index];
+                var site_type = index.split(':', 1)[0];
+                resultList.push(`${count}x ${site_type}`);
+              }
+              if (resultList.length == 1) {
+                var max_length = 15;
+                var name = (resultList[0] > max_length) ? resultList[0].substring(0,max_length-1): resultList[0];
+                var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
+                return column.replace('__NAME__', resultList[0]);
+              } 
+              else if (data.length > 1) {                           
                 var resultString = resultList.join(", ");
-
                 var max_length = 15;
                 var name = "Multiple";
-                var column =
-                  '<td><span style="padding: 0;" class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >' +
-                  name +
-                  "</span></td>";
+                var column ='<td><span class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >' +name +"</span></td>";
                 return column.replace("__NAME__", resultString);
               }
-
               return "<td></td>";
             },
             orderable: false,
@@ -637,7 +637,7 @@ export default {
           ];
           fields.splice(4, 0, "Email");
           fields.splice(5, 0, "Phone");
-          fields.splice(9, 0, "Amount Due");
+          fields.splice(9, 0, "Booking Total");
           fields.splice(10, 0, "Amount Paid");
           fields.splice(22, 0, "Booking Type");
           fields.splice(23, 0, "Override Reason");
@@ -678,7 +678,25 @@ export default {
                   bk[field] = booking.id;
                   break;
                 case 7:
-                  bk[field] = booking.campground_site_type;
+                  var typeCondensed = {};
+                  var resultList = [];
+                  for (var i = 0; i < booking.campground_site_type.length; i++) {
+                    if (booking.campground_site_type[i].campground_type === 0) {
+                      resultList.push(booking.campground_site_type[i].name);
+                      continue;
+                    }
+                    if (typeCondensed[booking.campground_site_type[i].type] == undefined) {
+                      typeCondensed[booking.campground_site_type[i].type] = 0;
+                    }                    
+                    typeCondensed[booking.campground_site_type[i].type] += 1;
+                  }
+                  for (var index in typeCondensed) {
+                    var count = typeCondensed[index];
+                    var site_type = index.split(':', 1)[0];
+                    resultList.push(`${count}x ${site_type}`);
+                  }
+                  var resultString = resultList.join(", ");
+                  bk[field] = resultString;
                   break;
                 case 8:
                   bk[field] = booking.status;

@@ -1,7 +1,7 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Approval has been reinstate:
+    Your Approval has been reinstated:
 
     Approval : {{ approval.lodgement_number}}
 

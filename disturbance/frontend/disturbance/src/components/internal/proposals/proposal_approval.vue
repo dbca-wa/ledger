@@ -4,7 +4,7 @@
             <div class="col-md-12 alert alert-success" v-if="proposal.processing_status == 'Approved'">
                 <p>The approval has been issued and has been emailed to {{proposal.applicant.name}}</p>
                 <p>Expiry date: {{proposal.proposed_issuance_approval.expiry_date}}
-                <p>Permit: <a target="_blank" :href="proposal.permit">permit.pdf</a></p>
+                <p>Permit: <a target="_blank" :href="proposal.permit">approval.pdf</a></p>
             </div>
             <div v-else class="col-md-12 alert alert-warning">
                 <p>The proposal was declined. The decision was emailed to {{proposal.applicant.name}}</p>
@@ -43,6 +43,15 @@
                                             </p>
                                         </div>
 
+                                    </div>
+                                    </template> 
+
+                                    <template v-if="isFinalised">
+                                        <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
+                                        
+                                    <div v-if="isApprovalLevel">    
+                                        <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
+                                        </p>
                                     </div>
                                     </template>                                    
                             </div>
@@ -156,6 +165,9 @@ export default {
             let vm = this;
                 let data = new FormData(vm.form);
                 data.append('approval_level_document', vm.uploadedFile)
+                if (vm.proposal.approval_level_document) {
+                    data.append('approval_level_document_name', vm.proposal.approval_level_document[0])
+                }
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/approval_level_document'),data,{
                 emulateJSON:true
             }).then(res=>{

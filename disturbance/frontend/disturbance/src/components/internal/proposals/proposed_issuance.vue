@@ -22,6 +22,10 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row" v-show="showstartDateError">
+                                    <alert  class="col-sm-12" type="danger"><strong>{{startDateErrorString}}</strong></alert>
+                    
+                                </div>
                             </div>
                             <div class="form-group">
                                 <div class="row">
@@ -38,6 +42,11 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row" v-show="showtoDateError">
+                                    <alert  class="col-sm-12" type="danger"><strong>{{toDateErrorString}}</strong></alert>
+                    
+                                </div>
+                                
                             </div>
                             <div class="form-group">
                                 <div class="row">
@@ -113,7 +122,11 @@ export default {
             issuingApproval: false,
             validation_form: null,
             errors: false,
+            toDateError:false,
+            startDateError:false,
             errorString: '',
+            toDateErrorString:'',
+            startDateErrorString:'',
             successString: '',
             success:false,
             datepickerOptions:{
@@ -130,6 +143,14 @@ export default {
         showError: function() {
             var vm = this;
             return vm.errors;
+        },
+        showtoDateError: function() {
+            var vm = this;
+            return vm.toDateError;
+        },
+        showstartDateError: function() {
+            var vm = this;
+            return vm.startDateError;
         },
         title: function(){
             return this.processing_status == 'With Approver' ? 'Issue Approval' : 'Propose to issue approval';
@@ -155,7 +176,11 @@ export default {
             this.isModalOpen = false;
             this.approval = {};
             this.errors = false;
+            this.toDateError = false;
+            this.startDateError = false;
             $('.has-error').removeClass('has-error');
+            $(this.$refs.due_date).data('DateTimePicker').clear();
+            $(this.$refs.start_date).data('DateTimePicker').clear();
             this.validation_form.resetForm();
         },
         fetchContact: function(id){
@@ -237,7 +262,17 @@ export default {
             $(vm.$refs.due_date).datetimepicker(vm.datepickerOptions);
             $(vm.$refs.due_date).on('dp.change', function(e){
                 if ($(vm.$refs.due_date).data('DateTimePicker').date()) {
-                    vm.approval.expiry_date =  e.date.format('DD/MM/YYYY');
+                    if ($(vm.$refs.due_date).data('DateTimePicker').date() < $(vm.$refs.start_date).data('DateTimePicker').date()){
+                        vm.toDateError = true;
+                        vm.toDateErrorString = 'Please select Expiry date that is after Start date';
+                        vm.approval.expiry_date = ""
+                    }
+                    else{
+                        vm.toDateError = false;
+                        vm.toDateErrorString = '';
+                        vm.approval.expiry_date =  e.date.format('DD/MM/YYYY');
+                    }
+                    //vm.approval.expiry_date =  e.date.format('DD/MM/YYYY');
                 }
                 else if ($(vm.$refs.due_date).data('date') === "") {
                     vm.approval.expiry_date = "";
@@ -246,7 +281,19 @@ export default {
             $(vm.$refs.start_date).datetimepicker(vm.datepickerOptions);
             $(vm.$refs.start_date).on('dp.change', function(e){
                 if ($(vm.$refs.start_date).data('DateTimePicker').date()) {
-                    vm.approval.start_date =  e.date.format('DD/MM/YYYY');
+
+                    if (($(vm.$refs.due_date).data('DateTimePicker').date()!= null)&& ($(vm.$refs.due_date).data('DateTimePicker').date() < $(vm.$refs.start_date).data('DateTimePicker').date())){
+                        vm.startDateError = true;
+                        vm.startDateErrorString = 'Please select Start date that is before Expiry date';
+                        vm.approval.start_date = ""
+                    }
+                    else{
+                        vm.startDateError = false;
+                        vm.startDateErrorString = '';
+                        vm.approval.start_date =  e.date.format('DD/MM/YYYY');
+                    }
+
+                    //vm.approval.start_date =  e.date.format('DD/MM/YYYY');
                 }
                 else if ($(vm.$refs.start_date).data('date') === "") {
                     vm.approval.start_date = "";

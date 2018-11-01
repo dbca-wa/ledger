@@ -25,23 +25,35 @@ from disturbance.components.compliances.email import (
                         send_amendment_email_notification,
                         send_reminder_email_notification,
                         send_external_submit_email_notification,
-                        send_submit_email_notification)
+                        send_submit_email_notification,
+                        send_internal_reminder_email_notification,
+                        send_due_email_notification,
+                        send_internal_due_email_notification
+                        )
 
-class Compliance(models.Model):
+import logging
+logger = logging.getLogger(__name__)
+
+
+#class Compliance(models.Model):
+class Compliance(RevisionedMixin):
 
     PROCESSING_STATUS_CHOICES = (('due', 'Due'),
                                  ('future', 'Future'),
                                  ('with_assessor', 'With Assessor'),
                                  ('approved', 'Approved'),
+                                 ('discarded', 'Discarded'),
                                  )
 
     CUSTOMER_STATUS_CHOICES = (('due', 'Due'),
                                  ('future', 'Future'),
                                  ('with_assessor', 'Under Review'),
                                  ('approved', 'Approved'),
+                                 ('discarded', 'Discarded'),
                                  )
 
 
+    lodgement_number = models.CharField(max_length=9, blank=True, default='')
     proposal = models.ForeignKey('disturbance.Proposal',related_name='compliances')
     approval = models.ForeignKey('disturbance.Approval',related_name='compliances')
     due_date = models.DateField()
@@ -50,9 +62,11 @@ class Compliance(models.Model):
     customer_status = models.CharField(choices=CUSTOMER_STATUS_CHOICES,max_length=20, default=CUSTOMER_STATUS_CHOICES[1][0])
     assigned_to = models.ForeignKey(EmailUser,related_name='disturbance_compliance_assignments',null=True,blank=True)
     #requirement = models.TextField(null=True,blank=True)
-    requirement = models.ForeignKey(ProposalRequirement, blank=True, null=True, related_name='compliance_requirement')
+    requirement = models.ForeignKey(ProposalRequirement, blank=True, null=True, related_name='compliance_requirement', on_delete=models.SET_NULL)
     lodgement_date = models.DateTimeField(blank=True, null=True)
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_compliances')
+    reminder_sent = models.BooleanField(default=False)
+    post_reminder_sent = models.BooleanField(default=False)
 
 
     class Meta:
@@ -76,11 +90,12 @@ class Compliance(models.Model):
 
     @property
     def reference(self):
-        return 'C{0:06d}'.format(self.id)
+        #return 'C{0:06d}'.format(self.id)
+        return self.lodgement_number
 
     @property
     def allowed_assessors(self):
-        return self.proposal.allowed_assessors
+        return self.proposal.compliance_assessors
 
     @property
     def can_user_view(self):
@@ -95,10 +110,18 @@ class Compliance(models.Model):
         qs =ComplianceAmendmentRequest.objects.filter(compliance = self)
         return qs
 
+    def save(self, *args, **kwargs):
+        super(Compliance, self).save(*args,**kwargs)
+        if self.lodgement_number == '':
+            new_lodgment_id = 'C{0:06d}'.format(self.pk)
+            self.lodgement_number = new_lodgment_id
+            self.save()
 
     def submit(self,request):
         with transaction.atomic():
             try:
+                if self.processing_status=='discarded':
+                    raise ValidationError('You cannot submit this compliance with requirements as it has been discarded.')
                 if self.processing_status == 'future' or 'due':
                     self.processing_status = 'with_assessor'
                     self.customer_status = 'with_assessor'
@@ -106,8 +129,7 @@ class Compliance(models.Model):
 
                     if request.FILES:
                         for f in request.FILES:
-                            document = self.documents.create()
-                            document.name = str(request.FILES[f])
+                            document = self.documents.create(name=str(request.FILES[f]))
                             document._file = request.FILES[f]
                             document.save()
                     if (self.amendment_requests):
@@ -116,12 +138,15 @@ class Compliance(models.Model):
                             for q in qs:
                                 q.status = 'amended'
                                 q.save()
+
                 #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.lodgement_date = timezone.now()
-                self.save()
+                self.save(version_comment='Compliance Submitted: {}'.format(self.id))
+                self.proposal.save(version_comment='Compliance Submitted: {}'.format(self.id))
                 self.log_user_action(ComplianceUserAction.ACTION_SUBMIT_REQUEST.format(self.id),request)
-                send_external_submit_email_notification(request,self) 
+                send_external_submit_email_notification(request,self)
                 send_submit_email_notification(request,self)
+                self.documents.all().update(can_delete=False)
             except:
                 raise
 
@@ -159,18 +184,34 @@ class Compliance(models.Model):
 
     def send_reminder(self,user):
         with transaction.atomic():
-            today = timezone.now().date()
+            today = timezone.localtime(timezone.now()).date()
             try:
                 if self.processing_status =='due':
-                    if self.due_date < today and self.lodgement_date==None:
+                    if self.due_date < today and self.lodgement_date==None and self.post_reminder_sent==False:
                         send_reminder_email_notification(self)
-                        ComplianceUserAction.log_action(self,ComplianceUserAction.ACTION_CONCLUDE_REQUEST.format(self.id),user)
-            except:
-                raise
+                        send_internal_reminder_email_notification(self)
+                        self.post_reminder_sent=True
+                        self.reminder_sent=True
+                        self.save()
+                        ComplianceUserAction.log_action(self,ComplianceUserAction.ACTION_REMINDER_SENT.format(self.id),user)
+                        logger.info('Post due date reminder sent for Compliance {} '.format(self.lodgement_number))
+                    elif self.due_date >= today and today >= self.due_date - datetime.timedelta(days=14) and self.reminder_sent==False:
+                        # second part: if today is with 14 days of due_date, and email reminder is not sent (deals with Compliances created with the reminder period)
+                        send_due_email_notification(self)
+                        send_internal_due_email_notification(self)
+                        self.reminder_sent=True
+                        self.save()
+                        ComplianceUserAction.log_action(self,ComplianceUserAction.ACTION_REMINDER_SENT.format(self.id),user)
+                        logger.info('Pre due date reminder sent for Compliance {} '.format(self.lodgement_number))
 
+            except Exception as e:
+                logger.info('Error sending Reminder Compliance {}\n{}'.format(self.lodgement_number, e))
 
     def log_user_action(self, action, request):
         return ComplianceUserAction.log_action(self, action, request.user)
+
+    def __str__(self):
+        return self.lodgement_number
 
 
 def update_proposal_complaince_filename(instance, filename):
@@ -180,7 +221,12 @@ def update_proposal_complaince_filename(instance, filename):
 class ComplianceDocument(Document):
     compliance = models.ForeignKey('Compliance',related_name='documents')
     _file = models.FileField(upload_to=update_proposal_complaince_filename)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
 
+    def delete(self):
+        if self.can_delete:
+            return super(ComplianceDocument, self).delete()
+        logger.info('Cannot delete existing document object after Compliance has been submitted (including document submitted before Compliance pushback to status Due): {}'.format(self.name))
 
     class Meta:
         app_label = 'disturbance'
@@ -193,6 +239,7 @@ class ComplianceUserAction(UserAction):
     ACTION_DECLINE_REQUEST = "Decline request"
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
     ACTION_REMINDER_SENT = "Reminder sent for compliance {}"
+    ACTION_STATUS_CHANGE = "Change status to Due for compliance {}"
     # Assessors
 
 
@@ -244,23 +291,33 @@ class CompRequest(models.Model):
     class Meta:
         app_label = 'disturbance'
 
+class ComplianceAmendmentReason(models.Model):
+    reason = models.CharField('Reason', max_length=125)
+
+    class Meta:
+        app_label = 'disturbance'
+
+    def __str__(self):
+        return self.reason
+
 
 class ComplianceAmendmentRequest(CompRequest):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
-    try:
-        # model requires some choices if AmendmentReason does not yet exist or is empty
-        REASON_CHOICES = list(AmendmentReason.objects.values_list('id', 'reason'))
-        if not REASON_CHOICES:
-            REASON_CHOICES = ((0, 'The information provided was insufficient'),
-                              (1, 'There was missing information'),
-                              (2, 'Other'))
-    except:
-        REASON_CHOICES = ((0, 'The information provided was insufficient'),
-                          (1, 'There was missing information'),
-                          (2, 'Other'))
+    # try:
+    #     # model requires some choices if AmendmentReason does not yet exist or is empty
+    #     REASON_CHOICES = list(AmendmentReason.objects.values_list('id', 'reason'))
+    #     if not REASON_CHOICES:
+    #         REASON_CHOICES = ((0, 'The information provided was insufficient'),
+    #                           (1, 'There was missing information'),
+    #                           (2, 'Other'))
+    # except:
+    #     REASON_CHOICES = ((0, 'The information provided was insufficient'),
+    #                       (1, 'There was missing information'),
+    #                       (2, 'Other'))
 
     status = models.CharField('Status', max_length=30, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
-    reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
+    # reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
+    reason = models.ForeignKey(ComplianceAmendmentReason, blank=True, null=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -285,10 +342,13 @@ def update_proposal_complaince_filename(instance, filename):
 
 
 
-class ComplianceDocument(Document):
-    compliance = models.ForeignKey('Compliance',related_name='documents')
-    _file = models.FileField(upload_to=update_proposal_complaince_filename)
+import reversion
+reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs'])
+reversion.register(ComplianceDocument)
+reversion.register(ComplianceUserAction)
+reversion.register(ComplianceLogEntry)
+reversion.register(ComplianceLogDocument)
+reversion.register(CompRequest)
+reversion.register(ComplianceAmendmentReason)
+reversion.register(ComplianceAmendmentRequest)
 
-
-    class Meta:
-        app_label = 'disturbance'

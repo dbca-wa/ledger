@@ -1,6 +1,8 @@
 from oscar.apps.order.utils import OrderCreator as CoreOrderCreator
 from django.conf import settings
+from django.db import transaction
 from oscar.core.loading import get_model, get_class
+
 
 Line = get_model('order', 'Line')
 Order = get_model('order', 'Order')
@@ -66,8 +68,9 @@ class OrderCreator(CoreOrderCreator):
         for voucher in basket.vouchers.all():
             self.record_voucher_usage(order, voucher, user)
 
-        # Send signal for analytics to pick up
-        order_placed.send(sender=self, order=order, user=user)
+        # Send signal for analytics to pick up, but only if we aren't in a transaction block
+        if transaction.get_autocommit():
+            order_placed.send(sender=self, order=order, user=user)
 
         return order    
 
