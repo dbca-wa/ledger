@@ -119,7 +119,7 @@ def addToInterface(date,oracle_codes,system,override):
                     description = k,
                     source = system.source,
                     method = system.method,
-                    comments = '{} GST/{}'.format(deduction.destination_account_code,date),
+                    comments = '{} GST/{}'.format(k,date),
                     status = 'NEW',
                     status_date = today
                 )
