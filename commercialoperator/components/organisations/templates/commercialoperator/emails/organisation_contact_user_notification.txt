@@ -2,7 +2,7 @@
 
 {%  block content %}
     {% if linked_by.email != user.email %}
-        Your have been linked to:
+        Your have been made company User to:
 
         Organisation : {{ organisation.name }}
 
@@ -10,7 +10,7 @@
 
         You were linked to this organisation by {{ linked_by.get_full_name }}({{linked_by.email}}).
     {% else %}
-        Your have linked yourself to:
+        Your have made yourself Company User to:
 
         Organisation : {{ organisation.name }}
 
