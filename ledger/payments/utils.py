@@ -142,6 +142,7 @@ def addToInterface(date,oracle_codes,system,override):
 
                     if deduction.destination_account_code not in records:
                         records[deduction.destination_account_code] = OracleInterface(
+                            receipt_number = system.receipt_number,
                             receipt_date = trans_date,
                             activity_name = deduction.destination_account_code,
                             amount = D(0), 
