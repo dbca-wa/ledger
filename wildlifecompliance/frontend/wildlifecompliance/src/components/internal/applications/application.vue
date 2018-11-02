@@ -831,6 +831,10 @@ export default {
                                  'success'
                             )
                             vm.refreshAssessorDatatables();
+                            vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/internal_application')).then((res) => {
+                                vm.refreshFromResponse(res);
+                            });
+
                         },(error)=>{
                             console.log(error);
                             vm.errors = true;
@@ -852,6 +856,9 @@ export default {
                                  'success'
                             )
                             vm.refreshAssessorDatatables();
+                            vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/internal_application')).then((res) => {
+                                vm.refreshFromResponse(res);
+                            });
                         },(error)=>{
                             console.log(error);
                             vm.errors = true;
@@ -1004,9 +1011,9 @@ export default {
                 
                 tab_name = $(d).data('tabname')
                 if ($(d).val() != '' && (activity_type_name.indexOf(tab_name) < 0) ){
-                    activity_type_name.push(tab_name)
-                    
-                    activity_type_id.push($(d).data('tabid'))
+                    activity_type_name.push(tab_name);
+                    activity_type_id.push($(d).data('tabid'));
+                }
             }); 
             
             this.$refs.ammendment_request.amendment.text = values;
