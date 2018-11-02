@@ -582,7 +582,7 @@ export default {
                 });
                 
             if (assessor.length > 0){
-                console.log(proposal.id, assessor)
+                //console.log(proposal.id, assessor)
                 return true;
             }
             else
