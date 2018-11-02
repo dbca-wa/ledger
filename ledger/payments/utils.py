@@ -112,6 +112,7 @@ def addToInterface(date,oracle_codes,system,override):
         for k, v in oracle_codes.items():
             if k not in records:
                 records[k] = OracleInterface(
+                    receipt_number = system.receipt_number,
                     receipt_date = trans_date,
                     activity_name = k,
                     amount = D(v), 
