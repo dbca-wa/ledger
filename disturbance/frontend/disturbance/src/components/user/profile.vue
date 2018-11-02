@@ -127,14 +127,20 @@
                         <alert v-if="showContactError" type="danger" style="color:red"><div v-for="item in errorListContact"><strong>{{item}}</strong></div></alert>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Phone (work)</label>
-                            <div class="col-sm-6">
+                            <div v-if="profile.is_department_user" class="col-sm-6">
                                 <input readonly="readonly" type="text" class="form-control" id="phone" name="Phone" placeholder="" v-model="profile.phone_number">
+                            </div>
+                            <div v-else class="col-sm-6">
+                                <input type="text" class="form-control" id="phone" name="Phone" placeholder="" v-model="profile.phone_number">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Mobile</label>
-                            <div class="col-sm-6">
+                            <div v-if="profile.is_department_user" class="col-sm-6">
                                 <input readonly="readonly" type="text" class="form-control" id="mobile" name="Mobile" placeholder="" v-model="profile.mobile_number">
+                            </div>
+                            <div v-else class="col-sm-6">
+                                <input type="text" class="form-control" id="mobile" name="Mobile" placeholder="" v-model="profile.mobile_number">
                             </div>
                           </div>
                           <div class="form-group">
