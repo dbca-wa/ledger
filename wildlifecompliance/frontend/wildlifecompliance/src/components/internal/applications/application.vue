@@ -515,7 +515,7 @@
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
         <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
-        <SendToAssessor ref="send_to_assessor" :application_id="application.id" ></SendToAssessor>
+        <SendToAssessor ref="send_to_assessor" :application_id="application.id" @refreshFromResponse="refreshFromResponse"></SendToAssessor>
         <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"/>
         
     </div>
@@ -725,11 +725,9 @@ export default {
 
             }
             if(flag>0 && flag==len){
-                console.log('inside is finalised true')
                 return true;
             }
             else{
-                console.log('inside is finalised false')
                 return false;
             }
             
@@ -744,11 +742,9 @@ export default {
 
             }
             if(flag>0 && flag!=len){
-                console.log('inside is partially finalised true')
                 return true;
             }
             else{
-                console.log('inside is partially finalised false')
                 return false;
             }
             
@@ -760,23 +756,18 @@ export default {
             return this.application && this.application.assessor_mode.has_assessor_mode ? true : false;
         },
         isIdCheckAccepted: function(){
-            console.log(this.application.id_check_status)
             return this.application.id_check_status == 'Accepted';
         },
         isIdNotChecked: function(){
-            console.log(this.application.id_check_status)
             return this.application.id_check_status == 'Not Checked';
         },
         isIdCheckRequested: function(){
-            console.log(this.application.id_check_status)
             return this.application.id_check_status == 'Awaiting Update';
         },
         isIdCheckUpdated: function(){
-            console.log(this.application.id_check_status)
             return this.application.id_check_status == 'Updated';
         },
         isCharacterCheckAccepted: function(){
-            console.log(this.application.id_check_status)
             return this.application.character_check_status == 'Accepted';
         },
         canAction: function(){
@@ -889,10 +880,6 @@ export default {
         },
         sendtoAssessor: function(item1){
             let vm=this;
-            // var selectedTabTitle = $("#tabs-section li.active");
-            // console.log($(selectedTabTitle))
-            // console.log($(selectedTabTitle).text())
-            // console.log($(item1))
             this.$refs.send_to_assessor.assessment.licence_activity_type=item1;
             this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id;
             this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name;
@@ -907,8 +894,6 @@ export default {
             
             this.$refs.proposed_licence.propose_issue.licence_activity_type_id=tab_id
             this.$refs.proposed_licence.propose_issue.licence_activity_type_name=selectedTabTitle.text();
-            console.log(tab_id)
-            console.log(this.$refs.proposed_licence.propose_issue.licence_activity_type_name)
             // this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
             this.$refs.proposed_licence.isModalOpen = true;
         },
@@ -934,7 +919,6 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_id_check')))
                     .then((response) => {
-                        console.log(response);
                         vm.application = response.body;
                     }, (error) => {
                         console.log(error);
@@ -955,7 +939,6 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/reset_id_check')))
                     .then((response) => {
-                        console.log(response);
                         vm.application = response.body;
                     }, (error) => {
                         console.log(error);
@@ -966,8 +949,6 @@ export default {
         },
         updateIdRequest: function() {
             let vm = this;
-            console.log(vm.application.schema[0].name)
-            console.log(vm.application.schema[0].status)
             swal({
                 title: "Request Update ID Check",
                 text: "Are you sure you want to request this ID Check update?",
@@ -978,7 +959,6 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/request_id_check')))
                     .then((response) => {
-                        console.log(response);
                         vm.application = response.body;
                     }, (error) => {
                         console.log(error);
@@ -999,7 +979,6 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_character_check')))
                     .then((response) => {
-                        console.log(response);
                         vm.application = response.body;
                     }, (error) => {
                         console.log(error);
@@ -1010,7 +989,6 @@ export default {
         },
         refreshAssessorDatatables: function(){
             var vm = this;
-            console.log(vm.$refs.assessorDatatable);
             for (var i=0;i<vm.$refs.assessorDatatable.length;i++){
                 vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
             }
@@ -1021,10 +999,6 @@ export default {
             var activity_type_name=[];
             var activity_type_id=[];
             var selectedTabTitle
-            // var selected = $("#tabs-section").tabs( "option", "selected" );
-            // var selectedTabTitle = $("#tabs-section li.active");
-            // console.log($(selectedTabTitle))
-            // console.log($(selectedTabTitle).text())
             $('.deficiency').each((i,d) => {
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
                 
@@ -1033,17 +1007,11 @@ export default {
                     activity_type_name.push(tab_name)
                     
                     activity_type_id.push($(d).data('tabid'))
-                }
-                // console.log('from inside internal application')
-                // console.log(activity_type_name)
-                // console.log(activity_type_id)
-                // console.log($(d).data('tabname'))
             }); 
             
             this.$refs.ammendment_request.amendment.text = values;
             this.$refs.ammendment_request.amendment.activity_type_name = activity_type_name;
             this.$refs.ammendment_request.amendment.activity_type_id = activity_type_id;
-            console.log(this.$refs.ammendment_request.amendment.activity_type_name)
             this.$refs.ammendment_request.isModalOpen = true;
         },
         togglesendtoAssessor:function(){
@@ -1272,20 +1240,10 @@ export default {
             vm.loading.push('Fetching assessor group');
             vm.$http.get(api_endpoints.assessor_group).then((response) => {
                 vm.assessorGroup = response.body
-                console.log('this is assessor group')
-                console.log(vm.assessorGroup)
             },(error) => {
                 console.log(error);
-                // console.log(response.body)
             })
         },
-        // fetchActivityType: function(){
-        //     let vm = this;
-        //     console.log('fetching activity type data')
-        //     console.log(vm.application.licence_type_data.activity_type)
-        //     vm.activity_type_data=vm.application.licence_type_data.activity_type
-        //     console.log(vm.activity_type_data)
-        // },
         initialiseAssignedOfficerSelect:function(reinit=false){
             let vm = this;
             if (reinit){
@@ -1439,11 +1397,8 @@ export default {
         vm.fetchDeparmentUsers();
         vm.fetchAssessorGroup();
         vm.$nextTick(function () {
-            console.log('application licence_type_data');
-            console.log(vm.application.licence_type_data);
             for (var i=0;i<vm.application.licence_type_data.activity_type.length;i++) {
                 var activity_type_id = vm.application.licence_type_data.activity_type[i].id
-                console.log(activity_type_id);
                 vm.assessors_options[activity_type_id] = {
                      language: {
                         processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -1502,16 +1457,6 @@ export default {
                 vm.application = res.body;
                 vm.original_application = helpers.copyObject(res.body);
                 vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                // vm.fetchActivityType();
-                // var tabs=vm.activity_type_data
-                // console.log('printing tabs')
-                // console.log(tabs.length)
-                // for(i=0;i<tabs.length;i++){
-                //     $('#assessor-section').append(`<li><a data-toggle="tab" href='#${tabs[i].id}+_uid'>${tabs[i].name}</a></li>`);
-                // }
-                // // tabs.map(tsec => {
-                // //     $('#assessor-section').append(`<li><a data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
-                // // });
               });
             },
             err => {
