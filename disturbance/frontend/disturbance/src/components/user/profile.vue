@@ -128,13 +128,13 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Phone (work)</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" id="phone" name="Phone" placeholder="" v-model="profile.phone_number">
+                                <input readonly="readonly" type="text" class="form-control" id="phone" name="Phone" placeholder="" v-model="profile.phone_number">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Mobile</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" id="mobile" name="Mobile" placeholder="" v-model="profile.mobile_number">
+                                <input readonly="readonly" type="text" class="form-control" id="mobile" name="Mobile" placeholder="" v-model="profile.mobile_number">
                             </div>
                           </div>
                           <div class="form-group">
