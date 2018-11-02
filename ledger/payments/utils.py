@@ -111,7 +111,7 @@ def addToInterface(date,oracle_codes,system,override):
         records = {}
         for k, v in oracle_codes.items():
             if k not in records:
-                records[k] = OracleInterface(
+                records[k] = OracleInterface.objects.create(
                     receipt_date = trans_date,
                     activity_name = k,
                     amount = D(v), 
@@ -140,7 +140,7 @@ def addToInterface(date,oracle_codes,system,override):
                         raise ValidationError('The account code setup for oracle deduction does not exist.')
 
                     if deduction.destination_account_code not in records:
-                        records[deduction.destination_account_code] = OracleInterface(
+                        records[deduction.destination_account_code] = OracleInterface.objects.create(
                             receipt_date = trans_date,
                             activity_name = deduction.destination_account_code,
                             amount = D(0), 
