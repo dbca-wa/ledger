@@ -81,10 +81,9 @@ class CompliancePaginatedViewSet(viewsets.ModelViewSet):
             http://localhost:8000/api/compliance_paginated/compliances_external/?format=datatables&draw=1&length=2
         """
 
-        #import ipdb; ipdb.set_trace()
         qs = self.get_queryset().exclude(processing_status='future')
-        #qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
-        qs = self.filter_queryset(qs)
+        qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
+        #qs = self.filter_queryset(qs)
         #qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
 
         # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation

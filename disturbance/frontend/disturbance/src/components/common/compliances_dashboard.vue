@@ -144,6 +144,13 @@ export default {
                         //d.regions = vm.filterProposalRegion.join();
                         d.date_from = vm.filterComplianceDueFrom != '' && vm.filterComplianceDueFrom != null ? moment(vm.filterComplianceDueFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterComplianceDueTo != '' && vm.filterComplianceDueTo != null ? moment(vm.filterComplianceDueTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        if (vm.level == 'external') { // hack to allow for correct Django choicelist in qs filter ProposalFilterBackend.filter_quesryset()
+                            d.customer_status = vm.filterComplianceStatus == 'Under Review' ? 'with_assessor': vm.filterComplianceStatus != 'All' ? vm.filterComplianceStatus: '';
+                            d.processing_status = '';
+                        } else {
+                            d.processing_status = vm.filterComplianceStatus == 'With Assessor' ? 'with_assessor': vm.filterComplianceStatus != 'All' ? vm.filterComplianceStatus: '';
+                            d.customer_status = '';
+                        }
                     }
 
                 },
@@ -182,11 +189,10 @@ export default {
                         data: "holder",
                         name: "proposal__applicant__organisation__name"
                     },
-                    {data: "processing_status",
-                        mRender:function(data,type,full){
-                            return vm.level == 'external' ? full.customer_status: data;
-                        }
 
+                    {
+                        data: vm.level == 'external'? "customer_status" : "processing_status",
+                        searchable: false,
                     },
                     {
                         data: "due_date",
@@ -292,13 +298,8 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
             }
         },
-        filterComplianceStatus: function() {
-            let vm = this;
-            if (vm.filterComplianceStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search(vm.filterComplianceStatus).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
-            }
+        filterComplianceStatus: function(){
+            this.$refs.proposal_datatable.vmDataTable.draw();
         },
         filterProposalSubmitter: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
