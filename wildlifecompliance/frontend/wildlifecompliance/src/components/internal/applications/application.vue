@@ -101,7 +101,7 @@
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Send to Assessor</button><br/>
                                         </div>
                                     </div>
-                                    <div v-if="!applicationIsDraft" class="row">
+                                    <div v-if="!applicationIsDraft && canRequestAmendment" class="row">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
                                         </div>
@@ -1027,6 +1027,10 @@ export default {
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
             vm.showingConditions = false;
+            setTimeout(function(){
+                console.log($('#tabs-assessor li:first-child a'));
+                $('#tabs-assessor li:first-child a')[0].click();
+            }, 50);
         },
         save: function(e) {
           let vm = this;
@@ -1057,8 +1061,11 @@ export default {
             this.assessmentComplete=false;
             var selectedTabTitle = $("#tabs-section li.active");
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
-            
             this.selected_assessment_tab=tab_id
+            setTimeout(function(){
+                console.log($('#conditiontabs li a'));
+                $('#conditiontabs li a')[0].click();
+            }, 50);
         },
         returnToOfficerConditions: function(){
             let vm = this;
