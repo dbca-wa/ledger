@@ -144,6 +144,10 @@ class Approval(RevisionedMixin):
         return self.current_proposal.compliance_assessors
 
     @property
+    def allowed_approvers(self):
+        return self.current_proposal.allowed_approvers
+
+    @property
     def is_issued(self):
         return self.licence_number is not None and len(self.licence_number) > 0
 
