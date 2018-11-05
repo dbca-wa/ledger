@@ -149,17 +149,32 @@ module.exports = {
                 if(data !== null && data !== undefined) {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
-                _elements.push(
-                    <div class="tab-pane fade" id={c.id}>
-                        {c.children.map(d=>{
-                            return (
-                                <div>
-                                    {this.renderChildren(h,d,value)}
-                                </div>
-                            )
-                        })}
-                    </div>
-                )
+                if(this.tabs_list.length>0){
+                     _elements.push(
+                        <div class="tab-pane fade" id={c.id}>
+                            {c.children.map(d=>{
+                                return (
+                                    <div>
+                                        {this.renderChildren(h,d,value)}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )
+                }else{
+                     _elements.push(
+
+                        <div class="tab-pane fade in active" id={c.id}>
+                            {c.children.map(d=>{
+                                return (
+                                    <div>
+                                        {this.renderChildren(h,d,value)}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )
+                }
                 this.tabs_list.push({name:c.name,label:c.label,id:c.id});
                 break;
             case 'checkbox':
