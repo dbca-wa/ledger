@@ -71,6 +71,7 @@ a<template id="proposal_dashboard">
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
+import Vue from 'vue'
 import {
     api_endpoints,
     helpers
@@ -96,6 +97,8 @@ export default {
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'proposal-datatable-'+vm._uid,
+            //Profile to check if user has access to process Proposal
+            profile: {},
             // Filters for Proposals
             filterProposalRegion: 'All',
             filterProposalActivity: 'All',
@@ -210,7 +213,7 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if (full.can_user_view) {
+                                if (full.processing_status=='With Assessor' && vm.check_assessor(full)) {
                                     links +=  `<a href='/internal/compliance/${full.id}'>Process</a><br/>`;
                                     
                                 }
@@ -234,7 +237,7 @@ export default {
                     {data: "reference", visible: false},
                     {data: "customer_status", visible: false},
                     {data: "can_user_view", visible: false},
-
+                    {data: "allowed_assessors", visible: false},
                 ],
                 processing: true,
                 /*
@@ -447,11 +450,38 @@ export default {
                     }
                 }
             );
+        },
+        fetchProfile: function(){
+            let vm = this;
+            Vue.http.get(api_endpoints.profile).then((response) => {
+                vm.profile = response.body
+                              
+            },(error) => {
+                console.log(error);
+                
+            })
+        },
+        check_assessor: function(compliance){
+            let vm = this;         
+            
+            var assessor = compliance.allowed_assessors.filter(function(elem){
+                    return(elem.id==vm.profile.id)
+                });
+                
+            if (assessor.length > 0){
+                //console.log(proposal.id, assessor)
+                return true;
+            }
+            else
+                return false;       
+            
+            return false;       
         }
     },
     mounted: function(){
         let vm = this;
         vm.fetchFilterLists();
+        vm.fetchProfile();
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {
