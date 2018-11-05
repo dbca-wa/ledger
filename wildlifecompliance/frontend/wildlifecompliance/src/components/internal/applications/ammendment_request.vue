@@ -88,6 +88,7 @@ export default {
             errors: false,
             errorString: '',
             validation_form: null,
+            noDeficiencyExist:false,
         }
     },
     computed: {
@@ -140,6 +141,14 @@ export default {
             } );
             console.log('this is amendment object')
             console.log(vm.amendment)
+        },
+        setNoDeficiencyExist: function(){
+            let vm = this;
+            let values = '';
+            $('.deficiency').each((i,d) => {
+               values +=  $(d).val() != '' ? `Question` : '' ;
+            });
+            vm.noDeficiencyExist = values != '' ? false : true;
         },
         sendData:function(){
             let vm = this;
@@ -239,10 +248,10 @@ export default {
        vm.form = document.forms.amendForm;
        vm.fetchAmendmentChoices();
        vm.addFormValidations();
+       vm.setNoDeficiencyExist();
        this.$nextTick(()=>{  
             vm.eventListerners();
         });
-    //console.log(validate);
    }
 }
 </script>

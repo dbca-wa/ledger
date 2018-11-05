@@ -103,7 +103,7 @@
                                     </div>
                                     <div v-if="!applicationIsDraft" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" v-bind:class="{disabled:noDeficiencyExist}" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
                                         </div>
                                     </div>
                                     <div v-if="canIssueDecline" class="row">
@@ -623,6 +623,7 @@ export default {
             logs_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/action_log'),
             panelClickersInitialised: false,
             sendingReferral: false,
+            noDeficiencyExist: false,
         }
     },
     components: {
@@ -1070,6 +1071,7 @@ export default {
               )
           },err=>{
           });
+          vm.noDeficiencyExist = this.$refs.ammendment_request.noDeficiencyExist;
         },
         toggleApplication:function(){
             this.showingApplication = !this.showingApplication;
@@ -1500,7 +1502,8 @@ export default {
             
             vm.form = document.forms.new_application;
             vm.eventListeners();
-        });
+            vm.noDeficiencyExist = this.$refs.ammendment_request.noDeficiencyExist;
+        })
     },
     beforeRouteEnter: function(to, from, next) {
           Vue.http.get(`/api/application/${to.params.application_id}/internal_application.json`).then(res => {
