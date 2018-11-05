@@ -141,7 +141,11 @@ class Approval(RevisionedMixin):
 
     @property
     def allowed_assessors(self):
-        return self.current_proposal.allowed_assessors
+        return self.current_proposal.compliance_assessors
+
+    @property
+    def allowed_approvers(self):
+        return self.current_proposal.allowed_approvers
 
     @property
     def is_issued(self):
