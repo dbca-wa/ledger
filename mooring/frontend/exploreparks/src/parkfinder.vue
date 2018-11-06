@@ -1,8 +1,39 @@
 <!DOCTYPE html>
 <template>
     <div v-cloak class="f6inject">
-        <div class="row">
+       <div class="row">
             <div class="small-12 medium-3 large-6 columns search-params">
+
+        <div class="columns small-12 medium-12 large-12" v-show="current_booking.length > 0">
+        <div class="row">
+                <div class="small-8 medium-9 large-10">
+                        <div class="panel panel-default">
+                             <div class="panel-heading"><h3 class="panel-title">Trolley: <span id='total_trolley'>${{ total_booking }}</span></h3></div>
+                              <div class='columns small-12 medium-12 large-12'>
+                                 <div v-for="item in current_booking" class="row small-12 medium-12 large-12">
+                                         <div class="columns small-12 medium-9 large-9">{{ item.item }}</div>
+                                         <div class="columns small-12 medium-2 large-2">${{ item.amount }}</div>
+                                         <div class="columns small-12 medium-1 large-1"><a style='color: red; opacity: 1;' type="button" class="close" @click="deleteBooking(item.id)">x</a></div>
+                                 </div>
+                              </div>
+                        </div>
+                </div>
+                <div class="columns small-4 medium-3 large-2" >
+
+                        <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a>
+                        <button  title="Please add items into your trolley." v-show="current_booking.length == 0 " style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" disabled >Add items to Proceed to Check Out</button>
+                         <div class="row">
+                          <div class="columns small-9 medium-9 large-9" v-if="ongoing_booking">
+                        <button  title="Please add items into your trolley." v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }}</button>
+                        <a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_id='+parkstayGroundId" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
+                            Cancel in-progress booking
+                        </a>
+                        </div>
+                        </div>
+                </div>
+        </div>
+        </div>
+
                 <div class="row">
                     <div class="small-12 columns">
                         <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for mooring's..."/></label>
@@ -608,6 +639,9 @@ export default {
             groupPinLevelChange: true,
             anchorPinLevelChange: true,
             mooring_map_data: null,
+            markerAvail: [],
+            current_booking: [],
+            total_price: "0.00",
         }
     },
     computed: {
@@ -1193,14 +1227,24 @@ export default {
             scale = Math.round(scale);
         }
 //        document.getElementById('scale').innerHTML = "Scale = 1 : " + scale;
-            },
-            buildMarkerBookable: function(lat,lon,props,name,marker_id) {
+      },
+      buildMarkerBookable: function(lat,lon,props,name,marker_id) {
             var mooring_type =  $("input:radio[name=gear_type]:checked").val();
             var pin_type=require('assets/map_pins/pin_red.png'); 
             var bookable = false;
+            var vm = this;
             if (this.groundsIds.has(marker_id)) {
-                pin_type=require('assets/map_pins/pin_orange.png');
-                var bookable = true;
+                if (vm.markerAvail[marker_id] == 'free') { 
+                     pin_type=require('assets/map_pins/pin_orange.png');
+                     bookable = true;
+                } else if (vm.markerAvail[marker_id] == 'partial') {
+                     pin_type=require('assets/map_pins/pin_orange_red.png');
+                     bookable = true;
+                } else {
+                     pin_type=require('assets/map_pins/pin_red.png');
+                     bookable = false;
+	        }	
+                console.log(vm.markerAvail[marker_id]);
 	        }
 
                 //this.anchorPinsActive.push(marker_id);
@@ -1289,7 +1333,7 @@ export default {
                   name: name,
                   zoom_level: zoom_level
               });
-
+              
               var icon = require('assets/map_pins/geo_group_red.png');
               if (text > 30) {
                        icon = require('assets/map_pins/geo_group2.png');
@@ -1333,6 +1377,40 @@ export default {
                    source: vectorSource
               });
               return vectorLayer;
+      },
+      deleteBooking: function(booking_item_id) {
+              var vm = this;
+              var submitData = {
+                  booking_item: booking_item_id,
+              };
+
+              $.ajax({
+                  url: vm.parkstayUrl + '/api/booking/delete',
+                  dataType: 'json',
+                  method: 'POST',
+                  data: submitData,
+                  success: function(data, stat, xhr) {
+                      vm.updateBooking();
+                  },
+                  error: function(xhr, stat, err) {
+                       vm.updateBooking();
+                  }
+              });  
+      },
+      updateBooking: function() {
+        var vm = this;
+        $.ajax({
+            url: vm.parkstayUrl+'/api/current_booking',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+               console.log("RESPONSE ");
+                console.log(response.current_booking);
+
+                vm.current_booking = response.current_booking.current_booking;
+                vm.total_price = response.current_booking.total_price;
+            }
+        });
+
       },
       BookNow: function() { 
         var vessel_size = $('#vesselSize').val();
@@ -1501,6 +1579,19 @@ export default {
                 vm.groundsSource.loadSource();
             }
         });
+
+
+        $.ajax({
+            url: vm.parkstayUrl+'/api/current_booking',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+                console.log("RESPONSE ");
+                console.log(response.current_booking);
+                vm.current_booking = response.current_booking;
+                vm.total_price = response.total_price
+            }
+        });
+
 
         this.groundsSource = new ol.source.Vector({
             features: vm.groundsFilter
@@ -1800,6 +1891,19 @@ export default {
             }
         });
 
+
+        $.ajax({
+            url: vm.parkstayUrl+'/api/current_booking',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+               console.log("RESPONSE ");
+                console.log(response.current_booking);
+
+                vm.current_booking = response.current_booking.current_booking;
+                vm.total_price = response.current_booking.total_price;
+            }
+        });
+
         this.groundsSource = new ol.source.Vector({
             features: vm.groundsFilter   
         });
@@ -1836,7 +1940,12 @@ export default {
                     response.forEach(function(el) {
                         vm.groundsIds.add(el.id);
                         vm.dateCache = vm.arrivalDateString+vm.departureDateString;
+
+                    console.log("HERE");
+                    console.log(el);
+                    vm.markerAvail[el.id] = el.avail;
                     });
+
                     vm.updateFilter();
                //     vm.removePinAnchors();
                //     vm.anchorPinLevelChange = true;

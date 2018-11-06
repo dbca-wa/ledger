@@ -116,27 +116,37 @@
                     </div>
                 </div>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Arrival
                     <input id="date-arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Departure
                     <input id="date-departure" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Vessel Size
                     <input id="vesselSize" type="number" placeholder="0" v-on:change="update" v-model="vesselSize"/>
                 </label>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Distance (radius)
                     <input id="distanceRadius" type="number" placeholder="0" v-on:change="update" v-model="distanceRadius"/>
                 </label>
             </div>
+            <div class="columns small-6 medium-6 large-2">
 
+	    </div>
+
+            <div class="columns small-6 medium-6 large-2">
+            <span class='pull-right'>
+               <a type="button" :href="/map/" class="button float-right warning">
+                  Search Other Mooring
+               </a>
+	    </span>
+	    </div>
             <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns" style='display:none'>
                 <label>
                     Guests 
@@ -538,7 +548,6 @@ export default {
                   showLoaderOnConfirm: true,
                   allowOutsideClick: false
                 }).then((value) => {
-			console.log('yes start againa');
                         var loc = window.location;
                         window.location = loc.protocol + '//' + loc.host + loc.pathname;
 		});
@@ -568,17 +577,12 @@ export default {
                         var vm = this;
                         var avail_index;
                         // vm.sites = data.sites;
-                        console.log("SITE");
-			console.log(vm.sites[site_index_id]);
-	
                         for (avail_index = 0; avail_index < vm.sites[site_index_id].availability.length; ++avail_index) {
                                         var booking_period = vm.sites[site_index_id].availability[avail_index][1].booking_period;
                                         //if (booking_period.length > 1) {
                                         //        vm.mooring_book_row[index] = false;
                                         //}
                                         vm.addBooking(vm.sites[site_index_id].id, vm.sites[site_index_id].mooring_id, booking_period[0].id, booking_period[0].date);
-                                        console.log(vm.sites[site_index_id].availability[avail_index][1]);
-                                        console.log(vm.sites[site_index_id].id, vm.sites[site_index_id].mooring_id, booking_period[0].id, booking_period[0].date);
                         }
 
 
@@ -587,9 +591,6 @@ export default {
               var vm = this;
               vm.isLoading =true;
 //            $('#spinnerLoader').show();
-              console.log("ADD BOOKING");
-              console.log(mooring_id+' : '+bp_id);
-              console.log(date);
               var booking_start = $('#date-arrival').val();
               var booking_finish = $('#date-departure').val();
 
@@ -663,7 +664,6 @@ export default {
                     withCredentials: true
                 },
                 success: function(data, stat, xhr) {
-                    //console.log(data);
                     if (data.status == 'success') {
                         window.location.href = vm.parkstayUrl + '/booking';
                     }
@@ -812,7 +812,6 @@ export default {
 			}
 
                         // End of booking whole row index
-                        console.log(vm.mooring_book_row);
                         vm.status = 'online';
                         if (parseInt(vm.parkstayGroundRatisId) > 0){
                             vm.parkstayGroundId = data.id;
@@ -844,7 +843,6 @@ export default {
         var vm = this;
 
         $(document).foundation();
-        console.log('DATE PICKER'); 
         this.arrivalEl = $('#date-arrival');
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
@@ -854,10 +852,8 @@ export default {
                 //return '';
             }
         }).on('changeDate', function (ev) {
-            console.log('arrivalEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
-            console.log('arrivalEl change');
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
@@ -882,10 +878,8 @@ export default {
                 return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
-            console.log('departureEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
-            console.log('departureEl change');
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
@@ -896,8 +890,6 @@ export default {
             }
         }).data('datepicker');
 
-        console.log('DATE PICKER END');
-        console.log(this.site);
 
         this.arrivalData.date = this.arrivalDate.toDate();
         this.arrivalData.setValue();

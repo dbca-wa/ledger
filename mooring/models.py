@@ -462,8 +462,8 @@ class BookingRange(models.Model):
     closure_reason = models.ForeignKey('ClosureReason',null=True,blank=True)
     open_reason = models.ForeignKey('OpenReason',null=True,blank=True)
     details = models.TextField(blank=True,null=True)
-    range_start = models.DateField(blank=True, null=True)
-    range_end = models.DateField(blank=True, null=True)
+    range_start = models.DateTimeField(blank=True, null=True)
+    range_end = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         abstract = True

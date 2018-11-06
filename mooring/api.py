@@ -439,6 +439,7 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
         scrubbed = serializer.validated_data
         context = {}
+        ground_ids = []
         # filter to the campsites by gear allowed (if specified), else show the lot
         if scrubbed['gear_type'] != 'all':
             context = {scrubbed['gear_type']: True}
@@ -446,11 +447,14 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         # if a date range is set, filter out campgrounds that are unavailable for the whole stretch
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
             sites = Mooringsite.objects.filter(**context)
-            ground_ids = utils.get_open_marinas(sites, scrubbed['arrival'], scrubbed['departure'])
+            #ground_ids = utils.get_open_marinas(sites, scrubbed['arrival'], scrubbed['departure'])
+  
+            open_marinas = utils.get_open_marinas(sites, scrubbed['arrival'], scrubbed['departure'])
+            for i in open_marinas:
+                 ground_ids.append(i) 
 
         else: # show all of the campgrounds with campsites
             ground_ids = set((x[0] for x in Mooringsite.objects.filter(**context).values_list('mooringarea')))
-
             # we need to be tricky here. for the default search (all, no timestamps),
             # we want to include all of the "campgrounds" that don't have any campsites in the model! (e.g. third party)
             if scrubbed['gear_type'] == 'all':
@@ -468,7 +472,7 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             end_date = today + timedelta(days=1)
 
-        temp_queryset = MooringArea.objects.filter(id__in=ground_ids).order_by('name')
+        temp_queryset = Mooringsite.objects.filter(id__in=ground_ids).order_by('name')
         queryset = []
         for q in temp_queryset:
             # Get the current stay history
@@ -476,16 +480,38 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
                             Q(range_start__lte=start_date,range_end__gte=start_date)|# filter start date is within period
                             Q(range_start__lte=end_date,range_end__gte=end_date)|# filter end date is within period
                             Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
-                            ,mooringarea=q)
+                            ,mooringarea=q.mooringarea)
+
             if stay_history:
                 max_days = min([x.max_days for x in stay_history])
             else:
                 max_days = settings.PS_MAX_BOOKING_LENGTH
-            if (end_date - start_date).days <= max_days:            
-                queryset.append(q)
+            if (end_date - start_date).days <= max_days:         
+                row = {}
+                row['id'] = q.mooringarea.id
+                row['avail2'] = open_marinas[q.id]
+                #row['avail'] = 'full'
+                if int(open_marinas[q.id]['closed_periods']) == 0 and int(open_marinas[q.id]['open_periods']) > 0:
+                     row['avail'] = 'free'
+                elif int(open_marinas[q.id]['open_periods']) == 0:
+                     row['avail'] = 'full'
+                elif int(open_marinas[q.id]['closed_periods']) > 0 and int(open_marinas[q.id]['open_periods']) > 0:
+                     row['avail'] = 'partial'
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+                queryset.append(row)
+
+#        serializer = self.get_serializer(queryset, many=True)
+        return HttpResponse(json.dumps(queryset), content_type='application/json')
+#        return Response(serializer.data)
+
+def current_booking(request, *args, **kwargs):
+    queryset = MooringArea.objects.exclude(mooring_type=3)
+    response_data = {}
+    response_data['result'] = 'success'
+    response_data['message'] = ''
+    ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+    response_data['current_booking'] = get_current_booking(ongoing_booking)
+    return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 
 @require_http_methods(['GET'])
@@ -499,7 +525,7 @@ def search_suggest(request, *args, **kwargs):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1]}))
     for x in Region.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry','zoom_level'):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Region', 'id': x[0], 'name': x[1], 'zoom_level': x[3]}))
-
+    entries['jasontest'] ='asdfadsf'
     return HttpResponse(geojson.dumps(geojson.FeatureCollection(entries)), content_type='application/json')
 
 @csrf_exempt
@@ -1253,8 +1279,10 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         #if length > settings.PS_MAX_BOOKING_LENGTH:
         #    length = settings.PS_MAX_BOOKING_LENGTH
         #    end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
-        if max_advance_booking_days > ground.max_advance_booking:
-           return Response({'name':'   ', 'error': 'Max advanced booking limit is '+str(ground.max_advance_booking)+' day/s. You can not book longer than this period.', 'error_type': 'stay_error', 'max_advance_booking': ground.max_advance_booking, 'days': length, 'max_advance_booking_days': max_advance_booking_days }, status=200 )
+        
+        # Have moved this into Availablity Calander utils.py
+        #if max_advance_booking_days > ground.max_advance_booking:
+        #   return Response({'name':'   ', 'error': 'Max advanced booking limit is '+str(ground.max_advance_booking)+' day/s. You can not book longer than this period.', 'error_type': 'stay_error', 'max_advance_booking': ground.max_advance_booking, 'days': length, 'max_advance_booking_days': max_advance_booking_days }, status=200 )
 
 
         # fetch all the campsites and applicable rates for the campground
@@ -1505,8 +1533,9 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #if length > settings.PS_MAX_BOOKING_LENGTH:
         #    length = settings.PS_MAX_BOOKING_LENGTH
         #    end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
-        if max_advance_booking_days > ground.max_advance_booking:
-           return Response({'name':'   ', 'error': 'Max advanced booking limit is '+str(ground.max_advance_booking)+' day/s. You can not book longer than this period.', 'error_type': 'stay_error', 'max_advance_booking': ground.max_advance_booking, 'days': length, 'max_advance_booking_days': max_advance_booking_days }, status=200 )
+        #### # Have moved this into Availablity Calander utils.py
+        #if max_advance_booking_days > ground.max_advance_booking:
+        #   return Response({'name':'   ', 'error': 'Max advanced booking limit is '+str(ground.max_advance_booking)+' day/s. You can not book longer than this period.', 'error_type': 'stay_error', 'max_advance_booking': ground.max_advance_booking, 'days': length, 'max_advance_booking_days': max_advance_booking_days }, status=200 )
 
 
         # fetch all the campsites and applicable rates for the campground
@@ -1545,18 +1574,21 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #     print "DATESSS"
         #     print dates 
         # fetch availability map
-        ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
-        current_booking = []
-        total_price = Decimal('0.00')
-        for ms in ms_booking:
-           row = {}
-           row['id'] = ms.id
-           #print ms.from_dt.astimezone(pytimezone('Australia/Perth'))
-           row['item'] = ms.campsite.name + ' from '+ms.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')
-           row['amount'] = str(ms.amount)
-#           row['item'] = ms.campsite.name
-           total_price = total_price +ms.amount
-           current_booking.append(row)
+        cb = get_current_booking(ongoing_booking)
+        current_booking = cb['current_booking']
+        total_price = cb['total_price']
+#        ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
+#        current_booking = []
+#        total_price = Decimal('0.00')
+#        for ms in ms_booking:
+#           row = {}
+#           row['id'] = ms.id
+#           #print ms.from_dt.astimezone(pytimezone('Australia/Perth'))
+#           row['item'] = ms.campsite.name + ' from '+ms.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')
+#           row['amount'] = str(ms.amount)
+##           row['item'] = ms.campsite.name
+#           total_price = total_price +ms.amount
+#           current_booking.append(row)
  
 
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
@@ -1847,8 +1879,9 @@ def create_admissions_booking(request, *args, **kwargs):
         lines = utils.admissions_price_or_lineitems(request, admissionsBooking)
     except Exception as e:
         error = (None, '{} Please contact Marine Park and Visitors services with this error message and the time of the request.'.format(str(e)))
-        #handle
+#        #handle
     total = sum([decimal.Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
+
     
     #Lookup customer
     if request.user.is_anonymous() or request.user.is_staff:
@@ -3370,3 +3403,23 @@ class OracleJob(views.APIView):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
 
+
+def get_current_booking(ongoing_booking): 
+
+     ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
+     cb = {'current_booking':[], 'total_price': '0.00'}
+     current_booking = []
+#     total_price = Decimal('0.00')
+     total_price = Decimal('0.00')
+     for ms in ms_booking:
+         row = {}
+         row['id'] = ms.id
+           #print ms.from_dt.astimezone(pytimezone('Australia/Perth'))
+         row['item'] = ms.campsite.name + ' from '+ms.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')
+         row['amount'] = str(ms.amount)
+#           row['item'] = ms.campsite.name
+         total_price = str(Decimal(total_price) +Decimal(ms.amount))
+         current_booking.append(row)
+     cb['current_booking'] = current_booking
+     cb['total_price'] = str(total_price)
+     return cb

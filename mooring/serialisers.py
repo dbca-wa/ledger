@@ -191,9 +191,10 @@ class MooringAreaMapMarinaSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id','name', 'entry_fee_required', 'district')
 
 class MooringAreaMapFilterSerializer(serializers.HyperlinkedModelSerializer):
+
     class Meta:
         model = MooringArea
-        fields = ('id',)
+        fields = ('id')
 
 class MooringAreaMapImageSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
