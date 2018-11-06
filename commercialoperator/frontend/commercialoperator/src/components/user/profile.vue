@@ -358,6 +358,7 @@ export default {
             showAddressError: false,
             errorListContact:[],
             showContactError: false,
+            role : null,
         }
     },
     watch: {

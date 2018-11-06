@@ -542,6 +542,10 @@ class OrganisationRequest(models.Model):
         ('approved','Approved'),
         ('declined','Declined')
     )
+    ROLE_CHOICES = (
+        ('employee','Employee'),
+        ('consultant','Consultant')
+    )
     name = models.CharField(max_length=128, unique=True)
     abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
     requester = models.ForeignKey(EmailUser)
@@ -549,6 +553,7 @@ class OrganisationRequest(models.Model):
     identification = models.FileField(upload_to='organisation/requests/%Y/%m/%d', null=True, blank=True)
     status = models.CharField(max_length=100,choices=STATUS_CHOICES, default="with_assessor")
     lodgement_date = models.DateTimeField(auto_now_add=True)
+    role = models.CharField(max_length=100,choices=ROLE_CHOICES, default="employee")
 
     class Meta:
         app_label = 'commercialoperator'
@@ -577,15 +582,24 @@ class OrganisationRequest(models.Model):
         # log who created the link
         org.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
         # Create contact person
+        if self.role == 'consultant':
+            role = 'consultant'
+        else:
+            role = 'organisation_admin'
+        # Create contact person
+
         OrganisationContact.objects.create(
-            organisation = org,
-            first_name = self.requester.first_name,
-            last_name = self.requester.last_name,
-            mobile_number = self.requester.mobile_number,
-            phone_number = self.requester.phone_number,
-            fax_number = self.requester.fax_number,
-            email = self.requester.email
-        
+            organisation=org,
+            first_name=self.requester.first_name,
+            last_name=self.requester.last_name,
+            mobile_number=self.requester.mobile_number,
+            phone_number=self.requester.phone_number,
+            fax_number=self.requester.fax_number,
+            email=self.requester.email,
+            user_role=role,
+            user_status='active',
+            is_admin=True
+
         )
         # send email to requester
         send_organisation_request_accept_email_notification(self, org, request)
