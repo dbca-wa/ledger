@@ -998,19 +998,20 @@ export default {
         },
         ammendmentRequest: function(){
             let values = '';
-            let tab_name='';
             var activity_type_name=[];
             var activity_type_id=[];
-            var selectedTabTitle
+            var selectedTabTitle;
+
             $('.deficiency').each((i,d) => {
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
-                
-                tab_name = $(d).data('tabname');
-                if (tab_name != null && $(d).val() != '' && (activity_type_name.indexOf(tab_name) < 0)){
-                    activity_type_name.push(tab_name);
-                    activity_type_id.push($(d).data('tabid'));
-                }
-            }); 
+            });
+
+            selectedTabTitle = $("#tabs-section li.active");
+            this.tab_name = $(selectedTabTitle).text();
+            this.tab_id = selectedTabTitle.children().attr('href').split('#')[1];
+
+            activity_type_id.push(this.tab_id);
+            activity_type_name.push(this.tab_name);
 
             this.$refs.ammendment_request.amendment.text = values;
             this.$refs.ammendment_request.amendment.activity_type_name = activity_type_name;
