@@ -1,6 +1,6 @@
 <template id="application_conditions">
 
-                    <div class="col-md-12">
+                <div class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -20,7 +20,7 @@
                             </div>
                         </div>
                     </div>
-                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions"/>
+                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_type_tab="licence_activity_type_tab"/>
                 </div>
 
             
@@ -36,8 +36,8 @@ import ConditionDetail from './application_add_condition.vue'
 export default {
     name: 'InternalApplicationConditions',
     props: {
-        application: Object
-
+        application: Object,
+        licence_activity_type_tab:Number
     },
     data: function() {
         let vm = this;
@@ -52,7 +52,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/conditions'),
+                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity_type='+vm.licence_activity_type_tab),
                     "dataSrc": ''
                 },
                 order: [],
@@ -148,12 +148,10 @@ export default {
     },
     methods:{
         addCondition(){
-
             var selectedTabTitle = $("li.active");
             var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
-            
-            this.$refs.condition_detail.licence_activity_type=tab_id
 
+            this.$refs.condition_detail.licence_activity_type=tab_id
             this.$refs.condition_detail.isModalOpen = true;
         },
         removeCondition(_id){

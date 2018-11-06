@@ -132,10 +132,10 @@ export default {
                         emulateJSON:true,
                     }).then((response)=>{
                         swal(
-                             'Sent',
-                             'An Application has been proposed to decline',
+                             'Propose Decline',
+                             'The licenced activity has been proposed for Decline.',
                              'success'
-                        );
+                        )
                         vm.decliningApplication = false;
                         vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
                         vm.close();
