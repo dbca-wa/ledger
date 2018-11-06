@@ -1005,8 +1005,8 @@ export default {
             $('.deficiency').each((i,d) => {
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
                 
-                tab_name = $(d).data('tabname')
-                if ($(d).val() != '' && (activity_type_name.indexOf(tab_name) < 0) ){
+                tab_name = $(d).data('tabname');
+                if (tab_name != null && $(d).val() != '' && (activity_type_name.indexOf(tab_name) < 0)){
                     activity_type_name.push(tab_name);
                     activity_type_id.push($(d).data('tabid'));
                 }

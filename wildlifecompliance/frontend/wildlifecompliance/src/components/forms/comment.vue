@@ -27,16 +27,9 @@ export default {
       getTab(){
         let vm=this;
         var selectedTabTitle = $("#tabs-section li.active");
-        var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
-        console.log(tab_id)
+        var tab_id=selectedTabTitle.children().attr('href').split('#')[1];
         vm.tabname = $(selectedTabTitle).text();
-        vm.tabid = tab_id
-        
-        // console.log('hello from comment')
-        // console.log(vm.tabname)
-        // console.log($(selectedTabTitle).attr('id'))
-        // console.log(selectedTabTitle)
-        // console.log(selectedTabTitle.children().attr('href').split(/(\d)/)[1])
+        vm.tabid = tab_id;
       }
     }
 }
