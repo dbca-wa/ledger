@@ -47,10 +47,43 @@ class Organisation(models.Model):
         return OrganisationAction.log_action(self, action, request.user)
 
     def validate_pins(self,pin1,pin2,request):
-        val = self.pin_one == pin1 and self.pin_two == pin2
-        if val:
-            self.link_user(request.user,request)
+        val_admin = self.admin_pin_one == pin1 and self.admin_pin_two == pin2
+        val_user = self.user_pin_one == pin1 and self.user_pin_two == pin2
+        if val_admin:
+            val= val_admin
+            admin_flag= True
+            role = 'organisation_admin' 
+        elif val_user:
+            val = val_user
+            admin_flag = False
+            role = 'organisation_user'
+        else:
+            val = False
+            return val
+
+        self.add_user_contact(request.user,request,admin_flag,role)
         return val
+
+    def add_user_contact(self,user,request,admin_flag,role):
+        with transaction.atomic():
+
+            OrganisationContact.objects.create(
+                organisation = self,
+                first_name = user.first_name,
+                last_name = user.last_name,
+                mobile_number = user.mobile_number,
+                phone_number = user.phone_number,
+                fax_number = user.fax_number,
+                email = user.email,
+                user_role = role,
+                user_status='pending',
+                is_admin = admin_flag
+            
+            )
+
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_CONTACT_ADDED.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
+
     
     # def link_user(self,user,request):
     #     with transaction.atomic():
