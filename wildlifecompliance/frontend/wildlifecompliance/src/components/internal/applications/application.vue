@@ -96,7 +96,7 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
-                                    <div v-if="!applicationIsDraft" class="row">
+                                    <div v-if="!applicationIsDraft && canSendToAssessor" class="row">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Send to Assessor</button><br/>
                                         </div>
@@ -165,14 +165,17 @@
                     </div>
                 </template>
                 <template v-if="isSendingToAssessor && !showingConditions">
+                <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && (item1.processing_status=='With Officer' || item1.processing_status=='With Officer-Conditions')">
                     <div>
                         <ul id="tabs-assessor" class="nav nav-tabs">
-                            <li v-for="(item1,index) in application.licence_type_data.activity_type" :class="setAssessorTab(index)"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                            <li :class="setAssessorTab(index)">
+                                <a data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a>
+                            </li>
                         </ul>
                     </div>
                         
                     <div class="tab-content">
-                            <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" :class="setAssessorTabContent(index)">
+                            <div :id="`${item1.id}`+_uid" :class="setAssessorTabContent(index)">
                                 <div>
                                     <div class="panel panel-default">
                                         <div class="panel-heading">
@@ -203,6 +206,7 @@
                                 </div>
                             </div>
                     </div>
+                </div>
                 </template>
                 <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised && !isOfficerConditions">
                     <div>
@@ -664,6 +668,15 @@ export default {
             var activity_types_list = this.application.licence_type_data.activity_type
             for(var i=0;i<activity_types_list.length;i++){
                 if(activity_types_list[i].processing_status == 'With Officer'){
+                    return true;
+                }
+            }
+            return false;
+        },
+        canSendToAssessor: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer' || activity_types_list[i].processing_status == 'With Officer-Conditions'){
                     return true;
                 }
             }
