@@ -165,48 +165,46 @@
                     </div>
                 </template>
                 <template v-if="isSendingToAssessor && !showingConditions">
-                <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && (item1.processing_status=='With Officer' || item1.processing_status=='With Officer-Conditions')">
                     <div>
                         <ul id="tabs-assessor" class="nav nav-tabs">
-                            <li :class="setAssessorTab(index)">
+                            <li v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && (item1.processing_status=='With Officer' || item1.processing_status=='With Officer-Conditions' || item1.processing_status=='With Assessor')" :class="setAssessorTab(index)" @click.prevent="clearSendToAssessorForm()">
                                 <a data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a>
                             </li>
                         </ul>
                     </div>
                         
                     <div class="tab-content">
-                            <div :id="`${item1.id}`+_uid" :class="setAssessorTabContent(index)">
-                                <div>
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading">
-                                            <h3 class="panel-title">Send to Assessor
-                                                <a class="panelClicker" :href="`#${item1.id}`+assessorsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="assessorsBody">
-                                                    <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                                </a>
-                                            </h3>
+                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && (item1.processing_status=='With Officer' || item1.processing_status=='With Officer-Conditions' || item1.processing_status=='With Assessor')" :id="`${item1.id}`+_uid" :class="setAssessorTabContent(index)">
+                            <div>
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        <h3 class="panel-title">Send to Assessor
+                                            <a class="panelClicker" :href="`#${item1.id}`+assessorsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="assessorsBody">
+                                                <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                            </a>
+                                        </h3>
+                                    </div>
+                                    <div class="panel-body panel-collapse collapse in" :id="`${item1.id}`+assessorsBody">
+                                        <div class="row">
+                                           <div class="col-sm-10" style="margin-bottom: 10px">
+                                                    <label class="control-label pull-left"  for="Name">Assessor Group</label>
+                                                    <select class="form-control" v-model="selectedAssessor">
+                                                        <option v-for="assessor in assessorGroup" :id="assessor.id"
+                                                        :value="assessor" v-if="application.licence_type_data.id == assessor.licence_class && item1.id == assessor.licence_activity_type">{{assessor.display_name}}</option>
+                                                    </select>
+                                            </div>
+                                            <div class="col-sm-2">
+                                                <a class="btn btn-primary" style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)">Send</a>
+                                            </div>
                                         </div>
-                                        <div class="panel-body panel-collapse collapse in" :id="`${item1.id}`+assessorsBody">
-                                            <div class="row">
-                                               <div class="col-sm-10" style="margin-bottom: 10px">
-                                                        <label class="control-label pull-left"  for="Name">Assessor Group</label>
-                                                        <select class="form-control" v-model="selectedAssessor">
-                                                            <option v-for="assessor in assessorGroup" :id="assessor.id"
-                                                            :value="assessor" v-if="application.licence_type_data.id == assessor.licence_class && item1.id == assessor.licence_activity_type">{{assessor.display_name}}</option>
-                                                        </select>
-                                                </div>
-                                                <div class="col-sm-2">
-                                                    <a class="btn btn-primary" style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)">Send</a>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options[`${item1.id}`]" :dtHeaders="assessors_headers" />
-                                            </div>
+                                        <div class="row">
+                                            <datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options[`${item1.id}`]" :dtHeaders="assessors_headers" />
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
                     </div>
-                </div>
                 </template>
                 <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised && !isOfficerConditions">
                     <div>
@@ -676,7 +674,7 @@ export default {
         canSendToAssessor: function(){
             var activity_types_list = this.application.licence_type_data.activity_type
             for(var i=0;i<activity_types_list.length;i++){
-                if(activity_types_list[i].processing_status == 'With Officer' || activity_types_list[i].processing_status == 'With Officer-Conditions'){
+                if(activity_types_list[i].processing_status == 'With Officer' || activity_types_list[i].processing_status == 'With Officer-Conditions' || activity_types_list[i].processing_status == 'With Assessor'){
                     return true;
                 }
             }
@@ -894,7 +892,19 @@ export default {
             this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id;
             this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name;
             this.$refs.send_to_assessor.assessment.text='';
-            this.$refs.send_to_assessor.isModalOpen=true;
+            if (typeof this.selectedAssessor.id == 'undefined' || typeof this.selectedAssessor.display_name == 'undefined'){
+              swal(
+                'Error',
+                'Please select an Assessor Group to send the request to.',
+                'error'
+              )
+            } else {
+                this.$refs.send_to_assessor.isModalOpen=true;
+            }
+        },
+        clearSendToAssessorForm(){
+            this.$refs.send_to_assessor.assessment.text='';
+            this.selectedAssessor={};
         },
         setAssessorTab(_index){
             return _index === 0 ? 'active' : '';
@@ -1048,7 +1058,6 @@ export default {
             vm.showingApplication = false;
             vm.showingConditions = false;
             setTimeout(function(){
-                console.log($('#tabs-assessor li:first-child a'));
                 $('#tabs-assessor li:first-child a')[0].click();
             }, 50);
         },
@@ -1075,6 +1084,9 @@ export default {
             if(this.isOfficerConditions){
                 this.isOfficerConditions=!this.isOfficerConditions
             }
+            setTimeout(function(){
+                $('#tabs-main li a')[1].click();
+            }, 50);
         },
         toggleConditions:function(){
             this.showingConditions = true;
@@ -1086,7 +1098,6 @@ export default {
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
             this.selected_assessment_tab=tab_id
             setTimeout(function(){
-                console.log($('#conditiontabs li a'));
                 $('#conditiontabs li a')[0].click();
             }, 50);
         },
@@ -1109,7 +1120,6 @@ export default {
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
             this.selected_assessment_tab=tab_id
             setTimeout(function(){
-                console.log($('#conditiontabs li a'));
                 $('#conditiontabs li a')[0].click();
             }, 50);
 
