@@ -87,15 +87,22 @@ from '@/utils/hooks'
                 });
 
             }
-            
+            // Initialise by setting all first tabs.
+            $('#tabs-section li:first-child a').click();
+            $('#tabs-main li:first-child a').click();
+
             if (this.withSectionsSelector){
-                
-                Renderer.sections.map(sec => {
+                var _tabid = 0;
+                var _settab = '';
+                Renderer.sections.map((sec,i) => {
                     $('#scrollspy-section').append(`<li class="list-group-item" ><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
                 });
 
                 $('a.page-scroll').bind('click', function(event) {
                    var $anchor = $(this);
+                   _tabid = parseInt(($anchor.attr('href')).split('_')[1]);
+                   _settab = '#tabs-section li:nth-child(' + ++_tabid + ') a';
+                   $(_settab).click();
                    $('html, body').stop().animate({
                        scrollTop: ($($anchor.attr('href')).offset().top)
                    }, 1000, 'easeInOutExpo');
@@ -115,9 +122,7 @@ from '@/utils/hooks'
 
             }
 
-            // Initialise by setting all first tabs.
-            $('#tabs-section li:first-child a').click();
-            $('#tabs-main li:first-child a').click();
+
         },
         render(h) {
             let vm =this;
