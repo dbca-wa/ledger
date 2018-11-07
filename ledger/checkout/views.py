@@ -80,7 +80,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
         if not self.preview:
             # Payment details should only be collected if necessary
             return ['skip_unless_payment_is_required','skip_payment_if_proxy']
-
         return super(PaymentDetailsView, self).get_skip_conditions(request)
 
     def get(self, request, *args, **kwargs):
