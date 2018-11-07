@@ -95,7 +95,10 @@ from '@/utils/hooks'
                 var _tabid = 0;
                 var _settab = '';
                 Renderer.sections.map((sec,i) => {
-                    $('#scrollspy-section').append(`<li class="list-group-item" ><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
+                   if (sec.name.indexOf('Section1')>-1) {
+                      $('#scrollspy-section').append(`<li class="list-group-item" >` + tabs[parseInt(sec.name.split('_')[1])].name + `</li>`);
+                   }
+                   $('#scrollspy-section').append(`<li class="list-group-item" ><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
                 });
 
                 $('a.page-scroll').bind('click', function(event) {
