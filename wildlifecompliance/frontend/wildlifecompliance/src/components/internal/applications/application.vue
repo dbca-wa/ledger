@@ -113,6 +113,11 @@
                                     </div>
                                 </template>
                                 <template v-else>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
                                     <div v-if="isSendingToAssessor || isOfficerConditions || showingConditions"class="row">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
