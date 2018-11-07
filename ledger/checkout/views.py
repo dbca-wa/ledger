@@ -79,9 +79,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
     def get_skip_conditions(self, request):
         if not self.preview:
             # Payment details should only be collected if necessary
-            # return ['skip_unless_payment_is_required','skip_payment_if_proxy']
-            # Handle skip payment in get method
-            return []
+            return ['skip_unless_payment_is_required','skip_payment_if_proxy']
+
         return super(PaymentDetailsView, self).get_skip_conditions(request)
 
     def get(self, request, *args, **kwargs):
@@ -92,29 +91,30 @@ class PaymentDetailsView(CorePaymentDetailsView):
         return super(PaymentDetailsView, self).get(request, *args, **kwargs)
 
     def skip_if_proxy(self):
-        if self.checkout_session.proxy():
+        if self.preview and self.checkout_session.proxy():
             return True
         return False
 
     def skip_preview_if_free(self, request):
-        # Check to see if payment is actually required for this order.
-        shipping_address = self.get_shipping_address(request.basket)
-        shipping_method = self.get_shipping_method(
-            request.basket, shipping_address)
-        if shipping_method:
-            shipping_charge = shipping_method.calculate(request.basket)
-        else:
-            # It's unusual to get here as a shipping method should be set by
-            # the time this skip-condition is called. In the absence of any
-            # other evidence, we assume the shipping charge is zero.
-            shipping_charge = prices.Price(
-                currency=request.basket.currency, excl_tax=D('0.00'),
-                tax=D('0.00')
-            )
-        total = self.get_order_totals(request.basket, shipping_charge)
-        if total.excl_tax == D('0.00'):
-            self.checkout_session.is_free_basket(True)
-            return True
+        if self.preview:
+            # Check to see if payment is actually required for this order.
+            shipping_address = self.get_shipping_address(request.basket)
+            shipping_method = self.get_shipping_method(
+                request.basket, shipping_address)
+            if shipping_method:
+                shipping_charge = shipping_method.calculate(request.basket)
+            else:
+                # It's unusual to get here as a shipping method should be set by
+                # the time this skip-condition is called. In the absence of any
+                # other evidence, we assume the shipping charge is zero.
+                shipping_charge = prices.Price(
+                    currency=request.basket.currency, excl_tax=D('0.00'),
+                    tax=D('0.00')
+                )
+            total = self.get_order_totals(request.basket, shipping_charge)
+            if total.excl_tax == D('0.00'):
+                self.checkout_session.is_free_basket(True)
+                return True
         return False
 
     def get_context_data(self, **kwargs):
