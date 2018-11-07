@@ -13,6 +13,7 @@ import TextArea from '../components/forms/text-area.vue'
 import Label from '../components/forms/label.vue'
 import AssessorText from '../components/forms/readonly_text.vue'
 import HelpText from '../components/forms/help_text.vue'
+import HelpTextUrl from '../components/forms/help_text_url.vue'
 import CommentRadioCheckBox from '../components/forms/comment_icon_checkbox_radio.vue'
 import {helpers,api_endpoints} from "@/utils/hooks.js"
 
@@ -23,7 +24,7 @@ module.exports = {
         var assessorData = this.status_data.assessorData;
         var commentData = this.status_data.commentData;
         var assessorInfo = this.status_data.assessorInfo;
-		var applicationId = this.status_data.applicationlId;
+		var applicationId = this.status_data.applicationId;
         var assessorMode = false; 
         var assessorCanAssess = false; 
         var assessorLevel = '';
@@ -194,26 +195,39 @@ module.exports = {
                     
                 )
                 break;
-             case 'tab':
+            case 'tab':
                 var value = null;
                 if(data !== null && data !== undefined) {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
-                _elements.push(
-                 
-                    <div class="tab-pane fade in active" id={c.id}>
-                        {c.children.map(d=>{
-                            return (
-                                <div>
-                                    {this.renderChildren(h,d,value)}
-                                </div>
-                            )
-                         })}
-                    </div>
-                 )
-                this.tabs_list.pop({name:c.name,label:c.label,id:c.id});
+                if(this.tabs_list.length>0){
+                     _elements.push(
+                        <div class="tab-pane fade" id={c.id}>
+                            {c.children.map(d=>{
+                                return (
+                                    <div>
+                                        {this.renderChildren(h,d,value)}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )
+                }else{
+                     _elements.push(
+                    
+                        <div class="tab-pane fade in active" id={c.id}>
+                            {c.children.map(d=>{
+                                return (
+                                    <div>
+                                        {this.renderChildren(h,d,value)}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )
+                }
                 this.tabs_list.push({name:c.name,label:c.label,id:c.id});
-                break;
+				break;
             case 'checkbox':
                 _elements.push(
                     <div class="form-group">
