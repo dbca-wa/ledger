@@ -531,13 +531,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
-    def final_licence(self, request, *args, **kwargs):
+    def final_decision(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             # serializer = ProposedLicenceSerializer(data=request.data)
             # serializer.is_valid(raise_exception=True)
             print(request.data)
-            instance.final_licence(request)
+            instance.final_decision(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 
         except serializers.ValidationError:
@@ -867,6 +867,7 @@ class ApplicationConditionViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             with transaction.atomic():
                 instance = serializer.save()
+                instance.submit()
                 instance.application.log_user_action(ApplicationUserAction.ACTION_ENTER_CONDITIONS.format(instance.licence_activity_type.name),request)
             return Response(serializer.data)
         except serializers.ValidationError:

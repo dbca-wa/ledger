@@ -50,3 +50,10 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(application__applicant_id=org_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @list_route(methods=['GET',])
+    def user_list(self, request, *args, **kwargs):
+        qs = self.get_queryset().exclude(processing_status='future')
+        
+        serializer = ReturnSerializer(qs, many=True)
+        return Response(serializer.data)
