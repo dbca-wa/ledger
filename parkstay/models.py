@@ -1093,7 +1093,7 @@ class Booking(models.Model):
                 amount += i.payment_amount
                        
         if amount == 0:
-            if self.override_reason and self.override_price == 0:
+            if self.override_price and self.override_price == 0:
                 return 'paid'
             else: 
                 return 'unpaid' 
