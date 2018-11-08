@@ -253,7 +253,7 @@ export default {
                     price: 0,
                     description: "Vehicle Registration",
                     rego: "",
-                    entry_fee: true
+                    entry_fee: false
                 },
                 {
                     id: "concession",
@@ -263,7 +263,7 @@ export default {
                     description: "Concession Vehicle Registration",
                     helpText: "accepted concession cards",
                     rego: "",
-                    entry_fee: true
+                    entry_fee: false
                 },
                 {
                     id: "motorbike",
@@ -272,7 +272,7 @@ export default {
                     price: 0,
                     description: "Motorbike Registration",
                     rego: "",
-                    entry_fee: true
+                    entry_fee: false
                 }
             ],
             park: {
@@ -871,7 +871,7 @@ export default {
                         vm.addVehicleCount(vp)
                     }
                     vp.rego = '';
-                    vp.entry_fee = true;
+                    vp.entry_fee = false;
                     return vp;
                 });
             })

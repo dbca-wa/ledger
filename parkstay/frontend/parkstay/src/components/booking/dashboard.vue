@@ -622,7 +622,7 @@ export default {
           var fields = ["Created"];
           //var fields = [...vm.dtHeaders];
           var fields = [...fields, ...vm.dtHeaders];
-          fields.splice(vm.dtHeaders.length - 1, 1);
+          fields.splice(fields.length - 1, 1);
           fields = [
             ...fields,
             "Adults",
@@ -707,7 +707,12 @@ export default {
                   bk[field] = booking.cost_total;
                   break;
                 case 10:
-                  bk[field] = booking.cost_total - booking.discount;
+                  if(booking.override_reason == null)
+                  {
+                    bk[field] = "";
+                  } else {
+                    bk[field] = booking.cost_total - booking.discount;                    
+                  }                   
                   break;
                 case 11:
                   bk[field] = booking.override_reason;
