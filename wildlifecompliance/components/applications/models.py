@@ -190,6 +190,13 @@ class ApplicationDocument(Document):
     application = models.ForeignKey('Application',related_name='documents')
     _file = models.FileField(upload_to=update_application_doc_filename)
     input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+
+    def delete(self):
+        if self.can_delete:
+            return super(ApplicationDocument, self).delete()
+        logger.info('Cannot delete existing document object after application has been submitted (including document submitted before application pushback to status Draft): {}'.format(self.name))
+
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -535,7 +542,8 @@ class Application(RevisionedMixin):
                                     is_default = True,
                                     standard = False,
                                     application = self,
-                                    licence_activity_type = WildlifeLicenceActivityType.objects.get(id=activity_type["id"])
+                                    licence_activity_type = WildlifeLicenceActivityType.objects.get(id=activity_type["id"]),
+                                    return_type=q.return_type
                                 )
                         print(qs)
                 self.save()
@@ -561,6 +569,8 @@ class Application(RevisionedMixin):
                     send_application_submitter_email_notification(self,request)
                     for group in officer_groups:
                         send_application_submit_email_notification(group.members.all(),self,request)
+
+		    self.documents.all().update(can_delete=False)
 
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
@@ -917,7 +927,7 @@ class Application(RevisionedMixin):
             except:
                 raise
 
-    def final_licence(self,request):
+    def final_decision(self,request):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         with transaction.atomic():
             try:
@@ -952,6 +962,8 @@ class Application(RevisionedMixin):
                             decision_action='issued',
                             licence_activity_type_id=item['id']
                         )
+                        print('Generate returns')
+                        self.generate_returns(licence,request)
                         # Log application action
                         self.log_user_action(ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(item['name']),request)
                         # Log entry for organisation
@@ -993,32 +1005,61 @@ class Application(RevisionedMixin):
             except:
                 raise
 
-    def generate_returns(self,licence):
+    def generate_returns(self,licence,request):
         from wildlifecompliance.components.returns.models import Return
+        licence_expiry=licence.expiry_date
+        licence_expiry=datetime.datetime.strptime(licence_expiry, "%Y-%m-%d").date()
         today = timezone.now().date()
         timedelta = datetime.timedelta
         for req in self.conditions.all():
-            if req.recurrence and req.due_date > today:
-                current_date = req.due_date
-                for x in range(req.recurrence_schedule):
-                    #Weekly
-                    if req.recurrence_pattern == 1:
-                        current_date += timedelta(weeks=1)
-                    #Monthly
-                    elif req.recurrence_pattern == 2:
-                        current_date += timedelta(weeks=4)
-                        pass
-                    #Yearly
-                    elif req.recurrence_pattern == 3:
-                        current_date += timedelta(days=365)
-                    # Create the return
-                    Return.objects.create(
-                        application=self,
-                        due_date=current_date,
-                        processing_status='future',
-                        licence=licence
-                    )
-                    #TODO add logging for return
+            try:
+                if req.due_date and req.due_date >= today:
+                    current_date = req.due_date
+                    #create a first Return
+                    try:
+                        returns= Return.objects.get(condition = req, due_date = current_date)
+                    except Return.DoesNotExist:
+                        returns =Return.objects.create(
+                                    application=self,
+                                    due_date=current_date,
+                                    processing_status='future',
+                                    licence=licence,
+                                    condition=req,
+                                    return_type=req.return_type,
+                                    submitter=request.user
+                        )
+                        # compliance.log_user_action(ComplianceUserAction.ACTION_CREATE.format(compliance.id),request)
+                    if req.recurrence:
+                        while current_date < licence_expiry:
+                            for x in range(req.recurrence_schedule):
+                            #Weekly
+                                if req.recurrence_pattern == 1:
+                                    current_date += timedelta(weeks=1)
+                            #Monthly
+                                elif req.recurrence_pattern == 2:
+                                    current_date += timedelta(weeks=4)
+                                    pass
+                            #Yearly
+                                elif req.recurrence_pattern == 3:
+                                    current_date += timedelta(days=365)
+                            # Create the Return
+                            if current_date <= licence_expiry:
+                                try:
+                                    returns= Return.objects.get(condition = req, due_date = current_date)
+                                except Return.DoesNotExist:
+                                    returns =Return.objects.create(
+                                                application=self,
+                                                due_date=current_date,
+                                                processing_status='future',
+                                                licence=licence,
+                                                condition=req,
+                                                return_type=req.return_type
+                                    )
+                                    # compliance.log_user_action(ComplianceUserAction.ACTION_CREATE.format(compliance.id),request)
+            except:
+                raise
+
+
 
 class ApplicationInvoice(models.Model):
     application = models.ForeignKey(Application, related_name='invoices')
@@ -1240,6 +1281,7 @@ class ApplicationStandardCondition(RevisionedMixin):
     text = models.TextField()
     code = models.CharField(max_length=10, unique=True)
     obsolete = models.BooleanField(default=False)
+    return_type=models.ForeignKey('wildlifecompliance.ReturnType',null=True)
 
     def __str__(self):
         return self.code
@@ -1250,6 +1292,7 @@ class ApplicationStandardCondition(RevisionedMixin):
 class DefaultCondition(OrderedModel):
     condition = models.TextField(null=True,blank=True)
     licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
+    return_type=models.ForeignKey('wildlifecompliance.ReturnType',null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1267,22 +1310,28 @@ class ApplicationCondition(OrderedModel):
     recurrence_pattern = models.SmallIntegerField(choices=RECURRENCE_PATTERNS,default=1)
     recurrence_schedule = models.IntegerField(null=True,blank=True)
     licence_activity_type=models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',null=True)
+    return_type=models.ForeignKey('wildlifecompliance.ReturnType',null=True)
     #order = models.IntegerField(default=1)
 
     class Meta:
         app_label = 'wildlifecompliance'
 
+    def submit(self):
+        if self.standard:
+            self.return_type=self.standard_condition.return_type
+            self.save()
+        else:
+            self.return_type=self.standard_condition.return_type
+            self.save()
+
 
     @property
     def condition(self):
         if self.standard:
-            print("inside standard")
             return self.standard_condition.text
         elif self.is_default:
-            print("inside is default")
             return self.default_condition.condition
         else:
-            print("inside free condition")
             return self.free_condition
 
 class ApplicationUserAction(UserAction):

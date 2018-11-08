@@ -1,3 +1,5 @@
+var site_url = location.origin
+
 module.exports = {
     organisations: '/api/organisations/',
     organisation_requests: '/api/organisation_requests/',
@@ -24,7 +26,8 @@ module.exports = {
     application_conditions:"/api/application_conditions/",
     discard_application:function (id) {
       return `/api/application/${id}/`;
-    }
-
+    },
+    site_url: site_url,
+    system_name: 'Wildlife Compliance System',
 }
 

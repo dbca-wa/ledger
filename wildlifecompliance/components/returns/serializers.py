@@ -1,15 +1,13 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from wildlifecompliance.components.returns.models import (
-    Return
+    Return,
+    ReturnType
 )
 from rest_framework import serializers
 
 class ReturnSerializer(serializers.ModelSerializer):
-    regions = serializers.CharField(source='application.region')
-    activity = serializers.CharField(source='application.activity')
-    title = serializers.CharField(source='application.title')
-    holder = serializers.CharField(source='application.applicant.name')
+    # activity = serializers.CharField(source='application.activity')
     processing_status = serializers.CharField(source='get_processing_status_display')
 
     class Meta:
@@ -19,10 +17,16 @@ class ReturnSerializer(serializers.ModelSerializer):
             'application',
             'due_date',
             'processing_status',
-            'regions',
-            'activity',
-            'title',
-            'holder',
             'assigned_to',
             'licence',
+            'resources',
+            'headers'
         )
+
+class ReturnTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=ReturnType
+        fields=(
+            'id',
+            'resources'
+            )

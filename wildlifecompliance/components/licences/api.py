@@ -57,7 +57,8 @@ class LicenceViewSet(viewsets.ModelViewSet):
         user_orgs = [org.id for org in request.user.wildlifecompliance_organisations.all()];
         qs = []
         #qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
-        qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs)))
+        qs.extend(list(self.get_queryset().filter(submitter = request.user)))
+        qs.extend(list(self.get_queryset().filter(org_applicant_id__in = user_orgs)))
         queryset = list(set(qs))
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

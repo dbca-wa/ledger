@@ -11,7 +11,6 @@ from wildlifecompliance.components.organisations.models import (
 from rest_framework import serializers
 
 class WildlifeLicenceSerializer(serializers.ModelSerializer):
-    applicant = serializers.CharField(source='applicant.name')
     licence_document = serializers.CharField(source='licence_document._file.url')
     status = serializers.CharField(source='get_status_display')
     current_application = BaseApplicationSerializer(read_only=True)
@@ -34,7 +33,6 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
             'expiry_date',
             'surrender_details',
             'suspension_details',
-            'applicant',
             'extracted_fields',
             'status'
         )
