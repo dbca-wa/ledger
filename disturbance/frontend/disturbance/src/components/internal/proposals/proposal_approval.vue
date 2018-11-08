@@ -36,7 +36,7 @@
                                             <p><strong>Attach documents:</strong></p>
                                             <p>
                                             <span class="btn btn-info btn-file pull-left">
-                                            Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                            Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                             </span>
                                             <!--<span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName()}}</span>-->
                                             </span>
