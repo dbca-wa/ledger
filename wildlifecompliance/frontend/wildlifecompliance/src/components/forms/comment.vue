@@ -15,23 +15,7 @@
 
 <script>
 export default {
-    props:["name","question","value","readonly","id","tabname","tabid","isRequired"],
-    data:function () {
-       let vm = this;
-        return {
-          tabname:null,
-          tabid:null
-        }
-    },
-    methods:{
-      getTab(){
-        let vm=this;
-        var selectedTabTitle = $("#tabs-section li.active");
-        var tab_id=selectedTabTitle.children().attr('href').split('#')[1];
-        vm.tabname = $(selectedTabTitle).text();
-        vm.tabid = tab_id;
-      }
-    }
+    props:["name","question","value","readonly","id","isRequired"],
 }
 </script>
 
