@@ -190,6 +190,13 @@ class ApplicationDocument(Document):
     application = models.ForeignKey('Application',related_name='documents')
     _file = models.FileField(upload_to=update_application_doc_filename)
     input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+
+    def delete(self):
+        if self.can_delete:
+            return super(ApplicationDocument, self).delete()
+        logger.info('Cannot delete existing document object after application has been submitted (including document submitted before application pushback to status Draft): {}'.format(self.name))
+
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -562,6 +569,8 @@ class Application(RevisionedMixin):
                     send_application_submitter_email_notification(self,request)
                     for group in officer_groups:
                         send_application_submit_email_notification(group.members.all(),self,request)
+
+		    self.documents.all().update(can_delete=False)
 
             else:
                 raise ValidationError('You can\'t edit this application at this moment')
