@@ -3405,6 +3405,13 @@ class OracleJob(views.APIView):
 
 
 def get_current_booking(ongoing_booking): 
+     #ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+     timer = None
+     expiry = None
+     if ongoing_booking:
+         #expiry_time = ongoing_booking.expiry_time
+         timer = (ongoing_booking.expiry_time-timezone.now()).seconds if ongoing_booking else -1
+         expiry = ongoing_booking.expiry_time.isoformat() if ongoing_booking else ''
 
      ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
      cb = {'current_booking':[], 'total_price': '0.00'}
@@ -3422,4 +3429,9 @@ def get_current_booking(ongoing_booking):
          current_booking.append(row)
      cb['current_booking'] = current_booking
      cb['total_price'] = str(total_price)
+     cb['ongoing_booking'] = True if ongoing_booking else False,
+     cb['ongoing_booking_id'] = ongoing_booking.id if ongoing_booking else None,
+     cb['expiry'] = expiry
+     cb['timer'] = timer
+
      return cb

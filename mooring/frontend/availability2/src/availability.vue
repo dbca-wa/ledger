@@ -44,6 +44,17 @@
             </div>
         </div>
 
+        <div class="columns small-12 medium-12 large-12" v-show="ongoing_booking">
+        <div class="row">
+                <div class="small-8 medium-9 large-10">
+
+		<button v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }} to complete booking.</button>
+		<a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_id='+parkstayGroundId" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
+                      Cancel in-progress booking
+                </a>
+              </div>
+	   </div>
+	</div>
         <div class="columns small-12 medium-12 large-12">
         <div class="row">
                 <div class="small-8 medium-9 large-10">
@@ -62,14 +73,6 @@
                          
                         <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a>
                         <button  title="Please add items into your trolley." v-show="current_booking.length == 0 " style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" disabled >Add items to Proceed to Check Out</button>
-                         <div class="row">
-			  <div class="columns small-9 medium-9 large-9" v-if="ongoing_booking">
-                        <button  title="Please add items into your trolley." v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }}</button>
-			<a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_id='+parkstayGroundId" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
-                            Cancel in-progress booking
-                        </a>
-			</div>
-			</div>
                 </div>
         </div>
         </div>
@@ -778,7 +781,6 @@ export default {
                         vm.sites = data.sites;
                       
                         for (index = 0; index < vm.sites.length; ++index) {
-                                console.log(index);
                                 vm.mooring_book_row[index] = true;
                                 vm.mooring_book_row_price[index] = '0.00';
                                 for (avail_index = 0; avail_index < vm.sites[index].availability.length; ++avail_index) {
@@ -807,7 +809,6 @@ export default {
                                         } else {
 						vm.mooring_book_row[index] = false;
 					}
-                                        console.log(vm.sites[index].availability[avail_index][1]);
 				}
 			}
 

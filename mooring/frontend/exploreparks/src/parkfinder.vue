@@ -3,10 +3,17 @@
     <div v-cloak class="f6inject">
        <div class="row">
             <div class="small-12 medium-3 large-6 columns search-params">
-
         <div class="columns small-12 medium-12 large-12" v-show="current_booking.length > 0">
+             
+
+
         <div class="row">
-                <div class="small-8 medium-9 large-10">
+                <div class="columns small-12 medium-12 large-12" >
+                      <button  title="Please add items into your trolley." v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }}</button>  <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a> <a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_id='+parkstayGroundId" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
+                            Cancel in-progress booking
+                        </a>
+		</div>
+                <div class="small-12 medium-12 large-12">
                         <div class="panel panel-default">
                              <div class="panel-heading"><h3 class="panel-title">Trolley: <span id='total_trolley'>${{ total_booking }}</span></h3></div>
                               <div class='columns small-12 medium-12 large-12'>
@@ -16,19 +23,6 @@
                                          <div class="columns small-12 medium-1 large-1"><a style='color: red; opacity: 1;' type="button" class="close" @click="deleteBooking(item.id)">x</a></div>
                                  </div>
                               </div>
-                        </div>
-                </div>
-                <div class="columns small-4 medium-3 large-2" >
-
-                        <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a>
-                        <button  title="Please add items into your trolley." v-show="current_booking.length == 0 " style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" disabled >Add items to Proceed to Check Out</button>
-                         <div class="row">
-                          <div class="columns small-9 medium-9 large-9" v-if="ongoing_booking">
-                        <button  title="Please add items into your trolley." v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }}</button>
-                        <a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_id='+parkstayGroundId" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
-                            Cancel in-progress booking
-                        </a>
-                        </div>
                         </div>
                 </div>
         </div>
@@ -571,6 +565,9 @@ import moment from 'moment';
 import swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.css';
 
+var nowTemp = new Date();
+var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
+
 export default {
     name: 'parkfinder',
     el: '#parkfinder',
@@ -641,7 +638,11 @@ export default {
             mooring_map_data: null,
             markerAvail: [],
             current_booking: [],
-            total_price: "0.00",
+            total_booking: "0.00",
+            timer: -1,
+            expiry: null,
+            booking_expired_notification: false,
+            ongoing_booking: false,
         }
     },
     computed: {
@@ -691,6 +692,40 @@ export default {
                     return count + " people ▼";
                 }
             }
+        },
+        timeleft: {
+                cache: false,
+                get: function() {
+                    // Minutes and seconds
+                    var mins = ~~(this.timer / 60);
+                    var secs = this.timer % 60;
+
+                    // Hours, minutes and seconds
+                    var hrs = ~~(this.timer / 3600);
+                    var mins = ~~((this.timer % 3600) / 60);
+                    var secs = this.timer % 60;
+
+                    // Output like "1:01" or "4:03:59" or "123:03:59"
+                    var ret = "";
+
+                    if (hrs > 0) {
+                        ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+                    }
+
+                    ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+                    ret += "" + secs;
+                    if (this.ongoing_booking) {
+                       if (this.timer < 0) {
+                            if (this.booking_expired_notification == false) {
+                           console.log('TIMED OUT');
+                           clearInterval(this.timer);
+                           this.bookingExpired();
+                           this.booking_expired_notification = true;
+                        }
+                       }
+                    }
+                    return ret;
+                }
         },
         bookingParam: {
             cache: false,
@@ -758,6 +793,21 @@ export default {
                     return false;
                 }
             }
+        },
+        bookingExpired: function() {
+                swal({
+                  title: 'Booking Expired',
+                  text: "Please click start again to begin booking again:",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'Start Again',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                }).then((value) => {
+                        var loc = window.location;
+                        window.location = loc.protocol + '//' + loc.host + '/map/';
+                });
+
         },
         toggleShowFilters: function() {
             this.hideExtraFilters = !this.hideExtraFilters;
@@ -1198,6 +1248,9 @@ export default {
             vm.anchorGroups = {};
             var vessel_size = $('#vesselSize').val();
             var vessel_draft = $('#vesselDraft').val();
+            if (response) { 
+            if (response.hasOwnProperty('features')) {
+
             var mooring = response['features'];
             for (var m in mooring) {
                 var mooring_vessel_size = response['features'][m]['properties']['vessel_size_limit'];
@@ -1213,6 +1266,8 @@ export default {
                         vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] + 1;
                     }   
                 }
+            }
+            }
             }
             for (var g in vm.anchorGroups) { 
                 var longitude = vm.anchorGroups[g]['geometry'][0];
@@ -1244,7 +1299,6 @@ export default {
                      pin_type=require('assets/map_pins/pin_red.png');
                      bookable = false;
 	        }	
-                console.log(vm.markerAvail[marker_id]);
 	        }
 
                 //this.anchorPinsActive.push(marker_id);
@@ -1403,11 +1457,11 @@ export default {
             url: vm.parkstayUrl+'/api/current_booking',
             dataType: 'json',
             success: function (response, stat, xhr) {
-               console.log("RESPONSE ");
-                console.log(response.current_booking);
-
                 vm.current_booking = response.current_booking.current_booking;
-                vm.total_price = response.current_booking.total_price;
+                vm.total_booking = response.current_booking.total_price;
+                vm.timer = response.current_booking.timer;
+                vm.ongoing_booking = response.current_booking.ongoing_booking[0];
+              
             }
         });
 
@@ -1577,18 +1631,6 @@ export default {
                 vm.groundsData.clear();
                 vm.groundsData.extend(features);
                 vm.groundsSource.loadSource();
-            }
-        });
-
-
-        $.ajax({
-            url: vm.parkstayUrl+'/api/current_booking',
-            dataType: 'json',
-            success: function (response, stat, xhr) {
-                console.log("RESPONSE ");
-                console.log(response.current_booking);
-                vm.current_booking = response.current_booking;
-                vm.total_price = response.total_price
             }
         });
 
@@ -1891,18 +1933,18 @@ export default {
             }
         });
 
-
-        $.ajax({
-            url: vm.parkstayUrl+'/api/current_booking',
-            dataType: 'json',
-            success: function (response, stat, xhr) {
-               console.log("RESPONSE ");
-                console.log(response.current_booking);
-
-                vm.current_booking = response.current_booking.current_booking;
-                vm.total_price = response.current_booking.total_price;
-            }
-        });
+        vm.updateBooking();
+//        $.ajax({
+//            url: vm.parkstayUrl+'/api/current_booking',
+//            dataType: 'json',
+//            success: function (response, stat, xhr) {
+//               console.log("RESPONSE ");
+//                console.log(response.current_booking);
+//
+ //               vm.current_booking = response.current_booking.current_booking;
+//                vm.total_booking = response.current_booking.total_price;
+//            }
+//        });
 
         this.groundsSource = new ol.source.Vector({
             features: vm.groundsFilter   
@@ -1941,8 +1983,6 @@ export default {
                         vm.groundsIds.add(el.id);
                         vm.dateCache = vm.arrivalDateString+vm.departureDateString;
 
-                    console.log("HERE");
-                    console.log(el);
                     vm.markerAvail[el.id] = el.avail;
                     });
 
@@ -2239,7 +2279,7 @@ export default {
                           resolution: resolution,
                           duration: 1000
                     }); 
-                     
+                    if (properties.props) { 
                     if (properties.props.mooring_type == 0) {
                         $('#mapPopupBook').show();
                         $("#mapPopupImage").hide();
@@ -2252,6 +2292,9 @@ export default {
                     } else {
                         $('#mapPopupBook').hide();
                     }
+		    } else {
+			$('#mapPopupBook').hide();
+		    }
 	        } 
 
           } else {
@@ -2261,6 +2304,26 @@ export default {
      //      this.buildmarkers();
 
         });
+
+            var saneTz = (0 < Math.floor((vm.expiry - moment.now())/1000) < vm.timer);
+            var timer = setInterval(function (ev) {
+                // fall back to the pre-encoded timer
+                if (!saneTz) {
+                    vm.timer -= 1;
+                } else {
+                    // if the timezone is sane, do live updates
+                    // this way unloaded tabs won't cache the wrong time.
+                    var newTimer = Math.floor((vm.expiry - moment.now())/1000);
+                    vm.timer = newTimer;
+                }
+
+                if ((vm.timer <= -1)) {
+//                   clearInterval(timer);
+//                    var loc = window.location;
+//                    window.location = loc.protocol + '//' + loc.host + loc.pathname;
+               }
+            }, 1000);
+
 
 
 //function(feature, layer) {
