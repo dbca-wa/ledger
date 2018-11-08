@@ -176,6 +176,11 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_licence'),JSON.stringify(vm.propose_issue),{
                         emulateJSON:true,
                     }).then((response)=>{
+                        swal(
+                             'Propose Issue',
+                             'The licenced activity has been proposed for Issue.',
+                             'success'
+                        )
                         vm.issuingLicence = false;
                         vm.close();
                         vm.$emit('refreshFromResponse',response);
@@ -189,6 +194,11 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/final_licence'),JSON.stringify(licence),{
                         emulateJSON:true,
                     }).then((response)=>{
+                        swal(
+                             'Issue Licence',
+                             'The Licence has been issued for this Application.',
+                             'success'
+                        )
                         vm.issuingLicence = false;
                         vm.close();
                         vm.$emit('refreshFromResponse',response);

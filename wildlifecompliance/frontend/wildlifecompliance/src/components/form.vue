@@ -89,7 +89,7 @@ from '@/utils/hooks'
             }
             
             if (this.withSectionsSelector){
-                
+
                 Renderer.sections.map(sec => {
                     $('#scrollspy-section').append(`<li class="list-group-item" ><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
                 });
@@ -116,12 +116,13 @@ from '@/utils/hooks'
             }
 
             // Initialise by setting all first tabs.
-            $('#tabs-section li:first-child a').tab('show');
-            $('#tabs-main li:first-child a').tab('show');
+            $('#tabs-section li:first-child a').click();
+            $('#tabs-main li:first-child a').click();
         },
         render(h) {
             let vm =this;
-            Renderer.store_status_data(vm.application.readonly,vm.application.assessor_data,vm.application.comment_data,vm.application.current_assessor,vm.application.assessor_mode,vm.application.can_user_edit,vm.application.documents_url);
+            Renderer.tabs_list = [];
+            Renderer.store_status_data(vm.application.readonly,vm.application.assessor_data,vm.application.comment_data,vm.application.current_assessor,vm.application.assessor_mode,vm.application.can_user_edit,vm.application.documents_url,vm.application.id);
             if (vm.withSectionsSelector){
                 return (
                     <div>

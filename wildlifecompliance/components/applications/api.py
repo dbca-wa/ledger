@@ -10,6 +10,7 @@ from django.db.models import Q, Min
 from django.db import transaction
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.contrib import messages
@@ -98,6 +99,54 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         serializer = DTApplicationSerializer(queryset, many=True)
         return Response(serializer.data)
 
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def process_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            action = request.POST.get('action')
+            section = request.POST.get('input_name')
+            if action == 'list' and 'input_name' in request.POST:
+                pass
+
+            elif action == 'delete' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.documents.get(id=document_id)
+
+                if document._file and os.path.isfile(document._file.path) and document.can_delete:
+                    os.remove(document._file.path)
+
+                document.delete()
+                instance.save(version_comment='Approval File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
+
+            elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
+                application_id = request.POST.get('application_id')
+                filename = request.POST.get('filename')
+                _file = request.POST.get('_file')
+                if not _file:
+                    _file = request.FILES.get('_file')
+
+                document = instance.documents.get_or_create(input_name=section, name=filename)[0]
+                path = default_storage.save('applications/{}/documents/{}'.format(application_id, filename), ContentFile(_file.read()))
+
+                document._file = path
+                document.save()
+                instance.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
+
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.documents.filter(input_name=section) if d._file] )
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET',])
     def action_log(self, request, *args, **kwargs):
@@ -533,13 +582,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
-    def final_licence(self, request, *args, **kwargs):
+    def final_decision(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             # serializer = ProposedLicenceSerializer(data=request.data)
             # serializer.is_valid(raise_exception=True)
             print(request.data)
-            instance.final_licence(request)
+            instance.final_decision(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 
         except serializers.ValidationError:
@@ -847,6 +896,7 @@ class ApplicationConditionViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             with transaction.atomic():
                 instance = serializer.save()
+                instance.submit()
                 instance.application.log_user_action(ApplicationUserAction.ACTION_ENTER_CONDITIONS.format(instance.licence_activity_type.name),request)
             return Response(serializer.data)
         except serializers.ValidationError:

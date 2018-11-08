@@ -1,4 +1,4 @@
-<template id="application_dashboard">
+<template id="returns_dashboard">
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
@@ -32,7 +32,7 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
-                            <datatable ref="application_datatable" :id="datatable_id" :dtOptions="application_options" :dtHeaders="application_headers"/>
+                            <datatable ref="return_datatable" :id="datatable_id" :dtOptions="application_options" :dtHeaders="application_headers"/>
                         </div>
                     </div>
                 </div>
@@ -66,7 +66,7 @@ export default {
         let vm = this;
         return {
             pBody: 'pBody' + vm._uid,
-            datatable_id: 'application-datatable-'+vm._uid,
+            datatable_id: 'return-datatable-'+vm._uid,
             // Filters for Applications
             filterReturnLicenceType: 'All',
             filterReturnStatus: 'All',
@@ -103,7 +103,7 @@ export default {
             application_activityTitles : [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Licence Type","Licence Holder","Logged On","Due Date","Status","Licence","Action"],
+            application_headers:["Number","Due Date","Status","Licence","Action"],
             application_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -120,21 +120,14 @@ export default {
                             return `C${data}`;
                         }
                     },
-                    {data: "licence_type"},
-                    {data: "holder"},
-                    {
-                        data: "logged_on",
-                        mRender:function (data,type,full) {
-                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
-                    },
+                                        
                     {
                         data: "due_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
-                    {data: "status"},
+                    {data: "processing_status"},
                     {
                         data: "licence",
                         mRender:function (data,type,full) {
@@ -143,19 +136,21 @@ export default {
                     },
                     {
                         mRender:function (data,type,full) {
+                            let vm=this;
                             let links = '';
-                            if (!vm.is_external){
-                                links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
-                            }
-                            else{
-                                if (full.can_user_edit) {
-                                    links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                                }
-                                else if (full.can_user_view) {
-                                    links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
-                                }
-                            }
+                            links +=  `<a href='/external/return/${full.id}'>View</a><br/>`;
+                            // if (!vm.is_external){
+                            //     links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
+                            // }
+                            // else{
+                            //     if (full.can_user_edit) {
+                            //         links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
+                            //         links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
+                            //     }
+                            //     else if (full.can_user_view) {
+                            //         links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
+                            //     }
+                            // }
                             return links;
                         }
                     }
@@ -163,28 +158,28 @@ export default {
                 processing: true,
                 initComplete: function () {
                     // Grab Regions from the data in the table
-                    var regionColumn = vm.$refs.application_datatable.vmDataTable.columns(1);
-                    regionColumn.data().unique().sort().each( function ( d, j ) {
-                        let regionTitles = [];
-                        $.each(d,(index,a) => {
-                            // Split region string to array
-                            if (a != null){
-                                $.each(a.split(','),(i,r) => {
-                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                                });
-                            }
-                        })
-                        vm.application_regions = regionTitles;
-                    });
+                    // var regionColumn = vm.$refs.application_datatable.vmDataTable.columns(1);
+                    // regionColumn.data().unique().sort().each( function ( d, j ) {
+                    //     let regionTitles = [];
+                    //     $.each(d,(index,a) => {
+                    //         // Split region string to array
+                    //         if (a != null){
+                    //             $.each(a.split(','),(i,r) => {
+                    //                 r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
+                    //             });
+                    //         }
+                    //     })
+                    //     vm.application_regions = regionTitles;
+                    // });
                     // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.application_datatable.vmDataTable.columns(2);
-                    titleColumn.data().unique().sort().each( function ( d, j ) {
-                        let activityTitles = [];
-                        $.each(d,(index,a) => {
-                            a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
-                        })
-                        vm.application_activityTitles = activityTitles;
-                    });
+                    // var titleColumn = vm.$refs.application_datatable.vmDataTable.columns(2);
+                    // titleColumn.data().unique().sort().each( function ( d, j ) {
+                    //     let activityTitles = [];
+                    //     $.each(d,(index,a) => {
+                    //         a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
+                    //     })
+                    //     vm.application_activityTitles = activityTitles;
+                    // });
                 }
             }
         }
@@ -272,8 +267,8 @@ export default {
             // });
         },
         initialiseSearch:function(){
-            this.regionSearch();
-            this.dateSearch();
+            // this.regionSearch();
+            // this.dateSearch();
         },
         regionSearch:function(){
             // let vm = this;

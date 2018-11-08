@@ -30,9 +30,12 @@
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="start_date" style="width: 70%;">
                                                         <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="licence.activity_type[index].start_date">
-                                                        
+                                                        <span class="input-group-addon">
+                                                            <span class="glyphicon glyphicon-calendar"></span>
+                                                        </span>
                                                     </div>
                                                 </div>
+
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-3">
@@ -41,7 +44,9 @@
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="end_date" style="width: 70%;">
                                                         <input type="text" class="form-control" name="end_date" placeholder="DD/MM/YYYY" v-model="licence.activity_type[index].end_date">
-                                                        
+                                                        <span class="input-group-addon">
+                                                            <span class="glyphicon glyphicon-calendar"></span>
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -204,7 +209,12 @@ export default {
                 id_check:false,
                 character_check:false,
                 current_application: vm.application.id,
-                }
+                },
+            datepickerOptions:{
+                format: 'DD/MM/YYYY',
+                showClear:true,
+                allowInputToggle:true
+            },
         }
     },
     watch:{
@@ -238,7 +248,7 @@ export default {
         ok:function () {
             let vm = this;
             let licence = JSON.parse(JSON.stringify(vm.licence));
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_licence'),JSON.stringify(licence),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_decision'),JSON.stringify(licence),{
                         emulateJSON:true,
                     }).then((response)=>{
                         swal(
@@ -308,7 +318,32 @@ export default {
         },
        
         eventListeners(){
+            let vm = this;
+            // Initialise Date Picker
+            // console.log('printing end date refs')
+            // console.log(vm.$refs)
+            // console.log(vm.$refs.end_date)
             
+            //     console.log('inside if application issue')
+            //     for (var i=0; i < vm.$refs.end_date.length; i++) {
+            //     $(vm.$refs.end_date[i]).datetimepicker(vm.datepickerOptions);
+            //     $(vm.$refs.end_date[i]).on('dp.change', function(e){
+            //         if ($(vm.$refs.end_date[i]).data('DateTimePicker').date()) {
+            //             vm.licence.activity_type[i].expiry_date=  e.date.format('DD/MM/YYYY');
+            //         }
+                    
+            //      });
+            // }
+        
+            // $(vm.$refs.start_date).datetimepicker(vm.datepickerOptions);
+            // $(vm.$refs.start_date).on('dp.change', function(e){
+            //     if ($(vm.$refs.start_date).data('DateTimePicker').date()) {
+            //         vm.propose_issue.start_date =  e.date.format('DD/MM/YYYY');
+            //     }
+            //     else if ($(vm.$refs.start_date).data('date') === "") {
+            //         vm.propose_issue.start_date = "";
+            //     }
+            //  });
             
         },
     },
@@ -316,8 +351,8 @@ export default {
         let vm = this;
         this.fetchProposeIssue();
 
-        vm.$nextTick(() => {
-            this.eventListeners();
+        this.$nextTick(() => {
+            vm.eventListeners();
         });
     },
     

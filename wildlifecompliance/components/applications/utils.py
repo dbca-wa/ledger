@@ -302,17 +302,17 @@ def save_proponent_data(instance,request,viewset):
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
             # Save Documents
-            for f in request.FILES:
-                try:
-                    #document = instance.documents.get(name=str(request.FILES[f]))
-                    document = instance.documents.get(input_name=f)
-                except ApplicationDocument.DoesNotExist:
-                    document = instance.documents.get_or_create(input_name=f)[0]
-                document.name = str(request.FILES[f])
-                if document._file and os.path.isfile(document._file.path):
-                    os.remove(document._file.path)
-                document._file = request.FILES[f]
-                document.save()
+#            for f in request.FILES:
+#                try:
+#                    #document = instance.documents.get(name=str(request.FILES[f]))
+#                    document = instance.documents.get(input_name=f)
+#                except ApplicationDocument.DoesNotExist:
+#                    document = instance.documents.get_or_create(input_name=f)[0]
+#                document.name = str(request.FILES[f])
+#                if document._file and os.path.isfile(document._file.path):
+#                    os.remove(document._file.path)
+#                document._file = request.FILES[f]
+#                document.save()
             # End Save Documents
         except:
             raise
@@ -356,7 +356,7 @@ def get_activity_type_schema(licence_class_data):
         wl_activity_type_id = item['id']
         activity_type_obj = WildlifeLicenceActivityType.objects.get(id = wl_activity_type_id)
         item["name"]=activity_type_obj.name
-        item["processing_status"]="draft"
+        item["processing_status"]="Draft"
         item["proposed_decline"]=False
 
         for index1, item1 in enumerate(item['activity']):
@@ -372,7 +372,7 @@ def get_activity_type_schema(licence_class_data):
                   "id":activity_type_obj.id,
                   "label":activity_type_obj.name,
                   "name":activity_type_obj.name,
-                  "status":"draft",
+                  "status":"Draft",
                   "children":schema_activity
                 })
         # print(schema_tab)
