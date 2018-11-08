@@ -89,7 +89,7 @@ from '@/utils/hooks'
             }
             
             if (this.withSectionsSelector){
-                
+
                 Renderer.sections.map(sec => {
                     $('#scrollspy-section').append(`<li class="list-group-item" ><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
                 });

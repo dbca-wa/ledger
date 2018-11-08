@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from wildlifecompliance.helpers import is_officer, is_departmentUser
 from wildlifecompliance.forms import *
 from wildlifecompliance.components.applications.models import Referral,Application
+from wildlifecompliance.components.returns.models import Return
 from wildlifecompliance.components.applications.mixins import ReferralOwnerMixin
 from wildlifecompliance.components.main import utils
 from wildlifecompliance.exceptions import BindApplicationException
@@ -19,6 +20,10 @@ from wildlifecompliance.exceptions import BindApplicationException
 
 class ExternalApplicationView(DetailView):
     model = Application
+    template_name = 'wildlifecompliance/dash/index.html'
+
+class ExternalReturnView(DetailView):
+    model = Return
     template_name = 'wildlifecompliance/dash/index.html'
 
 class InternalView(UserPassesTestMixin, TemplateView):

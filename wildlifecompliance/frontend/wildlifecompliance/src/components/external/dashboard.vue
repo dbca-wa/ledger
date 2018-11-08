@@ -12,7 +12,7 @@
     </div>
     <ApplicationDashTable level='external' :url='applications_url'/>
     <LicenceDashTable level='external' :url='licences_url'/>
-    <ReturnDashTable level='external' :url='empty_list'/>
+    <ReturnDashTable level='external' :url='returns_url'/>
 </div>
 </template>
 <script>
@@ -33,6 +33,7 @@ export default {
         return {
             applications_url: helpers.add_endpoint_json(api_endpoints.applications,'user_list'),
             licences_url: helpers.add_endpoint_json(api_endpoints.licences,'user_list'),
+            returns_url:helpers.add_endpoint_json(api_endpoints.returns,'user_list'),
             empty_list: '/api/empty_list',
         }
     },
