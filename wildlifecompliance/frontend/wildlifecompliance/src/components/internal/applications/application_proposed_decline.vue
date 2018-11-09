@@ -43,8 +43,8 @@
                 </div>
             </div>
             <div slot="footer">
-                <button type="button" v-if="decliningApplication" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Declining</button>
-                <button type="button" v-else class="btn btn-default" @click="ok">Decline</button>
+                <button type="button" v-if="decliningApplication" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i>Proposing Decline</button>
+                <button type="button" v-else class="btn btn-danger" @click="ok">Propose Decline</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
@@ -137,7 +137,6 @@ export default {
                              'success'
                         )
                         vm.decliningApplication = false;
-                        vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
                         vm.close();
                         vm.$emit('refreshFromResponse',response);
                     },(error)=>{

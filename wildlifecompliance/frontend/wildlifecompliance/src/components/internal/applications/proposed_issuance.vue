@@ -70,8 +70,8 @@
                 </div>
             </div>
             <div slot="footer">
-                <button type="button" v-if="issuingLicence" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Issuing</button>
-                <button type="button" v-else class="btn btn-default" @click="ok">Issue</button>
+                <button type="button" v-if="issuingLicence" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i>Proposing Issue</button>
+                <button type="button" v-else class="btn btn-success" @click="ok">Propose Issue</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
