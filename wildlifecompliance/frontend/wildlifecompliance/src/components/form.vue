@@ -95,10 +95,13 @@ from '@/utils/hooks'
                 var _tabid = 0;
                 var _settab = '';
                 Renderer.sections.map((sec,i) => {
+
                    if (sec.name.indexOf('Section1')>-1) {
-                      $('#scrollspy-section').append(`<li class="list-group-item" >` + tabs[parseInt(sec.name.split('_')[1])].name + `</li>`);
+                      if (sec.name.indexOf('Section1_0')<1) { $('#scrollspy-section').append(`</ul></li>`); }
+                      $('#scrollspy-section').append(`<li><a href='#'>` + tabs[parseInt(sec.name.split('_')[1])].name + `<span class='caret'></span></a><ul class='dropdown-menu'>`);
+
                    }
-                   $('#scrollspy-section').append(`<li class="list-group-item" ><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
+                   $('#scrollspy-section').append(`<li><a href='#${sec.name}'>${sec.label}</a></li>`);
                 });
 
                 $('a.page-scroll').bind('click', function(event) {
@@ -138,16 +141,25 @@ from '@/utils/hooks'
                             <h3>Application {vm.application.id}: {vm.application.licence_type_short_name}</h3>
                         </div>
                         <div class="col-md-3" >
-                            <div class="panel panel-default fixed">
-                              <div class="panel-heading">
-                                <h5>Sections</h5>
-                              </div>
-                              <div class="panel-body" style="padding:0">
-                                  <ul class="list-group" id="scrollspy-section" style="margin-bottom:0">
-
+                              <div class="navbar navbar-default" role="navigation">
+                                <div class="navbar-header">
+                                  <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse" >
+                                    <span class="sr-only">Toggle navigation</span>
+                                    <span class="icon-bar"></span>
+                                    <span class="icon-bar"></span>
+                                    <span class="icon-bar"></span>
+                                  </button>
+                                  <a class="navbar-brand" href="#">&nbsp;</a>
+                                </div>
+                                <div id="navbar" class="navbar-collapse collapse">
+                                  <ul class="nav navbar-nav">
+                                    <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Sections<span class="caret"></span></a>
+                                      <ul class="dropdown-menu" id="scrollspy-section" >
+                                      </ul>
+                                    </li>
                                   </ul>
+                                </div>
                               </div>
-                            </div>
                         </div>
                         <div class="col-md-9">
                             <ul class="nav nav-tabs" id="tabs-section">
