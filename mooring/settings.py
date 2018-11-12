@@ -48,8 +48,8 @@ else:
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'mooring', 'templates'))
 TEMPLATES[0]['OPTIONS']['context_processors'].append('mooring.context_processors.mooring_url')
 '''BOOTSTRAP3 = {
-    'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
-    'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
+    'jquery_url': '/static/common/css/jquery.min.js',
+    'base_url': '/static/common/css//twitter-bootstrap/3.3.6/',
     'css_url': None,
     'theme_url': None,
     'javascript_url': None,
