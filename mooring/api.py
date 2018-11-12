@@ -525,7 +525,6 @@ def search_suggest(request, *args, **kwargs):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1]}))
     for x in Region.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry','zoom_level'):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Region', 'id': x[0], 'name': x[1], 'zoom_level': x[3]}))
-    entries['jasontest'] ='asdfadsf'
     return HttpResponse(geojson.dumps(geojson.FeatureCollection(entries)), content_type='application/json')
 
 @csrf_exempt
@@ -643,7 +642,8 @@ def add_booking(request, *args, **kwargs):
                   from_dt=start_booking_date+' '+str(booking_period.start_time),
                   to_dt=finish_booking_date+' '+str(booking_period.finish_time),
                   booking=booking,
-                  amount=amount
+                  amount=amount,
+                  booking_period_option=booking_period 
                   )
 
         response_data['result'] = 'success'

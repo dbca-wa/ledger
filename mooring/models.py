@@ -911,6 +911,7 @@ class MooringsiteBooking(models.Model):
     amount = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False) 
     booking = models.ForeignKey('Booking',related_name="campsites", on_delete=models.CASCADE, null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
+    booking_period_option = models.ForeignKey('BookingPeriodOption', related_name="booking_period_option", on_delete=models.PROTECT, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.campsite, self.date)
