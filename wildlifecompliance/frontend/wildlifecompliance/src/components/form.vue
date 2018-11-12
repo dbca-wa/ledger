@@ -94,15 +94,21 @@ from '@/utils/hooks'
             if (this.withSectionsSelector){
                 var _tabid = 0;
                 var _settab = '';
+                var _mnu1 = '';
+                var _mnu2 = '';
                 Renderer.sections.map((sec,i) => {
 
                    if (sec.name.indexOf('Section1')>-1) {
-                      if (sec.name.indexOf('Section1_0')<1) { $('#scrollspy-section').append(`</ul></li>`); }
-                      $('#scrollspy-section').append(`<li><a href='#'>` + tabs[parseInt(sec.name.split('_')[1])].name + `<span class='caret'></span></a><ul class='dropdown-menu'>`);
-
-                   }
-                   $('#scrollspy-section').append(`<li><a href='#${sec.name}'>${sec.label}</a></li>`);
+                      if (sec.name.indexOf('Section1_0')===-1) {
+                        _mnu1 = _mnu1 + _mnu2 + '</ul></li>';
+                        _mnu2 = '';
+                      }
+                      _mnu1 = _mnu1 + `<li class='dropdown-submenu'><a class='section-menu' href='#section-submenu' data-toggle='collapse' aria-expanded='false'>` + tabs[parseInt(sec.name.split('_')[1])].name + `<span class='caret'></span></a><ul class='dropdown-menu' id='section-submenu' >` +_mnu2;
+                   };
+                   _mnu2 = _mnu2 + `<li><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`;
                 });
+                _mnu1 = _mnu1 + _mnu2 + '</ul></li>';
+                $('#scrollspy-section').append(_mnu1);
 
                 $('a.page-scroll').bind('click', function(event) {
                    var $anchor = $(this);
@@ -130,7 +136,7 @@ from '@/utils/hooks'
 
 
         },
-        render(h) {
+       render(h) {
             let vm =this;
             Renderer.tabs_list = [];
             Renderer.store_status_data(vm.application.readonly,vm.application.assessor_data,vm.application.comment_data,vm.application.current_assessor,vm.application.assessor_mode,vm.application.can_user_edit,vm.application.documents_url,vm.application.id);
@@ -141,25 +147,20 @@ from '@/utils/hooks'
                             <h3>Application {vm.application.id}: {vm.application.licence_type_short_name}</h3>
                         </div>
                         <div class="col-md-3" >
-                              <div class="navbar navbar-default" role="navigation">
-                                <div class="navbar-header">
-                                  <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse" >
-                                    <span class="sr-only">Toggle navigation</span>
-                                    <span class="icon-bar"></span>
-                                    <span class="icon-bar"></span>
-                                    <span class="icon-bar"></span>
-                                  </button>
-                                  <a class="navbar-brand" href="#">&nbsp;</a>
-                                </div>
-                                <div id="navbar" class="navbar-collapse collapse">
-                                  <ul class="nav navbar-nav">
-                                    <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Sections<span class="caret"></span></a>
+                          <div class="panel panel-default fixed">
+                            <div class="panel-heading">
+                               <div class="dropdown">
+                                  <ul class="list-unstyled">
+                                    <li ><a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><h5>Sections<span class="caret"></span></h5></a>
                                       <ul class="dropdown-menu" id="scrollspy-section" >
                                       </ul>
                                     </li>
                                   </ul>
                                 </div>
-                              </div>
+                            </div>
+                            <div class="panel-body" style="padding:0">
+                            </div>
+                          </div>
                         </div>
                         <div class="col-md-9">
                             <ul class="nav nav-tabs" id="tabs-section">
@@ -211,4 +212,11 @@ from '@/utils/hooks'
             }
         }
     }
+    $(document).ready(function(){
+      $('.dropdown-submenu a.section-menu').on("click", function(e){
+        $(this).next('ul').toggle();
+        e.stopPropagation();
+        e.preventDefault();
+      });
+    });
 </script>
