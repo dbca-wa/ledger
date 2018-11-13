@@ -4,7 +4,7 @@
                     <div class="row" v-for="(item,index) in licence.activity_type">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3 class="panel-title">Issue {{item.name}}
+                                <h3 class="panel-title">Issue/Decline - {{item.name}}
                                     <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
                                         <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                                     </a>

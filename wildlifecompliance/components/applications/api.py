@@ -493,7 +493,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def update_activity_status(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            print(request.data)
             activity_id = request.data.get('activity_id')
             status = request.data.get('status')
             if not status or not activity_id:

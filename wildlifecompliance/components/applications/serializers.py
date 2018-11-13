@@ -533,12 +533,12 @@ class ApplicationProposedIssueSerializer(serializers.ModelSerializer):
 class ProposedLicenceSerializer(serializers.Serializer):
     expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'])
     start_date = serializers.DateField(input_formats=['%d/%m/%Y'])
-    details = serializers.CharField()
+    reason = serializers.CharField()
     cc_email = serializers.CharField(required=False,allow_null=True)
-    licence_activity_type_name=serializers.CharField(required=False,allow_null=True)
-    licence_activity_type_id=serializers.IntegerField()
+    activity_type=serializers.ListField(child=serializers.IntegerField())
+
 
 class ProposedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
-    cc_email = serializers.CharField(required=False)
+    cc_email = serializers.CharField(required=False,allow_null=True)
     activity_type=serializers.ListField(child=serializers.IntegerField())
