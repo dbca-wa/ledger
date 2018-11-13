@@ -62,7 +62,7 @@ from wildlifecompliance.components.applications.serializers import (
     ApplicationConditionSerializer,
     ApplicationStandardConditionSerializer,
     ProposedLicenceSerializer,
-    PropedDeclineSerializer,
+    ProposedDeclineSerializer,
     AssessmentSerializer,
     ApplicationGroupTypeSerializer,
     SaveAssessmentSerializer,
@@ -607,9 +607,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def proposed_decline(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = PropedDeclineSerializer(data=request.data)
+            serializer = ProposedDeclineSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            # print(serializer.validated_data)
             instance.proposed_decline(request,serializer.validated_data)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data) 

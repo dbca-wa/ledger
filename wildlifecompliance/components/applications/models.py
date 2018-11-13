@@ -799,7 +799,7 @@ class Application(RevisionedMixin):
             try:
                 # if not self.can_assess(request.user):
                 #     raise exceptions.ApplicationNotAuthorized()
-                for activity_type in  self.licence_type_data['activity_type']:
+                for activity_type in self.licence_type_data['activity_type']:
                     if activity_type["id"]==details.get('activity_type'):
                         if activity_type["processing_status"] !="With Officer-Conditions":
                             raise ValidationError('You cannot propose for licence if it is not with assessor for conditions')

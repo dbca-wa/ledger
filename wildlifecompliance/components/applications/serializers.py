@@ -538,7 +538,7 @@ class ProposedLicenceSerializer(serializers.Serializer):
     licence_activity_type_name=serializers.CharField(required=False,allow_null=True)
     licence_activity_type_id=serializers.IntegerField()
 
-class PropedDeclineSerializer(serializers.Serializer):
+class ProposedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False)
     activity_type=serializers.ListField(child=serializers.IntegerField())
