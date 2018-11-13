@@ -119,6 +119,9 @@
                                     </div>
                                     <div v-if="canIssueDecline" class="row">
                                         <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleFinalViewConditions()">View Final Conditions</button>
+                                        </div>
+                                        <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
                                         </div>
                                     </div>
@@ -129,7 +132,7 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
-                                    <div v-if="isSendingToAssessor || isOfficerConditions || showingConditions || isofficerfinalisation"class="row">
+                                    <div v-if="isSendingToAssessor || isOfficerConditions || isFinalViewConditions || showingConditions || isofficerfinalisation"class="row">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back to Application</button><br/>
                                         </div>
@@ -184,7 +187,19 @@
                     </div>
                     <div class="tab-content">
                         <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status=='With Officer-Conditions'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
-                            <OfficerConditions :application="application" :licence_activity_type_tab="item1.id"/>
+                            <OfficerConditions :application="application" :licence_activity_type_tab="item1.id" :final_view_conditions="false"/>
+                        </div>
+                    </div>
+                </template>
+                <template v-if="isFinalViewConditions">
+                    <div v-for="item in application.licence_type_data">
+                        <ul class="nav nav-tabs" id="conditiontabs">
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                        </ul>
+                    </div>
+                    <div class="tab-content">
+                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                            <OfficerConditions :application="application" :licence_activity_type_tab="item1.id" :final_view_conditions="true"/>
                         </div>
                     </div>
                 </template>
@@ -230,7 +245,7 @@
                         </div>
                     </div>
                 </template>
-                <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised && !isOfficerConditions">
+                <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised && !isOfficerConditions && !isFinalViewConditions">
                     <div>
                     <ul class="nav nav-tabs" id="tabs-main">
                         <li><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
@@ -583,6 +598,7 @@ export default {
             showingConditions:false,
             assessmentComplete:false,
             isOfficerConditions:false,
+            isFinalViewConditions:false,
             isofficerfinalisation:false,
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
@@ -956,6 +972,7 @@ export default {
             this.isSendingToAssessor=false;
             this.showingConditions=false;
             this.isOfficerConditions=false;
+            this.isFinalViewConditions=false;
             this.assessmentComplete=false;
             this.isofficerfinalisation=true;
         },
@@ -1110,6 +1127,9 @@ export default {
             if(this.isOfficerConditions){
                 this.isOfficerConditions=!this.isOfficerConditions
             }
+            if(this.isFinalViewConditions){
+                this.isFinalViewConditions=!this.isFinalViewConditions
+            }
             if(this.isofficerfinalisation){
                 this.isofficerfinalisation=!this.isofficerfinalisation
             }
@@ -1122,6 +1142,7 @@ export default {
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.isOfficerConditions=false;
+            this.isFinalViewConditions=false;
             this.assessmentComplete=false;
             var selectedTabTitle = $("#tabs-section li.active");
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
@@ -1144,6 +1165,22 @@ export default {
             this.isSendingToAssessor=false;
             this.showingConditions=false;
             this.isOfficerConditions=true;
+            this.isFinalViewConditions=false;
+            this.assessmentComplete=false;
+            var selectedTabTitle = $("#tabs-section li.active");
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
+            this.selected_assessment_tab=tab_id
+            setTimeout(function(){
+                $('#conditiontabs li a')[0].click();
+            }, 50);
+
+        },
+        toggleFinalViewConditions:function(){
+            this.showingApplication = false;
+            this.isSendingToAssessor=false;
+            this.showingConditions=false;
+            this.isOfficerConditions=false;
+            this.isFinalViewConditions=true;
             this.assessmentComplete=false;
             var selectedTabTitle = $("#tabs-section li.active");
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
