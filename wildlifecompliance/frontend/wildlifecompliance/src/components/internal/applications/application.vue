@@ -98,7 +98,7 @@
                                     </div>
                                     <div v-if="!applicationIsDraft && canRequestAmendment" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
                                         </div>
                                     </div>
                                     <div v-if="!applicationIsDraft && canSendToAssessor" class="row">
@@ -538,7 +538,7 @@
         </div>
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
-        <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></AmmendmentRequest>
+        <AmendmentRequest ref="amendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
         <SendToAssessor ref="send_to_assessor" :application_id="application.id" @refreshFromResponse="refreshFromResponse"></SendToAssessor>
         <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedLicence>
 
@@ -548,7 +548,7 @@
 import Application from '../../form.vue'
 import Vue from 'vue'
 import ProposedDecline from './application_proposed_decline.vue'
-import AmmendmentRequest from './ammendment_request.vue'
+import AmendmentRequest from './amendment_request.vue'
 import SendToAssessor from './application_send_assessor.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Conditions from './application_conditions.vue'
@@ -654,7 +654,7 @@ export default {
         Application,
         datatable,
         ProposedDecline,
-        AmmendmentRequest,
+        AmendmentRequest,
         SendToAssessor,
         Conditions,
         OfficerConditions,
@@ -1062,7 +1062,7 @@ export default {
                 vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
             }
         },
-        ammendmentRequest: function(){
+        amendmentRequest: function(){
             let values = '';
             var activity_type_name=[];
             var activity_type_id=[];
@@ -1073,25 +1073,24 @@ export default {
             });
 
             selectedTabTitle = $("#tabs-section li.active");
-            this.tab_name = $(selectedTabTitle).text();
-            this.tab_id = selectedTabTitle.children().attr('href').split('#')[1];
+            vm.tab_name = $(selectedTabTitle).text();
+            vm.tab_id = selectedTabTitle.children().attr('href').split('#')[1];
 
-            activity_type_id.push(this.tab_id);
-            activity_type_name.push(this.tab_name);
+            activity_type_id.push(vm.tab_id);
+            activity_type_name.push(vm.tab_name);
 
-            this.$refs.ammendment_request.amendment.text = values;
-            this.$refs.ammendment_request.amendment.activity_type_name = activity_type_name;
-            this.$refs.ammendment_request.amendment.activity_type_id = activity_type_id;
-            this.$refs.ammendment_request.isModalOpen = true;
+            vm.$refs.amendment_request.amendment.text = values;
+            vm.$refs.amendment_request.amendment.activity_type_name = activity_type_name;
+            vm.$refs.amendment_request.amendment.activity_type_id = activity_type_id;
+            vm.$refs.amendment_request.isModalOpen = true;
 
             if (values === ''){
-               swal({
-                  type: 'error',
-                  title:  'Oops...',
-                  text: 'Something went wrong!',
-                  footer: '<a href>There are no deficiencies for this Activity.</a>'
-               })
-               this.$refs.ammendment_request.isModalOpen = false;
+               swal(
+                  'Amendment Request',
+                  'There are no deficiencies entered for this Application.',
+                  'error'
+               )
+               vm.$refs.amendment_request.isModalOpen = false;
             }
         },
         togglesendtoAssessor:function(){
@@ -1105,16 +1104,17 @@ export default {
             }, 50);
         },
         save: function(e) {
-          let vm = this;
-          let formData = new FormData(vm.form);
-          vm.$http.post(vm.application_form_url,formData).then(res=>{
+            let vm = this;
+            let formData = new FormData(vm.form);
+            console.log(formData);
+            vm.$http.post(vm.application_form_url,formData).then(res=>{
               swal(
                 'Saved',
                 'Your application has been saved',
                 'success'
               )
-          },err=>{
-          });
+            },err=>{
+            });
         },
         toggleApplication:function(){
             this.showingApplication = !this.showingApplication;
