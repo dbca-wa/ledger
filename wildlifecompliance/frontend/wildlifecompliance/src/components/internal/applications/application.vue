@@ -46,7 +46,7 @@
                                     
                                     <div v-for="item1 in item">
                                         <div v-if="item1.name">
-                                            {{item1.name}}:{{item1.processing_status}}
+                                            <strong>{{item1.name}}: </strong>{{item1.processing_status}}
                                         </div>
                                     </div>
                                 </div>
@@ -96,17 +96,31 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
+                                    <div v-if="!applicationIsDraft && canRequestAmendment" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
+                                        </div>
+                                    </div>
                                     <div v-if="!applicationIsDraft && canSendToAssessor" class="row">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Send to Assessor</button><br/>
                                         </div>
                                     </div>
-                                    <div v-if="!applicationIsDraft && canRequestAmendment" class="row">
+                                    <div v-if="canOfficerReviewConditions" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
+                                            <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
+                                        </div>
+                                    </div>
+                                    <div v-if="canProposeIssueOrDecline" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-danger top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
+                                            <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
                                         </div>
                                     </div>
                                     <div v-if="canIssueDecline" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleFinalViewConditions()">View Final Conditions</button>
+                                        </div>
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
                                         </div>
@@ -118,14 +132,9 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
-                                    <div v-if="isSendingToAssessor || isOfficerConditions || showingConditions"class="row">
+                                    <div v-if="isSendingToAssessor || isOfficerConditions || isFinalViewConditions || showingConditions || isofficerfinalisation"class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
-                                        </div>
-                                    </div>
-                                    <div v-if="showingConditions"class="row">
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeAssessment()">Complete Assessment</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back to Application</button><br/>
                                         </div>
                                     </div>
                                 </template>
@@ -149,8 +158,7 @@
                         <ul class="nav nav-tabs" id="conditiontabs">
                             <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
-            
-                    </div>   
+                    </div>
                     <div  class="tab-content">
                         <div v-for="item in application.licence_type_data">
                             <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`" class="tab-pane fade in">
@@ -158,14 +166,40 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row" style="margin-bottom:50px;">
+                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                            <div class="navbar-inner">
+                                <div class="container">
+                                    <p class="pull-right" style="margin-top:5px;">
+                                        <button class="btn btn-primary" @click.prevent="completeAssessment()">Complete Assessment</button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </template>
                 <template v-if="isOfficerConditions">
+                    <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in application.licence_type_data.activity_type"><a v-if="item1.name && item1.processing_status=='With Officer-Conditions' && item1.id == selected_assessment_tab" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Officer-Conditions'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
                         </ul>
-                    <div  class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status=='With Officer-Conditions' && item1.id == selected_assessment_tab" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
-                            <OfficerConditions :application="application" :licence_activity_type_tab="selected_assessment_tab"/>
+                    </div>
+                    <div class="tab-content">
+                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status=='With Officer-Conditions'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                            <OfficerConditions :application="application" :licence_activity_type_tab="item1.id" :final_view_conditions="false"/>
+                        </div>
+                    </div>
+                </template>
+                <template v-if="isFinalViewConditions">
+                    <div v-for="item in application.licence_type_data">
+                        <ul class="nav nav-tabs" id="conditiontabs">
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                        </ul>
+                    </div>
+                    <div class="tab-content">
+                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                            <OfficerConditions :application="application" :licence_activity_type_tab="item1.id" :final_view_conditions="true"/>
                         </div>
                     </div>
                 </template>
@@ -211,7 +245,7 @@
                         </div>
                     </div>
                 </template>
-                <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised && !isOfficerConditions">
+                <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised && !isOfficerConditions && !isFinalViewConditions">
                     <div>
                     <ul class="nav nav-tabs" id="tabs-main">
                         <li><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
@@ -485,12 +519,9 @@
                                             <div class="navbar-inner">
                                                 <div class="container">
                                                     <p class="pull-right" style="margin-top:5px;">
-                                                        <button v-if="canReturnToConditions" class="btn btn-success" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
-                                                        <button v-if="canProposeIssue" class="btn btn-success" @click.prevent="proposedLicence()">Propose Issue</button>
-                                                        <button v-if="canProposeDecline" class="btn btn-danger" @click.prevent="proposedDecline()">Propose Decline</button>
-                                                        <button v-if="canOfficerReviewConditions" class="btn btn-warning" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
+                                                        <button v-if="canReturnToConditions" class="btn btn-primary" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
                                                         <button v-if="canCompleteAssessment" class="btn btn-info" @click.prevent="toggleConditions()">Assess</button>
-                                                        <button v-if="!applicationIsDraft" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
+                                                        <button v-if="!applicationIsDraft && canRequestAmendment" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
                                                     </p>
                                                 </div>
                                             </div>
@@ -500,28 +531,24 @@
                             </form>
                         </div>
                     </div>
-                    
-
                 </div>
-                
         </div>
-
     </template>
         </div>
         </div>
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
-        <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
+        <AmendmentRequest ref="amendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
         <SendToAssessor ref="send_to_assessor" :application_id="application.id" @refreshFromResponse="refreshFromResponse"></SendToAssessor>
-        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"/>
-        
+        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedLicence>
+
     </div>
 </template>
 <script>
 import Application from '../../form.vue'
 import Vue from 'vue'
 import ProposedDecline from './application_proposed_decline.vue'
-import AmmendmentRequest from './ammendment_request.vue'
+import AmendmentRequest from './amendment_request.vue'
 import SendToAssessor from './application_send_assessor.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Conditions from './application_conditions.vue'
@@ -571,6 +598,7 @@ export default {
             showingConditions:false,
             assessmentComplete:false,
             isOfficerConditions:false,
+            isFinalViewConditions:false,
             isofficerfinalisation:false,
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
@@ -626,7 +654,7 @@ export default {
         Application,
         datatable,
         ProposedDecline,
-        AmmendmentRequest,
+        AmendmentRequest,
         SendToAssessor,
         Conditions,
         OfficerConditions,
@@ -689,13 +717,22 @@ export default {
             return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Finalisation' ? true : false;
         },
         canOfficerReviewConditions: function(){
-            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Conditions' ? true : false;
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer-Conditions'){
+                    return true;
+                }
+            }
+            return false;
         },
-        canProposeDecline: function(){
-            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Conditions' ? true : false;
-        },
-        canProposeIssue: function(){
-            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Conditions' ? true : false;
+        canProposeIssueOrDecline: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer-Conditions'){
+                    return true;
+                }
+            }
+            return false;
         },
         canCompleteAssessment: function(){
             return this.selectedTabId && this.selectedActivityType.processing_status == 'With Assessor' ? true : false;
@@ -935,8 +972,9 @@ export default {
             this.isSendingToAssessor=false;
             this.showingConditions=false;
             this.isOfficerConditions=false;
+            this.isFinalViewConditions=false;
             this.assessmentComplete=false;
-            this.isofficerfinalisation=true
+            this.isofficerfinalisation=true;
         },
         acceptIdRequest: function() {
             let vm = this;
@@ -1024,7 +1062,7 @@ export default {
                 vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
             }
         },
-        ammendmentRequest: function(){
+        amendmentRequest: function(){
             let values = '';
             var activity_type_name=[];
             var activity_type_id=[];
@@ -1035,25 +1073,24 @@ export default {
             });
 
             selectedTabTitle = $("#tabs-section li.active");
-            this.tab_name = $(selectedTabTitle).text();
-            this.tab_id = selectedTabTitle.children().attr('href').split('#')[1];
+            vm.tab_name = $(selectedTabTitle).text();
+            vm.tab_id = selectedTabTitle.children().attr('href').split('#')[1];
 
-            activity_type_id.push(this.tab_id);
-            activity_type_name.push(this.tab_name);
+            activity_type_id.push(vm.tab_id);
+            activity_type_name.push(vm.tab_name);
 
-            this.$refs.ammendment_request.amendment.text = values;
-            this.$refs.ammendment_request.amendment.activity_type_name = activity_type_name;
-            this.$refs.ammendment_request.amendment.activity_type_id = activity_type_id;
-            this.$refs.ammendment_request.isModalOpen = true;
+            vm.$refs.amendment_request.amendment.text = values;
+            vm.$refs.amendment_request.amendment.activity_type_name = activity_type_name;
+            vm.$refs.amendment_request.amendment.activity_type_id = activity_type_id;
+            vm.$refs.amendment_request.isModalOpen = true;
 
             if (values === ''){
-               swal({
-                  type: 'error',
-                  title:  'Oops...',
-                  text: 'Something went wrong!',
-                  footer: '<a href>There are no deficiencies for this Activity.</a>'
-               })
-               this.$refs.ammendment_request.isModalOpen = false;
+               swal(
+                  'Amendment Request',
+                  'There are no deficiencies entered for this Application.',
+                  'error'
+               )
+               vm.$refs.amendment_request.isModalOpen = false;
             }
         },
         togglesendtoAssessor:function(){
@@ -1067,16 +1104,17 @@ export default {
             }, 50);
         },
         save: function(e) {
-          let vm = this;
-          let formData = new FormData(vm.form);
-          vm.$http.post(vm.application_form_url,formData).then(res=>{
+            let vm = this;
+            let formData = new FormData(vm.form);
+            console.log(formData);
+            vm.$http.post(vm.application_form_url,formData).then(res=>{
               swal(
                 'Saved',
                 'Your application has been saved',
                 'success'
               )
-          },err=>{
-          });
+            },err=>{
+            });
         },
         toggleApplication:function(){
             this.showingApplication = !this.showingApplication;
@@ -1089,6 +1127,12 @@ export default {
             if(this.isOfficerConditions){
                 this.isOfficerConditions=!this.isOfficerConditions
             }
+            if(this.isFinalViewConditions){
+                this.isFinalViewConditions=!this.isFinalViewConditions
+            }
+            if(this.isofficerfinalisation){
+                this.isofficerfinalisation=!this.isofficerfinalisation
+            }
             setTimeout(function(){
                 $('#tabs-main li a')[1].click();
             }, 50);
@@ -1098,6 +1142,7 @@ export default {
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.isOfficerConditions=false;
+            this.isFinalViewConditions=false;
             this.assessmentComplete=false;
             var selectedTabTitle = $("#tabs-section li.active");
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
@@ -1120,6 +1165,22 @@ export default {
             this.isSendingToAssessor=false;
             this.showingConditions=false;
             this.isOfficerConditions=true;
+            this.isFinalViewConditions=false;
+            this.assessmentComplete=false;
+            var selectedTabTitle = $("#tabs-section li.active");
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
+            this.selected_assessment_tab=tab_id
+            setTimeout(function(){
+                $('#conditiontabs li a')[0].click();
+            }, 50);
+
+        },
+        toggleFinalViewConditions:function(){
+            this.showingApplication = false;
+            this.isSendingToAssessor=false;
+            this.showingConditions=false;
+            this.isOfficerConditions=false;
+            this.isFinalViewConditions=true;
             this.assessmentComplete=false;
             var selectedTabTitle = $("#tabs-section li.active");
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
