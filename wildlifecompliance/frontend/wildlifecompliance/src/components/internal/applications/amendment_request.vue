@@ -165,15 +165,14 @@ export default {
                         vm.amendingApplication = true;
                         vm.close();
                         //vm.$emit('refreshFromResponse',response);
-                        Vue.http.get(`/api/application/${vm.application_id}/internal_application.json`).then((response)=>
+                        Vue.http.get(`/api/application/${vm.application_id}/internal_application.json`).then((res)=>
                         {
-                            vm.$emit('refreshFromResponse',response);
+                            vm.$emit('refreshFromResponse',res);
                             
                         },(error)=>{
                             console.log(error);
                         });
-                        vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
-                     
+
                     },(error)=>{
                         console.log(error);
                         vm.errors = true;
