@@ -154,7 +154,7 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div v-if="!isApplication" class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
@@ -321,6 +321,12 @@ import $ from 'jquery'
 import { api_endpoints, helpers } from '@/utils/hooks'
 export default {
     name: 'Profile',
+    props:{
+      isApplication:{
+                type: Boolean,
+                default: false
+            },
+    },
     data () {
         let vm = this;
         return {
@@ -435,6 +441,7 @@ export default {
         },
         updatePersonal: function() {
             let vm = this;
+            //console.log(vm.profile);
             vm.missing_fields = [];
             var required_fields=[];
             vm.errorListPersonal=[];
@@ -501,7 +508,7 @@ export default {
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_contact')),JSON.stringify(vm.profile),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
+                //console.log(response);
                 vm.updatingContact = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
@@ -714,7 +721,18 @@ export default {
                 });
             },(error) => {
             }); 
-        }
+        },
+        fetchProfile: function(){
+          let vm=this;
+          Vue.http.get(api_endpoints.profile).then((response) => {
+                    vm.profile = response.body
+                    if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                    if ( vm.profile.commercialoperator_organisations && vm.profile.commercialoperator_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+        },(error) => {
+            console.log(error);
+        })
+
+        },
     },
     beforeRouteEnter: function(to,from,next){
         Vue.http.get(api_endpoints.profile).then((response) => {
@@ -732,9 +750,11 @@ export default {
             console.log(error);
         })
     },
+
     mounted: function(){
         this.fetchCountries();
         this.fetchOrgRequestList();
+        this.fetchProfile(); //beforeRouteEnter doesn't work when loading this component in Application.vue so adding an extra method to get profile details.
         this.personal_form = document.forms.personal_form;
         $('.panelClicker[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];
