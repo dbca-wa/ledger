@@ -836,6 +836,12 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
     if not daily_rates:
         raise Exception('There was an error while trying to get the daily rates.')
 
+    if AdmissionsOracleCode.objects.count() == 0:
+        if request.user.is_staff:
+            raise Exception('Admissions Oracle Code missing, please set up in administration tool.')
+        else:
+            raise Exception('Please alert RIA of the following error message:\nAdmissions Oracle Code missing.')
+
     family = 0
     adults = admissionsBooking.noOfAdults
     children = admissionsBooking.noOfChildren

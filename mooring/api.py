@@ -1259,7 +1259,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         num_infant = serializer.validated_data['num_infant']
         num_mooring = serializer.validated_data['num_mooring']
         gear_type = serializer.validated_data['gear_type']
-        vessel_size = serializer.validated_data['vessel_size'] 
+        vessel_size = serializer.validated_data['vessel_size']
 
         # if campground doesn't support online bookings, abort!
         if ground.mooring_type != 0:
@@ -1875,11 +1875,16 @@ def create_admissions_booking(request, *args, **kwargs):
     )
 
     #Lookup price and set lines.
+    lines = []
     try:
         lines = utils.admissions_price_or_lineitems(request, admissionsBooking)
     except Exception as e:
         error = (None, '{} Please contact Marine Park and Visitors services with this error message and the time of the request.'.format(str(e)))
-#        #handle
+        return HttpResponse(geojson.dumps({
+            'status': 'failure',
+            'error': error
+        }), content_type='application/json')
+        #handle
     total = sum([decimal.Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
 
     
@@ -2614,7 +2619,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'country': emailUser['country'],
                 'postcode': emailUser['postcode'],
                 'phone': emailUser['phone'],
-                'regos': regos
+                # 'regos': regos
             }
 
             #booking_details = {
@@ -3011,7 +3016,7 @@ class RegisteredVesselsViewSet(viewsets.ModelViewSet):
         rego = request.GET.get('rego') if request.GET.get('rego') else None
         queryset = self.get_queryset()
         if rego:
-            queryset = queryset.filter(rego_no=rego)
+            queryset = queryset.filter(rego_no=rego.upper())
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
