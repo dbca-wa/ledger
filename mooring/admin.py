@@ -173,6 +173,8 @@ admin.site.register(models.PromoArea)
 
 @admin.register(models.RegisteredVessels)
 class RegisteredVessels(admin.ModelAdmin):
-    lsit_display = ('rego_no', )
+    list_display = ('rego_no', 'sticker_l', 'sticker_au', 'sticker_an')
     ordering = ('rego_no',)
     search_fields = ('rego_no',)
+
+    

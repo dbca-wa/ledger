@@ -504,9 +504,9 @@ class BookingRange(models.Model):
         if not skip_validation:
             self.full_clean()
         if self.status == 1 and not self.closure_reason:
-            self.closure_reason = ClosureReason.objects.get(pk=1)
+            self.closure_reason = ClosureReason.objects.all().first()
         elif self.status == 0 and not self.open_reason:
-            self.open_reason = OpenReason.objects.get(pk=1)
+            self.open_reason = OpenReason.objects.all().first()
 
         super(BookingRange, self).save(*args, **kwargs)
 
@@ -1450,16 +1450,20 @@ class RegisteredVessels(models.Model):
     vessel_draft = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     vessel_beam = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     vessel_weight = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
-    sticker_l = models.IntegerField(default=0)
-    sticker_au = models.IntegerField(default=0)
-    sticker_an = models.IntegerField(default=0)
+    sticker_l = models.IntegerField(default=None, blank=True, null=True)
+    sticker_au = models.IntegerField(default=None, blank=True, null=True)
+    sticker_an = models.IntegerField(default=None, blank=True, null=True)
     expiry_l = models.DateField(null=True, blank=True)
     expiry_au = models.DateField(null=True, blank=True)
     expiry_an = models.DateField(null=True, blank=True)
 
     @property
     def admissionsPaid(self):
-        return True
+        if self.sticker_l > 0 or self.sticker_au > 0 or self.sticker_an > 0:
+            return True
+        else:
+            return False
+
 
 # REASON MODELS
 # =====================================

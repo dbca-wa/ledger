@@ -3,6 +3,7 @@
 import Vue from 'vue';
 import resource from 'vue-resource'
 import VueRouter from 'vue-router'
+import VModal from 'vue-js-modal';
 import admissions from './admissions';
 import costs from './costs';
 import App from './App';
@@ -12,6 +13,7 @@ import { mapGetters } from 'vuex';
 var css = require('./hooks-css.js');
 Vue.use(VueRouter);
 Vue.use(resource);
+Vue.use(VModal);
 
 require('custom-event-polyfill');
 

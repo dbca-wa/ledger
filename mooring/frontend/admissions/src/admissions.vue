@@ -32,7 +32,7 @@
                                         <div class="small-12 medium-12 large-4 columns">
                                             <label class="label-plain2">Email</label>
                                             <div class="col-sm-8">
-                                                <input  id="email" v-model="email" class="form-control" name="email" @blur="validateEmail()" type="email" required/>
+                                                <input  id="email" v-model="email" class="form-control" name="email" @blur="validateEmailFormat()" type="email" required/>
                                             </div>
                                         </div>
                                     </div>
@@ -72,7 +72,7 @@
                                         <div class="small-12 medium-12 large-4 columns">
                                             <label class="label-plain">Vessel Registration</label>
                                             <div class="col-sm-8">
-                                                <input id="vesselReg" v-model="vesselReg" class="form-control" name="vesselReg" type="text"/>
+                                                <input id="vesselReg" v-model="vesselReg" class="form-control" name="vesselReg" @blur="validateVesselReg()" type="text"/>
                                             </div>
                                         </div>
                                     </div>
@@ -143,11 +143,11 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <!-- <div class="col-md-6">
                                     <div class="form-group">
                                         <p style="margin-top:30px;">Changes not permitted.Cancel up to 29 days before arrival for 50% refund.</p>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
@@ -160,7 +160,7 @@
                                             <div class="checkbox">
                                                 <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
                                             </div>
-                                            <button :disabled="!toc" type="submit" class="btn btn-primary" style="width:180px;background-color:#4286f4;font-weight:bold;">Proceed to Payment</button>
+                                            <button :disabled="!validToProceed" type="submit" class="btn btn-primary" style="width:180px;background-color:#4286f4;font-weight:bold;">Proceed to Payment</button>
                                         </div>
                                     </div>
                                 </div>
@@ -170,6 +170,28 @@
                 </div>
             </div>
         </form>
+        <modal name="messageModal" height="auto"
+            transition="nice-modal-fade"
+            :resizeable="false"
+            :delay="100"
+            :scrollable="true"
+            :draggable="false">
+            <div class="messageModal-content" align="center">
+                <h1 id="ModalTitle">System Message</h1>
+                <div align="left" style="padding:15px;">
+                    <div class = "row">
+                        <div class="col-sm-12">
+                            <div class="alert alert-danger" align="center">
+                                {{ message }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div align="left" style="margin-bottom:20px; margin-left:20px;">
+                    <button type="button" v-on:click="messageModalConfirm()" class="btn btn-primary" style="width:80px;font-weight:bold;">OK</button>
+                </div>
+            </div>
+        </modal>
     </div>
 </template>
 
@@ -226,6 +248,8 @@ export default {
         errorMsg: null,
         errorMsgPersonal: null,
         toc: false,
+        message: null,
+        noPayment: false,
         errors: {
             arrivalDate: false,
             overnightStay: false,
@@ -243,6 +267,16 @@ export default {
         }
     },
     computed: {
+        validToProceed: {
+            cache: false,
+            get: function(){
+                if (this.toc && !this.errorMsg && !this.errorMsgPersonal &&!this.noPayment){
+                    return true;
+                } else {
+                    return false;
+                } 
+            }
+        },
         arrivalDateString: {
             cache: false,
             get: function() {
@@ -265,6 +299,10 @@ export default {
 
     },
     methods: {
+        messageModalConfirm: function(){
+            this.message = null;
+            this.$modal.hide('messageModal');
+        },
         processForm: function(){
             var vm = this;
             console.log("processing");
@@ -320,6 +358,13 @@ export default {
                         if (data.status == 'success') {
                             console.log("success");
                             window.location.href = vm.mooringUrl + data.redirect;
+                        } else if (data.status == 'failure'){
+                            console.log("failure");
+                            if (data.error[1].includes("Admissions Oracle Code")){
+                                var msg = data.error[1].split('.')[0];
+                                vm.message = msg;
+                                vm.$modal.show('messageModal');
+                            }
                         }
                     },
                     error: function(xhr, stat, err) {
@@ -385,6 +430,24 @@ export default {
                 }  
             }
         },
+        validateEmailFormat: function(){
+            var error1 = "Please enter a valid email.";
+            var error2 = "Email does not follow convention.\nexample@domain.com";
+            var fieldToCheck = this.email;
+            if(!fieldToCheck){
+                this.errors.email = true;
+                this.errorMsgPersonal = error1;
+            } else {
+                var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+                if(re.test(fieldToCheck)){
+                    this.errorMsgPersonal = null;
+                    this.errors.email = false;
+                } else {
+                    this.errors.email = true;
+                    this.errorMsgPersonal = error2;
+                }
+            }
+        },
         validateArrivalDate: function(){
             var error1 = "If paying for a prior warning, please ensure you enter the reference number.";
             var error2 = "Please select a date from the past if paying for a warning.";
@@ -406,6 +469,33 @@ export default {
                         this.errorMsg = null;
                     }
                 }
+            }
+        },
+        validateVesselReg: function(){
+            let vm = this;
+            var reg = vm.vesselReg;
+            var data = {
+                'rego': reg
+            }
+            vm.noPayment = false;
+            if(reg){
+                $.ajax({
+                    url: process.env.PARKSTAY_URL + "/api/registeredVessels/",
+                    dataType: 'json',
+                    data: data,
+                    method: 'GET',
+                    success: function(data, stat, xhr) {
+                        if(data[0]){
+                            if(data[0].admissionsPaid){
+                                vm.message = "Admission Fees for this vessel are already paid.";
+                                vm.noPayment = true;
+                                vm.$modal.show('messageModal');
+                            }
+                        } else {
+                            console.log("Registration was not found.")
+                        }
+                    }
+                });
             }
         },
         validateWarningRefNo: function(){

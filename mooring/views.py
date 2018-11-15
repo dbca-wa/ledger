@@ -368,7 +368,7 @@ class AdmissionsBookingSuccessView(TemplateView):
                     logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
                     return redirect('admissions')
 
-                if inv.system not in ['S516']:
+                if inv.system not in ['0516']:
                     logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                     return redirect('admissions')
 
@@ -413,7 +413,6 @@ class BookingSuccessView(TemplateView):
         try:
             booking = utils.get_session_booking(request.session)
             invoice_ref = request.GET.get('invoice')
-            
             if booking.booking_type == 3:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
@@ -441,12 +440,11 @@ class BookingSuccessView(TemplateView):
 
                     utils.delete_session_booking(request.session)
                     request.session['ps_last_booking'] = booking.id
-
                     # send out the invoice before the confirmation is sent
                     emails.send_booking_invoice(booking)
                     # for fully paid bookings, fire off confirmation email
                     if booking.paid:
-                        emails.send_booking_confirmation(booking,request) 
+                        emails.send_booking_confirmation(booking,request)
 
         except Exception as e:
             if 'ps_booking_internal' in request.COOKIES:
@@ -457,7 +455,8 @@ class BookingSuccessView(TemplateView):
                 return redirect('home')
 
         context = {
-            'booking': booking
+            'booking': booking,
+            'book_inv': book_inv
         }
         return render(request, self.template_name, context)
 
