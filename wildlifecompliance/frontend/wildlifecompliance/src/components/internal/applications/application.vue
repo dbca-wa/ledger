@@ -1063,6 +1063,8 @@ export default {
             }
         },
         amendmentRequest: function(){
+            let vm = this;
+            vm.save_wo();
             let values = '';
             var activity_type_name=[];
             var activity_type_id=[];
@@ -1106,13 +1108,20 @@ export default {
         save: function(e) {
             let vm = this;
             let formData = new FormData(vm.form);
-            console.log(formData);
             vm.$http.post(vm.application_form_url,formData).then(res=>{
               swal(
                 'Saved',
                 'Your application has been saved',
                 'success'
               )
+            },err=>{
+            });
+        },
+        save_wo: function() {
+            let vm = this;
+            let formData = new FormData(vm.form);
+            vm.$http.post(vm.application_form_url,formData).then(res=>{
+
             },err=>{
             });
         },
