@@ -122,9 +122,9 @@ class Remittance(Flowable):
         canvas.drawString(cheque_x, cheque_y, 'Pay By Cheque:')
         canvas.setFont(DEFAULT_FONTNAME, 9)
         cheque_y -= 15
-        canvas.drawString(cheque_x, cheque_y, 'Make cheque payable to: Department of Parks and Wildlife')
+        canvas.drawString(cheque_x, cheque_y, 'Make cheque payable to: Department of Biodiversity, Conservation and Attractions')
         cheque_y -= 15
-        canvas.drawString(cheque_x, cheque_y, 'Mail to: Department of Parks and Wildlife')
+        canvas.drawString(cheque_x, cheque_y, 'Mail to: Department of Biodiversity, Conservation and Attractions')
         cheque_y -= 15
         canvas.drawString(cheque_x + 32, cheque_y, 'Locked Bag 30')
         cheque_y -= 15

@@ -55,7 +55,7 @@ export default {
   },
   filters:{
         formatDate: function(data){
-            return data ? moment(data).format('DD/MM/YYYY'): '';
+            return data ? moment(data).format('DD/MM/YYYY HH:mm:ss'): '';
         }
   },
   mounted: function() {

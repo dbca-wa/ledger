@@ -1,0 +1,15 @@
+{%  extends 'disturbance/emails/base_email.html' %}
+
+{%  block content %}
+	The Proposal {{ proposal.lodgement_number }} has been sent back by approver.
+
+    <p>Approver comments: {{ approver_comment }}</p>
+    
+
+    <p>
+    You can access this Proposal using the following link:
+    </p>
+    <a href="{{url}}">Access Proposal</a>
+
+
+{%  endblock %}

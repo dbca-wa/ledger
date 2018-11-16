@@ -1,7 +1,7 @@
 <template>
 <div class="container" id="internalDash">
     <ProposalDashTable level="internal" :url="proposals_url"/>
-    <ReferralDashTable />
+    <ReferralDashTable :url="referrals_url"/>
 </div>
 </template>
 <script>
@@ -17,7 +17,12 @@ export default {
     data() {
         let vm = this;
         return {
-            proposals_url: api_endpoints.proposals,
+            //proposals_url: api_endpoints.proposals,
+            //proposals_url: api_endpoints.proposals_paginated_internal,
+            //proposals_url: '/api/list_proposal/?format=datatables',
+            //proposals_url: api_endpoints.list_proposals,
+            proposals_url: api_endpoints.proposals_paginated_internal,
+            referrals_url: api_endpoints.referrals_paginated_internal,
         }
     
     },
