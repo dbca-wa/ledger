@@ -1,8 +1,33 @@
 <!DOCTYPE html>
 <template>
     <div v-cloak class="f6inject">
-        <div class="row">
+       <div class="row">
             <div class="small-12 medium-3 large-6 columns search-params">
+        <div class="columns small-12 medium-12 large-12" v-show="current_booking.length > 0">
+             
+
+
+        <div class="row">
+                <div class="columns small-12 medium-12 large-12" >
+                      <button  title="Please add items into your trolley." v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }}</button>  <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a> <a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_id='+parkstayGroundId" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
+                            Cancel in-progress booking
+                        </a>
+		</div>
+                <div class="small-12 medium-12 large-12">
+                        <div class="panel panel-default">
+                             <div class="panel-heading"><h3 class="panel-title">Trolley: <span id='total_trolley'>${{ total_booking }}</span></h3></div>
+                              <div class='columns small-12 medium-12 large-12'>
+                                 <div v-for="item in current_booking" class="row small-12 medium-12 large-12">
+                                         <div class="columns small-12 medium-9 large-9">{{ item.item }}</div>
+                                         <div class="columns small-12 medium-2 large-2">${{ item.amount }}</div>
+                                         <div class="columns small-12 medium-1 large-1"><a style='color: red; opacity: 1;' type="button" class="close" @click="deleteBooking(item.id)">x</a></div>
+                                 </div>
+                              </div>
+                        </div>
+                </div>
+        </div>
+        </div>
+
                 <div class="row">
                     <div class="small-12 columns">
                         <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for mooring's..."/></label>
@@ -556,6 +581,9 @@ import moment from 'moment';
 import swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.css';
 
+var nowTemp = new Date();
+var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
+
 export default {
     name: 'parkfinder',
     el: '#parkfinder',
@@ -624,6 +652,13 @@ export default {
             groupPinLevelChange: true,
             anchorPinLevelChange: true,
             mooring_map_data: null,
+            markerAvail: [],
+            current_booking: [],
+            total_booking: "0.00",
+            timer: -1,
+            expiry: null,
+            booking_expired_notification: false,
+            ongoing_booking: false,
         }
     },
     computed: {
@@ -673,6 +708,40 @@ export default {
                     return count + " people ▼";
                 }
             }
+        },
+        timeleft: {
+                cache: false,
+                get: function() {
+                    // Minutes and seconds
+                    var mins = ~~(this.timer / 60);
+                    var secs = this.timer % 60;
+
+                    // Hours, minutes and seconds
+                    var hrs = ~~(this.timer / 3600);
+                    var mins = ~~((this.timer % 3600) / 60);
+                    var secs = this.timer % 60;
+
+                    // Output like "1:01" or "4:03:59" or "123:03:59"
+                    var ret = "";
+
+                    if (hrs > 0) {
+                        ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+                    }
+
+                    ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+                    ret += "" + secs;
+                    if (this.ongoing_booking) {
+                       if (this.timer < 0) {
+                            if (this.booking_expired_notification == false) {
+                           console.log('TIMED OUT');
+                           clearInterval(this.timer);
+                           this.bookingExpired();
+                           this.booking_expired_notification = true;
+                        }
+                       }
+                    }
+                    return ret;
+                }
         },
         bookingParam: {
             cache: false,
@@ -741,6 +810,21 @@ export default {
                 }
             }
         },
+        bookingExpired: function() {
+                swal({
+                  title: 'Booking Expired',
+                  text: "Please click start again to begin booking again:",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'Start Again',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                }).then((value) => {
+                        var loc = window.location;
+                        window.location = loc.protocol + '//' + loc.host + '/map/';
+                });
+
+        },
         toggleShowFilters: function() {
             this.hideExtraFilters = !this.hideExtraFilters;
         },
@@ -804,7 +888,6 @@ export default {
                         }
                     },1000);
                 }*/
-
                 return;
             }
 
@@ -1180,6 +1263,9 @@ export default {
             vm.anchorGroups = {};
             var vessel_size = $('#vesselSize').val();
             var vessel_draft = $('#vesselDraft').val();
+            if (response) { 
+            if (response.hasOwnProperty('features')) {
+
             var mooring = response['features'];
             for (var m in mooring) {
                 var mooring_vessel_size = response['features'][m]['properties']['vessel_size_limit'];
@@ -1196,6 +1282,8 @@ export default {
                     }   
                 }
             }
+            }
+            }
             for (var g in vm.anchorGroups) { 
                 var longitude = vm.anchorGroups[g]['geometry'][0];
                 var latitude = vm.anchorGroups[g]['geometry'][1];
@@ -1209,14 +1297,23 @@ export default {
             scale = Math.round(scale);
         }
 //        document.getElementById('scale').innerHTML = "Scale = 1 : " + scale;
-            },
-            buildMarkerBookable: function(lat,lon,props,name,marker_id) {
+      },
+      buildMarkerBookable: function(lat,lon,props,name,marker_id) {
             var mooring_type =  $("input:radio[name=gear_type]:checked").val();
             var pin_type=require('assets/map_pins/pin_red.png'); 
             var bookable = false;
+            var vm = this;
             if (this.groundsIds.has(marker_id)) {
-                pin_type=require('assets/map_pins/pin_orange.png');
-                var bookable = true;
+                if (vm.markerAvail[marker_id] == 'free') { 
+                     pin_type=require('assets/map_pins/pin_orange.png');
+                     bookable = true;
+                } else if (vm.markerAvail[marker_id] == 'partial') {
+                     pin_type=require('assets/map_pins/pin_orange_red.png');
+                     bookable = true;
+                } else {
+                     pin_type=require('assets/map_pins/pin_red.png');
+                     bookable = false;
+	        }	
 	        }
 
                 //this.anchorPinsActive.push(marker_id);
@@ -1305,7 +1402,7 @@ export default {
                   name: name,
                   zoom_level: zoom_level
               });
-
+              
               var icon = require('assets/map_pins/geo_group_red.png');
               if (text > 30) {
                        icon = require('assets/map_pins/geo_group2.png');
@@ -1349,6 +1446,40 @@ export default {
                    source: vectorSource
               });
               return vectorLayer;
+      },
+      deleteBooking: function(booking_item_id) {
+              var vm = this;
+              var submitData = {
+                  booking_item: booking_item_id,
+              };
+
+              $.ajax({
+                  url: vm.parkstayUrl + '/api/booking/delete',
+                  dataType: 'json',
+                  method: 'POST',
+                  data: submitData,
+                  success: function(data, stat, xhr) {
+                      vm.updateBooking();
+                  },
+                  error: function(xhr, stat, err) {
+                       vm.updateBooking();
+                  }
+              });  
+      },
+      updateBooking: function() {
+        var vm = this;
+        $.ajax({
+            url: vm.parkstayUrl+'/api/current_booking',
+            dataType: 'json',
+            success: function (response, stat, xhr) {
+                vm.current_booking = response.current_booking.current_booking;
+                vm.total_booking = response.current_booking.total_price;
+                vm.timer = response.current_booking.timer;
+                vm.ongoing_booking = response.current_booking.ongoing_booking[0];
+              
+            }
+        });
+
       },
       BookNow: function() { 
         var vessel_size = $('#vesselSize').val();
@@ -1517,6 +1648,7 @@ export default {
                 vm.groundsSource.loadSource();
             }
         });
+
 
         this.groundsSource = new ol.source.Vector({
             features: vm.groundsFilter
@@ -1816,6 +1948,19 @@ export default {
             }
         });
 
+        vm.updateBooking();
+//        $.ajax({
+//            url: vm.parkstayUrl+'/api/current_booking',
+//            dataType: 'json',
+//            success: function (response, stat, xhr) {
+//               console.log("RESPONSE ");
+//                console.log(response.current_booking);
+//
+ //               vm.current_booking = response.current_booking.current_booking;
+//                vm.total_booking = response.current_booking.total_price;
+//            }
+//        });
+
         this.groundsSource = new ol.source.Vector({
             features: vm.groundsFilter   
         });
@@ -1852,7 +1997,10 @@ export default {
                     response.forEach(function(el) {
                         vm.groundsIds.add(el.id);
                         vm.dateCache = vm.arrivalDateString+vm.departureDateString;
+
+                    vm.markerAvail[el.id] = el.avail;
                     });
+
                     vm.updateFilter();
                //     vm.removePinAnchors();
                //     vm.anchorPinLevelChange = true;
@@ -2146,7 +2294,7 @@ export default {
                           resolution: resolution,
                           duration: 1000
                     }); 
-                     
+                    if (properties.props) { 
                     if (properties.props.mooring_type == 0) {
                         $('#mapPopupBook').show();
                         $("#mapPopupImage").hide();
@@ -2159,6 +2307,9 @@ export default {
                     } else {
                         $('#mapPopupBook').hide();
                     }
+		    } else {
+			$('#mapPopupBook').hide();
+		    }
 	        } 
 
           } else {
@@ -2168,6 +2319,26 @@ export default {
      //      this.buildmarkers();
 
         });
+
+            var saneTz = (0 < Math.floor((vm.expiry - moment.now())/1000) < vm.timer);
+            var timer = setInterval(function (ev) {
+                // fall back to the pre-encoded timer
+                if (!saneTz) {
+                    vm.timer -= 1;
+                } else {
+                    // if the timezone is sane, do live updates
+                    // this way unloaded tabs won't cache the wrong time.
+                    var newTimer = Math.floor((vm.expiry - moment.now())/1000);
+                    vm.timer = newTimer;
+                }
+
+                if ((vm.timer <= -1)) {
+//                   clearInterval(timer);
+//                    var loc = window.location;
+//                    window.location = loc.protocol + '//' + loc.host + loc.pathname;
+               }
+            }, 1000);
+
 
 
 //function(feature, layer) {
