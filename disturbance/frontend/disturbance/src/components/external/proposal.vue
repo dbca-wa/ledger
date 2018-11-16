@@ -36,7 +36,8 @@
                 </ul>
             </div>
 
-            <Proposal v-if="proposal" :proposal="proposal" id="proposalStart">
+            
+            <Proposal v-if="proposal" :proposal="proposal" id="proposalStart" :showSections="sectionShow">
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
@@ -46,6 +47,7 @@
                     <div v-if="!proposal.readonly" class="container">
                       <p class="pull-right" style="margin-top:5px;">
                         <!-- <input type="submit" class="btn btn-primary" value="Save and Exit"/> -->
+                        <button id="sectionHide" @click.prevent="sectionHide" class="btn btn-primary">Show/Hide sections</button>
                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
 
@@ -60,6 +62,8 @@
                     </div>
                     <div v-else class="container">
                       <p class="pull-right" style="margin-top:5px;">
+                        <button id="sectionHide" @click.prevent="sectionHide" class="btn btn-primary">Show/Hide sections</button>
+
                         <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
                       </p>
                     </div>
@@ -93,6 +97,7 @@ export default {
       newText: "",
       pBody: 'pBody',
       missing_fields: [],
+      sectionShow: true,
     }
   },
   components: {
@@ -148,6 +153,11 @@ export default {
       vm.$http.post(vm.proposal_form_url,formData);
     },
 
+    sectionHide: function(e) {
+      let vm = this;
+      vm.sectionShow=!vm.sectionShow
+      //console.log(vm.sectionShow);
+    },
 
     setdata: function(readonly){
       this.proposal_readonly = readonly;
