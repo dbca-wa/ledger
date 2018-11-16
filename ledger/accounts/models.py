@@ -5,7 +5,7 @@ import zlib
 
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.contrib.postgres.fields import JSONField
-from django.db import models, IntegrityError
+from django.db import models, IntegrityError, transaction
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
@@ -358,6 +358,57 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
         else:
             return -1
+
+    def upload_identification(self, request):
+        with transaction.atomic():
+            document = Document(file=request.data.dict()['identification'])
+            document.save()
+            self.identification = document
+            self.save()
+
+    def log_user_action(self, action, request=None):
+        if request:
+            return EmailUserAction.log_action(self, action, request.user)
+        else:
+            pass
+
+@python_2_unicode_compatible
+class UserAction(models.Model):
+    who = models.ForeignKey(EmailUser, null=False, blank=False)
+    when = models.DateTimeField(null=False, blank=False, auto_now_add=True)
+    what = models.TextField(blank=False)
+
+    def __str__(self):
+        return "{what} ({who} at {when})".format(
+            what=self.what,
+            who=self.who,
+            when=self.when
+        )
+
+    class Meta:
+        abstract = True
+        app_label = 'accounts'
+
+class EmailUserAction(UserAction):
+    ACTION_PERSONAL_DETAILS_UPDATE = "User {} Personal Details Updated"
+    ACTION_CONTACT_DETAILS_UPDATE = "User {} Contact Details Updated"
+    ACTION_POSTAL_ADDRESS_UPDATE = "User {} Postal Address Updated"
+    ACTION_ID_UPDATE = "User {} Identification Updated"
+
+    emailuser = models.ForeignKey(EmailUser, related_name='action_logs')
+
+    class Meta:
+        app_label = 'accounts'
+        ordering = ['-when']
+
+    @classmethod
+    def log_action(cls, emailuser, action, user):
+        return cls.objects.create(
+            emailuser=emailuser,
+            who=user,
+            what=str(action)
+        )
+
 
 
 class EmailUserListener(object):
