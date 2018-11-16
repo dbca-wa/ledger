@@ -24,13 +24,18 @@ export default {
         proposal: {
             type: Object,
             required: true
+        },
+        referral_url: {
+            type: String,
+            default: null
         }
     },
     data(){
         let vm = this;
         return {
             table: null,
-            dateFormat: 'DD/MM/YYYY HH:MM:SS',
+            dateFormat: 'DD/MM/YYYY HH:mm:ss',
+            datatable_url: '',
             datatable_options: {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -41,7 +46,8 @@ export default {
                 //order: [[0, 'desc']],
                 processing:true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.referrals,'datatable_list')+'?proposal='+vm.proposal.id, 
+                    //"url": helpers.add_endpoint_json(api_endpoints.referrals,'datatable_list')+'?proposal='+vm.proposal.id, 
+                    "url": this.referral_url,
                     "dataSrc": '',
                 },
                 columns:[
@@ -80,12 +86,43 @@ export default {
                             }
                             return result;
                         }
+                    },
+                    {
+                        title: 'Referral Comments',
+                        data: 'referral_text',
+
+                        'render': function (value) {
+                            var ellipsis = '...',
+                                truncated = _.truncate(value, {
+                                    length: 20,
+                                    omission: ellipsis,
+                                    separator: ' '
+                                }),
+                                result = '<span>' + truncated + '</span>',
+                                popTemplate = _.template('<a href="#" ' +
+                                    'role="button" ' +
+                                    'data-toggle="popover" ' +
+                                    'data-trigger="click" ' +
+                                    'data-placement="top auto"' +
+                                    'data-html="true" ' +
+                                    'data-content="<%= text %>" ' +
+                                    '>more</a>');
+                            if (_.endsWith(truncated, ellipsis)) {
+                                result += popTemplate({
+                                    text: value
+                                });
+                            }
+
+                            return result;
+                        },
+                        'createdCell': helpers.dtPopoverCellFn,
                     }
                 ]
             },
         }
     },
     computed: {
+        
     },
     methods: {
         remindReferral:function(_id,user){
@@ -217,6 +254,7 @@ export default {
     },
     mounted(){
         this.initialiseTable();
+        
     }
 }
 </script>

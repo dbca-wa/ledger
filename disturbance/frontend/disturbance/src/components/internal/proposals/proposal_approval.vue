@@ -4,7 +4,7 @@
             <div class="col-md-12 alert alert-success" v-if="proposal.processing_status == 'Approved'">
                 <p>The approval has been issued and has been emailed to {{proposal.applicant.name}}</p>
                 <p>Expiry date: {{proposal.proposed_issuance_approval.expiry_date}}
-                <p>Permit: <a target="_blank" :href="proposal.permit">permit.pdf</a></p>
+                <p>Permit: <a target="_blank" :href="proposal.permit">approval.pdf</a></p>
             </div>
             <div v-else class="col-md-12 alert alert-warning">
                 <p>The proposal was declined. The decision was emailed to {{proposal.applicant.name}}</p>
@@ -21,6 +21,41 @@
                         </h3>
                     </div>
                     <div class="panel-body panel-collapse collapse in" :id="proposedLevel">
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                    <template v-if="!isFinalised">
+                                        <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
+                                        
+                                    <div v-if="isApprovalLevel">    
+                                        <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
+                                        <span>
+                                        <a @click="removeFile()" class="fa fa-trash-o" title="Remove file" style="cursor: pointer; color:red;"></a>
+                                        </span></p>
+                                        <div v-else>
+                                            <p><strong>Attach documents:</strong></p>
+                                            <p>
+                                            <span class="btn btn-info btn-file pull-left">
+                                            Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                            </span>
+                                            <!--<span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName()}}</span>-->
+                                            </span>
+                                            </p>
+                                        </div>
+
+                                    </div>
+                                    </template> 
+
+                                    <template v-if="isFinalised">
+                                        <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
+                                        
+                                    <div v-if="isApprovalLevel">    
+                                        <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
+                                        </p>
+                                    </div>
+                                    </template>                                    
+                            </div>
+                        </div> 
                     </div>
                 </div>
             </div>
@@ -87,6 +122,7 @@ export default {
         return {
             proposedDecision: "proposal-decision-"+vm._uid,
             proposedLevel: "proposal-level-"+vm._uid,
+            uploadedFile: null,
         }
     },
     watch:{
@@ -99,9 +135,58 @@ export default {
         },
         isFinalised: function(){
             return this.proposal.processing_status == 'Approved' || this.proposal.processing_status == 'Declined';
-        }
+        },
+        isApprovalLevel:function(){
+            return this.proposal.approval_level != null ? true : false;
+        },
     },
     methods:{
+        readFile: function() {
+            let vm = this;
+            let _file = null;
+            var input = $(vm.$refs.uploadedFile)[0];
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.readAsDataURL(input.files[0]); 
+                reader.onload = function(e) {
+                    _file = e.target.result;
+                };
+                _file = input.files[0];
+            }
+            vm.uploadedFile = _file;
+            vm.save()
+        },
+        removeFile: function(){
+            let vm = this;
+            vm.uploadedFile = null;
+            vm.save()
+        },
+        save: function(){
+            let vm = this;
+                let data = new FormData(vm.form);
+                data.append('approval_level_document', vm.uploadedFile)
+                if (vm.proposal.approval_level_document) {
+                    data.append('approval_level_document_name', vm.proposal.approval_level_document[0])
+                }
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/approval_level_document'),data,{
+                emulateJSON:true
+            }).then(res=>{
+                vm.proposal = res.body;
+                vm.$emit('refreshFromResponse',res);
+
+                },err=>{
+                swal(
+                    'Submit Error',
+                    helpers.apiVueResourceError(err),
+                    'error'
+                )
+            });
+
+            
+        },
+        uploadedFileName: function() {
+            return this.uploadedFile != null ? this.uploadedFile.name: '';
+        },
         addRequirement(){
             this.$refs.requirement_detail.isModalOpen = true;
         },

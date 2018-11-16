@@ -52,10 +52,45 @@ export default {
                     "dataSrc": ''
                 },
                 order: [],
+                dom: 'lBfrtip',
+                buttons:[
+                'excel', 'csv', ], //'copy'
                 columns: [
                     {
                         data: "requirement",
-                        orderable: false
+                        //orderable: false,
+                        'render': function (value) {
+                            var ellipsis = '...',
+                                truncated = _.truncate(value, {
+                                    length: 25,
+                                    omission: ellipsis,
+                                    separator: ' '
+                                }),
+                                result = '<span>' + truncated + '</span>',
+                                popTemplate = _.template('<a href="#" ' +
+                                    'role="button" ' +
+                                    'data-toggle="popover" ' +
+                                    'data-trigger="click" ' +
+                                    'data-placement="top auto"' +
+                                    'data-html="true" ' +
+                                    'data-content="<%= text %>" ' +
+                                    '>more</a>');
+                            if (_.endsWith(truncated, ellipsis)) {
+                                result += popTemplate({
+                                    text: value
+                                });
+                            }
+
+                            return result;
+                        },
+                        'createdCell': helpers.dtPopoverCellFn,
+
+                        /*'createdCell': function (cell) {
+                            //TODO why this is not working?
+                            // the call to popover is done in the 'draw' event
+                            $(cell).popover();
+                        }*/
+
                     },
                     {
                         data: "due_date",
@@ -87,7 +122,11 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (vm.proposal.assessor_mode.has_assessor_mode){
-                                links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
+                                if(full.copied_from==null)
+                                {
+                                    links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
+                                }
+                                //links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
                                 links +=  `<a href='#' class="deleteRequirement" data-id="${full.id}">Delete</a><br/>`;
                             }
                             return links;
@@ -152,12 +191,20 @@ export default {
                 confirmButtonText: 'Remove Requirement',
                 confirmButtonColor:'#d9534f'
             }).then(() => {
-                vm.$http.delete(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id))
+                // vm.$http.delete(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id))
+                // .then((response) => {
+                //     vm.$refs.requirements_datatable.vmDataTable.ajax.reload();
+                // }, (error) => {
+                //     console.log(error);
+                // });
+
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id+'/discard'))
                 .then((response) => {
                     vm.$refs.requirements_datatable.vmDataTable.ajax.reload();
                 }, (error) => {
                     console.log(error);
                 });
+
             },(error) => {
             });
         },
@@ -253,4 +300,7 @@ export default {
 }
 </script>
 <style scoped>
+.dataTables_wrapper .dt-buttons{
+    float: right;
+}
 </style>

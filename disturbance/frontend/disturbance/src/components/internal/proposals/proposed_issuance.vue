@@ -4,6 +4,7 @@
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="approvalForm">
+                        <alert v-if="isApprovalLevelDocument" type="warning"><strong>{{warningString}}</strong></alert>
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
                             <div class="form-group">
@@ -21,6 +22,10 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row" v-show="showstartDateError">
+                                    <alert  class="col-sm-12" type="danger"><strong>{{startDateErrorString}}</strong></alert>
+                    
+                                </div>
                             </div>
                             <div class="form-group">
                                 <div class="row">
@@ -30,13 +35,18 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="due_date" style="width: 70%;">
-                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" v-model="approval.expiry_date">
+                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" v-model="approval.expiry_date" :disabled="is_amendment">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row" v-show="showtoDateError">
+                                    <alert  class="col-sm-12" type="danger"><strong>{{toDateErrorString}}</strong></alert>
+                    
+                                </div>
+                                
                             </div>
                             <div class="form-group">
                                 <div class="row">
@@ -65,7 +75,7 @@
                 </div>
             </div>
             <div slot="footer">
-                <button type="button" v-if="issuingApproval" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Issuing</button>
+                <button type="button" v-if="issuingApproval" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Processing</button>
                 <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
@@ -92,6 +102,14 @@ export default {
         processing_status: {
             type: String,
             required: true
+        },
+        proposal_type: {
+            type: String,
+            required: true
+        },
+        isApprovalLevelDocument: {
+            type: Boolean,
+            required: true
         }
     },
     data:function () {
@@ -104,7 +122,11 @@ export default {
             issuingApproval: false,
             validation_form: null,
             errors: false,
+            toDateError:false,
+            startDateError:false,
             errorString: '',
+            toDateErrorString:'',
+            startDateErrorString:'',
             successString: '',
             success:false,
             datepickerOptions:{
@@ -114,6 +136,7 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
+            warningString: 'Please attach Level of Approval document before issuing Approval',
         }
     },
     computed: {
@@ -121,9 +144,22 @@ export default {
             var vm = this;
             return vm.errors;
         },
+        showtoDateError: function() {
+            var vm = this;
+            return vm.toDateError;
+        },
+        showstartDateError: function() {
+            var vm = this;
+            return vm.startDateError;
+        },
         title: function(){
             return this.processing_status == 'With Approver' ? 'Issue Approval' : 'Propose to issue approval';
-        }
+        },
+        is_amendment: function(){
+            return this.proposal_type == 'Amendment' ? true : false;
+        },
+        
+
     },
     methods:{
         ok:function () {
@@ -140,7 +176,11 @@ export default {
             this.isModalOpen = false;
             this.approval = {};
             this.errors = false;
+            this.toDateError = false;
+            this.startDateError = false;
             $('.has-error').removeClass('has-error');
+            $(this.$refs.due_date).data('DateTimePicker').clear();
+            $(this.$refs.start_date).data('DateTimePicker').clear();
             this.validation_form.resetForm();
         },
         fetchContact: function(id){
@@ -222,7 +262,17 @@ export default {
             $(vm.$refs.due_date).datetimepicker(vm.datepickerOptions);
             $(vm.$refs.due_date).on('dp.change', function(e){
                 if ($(vm.$refs.due_date).data('DateTimePicker').date()) {
-                    vm.approval.expiry_date =  e.date.format('DD/MM/YYYY');
+                    if ($(vm.$refs.due_date).data('DateTimePicker').date() < $(vm.$refs.start_date).data('DateTimePicker').date()){
+                        vm.toDateError = true;
+                        vm.toDateErrorString = 'Please select Expiry date that is after Start date';
+                        vm.approval.expiry_date = ""
+                    }
+                    else{
+                        vm.toDateError = false;
+                        vm.toDateErrorString = '';
+                        vm.approval.expiry_date =  e.date.format('DD/MM/YYYY');
+                    }
+                    //vm.approval.expiry_date =  e.date.format('DD/MM/YYYY');
                 }
                 else if ($(vm.$refs.due_date).data('date') === "") {
                     vm.approval.expiry_date = "";
@@ -231,7 +281,19 @@ export default {
             $(vm.$refs.start_date).datetimepicker(vm.datepickerOptions);
             $(vm.$refs.start_date).on('dp.change', function(e){
                 if ($(vm.$refs.start_date).data('DateTimePicker').date()) {
-                    vm.approval.start_date =  e.date.format('DD/MM/YYYY');
+
+                    if (($(vm.$refs.due_date).data('DateTimePicker').date()!= null)&& ($(vm.$refs.due_date).data('DateTimePicker').date() < $(vm.$refs.start_date).data('DateTimePicker').date())){
+                        vm.startDateError = true;
+                        vm.startDateErrorString = 'Please select Start date that is before Expiry date';
+                        vm.approval.start_date = ""
+                    }
+                    else{
+                        vm.startDateError = false;
+                        vm.startDateErrorString = '';
+                        vm.approval.start_date =  e.date.format('DD/MM/YYYY');
+                    }
+
+                    //vm.approval.start_date =  e.date.format('DD/MM/YYYY');
                 }
                 else if ($(vm.$refs.start_date).data('date') === "") {
                     vm.approval.start_date = "";

@@ -14,6 +14,7 @@ from django.db.models.signals import post_delete, pre_save, post_save
 from django.core.exceptions import ValidationError
 
 from reversion import revisions
+from reversion.models import Version
 from django_countries.fields import CountryField
 
 from social_django.models import UserSocialAuth
@@ -199,7 +200,7 @@ class BaseAddress(models.Model):
         return zlib.crc32(self.summary.strip().upper().encode('UTF8'))
 
 class Address(BaseAddress):
-    user = models.ForeignKey('EmailUser', related_name='profile_adresses')
+    user = models.ForeignKey('EmailUser', related_name='profile_addresses')
     oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses')
     class Meta:
         verbose_name_plural = 'addresses'
@@ -523,11 +524,13 @@ class RevisionedMixin(models.Model):
 
     @property
     def created_date(self):
-        return revisions.get_for_object(self).last().revision.date_created
+        #return revisions.get_for_object(self).last().revision.date_created
+        return Version.objects.get_for_object(self).last().revision.date_created
 
     @property
     def modified_date(self):
-        return revisions.get_for_object(self).first().revision.date_created
+        #return revisions.get_for_object(self).first().revision.date_created
+        return Version.objects.get_for_object(self).first().revision.date_created
 
     class Meta:
         abstract = True
@@ -679,13 +682,16 @@ class ProfileListener(object):
                 address.save()
         # Clear out unused addresses
         # EmailUser can have address that is not linked with profile, hence the exclude
+        ''' This functionality no longer in use due to more than just
+        profile objects using the UserAddresses
+>>>>>>> 5f35680073d526d22a1da2fe14258d450e9d94cf
         user = instance.user
         user_addr = Address.objects.filter(user=user)
         for u in user_addr:
             if not u.profiles.all() \
                 and not u in (user.postal_address, user.residential_address, user.billing_address):
                 u.oscar_address.delete()
-                u.delete()
+                u.delete()'''
 
 class EmailIdentityListener(object):
     """

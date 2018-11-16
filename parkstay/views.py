@@ -233,13 +233,22 @@ class MakeBookingsView(TemplateView):
         VEHICLE_CHOICES = {'0': 'vehicle', '1': 'concession', '2': 'motorbike'}
         BookingVehicleRego.objects.filter(booking=booking).delete()
         for vehicle in vehicles:
-            BookingVehicleRego.objects.create(
+            obj_check = BookingVehicleRego.objects.filter(booking = booking,
+            rego = vehicle.cleaned_data.get('vehicle_rego'),
+            type=VEHICLE_CHOICES[vehicle.cleaned_data.get('vehicle_type')],
+            entry_fee=vehicle.cleaned_data.get('entry_fee')).exists()
+
+            if(not obj_check):
+                BookingVehicleRego.objects.create(
                     booking=booking, 
                     rego=vehicle.cleaned_data.get('vehicle_rego'), 
                     type=VEHICLE_CHOICES[vehicle.cleaned_data.get('vehicle_type')],
                     entry_fee=vehicle.cleaned_data.get('entry_fee')
-            )
-
+                )
+            else:
+                form.add_error(None, 'Duplicate regos not permitted.If unknown add number, e.g. Hire1, Hire2.')
+                return self.render_page(request, booking, form, vehicles,show_errors=True)
+       
         # Check if number of people is exceeded in any of the campsites
         for c in booking.campsites.all():
             if booking.num_guests > c.campsite.max_people:

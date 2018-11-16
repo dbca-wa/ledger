@@ -174,7 +174,18 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
         application = get_object_or_404(Application, pk=self.args[0])
 
         #kwargs['application'] = serialize(application, posthook=format_application)
-        kwargs['application'] = serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']},'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']}})
+        kwargs['application'] = serialize(application,posthook=format_application,
+                                            related={
+                                                'applicant': {'exclude': ['residential_address','postal_address','billing_address']},
+                                                'applicant_profile':{'fields':['email','id','institution','name']},
+                                                'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']},
+                                                'licence':{'related':{
+                                                   'holder':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'issuer':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'profile':{'related': {'user': {'exclude': ['residential_address','postal_address','billing_address']}},
+						       'exclude': ['postal_address']}
+                                                   },'exclude':['holder','issuer','profile','licence_ptr']}
+                                            })
 
         if application.licence:
             kwargs['issue_licence_form'] = IssueLicenceForm(instance=application.licence)
@@ -275,7 +286,18 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
                 return render(request, self.template_name, {
                     #'application': serialize(application, posthook=format_application),
-                    'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']},'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']}}),
+                    'application': serialize(application,posthook=format_application,
+                                                related={
+                                                    'applicant': {'exclude': ['residential_address','postal_address','billing_address']},
+                                                    'applicant_profile':{'fields':['email','id','institution','name']},
+                                                    'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']},
+                                                    'licence':{'related':{
+                                                       'holder':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                       'issuer':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                       'profile':{'related': {'user': {'exclude': ['residential_address','postal_address','billing_address']}},
+                                                           'exclude': ['postal_address']}
+                                                       },'exclude':['holder','issuer','profile','licence_ptr']}
+                                                }),
                     'issue_licence_form': issue_licence_form,
                     'extracted_fields': extracted_fields,
                     'payment_status': payment_status_verbose,
@@ -294,7 +316,18 @@ class IssueLicenceView(OfficerRequiredMixin, TemplateView):
 
             return render(request, self.template_name, {
                 #'application': serialize(application, posthook=format_application),
-                'application': serialize(application,posthook=format_application,related={'applicant': {'exclude': ['residential_address','postal_address','billing_address']},'applicant_profile':{'fields':['email','id','institution','name']},'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']}}),
+                'application': serialize(application,posthook=format_application,
+                                            related={
+                                                'applicant': {'exclude': ['residential_address','postal_address','billing_address']},
+                                                'applicant_profile':{'fields':['email','id','institution','name']},
+                                                'previous_application':{'exclude':['applicant','applicant_profile','previous_application','licence']},
+                                                'licence':{'related':{
+                                                   'holder':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'issuer':{'exclude': ['residential_address','postal_address','billing_address']},
+                                                   'profile':{'related': {'user': {'exclude': ['residential_address','postal_address','billing_address']}},
+                                                       'exclude': ['postal_address']}
+                                                   },'exclude':['holder','issuer','profile','licence_ptr']}
+                                            }),
                 'issue_licence_form': issue_licence_form,
                 'extracted_fields': extracted_fields,
                 'payment_status': payment_status_verbose,
