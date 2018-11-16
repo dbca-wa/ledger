@@ -22,8 +22,8 @@ class TestSetup(TestCase):
         adminUser = EmailUser.objects.create_superuser(email=adminUN, password="pass")
         user = EmailUser.objects.create_user(email=nonAdminUN, password="pass")
 
-        userAdmin = EmailUser.objects.get(email=adminUN)
-        orderAdmin = mixer.blend(Order, user=userAdmin)
+        self.userAdmin = EmailUser.objects.get(email=adminUN)
+        orderAdmin = mixer.blend(Order, user=self.userAdmin)
         invoiceAdmin = mixer.blend(Invoice, order_number=orderAdmin.number, reference="123456")
 
         userNonAdmin = EmailUser.objects.get(email=nonAdminUN)
@@ -52,9 +52,12 @@ class TestSetup(TestCase):
         self.msBooking = mixer.blend(MooringsiteBooking, campsite=self.site, booking=self.booking, from_dt=(datetime.now()+timedelta(days=1)).date(), to_dt=(datetime.now()+timedelta(days=4)).date())
         # self.MABRange = mixer.blend(MooringAreaBookingRange, campground=self.area, skip_validation=True)
 
+        self.region = mixer.blend(Region)
+
         self.adReason = mixer.blend(AdmissionsReason, detailRequired=False)
         self.prReason = mixer.blend(PriceReason, detailRequired=False)
         self.opReason = mixer.blend(OpenReason, detailRequired=False)
+        self.maxStayReason = mixer.blend(MaximumStayReason, detailRequired=False)
         
         settings.SESSION_ENGINE = 'django.contrib.sessions.backends.file'
         engine = import_module(settings.SESSION_ENGINE)

@@ -65,7 +65,6 @@ from mooring.models import (MooringArea,
                                 MooringAreaGroup,
                                 AdmissionsBooking,
                                 AdmissionsRate,
-                                BookingPeriodOption,
                                 AdmissionsBookingInvoice,
                                 BookingPeriodOption,
                                 BookingPeriod,
@@ -481,10 +480,12 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
                 max_days = min([x.max_days for x in stay_history])
             else:
                 max_days = settings.PS_MAX_BOOKING_LENGTH
-            if (end_date - start_date).days <= max_days:            
+            if (end_date - start_date).days <= max_days:   
                 queryset.append(q)
 
+        print "DEBUG-queryset: ", queryset
         serializer = self.get_serializer(queryset, many=True)
+        print "DEBUG-serializer.data: ", serializer.data
         return Response(serializer.data)
 
 
@@ -557,7 +558,6 @@ def add_booking(request, *args, **kwargs):
     print booking.id
     print "BP"
     print request.POST['bp_id']
-    #print BookingPeriodOption.objects.all()
     mooringsite = Mooringsite.objects.get(id=request.POST['site_id'])
 
 

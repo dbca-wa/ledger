@@ -191,7 +191,7 @@ class AdmissionsReasonViewSetTestCase(TestSetup):
 #         """
 #         self.client.login(email=adminUN, password='pass')
 #         print "DEBUG: ", self.area
-#         print "DEBUG: ", self.areaGroup
+#         print "DEBUG: ", self.areaGroup.moorings
 #         response = self.client.get(self.url)
 #         self.assertEqual(response.status_code, 200)
 
@@ -705,6 +705,11 @@ class CountryViewSetTestCase(TestSetup):
 
 class DistrictViewSetTestCase(TestSetup):
     url = '/api/districts/'
+    data = {
+        'name' : "A Name",
+        'abbreviation' : "Nme",
+        'ratis_id' : -1
+    }
 
     def test_api_get_admin(self):
         """ Test the District View API endpoint GET response when logged in as admin user.
@@ -730,8 +735,9 @@ class DistrictViewSetTestCase(TestSetup):
         """Test the District View API endpoint POST response when logged in as admin user.
         """
         self.client.login(email=adminUN, password='pass')
-        response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 400)
+        self.data['region'] = self.region.id
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
+        self.assertEqual(response.status_code, 201)
 
     def test_api_post_non_admin(self):
         """Test the District View API endpoint POST response when logged in as external user.
@@ -748,6 +754,11 @@ class DistrictViewSetTestCase(TestSetup):
 
 class FeatureViewSetTestCase(TestSetup):
     url = '/api/features/'
+    data = {
+        'name' : "A Name",
+        'description': "Description text",
+        'image' : None
+    }
 
     def test_api_get_admin(self):
         """ Test the Feature View API endpoint GET response when logged in as admin user.
@@ -773,8 +784,8 @@ class FeatureViewSetTestCase(TestSetup):
         """Test the Feature View API endpoint POST response when logged in as admin user.
         """
         self.client.login(email=adminUN, password='pass')
-        response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 400)
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
+        self.assertEqual(response.status_code, 201)
 
     def test_api_post_non_admin(self):
         """Test the Feature View API endpoint POST response when logged in as external user.
@@ -1257,6 +1268,17 @@ class MooringAreaMapViewSetTestCase(TestSetup):
 
 class MooringAreaStayHistoryViewSetTestCase(TestSetup):
     url = '/api/mooring_stay_history/'
+    start = datetime.now()
+    end = datetime.now() + timedelta(days=3)
+    data = {
+        'range_start': "{}-{}-{}".format(start.year, start.month, start.day),
+        'range_end': "{}-{}-{}".format(end.year, end.month, end.day),
+        'min_days': 1,
+        'max_days': 12,
+        'min_dba': 1,
+        'max_dba': 12,
+        'details': "Some details here.",
+    }
 
     def test_api_get_admin(self):
         """ Test the Mooring Area Stay History View API endpoint GET response when logged in as admin user.
@@ -1278,24 +1300,26 @@ class MooringAreaStayHistoryViewSetTestCase(TestSetup):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 403)
 
-    def test_api_post_admin(self):
-        """Test the Mooring Area Stay History View API endpoint POST response when logged in as admin user.
-        """
-        self.client.login(email=adminUN, password='pass')
-        response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 400)
+    # def test_api_post_admin(self):
+    #     """Test the Mooring Area Stay History View API endpoint POST response when logged in as admin user.
+    #     """
+    #     self.data['reason'] = self.maxStayReason.id
+    #     self.data['mooringarea'] = self.area.id
+    #     self.client.login(email=adminUN, password='pass')
+    #     response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
+    #     self.assertEqual(response.status_code, 201)
 
     def test_api_post_non_admin(self):
         """Test the Mooring Area Stay History View API endpoint POST response when logged in as external user.
         """
         self.client.login(email=nonAdminUN, password='pass')
-        response = self.client.post(self.url)
+        response = self.client.put(self.url, json.dumps(self.data), partial=True, content_type='application/json')
         self.assertEqual(response.status_code, 403)
 
     def test_api_post_anon(self):
         """Test the Mooring Area Stay History View API endpoint POST response when not logged in.
         """
-        response = self.client.post(self.url)
+        response = self.client.put(self.url, json.dumps(self.data), partial=True, content_type='application/json')
         self.assertEqual(response.status_code, 403)
 
 class MooringAreaViewSetTestCase(TestSetup):
@@ -1326,7 +1350,7 @@ class MooringAreaViewSetTestCase(TestSetup):
         """
         self.client.login(email=adminUN, password='pass')
         response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 200)
 
     def test_api_post_non_admin(self):
         """Test the Mooring Area View API endpoint POST response when logged in as external user.
@@ -1343,6 +1367,9 @@ class MooringAreaViewSetTestCase(TestSetup):
 
 class MooringGroupTestCase(TestSetup):
     url = '/api/mooring_groups/'
+    data = {
+        'name': "name text"
+    }
 
     def test_api_get_admin(self):
         """ Test the Mooring Group API endpoint GET response when logged in as admin user.
@@ -1368,25 +1395,38 @@ class MooringGroupTestCase(TestSetup):
         """Test the Mooring Group API endpoint POST response when logged in as admin user.
         """
         self.client.login(email=adminUN, password='pass')
-        response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 400)
+        self.data['members'] = [self.userAdmin.id]
+        self.data['moorings'] = [self.area.id]
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
+        self.assertEqual(response.status_code, 201)
 
     def test_api_post_non_admin(self):
         """Test the Mooring Group API endpoint POST response when logged in as external user.
         """
         self.client.login(email=nonAdminUN, password='pass')
-        response = self.client.post(self.url)
+        self.data['members'] = [self.userAdmin.id]
+        self.data['moorings'] = [self.area.id]
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
         self.assertEqual(response.status_code, 403)
 
-    def test_api_post_non_admin(self):
+    def test_api_post_anon(self):
         """Test the Mooring Group API endpoint POST response when logged in as external user.
         """
-        self.client.login(email=nonAdminUN, password='pass')
-        response = self.client.post(self.url)
+        self.data['members'] = [self.userAdmin.id]
+        self.data['moorings'] = [self.area.id]
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
         self.assertEqual(response.status_code, 403)
 
 class MooringsiteBookingRangeViewSetTestCase(TestSetup):
     url = '/api/mooringsite_booking_ranges/'
+    start = datetime.now()
+    end = datetime.now() + timedelta(days=3)
+    data = {
+        'status' : 0,
+        'range_start': "{}/{}/{}".format(start.day, start.month, start.year),
+        'range_end': "{}/{}/{}".format(end.day, end.month, end.year),
+        'details' : "Some details",
+    }
 
     def test_api_get_admin(self):
         """ Test the Mooring Area Booking Range API endpoint GET response when logged in as admin.
@@ -1412,25 +1452,34 @@ class MooringsiteBookingRangeViewSetTestCase(TestSetup):
         """Test the Mooring Area Booking Range API endpoint POST response when logged in as admin user.
         """
         self.client.login(email=adminUN, password='pass')
-        response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 400)
+        self.data['open_reason'] = self.opReason.id
+        self.data['campsite'] = self.area.id
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
+        self.assertEqual(response.status_code, 201)
 
     def test_api_post_non_admin(self):
         """Test the Mooring Area Booking Range API endpoint POST response when logged in as external user.
         """
         self.client.login(email=nonAdminUN, password='pass')
-        response = self.client.post(self.url)
+        self.data['open_reason'] = self.opReason.id
+        self.data['campsite'] = self.area.id
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
         self.assertEqual(response.status_code, 403)
 
-    def test_api_post_non_admin(self):
+    def test_api_post_anon(self):
         """Test the Mooring Area Booking Range API endpoint POST response when logged in as external user.
         """
-        self.client.login(email=nonAdminUN, password='pass')
-        response = self.client.post(self.url)
+        self.data['open_reason'] = self.opReason.id
+        self.data['campsite'] = self.area.id
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
         self.assertEqual(response.status_code, 403)
 
 class MooringsiteBookingViewSetTestCase(TestSetup):
     url = '/api/mooringsite_bookings/'
+    start = datetime.now()
+    data = {
+        'date': "{}-{}-{}".format(start.year, start.month, start.day)
+    }
 
     def test_api_get_admin(self):
         """ Test the Mooringsite Booking View API endpoint GET response when logged in as admin.
@@ -1456,21 +1505,25 @@ class MooringsiteBookingViewSetTestCase(TestSetup):
         """Test the Mooringsite Booking View API endpoint POST response when logged in as admin user.
         """
         self.client.login(email=adminUN, password='pass')
-        response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 400)
+        self.data['campsite'] = self.site.id
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
+        print "DEBUG: ", response
+        self.assertEqual(response.status_code, 201)
 
     def test_api_post_non_admin(self):
         """Test the Mooringsite Booking View API endpoint POST response when logged in as external user.
         """
         self.client.login(email=nonAdminUN, password='pass')
-        response = self.client.post(self.url)
+        self.data['campsite'] = self.site.id
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
         self.assertEqual(response.status_code, 403)
 
-    def test_api_post_non_admin(self):
+    def test_api_post_anon(self):
         """Test the Mooringsite Booking View API endpoint POST response when logged in as external user.
         """
         self.client.login(email=nonAdminUN, password='pass')
-        response = self.client.post(self.url)
+        self.data['campsite'] = self.site.id
+        response = self.client.post(self.url, json.dumps(self.data), content_type='application/json')
         self.assertEqual(response.status_code, 403)
 
 class MooringsiteClassViewSetTestCase(TestSetup):

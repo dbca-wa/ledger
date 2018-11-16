@@ -179,6 +179,22 @@
                         <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank"  v-on:click="BookNow()" >Book now</a>
                     </div>
                 </div>
+                <div class="legend" id="legend" style="margin-top:20px;">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            Public Mooring:
+                            <img class="publicPin" src="assets/map_pins/pin_gray.png" />
+                        </div>
+                        <div class="col-sm-4">
+                            Available Mooring:
+                            <img class="publicPin" src="assets/map_pins/pin_orange.png" />
+                        </div>
+                        <div class="col-sm-4">
+                            Unavailable Mooring:
+                            <img class="publicPin" src="assets/map_pins/pin_red.png" />
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <template v-if="extentFeatures.length > 0">
