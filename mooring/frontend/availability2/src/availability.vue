@@ -1,5 +1,6 @@
 <template>
     <div id="sites-cal" class="f6inject">
+
         <a name="makebooking" />
         <div class="row" v-if="status == 'offline'">
             <div class="columns small-12 medium-12 large-12">
@@ -32,11 +33,33 @@
                 </div>
             </div>
         </div>
+        <div class="row" v-if="timeleft < 0">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="callout alert">
+                    Session Expired <br/>
+                    <template v-if="showSecondErrorLine">
+                    Sorry your Session has expired
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div class="columns small-12 medium-12 large-12" v-show="ongoing_booking">
+        <div class="row">
+                <div class="small-8 medium-9 large-10">
+
+		<button v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }} to complete booking.</button>
+		<a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_id='+parkstayGroundId" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
+                      Cancel in-progress booking
+                </a>
+              </div>
+	   </div>
+	</div>
         <div class="columns small-12 medium-12 large-12">
         <div class="row">
                 <div class="small-8 medium-9 large-10">
                         <div class="panel panel-default">
-                             <div class="panel-heading"> <h3 class="panel-title">Trolley: <span id='total_trolley'>${{ total_booking }}</span></h3></div>
+                             <div class="panel-heading"><h3 class="panel-title">Trolley: <span id='total_trolley'>${{ total_booking }}</span></h3></div>
                               <div class='columns small-12 medium-12 large-12'> 
                                  <div v-for="item in current_booking" class="row small-12 medium-12 large-12">
                                          <div class="columns small-12 medium-9 large-9">{{ item.item }}</div>
@@ -47,19 +70,22 @@
                         </div>
                 </div>
                 <div class="columns small-4 medium-3 large-2">
-                        <a class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'">Check Out</a>
+                         
+                        <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a>
+                        <button  title="Please add items into your trolley." v-show="current_booking.length == 0 " style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" disabled >Add items to Proceed to Check Out</button>
                 </div>
         </div>
         </div>
-
+	<loader :isLoading.sync="isLoading">&nbsp;</loader>
         <div class="row" v-if="name">
             <div class="columns small-12">
                 <h1>V2 - Book mooring: {{ name }}</h1>
             </div>
         </div>
-        <div v-if="ongoing_booking" class="row">
+        <div v-if="ongoing_booking" class="row" style='display:none'>
             <div class="columns small-12 medium-12 large-12">
                 <div class="clearfix">
+                    {{ timeleft }}
                     <a type="button" :href="parkstayUrl+'/booking'" class="button float-right warning continueBooking">
                         Complete in-progress booking
                     </a>
@@ -93,22 +119,37 @@
                     </div>
                 </div>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Arrival
                     <input id="date-arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Departure
                     <input id="date-departure" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Vessel Size
                     <input id="vesselSize" type="number" placeholder="0" v-on:change="update" v-model="vesselSize"/>
                 </label>
             </div>
+            <div class="columns small-6 medium-6 large-2">
+                <label>Distance (radius)
+                    <input id="distanceRadius" type="number" placeholder="0" v-on:change="update" v-model="distanceRadius"/>
+                </label>
+            </div>
+            <div class="columns small-6 medium-6 large-2">
 
+	    </div>
+
+            <div class="columns small-6 medium-6 large-2">
+            <span class='pull-right'>
+               <a type="button" :href="/map/" class="button float-right warning">
+                  Search Other Mooring
+               </a>
+	    </span>
+	    </div>
             <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns" style='display:none'>
                 <label>
                     Guests 
@@ -121,7 +162,8 @@
                         </div><div class="small-6 columns">
                             <input type="number" id="numAdults" name="num_adults" @change="update()" v-model="numAdults" min="0" max="16"/>
                         </div>
-                    </div><div class="row">
+                    </div>
+                    <div class="row">
                         <div class="small-6 columns" >
                             <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
 - Seniors Card
@@ -134,13 +176,15 @@
                         </div><div class="small-6 columns">
                             <input type="number" id="numConcessions" name="num_concessions" @change="update()" v-model="numConcessions" min="0" max="16"/>
                         </div>
-                    </div><div class="row">
+                    </div>
+                    <div class="row">
                         <div class="small-6 columns">
                             <label for="num_children" class="text-right">Children (ages 6-15)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="numChildren" name="num_children" @change="update()" v-model="numChildren" min="0" max="16"/>
                         </div>
-                    </div><div class="row">
+                    </div>
+                    <div class="row">
                         <div class="small-6 columns">
                             <label for="num_infants" class="text-right">Infants (ages 0-5)</label>
                         </div><div class="small-6 columns">
@@ -164,18 +208,18 @@
             <table class="hover">
                 <thead>
                     <tr>
-                        <th class="site">Mooring &nbsp;<a class="float-right" target="_blank" :href="map" v-if="map" style='display: none;'>View Map</a> </th>
+                        <th class="site">Mooring &nbsp;<a class="float-right" target="_blank" :href="map" v-if="map" style='display: none;'>View Map</a></th>
                         <th class="book">Book</th>
                         <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
                     </tr>
                 </thead>
-                <tbody><template v-for="site in sites" >
+                <tbody><template v-for="(site, index) in sites" >
                     <tr>
                         <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i></td>
                         <td class="book">
                             <template v-if="site.price">
-                                <button v-if="!ongoing_booking" @click="submitBooking(site)" class="button"><small>Book now</small><br/>{{ site.price }}</button>
-                                <button v-else disabled class="button has-tip" data-tooltip aria-haspopup="true" title="Please complete your current ongoing booking using the button at the top of the page."><small>Book now</small><br/>{{ site.price }}</button>
+                                <button v-if="mooring_book_row[index] == true" @click="addBookingRow(index)" class="button"><small>Book now</small><br/> ${{ mooring_book_row_price[index] }}</button>
+                                <button style='display:none' v-else disabled class="button has-tip" data-tooltip aria-haspopup="true" title="Please complete your current ongoing booking using the button at the top of the page."><small>Book now</small><br/>{{ site.price }}</button>
                             </template>
                             <template v-else>
                                 <button v-if="site.breakdown" class="button warning" @click="toggleBreakdown(site)"><small>Show availability</small></button>
@@ -218,7 +262,6 @@
           <table class="hover">
                 <tbody>
                   <tr>
-
                      <td>
           	Advanced booking is limited to {{ max_advance_booking }} day/s. 
                      </td>
@@ -228,9 +271,9 @@
      </div>
 
 
+
         </div>
        </div>
-
     </div>
 
 </template>
@@ -326,6 +369,7 @@ import debounce from 'debounce';
 import moment from 'moment';
 import swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.css';
+import loader from './loader.vue';
 
 var nowTemp = new Date();
 var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
@@ -364,6 +408,9 @@ function getCookie(name) {
 
 export default {
     el: '#availability',
+    components: {
+        loader,
+    },
     data: function () {
         return {
             name: '',
@@ -383,6 +430,7 @@ export default {
             numConcessions: parseInt(getQueryParam('num_concession', 0)),
             numInfants: parseInt(getQueryParam('num_infants', 0)),
             vesselSize: parseInt(getQueryParam('vessel_size', 0)),
+            distanceRadius: parseInt(getQueryParam('distance_radius', 100)),
             maxAdults: 30,
             maxChildren: 30,
             gearType: getQueryParam('gear_type', 'tent'),
@@ -406,6 +454,11 @@ export default {
             current_booking: [],
             total_booking: '0.00',
             showSecondErrorLine: true,
+            timer: -1,
+            expiry: null,
+            booking_expired_notification: false,
+            mooring_book_row: [],
+            mooring_book_row_price: []
         };
     },
     computed: {
@@ -432,6 +485,44 @@ export default {
                 return this.departureEl[0].value ? moment(this.departureData.getDate()).format('YYYY/MM/DD') : null; 
             }
         },
+        timeleft: {
+                cache: false,
+                get: function get() {
+                    // Minutes and seconds
+                    var mins = ~~(this.timer / 60);
+                    var secs = this.timer % 60;
+
+                    // Hours, minutes and seconds
+                    var hrs = ~~(this.timer / 3600);
+                    var mins = ~~((this.timer % 3600) / 60);
+                    var secs = this.timer % 60;
+
+                    // Output like "1:01" or "4:03:59" or "123:03:59"
+                    var ret = "";
+
+                    if (hrs > 0) {
+                        ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+                    }
+
+                    ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+                    ret += "" + secs;
+                    if (this.ongoing_booking) {
+                       
+                       if (this.timer < 0) {
+                            if (this.booking_expired_notification == false) { 
+   		   	   console.log('TIMED OUT');
+                           clearInterval(this.timer);
+//                         var loc = window.location;
+//                         window.location = loc.protocol + '//' + loc.host + loc.pathname;
+                           this.bookingExpired();
+                           this.booking_expired_notification = true;
+			}
+		       }
+                    }
+                    return ret;
+                }
+        }
+
     },
     methods: {
         toggleMoreInfo: function(){
@@ -450,6 +541,21 @@ export default {
                 site.showBreakdown = true;
             }
         },
+        bookingExpired: function() {
+                swal({
+                  title: 'Booking Expired',
+                  text: "Please click start again to begin booking again:",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'Start Again',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                }).then((value) => {
+                        var loc = window.location;
+                        window.location = loc.protocol + '//' + loc.host + loc.pathname;
+		});
+
+	},
         deleteBooking: function(booking_item_id) {
               var vm = this;
               var submitData = {
@@ -469,13 +575,25 @@ export default {
                   }
               });
 
+	},
+	addBookingRow: function(site_index_id) {
+                        var vm = this;
+                        var avail_index;
+                        // vm.sites = data.sites;
+                        for (avail_index = 0; avail_index < vm.sites[site_index_id].availability.length; ++avail_index) {
+                                        var booking_period = vm.sites[site_index_id].availability[avail_index][1].booking_period;
+                                        //if (booking_period.length > 1) {
+                                        //        vm.mooring_book_row[index] = false;
+                                        //}
+                                        vm.addBooking(vm.sites[site_index_id].id, vm.sites[site_index_id].mooring_id, booking_period[0].id, booking_period[0].date);
+                        }
+
 
 	},
         addBooking: function (site_id, mooring_id,bp_id,date) {
               var vm = this;
-              console.log("ADD BOOKING");
-              console.log(mooring_id+' : '+bp_id);
-              console.log(date);
+              vm.isLoading =true;
+//            $('#spinnerLoader').show();
               var booking_start = $('#date-arrival').val();
               var booking_finish = $('#date-departure').val();
 
@@ -492,15 +610,19 @@ export default {
                   url: vm.parkstayUrl + '/api/booking/create', 
                   dataType: 'json',
                   method: 'POST',
+                  async: false,
                   data: submitData, 
                   success: function(data, stat, xhr) {
                       vm.update();
+                      vm.isLoading =false;
+  //                    $('#spinnerLoader').hide();
                   },
                   error: function(xhr, stat, err) {
                        vm.update();
+                       vm.isLoading =false;
+    //                   $('#spinnerLoader').hide();
                   }
               });
-
         },
         submitBooking: function (site) {
             alert('not working yet');
@@ -519,8 +641,6 @@ export default {
                 })
                 return;
             }
-	 
-             
 
             var submitData = {
                 arrival: vm.arrivalDateString,
@@ -547,7 +667,6 @@ export default {
                     withCredentials: true
                 },
                 success: function(data, stat, xhr) {
-                    //console.log(data);
                     if (data.status == 'success') {
                         window.location.href = vm.parkstayUrl + '/booking';
                     }
@@ -578,7 +697,7 @@ export default {
         },
         update: function() {
             var vm = this;
-
+            $('#spinnerLoader').show();
             debounce(function() {
                 var params = {
                         arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
@@ -587,10 +706,11 @@ export default {
                         num_child: vm.numChildren,
                         num_concession: vm.numConcessions,
                         num_infant: vm.numInfants,
-                        vessel_size: vm.vesselSize
+                        vessel_size: vm.vesselSize,
+                        distance_radius: vm.distanceRadius
                     };
 
-                if (parseInt(vm.parkstayGroundRatisId) > 0){
+                if (parseInt(vm.parkstayGroundRatisId) > 0) {
                     var url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param(params);
                 } else if (vm.useAdminApi) {
                     var url = vm.parkstayUrl + '/api/availability_admin/'+ vm.parkstayGroundId +'/?'+$.param(params);
@@ -602,6 +722,7 @@ export default {
                 $.ajax({
                     url: url,
                     dataType: 'json',
+                    async: false,
                     success: function(data, stat, xhr) {
                         vm.name = data.name;
                         vm.days = data.days;
@@ -615,7 +736,9 @@ export default {
                         vm.max_advance_booking_days = data.max_advance_booking_days;
                         vm.current_booking = data.current_booking;
                         vm.total_booking = data.total_booking;
-                        
+                        vm.timer = data.timer;
+                        vm.expiry = data.expiry;
+         
                         if (data.error_type != null) {
                             vm.status = 'online';
                             return;
@@ -652,12 +775,50 @@ export default {
                             }
                         }
 
+                        // Booking Whole Row Index
+                        var index;
+                        var avail_index;
                         vm.sites = data.sites;
+                      
+                        for (index = 0; index < vm.sites.length; ++index) {
+                                vm.mooring_book_row[index] = true;
+                                vm.mooring_book_row_price[index] = '0.00';
+                                for (avail_index = 0; avail_index < vm.sites[index].availability.length; ++avail_index) {
+                                        var booking_period = vm.sites[index].availability[avail_index][1].booking_period;  
+                                        if (booking_period.length > 0) { 
+                                        if (vm.sites[index].mooring_class == 'small') {
+                                              var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].small_price);
+				              vm.mooring_book_row_price[index] = total.toFixed(2);
+					} else if (vm.sites[index].mooring_class == 'medium') {
+                                              var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].medium_price);
+					      vm.mooring_book_row_price[index] = total.toFixed(2);
+                                        } else if (vm.sites[index].mooring_class == 'large') {
+                                              var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].large_price);
+					      vm.mooring_book_row_price[index] = total.toFixed(2);
+					}
+                                        
+
+                                        if (booking_period.length > 1) { 
+                                                vm.mooring_book_row[index] = false;
+					} else {
+                                             
+					     if (booking_period[0].status == 'closed') {
+							vm.mooring_book_row[index] = false;	
+					     }
+					}
+                                        } else {
+						vm.mooring_book_row[index] = false;
+					}
+				}
+			}
+
+                        // End of booking whole row index
                         vm.status = 'online';
                         if (parseInt(vm.parkstayGroundRatisId) > 0){
                             vm.parkstayGroundId = data.id;
                             vm.updateURL();
                         }
+                        $('#spinnerLoader').hide();
                     },
                     error: function(xhr, stat, err) {
                         vm.showSecondErrorLine = true;
@@ -673,6 +834,7 @@ export default {
                         else{
                             vm.status = 'offline';
                         }
+                        $('#spinnerLoader').hide();
                     }
                 });
             }, 500)();
@@ -680,8 +842,8 @@ export default {
     },
     mounted: function () {
         var vm = this;
+
         $(document).foundation();
-        console.log('DATE PICKER'); 
         this.arrivalEl = $('#date-arrival');
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
@@ -691,10 +853,8 @@ export default {
                 //return '';
             }
         }).on('changeDate', function (ev) {
-            console.log('arrivalEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
-            console.log('arrivalEl change');
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
@@ -719,10 +879,8 @@ export default {
                 return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
-            console.log('departureEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
-            console.log('departureEl change');
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
@@ -732,8 +890,8 @@ export default {
                 ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
-        console.log('DATE PICKER END');
-        console.log(this.site);
+
+
         this.arrivalData.date = this.arrivalDate.toDate();
         this.arrivalData.setValue();
         this.arrivalData.fill();
@@ -741,6 +899,26 @@ export default {
         this.departureData.setValue();
         this.departureData.fill();
         this.update();
+
+            var saneTz = (0 < Math.floor((vm.expiry - moment.now())/1000) < vm.timer);
+            var timer = setInterval(function (ev) {
+                // fall back to the pre-encoded timer
+                if (!saneTz) {
+                    vm.timer -= 1;
+                } else {
+                    // if the timezone is sane, do live updates
+                    // this way unloaded tabs won't cache the wrong time.
+                    var newTimer = Math.floor((vm.expiry - moment.now())/1000);
+                    vm.timer = newTimer;
+                }
+
+                if ((vm.timer <= -1)) {
+//                   clearInterval(timer);
+//                    var loc = window.location;
+//                    window.location = loc.protocol + '//' + loc.host + loc.pathname;
+               }
+            }, 1000);
+
     }
 }
 </script>

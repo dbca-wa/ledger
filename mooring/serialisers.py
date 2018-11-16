@@ -62,6 +62,7 @@ class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     num_mooring = serializers.IntegerField(default=0)
     gear_type = serializers.ChoiceField(choices=('all', 'tent', 'caravan', 'campervan'), default='all')
     vessel_size = serializers.IntegerField(default=0)
+    #distance_radius = serializers.IntegerField(default=0)
 
 class MooringsiteBookingSerializer(serializers.Serializer):
     """Serializer used by the booking creation process."""
@@ -190,9 +191,10 @@ class MooringAreaMapMarinaSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id','name', 'entry_fee_required', 'district')
 
 class MooringAreaMapFilterSerializer(serializers.HyperlinkedModelSerializer):
+
     class Meta:
         model = MooringArea
-        fields = ('id',)
+        fields = ('id')
 
 class MooringAreaMapImageSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
