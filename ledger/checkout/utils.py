@@ -1,4 +1,4 @@
-from decimal import Decimal as D, ROUND_HALF_DOWN
+from decimal import Decimal as D, getcontext
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -59,6 +59,9 @@ def create_checkout_session(request, parameters):
 
     session_data = CheckoutSessionData(request) 
 
+    # reset method of payment when creating a new session
+    session_data.pay_by(None)
+    
     session_data.use_system(serializer.validated_data['system'])
     session_data.charge_by(serializer.validated_data['card_method'])
     session_data.use_shipping_method(serializer.validated_data['shipping_method'])
@@ -247,8 +250,10 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
 
 def calculate_excl_gst(amount):
-    result = D(100.0)/ D(100 + settings.LEDGER_GST) * D(amount)
-    return result.quantize(D('0.01'), ROUND_HALF_DOWN)
+    TWELVEPLACES = D(10) ** -12
+    getcontext().prec = 22
+    result = (D(100.0) / D(100 + settings.LEDGER_GST) * D(amount)).quantize(TWELVEPLACES)
+    return result
 
 
 def createBasket(product_list, owner, system, vouchers=None, force_flush=True):

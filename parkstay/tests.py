@@ -89,6 +89,15 @@ def create_fixtures():
     prsd = ps.PriceReason.objects.create(text='Default fees', editable=True)
     pr = ps.ParkEntryRate.objects.create(period_start=datetime.date.today(), vehicle=D('3.00'), motorbike=D('2.00'), concession=D('1.00'), reason=prsd)
 
+    r1 = ps.Rate.objects.create(adult=D(11.00), child=D(3.00), concession=D(7.00), infant=D(0.00))
+    r2 = ps.Rate.objects.create(adult=D(13.00), child=D(4.00), concession=D(9.00), infant=D(0.00))
+
+    cs1ar1 = ps.CampsiteRate.objects.create(campsite_id=cs1a.id, rate_id=r1.id, date_start=datetime.date.today(), price_model=0, rate_type=0, reason_id=prsd.id, update_level=0)
+    cs1br2 = ps.CampsiteRate.objects.create(campsite_id=cs1b.id, rate_id=r2.id, date_start=datetime.date.today(), price_model=0, rate_type=0, reason_id=prso.id, update_level=0)
+    cs2ar1 = ps.CampsiteRate.objects.create(campsite_id=cs2a.id, rate_id=r1.id, date_start=datetime.date.today(), price_model=0, rate_type=0, reason_id=prsd.id, update_level=0)
+    cs2br2 = ps.CampsiteRate.objects.create(campsite_id=cs2b.id, rate_id=r2.id, date_start=datetime.date.today(), price_model=0, rate_type=0, reason_id=prsd.id, update_level=0)
+    cs2cr2 = ps.CampsiteRate.objects.create(campsite_id=cs2c.id, rate_id=r2.id, date_start=datetime.date.today(), price_model=0, rate_type=0, reason_id=prso.id, update_level=0)
+
 
 class ClientBookingTestCase(TransactionTestCase):
     create_booking_url = reverse('create_booking')
@@ -406,23 +415,23 @@ class BookingRangeTestCase(TestCase):
         av1 = utils.get_campsite_availability(cs_qs, ext_date(-1), ext_date(15))
         # check for campsite closures
         for d in [ext_date(x) for x in range(10, 15)]:
-            self.assertEqual(tuple(av1[cs1a.pk][d]), ('closed',))
-            self.assertEqual(tuple(av1[cs1b.pk][d]), ('closed',))
+            self.assertEqual(tuple(av1[cs1a.pk][d]), ('closed','Other'))
+            self.assertEqual(tuple(av1[cs1b.pk][d]), ('closed','Other'))
 
         for d in [ext_date(x) for x in range(12, 15)]:
-            self.assertEqual(tuple(av1[cs2a.pk][d]), ('closed',))
+            self.assertEqual(tuple(av1[cs2a.pk][d]), ('closed','Other'))
 
         for d in [ext_date(x) for x in range(14, 15)]:
-            self.assertEqual(tuple(av1[cs2b.pk][d]), ('closed',))
+            self.assertEqual(tuple(av1[cs2b.pk][d]), ('closed','Other'))
         
         # check for earlier-than-today cutoff
         for cs in cs_qs:
-            self.assertEqual(tuple(av1[cs.pk][ext_date(-1)]), ('tooearly',))
+            self.assertEqual(tuple(av1[cs.pk][ext_date(-1)]), ('tooearly',None))
 
         # check for far future cutoff
         max_adv = cg2.max_advance_booking
         av2 = utils.get_campsite_availability(ps.Campsite.objects.filter(id=cs2b.pk), ext_date(max_adv+1), ext_date(max_adv+3))
         print(av2[cs2b.pk])
         for i in range(max_adv+1, max_adv+3):
-            self.assertEqual(tuple(av2[cs2b.pk][ext_date(i)]), ('toofar',) if i > max_adv else ('open',))
+            self.assertEqual(tuple(av2[cs2b.pk][ext_date(i)]), ('toofar',None) if i > max_adv else ('open',None))
 

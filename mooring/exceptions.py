@@ -1,0 +1,3 @@
+
+class BookingRangeWithinException(Exception):
+    pass

@@ -1,0 +1,5 @@
+{%  extends 'mooring/email/base_email.html' %}
+
+{% block content %}
+Please find attached the invoice for your own records for your upcoming trip to <b>{{ booking.mooringarea.name }}</b> in {{ booking.mooringarea.park.name }}, from {{ booking.stay_dates }}. <br/>
+{% endblock %}

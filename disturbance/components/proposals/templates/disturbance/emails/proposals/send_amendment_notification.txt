@@ -1,7 +1,7 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Proposal {{ proposal.lodgement_number }} has been reviewed and requires an amendment before approval.
+    Your Proposal {{ proposal.lodgement_number }} has been reviewed and requires an amendment before further assessment.
 
     {% if reason %}
         <p>

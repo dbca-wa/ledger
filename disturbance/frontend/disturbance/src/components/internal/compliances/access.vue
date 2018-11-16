@@ -22,7 +22,7 @@
                             <div class="col-sm-12 top-buffer-s">
                                 <table class="table small-table">
                                     <tr>
-                                        <th>Lodgment</th>
+                                        <th>Lodgement</th>
                                         <th>Date</th>
                                         <th>Action</th>
                                     </tr>
@@ -142,8 +142,7 @@ export default {
   watch: {},
   filters: {
     formatDate: function(data){
-        return moment(data).format('DD/MM/YYYY HH:mm:ss');
-    }
+        return data ? moment(data).format('DD/MM/YYYY'): '';    }
   },
   beforeRouteEnter: function(to, from, next){
     Vue.http.get(helpers.add_endpoint_json(api_endpoints.compliances,to.params.compliance_id)).then((response) => {

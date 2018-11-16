@@ -5,9 +5,10 @@ from ledger.accounts.models import EmailUser, Document
 from disturbance.components.proposals.models import ProposalDocument
 from disturbance.components.proposals.serializers import SaveProposalSerializer
 import traceback
+import os
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
-    data = {} 
+    data = {}
     special_fields_list = []
     assessor_data_list = []
     comment_data_list = {}
@@ -17,7 +18,9 @@ def create_data_from_form(schema, post_data, file_data, post_data_index=None,spe
         comment_fields_search = CommentDataSearch()
     try:
         for item in schema:
+            #import ipdb; ipdb.set_trace()
             data.update(_create_data_from_item(item, post_data, file_data, 0, ''))
+            #_create_data_from_item(item, post_data, file_data, 0, '')
             special_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
             if assessor_data:
                 assessor_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
@@ -39,15 +42,17 @@ def _extend_item_name(name, suffix, repetition):
 
 def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     item_data = {}
-    
+
     if 'name' in item:
         extended_item_name = item['name']
     else:
         raise Exception('Missing name in item %s' % item['label'])
 
+    #import ipdb; ipdb.set_trace()
     if 'children' not in item:
         if item['type'] in ['checkbox' 'declaration']:
             #item_data[item['name']] = post_data[item['name']]
+            #import ipdb; ipdb.set_trace()
             item_data[item['name']] = extended_item_name in post_data
         elif item['type'] == 'file':
             if extended_item_name in file_data:
@@ -67,6 +72,7 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
         if 'repetition' in item:
             item_data = generate_item_data(extended_item_name,item,item_data,post_data,file_data,len(post_data[item['name']]),suffix)
         else:
+            #import ipdb; ipdb.set_trace()
             item_data = generate_item_data(extended_item_name, item, item_data, post_data, file_data,1,suffix)
 
 
@@ -75,11 +81,13 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
             for child in item['conditions'][condition]:
                 item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
 
+    #import ipdb; ipdb.set_trace()
     return item_data
 
 def generate_item_data(item_name,item,item_data,post_data,file_data,repetition,suffix):
     item_data_list = []
     for rep in xrange(0, repetition):
+        #import ipdb; ipdb.set_trace()
         child_data = {}
         for child_item in item.get('children'):
             child_data.update(_create_data_from_item(child_item, post_data, file_data, 0,
@@ -119,7 +127,7 @@ class AssessorDataSearch(object):
                                 'email':ref_parts[1],
                                 'full_name': EmailUser.objects.get(email=ref_parts[1]).get_full_name()
                             })
-                        else:
+                        elif k.split('-')[-1].lower() == 'assessor':
                             # Assessor
                             res['assessor'] = v
 
@@ -128,11 +136,16 @@ class AssessorDataSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
         if 'children' not in item:
+            if 'conditions' in item:
+                for condition in item['conditions'].keys():
+                    for child in item['conditions'][condition]:
+                        item_data.update(self.extract_special_fields(child, post_data, file_data, repetition, suffix))
+
             if item.get(self.lookup_field):
                 self.assessor_data.append(self.extract_assessor_data(extended_item_name,post_data))
 
@@ -142,11 +155,10 @@ class AssessorDataSearch(object):
             else:
                 item_data = self.generate_item_data_special_field(extended_item_name, item, item_data, post_data, file_data,1,suffix)
 
-
-        if 'conditions' in item:
-            for condition in item['conditions'].keys():
-                for child in item['conditions'][condition]:
-                    item_data.update(self.extract_special_fields(child, post_data, file_data, repetition, suffix))
+            if 'conditions' in item:
+                for condition in item['conditions'].keys():
+                    for child in item['conditions'][condition]:
+                        item_data.update(self.extract_special_fields(child, post_data, file_data, repetition, suffix))
 
         return item_data
 
@@ -169,7 +181,7 @@ class CommentDataSearch(object):
         self.comment_data = {}
 
     def extract_comment_data(self,item,post_data):
-        res = {} 
+        res = {}
         values = []
         for k in post_data:
             if re.match(item,k):
@@ -187,7 +199,7 @@ class CommentDataSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -229,7 +241,7 @@ class SpecialFieldsSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -282,34 +294,45 @@ def save_proponent_data(instance,request,viewset):
     with transaction.atomic():
         try:
             lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
-            extracted_fields,special_fields = create_data_from_form(
-                instance.schema, request.POST, request.FILES,special_fields=lookable_fields)
+            extracted_fields,special_fields = create_data_from_form(instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
             instance.data = extracted_fields
+            #import ipdb; ipdb.set_trace()
             data = {
-                'region': special_fields.get('isRegionColumnForDashboard',None),
+                #'region': special_fields.get('isRegionColumnForDashboard',None),
                 'title': special_fields.get('isTitleColumnForDashboard',None),
                 'activity': special_fields.get('isActivityColumnForDashboard',None),
+
                 'data': extracted_fields,
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
                 'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
                # 'lodgement_sequence': 1 if instance.lodgement_sequence == 0 else instance.lodgement_sequence,
-               
+
             }
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
             # Save Documents
-            for f in request.FILES:
-                try:
-                    #document = instance.documents.get(name=str(request.FILES[f]))
-                    document = instance.documents.get(input_name=f)
-                except ProposalDocument.DoesNotExist:
-                    document = instance.documents.get_or_create(input_name=f)[0]
-                document.name = str(request.FILES[f])
-                if document._file and os.path.isfile(document._file.path):
-                    os.remove(document._file.path)
-                document._file = request.FILES[f]
-                document.save()
+#            for f in request.FILES:
+#                try:
+#                    #document = instance.documents.get(name=str(request.FILES[f]))
+#                    document = instance.documents.get(input_name=f)
+#                except ProposalDocument.DoesNotExist:
+#                    document = instance.documents.get_or_create(input_name=f)[0]
+#                document.name = str(request.FILES[f])
+#                if document._file and os.path.isfile(document._file.path):
+#                    os.remove(document._file.path)
+#                document._file = request.FILES[f]
+#                document.save()
+
+#            for f in request.FILES:
+#                #import ipdb; ipdb; ipdb.set_trace()
+#                try:
+#					document = instance.documents.get(input_name=f, name=request.FILES[f].name)
+#                except ProposalDocument.DoesNotExist:
+#					document = instance.documents.get_or_create(input_name=f, name=request.FILES[f].name)[0]
+#                document._file = request.FILES[f]
+#                document.save()
+
             # End Save Documents
         except:
             raise
@@ -343,3 +366,46 @@ def save_assessor_data(instance,request,viewset):
             # End Save Documents
         except:
             raise
+
+def clone_proposal_with_status_reset(proposal):
+    with transaction.atomic():
+        try:
+            proposal.customer_status = 'draft'
+            proposal.processing_status = 'draft'
+            proposal.assessor_data = {}
+            proposal.comment_data = {}
+
+            #proposal.id_check_status = 'not_checked'
+            #proposal.character_check_status = 'not_checked'
+            #proposal.compliance_check_status = 'not_checked'
+            #Sproposal.review_status = 'not_reviewed'
+
+            proposal.lodgement_number = ''
+            proposal.lodgement_sequence = 0
+            proposal.lodgement_date = None
+
+            proposal.assigned_officer = None
+            proposal.assigned_approver = None
+
+            proposal.approval = None
+
+            original_proposal_id = proposal.id
+
+            proposal.previous_proposal = proposal.objects.get(id=original_proposal_id)
+
+            proposal.id = None
+
+            #proposal.save(no_revision=True)
+            proposal.save()
+
+
+            # clone documents
+            for proposal_document in ProposalDocuments.objects.filter(proposal=original_proposal_id):
+                proposal_document.proposal = proposal
+                proposal_document.id = None
+                proposal_document.save()
+
+            return proposal
+        except:
+            raise
+

@@ -8,6 +8,7 @@ import Referral from '../referrals/referral.vue'
 import ApprovalDash from '../approvals/dashboard.vue'
 import ComplianceDash from '../compliances/dashboard.vue'
 import Compliance from '../compliances/access.vue'
+import Approval from '../approvals/approval.vue'
 export default
 {
     path: '/internal',
@@ -27,6 +28,11 @@ export default
             path: 'approvals',
             component: ApprovalDash,
             name:"internal-approvals-dash"
+        },
+        {
+            path: 'approval/:approval_id',
+            component: Approval,
+           
         },
         {
             path: 'compliances',

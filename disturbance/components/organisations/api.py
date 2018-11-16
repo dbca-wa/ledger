@@ -35,7 +35,7 @@ from disturbance.components.organisations.models import  (
                                     OrganisationRequestLogEntry,
                                 )
 
-from disturbance.components.organisations .serializers import (   
+from disturbance.components.organisations.serializers import (   
                                         OrganisationSerializer,
                                         OrganisationAddressSerializer,
                                         DetailsSerializer,
@@ -54,6 +54,7 @@ from disturbance.components.organisations .serializers import (
 from disturbance.components.proposals.serializers import (
                                         DTProposalSerializer,
                                     )
+from disturbance.components.organisations.emails import send_org_access_group_request_accept_email_notification
 
 class OrganisationViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
@@ -99,7 +100,10 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             raise
         except ValidationError as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -359,6 +363,24 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET',])
+    def decline(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            reason=''
+            instance.decline(reason, request)
+            serializer = OrganisationRequestSerializer(instance)
+            return Response(serializer.data) 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['POST',])
     def assign_to(self, request, *args, **kwargs):
         try:
@@ -455,6 +477,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             serializer.validated_data['requester'] = request.user
             with transaction.atomic():
                 instance = serializer.save()
+                instance.send_org_access_group_request_notification(request)
                 instance.log_user_action(OrganisationRequestUserAction.ACTION_LODGE_REQUEST.format(instance.id),request)
             return Response(serializer.data)
         except serializers.ValidationError:

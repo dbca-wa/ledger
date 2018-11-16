@@ -13,8 +13,10 @@ from disturbance.components.main.models import UserAction,CommunicationsLogEntry
 from disturbance.components.organisations.utils import random_generator
 from disturbance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
+                        send_organisation_request_decline_email_notification,
                         send_organisation_link_email_notification,
                         send_organisation_unlink_email_notification,
+                        send_org_access_group_request_accept_email_notification,
             )
 
 @python_2_unicode_compatible
@@ -71,11 +73,16 @@ class Organisation(models.Model):
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
             # delete contact person
             try:
-                OrganisationContact.objects.get(
+                '''OrganisationContact.objects.get(
                     organisation = self,
                     email = delegate.user.email
                 
-                ).delete()
+                ).delete()'''
+                org_contact = OrganisationContact.objects.get(organisation = self, email = delegate.user.email)
+                if OrganisationContact.objects.filter(organisation=self).count()>1:
+                    org_contact.delete()
+                else:
+                    raise ValidationError('You cannot unlink the last Organisation user')
             except OrganisationContact.DoesNotExist:
                 pass
             # delete delegate
@@ -95,8 +102,11 @@ class Organisation(models.Model):
         self.log_user_action(OrganisationAction.ACTION_UPDATE_ADDRESS, request)
 
     def update_contacts(self, request):
-        contact = self.contact.last()
-        self.log_user_action(OrganisationAction.ACTION_UPDATE_CONTACTS.format('{} {}({})'.format(contact.first_name, contact.last_name, contact.email)), request)
+        try:
+            contact = self.contact.last()
+            self.log_user_action(OrganisationAction.ACTION_UPDATE_CONTACTS.format('{} {}({})'.format(contact.first_name, contact.last_name, contact.email)), request)
+        except:
+            pass
 
     def generate_pins(self):
         self.pin_one = self._generate_pin()
@@ -286,7 +296,13 @@ class OrganisationRequest(models.Model):
         
         )
         # send email to requester
-        send_organisation_request_accept_email_notification(self,org,request)
+        send_organisation_request_accept_email_notification(self, org, request)
+
+    def send_org_access_group_request_notification(self,request):
+        # user submits a new organisation request
+        # send email to organisation access group
+        org_access_recipients = [i.email for i in OrganisationAccessGroup.objects.last().all_members]
+        send_org_access_group_request_accept_email_notification(self, request, org_access_recipients)
 
     def assign_to(self, user,request):
         with transaction.atomic():
@@ -310,6 +326,7 @@ class OrganisationRequest(models.Model):
                 request = self
             )
             self.log_user_action(OrganisationRequestUserAction.ACTION_DECLINE_REQUEST,request)
+            send_organisation_request_decline_email_notification(self,request)
 
     def log_user_action(self, action, request):
         return OrganisationRequestUserAction.log_action(self, action, request.user)
@@ -331,6 +348,7 @@ class OrganisationAccessGroup(models.Model):
 
     class Meta:
         app_label = 'disturbance'
+        verbose_name_plural = "Organisation access group"
         
 class OrganisationRequestUserAction(UserAction):
     ACTION_LODGE_REQUEST = "Lodge request {}"
@@ -385,3 +403,15 @@ class OrganisationRequestLogEntry(CommunicationsLogEntry):
 
     class Meta:
         app_label = 'disturbance'
+
+
+
+import reversion
+reversion.register(Organisation, follow=['contacts', 'action_logs', 'comms_logs'])
+reversion.register(OrganisationContact)
+reversion.register(OrganisationAction)
+reversion.register(OrganisationLogEntry)
+reversion.register(OrganisationLogDocument)
+reversion.register(OrganisationRequest)
+reversion.register(UserDelegation)
+
