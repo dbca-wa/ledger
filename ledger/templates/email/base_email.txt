@@ -8,12 +8,12 @@ Dear Sir/Madam,
 {% block signature %}
 Yours sincerely,
 
-Department of Parks and Wildlife
+Department of Biodiversity, Conservation and Attractions
 {% endblock %}
 
 
 
 {% block reply_statement %}
 Please do not reply directly to this email. Should you need to contact the Department of 
-Parks and Wildlife, please send emails to asi@dpaw.wa.gov.au or call (08) 9219 9000.
+Biodiversity, Conservation and Attractions, please send emails to asi@dpaw.wa.gov.au or call (08) 9219 9000.
 {% endblock %}

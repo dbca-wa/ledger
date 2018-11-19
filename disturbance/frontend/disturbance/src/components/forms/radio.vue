@@ -1,7 +1,7 @@
 <template lang="html">
     <div v-if="readonly">
         <div class="radio">
-            <label>
+            <label :id="id">
                 <input ref="radioB" :name="name" disabled type="radio" :value="value" @change="handleChange"  :required="isRequired" :data-conditions="options" :checked="isChecked"/>{{ label}}
             </label>
         </div>
@@ -9,7 +9,7 @@
     </div>
     <div v-else>
         <div class="radio">
-            <label>
+            <label :id="id">
                 <input ref="radioB" :name="name" type="radio" :value="value" @change="handleChange"  :required="isRequired" :data-conditions="options" :checked="isChecked"/>{{ label}}
             </label>
         </div>
@@ -19,7 +19,7 @@
 <script>
 export default {
     name:"radiobuttons",
-    props:["value","label","name","isRequired","handleChange","conditions","savedValue","readonly"],
+    props:["value","label", "id", "name","isRequired","handleChange","conditions","savedValue","readonly"],
     computed:{
         isChecked:function () {
             return this.value == this.savedValue;
@@ -51,4 +51,7 @@ export default {
 </script>
 
 <style lang="css">
+    input {
+        box-shadow:none;
+    }
 </style>

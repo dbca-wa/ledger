@@ -57,6 +57,7 @@ export default {
             form:null,
             amendment: {
             reason:'',
+            reason_id: null,
             amendingProposal: false,
             proposal: vm.proposal_id 
             },
@@ -88,6 +89,7 @@ export default {
             this.isModalOpen = false;
             this.amendment = {
                 reason: '',
+                reason_id: null,
                 proposal: this.proposal_id
             };
             this.errors = false;
@@ -184,10 +186,12 @@ export default {
             on("select2:select",function (e) {
                 var selected = $(e.currentTarget);
                 vm.amendment.reason = selected.val();
+                vm.amendment.reason_id = selected.val();
             }).
             on("select2:unselect",function (e) {
                 var selected = $(e.currentTarget);
                 vm.amendment.reason = selected.val();
+                vm.amendment.reason_id = selected.val();
             });
        }
    },

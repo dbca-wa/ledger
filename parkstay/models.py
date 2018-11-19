@@ -86,6 +86,7 @@ def update_campground_map_filename(instance, filename):
     return 'parkstay/campground_maps/{}/{}'.format(instance.id,filename)
 
 class Campground(models.Model):
+
     CAMPGROUND_TYPE_CHOICES = (
         (0, 'Bookable Online'),
         (1, 'Not Bookable Online'),
@@ -115,6 +116,7 @@ class Campground(models.Model):
     description = models.TextField(blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
     area_activities = models.TextField(blank=True, null=True)
+
     # Tags for communications methods available and access type
     tags = TaggableManager(blank=True)
     driving_directions = models.TextField(blank=True, null=True)
@@ -500,6 +502,7 @@ class Campsite(models.Model):
     caravan = models.BooleanField(default=False)
     min_people = models.SmallIntegerField(default=1)
     max_people = models.SmallIntegerField(default=12)
+    max_vehicles = models.PositiveIntegerField(default=1)
     description = models.TextField(null=True)
 
     def __str__(self):
@@ -543,7 +546,7 @@ class Campsite(models.Model):
         if closure:
             return closure.id
         return None
-    
+
     # Methods
     # =======================================
     def __is_campground_open(self):
@@ -882,9 +885,11 @@ class Booking(models.Model):
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     override_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
     override_reason = models.ForeignKey('DiscountReason', null=True, blank=True)
+    override_reason_info = models.TextField(blank=True, null=True)
     overridden_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True, related_name='overridden_bookings')
     campground = models.ForeignKey('Campground', null=True)
     is_canceled = models.BooleanField(default=False)
+    send_invoice = models.BooleanField(default=False)
     cancellation_reason = models.TextField(null=True,blank=True)
     cancelation_time = models.DateTimeField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)
@@ -1086,27 +1091,27 @@ class Booking(models.Model):
         for i in invoices:
             if not i.voided:
                 amount += i.payment_amount
-
+                       
         if amount == 0:
-            return 'unpaid'
-        # if self.cost_total < amount:
-        #     return 'over_paid'
-        # elif self.cost_total > amount:
-        #     return 'partially_paid'
-        # else:return "paid"
-
+            if self.override_reason and self.override_price == 0:
+                return 'paid'
+            else: 
+                return 'unpaid' 
+            
         if self.override_price:
             if self.override_price < amount:
                 return 'over_paid'
             elif self.override_price > amount:
                 return 'partially_paid'
-            else:return "paid"
+            else:
+                return "paid"
         else:
             if self.cost_total < amount:
                 return 'over_paid'
             elif self.cost_total > amount:
                 return 'partially_paid'
-            else:return "paid"
+            else:
+                return "paid"
              
     def __check_refund_status(self):
         invoices = []
@@ -1116,7 +1121,7 @@ class Booking(models.Model):
         invoices = Invoice.objects.filter(reference__in=references)
         for i in invoices:
             if i.voided:
-                amount += i.payment_amount
+                amount += i.total_payment_amount
                 refund_amount += i.refund_amount
 
         if amount == 0:

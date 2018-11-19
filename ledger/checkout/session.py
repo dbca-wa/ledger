@@ -2,6 +2,8 @@ from oscar.apps.checkout import exceptions
 from django.core.urlresolvers import reverse
 from django.contrib import messages
 from oscar.core.loading import get_class
+from decimal import Decimal as D
+
 
 CoreCheckoutSessionMixin = get_class('checkout.session', 'CheckoutSessionMixin')
 
@@ -98,8 +100,24 @@ class CheckoutSessionMixin(CoreCheckoutSessionMixin):
         if request.method == 'POST':
             return
 
+        # Check to see if payment is actually required for this order.
+        shipping_address = self.get_shipping_address(request.basket)
+        shipping_method = self.get_shipping_method(
+            request.basket, shipping_address)
+        if shipping_method:
+            shipping_charge = shipping_method.calculate(request.basket)
+        else:
+            # It's unusual to get here as a shipping method should be set by
+            # the time this skip-condition is called. In the absence of any
+            # other evidence, we assume the shipping charge is zero.
+            shipping_charge = prices.Price(
+                currency=request.basket.currency, excl_tax=D('0.00'),
+                tax=D('0.00')
+            )
+        total = self.get_order_totals(request.basket, shipping_charge)
+
         # bounce requests without a payment method set
-        if not self.checkout_session.payment_method():
+        if not self.checkout_session.payment_method() and total.excl_tax != D('0.00'):
             raise exceptions.FailedPreCondition(
                 url=reverse('checkout:payment-details'),
             )

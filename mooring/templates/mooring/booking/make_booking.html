@@ -1,0 +1,544 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+{% load forms %}
+{% block extra_css %}
+    {{ block.super }}
+    <style>
+        #guest-dropdown{
+            min-width:200px;
+            padding: 5px;
+        }
+        #guest-dropdown li{
+            padding: 5px;
+        }
+        .radio-title{
+            font-weight: bold;
+            font-size: 18px;
+
+        }
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+
+<div id="addBooking">
+{% if not booking %}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12"><div class="well">
+                <h3>Your session has expired, or you have not yet selected a mooring to book.</h3>
+                <p>Please visit the <a href="{{EXPLORE_PARKS_SEARCH}}">map</a> to start a new mooring booking session.</p>
+            </div></div>
+        </div>
+    </div>
+{% else %}
+    <form method="POST" name="addBookingForm" @submit.prevent="validate()" novalidate><div class="container">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="well">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p v-cloak>
+                            {% verbatim %}
+                                <b>Time left to complete booking {{ timeleft }}.</b> 
+                            {% endverbatim %}
+                                <a class="btn btn-info" href="{% url 'public_abort_booking' %}?change=true">Change in-progress booking</a>
+                                <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel in-progress booking</a>
+                            </p>
+                            {% if show_errors %}
+                            <div class="alert alert-danger">
+                                <p>There were some problems with your submission:</p>
+                                <ul>
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                                {% for field in form %}{% for error in field.errors %}
+                                    <li><b>{{ field.label }}:</b> {{ error }}</li>
+                                {% endfor %}{% endfor %}
+                                {% for error in vehicles.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                                {% for vehicle in vehicles %}{% for field, error in vehicle.errors.items %}
+                                    <li><b>Vessel {{ forloop.counter }} ({{ field }}):</b> {{ error }}</li>
+                                {% endfor %}{% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            <h3 class="text-primary">Booking for</h3>
+                        </div>
+                        <div class="col-md-2">
+                              <img alt="campground"  class="img-thumbnail img-responsive" src="{{ booking.campground.first_image.image.url }}" style='display:none'>
+                              <p class="pricing" v-cloak >
+                            {% verbatim %}
+                                  <strong>${{ perDayFee|formatMoney(2) }}</strong>
+                            {% endverbatim %}
+                                  <br> <span class="text-muted">Per day</span>
+                              </p>
+                        </div>
+                        <div class="col-md-10">
+                            <div class="row form-horizontal">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label pull-left required">Marine Park: </label>
+                                        <div class="col-sm-8">
+                                            {{ booking.mooringarea.name }} , {{ booking.mooringarea.park.name }}
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label pull-left required">Mooring : </label>
+                                        <div class="col-sm-8">
+                                        {% if booking.mooringarea.site_type == 2 %}
+                                            {{ booking.first_campsite.type }}
+                                        {% else %}
+                                            {{ booking.first_campsite.name }} ({{ booking.first_campsite.type }})
+                                        {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label pull-left required" >Dates: </label>
+                                        <div class="col-sm-8">
+                                            <div class="input-group date">
+                                                {{ booking.stay_dates }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style='display:none'>
+                                        <label class="col-sm-4 control-label pull-left required">{{ form.num_adult.label_tag }} </label>
+                                        <div class="col-sm-8">
+                                                {{ form.num_adult }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style='display:none'>
+                                        <label class="col-sm-4 control-label pull-left required">{{ form.num_concession.label_tag }} </label>
+                                        <div class="col-sm-8">
+                                                {{ form.num_concession }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style='display:none' >
+                                        <label class="col-sm-4 control-label pull-left required">{{ form.num_child.label_tag }} </label>
+                                        <div class="col-sm-8">
+                                                {{ form.num_child }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style='display:none'>
+                                        <label class="col-sm-4 control-label pull-left required">{{ form.num_infant.label_tag }} </label>
+                                        <div class="col-sm-8">
+                                                {{ form.num_infant }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12" v-cloak v-if="concessionWarning">
+                            Please note, only holders of the following Australian-issued cards are entitled to concessions:
+                            <ul>
+                                <li>Seniors Card</li>
+                                <li>Age Pension</li>
+                                <li>Disability Support</li>
+                                <li>Carer Payment</li>
+                                <li>Carer Allowance</li>
+                                <li>Companion Card</li>
+                                <li>Department of Veterans' Affairs</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="well">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h3 class="text-primary">Personal Details</h3>
+                        </div>
+                    </div>
+                    <div class="row">
+                    {% if request.user.is_anonymous %}
+                      <div class="col-md-6">
+                          <div class="form-group">
+                            {{form.email.label_tag}}
+                            {{ form.email|class:'form-control'}}
+                          </div>
+                      </div>
+                      <div class="col-md-6" >
+                          <div class="form-group">
+                              {{form.confirm_email.label_tag}}
+                              {{ form.confirm_email|class:'form-control'}}
+                          </div>
+                      </div>
+                    {% else %}
+                      <div class="col-md-12">
+                          <p>Logged in as user <b>{{ request.user.email }}</b>.</p>
+                      </div>
+                    {% endif %}
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6">
+                          <div class="form-group">
+                            {{form.first_name.label_tag}}
+                            {{ form.first_name|class:'form-control'}}
+                          </div>
+                      </div>
+                      <div class="col-md-6">
+                          <div class="form-group">
+                              {{form.last_name.label_tag}}
+                              {{ form.last_name|class:'form-control'}}
+                          </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6">
+                          <div class="form-group">
+                              {{form.postcode.label_tag}}
+                              {{ form.postcode|class:'form-control'}}
+                          </div>
+                      </div>
+                      <div class="col-md-6">
+                          <div class="form-group">
+                              {{form.country.label_tag}}
+                              {{ form.country|class:'form-control'}}
+                          </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6">
+                          <div class="form-group">
+                              {{form.phone.label_tag}}
+                              {{ form.phone|class:'form-control'}}
+                          </div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="well">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h3 class="text-primary">Vessels</h3>
+                            <p v-if="pricing.vehicle"><b><a href="{{EXPLORE_PARKS_ENTRY_FEES}}" target="_blank">Entry fees</a> are required for each vehicle entering this park.</b></p>
+                            <p style='display: none' v-else>No entry fees are required for this park.</p>
+                        </div>
+                    </div>
+                    {# Manual rendering of the 'vehicles' formset. #}
+                    {# Django 1.11 will move form rendering junk into proper templates, #}
+                    {# so there should be a cleaner way of doing this in future. #}
+                    <div class="row" v-cloak>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label style='display: none'>Number of vessels:
+                                    <input class="form-control" name="form-TOTAL_FORMS" max="8" min="1" value="1" v-model="vehicleCount" v-on:change="updateVehicles" type="number"/>
+                                    <input id="id_form-INITIAL_FORMS" name="form-INITIAL_FORMS" type="hidden" value="1" />
+                                    <input id="id_form-MIN_NUM_FORMS" name="form-MIN_NUM_FORMS" type="hidden" value="0" />
+                                    <input id="id_form-MAX_NUM_FORMS" name="form-MAX_NUM_FORMS" type="hidden" value="8" />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row form-group" v-for="(vehicle, index) in vehicles">
+                        <div class="col-md-4">
+                            <select v-on:change="calculateTotal" v-bind:name="'form-'+Number(index).toString()+'-vehicle_type'" class="form-control" v-model="vehicle[0]">
+                                <option value="0">Vessel</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" placeholder="Registration" v-model="vehicle[1]" required v-on:change="updateLocalStorage"/>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="checkbox" v-if="pricing.vehicle"><label><input v-bind:name="'form-'+Number(index).toString()+'-entry_fee'" type="checkbox" v-model="vehicle[2]" v-on:change="updateVehicles"/> Entry fee</label></div>
+                        </div>
+                    </div>
+                    <template v-if="pricing.vehicle">
+                        <div class="row" v-cloak>
+                            <div class="col-md-12">
+                        {% verbatim %}
+                                <p>Entry fee total: <strong>${{ entryFee|formatMoney(2) }}</strong></p>
+                        {% endverbatim %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <b>NOTE:</b> A vehicle entry fee is not required for the holder of a valid <a href="https://shop.dpaw.wa.gov.au/park-passes">Park Pass</a>.
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="well">
+                    <div class="row">
+                      <div class="col-md-6">
+                          <div class="form-group">
+                            <label for="Total Price">Total Price <span class="text-muted">(GST inclusive.)</span></label>
+                            <div class="input-group">
+                              <span class="input-group-addon">AUD $</span>
+                              <input type="text" class="form-control" :value="total|formatMoney(2)" readonly="true">
+                            </div>
+                          </div>
+                      </div>
+                      <div class="col-md-6">
+                          <div class="form-group">
+                              <p style="margin-top:30px;">Changes not permitted.Cancel up to 29 days before arrival for 50% refund.</p>
+                          </div>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="text-muted">
+                                Payments will be recorded against the booking once the booking is completed and the payment is received.
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row"> 
+                                <div class="col-md-8 col-md-offset-5">
+                                    <div class="checkbox">
+                                        <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
+                                    </div>
+                                    <button :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div></form>
+{% endif %}
+</div>
+{% endblock %}
+
+{% block custom_js %}
+{{ block.super }}
+{% if booking %}
+<script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.18.0/moment.min.js"></script>
+<script src="//static.dpaw.wa.gov.au/static/libs/vue/2.2.4/vue.min.js"></script>
+<script type="text/javascript">
+    var book = new Vue({
+        el: '#addBooking',
+        data: {
+            expiry: moment('{{ expiry|escapejs }}'),
+            timer: {{ timer }},
+            pricing: {
+                mooring: {{ pricing.mooring }},
+                adult: {{ pricing.adult }},
+                concession: {{ pricing.concession }},
+                child: {{ pricing.child }},
+                infant: {{ pricing.infant }},
+                vehicle: {{ pricing.vehicle }},
+                vehicleConc: {{ pricing.vehicle_conc }},
+                motorcycle: {{ pricing.motorcycle }}
+            },
+            vehicles: [
+                [0, '', true]
+            ],
+            perDayFee: 0,
+            entryFee: 0,
+            total: 0,
+            concessionWarning: false,
+            vehicleCount: 1,
+            toc: false,
+            booking_id: {{ booking.id }}
+        },
+        filters:{
+            formatMoney:function(n,c, d, t){
+                c = isNaN(c = Math.abs(c)) ? 2 : c;
+                d = d == undefined ? "." : d;
+                t = t == undefined ? "," : t;
+                var s = n < 0 ? "-" : "";
+                var i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c)));
+                var j = (j = i.length) > 3 ? j % 3 : 0;
+               return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+             }
+        },
+        computed: {
+            timeleft: {
+                cache: false,
+                get: function get() {
+                    // Minutes and seconds
+                    var mins = ~~(this.timer / 60);
+                    var secs = this.timer % 60;
+
+                    // Hours, minutes and seconds
+                    var hrs = ~~(this.timer / 3600);
+                    var mins = ~~((this.timer % 3600) / 60);
+                    var secs = this.timer % 60;
+
+                    // Output like "1:01" or "4:03:59" or "123:03:59"
+                    var ret = "";
+
+                    if (hrs > 0) {
+                        ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+                    }
+
+                    ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+                    ret += "" + secs;
+                    return ret;
+                }
+            }
+        },
+        methods:{
+            updateLocalStorage: function() {
+                var vm = this;
+                var data = {
+                    booking: vm.booking_id,
+                    vehicles: vm.vehicles
+                } 
+                localStorage.setItem('checkoutVehicleData',JSON.stringify(data));
+            },
+            updateVehicles: function () {
+                var vm = this;
+                var diff = vm.vehicles.length - vm.vehicleCount
+                if (diff < 0) {
+                    for (var i=0; i<-diff; i++) {
+                        vm.vehicles.push([0, '', true]);
+                    }
+                } else if (diff > 0) {
+                    for (var i=0; i<diff; i++) {
+                        vm.vehicles.pop();
+                    }
+                }
+                vm.calculateTotal();
+
+                vm.updateLocalStorage();
+            },
+            calculateTotal: function () {
+                var vm = this;
+                var form = document.forms.addBookingForm;
+
+                vm.entryFee = 0;
+                vm.total = 0;
+
+                // add per-person fees
+                // vm.total += (parseInt(form.num_adult.value) || 0)*vm.pricing.adult;
+                // vm.total += (parseInt(form.num_concession.value) || 0)*vm.pricing.concession;
+                // vm.total += (parseInt(form.num_child.value) || 0)*vm.pricing.child;
+                // vm.total += (parseInt(form.num_infant.value) || 0)*vm.pricing.infant;
+                
+                vm.total += vm.pricing.mooring;
+                // generate per night rate the ugly way
+                // (price can vary based on date, so this is an approximate measure)
+                vm.perDayFee = vm.total/{{ booking.num_days }};
+
+                // generate + add park entry fees
+                vm.vehicles.forEach(function (el) {
+                    if (el[2]) {
+                        switch(el[0]) {
+                            case '1':
+                                vm.entryFee += vm.pricing.vehicleConc;
+                                break;
+                            case '2':
+                                vm.entryFee += vm.pricing.motorcycle;
+                                break;
+                            case '0':
+                            default:
+                                vm.entryFee += vm.pricing.vehicle;
+                                break;
+                        }
+                    }
+                });
+                vm.total += vm.entryFee;
+
+                // show concession warning text if the number > 0
+                vm.concessionWarning = (parseInt(form.num_concession.value) > 0);
+                return;
+            },
+            validate: function (e) {
+                var isValid = true;
+                var form = document.forms.addBookingForm;
+                var fields = $(form).find(':input');
+                $('.tooltip-err').tooltip("destroy");
+                $.each(fields, function(i, field) {
+                    $(field).removeClass('tooltip-err');
+                    $(field).closest('.form-group').removeClass('has-error');
+                    if ($(field).attr('required') == 'required' || $(field).attr('required') == 'true') {
+                        var inputStr = $(field).val();
+                        if (inputStr == "" || inputStr == null) {
+                             var errMsg = $(field).attr('data-error-msg') ? $(field).attr('data-error-msg') : "Field is required";
+                             $(field).closest('.form-group').addClass('has-error');
+                               $(field).focus();
+                               $(field).select();
+                               $(field).addClass('tooltip-err');
+                               $(field).tooltip()
+                                   .attr("data-original-title", errMsg)
+                             isValid = false;
+                         }
+                    }
+                });
+                if (isValid) {
+                    form.submit();
+                }
+            }
+        },
+        mounted: function () {
+            var vm = this;
+
+            // check that expiry is in a sane range
+            var saneTz = (0 < Math.floor((vm.expiry - moment.now())/1000) < vm.timer);
+
+            // update the countdown timer every second
+            var timer = setInterval(function (ev) {
+                // fall back to the pre-encoded timer
+                if (!saneTz) {
+                    vm.timer -= 1;
+                } else {
+                    // if the timezone is sane, do live updates 
+                    // this way unloaded tabs won't cache the wrong time.
+                    var newTimer = Math.floor((vm.expiry - moment.now())/1000);
+                    vm.timer = newTimer;
+                }
+
+                if ((vm.timer <= 0)) {
+                    clearInterval(timer);
+                    var loc = window.location;
+                    window.location = loc.protocol + '//' + loc.host + loc.pathname;
+                } 
+            }, 1000);
+
+            // wire up events to the form controls
+            // TODO: for django 1.11 replace python form controls with templates;
+            // should be easier to inject vue stuff
+            var cbCalc = function (ev) {
+                vm.calculateTotal();
+            };
+
+            document.forms.addBookingForm.num_adult.addEventListener('change', cbCalc);
+            document.forms.addBookingForm.num_concession.addEventListener('change', cbCalc);
+            document.forms.addBookingForm.num_child.addEventListener('change', cbCalc);
+            document.forms.addBookingForm.num_infant.addEventListener('change', cbCalc);
+
+            // update the vehicle data from local storage
+            var storedData = localStorage.getItem('checkoutVehicleData');
+            if (storedData){
+                try{
+                    storedData = JSON.parse(storedData);
+                    if (storedData.hasOwnProperty('booking') && storedData.hasOwnProperty('vehicles') && parseInt(storedData.booking) == parseInt(vm.booking_id)){ 
+                        if (Array.isArray(storedData.vehicles)){
+                            var length = storedData.vehicles.length;
+                            vm.vehicles = [];
+                            $.each(storedData.vehicles, function(i,v) {
+                                vm.vehicles.push(v);
+                            });
+                            vm.vehicleCount = length;
+                        }
+                    }
+                    else{
+                        localStorage.removeItem('checkoutVehicleData');
+                    }
+                }
+                catch(e){
+                }
+            }
+            vm.calculateTotal();
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}
