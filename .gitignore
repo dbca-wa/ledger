@@ -97,7 +97,7 @@ uwsgi*.ini
 *.djcache
 
 # wildlifecompliance build static files
-wildlifecompliance/static/wildlifecompliance_vue/static/
+wildlifecompliance/static/wildlifecompliance_vue/static/*
 
 disturbance/static/disturbance_vue/static/css/app.css
 disturbance/static/disturbance_vue/static/js/app.js

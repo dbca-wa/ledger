@@ -684,7 +684,6 @@ class ProfileListener(object):
         # EmailUser can have address that is not linked with profile, hence the exclude
         ''' This functionality no longer in use due to more than just
         profile objects using the UserAddresses
->>>>>>> 5f35680073d526d22a1da2fe14258d450e9d94cf
         user = instance.user
         user_addr = Address.objects.filter(user=user)
         for u in user_addr:
