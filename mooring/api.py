@@ -431,7 +431,8 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
-            "gear_type": request.GET.get('gear_type', 'all')
+            "avail": request.GET.get('gear_type', 'all'),
+            "pen_type": request.GET.get('pen_type', 'all')
         }
        
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
@@ -439,9 +440,11 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         scrubbed = serializer.validated_data
         context = {}
         ground_ids = []
+
+        #Removed from parkstay
         # filter to the campsites by gear allowed (if specified), else show the lot
-        if scrubbed['gear_type'] != 'all':
-            context = {scrubbed['gear_type']: True}
+        # if scrubbed['gear_type'] != 'all':
+        #     context = {scrubbed['gear_type']: True}
 
         # if a date range is set, filter out campgrounds that are unavailable for the whole stretch
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
@@ -456,9 +459,17 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             ground_ids = set((x[0] for x in Mooringsite.objects.filter(**context).values_list('mooringarea')))
             # we need to be tricky here. for the default search (all, no timestamps),
             # we want to include all of the "campgrounds" that don't have any campsites in the model! (e.g. third party)
-            if scrubbed['gear_type'] == 'all':
+            if scrubbed['avail'] == 'all':
                 ground_ids.update((x[0] for x in MooringArea.objects.filter(campsites__isnull=True).values_list('id')))
 
+        # If the pen type has been included in filtering and is not 'all' then loop through the sites selected.
+        if scrubbed['pen_type'] != 'all':
+            sites = Mooringsite.objects.filter(pk__in=ground_ids)
+            for s in sites:           
+            # When looping through, if the pen type is not correct, remove it from the list.
+                i = s.mooringarea
+                if i.mooring_physical_type != scrubbed['pen_type']:
+                    ground_ids.remove(s.id)
 
         # Filter out for the max period
         today = date.today()
@@ -498,9 +509,25 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
                      row['avail'] = 'partial'
 
                 queryset.append(row)
+        
+        # Filter based on the availability
+        query = []
+        if scrubbed['avail'] != 'all':
+            for q in queryset:
+                if scrubbed['avail'] == 'rental-available' and q['avail'] not in ['free', 'partial']:
+                    pass
+                elif scrubbed['avail'] == 'rental-notavailable' and q['avail'] not in ['full']:
+                    pass
+                elif scrubbed['avail'] == 'public-notbookable' and q['avail'] not in ['']:
+                    pass
+                else:
+                    query.append(q)
+        else:
+            query = queryset
+                
 
 #        serializer = self.get_serializer(queryset, many=True)
-        return HttpResponse(json.dumps(queryset), content_type='application/json')
+        return HttpResponse(json.dumps(query), content_type='application/json')
 #        return Response(serializer.data)
 
 def current_booking(request, *args, **kwargs):
@@ -670,6 +697,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             queryset = self.get_queryset()
             cache.set('moorings_dt',queryset,3600)
         qs = [c for c in queryset.all() if can_view_campground(request.user,c)]
+        print "DEBUG: ", qs
         serializer = MooringAreaDatatableSerializer(qs,many=True)
         data = serializer.data
         return Response(data)
@@ -1496,7 +1524,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
-            "gear_type" : request.GET.get('gear_type', 'all'),
+            # "gear_type" : request.GET.get('gear_type', 'all'),
             "vessel_size" : request.GET.get('vessel_size', 0),
 #            "distance_radius" : request.GET.get('distance_radius', 0)
         }
@@ -1509,7 +1537,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         num_concession = serializer.validated_data['num_concession']
         num_child = serializer.validated_data['num_child']
         num_infant = serializer.validated_data['num_infant']
-        gear_type = serializer.validated_data['gear_type']
+        # gear_type = serializer.validated_data['gear_type']
         vessel_size = serializer.validated_data['vessel_size']
  #       distance_radius = serializer.validated_data['distance_radius']
 
@@ -1538,8 +1566,9 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 
         # fetch all the campsites and applicable rates for the campground
         context = {}
-        if gear_type != 'all':
-            context[gear_type] = True
+        #gear type is for parkstay, remvoed for now.
+        # if gear_type != 'all':
+        #     context[gear_type] = True
 #        sites_qs = Mooringsite.objects.filter(mooringarea=ground).filter(**context)
 #        radius = int(distance_radius)
         radius = int(100)
@@ -1550,6 +1579,17 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #print radius
 #       sites_qs = Mooringsite.objects.all().filter(**context)
         sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
+
+        # # If the pen type has been included in filtering and is not 'all' then loop through the sites selected.
+        # if pen_type != 'all':
+        #     sites = Mooringsite.objects.filter(pk__in=sites_qs)
+        #     for s in sites:           
+        #     # When looping through, if the pen type is not correct, remove it from the list.
+        #         i = s.mooringarea
+        #         if i.mooring_physical_type != pen_type:
+        #             sites_qs = sites_qs.exclude(pk=s.id)
+
+
 #        print "sites_qs"
 #        print sites_qs
         # fetch rate map
@@ -2034,7 +2074,7 @@ def get_admissions_confirmation(request, *args, **kwargs):
         return HttpResponse('Booking unavailable', status=403)
 
     # check payment status
-    if (not is_officer(request.user)) and (not booking.paid):
+    if (not is_officer(request.user)) or (not booking.customer == request.user):
         return HttpResponse('Booking unavailable', status=403)
 
     response = HttpResponse(content_type='application/pdf')
