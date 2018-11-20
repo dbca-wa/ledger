@@ -501,12 +501,15 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
                 row['id'] = q.mooringarea.id
                 row['avail2'] = open_marinas[q.id]
                 #row['avail'] = 'full'
-                if int(open_marinas[q.id]['closed_periods']) == 0 and int(open_marinas[q.id]['open_periods']) > 0:
-                     row['avail'] = 'free'
-                elif int(open_marinas[q.id]['open_periods']) == 0:
-                     row['avail'] = 'full'
-                elif int(open_marinas[q.id]['closed_periods']) > 0 and int(open_marinas[q.id]['open_periods']) > 0:
-                     row['avail'] = 'partial'
+                if q.mooringarea.mooring_type == 1:
+                        row['avail'] = 'full'
+                else:
+                     if int(open_marinas[q.id]['closed_periods']) == 0 and int(open_marinas[q.id]['open_periods']) > 0:
+                         row['avail'] = 'free'
+                     elif int(open_marinas[q.id]['open_periods']) == 0:
+                         row['avail'] = 'full'
+                     elif int(open_marinas[q.id]['closed_periods']) > 0 and int(open_marinas[q.id]['open_periods']) > 0:
+                         row['avail'] = 'partial'
 
                 queryset.append(row)
         
@@ -1792,6 +1795,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                      #[start_date+timedelta(days=i)]
                      for bp in v[2][date_rotate]['booking_period']:
                          bp['status'] = 'open'
+                         print "KKKK"
+                         print k
                          bp['date'] = str(date_rotate)
 
                          if avbp_map:
