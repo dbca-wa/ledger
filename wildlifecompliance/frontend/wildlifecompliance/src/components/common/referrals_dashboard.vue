@@ -132,7 +132,12 @@ export default {
                             return ''
                         }
                     },
-                    {data: "applicant"},
+                    {
+                        data: "applicant",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? `${data.name}` : '';
+                        }
+                    },
                     {data: "processing_status"},
                     {
                         data: "application_lodgement_date",
