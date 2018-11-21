@@ -8,6 +8,9 @@ from wildlifecompliance.components.applications.email import send_application_in
 from wildlifecompliance.components.main.utils import get_session_application, delete_session_application, bind_application_to_invoice
 import json,traceback
 from wildlifecompliance.exceptions import BindApplicationException
+import xlwt
+from wildlifecompliance.utils import serialize_export
+from datetime import datetime
 
 class ApplicationView(TemplateView):
     template_name = 'wildlifecompliance/application.html'
@@ -68,4 +71,55 @@ class ApplicationSuccessView(TemplateView):
         }
         delete_session_application(request.session)
         return render(request, self.template_name, context)
+
+
+def export_applications(request):
+    filename = 'wildlife_compliance_applications_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Applications')
+
+    # Sheet header, first row
+    row_num = 0
+
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    a=Application.objects.filter(id=140)
+    s=serialize_export(a[0])
+
+    keys = [row['key'] for row in s]
+    names = [row['name'] for row in s]
+    licence_activity = [row['licence_activity'] for row in s]
+    labels = [row['label'] for row in s]
+    for col_num in range(len(keys)):
+        ws.write(row_num, col_num, keys[col_num], font_style)
+
+    row_num += 1
+    for col_num in range(len(keys)):
+        ws.write(row_num, col_num, names[col_num], font_style)
+
+    row_num += 1
+    for col_num in range(len(keys)):
+        ws.write(row_num, col_num, licence_activity[col_num], font_style)
+
+    row_num += 1
+    for col_num in range(len(keys)):
+        ws.write(row_num, col_num, labels[col_num], font_style)
+    row_num += 1
+
+    # Sheet body, remaining rows
+    font_style = xlwt.XFStyle()
+
+    rows = [row['key'] for row in s]
+    for row in a:
+        row_num += 1
+        col_items = [item['value'] for item in s]
+        for col_num in range(len(col_items)):
+            ws.write(row_num, col_num, col_items[col_num], font_style)
+
+    wb.save(response)
+    return response
 
