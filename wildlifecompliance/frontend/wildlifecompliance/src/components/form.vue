@@ -83,7 +83,7 @@ from '@/utils/hooks'
             }
             else{
                 tabs.map(tsec => {
-                    $('#tabs-section').append(`<li><a onclick="vue.setSelectedTabId(this); this.getSelectedTab(this);" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
+                    $('#tabs-section').append(`<li><a onclick="vue.setSelectedTabId(this);" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
                 });
 
             }

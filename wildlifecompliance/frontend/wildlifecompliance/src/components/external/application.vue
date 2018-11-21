@@ -94,32 +94,43 @@ export default {
       pBody: 'pBody',
       application_customer_status_onload: '',
  	  missing_fields: [],
-      current_tab: '',
-      previous_tab: '',
+      //current_tab_id: null,
+      //current_tab: '',
+      //previous_tab: '',
     }
   },
   components: {
     Application
   },
+  /*
   watch: {
     // whenever current_tab changes, this function will run
-    /*
-    current_tab: function (newTab, oldTab) {
-        //vm.previous_tab = vm.current_tab;
-        //vm.current_tab = vm.get_current_tab();
-        this.debouncedGetAnswer()
-    },
-    */
-    current_tab: function (newTab, oldTab) {
+    currentTab: function () {
         // The on tab shown event
         $('.nav-tabs a').on('shown.bs.tab', function (e) {
             alert('Tab has changed');
-            //vm.previous_tab = vm.current_tab;
-            vm.current_tab = e.target;
-            vm.previous_tab = e.relatedTarget;
+            //vm.current_tab = e.target;
+            //vm.previous_tab = e.relatedTarget;
+            vm.current_tab_id = parseInt(e.target.href.split('#')[1]);
         });        
     }
   },
+  */
+    watch: {
+        // whenever current_tab changes, this function will run
+        //tabID: function () {
+        //current_tab: function () {
+        tab_changed: function () {
+            let vm = this;
+            // The on tab shown event
+            $('.nav-tabs a').on('shown.bs.tab', function (e) {
+                console.log('Tab has changed: ***' );
+                vm.currentTab = $("ul#tabs-section li.active")[0].textContent;
+                console.log('Tab has changed: ' + vm.currentTab + ' - ' + vm.tabID);
+            });
+        }    
+    },
+
   created: function () {
     this.debouncedTabChange = _.debounce(this.get_current_tab, 500)
   },
@@ -135,7 +146,10 @@ export default {
     },
     requiresCheckout: function() {
         return this.application.application_fee > 0 && this.application_customer_status_onload == 'Draft'
-    }
+    },
+    tab_changed: function() {
+      return this.current_tab;
+    },
   },
   methods: {
     getSelectedTab: function(obj) {
@@ -393,7 +407,7 @@ export default {
   
   mounted: function() {
     let vm = this;
-    vm.current_tab = vm.get_current_tab();
+    //vm.current_tab = vm.get_current_tab();
     vm.form = document.forms.new_application;
 
   },

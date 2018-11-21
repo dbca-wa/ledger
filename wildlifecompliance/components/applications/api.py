@@ -649,6 +649,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
     def draft(self, request, *args, **kwargs):
+        import ipdb; ipdb.set_trace()
         try:
             instance = self.get_object()
             save_proponent_data(instance,request,self)
