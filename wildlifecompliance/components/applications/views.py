@@ -9,7 +9,7 @@ from wildlifecompliance.components.main.utils import get_session_application, de
 import json,traceback
 from wildlifecompliance.exceptions import BindApplicationException
 import xlwt
-from wildlifecompliance.utils import serialize_export
+from wildlifecompliance.utils import serialize_export, unique_column_names
 from datetime import datetime
 
 class ApplicationView(TemplateView):
@@ -87,38 +87,49 @@ def export_applications(request):
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    a=Application.objects.filter(id=140)
-    s=serialize_export(a[0])
+    applications = Application.objects.filter(id__in=[121, 122, 123])
 
-    keys = [row['key'] for row in s]
-    names = [row['name'] for row in s]
-    licence_activity = [row['licence_activity'] for row in s]
-    labels = [row['label'] for row in s]
-    for col_num in range(len(keys)):
-        ws.write(row_num, col_num, keys[col_num], font_style)
+	for application in applications:
+		s=serialize_export(application)
 
-    row_num += 1
-    for col_num in range(len(keys)):
-        ws.write(row_num, col_num, names[col_num], font_style)
 
-    row_num += 1
-    for col_num in range(len(keys)):
-        ws.write(row_num, col_num, licence_activity[col_num], font_style)
+		columns = unique_column_names()
+		names = [row['name'] for row in s]
+		row_num += 1
+		for col_num in range(len(columns)):
+			ws.write(row_num, col_num, columns[col_num], font_style)
 
-    row_num += 1
-    for col_num in range(len(keys)):
-        ws.write(row_num, col_num, labels[col_num], font_style)
-    row_num += 1
 
-    # Sheet body, remaining rows
-    font_style = xlwt.XFStyle()
+		keys = [row['key'] for row in s]
 
-    rows = [row['key'] for row in s]
-    for row in a:
-        row_num += 1
-        col_items = [item['value'] for item in s]
-        for col_num in range(len(col_items)):
-            ws.write(row_num, col_num, col_items[col_num], font_style)
+		#activity = [row['activity'] for row in s]
+		#purpose = [row['purpose'] for row in s]
+		labels = [row['label'] for row in s]
+		for col_num in range(len(keys)):
+			ws.write(row_num, col_num, keys[col_num], font_style)
+
+		row_num += 1
+		for col_num in range(len(keys)):
+			ws.write(row_num, col_num, activity[col_num], font_style)
+
+		row_num += 1
+		for col_num in range(len(keys)):
+			ws.write(row_num, col_num, purpose[col_num], font_style)
+
+		row_num += 1
+		for col_num in range(len(keys)):
+			ws.write(row_num, col_num, labels[col_num], font_style)
+		row_num += 1
+
+		# Sheet body, remaining rows
+		font_style = xlwt.XFStyle()
+
+		rows = [row['key'] for row in s]
+		for row in a:
+			row_num += 1
+			col_items = [item['value'] for item in s]
+			for col_num in range(len(col_items)):
+				ws.write(row_num, col_num, col_items[col_num], font_style)
 
     wb.save(response)
     return response

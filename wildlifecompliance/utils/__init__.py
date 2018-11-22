@@ -1,7 +1,70 @@
 from django.conf import settings
 from collections import OrderedDict
-#from wildlifecompliance.components.applications.models import Application, ApplicationType
+from wildlifecompliance.components.applications.models import Application, ApplicationType
+from wildlifecompliance.components.licences.models import DefaultActivity
 #from copy import deepcopy
+
+
+class ActivityPurposeMap():
+    activity_purpose_map = {}
+
+    def __init__(self):
+        for i in DefaultActivity.objects.all():
+            self.activity_purpose_map.update( {i.activity_type.name: i.activity.name} )
+
+    def get(self, activity_name):
+        """ Returns purpose, given activity 
+
+        Result:
+            from wildlifecompliance.utils import ActivityPurpose
+            ap=ActivityPurposeMap()
+            ap.get('Taking, Dealing and Processing')
+            --> 'Bioprospecting - Flora or Fauna'
+
+        """
+        return self.activity_purpose_map.get(activity_name)
+
+
+def unique_column_names(applications):
+    """
+    Returns Unique Column Names per Activity-Purpose - since 
+	questions in ApplicationType.schema may be added or deleted for newer applications
+
+    To run:
+        from wildlifecompliance.utils import unique_column_names
+        applications =  Application.objects.filter(id__in=[121,122,123])
+        unique_column_names(applications)
+
+    Result:
+		[u'Section1-0_0',
+		 u'Section1-1_0',
+		 u'Section1-2_0',
+		 u'Section1-3_0',
+		 u'Section2-0_0',
+		 u'Section2-1_0',
+		 u'Section2-2_0']
+    """
+
+    unique_names = set([])
+    for app in applications:
+        serialized_app = serialize_export(app)
+        names = [item['name'] for item in serialized_app]
+
+        unique_names = set(unique_names).union(names)
+
+    return sorted(list(unique_names))
+
+def unique_column_labels(applications):
+    unique_names = set([])
+    for app in applications:
+        serialized_app = serialize_export(app)
+		for item in serialized_app:
+			item['name']
+			
+        names = [item['name'] for item in serialized_app]
+
+        unique_names = set(unique_names).union(names)
+
 
 def serialize_export(app_obj):
     """
@@ -27,18 +90,17 @@ def serialize_export(app_obj):
     name_label_pairs = search_keys(app_obj.schema, search_list=['name', 'label'])
     key_value_pairs = search(app_obj.data)
 
+    ap = ActivityPurposeMap()
     # cross-reference name_label_pairs with key_value_pairs, and combine
     for key_value in key_value_pairs:
         for k,v in key_value.iteritems():
             name = k.split('.')[-1]
-            licence_activity = k.split('.')[0]
-            label = [j['label']  for j in name_label_pairs if j['name']==name][0]
-            result.append( dict(key=k, licence_activity=licence_activity, name=name, label=label, value=v) )
-            #try:
-            #    label = [j['label']  for j in name_label_pairs if j['name']==name][0]
-            #    result.append( dict(key=k, activity=licence_activity, name=name, label=label, value=v) )
-            #except:
-            #    pass
+            activity = k.split('.')[0]
+            try:
+                label = [j['label']  for j in name_label_pairs if j['name']==name][0]
+                result.append( dict(id=app_obj.id, key=k, activity=activity, purpose=ap.get(activity), name=name, label=label, value=v) )
+            except:
+                pass
 
     return result
 
