@@ -3,7 +3,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Applications referred to me 
+                    <h3 class="panel-title">Applications requiring assessment
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -101,7 +101,7 @@ export default {
             application_licence_types: [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Licence Category","Activity Type","Type","Submiter","Applicant","Status","Lodged on","Action"],
+            application_headers:["Number","Licence Category","Activity Type","Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_options:{
                 customApplicationSearch: true,
                 tableID: 'application-datatable-'+vm._uid,
@@ -110,7 +110,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.referrals,'user_list'),
+                    "url": helpers.add_endpoint_json(api_endpoints.assessment,'user_list'),
                     "dataSrc": ''
                 },
                 columns: [
@@ -120,25 +120,42 @@ export default {
                             return 'P'+data;
                         }
                     },
-                    {data: "region"},
-                    {data: "activity"},
-                    {data: "title"},
+                    {
+                        data: "application_category",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? `${data}` : '';
+                        }
+                    },
+                    {
+                        data: "licence_activity_type",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? `${data}` : '';
+                        }
+                    },
+                    {
+                        data: "application",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? `${data}` : '';
+                        }
+                    },
                     {
                         data: "submitter",
                         mRender:function (data,type,full) {
-                            if (data) {
-                                return `${data.first_name} ${data.last_name}`;
-                            }
-                            return ''
+                            return data != '' && data != null ? `${data}` : '';
                         }
                     },
                     {
                         data: "applicant",
                         mRender:function (data,type,full) {
-                            return data != '' && data != null ? `${data.name}` : '';
+                            return data != '' && data != null ? `${data}` : '';
                         }
                     },
-                    {data: "processing_status"},
+                    {
+                        data: "application",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? `${full.status}` : '';
+                        }
+                    },
                     {
                         data: "application_lodgement_date",
                         mRender:function (data,type,full) {
@@ -148,7 +165,7 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            links +=  full.can_be_processed ? `<a href='/internal/application/${full.application}/referral/${full.id}'>Process</a><br/>`: `<a href='/internal/application/${full.application}/referral/${full.id}'>View</a><br/>`;
+                            links +=  full.can_be_processed ? `<a href='/internal/application/${full.application}'>Process</a><br/>`: `<a href='/internal/application/${full.application}'>View</a><br/>`;
                             return links;
                         }
                     }

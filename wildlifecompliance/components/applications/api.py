@@ -68,7 +68,8 @@ from wildlifecompliance.components.applications.serializers import (
     SaveAssessmentSerializer,
     AmendmentRequestSerializer,
     ExternalAmendmentRequestSerializer,
-    ApplicationProposedIssueSerializer
+    ApplicationProposedIssueSerializer,
+    DTAssessmentSerializer
     
 )
 
@@ -737,7 +738,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         licence_activity_type = self.request.query_params.get('licence_activity_type', None)
         if licence_activity_type is not None:
             queryset = queryset.filter(licence_activity_type=licence_activity_type)
-        serializer = AssessmentSerializer(queryset,many=True)
+        serializer = DTAssessmentSerializer(queryset,many=True)
         return Response(serializer.data)
 
     @detail_route(permission_classes=[],methods=['GET'])
@@ -958,6 +959,18 @@ class ApplicationStandardConditionViewSet(viewsets.ReadOnlyModelViewSet):
 class AssessmentViewSet(viewsets.ModelViewSet):
     queryset = Assessment.objects.all()
     serializer_class = AssessmentSerializer
+
+    @list_route(methods=['GET',])
+    def user_list(self, request, *args, **kwargs):
+        # Get the assessor groups the current user is member of
+        assessor_groups = ApplicationGroupType.objects.filter(type='assessor', members__email=request.user.email)
+
+        # For each assessor groups get the assessments
+        for group in assessor_groups:
+            queryset = Assessment.objects.filter(assessor_group=group)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):

@@ -79,6 +79,38 @@ class AssessmentSerializer(serializers.ModelSerializer):
     def get_status(self,obj):
         return obj.get_status_display()
 
+
+class DTAssessmentSerializer(serializers.ModelSerializer):
+    assessor_group = ApplicationGroupTypeSerializer(read_only=True)
+    status = serializers.SerializerMethodField(read_only=True)gi
+    application_lodgement_date = serializers.CharField(source='application.lodgement_date')
+    submitter = EmailUserSerializer()
+    applicant = serializers.CharField(source='application.applicant')
+    org_applicant = serializers.CharField(source='application.org_applicant.organisation.name')
+    application_category = ApplicationTypeSerializer(read_only=True)
+
+    class Meta:
+        model = Assessment
+        fields = (
+            'id',
+            'application',
+            'assessor_group',
+            'date_last_reminded',
+            'status',
+            'licence_activity_type',
+            'submitter',
+            'applicant',
+            'application_lodgement_date',
+            'application_category'
+        )
+
+    def get_submitter(self, obj):
+        return EmailUserSerializer(obj.application.submitter).data
+
+    def get_status(self,obj):
+        return obj.get_status_display()
+
+
 class SaveAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model=Assessment
