@@ -80,37 +80,6 @@ class AssessmentSerializer(serializers.ModelSerializer):
         return obj.get_status_display()
 
 
-class DTAssessmentSerializer(serializers.ModelSerializer):
-    assessor_group = ApplicationGroupTypeSerializer(read_only=True)
-    status = serializers.SerializerMethodField(read_only=True)gi
-    application_lodgement_date = serializers.CharField(source='application.lodgement_date')
-    submitter = EmailUserSerializer()
-    applicant = serializers.CharField(source='application.applicant')
-    org_applicant = serializers.CharField(source='application.org_applicant.organisation.name')
-    application_category = ApplicationTypeSerializer(read_only=True)
-
-    class Meta:
-        model = Assessment
-        fields = (
-            'id',
-            'application',
-            'assessor_group',
-            'date_last_reminded',
-            'status',
-            'licence_activity_type',
-            'submitter',
-            'applicant',
-            'application_lodgement_date',
-            'application_category'
-        )
-
-    def get_submitter(self, obj):
-        return EmailUserSerializer(obj.application.submitter).data
-
-    def get_status(self,obj):
-        return obj.get_status_display()
-
-
 class SaveAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model=Assessment
@@ -120,6 +89,9 @@ class ActivityTypeserializer(serializers.ModelSerializer):
     class Meta:
         model= WildlifeLicenceActivityType
         fields=('id','name','short_name')
+
+
+
 
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
@@ -574,3 +546,34 @@ class ProposedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False,allow_null=True)
     activity_type=serializers.ListField(child=serializers.IntegerField())
+
+
+class DTAssessmentSerializer(serializers.ModelSerializer):
+    assessor_group = ApplicationGroupTypeSerializer(read_only=True)
+    status = serializers.SerializerMethodField(read_only=True)
+    licence_activity_type = ActivityTypeserializer(read_only=True)
+    submitter = serializers.SerializerMethodField(read_only=True)
+    application_lodgement_date = serializers.CharField(source='application.lodgement_date')
+    applicant = serializers.CharField(source='application.applicant')
+    application_category = serializers.CharField(source='application.licence_type_name')
+
+    class Meta:
+        model = Assessment
+        fields = (
+            'id',
+            'application',
+            'assessor_group',
+            'date_last_reminded',
+            'status',
+            'licence_activity_type',
+            'submitter',
+            'application_lodgement_date',
+            'applicant',
+            'application_category'
+        )
+
+    def get_submitter(self, obj):
+        return EmailUserSerializer(obj.application.submitter).data
+
+    def get_status(self,obj):
+        return obj.get_status_display()

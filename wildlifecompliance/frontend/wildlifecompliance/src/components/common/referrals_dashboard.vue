@@ -101,7 +101,7 @@ export default {
             application_licence_types: [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Licence Category","Activity Type","Type","Submitter","Applicant","Status","Lodged on","Action"],
+            application_headers:["Number","Licence Category","Activity Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_options:{
                 customApplicationSearch: true,
                 tableID: 'application-datatable-'+vm._uid,
@@ -129,19 +129,13 @@ export default {
                     {
                         data: "licence_activity_type",
                         mRender:function (data,type,full) {
-                            return data != '' && data != null ? `${data}` : '';
-                        }
-                    },
-                    {
-                        data: "application",
-                        mRender:function (data,type,full) {
-                            return data != '' && data != null ? `${data}` : '';
+                            return data.id != '' && data.id != null ? `${data.name}` : '';
                         }
                     },
                     {
                         data: "submitter",
                         mRender:function (data,type,full) {
-                            return data != '' && data != null ? `${data}` : '';
+                            return data.id != '' && data.id != null ? `${data.first_name} ${data.last_name}` : '';
                         }
                     },
                     {
@@ -151,9 +145,9 @@ export default {
                         }
                     },
                     {
-                        data: "application",
+                        data: "status",
                         mRender:function (data,type,full) {
-                            return data != '' && data != null ? `${full.status}` : '';
+                            return data != '' && data != null ? `${data}` : '';
                         }
                     },
                     {
@@ -196,7 +190,7 @@ export default {
                         vm.application_activityTitles = activityTitles;
                     });
                     // Grab submitters from the data in the table
-                    var submittersColumn = vm.$refs.application_datatable.vmDataTable.columns(4);
+                    var submittersColumn = vm.$refs.application_datatable.vmDataTable.columns(3);
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
                         $.each(d,(index,s) => {
@@ -210,7 +204,7 @@ export default {
                         vm.application_submitters = submitters;
                     });
                     // Grab Status from the data in the table
-                    var statusColumn = vm.$refs.application_datatable.vmDataTable.columns(6);
+                    var statusColumn = vm.$refs.application_datatable.vmDataTable.columns(5);
                     statusColumn.data().unique().sort().each( function ( d, j ) {
                         let statusTitles = [];
                         $.each(d,(index,a) => {

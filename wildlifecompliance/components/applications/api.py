@@ -738,7 +738,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         licence_activity_type = self.request.query_params.get('licence_activity_type', None)
         if licence_activity_type is not None:
             queryset = queryset.filter(licence_activity_type=licence_activity_type)
-        serializer = DTAssessmentSerializer(queryset,many=True)
+        serializer = AssessmentSerializer(queryset,many=True)
         return Response(serializer.data)
 
     @detail_route(permission_classes=[],methods=['GET'])
@@ -969,7 +969,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         for group in assessor_groups:
             queryset = Assessment.objects.filter(assessor_group=group)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = DTAssessmentSerializer(queryset, many=True)
         return Response(serializer.data)
 
     @renderer_classes((JSONRenderer,))
