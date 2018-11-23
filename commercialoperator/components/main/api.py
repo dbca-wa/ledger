@@ -7,8 +7,8 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
-from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer
+from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer, VehicleSerializer, AccessTypeSerializer
 from django.core.exceptions import ValidationError
 
 
@@ -50,4 +50,10 @@ class ApplicationTypeViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         return ApplicationType.objects.order_by('order').filter(visible=True)
 
+class VehicleViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Vehicle.objects.all().order_by('id')
+    serializer_class = VehicleSerializer
 
+class AccessTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = AccessType.objects.all().order_by('id')
+    serializer_class = AccessTypeSerializer

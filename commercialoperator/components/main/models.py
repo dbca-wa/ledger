@@ -22,12 +22,37 @@ class Region(models.Model):
         return self.name
 
 
+
 @python_2_unicode_compatible
 class District(models.Model):
     region = models.ForeignKey(Region, related_name='districts')
     name = models.CharField(max_length=200, unique=True)
     code = models.CharField(max_length=3)
     archive_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
+class Vehicle(models.Model):
+    capacity = models.CharField(max_length=200, blank=True)
+    rego = models.CharField(max_length=200, blank=True)
+    license = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.rego
+
+@python_2_unicode_compatible
+class AccessType(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['name']
