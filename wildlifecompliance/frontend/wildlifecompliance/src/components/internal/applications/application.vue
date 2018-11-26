@@ -1372,7 +1372,7 @@ export default {
         fetchAssessorGroup: function(){
             let vm = this;
             vm.loading.push('Fetching assessor group');
-            vm.$http.get(api_endpoints.assessor_group).then((response) => {
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.assessor_group,'user_list')).then((response) => {
                 vm.assessorGroup = response.body
             },(error) => {
                 console.log(error);

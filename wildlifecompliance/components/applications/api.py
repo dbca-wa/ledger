@@ -1050,7 +1050,14 @@ class AssessmentViewSet(viewsets.ModelViewSet):
 class AssessorGroupViewSet(viewsets.ModelViewSet):
     queryset = ApplicationGroupType.objects.filter(type='assessor')
     serializer_class = ApplicationGroupTypeSerializer
-    renderer_classes = [JSONRenderer,]
+   # renderer_classes = [JSONRenderer,]
+
+    @list_route(methods=['GET',])
+    def user_list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response(serializer.data)
 
     # def list(self, request, *args, **kwargs):
     #     queryset = self.get_queryset()
