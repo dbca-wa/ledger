@@ -265,7 +265,7 @@ class Approval(RevisionedMixin):
                 # Log proposal action
                 self.log_user_action(ApprovalUserAction.ACTION_CANCEL_APPROVAL.format(self.id),request)
                 # Log entry for organisation
-                self.current_proposal.log_user_action(ProposalUserAction.ACTION_CANCEL_APPROVAL.format(self.current_proposal.id),request)
+                #self.current_proposal.log_user_action(ProposalUserAction.ACTION_CANCEL_APPROVAL.format(self.current_proposal.id),request)
             except:
                 raise
 
@@ -300,7 +300,7 @@ class Approval(RevisionedMixin):
                 # Log approval action
                 self.log_user_action(ApprovalUserAction.ACTION_SUSPEND_APPROVAL.format(self.id),request)
                 # Log entry for proposal
-                self.current_proposal.log_user_action(ProposalUserAction.ACTION_SUSPEND_APPROVAL.format(self.current_proposal.id),request)
+                #self.current_proposal.log_user_action(ProposalUserAction.ACTION_SUSPEND_APPROVAL.format(self.current_proposal.id),request)
             except:
                 raise
 
@@ -331,7 +331,7 @@ class Approval(RevisionedMixin):
                 # Log approval action
                 self.log_user_action(ApprovalUserAction.ACTION_REINSTATE_APPROVAL.format(self.id),request)
                 # Log entry for proposal
-                self.current_proposal.log_user_action(ProposalUserAction.ACTION_REINSTATE_APPROVAL.format(self.current_proposal.id),request)
+                #self.current_proposal.log_user_action(ProposalUserAction.ACTION_REINSTATE_APPROVAL.format(self.current_proposal.id),request)
             except:
                 raise
 
@@ -362,7 +362,7 @@ class Approval(RevisionedMixin):
                 # Log approval action
                 self.log_user_action(ApprovalUserAction.ACTION_SURRENDER_APPROVAL.format(self.id),request)
                 # Log entry for proposal
-                self.current_proposal.log_user_action(ProposalUserAction.ACTION_SURRENDER_APPROVAL.format(self.current_proposal.id),request)
+                #self.current_proposal.log_user_action(ProposalUserAction.ACTION_SURRENDER_APPROVAL.format(self.current_proposal.id),request)
             except:
                 raise
 
@@ -395,7 +395,7 @@ class ApprovalUserAction(UserAction):
     ACTION_CANCEL_APPROVAL = "Cancel approval {}"
     ACTION_SUSPEND_APPROVAL = "Suspend approval {}"
     ACTION_REINSTATE_APPROVAL = "Reinstate approval {}"
-    ACTION_SURRENDER_APPROVAL = "surrender approval {}"
+    ACTION_SURRENDER_APPROVAL = "Surrender approval {}"
     ACTION_RENEW_APPROVAL = "Create renewal Proposal for approval {}"
     ACTION_AMEND_APPROVAL = "Create amendment Proposal for approval {}"
 
