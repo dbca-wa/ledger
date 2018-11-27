@@ -44,8 +44,14 @@
                         <div class="col-md-1">
                             <label>Name</label>
                         </div>
-                        <div class="col-md-5">
-                            <input type="text" style="width:100%;" v-model="optionsName" v-on:blur="validateOptionsName()" class="form-control"/>
+                        <div class="col-md-3">
+                            <input type="text" style="width:100%;" maxlength="15" v-model="optionsName" v-on:blur="validateOptionsName()" class="form-control"/>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Description (Admin only)</label>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" style="width:100%;" v-model="optionsDescription" v-on:blur="validateOptionsDescription()" class="form-control"/>
                         </div>
                     </div>
                     <div class="row">
@@ -147,7 +153,7 @@
                         <div class="col-md-6" style="overflow:visible;">
                             <label>Period</label>
                             <select name="periodOptionsDelete" id="periodOptionsDelete" ref="periodOptionsDelete" style="width:100%;">
-                                <option v-for="res in booking_period_options" :value="res.id">{{res.period_name}}</option>
+                                <option v-for="res in booking_period_options" :value="res.id">{{res.option_description}}</option>
                             </select>
                         </div>
                         <div class="col-md-3"/>
@@ -176,7 +182,7 @@
                         <div class="col-md-6" style="overflow:visible;">
                             <label>Period</label>
                             <select name="periodOptions" id="periodOptions" ref="periodOptions" style="width:100%;" multiple>
-                                <option v-for="res in booking_period_options" :value="res.id">{{res.period_name}}</option>
+                                <option v-for="res in booking_period_options" :value="res.id">{{res.option_description}}</option>
                             </select>
                         </div>
                         <div class="col-md-3"/>
@@ -230,6 +236,7 @@ export default {
             periodOptionsModal: '',
             periodOptionsDelete: '',
             optionsName: '',
+            optionsDescription: '',
             optionsSmallPrice: '',
             optionsMediumPrice: '',
             optionsLargePrice: '',
@@ -276,7 +283,7 @@ export default {
                         if (data){
                             var names = "<td>";
                             for(var i = 0; i < full.booking_period.length; i++){
-                                names += full.booking_period[i].period_name + "<br/>";
+                                names += full.booking_period[i].period_name + " (" + full.booking_period[i].option_description + ")<br/>";
                             }
                             names += "</td>";
                             return names;
@@ -310,7 +317,7 @@ export default {
                 //Because this is using the custom adapter (see addEventListeners for more info)
                 //the text value must be assigned in order for the name to display in the dropdown.
                 for(var i = 0; i < vm.booking_period_options.length; i++){
-                    vm.booking_period_options[i].text = vm.booking_period_options[i].period_name;
+                    vm.booking_period_options[i].text = vm.booking_period_options[i].option_description;
                 }
                 //Then trigger the change of data on all 3 dropdowns.
                 $(vm.$refs.periodOptions).data('select2').dataAdapter.updateOptions(vm.booking_period_options);
@@ -363,6 +370,7 @@ export default {
                 }
             }
             vm.optionsName = res.period_name;
+            vm.optionsDescription = res.option_description;
             vm.optionsSmallPrice = res.small_price;
             vm.optionsMediumPrice = res.medium_price;
             vm.optionsLargePrice = res.large_price;
@@ -376,6 +384,7 @@ export default {
             //Destroys any data in the edit period option modal, used after save.
             let vm = this;
             vm.optionsName = '';
+            vm.optionsDescription = '';
             vm.optionsSmallPrice = '';
             vm.optionsMediumPrice = '';
             vm.optionsLargePrice = '';
@@ -470,6 +479,21 @@ export default {
                 return false;
             }
         },
+        validateOptionsDescription: function(){
+            //Name field must be filled in. Essentially required but offers use of
+            //the bootstrap alert error message.
+            let vm = this;
+            var errorString = "Please enter a description for admin use.";
+            if(!vm.optionsDescription || vm.optionsDescription == ""){
+                vm.errorMsg = errorString;
+                return true;
+            } else {
+                if(vm.errorMsg == errorString){
+                    vm.errorMsg = null;
+                }
+                return false;
+            }
+        },
         validateOptionsPrices: function(){
             //Prices must be filled in. Essentially required but offers use of the
             //bootstrap alert error message.
@@ -549,6 +573,7 @@ export default {
                 //If valid, get the data from the model fields into a dictionary.
                 var data = {
                     'period_name': vm.optionsName,
+                    'option_description': vm.optionsDescription,
                     'small_price': vm.optionsSmallPrice,
                     'medium_price': vm.optionsMediumPrice,
                     'large_price': vm.optionsLargePrice,

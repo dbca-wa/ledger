@@ -148,8 +148,8 @@ class BookingPeriod(admin.ModelAdmin):
 
 @admin.register(models.BookingPeriodOption)
 class BookingPeriodOption(admin.ModelAdmin):
-    list_display = ('period_name', 'small_price','medium_price','large_price','created')
-    search_fields = ('period_name',)
+    list_display = ('option_description', 'period_name', 'small_price','medium_price','large_price','created')
+    search_fields = ('option_description', 'period_name',)
 
 @admin.register(models.Region)
 class Region(admin.GeoModelAdmin):

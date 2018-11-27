@@ -605,7 +605,7 @@ class RateDetailSerializer(serializers.Serializer):
 class BookingPeriodOptionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingPeriodOption
-        fields = ('id', 'period_name', 'small_price', 'medium_price', 'large_price', 'start_time', 'finish_time')
+        fields = ('id', 'period_name', 'option_description', 'small_price', 'medium_price', 'large_price', 'start_time', 'finish_time')
 
 class BookingPeriodSerializer(serializers.ModelSerializer):
     booking_period = BookingPeriodOptionsSerializer(many=True, required=False)

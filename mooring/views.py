@@ -264,7 +264,7 @@ class MakeBookingsView(TemplateView):
                 pricing['infant_on'] = rate.infant_overnight_cost
                 pricing['family_on'] = rate.family_overnight_cost
 
-        print "DEBUG: ", lines
+        
 
         return render(request, self.template_name, {
             'form': form, 
@@ -278,7 +278,8 @@ class MakeBookingsView(TemplateView):
             'details': details,
             'pricing': pricing,
             'show_errors': show_errors,
-            'lines': lines
+            'lines': lines,
+            'override_reason_list': overrides,
          
         })
 

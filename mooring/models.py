@@ -1523,6 +1523,8 @@ class AdmissionsReason(Reason):
     pass
 class DiscountReason(Reason):
     pass
+class OverrideReason(Reason):
+    pass
 
 # VIEWS
 # =====================================
