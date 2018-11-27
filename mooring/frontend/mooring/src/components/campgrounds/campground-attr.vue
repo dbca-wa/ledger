@@ -76,16 +76,17 @@
                                         <div class="col-md-6">
 											<div class="form-group ">
 												<label class="control-label" >Mooring Physical Type</label>
-												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.mooring_physical_type">
+												<select id="campground_type_physical" name="campground_type_physical" class="form-control"  v-model="campground.mooring_physical_type">
 													<option value="0">Mooring</option>
 													<option value="1">Jetty Pen</option>
+                                                    <option value="2">Beach Pen</option>
 												</select>
 											</div>
 										</div>
                                         <div class="col-md-6">
 											<div class="form-group ">
 												<label class="control-label" >Mooring Class</label>
-												<select id="campground_type" name="campground_type" class="form-control"  v-model="campground.mooring_class">
+												<select id="campground_class" name="campground_class" class="form-control"  v-model="campground.mooring_class">
 													<option value="small">Small</option>
 													<option value="medium">Medium</option>
 													<option value="large">Large</option>
@@ -447,19 +448,19 @@ export default {
             } else {
                 $('#vessel_draft_warning').css("display","none");
             }
-            if(vm.campground.mooring_physical_type == 0){
-                if(!parseInt(vm.campground.vessel_weight_limit) > 0){
-                    $('#vessel_weight_warning').css("display","inline");
-                    isValid = false;
-                } else {
-                    $('#vessel_weight_warning').css("display","none");
-                }
-            } else {
+            if(vm.campground.mooring_physical_type == 1) {
                 if(!parseInt(vm.campground.vessel_beam_limit) > 0){
                     $('#vessel_beam_warning').css("display","inline");
                     isValid = false;
                 } else {
                     $('#vessel_beam_warning').css("display","none");
+                }
+            } else {
+                if(!parseInt(vm.campground.vessel_weight_limit) > 0){
+                    $('#vessel_weight_warning').css("display","inline");
+                    isValid = false;
+                } else {
+                    $('#vessel_weight_warning').css("display","none");
                 }
             }
             return isValid;

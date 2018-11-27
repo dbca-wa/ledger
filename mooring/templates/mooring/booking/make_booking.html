@@ -69,16 +69,19 @@
                             <h3 class="text-primary">Booking for</h3>
                         </div>
                         <div class="col-md-12">
-                             <div class="col-md-2">
+                             <div class="col-md-3">
                             	<strong>Mooring</strong>
                               </div>
-                               <div class="col-md-3">
+                              <div class="col-md-2">
+                                  <strong>Vessel</strong>
+                              </div>
+                               <div class="col-md-2">
                                  <strong>From</strong>
                                </div>
-                                <div class="col-md-2">
+                                <div class="col-md-1">
                               		&nbsp; 
                                 </div>
-                               <div class="col-md-3">
+                               <div class="col-md-2">
                                   <strong>To</strong>
                                </div>
                               <div class="col-md-2">
@@ -87,26 +90,90 @@
 
 
 
-
 		            {% for bm in booking_mooring %}
-                              <div class="col-md-2">
-                              {{ bm.campsite.mooringarea.name }} 
-			      </div>
-                               <div class="col-md-3">
-                                 {{ bm.from_dt }} 
-                               </div>
-                                <div class="col-md-2">
-				to
-				</div>
-                               <div class="col-md-3">
-                                  {{ bm.to_dt }}
-			       </div>
-                              <div class="col-md-2">
+                            <div class="col-md-3">
+                                {{ bm.campsite.mooringarea.name }} 
+                            </div>
+                            <div class="col-md-2">
+                                {% verbatim %}
+                                    {{ vehicles[0][1].toUpperCase() }}
+                                {% endverbatim %}
+                            </div>
+                            <div class="col-md-2">
+                                {{ bm.from_dt }} 
+                            </div>
+                            <div class="col-md-1">
+                                to
+                            </div>
+                            <div class="col-md-2">
+                                {{ bm.to_dt }}
+                            </div>
+                            <div class="col-md-2">
                                 ${{ bm.amount }}
-			      </div>
+			                </div>
 	
-			    {% endfor %}
-			</div>
+                {% endfor %}
+                    <div v-if="payingAdmissions">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4 class="text-primary">Admission Fees</h4>
+                            </div>
+                            <div class="col-md-1">
+                                <strong>Adults</strong>
+                            </div>
+                            <div class="col-md-1">
+                                <strong>Children</strong>
+                            </div>
+                            <div class="col-md-1">
+                                <strong>Infants</strong>
+                            </div>
+                            <div class="col-md-2">
+                                &nbsp;
+                            </div>
+                            <div class="col-md-2">
+                                <strong>From</strong>
+                            </div>
+                            <div class="col-md-1">
+                                &nbsp;
+                            </div>
+                            <div class="col-md-2">
+                                <strong>To</strong>
+                            </div>
+                            <div class="col-md-2">
+                                <strong>Price</strong>
+                            </div>
+                        </div>
+                        {% verbatim %}
+                        <div class="row" v-for="index in linesAdmissions.length">
+                            <div class="col-md-1">
+                                {{ numAdults }}
+                            </div>
+                            <div class="col-md-1">
+                                {{ numChildren }}
+                            </div>
+                            <div class="col-md-1">
+                                {{ numInfants }}
+                            </div>
+                            <div class="col-md-2">
+                                &nbsp;
+                            </div>
+                            <div class="col-md-2">
+                                {{ linesAdmissions[index-1].from }}
+                            </div>
+                            <div class="col-md-1">
+                                to
+                            </div>
+                            <div class="col-md-2">
+                                    {{ linesAdmissions[index-1].to }}
+                            </div>
+                            <div class="col-md-2">
+                                ${{ linesAdmissions[index-1].admissionFee }}
+                            </div>
+                        </div>
+                        {% endverbatim %}
+                </div>
+            </div>
+            
                         <div class="col-md-2" style='display:none'>
                               <img alt="campground"  class="img-thumbnail img-responsive" src="{{ booking.campground.first_image.image.url }}" style='display:none'>
                               <p class="pricing" v-cloak >
@@ -189,73 +256,71 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-6">
-                <div class="well">
+            <div class="col-lg-12" style="display:flex;">
+                <div class="well col-lg-6" style="flex:1;margin-right:1%;">
                     <div class="row">
                         <div class="col-lg-12">
                             <h3 class="text-primary">Personal Details</h3>
                         </div>
                     </div>
                     <div class="row">
-                    {% if request.user.is_anonymous %}
-                      <div class="col-md-6">
-                          <div class="form-group">
+                    {% if request.user.is_anonymous or request.user.is_staff %}
+                        <div class="col-md-6">
+                            <div class="form-group">
                             {{form.email.label_tag}}
                             {{ form.email|class:'form-control'}}
-                          </div>
-                      </div>
-                      <div class="col-md-6" >
-                          <div class="form-group">
-                              {{form.confirm_email.label_tag}}
-                              {{ form.confirm_email|class:'form-control'}}
-                          </div>
-                      </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6" >
+                            <div class="form-group">
+                                {{form.confirm_email.label_tag}}
+                                {{ form.confirm_email|class:'form-control'}}
+                            </div>
+                        </div>
                     {% else %}
-                      <div class="col-md-12">
-                          <p>Logged in as user <b>{{ request.user.email }}</b>.</p>
-                      </div>
+                        <div class="col-md-12">
+                            <p>Logged in as user <b>{{ request.user.email }}</b>.</p>
+                        </div>
                     {% endif %}
                     </div>
                     <div class="row">
-                      <div class="col-md-6">
-                          <div class="form-group">
+                        <div class="col-md-6">
+                            <div class="form-group">
                             {{form.first_name.label_tag}}
                             {{ form.first_name|class:'form-control'}}
-                          </div>
-                      </div>
-                      <div class="col-md-6">
-                          <div class="form-group">
-                              {{form.last_name.label_tag}}
-                              {{ form.last_name|class:'form-control'}}
-                          </div>
-                      </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{form.last_name.label_tag}}
+                                {{ form.last_name|class:'form-control'}}
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
-                      <div class="col-md-6">
-                          <div class="form-group">
-                              {{form.postcode.label_tag}}
-                              {{ form.postcode|class:'form-control'}}
-                          </div>
-                      </div>
-                      <div class="col-md-6">
-                          <div class="form-group">
-                              {{form.country.label_tag}}
-                              {{ form.country|class:'form-control'}}
-                          </div>
-                      </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{form.postcode.label_tag}}
+                                {{ form.postcode|class:'form-control'}}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{form.country.label_tag}}
+                                {{ form.country|class:'form-control'}}
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
-                      <div class="col-md-6">
-                          <div class="form-group">
-                              {{form.phone.label_tag}}
-                              {{ form.phone|class:'form-control'}}
-                          </div>
-                      </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{form.phone.label_tag}}
+                                {{ form.phone|class:'form-control'}}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="well">
+                <div class="well col-lg-6" style="flex:1; margin-left:1%;">
                     <div class="row">
                         <div class="col-lg-12">
                             <h3 class="text-primary">Vessels</h3>
@@ -266,7 +331,7 @@
                     {# Manual rendering of the 'vehicles' formset. #}
                     {# Django 1.11 will move form rendering junk into proper templates, #}
                     {# so there should be a cleaner way of doing this in future. #}
-                    <div class="row" v-cloak>
+                    <div class="row" style='display: none' v-cloak>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label style='display: none'>Number of vessels:
@@ -278,17 +343,98 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row form-group" v-for="(vehicle, index) in vehicles">
-                        <div class="col-md-4">
-                            <select v-on:change="calculateTotal" v-bind:name="'form-'+Number(index).toString()+'-vehicle_type'" class="form-control" v-model="vehicle[0]">
-                                <option value="0">Vessel</option>
-                            </select>
+                    <div class="row" v-for="(vehicle, index) in vehicles">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <select v-on:change="calculateTotal" v-bind:name="'form-'+Number(index).toString()+'-vehicle_type'" class="form-control" v-model="vehicle[0]" style="display:none;">
+                                    <option value="0">Vessel</option>
+                                </select>
+                                <label for="'form-'+Number(index).toString()+'-vehicle_rego'" class="text-right">Vessel</label><label>&nbspRegistration:</label>
+                                <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" v-model="vehicle[1]" required v-on:change="searchRego()" style="text-transform:uppercase"/>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" placeholder="Registration" v-model="vehicle[1]" required v-on:change="updateLocalStorage"/>
-                        </div>
-                        <div class="col-md-4">
+                        <!-- <div class="col-md-4">
                             <div class="checkbox" v-if="pricing.vehicle"><label><input v-bind:name="'form-'+Number(index).toString()+'-entry_fee'" type="checkbox" v-model="vehicle[2]" v-on:change="updateVehicles"/> Entry fee</label></div>
+                        </div> -->
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vessel_size" class="text-right">Vessel Size (Meters)</label>
+                                <input type="number" class="form-control" id="vessel_size" name="size" v-model="size"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vessel_draft" class="text-right">Vessel Draft (Meters)</label>
+                                <input type="number" class="form-control" id="vessel_draft" name="draft" v-model="draft"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vessel_beam" class="text-right">Vessel Beams (Meters)</label>
+                                <input type="number" class="form-control" id="vessel_beam" name="size" v-model="beam"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vessel_weight" class="text-right">Vessel Weight (Tons)</label>
+                                <input type="number" class="form-control" id="vessel_weight" name="draft" v-model="weight"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="linesAdmissions.length > 0">
+                        <div v-if="payingAdmissions" class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="num_adults" class="text-right">Adults (ages 12+):</label>
+                                    <input type="number" class="form-control" id="numAdults" name="num_adults" v-model="numAdults" v-on:change="calculateTotal()" min="0" max="16"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="num_children" class="text-right">Children (ages 4-12):</label>
+                                    <input type="number" class="form-control" id="numChildren" name="num_children" v-model="numChildren" v-on:change="calculateTotal()" min="0" max="16"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="num_infants" class="text-right">Infants (ages 0-4):</label>
+                                    <input type="number" class="form-control" id="numInfants" name="num_infants" v-model="numInfants" v-on:change="calculateTotal()" min="0" max="16"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                            </div>
+
+                                <div class="row" style="display:none;">
+                                    <div class="small-6 columns">
+                                        <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
+                                            - Seniors Card
+                                            - Age Pension
+                                            - Disability Support
+                                            - Carer Payment
+                                            - Carer Allowance
+                                            - Companion Card
+                                            - Department of Veterans' Affairs">Concessions</span>
+                                        </label>
+                                    </div><div class="small-6 columns">
+                                        <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
+                                    </div>
+                                </div>
+                            <div class="row" style="display:none;">
+                                <div class="small-6 columns">
+                                    <label for="num_children" class="text-right">Moorings<label>
+                                </div>
+                                <div class="small-6 columns">
+                                    <input type="number" id="numMooring" name="num_mooring" v-model="numMooring" min="0" max="16"/></label>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div v-else>
+                            <div class="row">
+                                No admission fees required for {% verbatim %} {{ vehicles[0][1].toUpperCase() }} {% endverbatim %}
+                            </div>
                         </div>
                     </div>
                     <template v-if="pricing.vehicle">
@@ -330,6 +476,33 @@
 
                     <div class="row">
                         <div class="col-md-6">
+                            {% if request.user.is_staff %}
+                                <label>None-Online Booking</label>
+                                <input type="checkbox" id="nononline" v-model="nononline" checked/>
+                                <br/>
+                                <label>Override Price</label>
+                                <input type="checkbox" id="override" v-model="override"/>
+                                <br/>
+                                <div v-if="override">
+                                    <div class="form-group">
+                                        <label>Override Amount:</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">AUD $</span>
+                                            <input type="number" class="form-control" v-model="overridePrice" step="0.01">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" v-if="overridePrice > 0">
+                                        <label>Reason:</label>
+                                        <select name="overrideReason" id="overrideReason" style="width:100%;">
+                                            <option v-for="res in override_reasons" :value="res.id">{% verbatim %}{{res.text}}{% endverbatim %}</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" v-if="overridePrice > 0">
+                                        <label>Details:</label>
+                                        <textarea v-model="overrideDetail" style="width:100%;resize:none;"></textarea>
+                                    </div>
+                                </div>
+                            {% endif %}
                             <p class="text-muted">
                                 Payments will be recorded against the booking once the booking is completed and the payment is received.
                             </p>
@@ -368,9 +541,14 @@
             pricing: {
                 mooring: {{ pricing.mooring }},
                 adult: {{ pricing.adult }},
+                adult_on: {{ pricing.adult_on }},
                 concession: {{ pricing.concession }},
                 child: {{ pricing.child }},
+                child_on: {{ pricing.child_on }},
                 infant: {{ pricing.infant }},
+                infant_on: {{ pricing.infant_on }},
+                family: {{ pricing.family }},
+                family_on: {{ pricing.family_on }},
                 vehicle: {{ pricing.vehicle }},
                 vehicleConc: {{ pricing.vehicle_conc }},
                 motorcycle: {{ pricing.motorcycle }}
@@ -382,7 +560,28 @@
             entryFee: 0,
             total: 0,
             concessionWarning: false,
+            numAdults: {{ details.num_adults }},
+            numChildren: {{ details.num_children }},
+            numInfants: {{ details.num_infants }},
+            linesAdmissions: {{ lines|safe }},
+            // numAdults: 0,
+            // numChildren:0,
+            // numInfants:0,
+            numConcessions: 0,
+            numMooring: 0,
             vehicleCount: 1,
+            payingAdmissions: true,
+            size:0,
+            weight:0,
+            draft:0,
+            beam:0,
+            admissionFee: 0,
+            nononline: false,
+            override: false,
+            overridePrice: 0,
+            overrideReason: '',
+            override_reasons: [{id:0, text: 'First reason'}, {id: 1, text: 'Second reason'}, {id: 2, text: "Third reason"}],
+            overrideDetail: '',
             toc: false,
             booking_id: {{ booking.id }},
             }
@@ -399,6 +598,16 @@
              }
         },
         computed: {
+            numPeople: {
+                get: function get(){
+                    var count = parseInt(this.numAdults) + parseInt(this.numChildren) + parseInt(this.numInfants);
+                    if (count === 1) {
+                        return count +" person ▼";
+                    } else {
+                        return count + " people ▼";
+                    }
+                }
+            },
             timeleft: {
                 cache: false,
                 get: function get() {
@@ -449,13 +658,145 @@
 
                 vm.updateLocalStorage();
             },
+            searchRego: function(rego){
+                let vm = this;
+                if (rego){
+                    var reg = rego;
+                } else {
+                    var reg = vm.vehicles[0][1]
+                }
+                var data = {
+                    'rego': reg
+                }
+                if(reg){
+                    $.ajax({
+                        url: "/api/registeredVessels/",
+                        dataType: 'json',
+                        data: data,
+                        method: 'GET',
+                        success: function(data, stat, xhr) {
+                            if(data[0]){
+                                vm.size = data[0].vessel_size;
+                                vm.weight = data[0].vessel_weight;
+                                vm.draft = data[0].vessel_draft;
+                                vm.beam = data[0].vessel_beam;
+                                if (vm.linesAdmissions.length > 0){
+                                    if (data[0].admissionsPaid){
+                                        vm.payingAdmissions = false;
+                                    } else {
+                                        vm.payingAdmissions = true;
+                                    }
+                                    vm.calculateTotal();
+                                }
+                            } else {
+                                console.log("Registration was not found.");
+                                vm.payingAdmissions = true;
+                                vm.calculateTotal();
+                                if (document.cookie.split('vessel_rego=').length==2 && (!this.vesselRego || this.vesselRego == "")){
+                                    document.cookie = "vessel_rego=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                                }
+                            }
+                        }
+                    });
+                }
+            },
             calculateTotal: function () {
                 var vm = this;
                 var form = document.forms.addBookingForm;
-                // console.log(vm.booking_mooring);	
 
                 vm.entryFee = 0;
                 vm.total = 0;
+                vm.total = '{{ booking_total }}';
+                vm.total = parseInt(vm.total);
+                vm.admissionFee = 0;
+
+                console.log(vm.total);
+                
+
+                if (vm.payingAdmissions){
+                    // Will need to calculate price per person based on input.
+                    // vm.admissionFee += (vm.numInfants * vm.pricing.infant);
+
+                    var family = 0;
+                    var adults = vm.numAdults;
+                    var children = vm.numChildren;
+
+                    if (adults > 1 & children > 1){
+                        if (adults == children){
+                            if (adults % 2 == 0){
+                                family = adults/2;
+                                adults = 0;
+                                children = 0;
+                            } else {
+                                adults -= 1;
+                                family = adults/2;
+                                adults = 1;
+                                children = 1;
+                            }
+                        }
+                        else if (adults > children){
+                            if (children % 2 == 0){
+                                family = children/2;
+                                adults -= children;
+                                children = 0;
+                            } else {
+                                children -= 1;
+                                family = children/2;
+                                adults -= children;
+                                children = 1;
+                            }
+                        } else {
+                            if (adults % 2 == 0){
+                                family = adults/2;
+                                children -= adults;
+                                adults = 0;
+                            } else {
+                                adults -= 1;
+                                family = adults/2;
+                                children -= adults;
+                                adults = 1;
+                            }
+                        }
+
+                        // vm.admissionFee += (adults * vm.pricing.adult);
+                        // vm.admissionFee += (children * vm.pricing.child);
+                        // vm.admissionFee += (family * vm.pricing.family);
+                        // console.log(family);
+                    } 
+                    // else {
+                    //     vm.admissionFee += (vm.numAdults * vm.pricing.adult);
+                    //     vm.admissionFee += (vm.numChildren * vm.pricing.child);
+                    // }
+
+                    // vm.admissionFee = parseFloat(vm.admissionFee).toFixed(2);
+                
+                    // vm.total += vm.admissionFee * vm.lines.length
+                    for (var i = 0; i < vm.linesAdmissions.length; i++){
+                        console.log("each line");;
+                        // vm.total += parseInt(vm.admissionFee);
+                        var thisAdmission = 0;
+                        console.log(vm.linesAdmissions[i].from);
+                        if (vm.linesAdmissions[i].from != vm.linesAdmissions[i].to){
+                            thisAdmission += (vm.numInfants * vm.pricing.infant_on);
+                            thisAdmission += (adults * vm.pricing.adult_on);
+                            thisAdmission += (children * vm.pricing.child_on);
+                            thisAdmission += (family * vm.pricing.family_on);
+                        } else {
+                            thisAdmission += (vm.numInfants * vm.pricing.infant);
+                            thisAdmission += (adults * vm.pricing.adult);
+                            thisAdmission += (children * vm.pricing.child);
+                            thisAdmission += (family * vm.pricing.family);
+                        }
+                        console.log("Before");
+                        console.log(vm.linesAdmissions[i].admissionFee);
+                        vm.linesAdmissions[i].admissionFee = parseFloat(thisAdmission).toFixed(2);
+                        console.log("After");
+                        console.log(vm.linesAdmissions[i].admissionFee);
+                        vm.admissionFee += parseInt(thisAdmission);
+                        vm.total += parseInt(thisAdmission);
+
+                    }
+                }
 
                 // add per-person fees
                 // vm.total += (parseInt(form.num_adult.value) || 0)*vm.pricing.adult;
@@ -486,7 +827,6 @@
 //                    }
 //                });
 //                vm.total += vm.entryFee;
-                vm.total = '{{ booking_total }}';
                 // show concession warning text if the number > 0
 //                vm.concessionWarning = (parseInt(form.num_concession.value) > 0);
                 return;
@@ -543,6 +883,12 @@
                 } 
             }, 1000);
 
+            if (vm.linesAdmissions.length > 0){
+                vm.payingAdmissions = true;
+            } else {
+                vm.payingAdmissions = false;
+            }
+
             // wire up events to the form controls
             // TODO: for django 1.11 replace python form controls with templates;
             // should be easier to inject vue stuff
@@ -583,6 +929,8 @@
                 var secondHalf = x[1].split(';');
                 var rego = secondHalf[0];
                 vm.vehicles = [[0, rego, true]];
+                console.log(rego);
+                vm.searchRego(rego);
             }
             vm.calculateTotal();
         }

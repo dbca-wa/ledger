@@ -4,7 +4,7 @@
             <div v-bind:class="{'col-md-4':large,'col-md-2':!large}">
                 <label>Reason: </label>
             </div>
-            <div v-bind:class="{'col-md-8':large,'col-md-4':!large}">
+            <div v-bind:class="{'col-md-8':large,'col-md-4':!large, 'col-md-10':wide, 'col-md-4':!wide }">
                 <select v-if="!reasons.length > 0" class="form-control" >
                     <option value="">Loading...</option>
                 </select>
@@ -40,6 +40,11 @@ export default {
         },
         large:{
             default:function () {
+                return false;
+            }
+        },
+        wide: {
+            default: function(){
                 return false;
             }
         }

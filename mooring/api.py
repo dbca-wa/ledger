@@ -4,6 +4,8 @@ import geojson
 import decimal
 import logging
 import json
+import calendar
+import time
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -21,7 +23,7 @@ from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route, list_route,renderer_classes,authentication_classes,permission_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission, IsAuthenticatedOrReadOnly
 from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
@@ -65,7 +67,6 @@ from mooring.models import (MooringArea,
                                 MooringAreaGroup,
                                 AdmissionsBooking,
                                 AdmissionsRate,
-                                BookingPeriodOption,
                                 AdmissionsBookingInvoice,
                                 BookingPeriodOption,
                                 BookingPeriod,
@@ -432,7 +433,8 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
-            "gear_type": request.GET.get('gear_type', 'all')
+            "avail": request.GET.get('gear_type', 'all'),
+            "pen_type": request.GET.get('pen_type', 'all')
         }
        
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
@@ -440,9 +442,11 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         scrubbed = serializer.validated_data
         context = {}
         ground_ids = []
+
+        #Removed from parkstay
         # filter to the campsites by gear allowed (if specified), else show the lot
-        if scrubbed['gear_type'] != 'all':
-            context = {scrubbed['gear_type']: True}
+        # if scrubbed['gear_type'] != 'all':
+        #     context = {scrubbed['gear_type']: True}
 
         # if a date range is set, filter out campgrounds that are unavailable for the whole stretch
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
@@ -457,9 +461,17 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             ground_ids = set((x[0] for x in Mooringsite.objects.filter(**context).values_list('mooringarea')))
             # we need to be tricky here. for the default search (all, no timestamps),
             # we want to include all of the "campgrounds" that don't have any campsites in the model! (e.g. third party)
-            if scrubbed['gear_type'] == 'all':
+            if scrubbed['avail'] == 'all':
                 ground_ids.update((x[0] for x in MooringArea.objects.filter(campsites__isnull=True).values_list('id')))
 
+        # If the pen type has been included in filtering and is not 'all' then loop through the sites selected.
+        if scrubbed['pen_type'] != 'all':
+            sites = Mooringsite.objects.filter(pk__in=ground_ids)
+            for s in sites:           
+            # When looping through, if the pen type is not correct, remove it from the list.
+                i = s.mooringarea
+                if i.mooring_physical_type != scrubbed['pen_type']:
+                    ground_ids.remove(s.id)
 
         # Filter out for the max period
         today = date.today()
@@ -502,9 +514,29 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
                          row['avail'] = 'partial'
 
                 queryset.append(row)
+        
+        # Filter based on the availability
+        query = []
+        if scrubbed['avail'] != 'all':
+            for q in queryset:
+                mooring_type = MooringArea.objects.get(id=q['id']).mooring_type
+                if scrubbed['avail'] == 'rental-available' and q['avail'] not in ['free', 'partial']:
+                    pass
+                elif scrubbed['avail'] == 'rental-notavailable' and (q['avail'] not in ['full'] or mooring_type == 2):
+                        pass
+                elif scrubbed['avail'] == 'public-notbookable':
+                    if mooring_type != 2:
+                        pass
+                    else:
+                        query.append(q)
+                else:
+                    query.append(q)
+        else:
+            query = queryset
+                
 
 #        serializer = self.get_serializer(queryset, many=True)
-        return HttpResponse(json.dumps(queryset), content_type='application/json')
+        return HttpResponse(json.dumps(query), content_type='application/json')
 #        return Response(serializer.data)
 
 def current_booking(request, *args, **kwargs):
@@ -558,6 +590,9 @@ def add_booking(request, *args, **kwargs):
 #    booking_period_finish = request.POST['booking_finish']
     booking_period_start = datetime.strptime(request.POST['booking_start'], "%d/%m/%Y").date()
     booking_period_finish = datetime.strptime(request.POST['booking_finish'], "%d/%m/%Y").date()
+    num_adults = request.POST['num_adult']
+    num_children = request.POST['num_children']
+    num_infants = request.POST['num_infant']
 
     start_booking_date = request.POST['date']
     finish_booking_date = request.POST['date']
@@ -571,8 +606,14 @@ def add_booking(request, *args, **kwargs):
              booking.departure = booking_period_finish
              booking.save()
     else:
+        details = {
+            'num_adults' : num_adults,
+            'num_children' : num_children,
+            'num_infants' : num_infants
+        }
+        print "DEBUG - DETAILS: ", details
         mooringarea = MooringArea.objects.get(id=request.POST['mooring_id'])
-        booking = Booking.objects.create(mooringarea=mooringarea,booking_type=3,expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),details={},arrival=booking_period_start,departure=booking_period_finish)
+        booking = Booking.objects.create(mooringarea=mooringarea,booking_type=3,expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),details=details,arrival=booking_period_start,departure=booking_period_finish)
         request.session['ps_booking'] = booking.id
         request.session.modified = True
 
@@ -654,6 +695,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             queryset = self.get_queryset()
             cache.set('moorings_dt',queryset,3600)
         qs = [c for c in queryset.all() if can_view_campground(request.user,c)]
+        print "DEBUG: ", qs
         serializer = MooringAreaDatatableSerializer(qs,many=True)
         data = serializer.data
         return Response(data)
@@ -854,6 +896,13 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             mutable = request.POST._mutable
             request.POST._mutable = True
             request.POST['campground'] = self.get_object().id
+            date_start = request.POST['range_start']
+            time_start = request.POST.get('range_start_time', "00:00")
+            request.POST['range_start'] = date_start +" "+ time_start
+            date_end = request.POST.get('range_end', None)
+            time_end = request.POST.get('range_end_time', "23:59")
+            if date_end is not None and date_end != "" and date_end != " ":
+                request.POST['range_end'] = date_end +" "+ time_end
             request.POST._mutable = mutable
             serializer = MooringAreaBookingRangeSerializer(data=request.data, method="post")
             serializer.is_valid(raise_exception=True)
@@ -900,10 +949,19 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 '''Thread for performance / no error messages though'''
                 #import thread
                 #thread.start_new_thread( self.close_campgrounds, (closure_data,campgrounds,) )
-                self.close_campgrounds(closure_data,campgrounds)
+                start = closure_data['range_start'] + " " + closure_data['range_start_time']
+                end = closure_data['range_end'] + " " + closure_data['range_end_time']
+
+                data = {
+                    'range_start': start,
+                    'range_end': end,
+                    'reason': closure_data['reason'],
+                    'status': closure_data['status'],
+                }
+                self.close_campgrounds(data,campgrounds)
                 cache.delete('campgrounds_dt')
                 return Response('All Selected MooringAreas Closed')
-            except serializers.ValidationError:
+            except serializers.ValidationError as e:
                 print(traceback.print_exc())
                 raise serializers.ValidationError(str(e[0]))
             except Exception as e:
@@ -1049,7 +1107,9 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 serializer = MooringAreaBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)).order_by('-range_start'),many=True)
             else:
                 serializer = MooringAreaBookingRangeSerializer(self.get_object().booking_ranges,many=True)
+            print "GETTING RESULTS"
             res = serializer.data
+            print "GOT THE RESULTS"
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
@@ -1480,7 +1540,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             "num_concession" : request.GET.get('num_concession', 0),
             "num_child" : request.GET.get('num_child', 0),
             "num_infant" : request.GET.get('num_infant', 0),
-            "gear_type" : request.GET.get('gear_type', 'all'),
+            # "gear_type" : request.GET.get('gear_type', 'all'),
             "vessel_size" : request.GET.get('vessel_size', 0),
 #            "distance_radius" : request.GET.get('distance_radius', 0)
         }
@@ -1493,7 +1553,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         num_concession = serializer.validated_data['num_concession']
         num_child = serializer.validated_data['num_child']
         num_infant = serializer.validated_data['num_infant']
-        gear_type = serializer.validated_data['gear_type']
+        # gear_type = serializer.validated_data['gear_type']
         vessel_size = serializer.validated_data['vessel_size']
  #       distance_radius = serializer.validated_data['distance_radius']
 
@@ -1522,8 +1582,9 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 
         # fetch all the campsites and applicable rates for the campground
         context = {}
-        if gear_type != 'all':
-            context[gear_type] = True
+        #gear type is for parkstay, remvoed for now.
+        # if gear_type != 'all':
+        #     context[gear_type] = True
 #        sites_qs = Mooringsite.objects.filter(mooringarea=ground).filter(**context)
 #        radius = int(distance_radius)
         radius = int(100)
@@ -1534,6 +1595,17 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #print radius
 #       sites_qs = Mooringsite.objects.all().filter(**context)
         sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
+
+        # # If the pen type has been included in filtering and is not 'all' then loop through the sites selected.
+        # if pen_type != 'all':
+        #     sites = Mooringsite.objects.filter(pk__in=sites_qs)
+        #     for s in sites:           
+        #     # When looping through, if the pen type is not correct, remove it from the list.
+        #         i = s.mooringarea
+        #         if i.mooring_physical_type != pen_type:
+        #             sites_qs = sites_qs.exclude(pk=s.id)
+
+
 #        print "sites_qs"
 #        print sites_qs
         # fetch rate map
@@ -2018,9 +2090,6 @@ def get_admissions_confirmation(request, *args, **kwargs):
         return HttpResponse('Booking unavailable', status=403)
 
     # check payment status
-    if (not is_officer(request.user)) and (not booking.paid):
-        return HttpResponse('Booking unavailable', status=403)
-
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="confirmation-AD{}.pdf"'.format(booking_id)
 
@@ -2894,12 +2963,39 @@ class BookingRangeViewset(viewsets.ModelViewSet):
         instance = self.get_object()
         original = bool(request.GET.get("original", False))
         serializer = self.get_serializer(instance, original=original, method='get')
-        return Response(serializer.data)
+        data = serializer.data
+
+        start = datetime.strptime(serializer.data['range_start'], '%d/%m/%Y %H:%M')
+        timestamp = calendar.timegm(start.timetuple())
+        local_dt = datetime.fromtimestamp(timestamp)
+        start = local_dt.replace(microsecond=start.microsecond)
+        data['range_start'] = start.strftime('%d/%m/%Y %H:%M')
+
+        if serializer.data['range_end']:
+                end = datetime.strptime(serializer.data['range_end'], '%d/%m/%Y %H:%M') if serializer.data['range_end'] else ""
+                timestamp = calendar.timegm(end.timetuple())
+                local_dt = datetime.fromtimestamp(timestamp)
+                end = local_dt.replace(microsecond=end.microsecond)
+                data['range_end'] = end.strftime('%d/%m/%Y %H:%M')
+        return Response(data)
 
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             partial = kwargs.pop('partial', False)
+
+            mutable = request.POST._mutable
+            request.POST._mutable = True
+            date_start = request.POST['range_start']
+            time_start = request.POST.get('range_start_time', "00:00")
+            request.POST['range_start'] = date_start +" "+ time_start
+            date_end = request.POST.get('range_end', None)
+            time_end = request.POST.get('range_end_time', "23:59")
+            if date_end is not None and date_end != "" and date_end != " ":
+                request.POST['range_end'] = date_end +" "+ time_end
+            request.POST._mutable = mutable
+
+            
             serializer = self.get_serializer(instance,data=request.data,partial=partial)
             serializer.is_valid(raise_exception=True)
             if instance.range_end and not serializer.validated_data.get('range_end'):
@@ -2992,6 +3088,7 @@ class BookingPeriodViewSet(viewsets.ModelViewSet):
 class RegisteredVesselsViewSet(viewsets.ModelViewSet):
     queryset = RegisteredVessels.objects.all()
     serializer_class = RegisteredVesselsSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request, *args, **kwargs):
         rego = request.GET.get('rego') if request.GET.get('rego') else None
@@ -3166,6 +3263,23 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
     queryset = AdmissionsRate.objects.all()
     renderer_classes = (JSONRenderer,)
     serializer_class = AdmissionsRateSerializer;
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    @detail_route(methods=['get'])
+    def get_price(self, request, format='json'):
+        http_status = status.HTTP_200_OK
+        try:
+            date = request.GET.get('date')
+            if date:
+                price = AdmissionsRate.objects.filter(Q(period_start__lte=date), Q(period_end=None) | Q(period_end__gte=date))
+                res = {
+                    'price' : price
+                }
+        except Exception as e:
+            res = {
+                'Error': str(e)
+            }
+        return Response(res, status=http_status)
 
     @list_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):

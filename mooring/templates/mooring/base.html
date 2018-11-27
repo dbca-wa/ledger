@@ -51,10 +51,10 @@
                                     <li style='display:none' ><a href="{% url 'dash-campsite-types'%}">Mooring Types</a></li>
                                     <li style='display:none' ><a href="{% url 'dash-bulkpricing'%}">Bulk Pricing</a></li>
                                     <li><a href="{% url 'dash-bookings'%}">Existing Bookings</a></li>
-                                    <li><a href="{% url 'admissions_cost'%}">Admission Fees</a></li>
                                     {% else %}
-                                    <li><a href="{{EXPLORE_PARKS_SEARCH}}">Search for a place to stay</a></li>
+                                    
                                     {% endif %}
+                                    <li><a href="{{EXPLORE_PARKS_SEARCH}}">Search For A Mooring</a></li>
                                 {% endblock %}
                             </ul>
                             <ul class="nav navbar-nav navbar-right">
@@ -82,6 +82,9 @@
                                             {% if request.user.is_staff %}
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                 <li><a href="/dashboard/reports">Reports</a></li>
+                                                <li role="separator" class="divider"></li>
+                                                <li><a href="{% url 'admissions_cost' %}">Manage Admission Fees</a></li>
+                                                <li><a href="{% url 'dash-bookingperiod' %}">Manage Booking Periods</a></li>
                                                 <li role="separator" class="divider"></li>
                                             {% endif %}
                                             <li><a href="{% url 'account' %}">Manage Account</a></li>

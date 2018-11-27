@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from mooring.models import lotusnotesextract, RegisteredVessels
+from mooring.models import RegisteredVessels
 import json
 
 from datetime import timedelta

@@ -1,8 +1,11 @@
 import logging
+import calendar
+import json
 from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
+from django.core.serializers.json import DjangoJSONEncoder
 from django.views.generic.base import View, TemplateView
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
@@ -27,7 +30,8 @@ from mooring.models import (MooringArea,
                                 MooringsiteRate,
                                 MarinaEntryRate,
                                 AdmissionsBooking,
-                                AdmissionsBookingInvoice
+                                AdmissionsBookingInvoice,
+                                AdmissionsRate
                                 )
 from mooring import emails
 from ledger.accounts.models import EmailUser, Address
@@ -176,22 +180,89 @@ class MakeBookingsView(TemplateView):
             'concession': Decimal('0.00'),
             'child': Decimal('0.00'),
             'infant': Decimal('0.00'),
+            'family': Decimal('0.00'),
+            'adult_on': Decimal('0.00'),
+            'child_on': Decimal('0.00'),
+            'infant_on': Decimal('0.00'),
+            'family_on': Decimal('0.00'),
             'vessel': entry_fees.vessel if entry_fees else Decimal('0.00'),
             'vehicle': entry_fees.vehicle if entry_fees else Decimal('0.00'),
             'vehicle_conc': entry_fees.concession if entry_fees else Decimal('0.00'),
             'motorcycle': entry_fees.motorbike if entry_fees else Decimal('0.00')
         }
+        details = {
+            'num_adults':0,
+            'num_children':0,
+            'num_infants':0,
+        }
+        lines = []
 
         if booking:
             booking_mooring = MooringsiteBooking.objects.filter(booking=booking)
             booking_total = sum(Decimal(i.amount) for i in booking_mooring)
-            pricing_list = utils.get_visit_rates(Mooringsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
-            pricing['mooring'] = sum([float(x['mooring']) for x in pricing_list.values()])
-            pricing['adult'] = sum([float(x['adult']) for x in pricing_list.values()])
-            pricing['concession'] = sum([float(x['concession']) for x in pricing_list.values()])
-            pricing['child'] = sum([float(x['child']) for x in pricing_list.values()])
-            pricing['infant'] = sum([float(x['infant']) for x in pricing_list.values()])
+            details = booking.details
+            # pricing_list = utils.get_visit_rates(Mooringsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
+            # pricing_list = {}
+#            print (pricing_list)
+#            for x in pricing_list.values():
+#                print x['mooring']
+#                print "---------------------------"
+            # pricing['mooring'] = sum([float(x['mooring']) for x in pricing_list.values()])
+            # pricing['adult'] = sum([float(x['adult']) for x in pricing_list.values()])
+            # pricing['concession'] = sum([float(x['concession']) for x in pricing_list.values()])
+            # pricing['child'] = sum([float(x['child']) for x in pricing_list.values()])
+            # pricing['infant'] = sum([float(x['infant']) for x in pricing_list.values()])
+            for bm in booking_mooring:
+                # Convert the from and to dates of this booking to just plain dates in local time.
+                # Append them to a list.
+                park = MarinePark.objects.get(name="Rottnest")
+                if bm.campsite.mooringarea.park == park:
+                    from_dt = bm.from_dt
+                    timestamp = calendar.timegm(from_dt.timetuple())
+                    local_dt = datetime.fromtimestamp(timestamp)
+                    from_dt = local_dt.replace(microsecond=from_dt.microsecond)
+                    to_dt = bm.to_dt
+                    timestamp = calendar.timegm(to_dt.timetuple())
+                    local_dt = datetime.fromtimestamp(timestamp)
+                    to_dt = local_dt.replace(microsecond=to_dt.microsecond)
+                    lines.append({'from': from_dt, 'to': to_dt})
+            # Sort the list by date from.
+            new_lines = sorted(lines, key=lambda line: line['from'])
+            i = 0
+            lines = []
+            latest_from = None
+            latest_to = None
+            # Loop through the list, if first instance, then this line's from date is the first admission fee.
+            # Then compare this TO value to the next FROM value. If they are not the same or overlapping dates
+            # add this date to the list, using the latest from and this TO value.
+            while i < len(new_lines):
+                if i == 0:
+                    latest_from = new_lines[i]['from'].date()
+                if i < len(new_lines)-1:
+                    if new_lines[i]['to'].date() < new_lines[i+1]['from'].date():
+                        latest_to = new_lines[i]['to'].date()
+                else:
+                    # if new_lines[i]['from'].date() > new_lines[i-1]['to'].date():
+                    latest_to = new_lines[i]['to'].date()
+                
+                if latest_to:
+                    lines.append({'from':datetime.strftime(latest_from, '%d %b %Y'), 'to': datetime.strftime(latest_to, '%d %b %Y'), 'admissionFee': 0})
+                    if i < len(new_lines)-1:
+                        latest_from = new_lines[i+1]['from'].date()
+                        latest_to = None
+                i+= 1
+            rate = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)))[0]
+            if rate:
+                pricing['adult'] = rate.adult_cost
+                pricing['child'] = rate.children_cost
+                pricing['infant'] = rate.infant_cost
+                pricing['family'] = rate.family_cost
+                pricing['adult_on'] = rate.adult_overnight_cost
+                pricing['child_on'] = rate.children_overnight_cost
+                pricing['infant_on'] = rate.infant_overnight_cost
+                pricing['family_on'] = rate.family_overnight_cost
 
+        
 
         return render(request, self.template_name, {
             'form': form, 
@@ -202,8 +273,11 @@ class MakeBookingsView(TemplateView):
             'campsite': campsite,
             'expiry': expiry,
             'timer': timer,
+            'details': details,
             'pricing': pricing,
-            'show_errors': show_errors
+            'show_errors': show_errors,
+            'lines': lines,
+            'override_reason_list': overrides,
          
         })
 
@@ -218,7 +292,7 @@ class MakeBookingsView(TemplateView):
             'num_infant': booking.details.get('num_infant', 0) if booking else 0
         }
 
-        if request.user.is_anonymous():
+        if request.user.is_anonymous() or request.user.is_staff:
             form = AnonymousMakeBookingsForm(form_context)
         else:
             form_context['first_name'] = request.user.first_name
@@ -232,7 +306,7 @@ class MakeBookingsView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-        if request.user.is_anonymous():
+        if request.user.is_anonymous() or request.user.is_staff:
             form = AnonymousMakeBookingsForm(request.POST)
         else:
             form = MakeBookingsForm(request.POST)
@@ -375,8 +449,8 @@ class AdmissionsBookingSuccessView(TemplateView):
                     # set booking to be permanent fixture
                     booking.booking_type = 1  # internet booking
                     booking.save()
-                    utils.delete_session_admissions_booking(request.session)
                     request.session['ad_last_booking'] = booking.id
+                    utils.delete_session_admissions_booking(request.session)
 
                     # send out the invoice before the confirmation is sent
                     emails.send_admissions_booking_invoice(booking)
@@ -429,8 +503,8 @@ class BookingSuccessView(TemplateView):
                     booking.expiry_time = None
                     booking.save()
 
-                    utils.delete_session_booking(request.session)
                     request.session['ps_last_booking'] = booking.id
+                    utils.delete_session_booking(request.session)
                     # send out the invoice before the confirmation is sent
                     emails.send_booking_invoice(booking)
                     # for fully paid bookings, fire off confirmation email
@@ -442,7 +516,10 @@ class BookingSuccessView(TemplateView):
                 return redirect('home')
             elif ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
                 booking = Booking.objects.get(id=request.session['ps_last_booking'])
+                book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
             else:
+                # booking = Booking.objects.all().order_by('-id').first()
+                # book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
                 return redirect('home')
 
         context = {

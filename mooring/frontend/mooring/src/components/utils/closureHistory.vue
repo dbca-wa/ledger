@@ -97,7 +97,7 @@ export default {
                 columns: [{
                     data: 'range_start',
                     mRender: function(data, type, full) {
-                        return Moment(data).format('DD/MM/YYYY');
+                        return Moment(data).format('DD/MM/YYYY HH:mm');
                     },
                     orderable: false
 
@@ -105,7 +105,7 @@ export default {
                     data: 'range_end',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return Moment(data).add(1, 'day').format('DD/MM/YYYY');
+                            return Moment(data).format('DD/MM/YYYY HH:mm');
                         }
                         else {
                             return '';
@@ -182,6 +182,12 @@ export default {
                 xhrFields: { withCredentials:true },
                 dataType: 'json',
                 success: function(data, stat, xhr) {
+                    var start = data.range_start.split(" ");
+                    data.range_start_time = start[1];
+                    data.range_start = start[0];
+                    var end = data.range_end.split(" ");
+                    data.range_end_time = end[1];
+                    data.range_end = end[0];
                     vm.closure = data;
                     vm.showClose();
                 },
@@ -198,7 +204,7 @@ export default {
         },
         sendData: function(url,method) {
             let vm = this;
-            var data = vm.$refs.closeModal.statusHistory;
+            var data = vm.$refs.closeModal.statusHistory;            
             $.ajax({
                 url: url,
                 method: method,

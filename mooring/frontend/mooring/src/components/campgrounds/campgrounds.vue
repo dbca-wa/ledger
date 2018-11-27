@@ -123,8 +123,10 @@ module.exports = {
                     "mRender": function(data, type, full){
                         if (data == 0){
                             return "Mooring"
-                        } else {
+                        } else if (data == 1) {
                             return "Jetty Pen"
+                        } else {
+                            return "Beach Pen"
                         }
                     }
                 }, {
@@ -147,7 +149,7 @@ module.exports = {
 //                        var addBooking = "<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>";
                         var addBooking = "";
                         // var availability_admin = "<br/><a target='_blank' href='/availability_admin/?site_id=__ID__' >Availability</a>";
-                        var availability_admin = "<br/><a target='_blank' href='/availability/?site_id=__ID__&vessel_size=0' >Availability</a>";
+                        var availability_admin = "<br/><a target='_blank' href='/availability2/?site_id=__ID__&vessel_size=0' >Availability</a>";
                         var column = "";
 
                         if (full.active) {
