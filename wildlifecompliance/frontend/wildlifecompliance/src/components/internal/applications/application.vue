@@ -1104,6 +1104,7 @@ export default {
             setTimeout(function(){
                 $('#tabs-assessor li:first-child a')[0].click();
             }, 50);
+            vm.fetchAssessorGroup();
         },
         save: function(e) {
             let vm = this;
@@ -1371,12 +1372,15 @@ export default {
         },
         fetchAssessorGroup: function(){
             let vm = this;
+            let data = {'application_id' : vm.application.id };
             vm.loading.push('Fetching assessor group');
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.assessor_group,'user_list')).then((response) => {
-                vm.assessorGroup = response.body
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessor_group,'user_list'),JSON.stringify(data),{
+                emulateJSON:true,
+            }).then((response) => {
+                vm.assessorGroup = response.body;
             },(error) => {
                 console.log(error);
-            })
+            });
         },
         initialiseAssignedOfficerSelect:function(reinit=false){
             let vm = this;
@@ -1529,7 +1533,6 @@ export default {
     mounted: function() {
         let vm = this;
         vm.fetchDeparmentUsers();
-        vm.fetchAssessorGroup();
         vm.$nextTick(function () {
             for (var i=0;i<vm.application.licence_type_data.activity_type.length;i++) {
                 var activity_type_id = vm.application.licence_type_data.activity_type[i].id

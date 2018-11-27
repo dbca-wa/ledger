@@ -1050,25 +1050,19 @@ class AssessmentViewSet(viewsets.ModelViewSet):
 class AssessorGroupViewSet(viewsets.ModelViewSet):
     queryset = ApplicationGroupType.objects.filter(type='assessor')
     serializer_class = ApplicationGroupTypeSerializer
-   # renderer_classes = [JSONRenderer,]
+    renderer_classes = [JSONRenderer,]
 
-    @list_route(methods=['GET',])
+    @list_route(methods=['POST',])
     def user_list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        app_id = request.data.get('application_id')
+        application = Application.objects.get(id=app_id)
+        id_list = set()
+        for assessment in application.assessments:
+            id_list.add(assessment.assessor_group.id)
+        queryset = self.get_queryset().exclude(id__in=id_list)
         serializer = self.get_serializer(queryset, many=True)
 
         return Response(serializer.data)
-
-    # def list(self, request, *args, **kwargs):
-    #     queryset = self.get_queryset()
-    #     # licence_activity_type = request.GET.get('licence_activity_type')
-    #     # if licence_activity_type:
-    #     #     queryset = queryset.filter(licence_activity_type=licence_activity_type)
-    #     serializer = ApplicationGroupTypeSerializer(queryset, many=True)
-    #     return Response(serializer.data)
-
-    # def get_queryset(self):
-    #     return self.queryset.filter(name='assessor')
 
 
 class AmendmentRequestViewSet(viewsets.ModelViewSet):
