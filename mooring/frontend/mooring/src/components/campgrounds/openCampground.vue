@@ -19,11 +19,23 @@
                     <div class="col-md-2">
                         <label for="open_cg_range_start">Open per: </label>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class='input-group date' id='open_cg_range_start'>
                             <input name="open_start" v-model="formdata.range_start" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-1" />
+                    <div class="col-md-2">
+                        <label for="open_cg_range_start_time"> Open time: </label>
+                    </div>
+                    <div class="col-md-3">
+                        <div class='input-group date' id='open_cg_range_start_time'>
+                            <input  name="open_start_time" v-model="formdata.range_start_time" type='text' class="form-control" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-time"></span>
                             </span>
                         </div>
                     </div>
@@ -61,12 +73,14 @@ module.exports = {
             current_closure: '',
             formdata: {
                 range_start: '',
+                range_start_time: '',
                 reason:'',
                 status:'0',
                 details: ''
             },
             reasons: [],
             picker: '',
+            picker_time: '',
             errors: false,
             errorString: '',
             form: ''
@@ -109,6 +123,7 @@ module.exports = {
             let vm = this;
             var data = this.formdata;
             data.range_start = this.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
+            data.range_start_time = this.picker_time.data('DateTimePicker').date().format('HH:mm');
             data.status = 0;
             $.ajax({
                 url: api_endpoints.opencloseCG(vm.id),
@@ -190,6 +205,15 @@ module.exports = {
         vm.picker.on('dp.change', function(e){
             vm.formdata.range_start = vm.picker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
+
+        vm.picker_time = $('#open_cg_range_start_time');
+        vm.picker_time.datetimepicker({
+            format: 'HH:mm'
+        });
+        vm.picker_time.on('dp.change', function(e){
+            vm.formdata.range_start_time = vm.picker_time.data('DateTimePicker').date().format('HH:mm');
+        });
+
         vm.form = $('#openCGForm');
         vm.addFormValidations();
         bus.$once('openReasons',setReasons => {

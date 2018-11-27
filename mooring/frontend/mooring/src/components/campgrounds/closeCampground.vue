@@ -9,7 +9,7 @@
                     <div class="col-md-2">
                         <label for="open_cg_range_start">Closure start: </label>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class='input-group date' id='close_cg_range_start'>
                             <input  name="closure_start" v-model="formdata.range_start" type='text' class="form-control" />
                             <span class="input-group-addon">
@@ -17,14 +17,28 @@
                             </span>
                         </div>
                     </div>
+
+                    <div class="col-md-1"/>
+                    <div class="col-md-2">
+                        <label for="open_cg_range_start_time"> Start time: </label>
+                    </div>
+                    <div class="col-md-3">
+                        <div class='input-group date' id='close_cg_range_start_time'>
+                            <input  name="closure_start_time" v-model="formdata.range_start_time" type='text' class="form-control" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-time"></span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
+
             </div>
             <div class="row">
                 <div class="form-group">
                     <div class="col-md-2">
                         <label for="open_cg_range_start">Reopen: </label>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class='input-group date' id='close_cg_range_end'>
                             <input name="closure_end" v-model="formdata.range_end" type='text' class="form-control" />
                             <span class="input-group-addon">
@@ -32,6 +46,20 @@
                             </span>
                         </div>
                     </div>
+
+                    <div class="col-md-1"/>
+                    <div class="col-md-2">
+                        <label for="open_cg_range_end_time"> Reopen time: </label>
+                    </div>
+                    <div class="col-md-3">
+                        <div class='input-group date' id='close_cg_range_end_time'>
+                            <input  name="closure_end_time" v-model="formdata.range_end_time" type='text' class="form-control" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-time"></span>
+                            </span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
             <reason type="close" v-model="formdata.closure_reason" ref="reason"></reason>
@@ -65,14 +93,18 @@ module.exports = {
             id:'',
             formdata: {
                 range_start: '',
+                range_start_time: '',
                 range_end: '',
+                range_end_time : '',
                 closure_reason:'',
                 status:'1',
                 details: ''
             },
             reasons: [],
             closeStartPicker: '',
+            closeStartTimePicker: '',
             closeEndPicker: '',
+            closeEndTimePicker: '',
             errors: false,
             errorString: '',
             form: ''
@@ -114,7 +146,7 @@ module.exports = {
             this.$refs.reason.selected = "";
         },
         addClosure: function() {
-            if (this.form.valid()){
+            if ($('#closeCGForm').valid()){
                 this.sendData();
             }
         },
@@ -193,22 +225,36 @@ module.exports = {
             vm.id = data.id;
         });
         vm.closeStartPicker = $('#close_cg_range_start');
+        vm.closeStartTimePicker = $('#close_cg_range_start_time');
         vm.closeEndPicker = $('#close_cg_range_end');
+        vm.closeEndTimePicker = $('#close_cg_range_end_time');
         vm.closeStartPicker.datetimepicker({
             format: 'DD/MM/YYYY',
             minDate: new Date()
         });
+        vm.closeStartTimePicker.datetimepicker({
+            format: 'HH:mm'
+        })
         vm.closeEndPicker.datetimepicker({
             format: 'DD/MM/YYYY',
             useCurrent: false
         });
+        vm.closeEndTimePicker.datetimepicker({
+            format: 'HH:mm'
+        })
         vm.closeStartPicker.on('dp.change', function(e){
             vm.formdata.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
             vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
         });
+        vm.closeStartTimePicker.on('dp.change', function(e){
+            vm.formdata.range_start_time = vm.closeStartTimePicker.data('DateTimePicker').date().format('HH:mm');
+        })
         vm.closeEndPicker.on('dp.change', function(e){
             vm.formdata.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
+        vm.closeEndTimePicker.on('dp.change', function(e){
+            vm.formdata.range_end_time = vm.closeEndTimePicker.data('DateTimePicker').date().format('HH:mm');
+        })
         vm.form = $('#closeCGForm');
         vm.addFormValidations();
         bus.$once('closeReasons',setReasons => {

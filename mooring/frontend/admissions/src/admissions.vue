@@ -282,6 +282,17 @@ export default {
             get: function() {
                 return this.arrivalEl[0].value ? moment(this.arrivalData.getDate()).format('YYYY/MM/DD') : null; 
             }
+        },
+    },
+    watch: {
+        noOfAdults: function(val){
+            this.validateNoOfPeople();
+        },
+        noOfChildren: function(val){
+            this.validateNoOfPeople();
+        },
+        noOfInfants: function(val){
+            this.validateNoOfPeople();
         }
     },
     filters: {
@@ -692,14 +703,14 @@ export default {
             method: 'GET',
             dataType: 'json',
             success: (function(data) {
-                vm.givenName = data.first_name;
-                vm.lastName = data.last_name;
-                vm.email = data.email;
-                vm.emailConfirm = data.email;
                 
                 if(data.is_staff == true){
 
                 } else {
+                    vm.givenName = data.first_name;
+                    vm.lastName = data.last_name;
+                    vm.email = data.email;
+                    vm.emailConfirm = data.email;
                     document.getElementById("givenName").readOnly = true;
                     document.getElementById("lastName").readOnly = true;
                     document.getElementById("email").readOnly = true;

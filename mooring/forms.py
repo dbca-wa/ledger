@@ -27,7 +27,7 @@ class MakeBookingsForm(forms.Form):
     num_concession = forms.IntegerField(min_value=0, max_value=16, label="Concessions")
     num_infant = forms.IntegerField(min_value=0, max_value=16, label="Infants (ages 0-5)")
     first_name = forms.CharField(label="Given Name(s)")
-    last_name = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
+    last_name = forms.CharField(widget=forms.TextInput(attrs={'required':True}), label="Last Name")
     phone = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
     postcode = forms.CharField(max_length=4, label="Post Code",widget=forms.TextInput(attrs={'required':True}))
     country = forms.ModelChoiceField(queryset=Country.objects.all(), to_field_name="iso_3166_1_a2")
@@ -48,7 +48,7 @@ class MakeBookingsForm(forms.Form):
 
 
 class AnonymousMakeBookingsForm(MakeBookingsForm):
-    email = forms.EmailField(widget=forms.TextInput(attrs={'required':True}))
+    email = forms.EmailField(label="Email", widget=forms.TextInput(attrs={'required':True}))
     confirm_email = forms.EmailField(label ="Confirm Email", widget=forms.TextInput(attrs={'required':True}))
 
     def clean(self):

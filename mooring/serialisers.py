@@ -60,7 +60,8 @@ class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     num_child = serializers.IntegerField(default=0)
     num_infant = serializers.IntegerField(default=0)
     num_mooring = serializers.IntegerField(default=0)
-    gear_type = serializers.ChoiceField(choices=('all', 'tent', 'caravan', 'campervan'), default='all')
+    avail = serializers.ChoiceField(choices=('all', 'rental-available', 'rental-notavailable', 'public-notbookable'), default='all')
+    pen_type = serializers.ChoiceField(choices=('all', 0, 1, 2), default='all')
     vessel_size = serializers.IntegerField(default=0)
     #distance_radius = serializers.IntegerField(default=0)
 
@@ -90,8 +91,8 @@ class AdmissionsBookingSerializer(serializers.ModelSerializer):
 class BookingRangeSerializer(serializers.ModelSerializer):
 
     details = serializers.CharField(required=False)
-    range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
-    range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
+    range_start = serializers.DateTimeField(input_formats=['%d/%m/%Y %H:%M'])
+    range_end = serializers.DateTimeField(input_formats=['%d/%m/%Y %H:%M'],required=False)
 
     def get_status(self, obj):
         return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
@@ -112,8 +113,8 @@ class BookingRangeSerializer(serializers.ModelSerializer):
             if not original:
                 self.fields['status'] = serializers.SerializerMethodField()
             else:
-                self.fields['range_start'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
-                self.fields['range_end'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'],required=False)
+                self.fields['range_start'] = serializers.DateTimeField(format='%d/%m/%Y %H:%M',input_formats=['%d/%m/%Y %H:%M'])
+                self.fields['range_end'] = serializers.DateTimeField(format='%d/%m/%Y %H:%M',input_formats=['%d/%m/%Y %H:%M'],required=False)
 
 class MooringAreaBookingRangeSerializer(BookingRangeSerializer):
 

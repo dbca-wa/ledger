@@ -4,6 +4,8 @@ import geojson
 import decimal
 import logging
 import json
+import calendar
+import time
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -21,7 +23,7 @@ from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route, list_route,renderer_classes,authentication_classes,permission_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission, IsAuthenticatedOrReadOnly
 from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
@@ -517,12 +519,16 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         query = []
         if scrubbed['avail'] != 'all':
             for q in queryset:
+                mooring_type = MooringArea.objects.get(id=q['id']).mooring_type
                 if scrubbed['avail'] == 'rental-available' and q['avail'] not in ['free', 'partial']:
                     pass
-                elif scrubbed['avail'] == 'rental-notavailable' and q['avail'] not in ['full']:
-                    pass
-                elif scrubbed['avail'] == 'public-notbookable' and q['avail'] not in ['']:
-                    pass
+                elif scrubbed['avail'] == 'rental-notavailable' and (q['avail'] not in ['full'] or mooring_type == 2):
+                        pass
+                elif scrubbed['avail'] == 'public-notbookable':
+                    if mooring_type != 2:
+                        pass
+                    else:
+                        query.append(q)
                 else:
                     query.append(q)
         else:
@@ -584,6 +590,9 @@ def add_booking(request, *args, **kwargs):
 #    booking_period_finish = request.POST['booking_finish']
     booking_period_start = datetime.strptime(request.POST['booking_start'], "%d/%m/%Y").date()
     booking_period_finish = datetime.strptime(request.POST['booking_finish'], "%d/%m/%Y").date()
+    num_adults = request.POST['num_adult']
+    num_children = request.POST['num_children']
+    num_infants = request.POST['num_infant']
 
     start_booking_date = request.POST['date']
     finish_booking_date = request.POST['date']
@@ -602,8 +611,14 @@ def add_booking(request, *args, **kwargs):
              booking.departure = booking_period_finish
              booking.save()
     else:
+        details = {
+            'num_adults' : num_adults,
+            'num_children' : num_children,
+            'num_infants' : num_infants
+        }
+        print "DEBUG - DETAILS: ", details
         mooringarea = MooringArea.objects.get(id=request.POST['mooring_id'])
-        booking = Booking.objects.create(mooringarea=mooringarea,booking_type=3,expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),details={},arrival=booking_period_start,departure=booking_period_finish)
+        booking = Booking.objects.create(mooringarea=mooringarea,booking_type=3,expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),details=details,arrival=booking_period_start,departure=booking_period_finish)
         request.session['ps_booking'] = booking.id
         request.session.modified = True
 
@@ -901,6 +916,13 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             mutable = request.POST._mutable
             request.POST._mutable = True
             request.POST['campground'] = self.get_object().id
+            date_start = request.POST['range_start']
+            time_start = request.POST.get('range_start_time', "00:00")
+            request.POST['range_start'] = date_start +" "+ time_start
+            date_end = request.POST.get('range_end', None)
+            time_end = request.POST.get('range_end_time', "23:59")
+            if date_end is not None and date_end != "" and date_end != " ":
+                request.POST['range_end'] = date_end +" "+ time_end
             request.POST._mutable = mutable
             serializer = MooringAreaBookingRangeSerializer(data=request.data, method="post")
             serializer.is_valid(raise_exception=True)
@@ -947,10 +969,19 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 '''Thread for performance / no error messages though'''
                 #import thread
                 #thread.start_new_thread( self.close_campgrounds, (closure_data,campgrounds,) )
-                self.close_campgrounds(closure_data,campgrounds)
+                start = closure_data['range_start'] + " " + closure_data['range_start_time']
+                end = closure_data['range_end'] + " " + closure_data['range_end_time']
+
+                data = {
+                    'range_start': start,
+                    'range_end': end,
+                    'reason': closure_data['reason'],
+                    'status': closure_data['status'],
+                }
+                self.close_campgrounds(data,campgrounds)
                 cache.delete('campgrounds_dt')
                 return Response('All Selected MooringAreas Closed')
-            except serializers.ValidationError:
+            except serializers.ValidationError as e:
                 print(traceback.print_exc())
                 raise serializers.ValidationError(str(e[0]))
             except Exception as e:
@@ -1096,7 +1127,9 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 serializer = MooringAreaBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)).order_by('-range_start'),many=True)
             else:
                 serializer = MooringAreaBookingRangeSerializer(self.get_object().booking_ranges,many=True)
+            print "GETTING RESULTS"
             res = serializer.data
+            print "GOT THE RESULTS"
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
@@ -2079,9 +2112,6 @@ def get_admissions_confirmation(request, *args, **kwargs):
         return HttpResponse('Booking unavailable', status=403)
 
     # check payment status
-    if (not is_officer(request.user)) or (not booking.customer == request.user):
-        return HttpResponse('Booking unavailable', status=403)
-
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="confirmation-AD{}.pdf"'.format(booking_id)
 
@@ -2956,12 +2986,39 @@ class BookingRangeViewset(viewsets.ModelViewSet):
         instance = self.get_object()
         original = bool(request.GET.get("original", False))
         serializer = self.get_serializer(instance, original=original, method='get')
-        return Response(serializer.data)
+        data = serializer.data
+
+        start = datetime.strptime(serializer.data['range_start'], '%d/%m/%Y %H:%M')
+        timestamp = calendar.timegm(start.timetuple())
+        local_dt = datetime.fromtimestamp(timestamp)
+        start = local_dt.replace(microsecond=start.microsecond)
+        data['range_start'] = start.strftime('%d/%m/%Y %H:%M')
+
+        if serializer.data['range_end']:
+                end = datetime.strptime(serializer.data['range_end'], '%d/%m/%Y %H:%M') if serializer.data['range_end'] else ""
+                timestamp = calendar.timegm(end.timetuple())
+                local_dt = datetime.fromtimestamp(timestamp)
+                end = local_dt.replace(microsecond=end.microsecond)
+                data['range_end'] = end.strftime('%d/%m/%Y %H:%M')
+        return Response(data)
 
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             partial = kwargs.pop('partial', False)
+
+            mutable = request.POST._mutable
+            request.POST._mutable = True
+            date_start = request.POST['range_start']
+            time_start = request.POST.get('range_start_time', "00:00")
+            request.POST['range_start'] = date_start +" "+ time_start
+            date_end = request.POST.get('range_end', None)
+            time_end = request.POST.get('range_end_time', "23:59")
+            if date_end is not None and date_end != "" and date_end != " ":
+                request.POST['range_end'] = date_end +" "+ time_end
+            request.POST._mutable = mutable
+
+            
             serializer = self.get_serializer(instance,data=request.data,partial=partial)
             serializer.is_valid(raise_exception=True)
             if instance.range_end and not serializer.validated_data.get('range_end'):
@@ -3054,6 +3111,7 @@ class BookingPeriodViewSet(viewsets.ModelViewSet):
 class RegisteredVesselsViewSet(viewsets.ModelViewSet):
     queryset = RegisteredVessels.objects.all()
     serializer_class = RegisteredVesselsSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request, *args, **kwargs):
         rego = request.GET.get('rego') if request.GET.get('rego') else None
@@ -3228,6 +3286,23 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
     queryset = AdmissionsRate.objects.all()
     renderer_classes = (JSONRenderer,)
     serializer_class = AdmissionsRateSerializer;
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    @detail_route(methods=['get'])
+    def get_price(self, request, format='json'):
+        http_status = status.HTTP_200_OK
+        try:
+            date = request.GET.get('date')
+            if date:
+                price = AdmissionsRate.objects.filter(Q(period_start__lte=date), Q(period_end=None) | Q(period_end__gte=date))
+                res = {
+                    'price' : price
+                }
+        except Exception as e:
+            res = {
+                'Error': str(e)
+            }
+        return Response(res, status=http_status)
 
     @list_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):

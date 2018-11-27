@@ -177,4 +177,7 @@ class RegisteredVessels(admin.ModelAdmin):
     ordering = ('rego_no',)
     search_fields = ('rego_no',)
 
-    
+@admin.register(models.MooringAreaBookingRange)
+class MooringAreaBookingRange(admin.ModelAdmin):
+    list_display = ('id', 'range_start', 'range_end', 'campground_id')
+    ordering = ('id',)

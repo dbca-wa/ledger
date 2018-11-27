@@ -40,43 +40,76 @@
                     <div class="small-12 medium-12 large-6 columns">
                         <label>Departure <input id="dateDeparture" autocomplete="off" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns" style='display:none'>
+                    
+                    <div class="small-12 medium-12 large-12 columns" style="display:none;">
+                        <label><input type="checkbox" v-model="bookableOnly"/> Show bookable moorings only</label>
+                    </div>
+                </div>
+                <div class="row"><div class="small-12 columns">
+                    <hr/>
+                </div>
+                </div>
+                <div class="row">
+                    <div class="small-12 medium-12 large-6 columns">
+                    <label>Vessel Registration  <input v-on:blur="searchRego()" v-model="vesselRego" id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" style="text-transform:uppercase" /></label>
+                    </div>
+                    <div class="small-12 medium-12 large-6 columns">
+                    <label>Vessel Size (meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
+                    </div>
+                    <div class="small-12 medium-12 large-6 columns">
+                    <label>Vessel Draft (meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" /></label>
+                    </div>
+                    <div class="small-12 medium-12 large-6 columns">
+                    <label>Vessel Beams (meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" /></label>
+                    </div>
+                    <div class="small-12 medium-12 large-6 columns">
+                    <label>Vessel Weight (tons)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" /></label>
+                    </div>
+                    <div class="small-12 medium-12 large-6 columns" >
                         <label>
                             Guests <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
                         </label>
                         <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
                             <div class="row">
                                 <div class="small-6 columns">
-                                    <label for="num_adults" class="text-right">path:::Adults (non-concessions)<label>
+                                    <label for="num_adults" class="text-right">Adults (ages 12+)<label>
                                 </div>
                                 <div class="small-6 columns">
                                     <input type="number" id="numAdults" name="num_adults" v-model="numAdults" min="0" max="16"/></label>
                                 </div>
                             </div>
-                            <div class="row">
+                            <div class="row" style="display:none;">
                                 <div class="small-6 columns">
                                     <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
-					- Seniors Card
-					- Age Pension
-					- Disability Support
-					- Carer Payment
-					- Carer Allowance
-				        - Companion Card
-- Department of Veterans' Affairs">Concessions</span>
-			  	   </label>
+                                        - Seniors Card
+                                        - Age Pension
+                                        - Disability Support
+                                        - Carer Payment
+                                        - Carer Allowance
+                                        - Companion Card
+                                        - Department of Veterans' Affairs">Concessions</span>
+                                    </label>
                                 </div><div class="small-6 columns">
                                     <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="small-6 columns">
-                                    <label for="num_children" class="text-right">Children (ages 6-15)<label>
+                                    <label for="num_children" class="text-right">Children (ages 4-12)<label>
                                 </div>
                                 <div class="small-6 columns">
                                     <input type="number" id="numChildren" name="num_children" v-model="numChildren" min="0" max="16"/></label>
                                 </div>
                             </div>
                             <div class="row">
+                                <div class="small-6 columns">
+                                    <label for="num_children" class="text-right">Infants (ages 0-4)<label>
+                                </div>
+                                <div class="small-6 columns">
+                                    <input type="number" id="numInfants" name="num_infants" v-model="numInfants" min="0" max="16"/></label>
+                                </div>
+                            </div>
+                            <div class="row" style="display:none;">
                                 <div class="small-6 columns">
                                     <label for="num_children" class="text-right">Moorings<label>
                                 </div>
@@ -86,58 +119,89 @@
                             </div>
 
                        </div>
-                       </div>
-                    <div class="small-12 medium-12 large-12 columns">
-                        <label><input type="checkbox" v-model="bookableOnly"/> Show bookable moorings only</label>
                     </div>
                 </div>
-                <div class="row"><div class="small-12 columns">
+                <div class="row">
+                    <div class="small-12 columns">
                     <hr/>
-                </div>
+                    </div>
                 </div>
                 <div class="row">
-                         <div class="small-12 medium-12 large-6 columns">
-                           <label>Vessel Registration  <input v-on:blur="searchRego()" v-model="vesselRego" id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" /></label>
-                         </div>
-                         <div class="small-12 medium-12 large-6 columns">
-                            <label>Vessel Size (meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
-                         </div>
-                         <div class="small-12 medium-12 large-6 columns">
-                            <label>Vessel Draft (meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" /></label>
-                         </div>
-                         <div class="small-12 medium-12 large-6 columns">
-                            <label>Vessel Beams (meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" /></label>
-                         </div>
-                         <div class="small-12 medium-12 large-6 columns">
-                            <label>Vessel Weight (tons)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" /></label>
-                         </div>
-                 </div>
-                 <div class="row">
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label>Mooring</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="gear_type" value="rental-available" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Rental (available)</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="gear_type" value="rental-notavailable" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Rental (not available)</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="gear_type" value="public-notbookable" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Public (not bookable)</label>
+                    </div>
+                </div>
+
+                <div class="row">
                      <div class="small-12 columns">
                         <hr/>
                      </div>
                  </div>
                  <div class="row">
-                      <div class="small-12 medium-12 large-12 columns">
-                           <label>Mooring</label>
-                      </div>
-                      <div class="small-12 medium-12 large-4 columns">
-                           <label><input type="radio" name="gear_type" value="all" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
-                      </div>
-                      <div class="small-12 medium-12 large-4 columns">
-                          <label><input type="radio" name="gear_type" value="rental-available" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Rental (available)</label>
-                      </div>
-                      <div class="small-12 medium-12 large-4 columns">
-                          <label><input type="radio" name="gear_type" value="rental-notavailable" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Rental (not available)</label>
-                      </div>
-                      <div class="small-12 medium-12 large-4 columns">
-                          <label><input type="radio" name="gear_type" value="public-notbookable" v-model="gearType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Public (not bookable)</label>
-                      </div>
-                 </div>
-                 <div class="row"><div class="small-12 columns">
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label>Types</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="pen_type" value="all" v-model="penType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC3"></i> All types</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="pen_type" value="0" v-model="penType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Moorings</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="pen_type" value="1" v-model="penType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Jetty Pens</label>
+                    </div>
+                    <div class="small-12 medium-12 large-4 columns">
+                        <label><input type="radio" name="pen_type" value="2" v-model="penType" class="show-for-sr" v-on:change="reload()"/><i class="symb RC20"></i> Beach Pens</label>
+                    </div>
+                </div>
+
+                <!-- <div class="row"><div class="small-12 columns"> -->
                     <hr class="search"/>
-                 </div>
-                 <div class="row" style='display:none'>
+                <!-- </div>  -->
+
+                <div class="row" id="legend" style="margin-bottom:10px;">
+                    <div class="small-12 medium-12 large-12 columns">
+                        <label>Availability</label>
+                    </div>
+                    <div class="small-12 medium-12 large-3 columns">
+                        <label>Public:
+                            <img class="publicPin" src="./assets/map_pins/pin_gray.png" />
+                        </label>
+                    </div>
+                    <div class="small-12 medium-12 large-3 columns">
+                        <label>Available:
+                            <img class="availablePin" src="./assets/map_pins/pin_orange.png" />
+                        </label>
+                    </div>
+                    <div class="small-12 medium-12 large-3 columns">
+                        <label>Partial Dates:
+                            <img class="partialPin" src="./assets/map_pins/pin_orange_red.png" />
+                        </label>
+                    </div>
+                    <div class="small-12 medium-12 large-3 columns">
+                        <label>Unavailable:
+                            <img class="unavailablePin" src="./assets/map_pins/pin_red.png" />
+                        </label>
+                    </div>
+                </div>
+
+
+                <div class="row"><div class="small-12 columns">
+                    <hr class="search"/>
+                </div>
+                <div class="row" style='display:none'>
                     <div class="small-12 medium-12 large-12 columns">
                         <label>Select features</label>
                     </div>
@@ -153,7 +217,7 @@
                         </div>
                     </template>
 -->
-		</div>
+		        </div>
 <!--
                 <div class="row">
                     <div class="small-12 medium-12 large-4 columns" v-bind:class="{'filter-hide': hideExtraFilters}">
@@ -186,7 +250,7 @@
                         <p>Mooring Limits</p>
                         <div class="row">
                             <div class="col-md-7">
-                                <small>Stay Period: <span id='max_stay_period'></span> day/s</small>
+                                <small>Max Stay: <span id='max_stay_period'></span> day/s</small>
                             </div>
                             <div class="col-md-5">
                                 <small>Max Size: <span id='vessel_size_popup'></span></small>
@@ -202,22 +266,6 @@
                         </div>
                         <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;" target="_blank">More info</a>
                         <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank"  v-on:click="BookNow()" >Book now</a>
-                    </div>
-                </div>
-                <div class="legend" id="legend" style="margin-top:20px;">
-                    <div class="row">
-                        <div class="col-sm-4">
-                            Public Mooring:
-                            <img class="publicPin" src="assets/map_pins/pin_gray.png" />
-                        </div>
-                        <div class="col-sm-4">
-                            Available Mooring:
-                            <img class="publicPin" src="assets/map_pins/pin_orange.png" />
-                        </div>
-                        <div class="col-sm-4">
-                            Unavailable Mooring:
-                            <img class="publicPin" src="assets/map_pins/pin_red.png" />
-                        </div>
                     </div>
                 </div>
             </div>
@@ -241,7 +289,7 @@
                                 <p>Mooring Limits</p>
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <small>Stay Period: {{ f.max_advance_booking }} day/s</small>
+                                        <small>Max Stay: {{ f.max_advance_booking }} day/s</small>
                                     </div>
                                     <div class="col-md-6">
                                         <small>Max Size: {{ f.vessel_size_limit }}</small>
@@ -261,7 +309,8 @@
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
                                  
                                 <a v-if="f.mooring_type == 0 && vesselSize > 0" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
-                                <a v-else class="button" v-on:click="BookNow()">Book now</a> 
+                                <a v-else-if="f.mooring_type == 0" class="button" v-on:click="BookNow()">Book now</a>
+                                <a v-else /> 
                             </div>
                         </div>
                     </div>
@@ -621,12 +670,13 @@ export default {
             arrivalDate: null,
             departureDate: null,
             dateCache: null,
-            numAdults: 0,
+            numAdults: 2,
             numConcessions: 0,
             numChildren: 0,
             numInfants: 0,
             numMooring: 1,
             gearType: 'all',
+            penType: 'all',
             filterParams: {
             },
             dateSetFirstTime: true,
@@ -701,7 +751,8 @@ export default {
         numPeople: {
             cache: false,
             get: function() {
-                var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants + this.numMooring;
+                // var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants + this.numMooring;
+                var count = this.numAdults + this.numConcessions + this.numChildren + this.numInfants;
                 if (count === 1) {
                     return count +" person ▼";
                 } else {
@@ -748,11 +799,11 @@ export default {
             get: function() {
                 var params = {
                     'num_adult': this.numAdults,
-                    'num_concession': this.numConcessions,
                     'num_children': this.numChildren,
                     'num_infants': this.numInfants,
                     'num_mooring' : this.numMooring,
                     'gear_type': this.gearType,
+                    'pen_type': this.penType,
                     'vessel_size' : this.vesselSize
                 };
                 if (this.arrivalDate && this.departureDate) {
@@ -1004,29 +1055,27 @@ export default {
               this.groundsSource.loadSource();
               this.removePinAnchors();
               this.anchorPinLevelChange = true;
-
               this.buildmarkers();
          //   this.refreshPopup();
         }, 250),
         removePinGroups: function() {
-                
-               var layerRemoved = false;
-               var map = this.olmap;
-               var refArray = map.getLayers().getArray().slice();
-               refArray.forEach(function(layer2) {
-                       if (layer2 != null) {
-                       var layer = layer2.I;
-                       if (layer != null) {
-                           // map.removeLayer(layer2);
-                           if (layer.hasOwnProperty("markerGroup")) {
+                var layerRemoved = false;
+                var map = this.olmap;
+                var refArray = map.getLayers().getArray().slice();
+                refArray.forEach(function(layer2) {
+                    if (layer2 != null) {
+                        var layer = layer2.I;
+                        if (layer != null) {
+                            // map.removeLayer(layer2);
+                            if (layer.hasOwnProperty("markerGroup")) {
                                 if (layer.markerGroup == 'circle') {
-                                      map.removeLayer(layer2);
-                                      layerRemoved = true;
+                                    map.removeLayer(layer2);
+                                    layerRemoved = true;
                                 }
-                          }
-                       }
-                      }
-                }); 
+                            }
+                        }
+                    }
+                });
                 if (layerRemoved == true) {
                     // We do this because when we call map.removeLayer it causes the layer 
                     // to go out of sync resulting in pins not being removed as foreach loop is 
@@ -1037,31 +1086,45 @@ export default {
                 return layerRemoved; 
 	},
         removePinAnchors: function() {
-               var layerRemoved = false;
-               var map = this.olmap;
-               var refArray = map.getLayers().getArray().slice();
-               refArray.forEach(function(layer2) {
-                       if (layer2 != null) {
-                       var layer = layer2.I;
-                       if (layer != null) {
-                           // map.removeLayer(layer2);
-                           if (layer.hasOwnProperty("markerGroup")) {
+                var layerRemoved = false;
+                var map = this.olmap;
+                var refArray = map.getLayers().getArray().slice();
+                refArray.forEach(function(layer2) {
+                    if (layer2 != null) {
+                        var layer = layer2.I;
+                        if (layer != null) {
+                            // map.removeLayer(layer2);
+                            if (layer.hasOwnProperty("markerGroup")) {
                                 if (layer.markerGroup == 'anchor') {
-                                      map.removeLayer(layer2);
-                                      layerRemoved = true;
+                                    map.removeLayer(layer2);
+                                    layerRemoved = true;
                                 }
-                          }
-                       }
-                      }
-               });
-               if (layerRemoved == true) {
+                            }
+                        }
+                    }
+                });
+
+                // var layersToRemove = [];
+
+                // map.getLayers().forEach(function(layer) {
+                //     if (layer.I.hasOwnProperty("markerGroup")){
+                //         layersToRemove.push(layer);
+                //     }
+                // });
+                // var len = layersToRemove.length;
+                // for (var i=0; i < len; i++){
+                //     map.removeLayer(layersToRemove[i]);
+                //     layerRemoved = true;
+                // }
+
+                if (layerRemoved == true) {
                     // We do this because when we call map.removeLayer it causes the layer
                     // to go out of sync resulting in pins not being removed as foreach loop is
                     // changed.  This loop ensure all pins have been removed
 
-                   this.removePinAnchors();
-               }
-               return layerRemoved;
+                    this.removePinAnchors();
+                }
+                return layerRemoved;
         },
         updateFilter: function() {
             var vm = this;
@@ -1120,6 +1183,8 @@ export default {
             this.updateViewport(true);
         },
         buildmarkers: function() {
+            this.removePinAnchors();
+            this.removePinGroups();
             var vm = this;
             var scale = Math.floor(this.current_map_scale);
             var map = this.olmap;
@@ -1140,7 +1205,7 @@ export default {
 //             this.groundsSource.loadSource();
             map.updateSize();
            
-            var response = vm.anchorPins; 
+            var response = vm.anchorPins;
             var pin_count = 0;
             for (var x in response) {
                 var mooring = response[x];
@@ -1151,6 +1216,7 @@ export default {
                             var vessel_draft = $("#vesselDraft").val();
                             var vessel_beam = $("#vesselBeam").val();
                             var vessel_weight = $("#vesselWeight").val();
+                            var type_filter = $("input[name=pen_type]:checked").val();
                             var show_marker = true;
                             if (response[x][m]['properties']['vessel_size_limit'].length == 0) { 
                                 response[x][m]['properties']['vessel_size_limit'] = 0;
@@ -1182,6 +1248,20 @@ export default {
                                     }
                                 }
                             }
+                            if (type_filter != 'all'){
+                                show_marker = false;
+                                if (response[x][m]['properties']['mooring_physical_type'] == type_filter){
+                                    show_marker = true;
+                                }
+                            }
+                            if (show_marker){
+                                show_marker = false;
+                                if (this.groundsIds.has(response[x][m]['id'])){
+                                    show_marker = true;
+                                }
+                            }
+
+
                             if (show_marker == true) {
                                 var array_search = vm.anchorPinsActive.indexOf(response[x][m]['id']);
   				                if (array_search > 0) {
@@ -1190,7 +1270,26 @@ export default {
                                     pin_count =  pin_count + 1;
                                     if (response[x][m]['properties']['mooring_type'] == 0) {
                                         if (mooring_type == 'all' || mooring_type == 'rental-available' || mooring_type == 'rental-notavailable') {
-                                            if (mooring_type == 'rental-available' || mooring_type == 'rental-notavailable') {     
+                                            if (mooring_type == 'rental-available' || mooring_type == 'rental-notavailable') {
+
+                                                // if (this.groundsIds.has(marker_id)) {       
+                                                //     // if (mooring_type == 'rental-available') {
+                                                //     if (response[x][m]['geometry'] != null ) {
+                                                //         if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
+                                                //             map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+                                                //         }
+                                                //     }
+                                                // }
+                                                // // } else {
+                                                //     // if (mooring_type == 'rental-notavailable') {
+                                                //         // if (response[x][m]['geometry'] != null ) {
+                                                //         //     if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
+                                                //         //         map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+                                                //         //     }
+                                                //         // }
+                                                //     // }
+								                // // }
+
                                                 if (this.groundsIds.has(marker_id)) {            
                                                     if (mooring_type == 'rental-available') {
                                                         if (response[x][m]['geometry'] != null ) {
@@ -1198,18 +1297,17 @@ export default {
                                 		                        map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
                                                             }
                                                         }
-                                                    }
-                                                } else {
-                                                    if (mooring_type == 'rental-notavailable') {
-                                                        if (this.groundsIds.has(marker_id)) {
-                                                        } else {
+                                                    // }
+                                                    } else {
+                                                        if (mooring_type == 'rental-notavailable') {
+                                                            // if (this.groundsIds.has(marker_id)) {
+                                                            // } else {
                                                             if (response[x][m]['geometry'] != null ) {
                                                                 if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
-											                        map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+                                                                    map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
                                                                 }
                                                             }
-										                }
-
+                                                        }
                                                     }
 								                }
                                             } else {
@@ -1227,7 +1325,7 @@ export default {
                                         if (mooring_type == 'all') {
                                             if (response[x][m]['geometry'] != null ) {
                                                 if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
-							                        map.addLayer(vm.buildMarkerNotBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+							                        map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
                                                 }
                                             }
                                             vm.updateFilter();
@@ -1263,35 +1361,43 @@ export default {
             vm.anchorGroups = {};
             var vessel_size = $('#vesselSize').val();
             var vessel_draft = $('#vesselDraft').val();
+            var pen_filter = $("input[name=pen_type]:checked").val();
             if (response) { 
-            if (response.hasOwnProperty('features')) {
+                if (response.hasOwnProperty('features')) {
 
-            var mooring = response['features'];
-            for (var m in mooring) {
-                var mooring_vessel_size = response['features'][m]['properties']['vessel_size_limit'];
-                var mooring_vessel_draft = response['features'][m]['properties']['vessel_draft_limit'];
-                if (mooring_vessel_size >= vessel_size && mooring_vessel_draft >= vessel_draft && this.weightBeam(response['features'][m]['properties'])) {
-                    if (vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] == null) { 
-                        vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] = {};
-                        vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = 1;
-                        vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['name'] = response['features'][m]['properties']['park']['district']['region']['name'];
-                        vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['zoom_level'] = response['features'][m]['properties']['park']['district']['region']['zoom_level'];
-                        vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['geometry'] = response['features'][m]['properties']['park']['district']['region']['wkb_geometry']['coordinates'];
-                    } else {
-                        vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] + 1;
-                    }   
+                    var mooring = response['features'];
+                    for (var m in mooring) {
+                        var mooring_id = response['features'][m]['id'];
+                        var mooring_vessel_size = response['features'][m]['properties']['vessel_size_limit'];
+                        var mooring_vessel_draft = response['features'][m]['properties']['vessel_draft_limit'];
+                        var mooring_physical_type = response['features'][m]['properties']['mooring_physical_type'];
+
+                        if (mooring_vessel_size >= vessel_size && mooring_vessel_draft >= vessel_draft && this.weightBeam(response['features'][m]['properties']) && ((pen_filter != 'all' && pen_filter == mooring_physical_type) || pen_filter == 'all') && vm.groundsIds['_c'].has(mooring_id)) {
+                            if (vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] == null) { 
+                                vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] = {};
+                                vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = 1;
+                                vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['name'] = response['features'][m]['properties']['park']['district']['region']['name'];
+                                vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['zoom_level'] = response['features'][m]['properties']['park']['district']['region']['zoom_level'];
+                                vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['geometry'] = response['features'][m]['properties']['park']['district']['region']['wkb_geometry']['coordinates'];
+                            } else {
+                                vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] + 1;
+                            }   
+                        }
+                    }
                 }
             }
-            }
-            }
-            for (var g in vm.anchorGroups) { 
-                var longitude = vm.anchorGroups[g]['geometry'][0];
-                var latitude = vm.anchorGroups[g]['geometry'][1];
+            if (Object.keys(vm.anchorGroups).length == 0){
+                // vm.removePinGroups();
+            } else {
+                for (var g in vm.anchorGroups) {
+                    var longitude = vm.anchorGroups[g]['geometry'][0];
+                    var latitude = vm.anchorGroups[g]['geometry'][1];
 
-                var total = vm.anchorGroups[g]['total'];
-                var name = vm.anchorGroups[g]['name'];
-                var zoom_level = vm.anchorGroups[g]['zoom_level'];
-                map.addLayer(vm.buildMarkerGroup(parseFloat(longitude),parseFloat(latitude),total,name, zoom_level));
+                    var total = vm.anchorGroups[g]['total'];
+                    var name = vm.anchorGroups[g]['name'];
+                    var zoom_level = vm.anchorGroups[g]['zoom_level'];
+                    map.addLayer(vm.buildMarkerGroup(parseFloat(longitude),parseFloat(latitude),total,name, zoom_level));
+                }
             }
         } else {
             scale = Math.round(scale);
@@ -1313,7 +1419,7 @@ export default {
                 } else {
                      pin_type=require('assets/map_pins/pin_red.png');
                      bookable = false;
-	        }	
+	            }	
 	        }
 
                 //this.anchorPinsActive.push(marker_id);
@@ -1507,49 +1613,49 @@ export default {
         var nowTemp = new Date();
         var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
-        this.arrivalEl = $('#dateArrival');
-        this.departureEl = $('#dateDeparture');
+        // this.arrivalEl = $('#dateArrival');
+        // this.departureEl = $('#dateDeparture');
 
-        this.arrivalData = this.arrivalEl.fdatepicker({
-            format: 'dd/mm/yyyy',
-            onRender: function (date) {
-                // disallow start dates before today
-                return date.valueOf() < now.valueOf() ? 'disabled': '';
-                //return '';
-            }
-        }).on('changeDate', function (ev) {
-            ev.target.dispatchEvent(new CustomEvent('change'));
-        }).on('change', function (ev) {
-            if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
-                var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
-                vm.departureData.date = newDate;
-                vm.departureData.setValue();
-                vm.departureData.fill();
-                vm.departureEl.trigger('changeDate');
-            }
-            vm.arrivalData.hide();
-            vm.arrivalDate = moment(vm.arrivalData.date);
-        }).on('keydown', function (ev) {
-            if (ev.keyCode == 13) {
-                ev.target.dispatchEvent(new CustomEvent('change'));
-            }
-        }).data('datepicker');
+        // this.arrivalData = this.arrivalEl.fdatepicker({
+        //     format: 'dd/mm/yyyy',
+        //     onRender: function (date) {
+        //         // disallow start dates before today
+        //         return date.valueOf() < now.valueOf() ? 'disabled': '';
+        //         //return '';
+        //     }
+        // }).on('changeDate', function (ev) {
+        //     ev.target.dispatchEvent(new CustomEvent('change'));
+        // }).on('change', function (ev) {
+        //     if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
+        //         var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
+        //         vm.departureData.date = newDate;
+        //         vm.departureData.setValue();
+        //         vm.departureData.fill();
+        //         vm.departureEl.trigger('changeDate');
+        //     }
+        //     vm.arrivalData.hide();
+        //     vm.arrivalDate = moment(vm.arrivalData.date);
+        // }).on('keydown', function (ev) {
+        //     if (ev.keyCode == 13) {
+        //         ev.target.dispatchEvent(new CustomEvent('change'));
+        //     }
+        // }).data('datepicker');
 
-        this.departureData = this.departureEl.fdatepicker({
-            format: 'dd/mm/yyyy',
-            onRender: function (date) {
-                return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
-            }
-        }).on('changeDate', function (ev) {
-            ev.target.dispatchEvent(new CustomEvent('change'));
-        }).on('change', function (ev) {
-            vm.departureData.hide();
-            vm.departureDate = moment(vm.departureData.date);
-        }).on('keydown', function (ev) {
-            if (ev.keyCode == 13) {
-                ev.target.dispatchEvent(new CustomEvent('change'));
-            }
-        }).data('datepicker');
+        // this.departureData = this.departureEl.fdatepicker({
+        //     format: 'dd/mm/yyyy',
+        //     onRender: function (date) {
+        //         return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
+        //     }
+        // }).on('changeDate', function (ev) {
+        //     ev.target.dispatchEvent(new CustomEvent('change'));
+        // }).on('change', function (ev) {
+        //     vm.departureData.hide();
+        //     vm.departureDate = moment(vm.departureData.date);
+        // }).on('keydown', function (ev) {
+        //     if (ev.keyCode == 13) {
+        //         ev.target.dispatchEvent(new CustomEvent('change'));
+        //     }
+        // }).data('datepicker');
 
         // load autosuggest choices
         var search = document.getElementById('searchInput');
@@ -1656,7 +1762,7 @@ export default {
 
         this.groundsSource.loadSource = function (onSuccess) {
 
-            if (vm.dateCache != vm.arrivalDateString+vm.departureDateString) {
+            if (vm.dateCache != vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType) {
             var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
             var params = {format: 'json'};
             var isCustom = false;
@@ -1678,6 +1784,7 @@ export default {
                 params.num_infants = vm.numInfants;
                 params.num_mooring = vm.numMooring;
                 params.gear_type = vm.gearType;
+                params.pen_type = vm.penType;
             }
             $.ajax({
                 url: urlBase+$.param(params),
@@ -1687,7 +1794,7 @@ export default {
                         vm.groundsIds.add(el.id);
                     });
                     vm.updateFilter();
-                    vm.dateCache = vm.arrivalDateString+vm.departureDateString;
+                    vm.dateCache = vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType;
                 },
                 dataType: 'json'
             });
@@ -1830,6 +1937,7 @@ export default {
                 ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
+        this.arrivalEl.fdatepicker('update', now);
 
         this.departureData = this.departureEl.fdatepicker({
             format: 'dd/mm/yyyy',
@@ -1847,6 +1955,11 @@ export default {
                 ev.target.dispatchEvent(new CustomEvent('change'));
             }
         }).data('datepicker');
+        var fivedays = new Date();
+        fivedays.setDate(fivedays.getDate() + 5);
+        fivedays = moment.utc({year: fivedays.getFullYear(), month: fivedays.getMonth(), day: fivedays.getDate(), hour: 0, minute: 0, second: 0}).toDate();
+        
+        this.departureEl.fdatepicker('update', fivedays);
 
         // load autosuggest choices
         var search = document.getElementById('searchInput');
@@ -1966,7 +2079,7 @@ export default {
         });
 
         this.groundsSource.loadSource = function (onSuccess) {
-            if (vm.dateCache != vm.arrivalDateString+vm.departureDateString) {
+            if (vm.dateCache != vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType) {
                     vm.removePinAnchors();
                     vm.anchorPinLevelChange = true;
 
@@ -1989,6 +2102,7 @@ export default {
                 params.num_infants = vm.numInfants;
                 params.num_mooring = vm.numMooring;
                 params.gear_type = vm.gearType;
+                params.pen_type = vm.penType;
             }
             $.ajax({
                 url: urlBase+$.param(params),
@@ -1996,8 +2110,8 @@ export default {
                     vm.groundsIds.clear();
                     response.forEach(function(el) {
                         vm.groundsIds.add(el.id);
-                        vm.dateCache = vm.arrivalDateString+vm.departureDateString;
 
+                    vm.dateCache = vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType;
                     vm.markerAvail[el.id] = el.avail;
                     });
 
@@ -2181,11 +2295,21 @@ export default {
                //vm.buildmarkers();
         });
 
-        //$("input[type=radio][name=gear_type]").click(function() {
-         //      vm.removePinAnchors();
-         //      vm.anchorPinLevelChange = true;
-         //      vm.buildmarkers();
-        //});
+        // $("input[name='gear_type']").change(function() {
+        //        vm.groundsSource.loadSource();
+        // //        vm.removePinAnchors();
+        // //        vm.anchorPinLevelChange = true;
+        // //        vm.removePinGroups();
+	    // //    vm.buildmarkers();
+        // });
+
+        // $("input[name='pen_type']").change(function() {
+        //     vm.groundsSource.loadSource();
+        // //        vm.removePinAnchors();
+        // //        vm.anchorPinLevelChange = true;
+        // //        vm.removePinGroups();
+	    // //    vm.buildmarkers();
+        // });
 
     
  

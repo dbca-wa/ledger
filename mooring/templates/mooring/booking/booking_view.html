@@ -50,9 +50,13 @@
                 </div>
             </div><div class="row"><div class="col-sm-12" style="margin-top: 1em">
                 {% if booking.status == 'Paid' or booking.status == 'Over Paid' %}
-                <a href="{% url 'get_confirmation' booking.id %}" class="btn btn-info btn-lg" >Confirmation</a>
-                <a href="{% url 'mooring-invoice-pdf' book_inv %}" class="btn btn-info btn-lg" >Invoice</a></p>
-                <p style="font-size: 1.5rem; font-weight: bold;">You must bring your printed confirmation with you to the mooring.</p>
+                    {% if request.user == booking.customer or request.user.is_staff or request.session.ps_last_booking == booking.id%}
+                        <a href="{% url 'get_confirmation' booking.id %}" class="btn btn-info btn-lg" >Confirmation</a>
+                        <a href="{% url 'mooring-invoice-pdf' book_inv %}" class="btn btn-info btn-lg" >Invoice</a></p>
+                        <p style="font-size: 1.5rem; font-weight: bold;">You must bring your printed confirmation with you to the mooring.</p>
+                    {% else %}
+                        <p style="font-size: 1.5rem; font-weight: bold;">You do not have permission to access the confirmation or invoice for this booking.<br>Please check your email or contact RIA directly.</p>
+                    {% endif %}
                 {% else %}<p style="font-size: 1.5rem; font-weight: bold;">You must bring your printed confirmation with you to the mooring. Confirmation is only available after the booking is paid in full.</p>{% endif %}
             </div></div>
         </div>

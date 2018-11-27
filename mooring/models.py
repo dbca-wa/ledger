@@ -5,6 +5,7 @@ import uuid
 import base64
 import binascii
 import hashlib
+import calendar
 from decimal import Decimal as D
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
@@ -131,7 +132,8 @@ class MooringArea(models.Model):
 
     MOORING_PHYSICAL_TYPE_CHOICES = (
         (0, 'Mooring'),
-        (1, 'Jetty Pen')
+        (1, 'Jetty Pen'),
+        (2, 'Beach Pen')
     )
 
     MOORING_CLASS_CHOICES = (
@@ -202,13 +204,27 @@ class MooringArea(models.Model):
 
     @property
     def active(self):
-        return self._is_open(datetime.now().date())
+        return self._is_open(timezone.now())
 
     @property
     def current_closure(self):
         closure = self._get_current_closure()
         if closure:
-            return 'Start: {} Reopen: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y') if closure.range_end else "")
+            start = closure.range_start
+            timestamp = calendar.timegm(start.timetuple())
+            local_dt = datetime.fromtimestamp(timestamp)
+            start = local_dt.replace(microsecond=start.microsecond)
+            start = start.strftime('%d/%m/%Y %H:%M')
+            if closure.range_end:
+                end = closure.range_end if closure.range_end else ""
+                timestamp = calendar.timegm(end.timetuple())
+                local_dt = datetime.fromtimestamp(timestamp)
+                end = local_dt.replace(microsecond=end.microsecond)
+                end = end.strftime('%d/%m/%Y %H:%M')
+            else:
+                end = ""
+            strTime = 'Start: {} Reopen: {}'.format(start, end)
+            return strTime
         return ''
 
     @property
@@ -274,7 +290,7 @@ class MooringArea(models.Model):
 
     def _get_current_closure(self):
         closure_period = None
-        period = datetime.now().date()
+        period = timezone.now()
         if not self.active:
             closure = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__isnull=True) |Q(range_end__gte=period)).order_by('updated_on')
             if closure:
@@ -308,7 +324,9 @@ class MooringArea(models.Model):
             else:
                 b.save()
         except MooringAreaBookingRange.DoesNotExist:
+            print "DEBUG-count pre b save: ", MooringAreaBookingRange.objects.filter(campground=self.id).count()
             b.save()
+            print "DEBUG-count post b save: ", MooringAreaBookingRange.objects.filter(campground=self.id).count()
         except:
             raise
 
@@ -431,6 +449,7 @@ class MooringAreaImage(models.Model):
 
 class BookingPeriodOption(models.Model):
     period_name = models.CharField(max_length=15)
+    option_description = models.CharField(max_length=255)
     small_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
     medium_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
     large_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
@@ -472,7 +491,7 @@ class BookingRange(models.Model):
     # ====================================
     @property
     def editable(self):
-        today = datetime.now().date()
+        today = timezone.now()
         if self.status != 0 and((self.range_start <= today and not self.range_end) or (self.range_start <= today and self.range_end > today) or (self.range_start > today and not self.range_end) or ( self.range_start >= today <= self.range_end)):
             return True
         elif self.status == 0 and ((self.range_start <= today and not self.range_end) or self.range_start > today):
@@ -578,7 +597,7 @@ class MooringAreaBookingRange(BookingRange):
             original = MooringAreaBookingRange.objects.get(pk=self.pk)
             if not original.editable:
                 raise ValidationError('This Booking Range is not editable')
-            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
+            if self.range_start < timezone.now() and original.range_start != self.range_start:
                 raise ValidationError('The start date can\'t be in the past')
         super(MooringAreaBookingRange,self).clean(*args, **kwargs)
 
@@ -1670,7 +1689,7 @@ class MooringAreaBookingRangeListener(object):
                 pass
         if instance.status == 0 and not instance.range_end:
             try:
-                another_open = MooringAreaBookingRange.objects.filter(campground=instance.campground,range_start=instance.range_start+timedelta(days=1),status=0).latest('updated_on')
+                another_open = MooringAreaBookingRange.objects.filter(campground=instance.campground,range_start=instance.range_start+timedelta(seconds=1),status=0).latest('updated_on')
                 instance.range_end = instance.range_start
             except MooringAreaBookingRange.DoesNotExist:
                 pass
@@ -1678,10 +1697,10 @@ class MooringAreaBookingRangeListener(object):
     @staticmethod
     @receiver(post_delete, sender=MooringAreaBookingRange)
     def _post_delete(sender, instance, **kwargs):
-        today = datetime.now().date()
+        today = timezone.now()
         if instance.status != 0 and instance.range_end:
             try:
-                linked_open = MooringAreaBookingRange.objects.filter(range_start=instance.range_end + timedelta(days=1), status=0).order_by('updated_on')
+                linked_open = MooringAreaBookingRange.objects.filter(range_start=instance.range_end + timedelta(seconds=1), status=0).order_by('updated_on')
                 if instance.range_start >= today:
                     if linked_open:
                         linked_open = linked_open[0]
@@ -1717,10 +1736,10 @@ class MooringAreaBookingRangeListener(object):
 
         # Check if its a closure and has an end date to create new opening range
         if instance.status != 0 and instance.range_end:
-            another_open = MooringAreaBookingRange.objects.filter(campground=instance.campground,range_start=datetime.now().date()+timedelta(days=1),status=0)
+            another_open = MooringAreaBookingRange.objects.filter(campground=instance.campground,range_start=instance.range_end+timedelta(seconds=1),status=0)
             if not another_open:
                 try:
-                    MooringAreaBookingRange.objects.create(campground=instance.campground,range_start=instance.range_end+timedelta(days=1),status=0)
+                    MooringAreaBookingRange.objects.create(campground=instance.campground,range_start=instance.range_end+timedelta(seconds=1),status=0)
                 except BookingRangeWithinException as e:
                     pass
 
