@@ -700,6 +700,28 @@ def get_park_entry_rate(request,start_date):
             res = serializer.data[0]
     return res
 
+def override_lineitems(override_price, override_reason, total_price, oracle_code, override_reason_info=""):
+    invoice_line = []
+    if oracle_code:
+        if override_price and total_price and override_reason:
+            discount = override_price - total_price
+            invoice_line.append({"ledger_description": '{} - {}'.format(override_reason.text, override_reason_info), "quantity": 1, 'price_incl_tax': discount, 'oracle_code': oracle_code})
+    return invoice_line
+
+def nononline_booking_lineitems(oracle_code):
+    invoice_line = []
+    if oracle_code:
+        invoice_line.append({'ledger_description': 'Non Online Booking Fee', 'quantity': 1, 'price_incl_tax': Decimal(15), 'oracle_code': oracle_code})
+    return invoice_line
+
+def admission_lineitems(lines):
+    invoice_lines = []
+    if lines:
+        for line in lines:
+            invoice_lines.append({'ledger_description': 'Admissions {} - {} ({} guests)'.format(line['from'], line['to'], line['guests']), "quantity": 1, 'price_incl_tax': line['admissionFee'], "oracle_code": line['oracle_code']})
+
+    return invoice_lines
+
 def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
     total_price = Decimal(0)
     booking_mooring = MooringsiteBooking.objects.filter(booking=booking)

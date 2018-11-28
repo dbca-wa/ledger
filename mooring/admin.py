@@ -120,6 +120,10 @@ class ClosureReason(ReasonAdmin):
 class OpenReason(ReasonAdmin):
     pass
 
+@admin.register(models.DiscountReason)
+class DiscountReason(ReasonAdmin):
+    pass
+
 @admin.register(models.OutstandingBookingRecipient)
 class OutstandingBookingRecipient(admin.ModelAdmin):
     pass

@@ -62,6 +62,7 @@ from mooring.models import (MooringArea,
                                 PriceReason,
                                 AdmissionsReason,
                                 MaximumStayReason,
+                                DiscountReason,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
                                 MooringAreaGroup,
@@ -108,6 +109,7 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     PriceReasonSerializer,
                                     AdmissionsReasonSerializer,
                                     MaximumStayReasonSerializer,
+                                    DiscountReasonSerializer,
                                     BulkPricingSerializer,
                                     UsersSerializer,
                                     AccountsAddressSerializer,
@@ -3125,6 +3127,10 @@ class AdmissionsReasonViewSet(viewsets.ReadOnlyModelViewSet):
 class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
+
+class DiscountReasonViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = DiscountReason.objects.all()
+    serializer_class = DiscountReasonSerializer
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Country.objects.order_by('-display_order', 'printable_name')
