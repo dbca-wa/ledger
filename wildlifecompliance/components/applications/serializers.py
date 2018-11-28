@@ -164,7 +164,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'payment_status',
                 'licence_fee',
                 'class_name',
-                'activity_type_names'
+                'activity_type_names',
+                'can_be_processed'
                 )
         read_only_fields=('documents',)
     
@@ -221,6 +222,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         #         amendment_request_data.append({"licence_activity_type":str(item.licence_activity_type),"id":item.licence_activity_type.id})
         return amendment_request_data
 
+    def get_can_be_processed(self, obj):
+        return obj.processing_status == 'under_review'
+
        
 class DTApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
@@ -230,6 +234,8 @@ class DTApplicationSerializer(BaseApplicationSerializer):
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
     assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
+    can_be_processed = serializers.SerializerMethodField(read_only=True)
+
 
 class ApplicationSerializer(BaseApplicationSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
