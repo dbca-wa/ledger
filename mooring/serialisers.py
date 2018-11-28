@@ -28,6 +28,7 @@ from mooring.models import (MooringAreaPriceHistory,
                                 PriceReason,
                                 AdmissionsReason,
                                 MaximumStayReason,
+                                DiscountReason,
                                 MooringAreaStayHistory,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
@@ -370,6 +371,7 @@ class MooringAreaSerializer(serializers.ModelSerializer):
             'vessel_weight_limit',
             'mooring_physical_type',
             'mooring_class',
+            'admission_fee_required',
         )
         read_only_fields = ('mooring_group',)
 
@@ -707,6 +709,11 @@ class MaximumStayReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaximumStayReason
         fields = ('id','text', 'detailRequired')
+
+class DiscountReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DiscountReason
+        fields = ('id', 'text', 'detailRequired')
 
 class AccountsAddressSerializer(serializers.ModelSerializer):
     class Meta:

@@ -93,6 +93,12 @@
 												</select>
 											</div>
 										</div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="control-label">Admission Fees </label>
+                                                <input type="checkbox" v-model="campground.admission_fee_required">
+                                            </div>
+                                        </div>
                                     </div>
                                     <imagePicker :images="campground.images"></imagePicker>
 									<div class="row" style="margin-top: 40px;">

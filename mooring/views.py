@@ -31,7 +31,9 @@ from mooring.models import (MooringArea,
                                 MarinaEntryRate,
                                 AdmissionsBooking,
                                 AdmissionsBookingInvoice,
-                                AdmissionsRate
+                                AdmissionsRate,
+                                DiscountReason,
+                                RegisteredVessels
                                 )
 from mooring import emails
 from ledger.accounts.models import EmailUser, Address
@@ -217,8 +219,7 @@ class MakeBookingsView(TemplateView):
             for bm in booking_mooring:
                 # Convert the from and to dates of this booking to just plain dates in local time.
                 # Append them to a list.
-                park = MarinePark.objects.get(name="Rottnest")
-                if bm.campsite.mooringarea.park == park:
+                if bm.campsite.mooringarea.admission_fee_required:
                     from_dt = bm.from_dt
                     timestamp = calendar.timegm(from_dt.timetuple())
                     local_dt = datetime.fromtimestamp(timestamp)
@@ -253,6 +254,8 @@ class MakeBookingsView(TemplateView):
                         latest_from = new_lines[i+1]['from'].date()
                         latest_to = None
                 i+= 1
+
+
             rate = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)))[0]
             if rate:
                 pricing['adult'] = rate.adult_cost
@@ -265,6 +268,11 @@ class MakeBookingsView(TemplateView):
                 pricing['family_on'] = rate.family_overnight_cost
 
         
+        staff = request.user.is_staff
+        if(staff):
+            staff = "true"
+        else:
+            staff = "false"
 
         return render(request, self.template_name, {
             'form': form, 
@@ -279,7 +287,7 @@ class MakeBookingsView(TemplateView):
             'pricing': pricing,
             'show_errors': show_errors,
             'lines': lines,
-            'override_reason_list': overrides,
+            'staff': staff
          
         })
 
@@ -332,10 +340,51 @@ class MakeBookingsView(TemplateView):
         booking.details['phone'] = form.cleaned_data.get('phone')
         booking.details['country'] = form.cleaned_data.get('country').iso_3166_1_a2
         booking.details['postcode'] = form.cleaned_data.get('postcode')
-        booking.details['num_adult'] = form.cleaned_data.get('num_adult')
+        # booking.details['num_adult'] = form.cleaned_data.get('num_adult')
         booking.details['num_concession'] = form.cleaned_data.get('num_concession')
-        booking.details['num_child'] = form.cleaned_data.get('num_child')
-        booking.details['num_infant'] = form.cleaned_data.get('num_infant')
+        # booking.details['num_child'] = form.cleaned_data.get('num_child')
+        # booking.details['num_infant'] = form.cleaned_data.get('num_infant')
+        booking.details['num_adult'] = int(request.POST.get('num_adults')) if request.POST.get('num_adults') else 0
+        booking.details['num_child'] = int(request.POST.get('num_children')) if request.POST.get('num_children') else 0
+        booking.details['num_infant'] = int(request.POST.get('num_infants')) if request.POST.get('num_infants') else 0
+        booking.details['non_online_booking'] = True if request.POST.get('nononline') else False
+        overidden = True if request.POST.get('override') else False
+
+        if overidden:
+            override_price = Decimal(request.POST.get('overridePrice')) if request.POST.get('overridePrice') else 0
+            if override_price > 0:
+                booking.override_price = override_price
+                booking.overridden_by = request.user
+                override_reason = request.POST.get('overrideReason') if request.POST.get('overrideReason') else None
+                if override_reason is not None:
+                    booking.override_reason = DiscountReason.objects.get(id=override_reason)
+                booking.override_reason_info = request.POST.get('overrideDetail') if request.POST.get('overrideDetail') else ""
+
+
+        oracle_code = ''
+        if booking.mooringarea.oracle_code:
+            oracle_code = booking.mooringarea.oracle_code
+        rego = request.POST.get('form-0-vehicle_rego') if request.POST.get('form-0-vehicle_rego') else None
+        admissionLines = []
+        if rego:
+            admissionsJson = json.loads(request.POST.get('admissionsLines')) if request.POST.get('admissionsLines') else []
+            admissions = []
+            for line in admissionsJson:
+                admissions.append({
+                    'from': line['from'],
+                    'to': line['to'],
+                    'admissionFee': Decimal(line['admissionFee']),
+                    'guests': booking.num_guests,
+                    'oracle_code': oracle_code
+                    })
+            admissionLines = utils.admission_lineitems(admissions)
+
+        vessel = ""
+        if RegisteredVessels.objects.filter(rego_no=rego).count() > 0:
+            vessel = RegisteredVessels.objects.get(rego_no=rego)
+            if vessel.admissionsPaid:
+                admissionLines = []
+        
 
         # update vehicle registrations from form
         VEHICLE_CHOICES = {'0': 'vessel', '1': 'concession', '2': 'motorbike'}
@@ -359,6 +408,14 @@ class MakeBookingsView(TemplateView):
 #                return self.render_page(request, booking, form, vehicles, show_errors=True)
         # generate final pricing
         lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
+        
+        if booking.details['non_online_booking']:
+            booking_line = utils.nononline_booking_lineitems(oracle_code)
+            for line in booking_line:
+                lines.append(line)
+        if booking.mooringarea.admission_fee_required:
+            for line in admissionLines:
+                lines.append(line)
         try:
             pass
 #            lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
@@ -369,8 +426,15 @@ class MakeBookingsView(TemplateView):
         #print(lines)
         total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
 
+        # if was discounted, include discount line and set total cost of booking.
+        if booking.override_price and overidden:
+            discount_line = utils.override_lineitems(booking.override_price, booking.override_reason, total, oracle_code, booking.override_reason_info)
+            for line in discount_line:
+                lines.append(line)
+            total = booking.override_price
+
         # get the customer object
-        if request.user.is_anonymous():
+        if request.user.is_anonymous() or request.user.is_staff:
             try:
                 customer = EmailUser.objects.get(email=form.cleaned_data.get('email'))
             except EmailUser.DoesNotExist:
