@@ -10,7 +10,7 @@ from wildlifecompliance.components.licences.models import WildlifeLicenceActivit
 import traceback
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
-    data = {} 
+    data = {}
     special_fields_list = []
     assessor_data_list = []
     comment_data_list = {}
@@ -42,7 +42,7 @@ def _extend_item_name(name, suffix, repetition):
 
 def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     item_data = {}
-    
+
     if 'name' in item:
         extended_item_name = item['name']
     else:
@@ -133,7 +133,7 @@ class AssessorDataSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -174,7 +174,7 @@ class CommentDataSearch(object):
         self.comment_data = {}
 
     def extract_comment_data(self,item,post_data):
-        res = {} 
+        res = {}
         values = []
         for k in post_data:
             if re.match(item,k):
@@ -192,7 +192,7 @@ class CommentDataSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -234,7 +234,7 @@ class SpecialFieldsSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -298,6 +298,7 @@ def save_proponent_data(instance,request,viewset):
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
                 'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
             }
+            import ipdb; ipdb.set_trace()
             serializer = SaveApplicationSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
@@ -367,7 +368,7 @@ def get_activity_type_schema(licence_class_data):
         update_schema_name(schema_activity,index)
         # for item in schema_activity:
         #     print(item['name'])
-            
+
         schema_tab.append({"type":"tab",
                   "id":activity_type_obj.id,
                   "label":activity_type_obj.name,
@@ -393,6 +394,6 @@ def update_schema_name(item_data,id):
 
 
 
-    
+
 
 
