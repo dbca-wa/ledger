@@ -89,47 +89,47 @@ def export_applications(request):
 
     applications = Application.objects.filter(id__in=[121, 122, 123])
 
-	for application in applications:
-		s=serialize_export(application)
+    for application in applications:
+        s=serialize_export(application)
 
 
-		columns = unique_column_names()
-		names = [row['name'] for row in s]
-		row_num += 1
-		for col_num in range(len(columns)):
-			ws.write(row_num, col_num, columns[col_num], font_style)
+        columns = unique_column_names()
+        names = [row['name'] for row in s]
+        row_num += 1
+        for col_num in range(len(columns)):
+            ws.write(row_num, col_num, columns[col_num], font_style)
 
 
-		keys = [row['key'] for row in s]
+        keys = [row['key'] for row in s]
 
-		#activity = [row['activity'] for row in s]
-		#purpose = [row['purpose'] for row in s]
-		labels = [row['label'] for row in s]
-		for col_num in range(len(keys)):
-			ws.write(row_num, col_num, keys[col_num], font_style)
+#activity = [row['activity'] for row in s]
+#purpose = [row['purpose'] for row in s]
+        labels = [row['label'] for row in s]
+        for col_num in range(len(keys)):
+            ws.write(row_num, col_num, keys[col_num], font_style)
 
-		row_num += 1
-		for col_num in range(len(keys)):
-			ws.write(row_num, col_num, activity[col_num], font_style)
+        row_num += 1
+        for col_num in range(len(keys)):
+            ws.write(row_num, col_num, activity[col_num], font_style)
 
-		row_num += 1
-		for col_num in range(len(keys)):
-			ws.write(row_num, col_num, purpose[col_num], font_style)
+        row_num += 1
+        for col_num in range(len(keys)):
+            ws.write(row_num, col_num, purpose[col_num], font_style)
 
-		row_num += 1
-		for col_num in range(len(keys)):
-			ws.write(row_num, col_num, labels[col_num], font_style)
-		row_num += 1
+        row_num += 1
+        for col_num in range(len(keys)):
+            ws.write(row_num, col_num, labels[col_num], font_style)
+        row_num += 1
 
-		# Sheet body, remaining rows
-		font_style = xlwt.XFStyle()
+# Sheet body, remaining rows
+        font_style = xlwt.XFStyle()
 
-		rows = [row['key'] for row in s]
-		for row in a:
-			row_num += 1
-			col_items = [item['value'] for item in s]
-			for col_num in range(len(col_items)):
-				ws.write(row_num, col_num, col_items[col_num], font_style)
+        rows = [row['key'] for row in s]
+        for row in a:
+            row_num += 1
+            col_items = [item['value'] for item in s]
+            for col_num in range(len(col_items)):
+                ws.write(row_num, col_num, col_items[col_num], font_style)
 
     wb.save(response)
     return response

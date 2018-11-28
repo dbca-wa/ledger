@@ -58,9 +58,9 @@ def unique_column_labels(applications):
     unique_names = set([])
     for app in applications:
         serialized_app = serialize_export(app)
-		for item in serialized_app:
-			item['name']
-			
+        for item in serialized_app:
+            item['name']
+            
         names = [item['name'] for item in serialized_app]
 
         unique_names = set(unique_names).union(names)
