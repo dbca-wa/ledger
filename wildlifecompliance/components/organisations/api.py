@@ -59,7 +59,14 @@ from wildlifecompliance.components.applications.serializers import (
 
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_address_updated_email_notification,
+                        send_organisation_id_upload_email_notification,
                     )
+
+
+from wildlifecompliance.components.applications.models import (
+                                        Application,
+                                        Assessment,
+                                    )
 
 
 class OrganisationViewSet(viewsets.ModelViewSet):
@@ -469,6 +476,15 @@ class OrganisationViewSet(viewsets.ModelViewSet):
                 instance.save()
                 instance.log_user_action(OrganisationAction.ACTION_ID_UPDATE.format(
                 '{} ({})'.format(instance.name, instance.abn)), request)
+
+ #           apps = Application.objects().filter(org_applicant=instance.organisation.id)
+ #           email_list = set()
+ #           for items in apps:
+ #               officer = EmailUser.objects.get(id=items.assigned_officer.id)
+ #               email_list.add(officer.email)
+
+ #           send_organisation_id_upload_email_notification(email_list, instance.organisation, request)
+
             serializer = OrganisationSerializer(instance, partial=True)
             return Response(serializer.data)
         except serializers.ValidationError:
