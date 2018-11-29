@@ -615,6 +615,9 @@ export default {
                   date: date,
                   booking_start: booking_start,
                   booking_finish: booking_finish,
+                  num_adult: vm.numAdults,
+                  num_children : vm.numChildren,
+                  num_infant: vm.numInfants
               };
 
               $.ajax({

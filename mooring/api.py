@@ -592,9 +592,9 @@ def add_booking(request, *args, **kwargs):
 #    booking_period_finish = request.POST['booking_finish']
     booking_period_start = datetime.strptime(request.POST['booking_start'], "%d/%m/%Y").date()
     booking_period_finish = datetime.strptime(request.POST['booking_finish'], "%d/%m/%Y").date()
-    #num_adults = request.POST['num_adult']
-    #num_children = request.POST['num_children']
-    #num_infants = request.POST['num_infant']
+    num_adults = request.POST.get('num_adult', 0)
+    num_children = request.POST.get('num_children', 0)
+    num_infants = request.POST.get('num_infant',0)
 
     start_booking_date = request.POST['date']
     finish_booking_date = request.POST['date']
@@ -603,17 +603,21 @@ def add_booking(request, *args, **kwargs):
     if 'ps_booking' in request.session:
         booking_id = request.session['ps_booking']
         if booking_id:
-             booking = Booking.objects.get(id=booking_id)
-             booking.arrival = booking_period_start
-             booking.departure = booking_period_finish
-             booking.save()
+            booking = Booking.objects.get(id=booking_id)
+            booking.arrival = booking_period_start
+            booking.departure = booking_period_finish
+            if not booking.details:
+                booking.details = {}
+            booking.details['num_adults'] = num_adults
+            booking.details['num_children'] = num_children
+            booking.details['num_infants'] = num_infants
+            booking.save()
     else:
         details = {
-    #        'num_adults' : num_adults,
-    #        'num_children' : num_children,
-    #        'num_infants' : num_infants
+           'num_adults' : num_adults,
+           'num_children' : num_children,
+           'num_infants' : num_infants
         }
-        print "DEBUG - DETAILS: ", details
         mooringarea = MooringArea.objects.get(id=request.POST['mooring_id'])
         booking = Booking.objects.create(mooringarea=mooringarea,booking_type=3,expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),details=details,arrival=booking_period_start,departure=booking_period_finish)
         request.session['ps_booking'] = booking.id
@@ -1559,6 +1563,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         vessel_size = serializer.validated_data['vessel_size']
  #       distance_radius = serializer.validated_data['distance_radius']
 
+        
+
         # if campground doesn't support online bookings, abort!
         if ground.mooring_type != 0:
             return Response({'error': 'Mooring doesn\'t support online bookings'}, status=400)
@@ -1662,8 +1668,9 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             'total_booking': str(total_price),
             'arrival': start_date.strftime('%Y/%m/%d'),
             'days': length,
-            'adults': 1,
-            'children': 0,
+            'adults': num_adult,
+            'children': num_child,
+            'infants' : num_infant,
             'maxAdults': 30,
             'maxChildren': 30,
             'sites': [],
