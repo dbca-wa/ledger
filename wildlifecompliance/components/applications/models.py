@@ -19,6 +19,7 @@ from ledger.licence.models import Licence
 from ledger.payments.invoice.models import Invoice
 from wildlifecompliance import exceptions
 
+from ledger.accounts.models import OrganisationAddress
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
@@ -34,6 +35,7 @@ from wildlifecompliance.components.applications.email import (
     send_application_decline_notification
     )
 from wildlifecompliance.ordered_model import OrderedModel
+from collections import OrderedDict
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
 
 
@@ -1544,6 +1546,88 @@ class Referral(models.Model):
 
     def can_assess_referral(self,user):
         return self.processing_status == 'with_referral'
+
+class ExcelApplication(models.Model):
+    application = models.ForeignKey(Application, related_name='excel_applications')
+    data = JSONField(blank=True, null=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    @property
+    def cols_output(self):
+        return OrderedDict([
+            ('lodgement_number', self.lodgement_number),
+            ('application_id', self.application.id),
+            ('licence_number', self.licence_number),
+            ('applicant', self.applicant)
+        ])
+
+    @property
+    def licence_class(self):
+        #return self.application.licence_class
+        return self.application.licence_type_short_name
+
+    @property
+    def lodgement_number(self):
+        return self.application.lodgement_number
+
+    @property
+    def licence_number(self):
+        return self.application.licence.licence_number if self.application.licence else None
+
+    @property
+    def applicant(self):
+        return self.application.applicant
+
+    @property
+    def applicant_block(self):
+        return '{}\n{}'.format(self.applicant, OrganisationAddress.objects.get(organisation__name=self.applicant.name).__str__())
+
+
+class ExcelActivityType(models.Model):
+    excel_app = models.ForeignKey(ExcelApplication, related_name='excel_activity_types')
+    short_name = models.CharField(max_length=24, blank=True)
+    data = JSONField(blank=True, null=True)
+    conditions = models.TextField(blank=True, null=True)
+    issue_date = models.DateTimeField(blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    expiry_date = models.DateField(blank=True, null=True)
+    issued = models.NullBooleanField(default=None)
+    processed = models.NullBooleanField(default=None)
+
+    class Meta:
+        unique_together = (('excel_app','short_name'))
+        app_label = 'wildlifecompliance'
+
+#    def save(self, *args, **kwargs):
+#        super(ExcelActivityType, self).save(*args, **kwargs)
+#        if self.short_name == '':
+#           self.short_name = self.excel_app.licence_class
+#            self.save()
+
+    @property
+    def application(self):
+        return self.excel_app.application
+
+    @property
+    def code(self):
+        return self.short_name[:2].lower()
+
+    @property
+    def cols_output(self):
+        return OrderedDict([
+            #('short_name', self.short_name),
+            ('{}-conditions'.format(self.code), self.conditions),
+            ('{}-application_id'.format(self.code), self.issue_date),
+            ('{}-licence_number'.format(self.code), self.start_date),
+            ('{}-applicant'.format(self.code), self.expiry_date),
+            ('{}-issued'.format(self.code), self.issued),
+            ('{}-processed'.format(self.code), self.processed),
+        ])
+
+
+
 
 @receiver(pre_delete, sender=Application)
 def delete_documents(sender, instance, *args, **kwargs):

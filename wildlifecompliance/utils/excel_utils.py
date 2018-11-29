@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from collections import OrderedDict
-from wildlifecompliance.components.applications.models import Application, ApplicationType
+from wildlifecompliance.components.applications.models import Application, ApplicationType, ExcelApplication, ExcelActivityType
 from wildlifecompliance.components.licences.models import DefaultActivityType, WildlifeLicenceClass
 from wildlifecompliance.components.organisations.models import Organisation
 from ledger.accounts.models import OrganisationAddress
@@ -16,8 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 import json
-import datetime
+from datetime import datetime
 from django.db import models
+
 
 
 def test(ids=[125]):
@@ -27,11 +28,11 @@ def test(ids=[125]):
 
     purposes = get_purposes(licence_class)
 
-    #d2 = OrderedDict([(purpose.short_name, d)]) 
+    #d2 = OrderedDict([(purpose.short_name, d)])
 
     applicantion_details = OrderedDict([('Application',a.lodgement_number), ('ID',a.id), ('Licence',a.licence), ('Applicant',applicant)])
 
-    d2 = OrderedDict([]) 
+    d2 = OrderedDict([])
     d2.update([('application_details', applicant_details)])
     for purpose in purposes:
         #import ipdb; ipdb.set_trace()
@@ -41,72 +42,21 @@ def test(ids=[125]):
     return d2
 
 
-class ExcelApplication(models.Model):
-    application = models.ForeignKey(Application, related_name='excel_applications')
-    data = JSONField(blank=True, null=True)
-
-    @property
-    def licence_class(self):
-        #return self.application.licence_class
-        return self.application.licence_type_short_name
-
-    @property
-    def lodgement_number(self):
-        return self.application.lodgement_number
-
-    @property
-    def licence_number(self):
-        return self.application.licence_number
-
-    @property
-    def applicant(self):
-        return self.application.applicant
-
-    @property
-    def applicant_block(self):
-        return '{}\n{}'.format(self.applicant, OrganisationAddress.objects.get(organisation__name=self.applicant.name).__str__())
-
-
-class ExcelActivityType(models.Model):
-    excel_app = models.ForeignKey(ExcelApplication, related_name='excel_activity_types')
-    short_name = models.CharField(max_length=24, blank=True)
-    data = JSONField(blank=True, null=True)
-    conditions = models.TextField(blank=True, null=True)
-    issue_date = models.DateTimeField(blank=True, null=True)
-    start_date = models.DateField(blank=True, null=True)
-    expiry_date = models.DateField(blank=True, null=True)
-    issued = models.NullBooleanField(default=None)
-    processed = models.NullBooleanField(default=None)
-
-    class Meta:
-        unique_together = (('excel_app','short_name'))
-        app_label = 'wildlifecompliance'
-
-#    def save(self, *args, **kwargs):
-#        super(ExcelActivityType, self).save(*args, **kwargs)
-#        if self.short_name == '':
-#           self.short_name = self.excel_app.licence_class
-#            self.save()
-
-#   @property
-#   def short_name(self):
-#       return self.activity_type.short_name
-
-def write_excel_model(ids=[125]):
+def write_excel_model(ids=[145]):
     applications = Application.objects.filter(id__in=ids)
 
     for application in applications:
         excel_app, created = ExcelApplication.objects.get_or_create(application=application)
 
-        activities = get_purposes(a.licence_type_data['short_name']).values_list('activity_type__short_name', flat=True)
-        for activity_type in a.licence_type_data['activity_type']:
+        activities = get_purposes(application.licence_type_data['short_name']).values_list('activity_type__short_name', flat=True)
+        for activity_type in application.licence_type_data['activity_type']:
             if activity_type['short_name'] in list(activities):
                 excel_activity_type, created = ExcelActivityType.objects.get_or_create(
                     excel_app=excel_app,
                     short_name=activity_type['short_name']
                 )
 
-def write_excel_model_test(ids=[125]):
+def write_excel_model_test(ids=[145]):
     applications = Application.objects.filter(id__in=ids)
 
     for application in applications:
@@ -164,7 +114,7 @@ class Activity():
 
     def activity_types(self):
         """ Set the actvity type OrderedDict, including null placeholders for Activity Types not used """
-        
+
         activities = get_purposes(a.licence_type_data['short_name']).values_list('activity_type__short_name', flat=True)
         for i in a.licence_type_data['activity_type']:
             if i['short_name'] in list(activities):
@@ -212,64 +162,84 @@ def read_workbook(input_filename):
                     wb_response_sets[name].append(label_object)
         return wb_response_sets
     else:
-        logger.error('{0} does not appear to be a valid file'.format(input_filename)) 
+        logger.error('{0} does not appear to be a valid file'.format(input_filename))
 
-def write_workbook(request):
-    filename = 'wc_apps_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))
+def cols_output(activity_type, short_name):
+    code = short_name[:2].lower()
+    return OrderedDict([
+        ('{}'.format(short_name), None),
+        ('{}-conditions'.format(code), activity_type[0].conditions if activity_type else None),
+        ('{}-application_id'.format(code), activity_type[0].issue_date if activity_type else None),
+        ('{}-licence_number'.format(code), activity_type[0].start_date if activity_type else None),
+        ('{}-applicant'.format(code), activity_type[0].expiry_date if activity_type else None),
+        ('{}-issued'.format(code), activity_type[0].issued if activity_type else None),
+        ('{}-processed'.format(code), activity_type[0].processed if activity_type else None),
+    ])
+
+def write_workbook(ids=[145]):
+    #filename = '/tmp/wc_apps_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))
+    filename = '/tmp/wc_apps.xls'
 
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Applications')
 
+    excel_apps = ExcelApplication.objects.all() #filter(id__in=ids)
+
     # Sheet header, first row
     row_num = 0
 
+    # Header
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    applications = Application.objects.filter(id__in=[125])
+    excel_app = excel_apps.last()
+    short_name_list = get_purposes(excel_app.licence_class).values_list('activity_type__short_name', flat=True)
+    col_num = 0
+    for k,v in excel_app.cols_output.iteritems():
+        ws.write(row_num, col_num, k, font_style)
+        col_num += 1
 
-    for application in applications:
-        s=serialize_export(application)
+    #for activity_type in excel_app.excel_activity_types.all():
+    for short_name in short_name_list:
+        activity_type = excel_app.excel_activity_types.filter(short_name=short_name)
+        activity_type_cols = cols_output(None, short_name).keys()
 
+        ws.write(row_num, col_num, '', font_style); col_num += 1
+        #ws.write(row_num, col_num, short_name, font_style); col_num += 1
 
-        columns = unique_column_names()
-        names = [row['name'] for row in s]
+        #for k,v in activity_type.cols_output.iteritems():
+        for col_name in activity_type_cols:
+            ws.write(row_num, col_num, col_name, font_style)
+            col_num += 1
+
+    # Application data
+    font_style = xlwt.XFStyle()
+    for excel_app in excel_apps:
         row_num += 1
-        for col_num in range(len(columns)):
-            ws.write(row_num, col_num, columns[col_num], font_style)
+        col_num = 0
+        for k,v in excel_app.cols_output.iteritems():
+            ws.write(row_num, col_num, v, font_style)
+            col_num += 1
+
+        for short_name in short_name_list:
+
+            activity_type = excel_app.excel_activity_types.filter(short_name=short_name)
+            activity_type_cols = cols_output(activity_type, short_name).keys()
+
+            ws.write(row_num, col_num, '', font_style); col_num += 1
+            #ws.write(row_num, col_num, short_name, font_style); col_num += 1
+            if activity_type.exists():
+                for k,v in activity_type[0].cols_output.iteritems():
+                    #import ipdb; ipdb.set_trace()
+                    ws.write(row_num, col_num, v, font_style)
+                    col_num += 1
+            else:
+                # create a blank activity_type bilock
+                for _ in activity_type_cols:
+                    ws.write(row_num, col_num, '', font_style)
+                    col_num += 1
 
 
-        keys = [row['key'] for row in s]
-
-#activity = [row['activity'] for row in s]
-#purpose = [row['purpose'] for row in s]
-        labels = [row['label'] for row in s]
-        for col_num in range(len(keys)):
-            ws.write(row_num, col_num, keys[col_num], font_style)
-
-        row_num += 1
-        for col_num in range(len(keys)):
-            ws.write(row_num, col_num, activity[col_num], font_style)
-
-        row_num += 1
-        for col_num in range(len(keys)):
-            ws.write(row_num, col_num, purpose[col_num], font_style)
-
-        row_num += 1
-        for col_num in range(len(keys)):
-            ws.write(row_num, col_num, labels[col_num], font_style)
-        row_num += 1
-
-# Sheet body, remaining rows
-        font_style = xlwt.XFStyle()
-
-        rows = [row['key'] for row in s]
-        for row in a:
-            row_num += 1
-            col_items = [item['value'] for item in s]
-            for col_num in range(len(col_items)):
-                ws.write(row_num, col_num, col_items[col_num], font_style)
-
-    wb.save(response)
-    return response
+    wb.save(filename)
+    return wb
 
