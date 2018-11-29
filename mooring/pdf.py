@@ -1,7 +1,7 @@
 import os
 from io import BytesIO
-from datetime import date
-
+import calendar
+from datetime import datetime, date
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, KeepTogether, PageBreak, Image, ImageAndFlowables
@@ -108,7 +108,7 @@ def _create_letter_header_footer(canvas, doc):
     canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
 
 
-def create_confirmation(confirmation_buffer, booking):
+def create_confirmation(confirmation_buffer, booking, mooring_bookings):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
     every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_letter_header_footer)
@@ -124,15 +124,55 @@ def create_confirmation(confirmation_buffer, booking):
     #text2 = Paragraph('Twelve voices were shouting in anger, and they were all alike. No question, now, what had happened to the faces of the pigs. The creatures outside looked from pig to man, and from man to pig, and from pig to man again; but already it was impossible to say which was which.', styles['Left'])
 
     #elements.append(ImageAndFlowables(im, [text1, text2], imageSide='left'))
-   
-    
-
     table_data = []
-    table_data.append([Paragraph('Mooring', styles['BoldLeft']), Paragraph('{}, {}'.format(booking.mooringarea.name, booking.mooringarea.park.name), styles['BoldLeft'])])
-    campsite = u'{}'.format(booking.first_campsite.type) if booking.mooringarea.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
-#   table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
-    
-    table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph(booking.stay_dates, styles['Left'])])
+
+    lines = []
+    from_date = ""
+    to_date = ""
+    for i, mb in enumerate(mooring_bookings):
+        start = mb.from_dt
+        timestamp = calendar.timegm(start.timetuple())
+        local_dt = datetime.fromtimestamp(timestamp)
+        start = local_dt.replace(microsecond=start.microsecond)
+        start = start.strftime('%d/%m/%Y %H:%M')
+        end = mb.to_dt
+        timestamp = calendar.timegm(end.timetuple())
+        local_dt = datetime.fromtimestamp(timestamp)
+        end = local_dt.replace(microsecond=end.microsecond)
+        end = end.strftime('%d/%m/%Y %H:%M')
+        
+        if from_date == "":
+            from_date = start
+        if i == len(mooring_bookings)-1:
+            to_date = end
+        else:
+            next_dt = mooring_bookings[i+1].from_dt
+            timestamp = calendar.timegm(next_dt.timetuple())
+            local_dt = datetime.fromtimestamp(timestamp)
+            next_dt = local_dt.replace(microsecond=next_dt.microsecond)
+            next_dt = next_dt.strftime('%d/%m/%Y %H:%M')
+            next_date = next_dt.split(" ")
+            end_date = end.split(" ")
+            if datetime.strptime(end_date[0], '%d/%m/%Y') == datetime.strptime(next_date[0], '%d/%m/%Y') and mb.campsite.mooringarea.name == mooring_bookings[i+1].campsite.mooringarea.name:
+                #Go to next booking
+                to_date = ""
+            else:
+                to_date = end
+        if to_date > "":
+            lines.append({'from': from_date, 'to':to_date, 'mooring': mb.campsite.mooringarea.name, 'park': mb.campsite.mooringarea.park.name})
+            from_date = ""
+            to_date = ""
+
+    for i, line in enumerate(lines):
+        table_data.append([Paragraph('Mooring {}'.format(i+1), styles['BoldLeft']), Paragraph('{}, {}'.format(line['mooring'], line['park']), styles['BoldLeft'])])
+        # campsite = u'{}'.format(booking.first_campsite.type) if booking.mooringarea.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
+    #   table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
+        days = (datetime.strptime(line['to'], '%d/%m/%Y %H:%M') - datetime.strptime(line['from'], '%d/%m/%Y %H:%M')).days
+        if days == 0:
+            days = 1
+        plural = 's' if days > 1 else ''
+        table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph('{} to {} ({} day{})'.format(line['from'], line['to'], days, plural), styles['Left'])])
+
 #    table_data.append([Paragraph('Number of guests', styles['BoldLeft']), Paragraph(booking.stay_guests, styles['Left'])])
     table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} {} ({})'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''), booking.customer.email if booking.customer else None), styles['Left'])])
     table_data.append([Paragraph('Booking confirmation number', styles['BoldLeft']), Paragraph(booking.confirmation_number, styles['Left'])])

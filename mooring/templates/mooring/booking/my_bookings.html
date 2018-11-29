@@ -31,7 +31,7 @@
 {% endif %}
 {% if past_bookings %}
             <h2>Past Bookings and Admission Fee Payments</h2>
-    {% for booking in past_bookings %}
+    {% for bk in past_bookings %}
         {% include "mooring/booking/booking_view.html" with booking=bk.0 book_inv=bk.1 %}
     {% endfor %}
     {% for ad in past_admissions %}

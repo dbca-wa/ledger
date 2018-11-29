@@ -44,7 +44,7 @@
                             {% verbatim %}
                                 <b>Time left to complete booking {{ timeleft }}.</b> 
                             {% endverbatim %}
-                                <a class="btn btn-info" href="{% url 'public_abort_booking' %}?change=true">Change in-progress booking</a>
+                                <a class="btn btn-info" href="{% url 'mooring_availaiblity2_selector' %}?site_id={{ booking.mooringarea.id }}">Change in-progress booking</a>
                                 <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel in-progress booking</a>
                             </p>
                             {% if show_errors %}
@@ -118,7 +118,7 @@
                                 </div>
                                 {% endfor %}
                             </div>
-                            <div v-if="payingAdmissions">
+                            <div v-if="payingAdmissions && linesAdmissions.length > 0" v-cloak>
                                 <div class="row">
                                     <div class="col-md-12">
                                         <h3 class="text-primary">Admission Fees</h3>
@@ -727,7 +727,9 @@
                                 }
                             } else {
                                 console.log("Registration was not found.");
-                                vm.payingAdmissions = true;
+                                if (vm.linesAdmissions.length > 0){
+                                    vm.payingAdmissions = true;
+                                }
                                 vm.calculateTotal();
                                 if (document.cookie.split('vessel_rego=').length==2 && (!this.vesselRego || this.vesselRego == "")){
                                     document.cookie = "vessel_rego=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";

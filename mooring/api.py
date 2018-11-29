@@ -2132,6 +2132,11 @@ def get_confirmation(request, *args, **kwargs):
     except Booking.DoesNotExist:
         return HttpResponse('Booking unavailable', status=403)
 
+    try:
+        mooring_bookings = MooringsiteBooking.objects.filter(booking=booking).order_by('from_dt')
+    except MooringsiteBooking.DoesNotExist:
+        return HttpResponse('Mooringsite Booking unavailable', status=403)
+
     # check permissions
     if not ((request.user == booking.customer) or is_officer(request.user) or (booking.id == request.session.get('ps_last_booking', None))):
         return HttpResponse('Booking unavailable', status=403)
@@ -2143,7 +2148,7 @@ def get_confirmation(request, *args, **kwargs):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="confirmation-PS{}.pdf"'.format(booking_id)
 
-    pdf.create_confirmation(response, booking)
+    pdf.create_confirmation(response, booking, mooring_bookings)
     return response
 
 

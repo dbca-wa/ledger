@@ -159,7 +159,7 @@ def abort_booking_view(request, *args, **kwargs):
             return redirect(reverse('mooring_availaiblity2_selector') + '?site_id={}'.format(c_id))
         else:
             # Redirect to explore parks
-            return redirect(settings.EXPLORE_PARKS_URL+'/map')
+            return redirect('map')
     except Exception as e:
         pass
     return redirect('public_make_booking')
@@ -319,6 +319,9 @@ class MakeBookingsView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        mooring_booking = ""
+        if booking:
+            mooring_booking = MooringsiteBooking.objects.filter(booking=booking)
         if request.user.is_anonymous() or request.user.is_staff:
             form = AnonymousMakeBookingsForm(request.POST)
         else:
@@ -365,21 +368,18 @@ class MakeBookingsView(TemplateView):
         if booking.mooringarea.oracle_code:
             oracle_code = booking.mooringarea.oracle_code
         rego = request.POST.get('form-0-vehicle_rego') if request.POST.get('form-0-vehicle_rego') else None
-        admissionLines = []
-        if rego:
-            admissionsJson = json.loads(request.POST.get('admissionsLines')) if request.POST.get('admissionsLines') else []
-            admissions = []
-            for line in admissionsJson:
-                admissions.append({
-                    'from': line['from'],
-                    'to': line['to'],
-                    'admissionFee': Decimal(line['admissionFee']),
-                    'guests': booking.num_guests,
-                    'oracle_code': oracle_code
-                    })
-            admissionLines = utils.admission_lineitems(admissions)
 
-        vessel = ""
+        admissionsJson = json.loads(request.POST.get('admissionsLines')) if request.POST.get('admissionsLines') else []
+        admissions = []
+        for line in admissionsJson:
+            admissions.append({
+                'from': line['from'],
+                'to': line['to'],
+                'admissionFee': Decimal(line['admissionFee']),
+                'guests': booking.num_guests,
+                'oracle_code': oracle_code
+                })
+        admissionLines = utils.admission_lineitems(admissions)
         if RegisteredVessels.objects.filter(rego_no=rego).count() > 0:
             vessel = RegisteredVessels.objects.get(rego_no=rego)
             if vessel.admissionsPaid:
@@ -413,9 +413,14 @@ class MakeBookingsView(TemplateView):
             booking_line = utils.nononline_booking_lineitems(oracle_code)
             for line in booking_line:
                 lines.append(line)
-        if booking.mooringarea.admission_fee_required:
-            for line in admissionLines:
-                lines.append(line)
+        if mooring_booking:
+            lines_required = False
+            for bm in mooring_booking:
+                if bm.campsite.mooringarea.admission_fee_required:
+                    lines_required = True
+            if lines_required:
+                for line in admissionLines:
+                    lines.append(line)
         try:
             pass
 #            lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
@@ -572,8 +577,11 @@ class BookingSuccessView(TemplateView):
                     booking.expiry_time = None
                     booking.save()
 
-                    request.session['ps_last_booking'] = booking.id
+                    if not request.user.is_staff:
+                        print "USER IS NOT STAFF."
+                        request.session['ps_last_booking'] = booking.id
                     utils.delete_session_booking(request.session)
+                    
                     # send out the invoice before the confirmation is sent
                     emails.send_booking_invoice(booking)
                     # for fully paid bookings, fire off confirmation email
@@ -587,10 +595,10 @@ class BookingSuccessView(TemplateView):
                 booking = Booking.objects.get(id=request.session['ps_last_booking'])
                 book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
             else:
-                # booking = Booking.objects.all().order_by('-id').first()
-                # book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
                 return redirect('home')
 
+        if request.user.is_staff:
+            return redirect('home')
         context = {
             'booking': booking,
             'book_inv': book_inv

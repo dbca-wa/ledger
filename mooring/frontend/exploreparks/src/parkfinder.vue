@@ -9,7 +9,7 @@
 
         <div class="row">
                 <div class="columns small-12 medium-12 large-12" >
-                      <button  title="Please add items into your trolley." v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }}</button>  <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a> <a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_id='+parkstayGroundId" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
+                      <button  title="Please add items into your trolley." v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }}</button>  <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a> <a type="button" :href="parkstayUrl+'/booking/abort'" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
                             Cancel in-progress booking
                         </a>
 		</div>
@@ -265,7 +265,7 @@
                             </div>
                         </div>
                         <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;" target="_blank">More info</a>
-                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank"  v-on:click="BookNow()" >Book now</a>
+                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" v-on:click="BookNow()" >Book now</a>
                     </div>
                 </div>
             </div>
@@ -308,7 +308,7 @@
 
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
                                  
-                                <a v-if="f.mooring_type == 0 && vesselSize > 0" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+                                <a v-if="f.mooring_type == 0 && vesselSize > 0 && vesselDraft > 0" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam">Book now</a>
                                 <a v-else-if="f.mooring_type == 0" class="button" v-on:click="BookNow()">Book now</a>
                                 <a v-else /> 
                             </div>
@@ -632,6 +632,9 @@ import 'sweetalert2/dist/sweetalert2.css';
 
 var nowTemp = new Date();
 var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
+var fivedays = new Date();
+fivedays.setDate(fivedays.getDate() + 5);
+fivedays = moment.utc({year: fivedays.getFullYear(), month: fivedays.getMonth(), day: fivedays.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
 export default {
     name: 'parkfinder',
@@ -667,8 +670,8 @@ export default {
             hideExtraFilters: true,
             suggestions: {},
             extentFeatures: [],
-            arrivalDate: null,
-            departureDate: null,
+            arrivalDate: now,
+            departureDate: fivedays,
             dateCache: null,
             numAdults: 2,
             numConcessions: 0,
@@ -807,8 +810,8 @@ export default {
                     'vessel_size' : this.vesselSize
                 };
                 if (this.arrivalDate && this.departureDate) {
-                    params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
-                    params['departure'] = this.departureDate.format('YYYY/MM/DD');
+                    params['arrival'] = this.arrivalDateString;
+                    params['departure'] = this.departureDateString;
                 }
                 return $.param(params);
             }
@@ -828,22 +831,23 @@ export default {
                     data: data,
                     method: 'GET',
                     success: function(data, stat, xhr) {
+                        var d = new Date();
+                        d.setTime(d.getTime() + (1*60*60*1000));
+                        document.cookie = "vessel_rego=" + reg + ";expires=" + d.toUTCString() + ";path=/;";
                         if(data[0]){
                             vm.vesselWeight = data[0].vessel_weight;
                             vm.vesselBeam = data[0].vessel_beam;
                             vm.vesselSize = data[0].vessel_size;
                             vm.vesselDraft = data[0].vessel_draft;
-                            var d = new Date();
-                            d.setTime(d.getTime() + (1*60*60*1000));
-                            document.cookie = "vessel_rego=" + reg + ";expires=" + d.toUTCString() + ";path=/;";
                         } else {
                             console.log("Registration was not found.");
-                            if (document.cookie.split('vessel_rego=').length==2 && (!this.vesselRego || this.vesselRego == "")){
-                                document.cookie = "vessel_rego=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                            }
                         }
                     }
                 });
+            } else {
+                if (document.cookie.split('vessel_rego=').length==2 && (!this.vesselRego || this.vesselRego == "")){
+                    document.cookie = "vessel_rego=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                }
             }
         },
         weightBeam: function(f){
@@ -1221,34 +1225,34 @@ export default {
                             if (response[x][m]['properties']['vessel_size_limit'].length == 0) { 
                                 response[x][m]['properties']['vessel_size_limit'] = 0;
                             } 
-                            if (parseInt(vessel_size) > 0) {
+                            if (parseFloat(vessel_size) > 0 && show_marker) {
                                 show_marker = false;
-                                if (parseInt(response[x][m]['properties']['vessel_size_limit']) >= parseInt(vessel_size)) {
+                                if (parseFloat(response[x][m]['properties']['vessel_size_limit']) >= parseFloat(vessel_size)) {
                                     show_marker = true;
                                 }
                             }
-                            if (parseInt(vessel_draft) > 0) {
+                            if (parseFloat(vessel_draft) > 0 && show_marker) {
                                 show_marker = false;
-                                if (parseInt(response[x][m]['properties']['vessel_draft_limit']) >= parseInt(vessel_draft)) {
+                                if (parseFloat(response[x][m]['properties']['vessel_draft_limit']) >= parseFloat(vessel_draft)) {
                                     show_marker = true;
                                 }
                             }
-                            if (response[x][m]['properties']['mooring_physical_type'] == 0){
-                                if (parseInt(vessel_weight) > 0) {
+                            if (response[x][m]['properties']['mooring_physical_type'] == 1 && show_marker){
+                                if (parseFloat(vessel_beam) > 0) {
                                     show_marker = false;
-                                    if (parseInt(response[x][m]['properties']['vessel_weight_limit']) >= parseInt(vessel_weight)) {
+                                    if (parseFloat(response[x][m]['properties']['vessel_beam_limit']) >= parseFloat(vessel_beam)) {
                                         show_marker = true;
                                     }
-                                }
+                                } 
                             } else {
-                                if (parseInt(vessel_beam) > 0) {
+                                if (parseFloat(vessel_weight) > 0) {
                                     show_marker = false;
-                                    if (parseInt(response[x][m]['properties']['vessel_beam_limit']) >= parseInt(vessel_beam)) {
+                                    if (parseFloat(response[x][m]['properties']['vessel_weight_limit']) >= parseFloat(vessel_weight)) {
                                         show_marker = true;
                                     }
                                 }
                             }
-                            if (type_filter != 'all'){
+                            if (type_filter != 'all' && show_marker){
                                 show_marker = false;
                                 if (response[x][m]['properties']['mooring_physical_type'] == type_filter){
                                     show_marker = true;
@@ -1589,8 +1593,19 @@ export default {
       },
       BookNow: function() { 
         var vessel_size = $('#vesselSize').val();
-        if (vessel_size > 0 ) {
-        } else {
+        var vessel_draft = $('#vesselDraft').val();
+        if (!(vessel_draft > 0)){
+            swal({
+            title: 'Missing Vessel Draft',
+            text: "Please enter vessel draft:",
+            type: 'warning',
+            showCancelButton: false,
+            confirmButtonText: 'OK',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: false
+            })
+        }
+        if (!(vessel_size > 0) ) {
             swal({
             title: 'Missing Vessel Size',
             text: "Please enter vessel size:",
@@ -2386,9 +2401,10 @@ export default {
                         $("#vessel_beam_weight_popup").html("Max Beam: " + properties.props.vessel_beam_limit);
                     }
                     var vessel_size = $('#vesselSize').val();
-                    if (vessel_size > 0 ) {
+                    var vessel_draft = $('#vesselDraft').val();
+                    if (vessel_size > 0 && vessel_draft > 0) {
                         $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&'+vm.bookingParam);
-                        $("#mapPopupBook").attr('target','_blank');
+                        // $("#mapPopupBook").attr('target','_blank');
                     } else {
 		                $("#mapPopupBook").attr('href','javascript:void(0);');
                         $("#mapPopupBook").attr('target','');
@@ -2443,6 +2459,14 @@ export default {
      //      this.buildmarkers();
 
         });
+
+            var x = document.cookie.split('vessel_rego=');
+            if(x.length == 2){
+                var secondHalf = x[1].split(';');
+                var rego = secondHalf[0];
+                vm.vesselRego = rego;
+                vm.searchRego(rego);
+            }
 
             var saneTz = (0 < Math.floor((vm.expiry - moment.now())/1000) < vm.timer);
             var timer = setInterval(function (ev) {
