@@ -243,6 +243,7 @@ class ApplicationSerializer(BaseApplicationSerializer):
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
+    can_be_processed = serializers.SerializerMethodField(read_only=True)
 
     def get_readonly(self,obj):
         return obj.can_user_view 
