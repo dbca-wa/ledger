@@ -66,6 +66,7 @@ from wildlifecompliance.components.organisations.emails import (
 from wildlifecompliance.components.applications.models import (
                                         Application,
                                         Assessment,
+                                        ApplicationRequest,
                                     )
 
 
@@ -477,13 +478,23 @@ class OrganisationViewSet(viewsets.ModelViewSet):
                 instance.log_user_action(OrganisationAction.ACTION_ID_UPDATE.format(
                 '{} ({})'.format(instance.name, instance.abn)), request)
 
- #           apps = Application.objects().filter(org_applicant=instance.organisation.id)
- #           email_list = set()
- #           for items in apps:
- #               officer = EmailUser.objects.get(id=items.assigned_officer.id)
- #               email_list.add(officer.email)
+            # instance = Organisation.objects.get(id=9)
+            _applications = Application.objects.filter(org_applicant=instance.organisation.id)
+            # Notify internal users new ID uploaded.
+            if _applications:
+                emails = set()
+                for _application in _applications:
+                    # Officer assigned to the application
+                    if _application.assigned_officer_id:
+                        emails.add(EmailUser.objects.get(id=_application.assigned_officer_id))
+                    # Officer belonging to a group assigned to the application
+                    if ApplicationRequest.objects.filter(application_id=_application.id).exists():
+                        _request = ApplicationRequest.objects.filter(application_id=_application).first()
+                        if Assessment.objects.filter(id=_request.id).exists():
+                            _group = Assessment.objects.filter(id=_request.id).first()
+                            emails.add(_group.members__email)
 
- #           send_organisation_id_upload_email_notification(email_list, instance.organisation, request)
+                send_organisation_id_upload_email_notification(emails, instance.organisation, request)
 
             serializer = OrganisationSerializer(instance, partial=True)
             return Response(serializer.data)

@@ -81,7 +81,7 @@ def send_organisation_id_upload_email_notification(emails, organisation, request
 
     msg = email.send(emails, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    _log_org_email(msg, organisation,  sender=sender)
+    _log_org_email(msg, organisation, sender=sender)
 
 
 def send_organisation_reinstate_email_notification(linked_user,linked_by,organisation,request):
