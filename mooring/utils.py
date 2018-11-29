@@ -385,7 +385,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
             if MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward ).count() > 0:
                 mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward ).order_by('-date_start')[0]
             else:
-                if MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end=None ).count() > 0:
+                if MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end=None).count() > 0:
                      mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end=None).order_by('-date_start')[0]
 
             if mooring_rate:
@@ -449,13 +449,10 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
         Q(range_start__lt=end_date_time) & (Q(range_end__gte=start_date_time)|Q(range_end__isnull=True))
     )
     for closure in cgbr_qs:
-        print "START CLOSURES"
         start = max(start_date, closure.range_start.date())
         end = min(end_date, closure.range_end.date()) if closure.range_end.date() else end_date
         start_time = (closure.range_start + timedelta(hours=8)).strftime('%H:%M:%S')
         end_time = (closure.range_end + timedelta(hours=8)).strftime('%H:%M:%S')
-        print start_time
-        print end_time
         today = date.today()
         diff = (end-start).days + 1
         for i in range(diff):

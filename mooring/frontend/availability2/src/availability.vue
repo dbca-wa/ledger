@@ -215,7 +215,11 @@
                 </thead>
                 <tbody><template v-for="(site, index) in sites" >
                     <tr>
-                        <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i></td>
+                        <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i><br>
+				<i>Distance: {{ site.distance_from_selection }}km</i>
+
+
+                        </td>
                         <td class="book">
                             <template v-if="site.price">
                                 <button v-if="mooring_book_row[index] == true" @click="addBookingRow(index)" class="button"><small>Book now</small><br/> ${{ mooring_book_row_price[index] }}</button>
