@@ -2378,6 +2378,7 @@ export default {
             if (properties.marker_group == 'mooring_marker') {
 
                 $('#mapPopupName').html(properties.props.name);
+                $('#mapPopupInfo').attr('href', properties.props.info_url);
 
                 if (properties.props.mooring_type == 0) {
                     if (properties.bookable == true) { 
