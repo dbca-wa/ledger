@@ -63,7 +63,7 @@
                        </div>
                        </div>
                      <div class="small-12 medium-12 large-3 columns">
-                        <label>Vessel Size (meters) <input id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
+                        <label>Vessel Size (meters) <input id="vesselSize" name="vessel_size" type="number"  placeholder="35" /></label>
                       </div>
                      <div class="small-12 medium-12 large-3 columns">
                         <label>Vessel Draft (meters) <input id="vesselDraft" name="vessel_draft" type="number" placeholder="35" /></label>
@@ -1231,11 +1231,11 @@ export default {
        var vessel_size = $('#vesselSize').val();
        var veseel_draft = $('#vesselDraft').val();
 
-       if (vessel_size > 0 ) {
+       if (vessel_size > 0 && veseel_draft > 0) {
        } else {
                 swal({
-                  title: 'Missing Vessel Size',
-                  text: "Please enter vessel size:",
+                  title: 'Missing Vessel Draft or Size',
+                  text: "Please enter vessel draft or size:",
                   type: 'warning',
                   showCancelButton: false,
                   confirmButtonText: 'OK',
@@ -1900,7 +1900,9 @@ export default {
          //      vm.buildmarkers();
         //});
 
-    
+        $('#vesselSize').val('0');
+        $('#vesselDraft').val('0');
+ 
  
         // loop to change the pointer when mousing over a vector layer
         this.olmap.on('pointermove', function(ev) {
