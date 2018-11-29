@@ -173,7 +173,14 @@ class District(admin.ModelAdmin):
 admin.site.register(models.Rate)
 #admin.site.register(models.Region)
 #admin.site.register(models.District)
-admin.site.register(models.PromoArea)
+#admin.site.register(models.PromoArea)
+@admin.register(models.PromoArea)
+class PromoArea(admin.GeoModelAdmin):
+    list_display = ('name',)
+    ordering = ('name',)
+    openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
+    search_fields = ('name',)
+
 
 @admin.register(models.RegisteredVessels)
 class RegisteredVessels(admin.ModelAdmin):

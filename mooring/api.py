@@ -599,11 +599,6 @@ def add_booking(request, *args, **kwargs):
     start_booking_date = request.POST['date']
     finish_booking_date = request.POST['date']
 
-    print (request.POST['date']) 
-    print (request.POST['bp_id'])
-    print (request.POST['mooring_id'])
-
-    print 'BOOKING ID'
     booking = None
     if 'ps_booking' in request.session:
         booking_id = request.session['ps_booking']
@@ -624,28 +619,15 @@ def add_booking(request, *args, **kwargs):
         request.session['ps_booking'] = booking.id
         request.session.modified = True
 
-    print "CURRENT BOOKINGID"
-    print booking.id
-    print "BP"
-    print request.POST['bp_id']
+    #print BookingPeriodOption.objects.all()
     mooringsite = Mooringsite.objects.get(id=request.POST['site_id'])
 
     booking_period = BookingPeriodOption.objects.get(id=int(request.POST['bp_id'])) 
-    print 'BP RES'
-    print booking_period
-    print booking_period.start_time
-    print booking_period.finish_time
 
     if booking_period.start_time > booking_period.finish_time:
             finish_bd = datetime.strptime(finish_booking_date, "%Y-%m-%d").date()
             finish_booking_date = str(finish_bd+timedelta(days=1))
             print finish_bd
-
-    print "TIME" 
-    print start_booking_date
-    print finish_booking_date
-    print "MOORING CLASS"
-    print mooringsite.mooringarea.mooring_class
 
     mooring_class = mooringsite.mooringarea.mooring_class
     amount = '0.00'
@@ -656,10 +638,8 @@ def add_booking(request, *args, **kwargs):
         amount = booking_period.medium_price
     elif mooring_class == 'large':
         amount = booking_period.large_price
-    print amount 
 #    MooringsiteBooking
 #    for i in range((end_date-start_date).days):
-    print "VALIDATE BOOKING"
 
     from_dt_utc = datetime.strptime(str(start_booking_date)+' '+str(booking_period.start_time), '%Y-%m-%d %H:%M:%S') - timedelta(hours=8)
     to_dt_utc =  datetime.strptime(str(finish_booking_date)+' '+str(booking_period.finish_time), '%Y-%m-%d %H:%M:%S') - timedelta(hours=8)
@@ -1364,7 +1344,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
         }
         # fetch availability map
-        availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
+        availability = utils.get_campsite_availability(sites_qs, start_date, end_date, None)
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,
@@ -1667,7 +1647,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 #           current_booking.append(row)
  
 
-        availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
+        availability = utils.get_campsite_availability(sites_qs, start_date, end_date, ongoing_booking)
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,
@@ -1805,8 +1785,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             
             # from our campsite queryset, generate a digest for each site
             sites_map = OrderedDict([(s, (s.pk, s.mooringsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
-            for s in sites_map:
-                 print s
+            #for s in sites_map:
+            #     print s
             bookings_map = {}
             # make an entry under sites for each site
             for k, v in sites_map.items():
@@ -1823,23 +1803,23 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                      bp_new = []
                      date_rotate = start_date+timedelta(days=i)
                      avbp_map = None
- #                    print date_rotate
-#                     print availability[v[0]]
                      if date_rotate in availability[v[0]]:
                          avbp_map = availability[v[0]][date_rotate][1]
+                         avbp_map2 = availability[v[0]][date_rotate][2]
+                         
                      #[start_date+timedelta(days=i)]
                      for bp in v[2][date_rotate]['booking_period']:
                          bp['status'] = 'open'
-                         print "KKKK"
-                         print k
                          bp['date'] = str(date_rotate)
-
+                         
                          if avbp_map:
                             if bp['id'] in avbp_map:
                                bp['status'] = avbp_map[bp['id']]
+                               bp['booking_row_id'] = avbp_map2[bp['id']]
                          bp_new.append(bp) 
                          if datetime.strptime(str(date_rotate), '%Y-%m-%d') <= datetime.now():
                                bp['status'] = 'closed'
+                         
                      v[2][date_rotate]['booking_period'] = bp_new
  
                      availability_map.append([True, v[2][date_rotate], v[2][date_rotate]])
@@ -1906,7 +1886,6 @@ class AvailabilityViewSet(BaseAvailabilityViewSet):
     permission_classes = []
 
 class AvailabilityViewSet2(BaseAvailabilityViewSet2):
-    print ("MADE IT AvailabilityViewSet2")
     permission_classes = []
 
 class AvailabilityRatisViewSet(BaseAvailabilityViewSet):
@@ -2099,7 +2078,6 @@ def create_booking(request, *args, **kwargs):
 @require_http_methods(['GET'])
 def get_admissions_confirmation(request, *args, **kwargs):
     # fetch booking for ID
-    print "get_confirmation"
     booking_id = kwargs.get('booking_id', None)
     if (booking_id is None):
         return HttpResponse('Booking ID not specified', status=400)
@@ -2799,7 +2777,6 @@ class BookingViewSet(viewsets.ModelViewSet):
     @csrf_exempt
     @detail_route(permission_classes=[PaymentCallbackPermission],methods=['GET','POST'])
     def payment_callback(self, request, *args, **kwargs):
-        print "CALL BACK PAYMENT "
         from django.utils import timezone
         http_status = status.HTTP_200_OK
         try:

@@ -168,7 +168,6 @@ class MakeBookingsView(TemplateView):
     template_name = 'mooring/booking/make_booking.html'
 
     def render_page(self, request, booking, form, vehicles, show_errors=False):
-        print "RENDER PAGE" 
         booking_mooring = None
         booking_total = '0.00'
         # for now, we can assume that there's only one campsite per booking.
@@ -206,7 +205,6 @@ class MakeBookingsView(TemplateView):
             details = booking.details
             # pricing_list = utils.get_visit_rates(Mooringsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
             # pricing_list = {}
-            print "PRICING LIST"
 #            print (pricing_list)
 #            for x in pricing_list.values():
 #                print x['mooring']
@@ -295,9 +293,6 @@ class MakeBookingsView(TemplateView):
     def get(self, request, *args, **kwargs):
         # TODO: find campsites related to campground
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-#        booking_mooring = MooringsiteBooking.objects.filter(booking=booking)
-#        print "GET BOOKING"
-#        print booking
         form_context = {
             'num_adult': booking.details.get('num_adult', 0) if booking else 0,
             'num_concession': booking.details.get('num_concession', 0) if booking else 0,
