@@ -592,9 +592,9 @@ def add_booking(request, *args, **kwargs):
 #    booking_period_finish = request.POST['booking_finish']
     booking_period_start = datetime.strptime(request.POST['booking_start'], "%d/%m/%Y").date()
     booking_period_finish = datetime.strptime(request.POST['booking_finish'], "%d/%m/%Y").date()
-    num_adults = request.POST['num_adult']
-    num_children = request.POST['num_children']
-    num_infants = request.POST['num_infant']
+    #num_adults = request.POST['num_adult']
+    #num_children = request.POST['num_children']
+    #num_infants = request.POST['num_infant']
 
     start_booking_date = request.POST['date']
     finish_booking_date = request.POST['date']
@@ -609,9 +609,9 @@ def add_booking(request, *args, **kwargs):
              booking.save()
     else:
         details = {
-            'num_adults' : num_adults,
-            'num_children' : num_children,
-            'num_infants' : num_infants
+    #        'num_adults' : num_adults,
+    #        'num_children' : num_children,
+    #        'num_infants' : num_infants
         }
         print "DEBUG - DETAILS: ", details
         mooringarea = MooringArea.objects.get(id=request.POST['mooring_id'])
@@ -1816,7 +1816,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                             if bp['id'] in avbp_map:
                                bp['status'] = avbp_map[bp['id']]
                                bp['booking_row_id'] = avbp_map2[bp['id']]
-                         bp_new.append(bp) 
+                         bp_new.append(bp)
+                         # Close everything thats in the past 
                          if datetime.strptime(str(date_rotate), '%Y-%m-%d') <= datetime.now():
                                bp['status'] = 'closed'
                          
