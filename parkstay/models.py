@@ -1232,9 +1232,7 @@ class Booking(models.Model):
                         paid = False 
                     
                 if self.override_price:
-                    if self.override_price < total_paid:
-                        paid = True
-                    elif self.override_price > total_paid:
+                    if self.override_price <= total_paid:
                         paid = True
                     else:
                         paid = False 
