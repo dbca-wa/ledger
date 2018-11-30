@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from collections import OrderedDict
 from wildlifecompliance.components.applications.models import Application, ApplicationType, ExcelApplication, ExcelActivityType
-from wildlifecompliance.components.licences.models import DefaultActivityType, WildlifeLicenceClass
+from wildlifecompliance.components.licences.models import DefaultActivityType, WildlifeLicenceClass, WildlifeLicenceActivity
 from wildlifecompliance.components.organisations.models import Organisation
 from ledger.accounts.models import OrganisationAddress
 from django.contrib.postgres.fields.jsonb import JSONField
@@ -42,19 +42,40 @@ def test(ids=[125]):
     return d2
 
 
-def write_excel_model(ids=[145]):
-    applications = Application.objects.filter(id__in=ids)
+#def write_excel_model(ids=[145]):
+def write_excel_model(licence_category):
+    applications = Application.objects.filter(licence_category=licence_category)
+    #applications = Application.objects.filter(id__in=id)
 
     for application in applications:
         excel_app, created = ExcelApplication.objects.get_or_create(application=application)
+        #excel_app.application.licence_type_data['short_name']
 
         activities = get_purposes(application.licence_type_data['short_name']).values_list('activity_type__short_name', flat=True)
         for activity_type in application.licence_type_data['activity_type']:
             if activity_type['short_name'] in list(activities):
                 excel_activity_type, created = ExcelActivityType.objects.get_or_create(
                     excel_app=excel_app,
+                    activity_name=activity_type['activity'][0]['name'],
+                    name=activity_type['name'],
                     short_name=activity_type['short_name']
                 )
+
+def create_activity_type_fields(activity_name):
+    """
+    from wildlifecompliance.utils.excel_utils import create_activity_type_fields
+    create_activity_type_fields('Importing Fauna (Non-Commercial)')
+    {u'Species1-1_0': u'species', u'Species1-2_0': u'number_of_animals'}
+    """
+    fields = WildlifeLicenceActivity.objects.get(name=activity_name).fields
+
+    ordered_dict=OrderedDict([])
+    if isinstance(fields, dict):
+        for k,v in fields.iteritems():
+            ordered_dict.update(OrderedDict([(k,v)]))
+
+    return ordered_dict
+    
 
 def write_excel_model_test(ids=[145]):
     applications = Application.objects.filter(id__in=ids)
@@ -134,6 +155,11 @@ class ApplicationDetails():
     def __init__(application):
         self.applicant = '{}\n{}'.format(application.applicant, OrganisationAddress.objects.get(organisation__name=application.applicant).__str__())
 
+def set_licence_category():
+    for i in Application.objects.all():
+        i.licence_category = i.licence_type_name.split(' - ')[0] if i.licence_type_name else None                                                                
+        i.save()
+
 def get_purposes(licence_class_short_name):
     """ Return the purposes mapped to a given category/licence class short_name """
     licence_class =  WildlifeLicenceClass.objects.get(short_name=licence_class_short_name)
@@ -164,26 +190,64 @@ def read_workbook(input_filename):
     else:
         logger.error('{0} does not appear to be a valid file'.format(input_filename))
 
-def cols_output(activity_type, short_name):
-    code = short_name[:2].lower()
-    return OrderedDict([
-        ('{}'.format(short_name), None),
-        ('{}-conditions'.format(code), activity_type[0].conditions if activity_type else None),
-        ('{}-application_id'.format(code), activity_type[0].issue_date if activity_type else None),
-        ('{}-licence_number'.format(code), activity_type[0].start_date if activity_type else None),
-        ('{}-applicant'.format(code), activity_type[0].expiry_date if activity_type else None),
-        ('{}-issued'.format(code), activity_type[0].issued if activity_type else None),
-        ('{}-processed'.format(code), activity_type[0].processed if activity_type else None),
-    ])
+def cols_fields(activity_type, short_name):
+    #if short_name == 
+    pass
+    
 
-def write_workbook(ids=[145]):
+def _cols_output(activity_type, short_name):
+    code = short_name[:2].lower()
+    ordered_dict = OrderedDict([
+        ('{}'.format(short_name), None),
+        ('{}_conditions'.format(code), activity_type[0].conditions if activity_type else None),
+        ('{}_issue_date'.format(code), activity_type[0].issue_date if activity_type else None),
+        ('{}_start_date'.format(code), activity_type[0].start_date if activity_type else None),
+        ('{}_expiry_date'.format(code), activity_type[0].expiry_date if activity_type else None),
+        ('{}_issued'.format(code), activity_type[0].issued if activity_type else None),
+        ('{}_processed'.format(code), activity_type[0].processed if activity_type else None),
+    ])
+    return ordered_dict
+
+def cols_common(activity_type, short_name):
+    code = short_name[:2].lower()
+    ordered_dict = OrderedDict([
+        ('{}_cover_processed'.format(code), None),
+        ('{}_cover_processed_date'.format(code), None),
+        ('{}_cover_processed_by'.format(code), None),
+        ('{}_conditions'.format(code), activity_type.conditions if activity_type else None),
+        ('{}_issue_date'.format(code), activity_type.issue_date if activity_type else None),
+        ('{}_start_date'.format(code), activity_type.start_date if activity_type else None),
+        ('{}_expiry_date'.format(code), activity_type.expiry_date if activity_type else None),
+        ('{}_issued'.format(code), activity_type.issued if activity_type else None),
+        ('{}_processed'.format(code), activity_type.processed if activity_type else None),
+    ])
+    return ordered_dict
+
+
+def cols_output(activity_type, short_name, activity_name):
+    """
+    excel_app = ExcelApplication.objects.all().last()
+    activity_type = excel_app.excel_activity_types.filter(short_name='Exporting')[0]
+    cols_output(activity_type, 'Importing', 'Importing Fauna (Non-Commercial)')
+    """
+    ordered_dict = OrderedDict([
+        ('{}'.format(short_name), None),
+    ])
+    ordered_dict.update(create_activity_type_fields(activity_name))
+    ordered_dict.update(cols_common(activity_type, short_name))
+    return ordered_dict
+
+
+def write_workbook(licence_category='Flora Industry'):
     #filename = '/tmp/wc_apps_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))
-    filename = '/tmp/wc_apps.xls'
+
+
+    excel_apps = ExcelApplication.objects.filter(application__licence_category=licence_category).order_by('application_id') #filter(id__in=ids)
+    filename = '/tmp/wc_apps_{}.xls'.format(licence_category.lower().replace(' ','_'))
 
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Applications')
 
-    excel_apps = ExcelApplication.objects.all() #filter(id__in=ids)
 
     # Sheet header, first row
     row_num = 0
@@ -193,7 +257,8 @@ def write_workbook(ids=[145]):
     font_style.font.bold = True
 
     excel_app = excel_apps.last()
-    short_name_list = get_purposes(excel_app.licence_class).values_list('activity_type__short_name', flat=True)
+    licence_class = excel_app.application.licence_type_data['short_name']
+    short_name_list = get_purposes(licence_class).values_list('activity_type__short_name', flat=True)
     col_num = 0
     for k,v in excel_app.cols_output.iteritems():
         ws.write(row_num, col_num, k, font_style)

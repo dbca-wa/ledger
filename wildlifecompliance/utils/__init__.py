@@ -66,6 +66,19 @@ def unique_column_labels(applications):
         unique_names = set(unique_names).union(names)
 
 
+def search_value(app_obj, section_name):
+    """
+        from wildlifecompliance.utils import search_value
+        a=Application.objects.get(id=129)
+        search_value(a, 'Species1-1_0')
+        --> 'species a details'
+    """
+    s = serialize_export(app_obj)
+    for i in s:
+        if i['name'] == section_name:
+            return i['value']
+    return None
+
 def serialize_export(app_obj):
     """
     To run:

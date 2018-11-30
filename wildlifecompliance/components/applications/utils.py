@@ -298,7 +298,7 @@ def save_proponent_data(instance,request,viewset):
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
                 'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
             }
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             serializer = SaveApplicationSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)

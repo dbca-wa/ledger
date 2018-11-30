@@ -37,6 +37,7 @@ class WildlifeLicenceActivity(models.Model):
     schema=JSONField(default=list)
     base_application_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
     base_licence_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
+    fields=JSONField(default=list)
     
     # application_schema = JSONField(blank=True, null=True)
 

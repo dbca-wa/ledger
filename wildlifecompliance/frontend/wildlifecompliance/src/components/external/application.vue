@@ -333,6 +333,7 @@ export default {
         console.log('SUBMIT VM FORM and CHECKOUT');
         let formData = new FormData(vm.form);
 
+        /*
         var num_missing_fields = vm.validate()
         if (num_missing_fields > 0) {
             vm.highlight_missing_fields()
@@ -342,6 +343,7 @@ export default {
             }, 1);
             return false;
         }
+        */
 
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'

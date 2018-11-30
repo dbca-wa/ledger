@@ -330,6 +330,7 @@ class Application(RevisionedMixin):
         if self.lodgement_number == '':
             new_lodgment_id = 'A{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
+            #self.licence_category = self.licence_type_data['short_name'] if 'short_name' in self.licence_type_data else None
             self.licence_category = self.licence_type_name.split(' - ')[0] if self.licence_type_name else None
             self.save()
 
@@ -1587,6 +1588,8 @@ class ExcelApplication(models.Model):
 
 class ExcelActivityType(models.Model):
     excel_app = models.ForeignKey(ExcelApplication, related_name='excel_activity_types')
+    activity_name = models.CharField(max_length=68, blank=True)
+    name = models.CharField(max_length=68, blank=True)
     short_name = models.CharField(max_length=24, blank=True)
     data = JSONField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)

@@ -690,7 +690,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             org_applicant=request.data.get('org_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             data = {
                 'schema':schema_data,
                 'submitter': request.user.id,
