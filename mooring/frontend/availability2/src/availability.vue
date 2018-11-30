@@ -49,7 +49,7 @@
                 <div class="small-8 medium-9 large-10">
 
 		<button v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }} to complete booking.</button>
-		<a type="button" :href="parkstayUrl+'/booking/abort?change=true&change_id='+parkstayGroundId" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
+		<a type="button" :href="parkstayUrl+'/booking/abort' class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
                       Cancel in-progress booking
                 </a>
               </div>

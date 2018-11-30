@@ -31,7 +31,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
             <div class="row">
                 <div class="form-group">
@@ -59,7 +58,6 @@
                             </span>
                         </div>
                     </div>
-
                 </div>
             </div>
             <reason type="close" v-model="formdata.closure_reason" ref="reason"></reason>
@@ -72,6 +70,10 @@
                         <textarea name="closure_details" v-model="formdata.details" class="form-control" id="close_cg_details"></textarea>
                     </div>
                 </div>
+            </div>
+            <div class="row">
+                For full day closures set start time as 00:00 and end time as 23:59, with the same date.<br/>
+                For half day closures set both start and end time e.g. 08:00 and 14:00.
             </div>
         </form>
     </div>
