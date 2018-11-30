@@ -95,17 +95,17 @@ def _create_letter_header_footer(canvas, doc):
     current_x = PAGE_WIDTH - LETTER_HEADER_MARGIN
     current_y = LETTER_HEADER_MARGIN
 
-    canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
-    canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
+    #canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
+    #canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
 
-    canvas.drawRightString(current_x, current_y, DPAW_URL)
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE,
-                           'Phone: {} Fax: {} Email: {}'.format(DPAW_PHONE, DPAW_FAX, DPAW_EMAIL))
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 2, DPAW_PO_BOX)
+    #canvas.drawRightString(current_x, current_y, DPAW_URL)
+    #canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE,
+    #                       'Phone: {} Fax: {} Email: {}'.format(DPAW_PHONE, DPAW_FAX, DPAW_EMAIL))
+    #canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 2, DPAW_PO_BOX)
 
-    canvas.setFont(BOLD_ITALIC_FONTNAME, SMALL_FONTSIZE)
+    #canvas.setFont(BOLD_ITALIC_FONTNAME, SMALL_FONTSIZE)
 
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
+    #canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
 
 
 def create_confirmation(confirmation_buffer, booking):
