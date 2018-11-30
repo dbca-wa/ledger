@@ -215,7 +215,11 @@
                 </thead>
                 <tbody><template v-for="(site, index) in sites" >
                     <tr>
-                        <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i></td>
+                        <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i><br>
+				<i>Distance: {{ site.distance_from_selection }}km</i>
+
+
+                        </td>
                         <td class="book">
                             <template v-if="site.price">
                                 <button v-if="mooring_book_row[index] == true" @click="addBookingRow(index)" class="button"><small>Book now</small><br/> ${{ mooring_book_row_price[index] }}</button>
@@ -235,7 +239,7 @@
                                         </button>
                                         </div>
 					<div v-else-if="bp.status == 'selected'">
-                                             <a type="button" class="close" style="color: red; opacity: 1; position: absolute; padding-left: 5px;" @click="deleteBooking(bp.booking_row_id)" >x</a>
+                                             <div style="position: relative; text-align: right; margin-right: 25px;"><a type="button" class="close" style="color: red; opacity: 1; position: absolute; padding-left: 5px;" @click="deleteBooking(bp.booking_row_id)" >x</a></div>
                                         <button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px; background-color: #8bc8f1;' @click="deleteBooking(bp.booking_row_id)" > 
                                             <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }} </span></small>
                                         </button>

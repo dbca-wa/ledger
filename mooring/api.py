@@ -6,6 +6,7 @@ import logging
 import json
 import calendar
 import time
+import math
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -1523,7 +1524,21 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
     queryset = MooringArea.objects.all()
     serializer_class = MooringAreaSerializer
+ 
+    def distance(self,origin, destination):
+         lat1, lon1 = origin
+         lat2, lon2 = destination
+         radius = 6371  # km
 
+         dlat = math.radians(lat2 - lat1)
+         dlon = math.radians(lon2 - lon1)
+         a = (math.sin(dlat / 2) * math.sin(dlat / 2) +
+             math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+             math.sin(dlon / 2) * math.sin(dlon / 2))
+         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+         d = radius * c
+         return d
+ 
     def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
         """Fetch full campsite availability for a campground."""
         # convert GET parameters to objects
@@ -1802,7 +1817,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                 #    print d
                 #    if d[0] == 'open':
                 #       pass
-
+                distance_from_selection = int(self.distance(ground.wkb_geometry,k.mooringarea.wkb_geometry))
 
                 availability_map = []
                 date_rotate = start_date
@@ -1833,7 +1848,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                      availability_map.append([True, v[2][date_rotate], v[2][date_rotate]])
                      #date_rotate = start_date+timedelta(days=i)
 #                print availability_map
-
+                
                 #print [v[2][start_date+timedelta(days=i)]['mooring'] for i in range(length)]
                 site = {
                     'name': k.mooringarea.name,
@@ -1844,6 +1859,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     'type': ground.mooring_type,
                     'class': v[1].pk,
                     'price' : '0.00',
+                    'distance_from_selection': distance_from_selection,
 #                    'price': '${}'.format(sum(v[2].values())) if not show_all else False,
 #                    'price': '${}'.format(v[2][start_date+timedelta(days=i)]['mooring'] for i in range(length)) if not show_all else False,
 #                    'availability3': [[True, v[2][start_date+timedelta(days=i)], v[2][start_date+timedelta(days=i)]] for i in range(length)],
@@ -1854,8 +1870,10 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                         'caravan': v[5]
                     }
                 }
+
                 result['sites'].append(site)
                 bookings_map[k.id] = site
+
                 if v[1].pk not in result['classes']:
                     result['classes'][v[1].pk] = v[1].name
             # update results based on availability map
@@ -1884,6 +1902,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     #         bookings_map[s.id]['price'] = False
                 #if '1' in v:
                     #         bookings_map[s.id]['availability'][offset]['booking_period']['avail'] = v[1]
+            result['sites'] =  sorted(result['sites'], key = lambda i: i['distance_from_selection']) 
             return Response(result)
 
 
