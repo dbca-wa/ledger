@@ -19,12 +19,12 @@ DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring
 LICENCE_HEADER_IMAGE_WIDTH = 840
 LICENCE_HEADER_IMAGE_HEIGHT = 166
 
-DPAW_BUSINESS = 'Marine Park and Visitor Services'
-DPAW_EMAIL = 'moorings@dbca.wa.gov.au'
-DPAW_URL = 'https://mooring.dbca.wa.gov.au'
-DPAW_PHONE = '(08) 9219 9000'
-DPAW_FAX = '(08) 9423 8242'
-DPAW_PO_BOX = 'Locked Bag 104, Bentley Delivery Centre, Western Australia 6983'
+DPAW_BUSINESS = ''
+DPAW_EMAIL = ''
+DPAW_URL = ''
+DPAW_PHONE = ''
+DPAW_FAX = ''
+DPAW_PO_BOX = ''
 
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
