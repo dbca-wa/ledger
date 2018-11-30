@@ -95,8 +95,8 @@ def _create_letter_header_footer(canvas, doc):
     current_x = PAGE_WIDTH - LETTER_HEADER_MARGIN
     current_y = LETTER_HEADER_MARGIN
 
-    canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
-    canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
+    #canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
+    #canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
 
     #canvas.drawRightString(current_x, current_y, DPAW_URL)
     #canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE,
