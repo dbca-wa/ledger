@@ -49,7 +49,7 @@
                 <div class="small-8 medium-9 large-10">
 
 		<button v-show="ongoing_booking" style="color: #FFFFFF; background-color: rgb(255, 0, 0);" class="button small-12 medium-12 large-12" >Time Left {{ timeleft }} to complete booking.</button>
-		<a type="button" :href="parkstayUrl+'/booking/abort' class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
+		<a type="button" :href="parkstayUrl+'/booking/abort'" class="button float-right warning continueBooking" style="color: #fff; background-color: #f0ad4e;  border-color: #eea236; border-radius: 4px;">
                       Cancel in-progress booking
                 </a>
               </div>
@@ -129,28 +129,43 @@
                     <input id="date-departure" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
-            <div class="columns small-6 medium-6 large-2">
-                <label>Vessel Size
-                    <input id="vesselSize" type="number" placeholder="0" v-on:change="update" v-model="vesselSize"/>
+            <div class="small-6 medium-6 large-2 columns" >
+                <label>
+                    Vessel Details
+                    <input type="button" class="button formButton" value="Measurements ▼" data-toggle="measurements-dropdown"/>
                 </label>
+                <div class="dropdown-pane" id="measurements-dropdown" data-dropdown data-auto-focus="true">
+                    <div class="row">
+                        <div class="small-6 columns">
+                            <label for="vesselSize" class="text-right">Vessel Size (Meters)</label>
+                        </div><div class="small-6 columns">
+                            <input type="number" id="vesselSize" name="vessel_size" @change="update()" v-model="vesselSize" step="1"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-6 columns">
+                            <label for="vesselDraft" class="text-right">Vessel Draft (Meters)</label>
+                        </div><div class="small-6 columns">
+                            <input type="number" id="vesselDraft" name="vessel_draft" @change="update()" v-model="vesselDraft" step="1"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-6 columns">
+                            <label for="vesselBeam" class="text-right">Vessel Beams (Meters)</label>
+                        </div><div class="small-6 columns">
+                            <input type="number" id="vesselBeam" name="vessel_beam" @change="update()" v-model="vesselBeam" step="1"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-6 columns">
+                            <label for="vesselWeight" class="text-right">Vessel Weight (Tons)</label>
+                        </div><div class="small-6 columns">
+                            <input type="number" id="vesselWeight" name="vessel_weight" @change="update()" v-model="vesselWeight" step="1"/>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="columns small-6 medium-6 large-2">
-                <label>Distance (radius)
-                    <input id="distanceRadius" type="number" placeholder="0" v-on:change="update" v-model="distanceRadius"/>
-                </label>
-            </div>
-            <div class="columns small-6 medium-6 large-2">
-
-	    </div>
-
-            <div class="columns small-6 medium-6 large-2">
-            <span class='pull-right'>
-               <a type="button" :href="/map/" class="button float-right warning">
-                  Search Other Mooring
-               </a>
-	    </span>
-	    </div>
-            <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns" style='display:none'>
+            <div class="small-6 medium-6 large-2 columns" >
                 <label>
                     Guests 
                     <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
@@ -158,12 +173,12 @@
                 <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
                     <div class="row">
                         <div class="small-6 columns">
-                            <label for="num_adults" class="text-right">Adults (non-concessions)</label>
+                            <label for="num_adults" class="text-right">Adults (ages 12+)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="numAdults" name="num_adults" @change="update()" v-model="numAdults" min="0" max="16"/>
                         </div>
                     </div>
-                    <div class="row">
+                    <div class="row" style="display:none;">
                         <div class="small-6 columns" >
                             <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
 - Seniors Card
@@ -179,20 +194,34 @@
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
-                            <label for="num_children" class="text-right">Children (ages 6-15)</label>
+                            <label for="num_children" class="text-right">Children (ages 4-12)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="numChildren" name="num_children" @change="update()" v-model="numChildren" min="0" max="16"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
-                            <label for="num_infants" class="text-right">Infants (ages 0-5)</label>
+                            <label for="num_infants" class="text-right">Infants (ages 0-4)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="numInfants" name="num_infants" @change="update()" v-model="numInfants" min="0" max="16"/>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="columns small-6 medium-6 large-2">
+                <label title="Distance to search from the original selected mooring.">Distance (radius KMs)
+                    <input id="distanceRadius" type="number" placeholder="0" v-on:change="update" v-model="distanceRadius"/>
+                </label>
+            </div>
+
+            <div class="columns small-6 medium-6 large-2">
+            <span class='pull-right'>
+               <a type="button" :href="/map/" class="button float-right warning">
+                  Search Other Mooring
+               </a>
+	    </span>
+	    </div>
+            
             <div v-if="!useAdminApi" class="columns small-6 medium-6 large-3" style='display:none;'>
                 <label>Equipment
                     <select name="gear_type" v-model="gearType" @change="update()">
@@ -444,7 +473,10 @@ export default {
             numChildren: parseInt(getQueryParam('num_children', 0)),
             numConcessions: parseInt(getQueryParam('num_concession', 0)),
             numInfants: parseInt(getQueryParam('num_infants', 0)),
-            vesselSize: parseInt(getQueryParam('vessel_size', 0)),
+            vesselSize: parseFloat(getQueryParam('vessel_size', 0)),
+            vesselDraft: parseFloat(getQueryParam('vessel_draft', 0)),
+            vesselBeam: parseFloat(getQueryParam('vessel_beam', 0)),
+            vesselWeight: parseFloat(getQueryParam('vessel_weight', 0)),
             distanceRadius: parseInt(getQueryParam('distance_radius', 100)),
             maxAdults: 30,
             maxChildren: 30,
@@ -619,6 +651,10 @@ export default {
                   date: date,
                   booking_start: booking_start,
                   booking_finish: booking_finish,
+                  vessel_size: vm.vesselSize,
+                  vessel_draft: vm.vesselDraft,
+                  vessel_beam: vm.vesselBeam,
+                  vessel_weight: vm.vesselWeight,
                   num_adult: vm.numAdults,
                   num_children : vm.numChildren,
                   num_infant: vm.numInfants
@@ -709,7 +745,10 @@ export default {
                 num_child: vm.numChildren,
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants,
-                vessel_size : vm.vesselSize
+                vessel_size : vm.vesselSize,
+                vessel_draft: vm.vesselDraft,
+                vessel_beam: vm.vesselBeam,
+                vessel_weight: vm.vesselWeight,
             });
             history.replaceState('', '', newHist);
         },
@@ -725,6 +764,9 @@ export default {
                         num_concession: vm.numConcessions,
                         num_infant: vm.numInfants,
                         vessel_size: vm.vesselSize,
+                        vessel_draft: vm.vesselDraft,
+                        vessel_beam: vm.vesselBeam,
+                        vessel_weight: vm.vesselWeight,
                         distance_radius: vm.distanceRadius
                     };
 
@@ -796,39 +838,77 @@ export default {
                         // Booking Whole Row Index
                         var index;
                         var avail_index;
+                        var filtered_sites = [];
                         vm.sites = data.sites;
                       
                         for (index = 0; index < vm.sites.length; ++index) {
-                                vm.mooring_book_row[index] = true;
-                                vm.mooring_book_row_price[index] = '0.00';
-                                for (avail_index = 0; avail_index < vm.sites[index].availability.length; ++avail_index) {
-                                        var booking_period = vm.sites[index].availability[avail_index][1].booking_period;  
-                                        if (booking_period.length > 0) { 
-                                        if (vm.sites[index].mooring_class == 'small') {
-                                              var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].small_price);
-				              vm.mooring_book_row_price[index] = total.toFixed(2);
-					} else if (vm.sites[index].mooring_class == 'medium') {
-                                              var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].medium_price);
-					      vm.mooring_book_row_price[index] = total.toFixed(2);
-                                        } else if (vm.sites[index].mooring_class == 'large') {
-                                              var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].large_price);
-					      vm.mooring_book_row_price[index] = total.toFixed(2);
-					}
-                                        
+                            vm.mooring_book_row[index] = true;
+                            vm.mooring_book_row_price[index] = '0.00';
+                            if (vm.sites[index].vessel_size_limit > 0){
+                                if (vm.sites[index].vessel_size_limit < vm.vesselSize){
+                                    if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
+                                       filtered_sites.push(vm.sites[index].id); 
+                                    }
+                                }
+                            } 
+                            if (vm.sites[index].vessel_draft_limit > 0){
+                                if (vm.sites[index].vessel_draft_limit < vm.vesselDraft){
+                                    if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
+                                       filtered_sites.push(vm.sites[index].id); 
+                                    }
+                                }
+                            }
+                            if (vm.sites[index].vessel_beam_limit > 0){
+                                if (vm.sites[index].vessel_beam_limit < vm.vesselBeam){
+                                    if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
+                                       filtered_sites.push(vm.sites[index].id); 
+                                    }
+                                }
+                            }
+                            if (vm.sites[index].vessel_weight_limit > 0){
+                                if (vm.sites[index].vessel_weight_limit < vm.vesselWeight){
+                                    if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
+                                       filtered_sites.push(vm.sites[index].id); 
+                                    }
+                                }
+                            }
+                            for (avail_index = 0; avail_index < vm.sites[index].availability.length; ++avail_index) {
+                                var booking_period = vm.sites[index].availability[avail_index][1].booking_period;  
+                                if (booking_period.length > 0) { 
+                                    if (vm.sites[index].mooring_class == 'small') {
+                                        var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].small_price);
+                                        vm.mooring_book_row_price[index] = total.toFixed(2);
+                                    } else if (vm.sites[index].mooring_class == 'medium') {
+                                        var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].medium_price);
+                                        vm.mooring_book_row_price[index] = total.toFixed(2);
+                                    } else if (vm.sites[index].mooring_class == 'large') {
+                                        var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].large_price);
+                                        vm.mooring_book_row_price[index] = total.toFixed(2);
+                                    }
+                                    if (booking_period.length > 1) {
+                                            vm.mooring_book_row[index] = false;
+                                    } else {      
+                                        if (booking_period[0].status == 'closed') {
+                                            vm.mooring_book_row[index] = false;	
+                                        }
+                                    }
+                                } else {
+                                    vm.mooring_book_row[index] = false;
+                                }
+                            }
+                        }
+                        var i;
+                        for (i = 0; i < filtered_sites.length; i++){
+                            var index;
+                            for (index = 0; index < vm.sites.length; index++){
+                                if (vm.sites[index].id == filtered_sites[i]){
+                                    console.log("removed one");
+                                    vm.sites.splice(index, 1); 
+                                }
+                            }
+                        }
 
-                                        if (booking_period.length > 1) { 
-                                                vm.mooring_book_row[index] = false;
-					} else {
-                                             
-					     if (booking_period[0].status == 'closed') {
-							vm.mooring_book_row[index] = false;	
-					     }
-					}
-                                        } else {
-						vm.mooring_book_row[index] = false;
-					}
-				}
-			}
+                        console.log("done");
 
                         // End of booking whole row index
                         vm.status = 'online';
@@ -940,5 +1020,4 @@ export default {
     }
 }
 </script>
-
 

@@ -54,16 +54,16 @@
                     <label>Vessel Registration  <input v-on:blur="searchRego()" v-model="vesselRego" id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" style="text-transform:uppercase" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Size (meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
+                    <label>Vessel Size (Meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Draft (meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" /></label>
+                    <label>Vessel Draft (Meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Beams (meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" /></label>
+                    <label>Vessel Beams (Meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Weight (tons)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" /></label>
+                    <label>Vessel Weight (Tons)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns" >
                         <label>
@@ -800,6 +800,18 @@ export default {
         bookingParam: {
             cache: false,
             get: function() {
+                if (this.vesselSize % 1 != 0){
+                    this.vesselSize = Math.ceil(this.vesselSize);
+                }
+                if (this.vesselDraft % 1 != 0){
+                    this.vesselDraft = Math.ceil(this.vesselDraft);
+                }
+                if (this.vesselBeam % 1 != 0){
+                    this.vesselBeam = Math.ceil(this.vesselBeam);
+                }
+                if (this.vesselWeight % 1 != 0){
+                    this.vesselWeight = Math.ceil(this.vesselWeight);
+                }
                 var params = {
                     'num_adult': this.numAdults,
                     'num_children': this.numChildren,
@@ -807,7 +819,10 @@ export default {
                     'num_mooring' : this.numMooring,
                     'gear_type': this.gearType,
                     'pen_type': this.penType,
-                    'vessel_size' : this.vesselSize
+                    'vessel_size' : this.vesselSize,
+                    'vessel_draft': this.vesselDraft,
+                    'vessel_beam': this.vesselBeam,
+                    'vessel_weight': this.vesselWeight,
                 };
                 if (this.arrivalDate && this.departureDate) {
                     params['arrival'] = this.arrivalDateString;

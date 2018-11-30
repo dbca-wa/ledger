@@ -148,16 +148,24 @@ def abort_booking_view(request, *args, **kwargs):
                 c_id = booking.mooringarea.id
         else:
             c_id = booking.mooringarea.id
-        # only ever delete a booking object if it's marked as temporary
-        if booking.booking_type == 3:
-            booking.delete()
-        utils.delete_session_booking(request.session)
+        
         if change:
+            num_adults = booking.details['num_adults']
+            num_children = booking.details['num_children']
+            num_infants = booking.details['num_infants']
+            vessel_size = booking.details['vessel_size']
+            vessel_draft = booking.details['vessel_draft']
+            vessel_beam = booking.details['vessel_beam']
+            vessel_weight = booking.details['vessel_weight']
             # Redirect to the availability screen
             #return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
             #mooring_availaiblity2_selector
-            return redirect(reverse('mooring_availaiblity2_selector') + '?site_id={}'.format(c_id))
+            return redirect(reverse('mooring_availaiblity2_selector') + '?site_id={}&num_adult={}&num_children={}&num_infants={}&vessel_size={}&vessel_draft={}&vessel_beam={}&vessel_weight={}'.format(c_id, num_adults, num_children, num_infants, vessel_size, vessel_draft, vessel_beam, vessel_weight))
         else:
+            # only ever delete a booking object if it's marked as temporary
+            if booking.booking_type == 3:
+                booking.delete()
+            utils.delete_session_booking(request.session)
             # Redirect to explore parks
             return redirect('map')
     except Exception as e:
@@ -196,6 +204,10 @@ class MakeBookingsView(TemplateView):
             'num_adults':0,
             'num_children':0,
             'num_infants':0,
+            'vessel_size':0,
+            'vessel_draft':0,
+            'vessel_beam':0,
+            'vessel_weight':0
         }
         lines = []
 
