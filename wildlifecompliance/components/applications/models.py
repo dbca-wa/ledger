@@ -1617,19 +1617,17 @@ class ExcelActivityType(models.Model):
     def code(self):
         return self.short_name[:2].lower()
 
-    @property
-    def cols_output(self):
-        return OrderedDict([
-            #('short_name', self.short_name),
-            ('{}-conditions'.format(self.code), self.conditions),
-            ('{}-application_id'.format(self.code), self.issue_date),
-            ('{}-licence_number'.format(self.code), self.start_date),
-            ('{}-applicant'.format(self.code), self.expiry_date),
-            ('{}-issued'.format(self.code), self.issued),
-            ('{}-processed'.format(self.code), self.processed),
-        ])
-
-
+#    @property
+#    def cols_output(self):
+#        return OrderedDict([
+#            #('short_name', self.short_name),
+#            ('{}-conditions'.format(self.code), self.conditions),
+#            ('{}-application_id'.format(self.code), self.issue_date),
+#            ('{}-licence_number'.format(self.code), self.start_date),
+#            ('{}-applicant'.format(self.code), self.expiry_date),
+#            ('{}-issued'.format(self.code), self.issued),
+#            ('{}-processed'.format(self.code), self.processed),
+#        ])
 
 
 @receiver(pre_delete, sender=Application)

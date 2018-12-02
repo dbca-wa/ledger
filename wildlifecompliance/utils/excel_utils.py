@@ -44,6 +44,11 @@ def test(ids=[125]):
 
 #def write_excel_model(ids=[145]):
 def write_excel_model(licence_category):
+    """
+    from wildlifecompliance.utils.excel_utils import write_excel_model
+    write_excel_model('Fauna Other Purpose')
+    """
+
     applications = Application.objects.filter(licence_category=licence_category)
     #applications = Application.objects.filter(id__in=id)
 
@@ -61,21 +66,24 @@ def write_excel_model(licence_category):
                     short_name=activity_type['short_name']
                 )
 
-def create_activity_type_fields(activity_name):
+def create_activity_type_fields(activity_type):
     """
     from wildlifecompliance.utils.excel_utils import create_activity_type_fields
     create_activity_type_fields('Importing Fauna (Non-Commercial)')
     {u'Species1-1_0': u'species', u'Species1-2_0': u'number_of_animals'}
     """
-    fields = WildlifeLicenceActivity.objects.get(name=activity_name).fields
-
     ordered_dict=OrderedDict([])
-    if isinstance(fields, dict):
-        for k,v in fields.iteritems():
-            ordered_dict.update(OrderedDict([(k,v)]))
+
+    try:
+        fields = WildlifeLicenceActivity.objects.get(name=activity_type.activity_name).fields
+        if isinstance(fields, dict):
+            for k,v in fields.iteritems():
+                ordered_dict.update(OrderedDict([(k,v)]))
+    except AttributeError:
+        pass
 
     return ordered_dict
-    
+
 
 def write_excel_model_test(ids=[145]):
     applications = Application.objects.filter(id__in=ids)
@@ -91,8 +99,6 @@ def write_excel_model_test(ids=[145]):
                 #   short_name=activity_type['short_name']
                 #)
                 print application.licence_type_short_name, activity_type['short_name']
-
-
 
 class ApplicationDetails():
     def __init__(self, application):
@@ -155,11 +161,6 @@ class ApplicationDetails():
     def __init__(application):
         self.applicant = '{}\n{}'.format(application.applicant, OrganisationAddress.objects.get(organisation__name=application.applicant).__str__())
 
-def set_licence_category():
-    for i in Application.objects.all():
-        i.licence_category = i.licence_type_name.split(' - ')[0] if i.licence_type_name else None                                                                
-        i.save()
-
 def get_purposes(licence_class_short_name):
     """ Return the purposes mapped to a given category/licence class short_name """
     licence_class =  WildlifeLicenceClass.objects.get(short_name=licence_class_short_name)
@@ -190,11 +191,6 @@ def read_workbook(input_filename):
     else:
         logger.error('{0} does not appear to be a valid file'.format(input_filename))
 
-def cols_fields(activity_type, short_name):
-    #if short_name == 
-    pass
-    
-
 def _cols_output(activity_type, short_name):
     code = short_name[:2].lower()
     ordered_dict = OrderedDict([
@@ -214,40 +210,37 @@ def cols_common(activity_type, short_name):
         ('{}_cover_processed'.format(code), None),
         ('{}_cover_processed_date'.format(code), None),
         ('{}_cover_processed_by'.format(code), None),
-        ('{}_conditions'.format(code), activity_type.conditions if activity_type else None),
-        ('{}_issue_date'.format(code), activity_type.issue_date if activity_type else None),
-        ('{}_start_date'.format(code), activity_type.start_date if activity_type else None),
-        ('{}_expiry_date'.format(code), activity_type.expiry_date if activity_type else None),
-        ('{}_issued'.format(code), activity_type.issued if activity_type else None),
-        ('{}_processed'.format(code), activity_type.processed if activity_type else None),
+        ('{}_conditions'.format(code), activity_type[0].conditions if activity_type else None),
+        ('{}_issue_date'.format(code), activity_type[0].issue_date if activity_type else None),
+        ('{}_start_date'.format(code), activity_type[0].start_date if activity_type else None),
+        ('{}_expiry_date'.format(code), activity_type[0].expiry_date if activity_type else None),
+        ('{}_issued'.format(code), activity_type[0].issued if activity_type else None),
+        ('{}_processed'.format(code), activity_type[0].processed if activity_type else None),
     ])
     return ordered_dict
 
-
-def cols_output(activity_type, short_name, activity_name):
+def cols_output(activity_type, short_name):
     """
     excel_app = ExcelApplication.objects.all().last()
     activity_type = excel_app.excel_activity_types.filter(short_name='Exporting')[0]
     cols_output(activity_type, 'Importing', 'Importing Fauna (Non-Commercial)')
     """
+    #import ipdb; ipdb.set_trace()
     ordered_dict = OrderedDict([
         ('{}'.format(short_name), None),
     ])
-    ordered_dict.update(create_activity_type_fields(activity_name))
+    ordered_dict.update(create_activity_type_fields(activity_type))
     ordered_dict.update(cols_common(activity_type, short_name))
     return ordered_dict
 
 
 def write_workbook(licence_category='Flora Industry'):
     #filename = '/tmp/wc_apps_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))
-
-
     excel_apps = ExcelApplication.objects.filter(application__licence_category=licence_category).order_by('application_id') #filter(id__in=ids)
     filename = '/tmp/wc_apps_{}.xls'.format(licence_category.lower().replace(' ','_'))
 
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Applications')
-
 
     # Sheet header, first row
     row_num = 0
@@ -289,22 +282,113 @@ def write_workbook(licence_category='Flora Industry'):
         for short_name in short_name_list:
 
             activity_type = excel_app.excel_activity_types.filter(short_name=short_name)
-            activity_type_cols = cols_output(activity_type, short_name).keys()
+            activity_type_cols = cols_output(activity_type, short_name)
 
             ws.write(row_num, col_num, '', font_style); col_num += 1
             #ws.write(row_num, col_num, short_name, font_style); col_num += 1
             if activity_type.exists():
-                for k,v in activity_type[0].cols_output.iteritems():
+                #for k,v in activity_type[0].cols_output.iteritems():
+                for k,v in activity_type_cols.iteritems():
                     #import ipdb; ipdb.set_trace()
                     ws.write(row_num, col_num, v, font_style)
                     col_num += 1
             else:
                 # create a blank activity_type bilock
-                for _ in activity_type_cols:
+                for _ in activity_type_cols.keys():
                     ws.write(row_num, col_num, '', font_style)
                     col_num += 1
 
 
     wb.save(filename)
     return wb
+
+import xlsxwriter
+from xlsxwriter.utility import xl_rowcol_to_cell
+def write_workbook2(licence_category='Flora Industry'):
+    #filename = '/tmp/wc_apps_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))
+    excel_apps = ExcelApplication.objects.filter(application__licence_category=licence_category).order_by('application_id') #filter(id__in=ids)
+    filename = '/tmp/wc_apps_{}.xlsx'.format(licence_category.lower().replace(' ','_'))
+    sheet_name = 'Applications'
+
+    wb = xlsxwriter.Workbook(filename)
+    ws = wb.add_worksheet(sheet_name)
+
+    bold = wb.add_format({'bold': True})
+
+    # Sheet header, first row
+    row_num = 0
+
+    # Header
+    excel_app = excel_apps.last()
+    licence_class = excel_app.application.licence_type_data['short_name']
+    short_name_list = get_purposes(licence_class).values_list('activity_type__short_name', flat=True)
+    col_num = 0
+    for k,v in excel_app.cols_output.iteritems():
+        #ws.write(row_num, col_num, k, font_style)
+        ws.write(row_num, col_num, k, bold)
+        col_num += 1
+
+    #for activity_type in excel_app.excel_activity_types.all():
+    for short_name in short_name_list:
+        activity_type = excel_app.excel_activity_types.filter(short_name=short_name)
+        activity_type_cols = cols_output(None, short_name).keys()
+
+        #ws.write(row_num, col_num, '', font_style); col_num += 1
+        ws.write(row_num, col_num, '', bold); col_num += 1
+        #ws.write(row_num, col_num, short_name, bold); col_num += 1
+
+        #for k,v in activity_type.cols_output.iteritems():
+        for col_name in activity_type_cols:
+            #ws.write(row_num, col_num, col_name, font_style)
+            ws.write(row_num, col_num, col_name, bold)
+            col_num += 1
+
+    # Application data
+    cell_dict = {}
+    row_start = row_num + 1
+    for excel_app in excel_apps:
+        row_num += 1
+        col_num = 0
+        for k,v in excel_app.cols_output.iteritems():
+            #ws.write(row_num, col_num, v, font_style)
+            ws.write(row_num, col_num, v)
+            col_num += 1
+
+        for short_name in short_name_list:
+            ws.write(row_num, col_num, ''); col_num += 1
+
+            cell_start = xl_rowcol_to_cell(row_start, col_num, row_abs=True, col_abs=True)
+            activity_type = excel_app.excel_activity_types.filter(short_name=short_name)
+            activity_type_cols = cols_output(activity_type, short_name)
+
+            col_start = col_num
+            if activity_type.exists():
+                #for k,v in activity_type[0].cols_output.iteritems():
+                for k,v in activity_type_cols.iteritems():
+                    #import ipdb; ipdb.set_trace()
+                    #ws.write(row_num, col_num, v, font_style)
+                    ws.write(row_num, col_num, v)
+                    col_num += 1
+            else:
+                # create a blank activity_type bilock
+                for _ in activity_type_cols.keys():
+                    #ws.write(row_num, col_num, '', font_style)
+                    ws.write(row_num, col_num, '')
+                    col_num += 1
+
+            cell_end = xl_rowcol_to_cell(row_num, col_num-1, row_abs=True, col_abs=True)
+            cell_dict.update({short_name: [cell_start, cell_end]})
+
+    #ws.write('F2:O3', '=Taking')
+    #wb.define_name('Application', '=Sheet1!$F$2:$O$14')
+
+    # Write the named ranges
+    for short_name in short_name_list:
+        #wb.define_name('Applications!Taking', '=Applications!$F$2:$O$3')
+        wb.define_name('{0}!{1}'.format(sheet_name, short_name), '={0}!{1}:{2}'.format(sheet_name, cell_dict[short_name][0], cell_dict[short_name][1]))
+
+
+    wb.close()
+    return wb
+    #return cell_dict
 
