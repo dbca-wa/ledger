@@ -274,9 +274,16 @@ class Schema:
 
     def __init__(self, schema):
         self.data = schema
+        # print(self.data)
         self.schema_model = SchemaModel(schema)
+        # print("printing schema model")
+        # print(self.schema_model.fields)
+        # for f in self.schema_model.fields:
+        #     print(SchemaField(f))
         self.fields = [SchemaField(f) for f in self.schema_model.fields]
         self.species_fields = self.find_species_fields(self)
+        for f in self.fields:
+            print(f.name)
 
     # implement some dict like methods
     def __getitem__(self, item):
@@ -422,6 +429,8 @@ class Schema:
 
     def is_all_valid(self, rows):
         for row in rows:
+            print("======Printing from is_all_valid====")
+            print(row)
             if not self.is_row_valid(row):
                 return False
         return True

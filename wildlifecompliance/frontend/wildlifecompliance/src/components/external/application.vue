@@ -107,6 +107,7 @@ export default {
     save: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
+      console.log(formData)
       vm.$http.post(vm.application_form_url,formData).then(res=>{
           swal(
             'Saved',
@@ -142,6 +143,10 @@ export default {
         let vm = this;
         console.log('SUBMIT VM FORM and CHECKOUT');
         let formData = new FormData(vm.form);
+        console.log("===========from application submt=========")
+        console.log(vm.form)
+        console.log(formData)
+        console.log(formData.keys())
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
         if (vm.requiresCheckout) {

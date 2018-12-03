@@ -30,6 +30,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
+from wildlifecompliance.components.returns.utils import _is_post_data_valid,_get_table_rows_from_post,_create_return_data_from_post_data
 from wildlifecompliance.components.returns.models import (
    Return
 )
@@ -57,3 +58,61 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         
         serializer = ReturnSerializer(qs, many=True)
         return Response(serializer.data)
+
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def update_details(self, request, *args, **kwargs):
+        try:
+            print("print from api")
+            print(self.request.data)
+            print("==========posting keys=========")
+            print(request.POST.keys())
+            print("============printing getlist")
+            for key in request.POST.keys():
+                print(key)
+                print(request.POST.getlist(key))
+            
+
+            instance = self.get_object()
+            returns_tables=self.request.data.get('table_name')
+            print("===========Returns table=====")
+            # print(type(returns_tables.encode('utf-8')))
+            print(returns_tables)
+            # list_returns_tables=eval(returns_tables)
+            # print(eval(returns_tables))
+            # print(returns_tables['name'])
+            if _is_post_data_valid(instance, returns_tables.encode('utf-8'), request.POST):
+                print('True')
+                _create_return_data_from_post_data(instance, returns_tables.encode('utf-8'), request.POST)
+            # amend_data=self.request.data
+            # reason=amend_data.pop('reason')
+            # application =amend_data.pop('application')
+            # text=amend_data.pop('text')
+            # activity_type_id=amend_data.pop('activity_type_id')
+            # print(type(application))
+            # print(application)
+            # for item in activity_type_id:
+            #     data={
+            #         'application':application,
+            #         'reason': reason,
+            #         'text':text,
+            #         'licence_activity_type':item
+            #     }
+            #     serializer = self.get_serializer(data= data)
+            #     serializer.is_valid(raise_exception = True)
+            #     instance = serializer.save()
+            #     instance.generate_amendment(request)
+            # serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))

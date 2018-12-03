@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import json
 import datetime
+from preserialize.serialize import serialize
 from django.db import models,transaction
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
@@ -33,6 +34,16 @@ class ReturnType(models.Model):
     @property
     def resources(self):
         return self.data_descriptor.get('resources', [])
+
+    def get_resource_by_name(self, name):
+        for resource in self.resources:
+            if resource.get('name') == name:
+                return resource
+        return None
+
+    def get_schema_by_name(self, name):
+        resource = self.get_resource_by_name(name)
+        return resource.get('schema', {}) if resource else None
 
 
 class Return(models.Model):
@@ -86,12 +97,16 @@ class Return(models.Model):
         return self.return_type.data_descriptor.get('resources', [])
 
     @property
-    def headers(self):
+    def table(self):
+        tables = []
         for resource in self.return_type.resources:
             resource_name = resource.get('name')
+            # print(type(resource_name))
+            # print(resource_name)
             schema = Schema(resource.get('schema'))
             headers = []
             for f in schema.fields:
+                # print(type(f.name))
                 header = {
                     "title": f.name,
                     "required": f.required
@@ -99,8 +114,53 @@ class Return(models.Model):
                 if f.is_species:
                     header["species"] = f.species_type
                 headers.append(header)
-        return headers
+            table = {
+                'name': resource_name,
+                'title': resource.get('title', resource.get('name')),
+                'headers': headers,
+                'data':None
+            }
+            # print(self.id)
+            # # print(self.returntable_set.all())
+            # print(resource_name)
+            # try:
+            #     return_table = self.returntable_set.get(name=resource_name)
+            #     rows = [return_row.data for return_row in return_table.returnrow_set.all()]
+            #     validated_rows = list(schema.rows_validator(rows))
+            #     table['data'] = validated_rows
+            # except ReturnTable.DoesNotExist:
+            #     pass
+            
+            # for f in schema.fields:
+            #     table['data'][f.name]={f.name:{'value':None}}
+            result = {}
+            # field validation
+            for field_name in schema.fields:
+                result[field_name.name] = {
+                    'value': None
+                }
+            table['data']=result    
+            print(table)
+        tables.append(table)
 
 
+        return tables
 
+
+class ReturnTable(RevisionedMixin):
+    ret = models.ForeignKey(Return)
+
+    name = models.CharField(max_length=50)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+
+class ReturnRow(RevisionedMixin):
+    return_table = models.ForeignKey(ReturnTable)
+
+    data = JSONField(blank=True, null=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
 
