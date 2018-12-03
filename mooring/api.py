@@ -2183,9 +2183,9 @@ def get_confirmation(request, *args, **kwargs):
         return HttpResponse('Booking unavailable', status=403)
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="confirmation-PS{}.pdf"'.format(booking_id)
+    response['Content-Disposition'] = 'filename="confirmation-PS{}.pdf"'.format(booking_id)
 
-    pdf.create_confirmation(response, booking, mooring_bookings)
+    response.write(pdf.create_confirmation(response, booking, mooring_bookings))
     return response
 
 

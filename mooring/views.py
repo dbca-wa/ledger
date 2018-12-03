@@ -229,7 +229,7 @@ class MakeBookingsView(TemplateView):
             for bm in booking_mooring:
                 # Convert the from and to dates of this booking to just plain dates in local time.
                 # Append them to a list.
-                if bm.campsite.mooringarea.admission_fee_required:
+                if bm.campsite.mooringarea.park.entry_fee_required:
                     from_dt = bm.from_dt
                     timestamp = calendar.timegm(from_dt.timetuple())
                     local_dt = datetime.fromtimestamp(timestamp)
@@ -423,7 +423,7 @@ class MakeBookingsView(TemplateView):
         if mooring_booking:
             lines_required = False
             for bm in mooring_booking:
-                if bm.campsite.mooringarea.admission_fee_required:
+                if bm.campsite.mooringarea.park.entry_fee_required:
                     lines_required = True
             if lines_required:
                 for line in admissionLines:

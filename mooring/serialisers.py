@@ -374,7 +374,6 @@ class MooringAreaSerializer(serializers.ModelSerializer):
             'vessel_weight_limit',
             'mooring_physical_type',
             'mooring_class',
-            'admission_fee_required',
         )
         read_only_fields = ('mooring_group',)
 
