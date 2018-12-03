@@ -12,7 +12,7 @@ from reportlab.lib.colors import HexColor
 from django.core.files import File
 from django.conf import settings
 
-from mooring.models import Booking, BookingVehicleRego, AdmissionsBooking
+from mooring.models import Booking, BookingVehicleRego, AdmissionsBooking, RegisteredVessels
 
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring','img','mooring_header.png')
 
@@ -127,6 +127,11 @@ def create_confirmation(confirmation_buffer, booking, mooring_bookings):
     #elements.append(ImageAndFlowables(im, [text1, text2], imageSide='left'))
     table_data = []
 
+    rego = ""
+    if booking.vehicle_payment_status:
+        for r in booking.vehicle_payment_status:
+            rego = r['Rego']
+
     lines = []
     from_date = ""
     to_date = ""
@@ -158,7 +163,7 @@ def create_confirmation(confirmation_buffer, booking, mooring_bookings):
             else:
                 to_date = end_str
         if to_date > "":
-            lines.append({'from': from_date, 'to':to_date, 'mooring': mb.campsite.mooringarea.name, 'park': mb.campsite.mooringarea.park.name})
+            lines.append({'from': from_date, 'to':to_date, 'mooring': mb.campsite.mooringarea.name, 'park': mb.campsite.mooringarea.park.name, 'fees': mb.campsite.mooringarea.park.entry_fee_required})
             from_date = ""
             to_date = ""
 
@@ -171,6 +176,16 @@ def create_confirmation(confirmation_buffer, booking, mooring_bookings):
             days = 1
         plural = 's' if days > 1 else ''
         table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph('{} to {} ({} day{})'.format(line['from'], line['to'], days, plural), styles['Left'])])
+        if line['fees']:
+            fee_text = "Fees Paid"
+            if RegisteredVessels.objects.filter(rego_no=rego).count() > 0:
+                found_ves = RegisteredVessels.objects.filter(rego_no=rego)[0]
+                if found_ves.admissionsPaid:
+                    fee_text = "Covered by licence or permit"
+            table_data.append([Paragraph('Admission Fees', styles['BoldLeft']), Paragraph('{}'.format(fee_text), styles['Left'])])
+        else:
+            fee_text = "Not Applicable"
+            table_data.append([Paragraph('Admission Fees', styles['BoldLeft']), Paragraph('{}'.format(fee_text), styles['Left'])])
         
 
 #    table_data.append([Paragraph('Number of guests', styles['BoldLeft']), Paragraph(booking.stay_guests, styles['Left'])])
