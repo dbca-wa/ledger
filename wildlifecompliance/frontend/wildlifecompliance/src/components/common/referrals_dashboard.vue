@@ -231,9 +231,9 @@ export default {
         filterApplicationStatus: function() {
             let vm = this;
             if (vm.filterApplicationStatus!= 'All') {
-                vm.$refs.application_datatable.vmDataTable.columns(6).search(vm.filterApplicationStatus).draw();
+                vm.$refs.application_datatable.vmDataTable.columns(5).search(vm.filterApplicationStatus).draw();
             } else {
-                vm.$refs.application_datatable.vmDataTable.columns(6).search('').draw();
+                vm.$refs.application_datatable.vmDataTable.columns(5).search('').draw();
             }
         },
         filterApplicationRegion: function(){
