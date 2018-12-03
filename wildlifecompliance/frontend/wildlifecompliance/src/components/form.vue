@@ -97,17 +97,18 @@ from '@/utils/hooks'
                 var _mnu1 = '';
                 var _mnu2 = '';
                 Renderer.sections.map((sec,i) => {
-
-                   if (sec.name.indexOf('Section1')>-1) {
-                      if (sec.name.indexOf('Section1_0')===-1) {
+                   if (parseInt(sec.name.split('_')[1])===_tabid) {
+                      if (_tabid !== 0) {
                         _mnu1 = _mnu1 + _mnu2 + '</ul></li>';
                         _mnu2 = '';
                       }
+                      _tabid++;
                       _mnu1 = _mnu1 + `<li class='dropdown-submenu'><a class='section-menu' href='#section-submenu' data-toggle='collapse' aria-expanded='false'>` + tabs[parseInt(sec.name.split('_')[1])].name + `<span class='caret'></span></a><ul class='dropdown-menu' id='section-submenu' >` +_mnu2;
                    };
                    _mnu2 = _mnu2 + `<li><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`;
                 });
                 _mnu1 = _mnu1 + _mnu2 + '</ul></li>';
+                _tabid = 0;
                 $('#scrollspy-section').append(_mnu1);
 
                 $('a.page-scroll').bind('click', function(event) {

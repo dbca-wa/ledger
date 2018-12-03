@@ -79,6 +79,7 @@ class AssessmentSerializer(serializers.ModelSerializer):
     def get_status(self,obj):
         return obj.get_status_display()
 
+
 class SaveAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model=Assessment
@@ -88,6 +89,9 @@ class ActivityTypeserializer(serializers.ModelSerializer):
     class Meta:
         model= WildlifeLicenceActivityType
         fields=('id','name','short_name')
+
+
+
 
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
@@ -160,7 +164,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'payment_status',
                 'licence_fee',
                 'class_name',
-                'activity_type_names'
+                'activity_type_names',
+                'can_be_processed'
                 )
         read_only_fields=('documents',)
     
@@ -217,6 +222,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         #         amendment_request_data.append({"licence_activity_type":str(item.licence_activity_type),"id":item.licence_activity_type.id})
         return amendment_request_data
 
+    def get_can_be_processed(self, obj):
+        return obj.processing_status == 'under_review'
+
        
 class DTApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
@@ -226,6 +234,8 @@ class DTApplicationSerializer(BaseApplicationSerializer):
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
     assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
+    can_be_processed = serializers.SerializerMethodField(read_only=True)
+
 
 class ApplicationSerializer(BaseApplicationSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
@@ -233,6 +243,7 @@ class ApplicationSerializer(BaseApplicationSerializer):
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
+    can_be_processed = serializers.SerializerMethodField(read_only=True)
 
     def get_readonly(self,obj):
         return obj.can_user_view 
@@ -542,3 +553,34 @@ class ProposedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False,allow_null=True)
     activity_type=serializers.ListField(child=serializers.IntegerField())
+
+
+class DTAssessmentSerializer(serializers.ModelSerializer):
+    assessor_group = ApplicationGroupTypeSerializer(read_only=True)
+    status = serializers.SerializerMethodField(read_only=True)
+    licence_activity_type = ActivityTypeserializer(read_only=True)
+    submitter = serializers.SerializerMethodField(read_only=True)
+    application_lodgement_date = serializers.CharField(source='application.lodgement_date')
+    applicant = serializers.CharField(source='application.applicant')
+    application_category = serializers.CharField(source='application.licence_type_name')
+
+    class Meta:
+        model = Assessment
+        fields = (
+            'id',
+            'application',
+            'assessor_group',
+            'date_last_reminded',
+            'status',
+            'licence_activity_type',
+            'submitter',
+            'application_lodgement_date',
+            'applicant',
+            'application_category'
+        )
+
+    def get_submitter(self, obj):
+        return EmailUserSerializer(obj.application.submitter).data
+
+    def get_status(self,obj):
+        return obj.get_status_display()
