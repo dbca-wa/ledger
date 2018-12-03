@@ -1596,6 +1596,16 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         vessel_weight = serializer.validated_data['vessel_weight']
  #       distance_radius = serializer.validated_data['distance_radius']
 
+        if ongoing_booking:
+            if not ongoing_booking.details:
+                ongoing_booking.details={}
+            ongoing_booking.details['vessel_size'] = vessel_size
+            ongoing_booking.details['vessel_draft'] = vessel_draft
+            ongoing_booking.details['vessel_beam'] = vessel_beam
+            ongoing_booking.details['vessel_weight'] = vessel_weight
+            ongoing_booking.save()
+        
+
         
 
         # if campground doesn't support online bookings, abort!

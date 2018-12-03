@@ -489,12 +489,22 @@
                     <div class="row">
                         <div class="col-md-6">
                             {% if request.user.is_staff %}
-                                <label>Non-Online Booking</label>
-                                <input type="checkbox" id="nononline" name="nononline" v-model="nononline" @change="calculateTotal()" checked/>
-                                <br/>
-                                <label>Override Price</label>
-                                <input type="checkbox" id="override" name="override" v-model="override"/>
-                                <br/>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label>Non-Online Booking:</label>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="checkbox" id="nononline" name="nononline" v-model="nononline" @change="calculateTotal()" checked/>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label>Override Price:</label>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="checkbox" id="override" name="override" v-model="override"/>
+                                </div>
+                            </div>
                                 <div v-if="override">
                                     <div class="form-group">
                                         <label>Override Amount:</label>
@@ -503,16 +513,13 @@
                                             <input type="number" class="form-control" name="overridePrice" v-model="overridePrice" step="0.01">
                                         </div>
                                     </div>
-                                    <div v-if="overridePrice > total" class="alert alert-danger" role="alert">
-                                        Cannot override price higher than total.
-                                    </div>
-                                    <div class="form-group" id="override-container" style="display:none;">
+                                    <div class="form-group" id="override-container">
                                         <label>Reason:</label>
                                         <select class="overrideReason" name="overrideReason" id="overrideReason" style="width:100%;">
                                             <option v-for="res in override_reasons" :value="res.id">{% verbatim %}{{res.text}}{% endverbatim %}</option>
                                         </select>
                                     </div>
-                                    <div class="form-group" v-if="overridePrice > 0">
+                                    <div class="form-group" >
                                         <label>Details:</label>
                                         <textarea v-model="overrideDetail" name="overrideDetail" style="width:100%;resize:none;"></textarea>
                                     </div>
@@ -614,24 +621,24 @@
              }
         },
         watch: {
-            overridePrice: function (val){
-                if (val > 0){
-                    console.log("INNMNNNNN");
-                    $('#override-container').show();
-                    $('.overrideReason').select2({
-                        minimumResultsForSearch: Infinity
-                    }).
-                    on("select2:select",function (e) {
-                        var selected = $(e.currentTarget);
-                        this.overrideReason = selected.val();
-                    }).
-                    on("select2:unselect",function (e) {
-                        var selected = $(e.currentTarget);
-                        this.overrideReason = selected.val();
-                    });
-                } else if (val == 0){
-                    $('#override-container').hide();
+            override: function (val){
+                console.log("Something changed");
+                if (val){
+                    this.$nextTick(() =>{
+                        $('.overrideReason').select2({
+                            minimumResultsForSearch: Infinity
+                        }).
+                        on("select2:select",function (e) {
+                            var selected = $(e.currentTarget);
+                            this.overrideReason = selected.val();
+                        }).
+                        on("select2:unselect",function (e) {
+                            var selected = $(e.currentTarget);
+                            this.overrideReason = selected.val();
+                        }); 
+                    })
                 }
+                
             }
         },
         computed: {
@@ -727,6 +734,10 @@
                                 }
                             } else {
                                 console.log("Registration was not found.");
+                                vm.size = 0;
+                                vm.weight = 0;
+                                vm.draft = 0;
+                                vm.beam = 0;
                                 if (vm.linesAdmissions.length > 0){
                                     vm.payingAdmissions = true;
                                 }
@@ -960,7 +971,7 @@
                 vm.nononline = true;
             }
 
-            
+
             vm.calculateTotal();
         }
     });
