@@ -68,7 +68,8 @@ from wildlifecompliance.components.applications.serializers import (
     SaveAssessmentSerializer,
     AmendmentRequestSerializer,
     ExternalAmendmentRequestSerializer,
-    ApplicationProposedIssueSerializer
+    ApplicationProposedIssueSerializer,
+    DTAssessmentSerializer
     
 )
 
@@ -959,6 +960,18 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     queryset = Assessment.objects.all()
     serializer_class = AssessmentSerializer
 
+    @list_route(methods=['GET',])
+    def user_list(self, request, *args, **kwargs):
+        # Get the assessor groups the current user is member of
+        assessor_groups = ApplicationGroupType.objects.filter(type='assessor', members__email=request.user.email)
+
+        # For each assessor groups get the assessments
+        for group in assessor_groups:
+            queryset = Assessment.objects.filter(assessor_group=group)
+
+        serializer = DTAssessmentSerializer(queryset, many=True)
+        return Response(serializer.data)
+
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
         try:
@@ -1039,16 +1052,17 @@ class AssessorGroupViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationGroupTypeSerializer
     renderer_classes = [JSONRenderer,]
 
-    # def list(self, request, *args, **kwargs):
-    #     queryset = self.get_queryset()
-    #     # licence_activity_type = request.GET.get('licence_activity_type')
-    #     # if licence_activity_type:
-    #     #     queryset = queryset.filter(licence_activity_type=licence_activity_type)
-    #     serializer = ApplicationGroupTypeSerializer(queryset, many=True)
-    #     return Response(serializer.data)
+    @list_route(methods=['POST',])
+    def user_list(self, request, *args, **kwargs):
+        app_id = request.data.get('application_id')
+        application = Application.objects.get(id=app_id)
+        id_list = set()
+        for assessment in application.assessments:
+            id_list.add(assessment.assessor_group.id)
+        queryset = self.get_queryset().exclude(id__in=id_list)
+        serializer = self.get_serializer(queryset, many=True)
 
-    # def get_queryset(self):
-    #     return self.queryset.filter(name='assessor')
+        return Response(serializer.data)
 
 
 class AmendmentRequestViewSet(viewsets.ModelViewSet):
@@ -1075,6 +1089,7 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(data= data)
                 serializer.is_valid(raise_exception = True)
                 instance = serializer.save()
+                instance.reason = reason
                 instance.generate_amendment(request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)

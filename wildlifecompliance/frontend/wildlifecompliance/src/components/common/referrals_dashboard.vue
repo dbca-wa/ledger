@@ -3,7 +3,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Applications referred to me 
+                    <h3 class="panel-title">Applications requiring assessment
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -101,7 +101,7 @@ export default {
             application_licence_types: [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Licence Category","Activity Type","Type","Submiter","Applicant","Status","Lodged on","Action"],
+            application_headers:["Number","Licence Category","Activity Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_options:{
                 customApplicationSearch: true,
                 tableID: 'application-datatable-'+vm._uid,
@@ -110,7 +110,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.referrals,'user_list'),
+                    "url": helpers.add_endpoint_json(api_endpoints.assessment,'user_list'),
                     "dataSrc": ''
                 },
                 columns: [
@@ -120,20 +120,36 @@ export default {
                             return 'P'+data;
                         }
                     },
-                    {data: "region"},
-                    {data: "activity"},
-                    {data: "title"},
+                    {
+                        data: "application_category",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? `${data}` : '';
+                        }
+                    },
+                    {
+                        data: "licence_activity_type",
+                        mRender:function (data,type,full) {
+                            return data.id != '' && data.id != null ? `${data.name}` : '';
+                        }
+                    },
                     {
                         data: "submitter",
                         mRender:function (data,type,full) {
-                            if (data) {
-                                return `${data.first_name} ${data.last_name}`;
-                            }
-                            return ''
+                            return data.id != '' && data.id != null ? `${data.first_name} ${data.last_name}` : '';
                         }
                     },
-                    {data: "applicant"},
-                    {data: "processing_status"},
+                    {
+                        data: "applicant",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? `${data}` : '';
+                        }
+                    },
+                    {
+                        data: "status",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? `${data}` : '';
+                        }
+                    },
                     {
                         data: "application_lodgement_date",
                         mRender:function (data,type,full) {
@@ -143,7 +159,7 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            links +=  full.can_be_processed ? `<a href='/internal/application/${full.application}/referral/${full.id}'>Process</a><br/>`: `<a href='/internal/application/${full.application}/referral/${full.id}'>View</a><br/>`;
+                            links +=  full.can_be_processed ? `<a href='/internal/application/${full.application}'>Process</a><br/>`: `<a href='/internal/application/${full.application}'>View</a><br/>`;
                             return links;
                         }
                     }
@@ -174,7 +190,7 @@ export default {
                         vm.application_activityTitles = activityTitles;
                     });
                     // Grab submitters from the data in the table
-                    var submittersColumn = vm.$refs.application_datatable.vmDataTable.columns(4);
+                    var submittersColumn = vm.$refs.application_datatable.vmDataTable.columns(3);
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
                         $.each(d,(index,s) => {
@@ -188,7 +204,7 @@ export default {
                         vm.application_submitters = submitters;
                     });
                     // Grab Status from the data in the table
-                    var statusColumn = vm.$refs.application_datatable.vmDataTable.columns(6);
+                    var statusColumn = vm.$refs.application_datatable.vmDataTable.columns(5);
                     statusColumn.data().unique().sort().each( function ( d, j ) {
                         let statusTitles = [];
                         $.each(d,(index,a) => {
@@ -215,9 +231,9 @@ export default {
         filterApplicationStatus: function() {
             let vm = this;
             if (vm.filterApplicationStatus!= 'All') {
-                vm.$refs.application_datatable.vmDataTable.columns(6).search(vm.filterApplicationStatus).draw();
+                vm.$refs.application_datatable.vmDataTable.columns(5).search(vm.filterApplicationStatus).draw();
             } else {
-                vm.$refs.application_datatable.vmDataTable.columns(6).search('').draw();
+                vm.$refs.application_datatable.vmDataTable.columns(5).search('').draw();
             }
         },
         filterApplicationRegion: function(){
