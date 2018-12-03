@@ -349,10 +349,14 @@ def write_workbook2(licence_category='Flora Industry'):
     for excel_app in excel_apps:
         row_num += 1
         col_num = 0
+        cell_start = xl_rowcol_to_cell(row_start, col_num, row_abs=True, col_abs=True)
         for k,v in excel_app.cols_output.iteritems():
             #ws.write(row_num, col_num, v, font_style)
             ws.write(row_num, col_num, v)
             col_num += 1
+
+        cell_end = xl_rowcol_to_cell(row_num, col_num-1, row_abs=True, col_abs=True)
+        cell_dict.update({'System': [cell_start, cell_end]})
 
         for short_name in short_name_list:
             ws.write(row_num, col_num, ''); col_num += 1
@@ -383,12 +387,13 @@ def write_workbook2(licence_category='Flora Industry'):
     #wb.define_name('Application', '=Sheet1!$F$2:$O$14')
 
     # Write the named ranges
+    wb.define_name('{0}!{1}'.format(sheet_name, 'System'), '={0}!{1}:{2}'.format(sheet_name, cell_dict['System'][0], cell_dict['System'][1]))
     for short_name in short_name_list:
         #wb.define_name('Applications!Taking', '=Applications!$F$2:$O$3')
         wb.define_name('{0}!{1}'.format(sheet_name, short_name), '={0}!{1}:{2}'.format(sheet_name, cell_dict[short_name][0], cell_dict[short_name][1]))
 
 
     wb.close()
-    return wb
-    #return cell_dict
+    #return wb
+    return cell_dict
 
