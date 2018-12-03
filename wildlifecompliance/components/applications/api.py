@@ -966,8 +966,9 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         assessor_groups = ApplicationGroupType.objects.filter(type='assessor', members__email=request.user.email)
 
         # For each assessor groups get the assessments
+        queryset = self.get_queryset().none()
         for group in assessor_groups:
-            queryset = Assessment.objects.filter(assessor_group=group)
+            queryset = queryset | Assessment.objects.filter(assessor_group=group)
 
         serializer = DTAssessmentSerializer(queryset, many=True)
         return Response(serializer.data)
