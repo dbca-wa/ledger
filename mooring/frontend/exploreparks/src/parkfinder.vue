@@ -855,11 +855,19 @@ export default {
                             vm.vesselSize = data[0].vessel_size;
                             vm.vesselDraft = data[0].vessel_draft;
                         } else {
+                            vm.vesselWeight = 0;
+                            vm.vesselBeam = 0;
+                            vm.vesselSize = 0;
+                            vm.vesselDraft = 0;
                             console.log("Registration was not found.");
                         }
                     }
                 });
             } else {
+                vm.vesselWeight = 0;
+                vm.vesselBeam = 0;
+                vm.vesselSize = 0;
+                vm.vesselDraft = 0;
                 if (document.cookie.split('vessel_rego=').length==2 && (!this.vesselRego || this.vesselRego == "")){
                     document.cookie = "vessel_rego=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
                 }
