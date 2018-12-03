@@ -596,6 +596,10 @@ def add_booking(request, *args, **kwargs):
     num_adults = request.POST.get('num_adult', 0)
     num_children = request.POST.get('num_children', 0)
     num_infants = request.POST.get('num_infant',0)
+    vessel_size = request.POST.get('vessel_size', 0)
+    vessel_draft = request.POST.get('vessel_draft', 0)
+    vessel_beam = request.POST.get('vessel_beam', 0)
+    vessel_weight = request.POST.get('vessel_weight', 0)
 
     start_booking_date = request.POST['date']
     finish_booking_date = request.POST['date']
@@ -612,12 +616,20 @@ def add_booking(request, *args, **kwargs):
             booking.details['num_adults'] = num_adults
             booking.details['num_children'] = num_children
             booking.details['num_infants'] = num_infants
+            booking.details['vessel_size'] = vessel_size
+            booking.details['vessel_draft'] = vessel_draft
+            booking.details['vessel_beam'] = vessel_beam
+            booking.details['vessel_weight'] = vessel_weight
             booking.save()
     else:
         details = {
            'num_adults' : num_adults,
            'num_children' : num_children,
-           'num_infants' : num_infants
+           'num_infants' : num_infants,
+           'vessel_size' : vessel_size,
+           'vessel_draft': vessel_draft,
+           'vessel_beam' : vessel_beam,
+           'vessel_weight': vessel_weight,
         }
         mooringarea = MooringArea.objects.get(id=request.POST['mooring_id'])
         booking = Booking.objects.create(mooringarea=mooringarea,booking_type=3,expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),details=details,arrival=booking_period_start,departure=booking_period_finish)
@@ -1563,6 +1575,9 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             "num_infant" : request.GET.get('num_infant', 0),
             # "gear_type" : request.GET.get('gear_type', 'all'),
             "vessel_size" : request.GET.get('vessel_size', 0),
+            "vessel_draft" : request.GET.get('vessel_draft', 0),
+            "vessel_beam" : request.GET.get('vessel_beam', 0),
+            "vessel_weight" : request.GET.get('vessel_weight', 0)
 #            "distance_radius" : request.GET.get('distance_radius', 0)
         }
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
@@ -1576,6 +1591,9 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         num_infant = serializer.validated_data['num_infant']
         # gear_type = serializer.validated_data['gear_type']
         vessel_size = serializer.validated_data['vessel_size']
+        vessel_draft = serializer.validated_data['vessel_draft']
+        vessel_beam = serializer.validated_data['vessel_beam']
+        vessel_weight = serializer.validated_data['vessel_weight']
  #       distance_radius = serializer.validated_data['distance_radius']
 
         
@@ -1868,7 +1886,11 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                         'tent': v[3],
                         'campervan': v[4],
                         'caravan': v[5]
-                    }
+                    },
+                    'vessel_size_limit': k.mooringarea.vessel_size_limit,
+                    'vessel_draft_limit': k.mooringarea.vessel_draft_limit,
+                    'vessel_beam_limit': k.mooringarea.vessel_beam_limit,
+                    'vessel_weight_limit': k.mooringarea.vessel_weight_limit
                 }
 
                 result['sites'].append(site)

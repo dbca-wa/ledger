@@ -44,7 +44,7 @@
                             {% verbatim %}
                                 <b>Time left to complete booking {{ timeleft }}.</b> 
                             {% endverbatim %}
-                                <a class="btn btn-info" href="{% url 'mooring_availaiblity2_selector' %}?site_id={{ booking.mooringarea.id }}">Change in-progress booking</a>
+                                <a class="btn btn-info" href="{% url 'public_abort_booking' %}?change=True">Change in-progress booking</a>
                                 <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel in-progress booking</a>
                             </p>
                             {% if show_errors %}
@@ -370,25 +370,25 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="vessel_size" class="text-right">Vessel Size (Meters)</label>
-                                <input type="number" class="form-control" id="vessel_size" name="size" v-model="size"/>
+                                <input type="number" class="form-control" id="vessel_size" name="size" v-model="size" readonly/>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="vessel_draft" class="text-right">Vessel Draft (Meters)</label>
-                                <input type="number" class="form-control" id="vessel_draft" name="draft" v-model="draft"/>
+                                <input type="number" class="form-control" id="vessel_draft" name="draft" v-model="draft" readonly/>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="vessel_beam" class="text-right">Vessel Beams (Meters)</label>
-                                <input type="number" class="form-control" id="vessel_beam" name="size" v-model="beam"/>
+                                <input type="number" class="form-control" id="vessel_beam" name="size" v-model="beam" readonly/>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="vessel_weight" class="text-right">Vessel Weight (Tons)</label>
-                                <input type="number" class="form-control" id="vessel_weight" name="draft" v-model="weight"/>
+                                <input type="number" class="form-control" id="vessel_weight" name="draft" v-model="weight" readonly/>
                             </div>
                         </div>
                     </div>
@@ -586,10 +586,10 @@
             numMooring: 0,
             vehicleCount: 1,
             payingAdmissions: true,
-            size:0,
-            weight:0,
-            draft:0,
-            beam:0,
+            size: {{ details.vessel_size }},
+            draft: {{ details.vessel_draft }},
+            beam: {{ details.vessel_beam }},
+            weight: {{ details.vessel_weight }},
             admissionFee: 0,
             nononline: false,
             override: false,
@@ -951,8 +951,6 @@
                 var secondHalf = x[1].split(';');
                 var rego = secondHalf[0];
                 vm.vehicles = [[0, rego, true]];
-                console.log(rego);
-                vm.searchRego(rego);
             }
             $.get("/api/discountReasons/",function (data) {
                 vm.override_reasons = data;

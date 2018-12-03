@@ -64,6 +64,9 @@ class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     avail = serializers.ChoiceField(choices=('all', 'rental-available', 'rental-notavailable', 'public-notbookable'), default='all')
     pen_type = serializers.ChoiceField(choices=('all', 0, 1, 2), default='all')
     vessel_size = serializers.IntegerField(default=0)
+    vessel_draft = serializers.IntegerField(default=0)
+    vessel_beam = serializers.IntegerField(default=0)
+    vessel_weight = serializers.IntegerField(default=0)
     #distance_radius = serializers.IntegerField(default=0)
 
 class MooringsiteBookingSerializer(serializers.Serializer):

@@ -82,6 +82,10 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        For full day closures set start time as 00:00 and end time as 23:59.<br/>
+                        For half day closures set both start and end time e.g. 08:00 and 14:00.
+                    </div>
                 </form>
             </div>
         </modal>

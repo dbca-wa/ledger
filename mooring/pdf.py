@@ -1,7 +1,7 @@
 import os
 from io import BytesIO
 import calendar
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, KeepTogether, PageBreak, Image, ImageAndFlowables
@@ -139,25 +139,23 @@ def create_confirmation(confirmation_buffer, booking, mooring_bookings):
         timestamp = calendar.timegm(end.timetuple())
         local_dt = datetime.fromtimestamp(timestamp)
         end = local_dt.replace(microsecond=end.microsecond)
-        end = end.strftime('%d/%m/%Y %H:%M')
+        end_str = end.strftime('%d/%m/%Y %H:%M')
         
         if from_date == "":
             from_date = start
         if i == len(mooring_bookings)-1:
-            to_date = end
+            to_date = end_str
         else:
             next_dt = mooring_bookings[i+1].from_dt
             timestamp = calendar.timegm(next_dt.timetuple())
             local_dt = datetime.fromtimestamp(timestamp)
             next_dt = local_dt.replace(microsecond=next_dt.microsecond)
-            next_dt = next_dt.strftime('%d/%m/%Y %H:%M')
-            next_date = next_dt.split(" ")
-            end_date = end.split(" ")
-            if datetime.strptime(end_date[0], '%d/%m/%Y') == datetime.strptime(next_date[0], '%d/%m/%Y') and mb.campsite.mooringarea.name == mooring_bookings[i+1].campsite.mooringarea.name:
+            next_str = next_dt.strftime('%d/%m/%Y %H:%M')
+            if (end + timedelta(minutes=1)) == next_dt and mb.campsite.mooringarea.name == mooring_bookings[i+1].campsite.mooringarea.name:
                 #Go to next booking
                 to_date = ""
             else:
-                to_date = end
+                to_date = end_str
         if to_date > "":
             lines.append({'from': from_date, 'to':to_date, 'mooring': mb.campsite.mooringarea.name, 'park': mb.campsite.mooringarea.park.name})
             from_date = ""
