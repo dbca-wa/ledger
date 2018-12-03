@@ -178,7 +178,6 @@ class MooringArea(models.Model):
     vessel_weight_limit = models.IntegerField(default=0)
     mooring_physical_type = models.SmallIntegerField(choices=MOORING_PHYSICAL_TYPE_CHOICES, default=0)
     mooring_class = models.CharField(choices=MOORING_CLASS_CHOICES, default=0, max_length=20)
-    admission_fee_required = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

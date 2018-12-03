@@ -7,22 +7,22 @@
                 </div>
                 <div class="col-lg-12">
                     <div class="row">
-                        <div class="col-md-3">
-                            <button type="button" class="btn btn-primary" @click.prevent="newOption()">Add New Option</button>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="newOption()">Add New Option</button>
                         </div>
-                        <div class="col-md-6"/>
-                        <div class="col-md-3">
-                            <button type="button" class="btn btn-primary" @click.prevent="newPeriod()">Add New Period</button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <button type="button" class="btn btn-primary" @click.prevent="editOption()">Edit Option</button>
+                        <div class="col-md-8"/>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="newPeriod()">Add New Period</button>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-3">
-                            <button type="button" class="btn btn-danger" @click.prevent="deleteOption()">Delete Option</button>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="editOption()">Edit Option</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger" style="width:100%;" @click.prevent="deleteOption()">Delete Option</button>
                         </div>
                     </div>
                     <div class="row">

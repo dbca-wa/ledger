@@ -98,14 +98,15 @@ def _create_letter_header_footer(canvas, doc):
     canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
     canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
 
-    canvas.drawRightString(current_x, current_y, DPAW_URL)
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE,
-                           'Phone: {} Fax: {} Email: {}'.format(DPAW_PHONE, DPAW_FAX, DPAW_EMAIL))
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 2, DPAW_PO_BOX)
+    # removed by request, may be needed elsewhere though in future.
+    # canvas.drawRightString(current_x, current_y, DPAW_URL)
+    # canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE,
+    #                        'Phone: {} Fax: {} Email: {}'.format(DPAW_PHONE, DPAW_FAX, DPAW_EMAIL))
+    # canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 2, DPAW_PO_BOX)
 
-    canvas.setFont(BOLD_ITALIC_FONTNAME, SMALL_FONTSIZE)
+    # canvas.setFont(BOLD_ITALIC_FONTNAME, SMALL_FONTSIZE)
 
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
+    # canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
 
 
 def create_confirmation(confirmation_buffer, booking, mooring_bookings):
@@ -165,11 +166,12 @@ def create_confirmation(confirmation_buffer, booking, mooring_bookings):
         table_data.append([Paragraph('Mooring {}'.format(i+1), styles['BoldLeft']), Paragraph('{}, {}'.format(line['mooring'], line['park']), styles['BoldLeft'])])
         # campsite = u'{}'.format(booking.first_campsite.type) if booking.mooringarea.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
     #   table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
-        days = (datetime.strptime(line['to'], '%d/%m/%Y %H:%M') - datetime.strptime(line['from'], '%d/%m/%Y %H:%M')).days
+        days = (datetime.strptime(line['to'], '%d/%m/%Y %H:%M').date() - datetime.strptime(line['from'], '%d/%m/%Y %H:%M').date()).days
         if days == 0:
             days = 1
         plural = 's' if days > 1 else ''
         table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph('{} to {} ({} day{})'.format(line['from'], line['to'], days, plural), styles['Left'])])
+        
 
 #    table_data.append([Paragraph('Number of guests', styles['BoldLeft']), Paragraph(booking.stay_guests, styles['Left'])])
     table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} {} ({})'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''), booking.customer.email if booking.customer else None), styles['Left'])])
@@ -177,8 +179,10 @@ def create_confirmation(confirmation_buffer, booking, mooring_bookings):
 
     if booking.vehicle_payment_status:
         vehicle_data = []
+        rego = ""
         for r in booking.vehicle_payment_status:
-            data = [Paragraph(r['Type'], styles['Left']), Paragraph(r['Rego'], styles['Left'])]
+            data = [Paragraph(r['Rego'], styles['Left'])]
+            rego = r['Rego']
             if r.get('Paid') != None:
                 if r['Paid'] == 'Yes':
                     data.append(Paragraph('Entry fee paid', styles['Left']))
@@ -188,9 +192,10 @@ def create_confirmation(confirmation_buffer, booking, mooring_bookings):
                     pass
                     #data.append(Paragraph('Marina Pass Required', styles['Left']))
             vehicle_data.append(data)
+
             
         vehicles = Table(vehicle_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
-        table_data.append([Paragraph('Vessel', styles['BoldLeft']), vehicles])
+        table_data.append([Paragraph('Vessel', styles['BoldLeft']), rego])
     else:
         table_data.append([Paragraph('Vessel', styles['BoldLeft']), Paragraph('No vessel', styles['Left'])])
         
