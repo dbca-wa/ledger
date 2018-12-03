@@ -7,8 +7,12 @@ from wildlifecompliance.components.licences.models import DefaultActivityType, W
 from wildlifecompliance.components.organisations.models import Organisation
 from ledger.accounts.models import OrganisationAddress
 from django.contrib.postgres.fields.jsonb import JSONField
+from wildlifecompliance.utils import SearchUtils
+from wildlifecompliance.components.licences.models import DefaultActivity
 
-import xlrd, xlwt
+import xlsxwriter
+from xlsxwriter.utility import xl_rowcol_to_cell
+#import xlrd, xlwt
 import os
 
 import logging
@@ -66,24 +70,88 @@ def write_excel_model(licence_category):
                     short_name=activity_type['short_name']
                 )
 
-def create_activity_type_fields(activity_type):
+#def create_activity_type_fields(activity_type):
+#    """
+#    from wildlifecompliance.utils.excel_utils import create_activity_type_fields
+#    create_activity_type_fields('Importing Fauna (Non-Commercial)')
+#    --> OrderedDict([(u'species', u'species a details'), (u'number_of_animals', u'1')])
+#    """
+#    ordered_dict=OrderedDict([])
+#
+#    try:
+#        fields = WildlifeLicenceActivity.objects.get(name=activity_type.activity_name).fields
+#        if isinstance(fields, dict):
+#            for k,v in fields.iteritems():
+#                # k - section name
+#                # v - question 
+#                s = SearchUtils(activity_type.application)
+#                answer = s.search_value(k)
+#                ordered_dict.update(OrderedDict([(v,answer)]))
+#    except AttributeError:
+#        pass
+#
+#    return ordered_dict
+
+def create_activity_type_fields(activity_type_id):
     """
     from wildlifecompliance.utils.excel_utils import create_activity_type_fields
     create_activity_type_fields('Importing Fauna (Non-Commercial)')
-    {u'Species1-1_0': u'species', u'Species1-2_0': u'number_of_animals'}
+    --> OrderedDict([(u'species', u'species a details'), (u'number_of_animals', u'1')])
+
+    ________________________________
+
+	c=WildlifeLicenceClass.objects.get(short_name='Fauna Other Purpose')
+
+	In [4]: c.short_name
+	Out[4]: u'Fauna Other Purpose'
+
+
+	for i in DefaultActivityType.objects.filter(licence_class__name=c.name):  	--> Maps licence class to activity_type
+		...:     print i.activity_type_id, i
+		  
+	16 Fauna (Other Purposes) Licence - Fauna Other - Taking
+	17 Fauna (Other Purposes) Licence - Fauna Other - Disturbing
+	18 Fauna (Other Purposes) Licence - Fauna Other - Possessing
+	19 Fauna (Other Purposes) Licence - Fauna Other - Importing
+	20 Fauna (Other Purposes) Licence - Fauna Other - Exporting
+
+	{'activity_type_id': 20,
+	 'id': 21,
+	 'licence_class_id': 2}
+
+	____________________________________
+
+
+	DefaultActivity.objects.get(activity_type_id=19).__dict__
+	Out[117]: 
+	{'_state': <django.db.models.base.ModelState at 0x7f0c4f66c090>,
+	 'activity_id': 27,
+	 'activity_type_id': 19,
+	 'id': 28}
+
+	In [112]: WildlifeLicenceActivity.objects.get(id=27)
+	Out[112]: <WildlifeLicenceActivity: Importing Fauna (Non-Commercial)>
+
+	WildlifeLicenceActivity.objects.get(id=27).fields
+	Out[120]: {u'Species1-1_0': u'species', u'Species1-2_0': u'number_of_animals'}
+
     """
     ordered_dict=OrderedDict([])
 
     try:
-        fields = WildlifeLicenceActivity.objects.get(name=activity_type.activity_name).fields
+        default_activity = DefaultActivity.objects.get(activity_type_id=activity_type_id) # Maps activity to activity_type
+        fields = WildlifeLicenceActivity.objects.get(id=default_activity.id).fields
         if isinstance(fields, dict):
             for k,v in fields.iteritems():
-                ordered_dict.update(OrderedDict([(k,v)]))
+                # k - section name
+                # v - question 
+                s = SearchUtils(activity_type.application)
+                answer = s.search_value(k)
+                ordered_dict.update(OrderedDict([(v,answer)]))
     except AttributeError:
         pass
 
     return ordered_dict
-
 
 def write_excel_model_test(ids=[145]):
     applications = Application.objects.filter(id__in=ids)
@@ -219,94 +287,32 @@ def cols_common(activity_type, short_name):
     ])
     return ordered_dict
 
-def cols_output(activity_type, short_name):
+def cols_output(activity_type, activity_type_id, short_name):
     """
     excel_app = ExcelApplication.objects.all().last()
     activity_type = excel_app.excel_activity_types.filter(short_name='Exporting')[0]
     cols_output(activity_type, 'Importing', 'Importing Fauna (Non-Commercial)')
     """
-    #import ipdb; ipdb.set_trace()
+    if short_name=='Importing':
+        import ipdb; ipdb.set_trace()
     ordered_dict = OrderedDict([
         ('{}'.format(short_name), None),
     ])
-    ordered_dict.update(create_activity_type_fields(activity_type))
+    ordered_dict.update(create_activity_type_fields(activity_type_id))
     ordered_dict.update(cols_common(activity_type, short_name))
     return ordered_dict
 
 
 def write_workbook(licence_category='Flora Industry'):
+    """ 
+    from wildlifecompliance.utils.excel_utils import write_workbook, write_excel_model
+    write_excel_model('Fauna Other Purpose')
+    write_workbook('Fauna Other Purpose')
+    """
     #filename = '/tmp/wc_apps_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))
     excel_apps = ExcelApplication.objects.filter(application__licence_category=licence_category).order_by('application_id') #filter(id__in=ids)
-    filename = '/tmp/wc_apps_{}.xls'.format(licence_category.lower().replace(' ','_'))
+    activity_types = DefaultActivityType.objects.filter(licence_class__short_name=licence_category)
 
-    wb = xlwt.Workbook(encoding='utf-8')
-    ws = wb.add_sheet('Applications')
-
-    # Sheet header, first row
-    row_num = 0
-
-    # Header
-    font_style = xlwt.XFStyle()
-    font_style.font.bold = True
-
-    excel_app = excel_apps.last()
-    licence_class = excel_app.application.licence_type_data['short_name']
-    short_name_list = get_purposes(licence_class).values_list('activity_type__short_name', flat=True)
-    col_num = 0
-    for k,v in excel_app.cols_output.iteritems():
-        ws.write(row_num, col_num, k, font_style)
-        col_num += 1
-
-    #for activity_type in excel_app.excel_activity_types.all():
-    for short_name in short_name_list:
-        activity_type = excel_app.excel_activity_types.filter(short_name=short_name)
-        activity_type_cols = cols_output(None, short_name).keys()
-
-        ws.write(row_num, col_num, '', font_style); col_num += 1
-        #ws.write(row_num, col_num, short_name, font_style); col_num += 1
-
-        #for k,v in activity_type.cols_output.iteritems():
-        for col_name in activity_type_cols:
-            ws.write(row_num, col_num, col_name, font_style)
-            col_num += 1
-
-    # Application data
-    font_style = xlwt.XFStyle()
-    for excel_app in excel_apps:
-        row_num += 1
-        col_num = 0
-        for k,v in excel_app.cols_output.iteritems():
-            ws.write(row_num, col_num, v, font_style)
-            col_num += 1
-
-        for short_name in short_name_list:
-
-            activity_type = excel_app.excel_activity_types.filter(short_name=short_name)
-            activity_type_cols = cols_output(activity_type, short_name)
-
-            ws.write(row_num, col_num, '', font_style); col_num += 1
-            #ws.write(row_num, col_num, short_name, font_style); col_num += 1
-            if activity_type.exists():
-                #for k,v in activity_type[0].cols_output.iteritems():
-                for k,v in activity_type_cols.iteritems():
-                    #import ipdb; ipdb.set_trace()
-                    ws.write(row_num, col_num, v, font_style)
-                    col_num += 1
-            else:
-                # create a blank activity_type bilock
-                for _ in activity_type_cols.keys():
-                    ws.write(row_num, col_num, '', font_style)
-                    col_num += 1
-
-
-    wb.save(filename)
-    return wb
-
-import xlsxwriter
-from xlsxwriter.utility import xl_rowcol_to_cell
-def write_workbook2(licence_category='Flora Industry'):
-    #filename = '/tmp/wc_apps_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))
-    excel_apps = ExcelApplication.objects.filter(application__licence_category=licence_category).order_by('application_id') #filter(id__in=ids)
     filename = '/tmp/wc_apps_{}.xlsx'.format(licence_category.lower().replace(' ','_'))
     sheet_name = 'Applications'
 
@@ -331,7 +337,10 @@ def write_workbook2(licence_category='Flora Industry'):
     #for activity_type in excel_app.excel_activity_types.all():
     for short_name in short_name_list:
         activity_type = excel_app.excel_activity_types.filter(short_name=short_name)
-        activity_type_cols = cols_output(None, short_name).keys()
+        import ipdb; ipdb.set_trace()
+        activity_type_id = activity_types.get(activity_type__short_name=short_name).id # from the mapping class (since activity type may be None), and need to create the dummy app fields
+        #activity_type_id = activity_types.get(short_name=short_name).activity_type_id # from the mapping class (since activity type may be None), and need to create the dummy app fields
+        activity_type_cols = cols_output(None, activity_type_id, short_name).keys()
 
         #ws.write(row_num, col_num, '', font_style); col_num += 1
         ws.write(row_num, col_num, '', bold); col_num += 1
@@ -363,10 +372,13 @@ def write_workbook2(licence_category='Flora Industry'):
 
             cell_start = xl_rowcol_to_cell(row_start, col_num, row_abs=True, col_abs=True)
             activity_type = excel_app.excel_activity_types.filter(short_name=short_name)
-            activity_type_cols = cols_output(activity_type, short_name)
+            activity_type_id = activity_types.get(activity_type__short_name=short_name).id # from the mapping class (since activity type may be None), and need to create the dummy app fields
+            #activity_type_id = activity_types.get(short_name=short_name).activity_type_id # from the mapping class (since activity type may be None), and need to create the dummy app fields
+            activity_type_cols = cols_output(activity_type, activity_type_id, short_name)
 
             col_start = col_num
             if activity_type.exists():
+                #import ipdb; ipdb.set_trace()
                 #for k,v in activity_type[0].cols_output.iteritems():
                 for k,v in activity_type_cols.iteritems():
                     #import ipdb; ipdb.set_trace()
