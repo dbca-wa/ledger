@@ -37,6 +37,8 @@ class District(models.Model):
     def __str__(self):
         return self.name
 
+
+
 @python_2_unicode_compatible
 class Vehicle(models.Model):
     capacity = models.CharField(max_length=200, blank=True)
@@ -61,6 +63,21 @@ class AccessType(models.Model):
     def __str__(self):
         return self.name
 
+@python_2_unicode_compatible
+class Park(models.Model):
+    district = models.ForeignKey(District, related_name='park_district')
+    name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=10, blank=True)
+    #proposal = models.ForeignKey(Proposal, related_name='parks')
+    
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+        #unique_together = ('name', 'proposal',)
+
+    def __str__(self):
+        return self.name
 
 @python_2_unicode_compatible
 class ApplicationType(models.Model):

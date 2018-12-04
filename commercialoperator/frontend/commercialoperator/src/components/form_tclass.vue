@@ -53,10 +53,11 @@
 
             </ul>
             <div class="tab-content" id="pills-tabContent">
-              <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab"> 
-                <Profile :isApplication="true"></Profile>
+              <!-- <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">  -->
+                <div class="tab-pane fade" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab"> 
+               <Profile :isApplication="true"></Profile>
               
-                <Organisation :org_id="proposal.applicant" :isApplication="true"></Organisation>
+                <Organisation :org_id="proposal.applicant" :isApplication="true"></Organisation> 
                 <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
@@ -150,6 +151,7 @@
 
     .nav-item {
         background-color: rgb(200,200,200,0.8) !important;
+        margin-bottom: 2px;
     }
 
     .nav-item>li>a {

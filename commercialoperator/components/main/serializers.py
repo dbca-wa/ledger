@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType
+from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park
 from ledger.accounts.models import EmailUser
 
 class CommunicationLogEntrySerializer(serializers.ModelSerializer):
@@ -34,10 +34,11 @@ class DistrictSerializer(serializers.ModelSerializer):
 
 
 class RegionSerializer(serializers.ModelSerializer):
-    districts = DistrictSerializer(many=True)
+    #districts = DistrictSerializer(many=True)
     class Meta:
         model = Region
-        fields = ('id', 'name', 'forest_region', 'districts')
+        fields = ('id', 'name') 
+            #'forest_region', 'districts')
 
 class ActivityMatrixSerializer(serializers.ModelSerializer):
     class Meta:
@@ -77,3 +78,8 @@ class AccessTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessType
         fields = ('id', 'name', 'visible')
+
+class ParkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Park
+        fields = '__all__'

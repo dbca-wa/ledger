@@ -22,7 +22,9 @@ module.exports = {
     regions:"/api/regions.json",
     activity_matrix:"/api/activity_matrix.json",
     application_types:"/api/application_types.json",
-
+    vehicles:"/api/vehicles.json",
+    access_types:"/api/access_types.json",
+    parks:"/api/parks.json",
 
     // used in internal and external dashboards
     proposals_paginated_external:   "/api/proposal_paginated/proposals_external/?format=datatables",

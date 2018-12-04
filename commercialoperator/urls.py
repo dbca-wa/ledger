@@ -40,6 +40,8 @@ router.register(r'activity_matrix', main_api.ActivityMatrixViewSet)
 router.register(r'application_types', main_api.ApplicationTypeViewSet)
 router.register(r'access_types', main_api.AccessTypeViewSet)
 router.register(r'vehicles', main_api.VehicleViewSet)
+router.register(r'parks', main_api.ParkViewSet)
+
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
