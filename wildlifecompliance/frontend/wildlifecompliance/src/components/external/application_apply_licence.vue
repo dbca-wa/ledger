@@ -83,6 +83,7 @@ export default {
     return {
         licence_select : this.$route.params.licence_select,
         behalf_of_org : this.$route.params.org_select,
+        behalf_of_proxy : this.$route.params.proxy_select,
         yourself : this.$route.params.yourself,
         "application": null,
         agent: {},
@@ -298,6 +299,7 @@ export default {
             })
         } else {
             data.org_applicant=vm.behalf_of_org
+            data.proxy_applicant=vm.behalf_of_proxy
             data.licence_class_data=vm.licence_class
             data.licence_type_name=vm.licence_type_name
             data.application_fee=vm.application_fee

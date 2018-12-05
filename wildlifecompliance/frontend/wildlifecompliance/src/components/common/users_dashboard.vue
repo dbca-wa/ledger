@@ -83,8 +83,11 @@ export default {
                     {
                         data:"id",
                         mRender:function(data, type, full){
-                            var column = "<a href='/internal/users/\__ID__\'> Edit </a>";
-                            return column.replace(/__ID__/g, data);
+                            let links = ''
+                            links += "<a href='/internal/users/\__ID__\'> Edit</a><br/>";
+                            links +=  `<a href='#${full.id}' apply-on-behalf-of='${full.id}'>New Application</a>`;
+
+                            return links.replace(/__ID__/g, data);
                         }
                     },
                 ],
@@ -114,8 +117,31 @@ export default {
         }
     },
     methods: {
+        applyOnBehalfOf:function (user_id) {
+            let vm = this;
+            console.log('from user list - apply on behalf of: ',user_id);
+             vm.$router.push({
+                  name:"apply_application_licence",
+                  params:{
+                    proxy_select: user_id
+                  }
+              });
+        },
+        addEventListeners: function(){
+            let vm = this;
+            // Apply on behalf of listener
+            vm.$refs.user_datatable.vmDataTable.on('click', 'a[apply-on-behalf-of]', function(e) {
+                e.preventDefault();
+                var id = parseInt($(this).attr('apply-on-behalf-of'));
+                vm.applyOnBehalfOf(id);
+            });
+        }
     },
     mounted: function(){
+        let vm = this;
+        this.$nextTick(() => {
+            vm.addEventListeners();
+        });
     }
 }
 </script>
