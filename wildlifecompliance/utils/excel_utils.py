@@ -92,7 +92,7 @@ def write_excel_model(licence_category):
 #
 #    return ordered_dict
 
-def create_activity_type_fields(activity_type, activity_name):
+def create_activity_type_fields(qs_activity_type, activity_name):
     """
     from wildlifecompliance.utils.excel_utils import create_activity_type_fields
     create_activity_type_fields('Importing Fauna (Non-Commercial)')
@@ -144,8 +144,10 @@ def create_activity_type_fields(activity_type, activity_name):
             for k,v in fields.iteritems():
                 # k - section name
                 # v - question
-                if activity_type:
-                    s = SearchUtils(activity_type.application)
+                if qs_activity_type:
+                    #if activity_name == 'Importing Fauna (Non-Commercial)':
+                    #    import ipdb; ipdb.set_trace()
+                    s = SearchUtils(qs_activity_type[0].application)
                     answer = s.search_value(k)
                     ordered_dict.update(OrderedDict([(v,answer)]))
                 else:
@@ -248,10 +250,7 @@ def get_purposes(licence_class_short_name):
 
         DefaultActivityType.objects.filter(licence_class__short_name='Flora Other Purpose').values_list('licence_class__activity_type__activity__name', flat=True).distinct()
     """
-    activity_type_names = DefaultActivityType.objects.filter(licence_class__short_name=licence_class_short_name).values_list(
-                            'licence_class__activity_type__activity__name', flat=True
-                        ).distinct()
-    return activity_type_names
+    return DefaultActivityType.objects.filter(licence_class__short_name=licence_class_short_name).values_list('licence_class__activity_type__activity__name', flat=True).distinct()
 
 def read_workbook(input_filename):
     """
@@ -278,35 +277,22 @@ def read_workbook(input_filename):
     else:
         logger.error('{0} does not appear to be a valid file'.format(input_filename))
 
-def _cols_output(activity_type, short_name):
-    code = short_name[:2].lower()
-    ordered_dict = OrderedDict([
-        ('{}'.format(short_name), None),
-        ('{}_conditions'.format(code), activity_type[0].conditions if activity_type else None),
-        ('{}_issue_date'.format(code), activity_type[0].issue_date if activity_type else None),
-        ('{}_start_date'.format(code), activity_type[0].start_date if activity_type else None),
-        ('{}_expiry_date'.format(code), activity_type[0].expiry_date if activity_type else None),
-        ('{}_issued'.format(code), activity_type[0].issued if activity_type else None),
-        ('{}_processed'.format(code), activity_type[0].processed if activity_type else None),
-    ])
-    return ordered_dict
-
-def cols_common(activity_type, activity_name):
+def cols_common(qs_activity_type, activity_name):
     code = activity_name[:2].lower()
     ordered_dict = OrderedDict([
         ('{}_cover_processed'.format(code), None),
         ('{}_cover_processed_date'.format(code), None),
         ('{}_cover_processed_by'.format(code), None),
-        ('{}_conditions'.format(code), activity_type[0].conditions if activity_type else None),
-        ('{}_issue_date'.format(code), activity_type[0].issue_date if activity_type else None),
-        ('{}_start_date'.format(code), activity_type[0].start_date if activity_type else None),
-        ('{}_expiry_date'.format(code), activity_type[0].expiry_date if activity_type else None),
-        ('{}_issued'.format(code), activity_type[0].issued if activity_type else None),
-        ('{}_processed'.format(code), activity_type[0].processed if activity_type else None),
+        ('{}_conditions'.format(code), qs_activity_type[0].conditions if qs_activity_type else None),
+        ('{}_issue_date'.format(code), qs_activity_type[0].issue_date if qs_activity_type else None),
+        ('{}_start_date'.format(code), qs_activity_type[0].start_date if qs_activity_type else None),
+        ('{}_expiry_date'.format(code), qs_activity_type[0].expiry_date if qs_activity_type else None),
+        ('{}_issued'.format(code), qs_activity_type[0].issued if qs_activity_type else None),
+        ('{}_processed'.format(code), qs_activity_type[0].processed if qs_activity_type else None),
     ])
     return ordered_dict
 
-def cols_output(activity_type, activity_name):
+def cols_output(qs_activity_type, activity_name):
     """
     excel_app = ExcelApplication.objects.all().last()
     activity_type = excel_app.excel_activity_types.filter(activity_name='Importing Fauna (Non-Commercial)')[0]
@@ -317,8 +303,8 @@ def cols_output(activity_type, activity_name):
     ordered_dict = OrderedDict([
         ('{}'.format(activity_name), None),
     ])
-    ordered_dict.update(create_activity_type_fields(activity_type, activity_name))
-    ordered_dict.update(cols_common(activity_type, activity_name))
+    ordered_dict.update(create_activity_type_fields(qs_activity_type, activity_name))
+    ordered_dict.update(cols_common(qs_activity_type, activity_name))
     return ordered_dict
 
 
@@ -354,7 +340,7 @@ def write_workbook(licence_category='Flora Industry'):
         col_num += 1
 
     for activity_name in activity_name_list:
-        activity_type = excel_app.excel_activity_types.filter(activity_name=activity_name)
+        #activity_type = excel_app.excel_activity_types.filter(activity_name=activity_name)
         #import ipdb; ipdb.set_trace()
         activity_type_cols = cols_output(None, activity_name).keys()
 
