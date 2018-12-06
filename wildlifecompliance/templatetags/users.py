@@ -1,18 +1,34 @@
 from django.template import Library
-from wildlifelicensing.apps.main import helpers
-
-from django.template import Library
-from wildlifelicensing.apps.main import helpers
+from wildlifecompliance import helpers as wildlifecompliance_helpers
 
 register = Library()
 
 
-@register.filter(name='is_customer')
-def is_customer(user):
-    return helpers.is_customer(user)
+@register.simple_tag(takes_context=True)
+def is_customer(context):
+    request = context['request']
+    return wildlifecompliance_helpers.is_customer(request)
+
+@register.simple_tag(takes_context=True)
+def is_officer(context):
+    request = context['request']
+    return wildlifecompliance_helpers.is_officer(request)
+
+@register.simple_tag(takes_context=True)
+def is_wildlifecompliance_admin(context):
+    # checks if user is an AdminUser
+    request = context['request']
+    return wildlifecompliance_helpers.is_wildlifecompliance_admin(request)
+
+@register.simple_tag(takes_context=True)
+def is_internal(context):
+    # checks if user is a departmentuser and logged in via single sign-on
+    request = context['request']
+    return wildlifecompliance_helpers.is_internal(request)
 
 
-@register.filter(name='is_officer')
-def is_officer(user):
-    return helpers.is_officer(user)
-
+@register.simple_tag(takes_context=True)
+def is_model_backend(context):
+    # Return True if user logged in via single sign-on (or False via social_auth i.e. an external user signing in with a login-token)
+    request = context['request']
+    return wildlifecompliance_helpers.is_model_backend(request)

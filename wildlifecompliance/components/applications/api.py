@@ -687,6 +687,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             licence_type_name = app_data.pop('licence_type_name')
             schema_data=get_activity_type_schema(licence_class_data)
             org_applicant=request.data.get('org_applicant')
+            proxy_applicant=request.data.get('proxy_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
             data = {
@@ -695,6 +696,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 'licence_type_data':licence_class_data,
                 'licence_type_name': licence_type_name,
                 'org_applicant': org_applicant,
+                'proxy_applicant': proxy_applicant,
                 'application_fee': application_fee,
                 'licence_fee': licence_fee
             }
