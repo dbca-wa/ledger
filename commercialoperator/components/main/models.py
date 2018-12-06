@@ -21,6 +21,10 @@ class Region(models.Model):
     def __str__(self):
         return self.name
 
+    # @property
+    # def districts(self):
+    #     return District.objects.filter(region=self)
+
 
 
 @python_2_unicode_compatible
@@ -37,7 +41,9 @@ class District(models.Model):
     def __str__(self):
         return self.name
 
-
+    @property
+    def parks(self):
+        return Parks.objects.filter(district=self)
 
 @python_2_unicode_compatible
 class Vehicle(models.Model):
@@ -65,7 +71,7 @@ class AccessType(models.Model):
 
 @python_2_unicode_compatible
 class Park(models.Model):
-    district = models.ForeignKey(District, related_name='park_district')
+    district = models.ForeignKey(District, related_name='parks')
     name = models.CharField(max_length=200, unique=True)
     code = models.CharField(max_length=10, blank=True)
     #proposal = models.ForeignKey(Proposal, related_name='parks')

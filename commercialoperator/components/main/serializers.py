@@ -26,19 +26,27 @@ class CommunicationLogEntrySerializer(serializers.ModelSerializer):
     def get_documents(self,obj):
         return [[d.name,d._file.url] for d in obj.documents.all()]
 
+class ParkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Park
+        fields = '__all__'
+        
 
 class DistrictSerializer(serializers.ModelSerializer):
+    parks = ParkSerializer(many=True)
     class Meta:
         model = District
-        fields = ('id', 'name', 'code')
+        fields = ('id', 'name', 'code', 'parks')
+
 
 
 class RegionSerializer(serializers.ModelSerializer):
-    #districts = DistrictSerializer(many=True)
+    districts = DistrictSerializer(many=True)
     class Meta:
         model = Region
-        fields = ('id', 'name') 
-            #'forest_region', 'districts')
+        fields = ('id', 'name','forest_region', 'districts')
+
+
 
 class ActivityMatrixSerializer(serializers.ModelSerializer):
     class Meta:
@@ -79,7 +87,3 @@ class AccessTypeSerializer(serializers.ModelSerializer):
         model = AccessType
         fields = ('id', 'name', 'visible')
 
-class ParkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Park
-        fields = '__all__'
