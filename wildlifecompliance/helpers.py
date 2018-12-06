@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from ledger.accounts.models import EmailUser
+from wildlifecompliance import settings
 
 
 def belongs_to(user, group_name):
