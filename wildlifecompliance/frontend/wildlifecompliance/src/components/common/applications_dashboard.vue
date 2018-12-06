@@ -99,6 +99,12 @@ export default {
     },
     data() {
         let vm = this;
+        let internal_application_headers = [];
+        if (wc_version == "1.0") {
+            internal_application_headers = ["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Lodged on","Action"];
+        } else {
+            internal_application_headers = ["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
+        }
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'application-datatable-'+vm._uid,
@@ -242,7 +248,7 @@ export default {
                     });
                 }
             },
-            application_headers:["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"],
+            application_headers:internal_application_headers,
             application_options:{
                 autoWidth: false,
                 language: {
@@ -416,6 +422,9 @@ export default {
         },
         is_referral: function(){
             return this.level == 'referral';
+        },
+        wc_version: function (){
+            return this.$root.wc_version;
         }
     },
     methods:{
