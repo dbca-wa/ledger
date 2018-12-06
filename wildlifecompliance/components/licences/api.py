@@ -48,7 +48,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
         # Filter by org
         org_id = request.GET.get('org_id',None)
         if org_id:
-            queryset = queryset.filter(applicant_id=org_id)
+            queryset = queryset.filter(org_applicant_id=org_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
