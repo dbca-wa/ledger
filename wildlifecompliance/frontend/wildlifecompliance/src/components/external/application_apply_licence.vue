@@ -38,7 +38,7 @@
                                                             <div v-for="(activity,index2) in type.activity" class="checkbox activity-clear-left">
 
                                                                 <div class ="col-sm-12">
-                                                                    <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected" @click="handleActivityCheckboxChange(index,index1,index2,$event)">{{activity.name}} ({{activity.base_application_fee}} + {{activity.base_licence_fee}})
+                                                                    <input type="checkbox" :value="activity.id" :id="activity.id" v-model="type.activity[index2].selected" @click="handleActivityCheckboxChange(index,index1,index2,$event)">{{activity.name}}<span v-if="wc_version != 1.0"> ({{activity.base_application_fee}} + {{activity.base_licence_fee}})</span>
                                                                 </div>
 
                                                             </div>
@@ -56,7 +56,7 @@
                             </div>
                             <div class="col-sm-12">
                                 <button :disabled="behalf_of == '' && yourself == ''" @click.prevent="submit()" class="btn btn-primary pull-right" style="margin-left: 10px;">Continue</button>
-                                <div class="pull-right" style="font-size: 18px;">
+                                <div v-if="wc_version != 1.0" class="pull-right" style="font-size: 18px;">
                                     <strong>Estimated application fee: {{application_fee | toCurrency}}</strong><br>
                                     <strong>Estimated licence fee: {{licence_fee | toCurrency}}</strong><br>
                                 </div>
@@ -119,6 +119,11 @@ export default {
     }
   },
   components: {
+  },
+  computed: {
+    wc_version: function (){
+        return this.$root.wc_version;
+    }
   },
   methods: {
     submit: function() {
@@ -325,7 +330,6 @@ export default {
     },
     
   },
- 
   beforeRouteEnter:function(to,from,next){
         let initialisers = [
 

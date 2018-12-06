@@ -21,6 +21,7 @@
                                       <input :disabled="hasOrgs" type="radio" name="select_licence" v-model="licence_select" value="New_licence" > apply for a new licence?
                                     </label>
                                 </div>
+                                <div v-if="wc_version != 1.0">
                                 <div class="radio">
                                     <label>
                                       <input type="radio" name="select_licence" v-model="licence_select" value="New_activity"> apply for a new licensed activity on your licence?
@@ -35,6 +36,7 @@
                                     <label>
                                       <input type="radio" name="select_licence" v-model="licence_select" value="Renew_activity"> renew one or more licensed activities on your licence?
                                     </label>
+                                </div>
                                 </div>
                             </div>
                             <div class="col-sm-12">
@@ -83,6 +85,9 @@ export default {
             return vm.profile.wildlifecompliance_organisations.find(org => parseInt(org.id) === parseInt(vm.behalf_of)).name;
         }
         return '';
+    },
+    wc_version: function (){
+        return this.$root.wc_version;
     }
   },
   methods: {
