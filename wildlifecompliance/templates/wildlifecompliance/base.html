@@ -100,10 +100,6 @@
                                                 {% if is_wildlifecompliance_admin_login %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                 {% endif %}
-                                                {% if is_officer_login %}
-                                                    <li><a href="/external">External</a></li>
-                                                    <li role="separator" class="divider"></li>
-                                                {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
                                                 <li><a href="{% url 'manage-profiles' %}">Manage Profiles</a></li>
                                                 {% for org in request.user.wildlifecompliance_organisations.all %}
