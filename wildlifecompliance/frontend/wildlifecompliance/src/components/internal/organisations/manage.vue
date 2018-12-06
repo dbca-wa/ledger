@@ -375,7 +375,7 @@ export default {
         let initialisers = [
             utils.fetchCountries(),
             utils.fetchOrganisation(to.params.org_id),
-            utils.fetchOrganisationPermissions(to.params.org_id)
+            utils.fetchOrganisation(to.params.org_id)
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
@@ -390,7 +390,7 @@ export default {
     beforeRouteUpdate: function(to, from, next){
         let initialisers = [
             utils.fetchOrganisation(to.params.org_id),
-            utils.fetchOrganisationPermissions(to.params.org_id)
+            utils.fetchOrganisation(to.params.org_id)
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
