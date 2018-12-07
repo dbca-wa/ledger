@@ -50,7 +50,7 @@
                                     </span>
                                     <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="!requiresCheckout" type="submit" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="!requiresCheckout || wc_version == 1.0" type="submit" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
                                     <input v-if="requiresCheckout && wc_version != 1.0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                 </p>
                             </div>
@@ -252,7 +252,7 @@ export default {
 
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
-        if (vm.requiresCheckout) {
+        if (vm.requiresCheckout && vm.wc_version != "1.0") {
             swal_title = 'Submit Application and Checkout'
             swal_html = 'Are you sure you want to submit this application and proceed to checkout?<br><br>' +
                 'Upon proceeding, you agree that the system will charge the same credit card used to ' +
@@ -270,7 +270,7 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
                     
-                    if (vm.requiresCheckout) {
+                    if (vm.requiresCheckout && vm.wc_version != "1.0") {
                         vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
                             window.location.href = "/ledger/checkout/checkout/payment-details/";
                         },err=>{
