@@ -280,6 +280,33 @@ class Organisation(models.Model):
             # send email
             send_organisation_contact_user_email_notification(user,request.user,self,request)
 
+    def make_consultant(self,user,request):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self, user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # Validate for Organisation Admin
+            administrators = OrganisationContact.objects.filter(organisation=self, user_role='organisation_admin')
+            user_is_admin = administrators.filter(email=delegate.user.email).exists()
+
+            if user_is_admin and administrators.count() < 2:
+                raise ValidationError('There is no Administrator for {}'.format(str(self.organisation)))
+
+            # add consultant
+            try:
+                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
+                org_contact.user_role = 'consultant'
+                org_contact.is_admin = False
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_USER.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_contact_user_email_notification(user,request.user,self,request)
+
+
     def suspend_user(self,user,request):
         with transaction.atomic():
             try:

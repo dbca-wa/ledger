@@ -289,7 +289,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             user_obj = EmailUser.objects.get(
                 email = serializer.validated_data['email']
                 )
-         #  TODO:  instance.make_consultant(user_obj,request)
+            instance.make_consultant(user_obj,request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data);
         except serializers.ValidationError:
