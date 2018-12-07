@@ -16,11 +16,11 @@
                                 <td><strong> {{application.lodgement_date|formatDate}}</strong></td>
                             </tr>
                         </table>
-                        <router-link :to="{name:'wc_home'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
+                        <router-link :to="{name:'home'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
                     </div>
                     <div v-else class="col-sm-offset-3 col-sm-6 borderDecoration">
                         <strong>Sorry it looks like there isn't any application currently in your session.</strong>
-                        <br /><router-link :to="{name:'external-applications-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
+                        <br /><router-link :to="{name:'home'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
                     </div>
                 </div>
             </div>
