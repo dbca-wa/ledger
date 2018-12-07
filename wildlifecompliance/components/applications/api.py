@@ -280,6 +280,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         user_orgs = [org.id for org in request.user.wildlifecompliance_organisations.all()];
         qs = []
         qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
+        qs.extend(list(self.get_queryset().filter(proxy_applicant = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         qs.extend(list(self.get_queryset().filter(org_applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         queryset = list(set(qs))
         serializer = DTApplicationSerializer(queryset, many=True)
