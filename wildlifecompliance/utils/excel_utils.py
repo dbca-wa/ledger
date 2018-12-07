@@ -12,7 +12,7 @@ from wildlifecompliance.components.licences.models import DefaultActivity
 
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell, xl_cell_to_rowcol, xl_col_to_name
-#import xlrd, xlwt
+import xlrd#, xlwt
 import os
 import re
 
@@ -254,7 +254,7 @@ def get_purposes(licence_class_short_name):
 
         DefaultActivityType.objects.filter(licence_class__short_name='Flora Other Purpose').values_list('licence_class__activity_type__activity__name', flat=True).distinct()
     """
-    activity_type =  DefaultActivityType.objects.filter(licence_class__short_name=licence_class_short_name).order_by('id')
+    activity_type =  DefaultActivityType.objects.filter(licence_class__short_name=licence_class_short_name).order_by('licence_class__activity_type__activity__name')
     return activity_type.values_list('licence_class__activity_type__activity__name', flat=True).distinct()
 
 def _read_workbook(input_filename):
@@ -290,33 +290,45 @@ def read_workbook(input_filename):
     :return:  Dict of response sets
     """
     wb_response_sets = {}
+    meta = {}
     if os.path.isfile(input_filename):
         wb = xlrd.open_workbook(input_filename)
-        sheet = wb.sheet_by_name('Applications')
+        sh = wb.sheet_by_name('Applications')
+        sh_meta = wb.sheet_by_name('Meta')
 
-        number_of_rows = sheet.nrows
-        for row in range(0, number_of_rows):
-            if sheet.cell(row, 0).value != "":
-                label_object = {
-                    'label': sheet.cell(row, 0).value,
-                }
-                wb_response_sets[name].append(label_object)
+        # Read Meta
+        number_of_rows = sh_meta.nrows
+        hdr = sh_meta.row_values(0)
+        for row in range(1, number_of_rows):
+            row_values = sh_meta.row_values(row)
+            purpose = row_values[0]
+            meta[purpose] = {}
+            for i in zip(hdr, row_values)[1:]:
+                meta[purpose].update( {i[0]: i[1]} )
 
-
-        for sheet in wb.sheets():
-            name = sheet.name
-            wb_response_sets[name] = []
-
-            number_of_rows = sheet.nrows
-            for row in range(1, number_of_rows):
-                if sheet.cell(row, 0).value != "":
-                    label_object = {
-                        'label': sheet.cell(row, 0).value,
-                    }
-                    wb_response_sets[name].append(label_object)
-        return wb_response_sets
-    else:
-        logger.error('{0} does not appear to be a valid file'.format(input_filename))
+    return meta
+#        for row in range(0, number_of_rows):
+#            if sheet.cell(row, 0).value != "":
+#                label_object = {
+#                    'label': sheet.cell(row, 0).value,
+#                }
+#                wb_response_sets[name].append(label_object)
+#
+#
+#        for sheet in wb.sheets():
+#            name = sheet.name
+#            wb_response_sets[name] = []
+#
+#            number_of_rows = sheet.nrows
+#            for row in range(1, number_of_rows):
+#                if sheet.cell(row, 0).value != "":
+#                    label_object = {
+#                        'label': sheet.cell(row, 0).value,
+#                    #}
+#                    wb_response_sets[name].append(label_object)
+#        return wb_response_sets
+#    else:
+#        logger.error('{0} does not appear to be a valid file'.format(input_filename))
 
 
 def cols_common(qs_activity_type, activity_name):
@@ -367,8 +379,15 @@ def write_workbook(licence_category='Flora Industry'):
     ws_meta = wb.add_worksheet('Meta')
 
     bold = wb.add_format({'bold': True})
-    unlocked = wb.add_format({'locked': False})
-    locked = wb.add_format({'locked': True})
+    unlocked = wb.add_format({'locked': 0})
+    locked = wb.add_format({'locked': 1})
+    wrap = wb.add_format({'text_wrap': True})
+    unlocked_wrap = wb.add_format({'text_wrap': True, 'locked': False})
+    integer = wb.add_format({'num_format': '0', 'align': 'center'})
+
+    #ws.set_column('E:DW', None, unlocked)
+    ws.set_column('A:XDF', None, unlocked)
+    ws.protect()
 
     # Sheet header, first row
     row_num = 0
@@ -377,7 +396,7 @@ def write_workbook(licence_category='Flora Industry'):
     excel_app = excel_apps.last()
     licence_class = excel_app.application.licence_type_data['short_name']
     #short_name_list = get_purposes(licence_class).values_list('activity_type__short_name', flat=True)
-    activity_name_list = get_purposes(licence_class)[:2]
+    activity_name_list = get_purposes(licence_class)#[:2]
     col_num = 0
     for k,v in excel_app.cols_output.iteritems():
         #ws.write(row_num, col_num, k, font_style)
@@ -404,13 +423,15 @@ def write_workbook(licence_category='Flora Industry'):
         col_num = 0
         cell_start = xl_rowcol_to_cell(row_start, col_num, row_abs=True, col_abs=True)
         for k,v in excel_app.cols_output.iteritems():
-            ws.write(row_num, col_num, v)
+            ws.write(row_num, col_num, v, locked)
             col_num += 1
 
         cell_end = xl_rowcol_to_cell(row_num, col_num-1, row_abs=True, col_abs=True)
         cell_dict.update({'System': [cell_start, cell_end]})
 
         for activity_name in activity_name_list:
+            #import ipdb; ipdb.set_trace()
+
             ws.write(row_num, col_num, ''); col_num += 1
 
             cell_start = xl_rowcol_to_cell(row_start, col_num, row_abs=True, col_abs=True)
@@ -421,12 +442,13 @@ def write_workbook(licence_category='Flora Industry'):
             if activity_type.exists():
                 #import ipdb; ipdb.set_trace()
                 for k,v in activity_type_cols.iteritems():
-                    ws.write(row_num, col_num, v)
+                    #ws.write('B1', 'Here is\nsome long text\nthat\nwe wrap',      wrap)
+                    ws.write(row_num, col_num, v, unlocked_wrap)
                     col_num += 1
             else:
                 # create a blank activity_type bilock
                 for _ in activity_type_cols.keys():
-                    ws.write(row_num, col_num, '')
+                    ws.write(row_num, col_num, '', unlocked)
                     col_num += 1
 
             cell_end = xl_rowcol_to_cell(row_num, col_num-1, row_abs=True, col_abs=True)
@@ -440,12 +462,12 @@ def write_workbook(licence_category='Flora Industry'):
     col_num = 0
     wb.define_name('{0}!{1}'.format(sheet_name, 'System'), '={0}!{1}:{2}'.format(sheet_name, cell_dict['System'][0], cell_dict['System'][1]))
     # Hdr
-    ws_meta.write(row_num, col_num, 'Purpose / Activity Type')
+    ws_meta.write(row_num, col_num, 'Purpose')
     ws_meta.write(row_num, col_num+1, 'Start Cell')
     ws_meta.write(row_num, col_num+2, 'End Cell')
     ws_meta.write(row_num, col_num+3, 'First Row')
-    ws_meta.write(row_num, col_num+4, 'First Col')
-    ws_meta.write(row_num, col_num+5, 'Last Row')
+    ws_meta.write(row_num, col_num+4, 'Last Row')
+    ws_meta.write(row_num, col_num+5, 'First Col')
     ws_meta.write(row_num, col_num+6, 'Last Col')
 
     # System
@@ -453,9 +475,10 @@ def write_workbook(licence_category='Flora Industry'):
     ws_meta.write(row_num+1, col_num+1, cell_dict['System'][0])
     ws_meta.write(row_num+1, col_num+2, cell_dict['System'][1])
     ws_meta.write(row_num+1, col_num+3, xl_cell_to_rowcol(cell_dict['System'][0])[0])
-    ws_meta.write(row_num+1, col_num+4, xl_cell_to_rowcol(cell_dict['System'][0])[1])
-    ws_meta.write(row_num+1, col_num+5, xl_cell_to_rowcol(cell_dict['System'][1])[0])
+    ws_meta.write(row_num+1, col_num+4, xl_cell_to_rowcol(cell_dict['System'][1])[0])
+    ws_meta.write(row_num+1, col_num+5, xl_cell_to_rowcol(cell_dict['System'][0])[1])
     ws_meta.write(row_num+1, col_num+6, xl_cell_to_rowcol(cell_dict['System'][1])[1])
+    #import ipdb; ipdb.set_trace()
 
     # Purposes
     width = 20
@@ -467,18 +490,21 @@ def write_workbook(licence_category='Flora Industry'):
         ws_meta.write(row_num, col_num+1, cell_dict[activity_name][0])
         ws_meta.write(row_num, col_num+2, cell_dict[activity_name][1])
         ws_meta.write(row_num, col_num+3, xl_cell_to_rowcol(cell_dict[activity_name][0])[0])
-        ws_meta.write(row_num, col_num+4, xl_cell_to_rowcol(cell_dict[activity_name][0])[1])
-        ws_meta.write(row_num, col_num+5, xl_cell_to_rowcol(cell_dict[activity_name][1])[0])
+        ws_meta.write(row_num, col_num+4, xl_cell_to_rowcol(cell_dict[activity_name][1])[0])
+        ws_meta.write(row_num, col_num+5, xl_cell_to_rowcol(cell_dict[activity_name][0])[1])
         ws_meta.write(row_num, col_num+6, xl_cell_to_rowcol(cell_dict[activity_name][1])[1])
         width = len(activity_name) if len(activity_name) > width else width
 
-    #import ipdb; ipdb.set_trace()
+    import ipdb; ipdb.set_trace()
     #  lock the System App Data section only
-    ws.set_column('{}:{}'.format(xl_col_to_name(0), xl_col_to_name(xl_cell_to_rowcol(cell_dict['System'][1])[1])), None, locked)
-    ws.set_column('{}:XDF'.format(xl_col_to_name(xl_cell_to_rowcol(cell_dict['System'][1])[1] + 1)), None, unlocked)
-    ws.protect()
+    #ws.protect()
+    #ws.set_column('{}:{}'.format(xl_col_to_name(0), xl_col_to_name(xl_cell_to_rowcol(cell_dict['System'][1])[1])), None, locked)
+    #ws.set_column('{}:AMJ'.format(xl_col_to_name(xl_cell_to_rowcol(cell_dict['System'][1])[1] + 1)), None, unlocked)
+    #ws.set_column('E:DW', None, unlocked)
+
 
     #  lock  the Meta Sheet (mostly)
+    ws_meta.set_column('D:G', 13, integer )
     ws_meta.set_column('A:Z', None, locked)
     ws_meta.protect()
     ws_meta.set_column(0, 0, width)
