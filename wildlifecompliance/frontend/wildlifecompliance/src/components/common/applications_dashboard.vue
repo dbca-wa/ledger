@@ -127,7 +127,11 @@ export default {
                     data: "submitter",
                     mRender:function (data,type,full) {
                         if (data) {
-                            return `${data.first_name} ${data.last_name}`;
+                            if (full.proxy_applicant){
+                                return `${data.first_name} ${data.last_name} (Proxy)`
+                            } else {
+                                return `${data.first_name} ${data.last_name}`;
+                            }
                         }
                         return ''
                     }
