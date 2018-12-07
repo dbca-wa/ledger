@@ -152,6 +152,9 @@ export default {
                         if (!vm.is_external){
                             links += `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
+                        if (full.can_user_edit) {
+                            links +=  `<a href='/external/application/${full.id}'>Edit</a><br/>`;
+                        }
                         return links;
                     }
                 }
