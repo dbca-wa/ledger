@@ -173,22 +173,34 @@ class WildlifeLicence(models.Model):
 
     extracted_fields = JSONField(blank=True, null=True)
     licence_activity_type=models.ForeignKey('WildlifeLicenceActivityType',null=True)
+    licence_type=models.ForeignKey('WildlifeLicenceActivity',null=True)
 
+    licence_number = models.CharField(max_length=64, blank=True, null=True)
+    licence_sequence = models.IntegerField(blank=True, default=0)
 
     # licence_class = models.ForeignKey(WildlifeLicenceClass)
     # licence_activity_type = models.ForeignKey(WildlifeLicenceActivityType)
     # licence_descriptor = models.ForeignKey(WildlifeLicenceDescriptor)
 
-
     class Meta:
+        unique_together = (('licence_number','licence_sequence'))
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return self.reference
+        return '{} {}-{}'.format(self.licence_activity_type, self.licence_number, self.licence_sequence)
+
+    def save(self, *args, **kwargs): 
+        import ipdb; ipdb.set_trace()
+        super(WildlifeLicence, self).save(*args,**kwargs) 
+        self.licence_sequence = self.licence_sequence + 1
+        if not self.licence_number: 
+            self.licence_number = 'L{0:06d}'.format(self.pk)
+        self.save() 
+        #super(WildlifeLicence, self).save(*args,**kwargs) 
 
     @property
     def reference(self):
-        return '{}'.format(self.id)
+        return '{}-{}'.format(self.licence_number, self.licence_sequence)
 
     @property
     def is_issued(self):

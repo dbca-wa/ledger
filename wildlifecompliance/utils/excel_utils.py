@@ -25,6 +25,13 @@ from datetime import datetime
 from django.db import models
 
 
+def test1(app_id=129):
+    u=EmailUser.objects.get(email__icontains='jawaid.mushtaq')
+    from wildlifecompliance.utils.excel_utils import create_activity_type_fields, cols_output, write_workbook, read_workbook, get_licence_type, get_applicant, get_applicant_details, get_applicant_org
+    a=Application.objects.get(id=app_id)
+    activity=WildlifeLicenceActivity.objects.get(name='Importing Fauna (Non-Commercial)')
+    l=WildlifeLicence.objects.create(current_application=a, activity='', region='', tenure='', title='', org_applicant=a.org_applicant, submitter=u, licence_type=activity)
+    return l
 
 def test(ids=[125]):
     a=Application.objects.get(id__in=ids)
@@ -257,6 +264,38 @@ def get_purposes(licence_class_short_name):
     activity_type =  DefaultActivityType.objects.filter(licence_class__short_name=licence_class_short_name).order_by('licence_class__activity_type__activity__name')
     return activity_type.values_list('licence_class__activity_type__activity__name', flat=True).distinct()
 
+def get_licence_type(activity_type_name):
+    """
+    activity_type name -- purpose name--> 'Importing Fauna (Non-Commercial)'
+    """
+    return DefaultActivityType.objects.filter(licence_class__activity_type__activity__name=activity_type_name).distinct('licence_class')[0].licence_class.name
+
+def get_applicant_org(applicant_name):
+    """
+    input:
+        applicant_name = Application.objects.get(id=129).applicant --> 'Org1'
+    """
+    try:
+        return Organisation.objects.get(organisation__name=applicant_name).organisation
+    except:
+        return None
+
+
+def get_applicant(applicant_name):
+    """
+    input:
+        applicant_name = Application.objects.get(id=129).applicant --> 'Org1'
+    """
+    return get_applicant_org(applicant_name).name
+
+def get_applicant_details(applicant_name):
+    """
+    input:
+        applicant_name = Application.objects.get(id=129).applicant --> 'Org1'
+    """
+    org = get_applicant_org(applicant_name)
+    return '{} \n{}'.format(org.name, org.postal_address)
+
 def _read_workbook(input_filename):
     """
     Read the contents of input_filename and return
@@ -345,6 +384,9 @@ def read_workbook(input_filename, licence_category='Fauna Other Purpose'):
         row_values = sh.row_values(row)
         lodgement_number = row_values[0]
         excel_data.update({lodgement_number: row_values})
+
+    
+
 
     out_filename = '/tmp/wc_apps_out_{}.xlsx'.format(licence_category.lower().replace(' ','_'))
 
