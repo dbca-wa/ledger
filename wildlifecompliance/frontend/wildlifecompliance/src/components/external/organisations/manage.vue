@@ -1051,12 +1051,6 @@ export default {
                 let phone = $(e.target).data('phone');
                 let role = 'consultant';
 
-                let data = new FormData();
-                data.append('name', vm.org.name);
-                data.append('abn', vm.org.abn);
-        //        data.append('identification', vm.uploadedFile);
-                data.append('role',role);
-
                 vm.contact_user.first_name= firstname
                 vm.contact_user.last_name= lastname
                 vm.contact_user.email= email
@@ -1071,10 +1065,10 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        vm.$http.post(api_endpoints.organisation_requests,data,{
-                        emulateJSON:true
-                    }).then((response) => {
-                          swal({
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/make_consultant'),JSON.stringify(vm.contact_user),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
                                 title: 'Organisation Consultant',
                                 text: 'You have successfully made ' + name + ' an Organisation Consultant.',
                                 type: 'success',
@@ -1084,7 +1078,7 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Organisation Consultant','There was an error making ' + name + ' an Organisation Consultant.','error')
+                            swal('Company Admin','There was an error making ' + name + ' an Organisation Consultant.','error')
                         });
                     }
                 },(error) => {
