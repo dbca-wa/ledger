@@ -111,6 +111,9 @@ export default {
     },
     requiresCheckout: function() {
         return this.application.application_fee > 0 && this.application_customer_status_onload == 'Draft'
+    },
+    wc_version: function (){
+        return this.$root.wc_version;
     }
   },
   methods: {
