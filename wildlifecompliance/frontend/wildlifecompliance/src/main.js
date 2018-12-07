@@ -47,6 +47,11 @@ window.vue = new Vue( {
     components: {
         App
     },
+    computed: {
+        wc_version: function (){
+            return wc_version;
+        }
+    },
     methods:{
         setSelectedTabId: function(target) {
             var tab_id = target.href.split('#')[1];

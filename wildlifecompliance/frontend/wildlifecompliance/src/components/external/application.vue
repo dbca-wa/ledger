@@ -44,14 +44,14 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <span v-if="requiresCheckout"style="margin-right: 5px; font-size: 18px;">
+                                    <span v-if="requiresCheckout && wc_version != 1.0"style="margin-right: 5px; font-size: 18px;">
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
                                     <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                                     <input v-if="!requiresCheckout" type="submit" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
-                                    <input v-else type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
+                                    <input v-if="requiresCheckout && wc_version != 1.0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                 </p>
                             </div>
                         </div>
@@ -111,6 +111,9 @@ export default {
     },
     requiresCheckout: function() {
         return this.application.application_fee > 0 && this.application_customer_status_onload == 'Draft'
+    },
+    wc_version: function (){
+        return this.$root.wc_version;
     }
   },
   methods: {

@@ -230,6 +230,7 @@ class DTApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
     org_applicant = serializers.CharField(source='org_applicant.organisation.name')
+    proxy_applicant = EmailUserSerializer()
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
@@ -333,6 +334,7 @@ class ApplicationDeclinedDetailsSerializer(serializers.ModelSerializer):
 class InternalApplicationSerializer(BaseApplicationSerializer):
     applicant = serializers.CharField(read_only=True)
     org_applicant = OrganisationSerializer()
+    proxy_applicant = EmailUserAppViewSerializer()
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)

@@ -280,6 +280,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         user_orgs = [org.id for org in request.user.wildlifecompliance_organisations.all()];
         qs = []
         qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
+        qs.extend(list(self.get_queryset().filter(proxy_applicant = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         qs.extend(list(self.get_queryset().filter(org_applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         queryset = list(set(qs))
         serializer = DTApplicationSerializer(queryset, many=True)
@@ -687,6 +688,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             licence_type_name = app_data.pop('licence_type_name')
             schema_data=get_activity_type_schema(licence_class_data)
             org_applicant=request.data.get('org_applicant')
+            proxy_applicant=request.data.get('proxy_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
             data = {
@@ -695,6 +697,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 'licence_type_data':licence_class_data,
                 'licence_type_name': licence_type_name,
                 'org_applicant': org_applicant,
+                'proxy_applicant': proxy_applicant,
                 'application_fee': application_fee,
                 'licence_fee': licence_fee
             }

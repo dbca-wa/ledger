@@ -3,6 +3,9 @@
 {% load static %}
 
 {% load users %}
+{% is_internal as is_internal_login %}
+{% is_officer as is_officer_login %}
+{% is_wildlifecompliance_admin as is_wildlifecompliance_admin_login %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -16,6 +19,9 @@
             {% endif %}
             {% block extra_css %}
             {% endblock %}
+            <script>
+                wc_version = "{{ wc_version }}"
+            </script>
             {% block extra_js %}
             {% endblock %}
             <title>
@@ -57,13 +63,17 @@
                             <div id="navbar" class="navbar-collapse collapse">
                                 <ul class="nav navbar-nav">
                                     {% block left_menu_items %}
-                                        {% if request.user.is_staff %}
-                                        <li><a href="/internal/licences">Licences</a></li>
-                                        <li><a href="/internal/returns">Returns</a></li>
-                                        <li><a href="/internal/tag_purchases">Tag Purchases</a></li>
-                                        <li><a href="/internal/advices">Advices to CEO</a></li>
-                                        <li><a href="/internal/organisations/access">Organisation Access Requests</a></li>
-                                        <li><a href="/internal/search">Search</a></li>
+                                        {% if is_internal_login %}
+                                            {% if wc_version != 1.0 %}
+                                                <li><a href="/internal/licences">Licences</a></li>
+                                                <li><a href="/internal/returns">Returns</a></li>
+                                                <li><a href="/internal/tag_purchases">Tag Purchases</a></li>
+                                                <li><a href="/internal/advices">Advices to CEO</a></li>
+                                            {% endif %}
+                                            {% if is_officer_login %}
+                                                <li><a href="/internal/organisations/access">Organisation Access Requests</a></li>
+                                                <li><a href="/internal/search">Search</a></li>
+                                            {% endif %}
                                         {% endif %}
                                     {% endblock %}
                                 </ul>
@@ -89,9 +99,8 @@
                                                 <span class="caret"></span>
                                             </a>
                                             <ul class="dropdown-menu">
-                                                {% if request.user.is_staff %}
+                                                {% if is_wildlifecompliance_admin_login %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
-                                                    <li><a href="/external">External</a></li>
                                                     <li role="separator" class="divider"></li>
                                                 {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
@@ -100,12 +109,12 @@
                                                     {% for org_contact in org.contacts.all%}
                                                         {% ifequal org_contact.email request.user.email %}
                                                             {% if org_contact.is_admin  and org_contact.user_status == 'active' %}
-
                                                                 <li><a href="/external/organisations/manage/{{org.id}}">Manage {{ org.organisation.name}} </a></li>
                                                             {% endif %}
                                                         {% endifequal %}
                                                     {% endfor %}
                                                 {% endfor %}
+                                                <li role="separator" class="divider"></li>
                                                 <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
                                             </ul>
                                         </li>

@@ -176,7 +176,7 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Email</label>
                             <div class="col-sm-6">
-                                <input type="email" class="form-control" name="email" placeholder="" v-model="profile.email">
+                                <input disabled type="email" class="form-control" name="email" placeholder="" v-model="profile.email">
                             </div>
                           </div>
                           <div class="form-group">

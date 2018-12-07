@@ -32,7 +32,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div v-if="wc_version != 1.0" class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         Workflow 
@@ -280,6 +280,28 @@
                                           </div>
                                       </form>
                                 </div>
+                                <div v-if="applicantType == 'proxy'" class="panel-body panel-collapse collapse in" :id="detailsBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Given Name(s)</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.proxy_applicant.first_name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Surname</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.proxy_applicant.last_name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Date of Birth</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="application.proxy_applicant.dob">
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
                                 <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse in" :id="detailsBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
@@ -315,7 +337,7 @@
                                         </a>
                                     </h3>
                                 </div>
-                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                <div v-if="applicantType == 'org' && application.org_applicant.organisation.identification" class="panel-body panel-collapse collapse" :id="identificationBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Identification</label>
@@ -325,7 +347,17 @@
                                           </div>
                                       </form>
                                 </div>
-                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                <div v-if="applicantType == 'proxy' && application.proxy_applicant.identification.file" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Identification</label>
+                                            <div class="col-sm-8">
+                                                <img width="100%" name="applicantIdentification" v-bind:src="application.proxy_applicant.identification.file" />
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                                <div v-if="applicantType == 'submitter' && application.submitter.identification.file" class="panel-body panel-collapse collapse" :id="identificationBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Identification</label>
@@ -348,7 +380,7 @@
                                         </a>
                                     </h3> 
                                 </div>
-                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse" :id="addressBody">
+                                <div v-if="applicantType == 'org' && application.org_applicant.address" class="panel-body panel-collapse collapse" :id="addressBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
@@ -380,7 +412,39 @@
                                           </div>
                                        </form>
                                 </div>
-                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="addressBody">
+                                <div v-if="applicantType == 'proxy' && application.proxy_applicant.residential_address" class="panel-body panel-collapse collapse" :id="addressBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Street</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="street" placeholder="" v-model="application.proxy_applicant.residential_address.line1">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="application.proxy_applicant.residential_address.locality">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">State</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="country" placeholder="" v-model="application.proxy_applicant.residential_address.state">
+                                            </div>
+                                            <label for="" class="col-sm-2 control-label">Postcode</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="application.proxy_applicant.residential_address.postcode">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Country</label>
+                                            <div class="col-sm-4">
+                                                <input disabled type="text" class="form-control" name="country" v-model="application.proxy_applicant.residential_address.country"/>
+                                            </div>
+                                          </div>
+                                       </form>
+                                </div>
+                                <div v-if="applicantType == 'submitter' && application.submitter.residential_address" class="panel-body panel-collapse collapse" :id="addressBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
@@ -429,6 +493,28 @@
                                     <table ref="contacts_datatable" :id="contacts_table_id" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
                                     </table>
                                 </div>
+                                <div v-if="applicantType == 'proxy'" class="panel-body panel-collapse collapse" :id="contactsBody">
+                                  <form class="form-horizontal">
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantPhoneNumber" placeholder="" v-model="application.proxy_applicant.phone_number">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Mobile</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantMobileNumber" placeholder="" v-model="application.proxy_applicant.mobile_number">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Email</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantEmail" placeholder="" v-model="application.proxy_applicant.email">
+                                        </div>
+                                      </div>
+                                  </form>
+                                </div>
                                 <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="contactsBody">
                                   <form class="form-horizontal">
                                       <div class="form-group">
@@ -456,7 +542,7 @@
                         </div>
                     </div>
                     <div class="col-md-12">
-                        <div class ="row">
+                        <div v-if="wc_version != 1.0" class ="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h3 class="panel-title">Check List
@@ -515,7 +601,7 @@
                                     <input type='hidden' name="application_id" :value="1" />
                                     <input type='hidden' id="selected_activity_type_tab_id" v-model="selected_activity_type_tab_id" :value=0 />
                                     <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
-                                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                                        <div v-if="wc_version != 1.0" class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                                             <div class="navbar-inner">
                                                 <div class="container">
                                                     <p class="pull-right" style="margin-top:5px;">
@@ -832,6 +918,9 @@ export default {
         canSeeSubmission: function(){
             return this.application && (this.application.processing_status != 'With Assessor (Conditions)' && this.application.processing_status != 'With Approver' && !this.isFinalised)
         },
+        wc_version: function (){
+            return this.$root.wc_version;
+        }
     },
     methods: {
         
@@ -915,7 +1004,7 @@ export default {
         },
         initialiseOrgContactTable: function(){
             let vm = this;
-            if (vm.application && !vm.contacts_table_initialised){
+            if (vm.application && vm.applicantType == 'org' && !vm.contacts_table_initialised){
                 vm.contacts_options.ajax.url = helpers.add_endpoint_json(api_endpoints.organisations,vm.application.org_applicant.id+'/contacts');
                 vm.contacts_table = $('#'+vm.contacts_table_id).DataTable(vm.contacts_options);
                 vm.contacts_table_initialised = true;
@@ -1244,7 +1333,12 @@ export default {
                 )
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
@@ -1259,11 +1353,21 @@ export default {
             .then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 vm.updateAssignedOfficerSelect();
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
@@ -1276,7 +1380,12 @@ export default {
             let vm = this;
             vm.original_application = helpers.copyObject(response.body);
             vm.application = helpers.copyObject(response.body);
-            vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+            if (vm.applicantType == 'org') {
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+            };
+            if (vm.applicantType == 'proxy') {
+                vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+            };
             vm.$nextTick(() => {
                 vm.initialiseAssignedOfficerSelect(true);
                 vm.updateAssignedOfficerSelect();
@@ -1300,11 +1409,21 @@ export default {
                 }).then((response) => {
                     vm.application = response.body;
                     vm.original_application = helpers.copyObject(response.body);
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                 }, (error) => {
                     vm.application = helpers.copyObject(vm.original_application)
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                     swal(
                         'Application Error',
@@ -1318,11 +1437,21 @@ export default {
                 .then((response) => {
                     vm.application = response.body;
                     vm.original_application = helpers.copyObject(response.body);
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                 }, (error) => {
                     vm.application = helpers.copyObject(vm.original_application)
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                     swal(
                         'Application Error',
@@ -1344,14 +1473,24 @@ export default {
             }).then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
 //                vm.$nextTick(() => {
 //                    vm.initialiseAssignedOfficerSelect(true);
 //                    vm.updateAssignedOfficerSelect();
 //                });
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 swal(
                     'Application Error',
                     helpers.apiVueResourceError(error),
@@ -1593,7 +1732,12 @@ export default {
               next(vm => {
                 vm.application = res.body;
                 vm.original_application = helpers.copyObject(res.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
               });
             },
             err => {
@@ -1605,7 +1749,12 @@ export default {
               next(vm => {
                 vm.application = res.body;
                 vm.original_application = helpers.copyObject(res.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
               });
             },
             err => {
