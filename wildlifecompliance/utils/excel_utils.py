@@ -282,7 +282,7 @@ def _read_workbook(input_filename):
     else:
         logger.error('{0} does not appear to be a valid file'.format(input_filename))
 
-def read_workbook(input_filename):
+def read_workbook1(input_filename):
     """
     Read the contents of input_filename and return
     :param logger:         The logger
@@ -307,6 +307,62 @@ def read_workbook(input_filename):
                 meta[purpose].update( {i[0]: i[1]} )
 
     return meta
+    
+def read_workbook(input_filename, licence_category='Fauna Other Purpose'):
+    """
+    Read the contents of input_filename and return
+    :param logger:         The logger
+    :param input_filename: Filepath of the spreadsheet to read
+    :return:  Dict of response sets
+    """
+    wb_response_sets = {}
+    meta = {}
+    if not os.path.isfile(input_filename):
+        logger.warn('Cannot find file {}'.format(input_filename))
+        return None
+
+    sheet_name = 'Applications'
+    wb = xlrd.open_workbook(input_filename)
+    sh = wb.sheet_by_name(sheet_name)
+    sh_meta = wb.sheet_by_name('Meta')
+
+    # Read Meta
+    number_of_rows = sh_meta.nrows
+    hdr = sh_meta.row_values(0)
+    for row in range(1, number_of_rows):
+        row_values = sh_meta.row_values(row)
+        purpose = row_values[0]
+        meta[purpose] = {}
+        for i in zip(hdr, row_values)[1:]:
+            meta[purpose].update( {i[0]: i[1]} )
+
+    #return meta
+
+    excel_data = {}
+    number_of_rows = sh.nrows
+    hdr = sh.row_values(0)
+    for row in range(1, number_of_rows):
+        row_values = sh.row_values(row)
+        lodgement_number = row_values[0]
+        excel_data.update({lodgement_number: row_values})
+
+    out_filename = '/tmp/wc_apps_out_{}.xlsx'.format(licence_category.lower().replace(' ','_'))
+
+    wb_out = xlsxwriter.Workbook(out_filename)
+    ws_out = wb_out.add_worksheet(sheet_name)
+
+    bold = wb_out.add_format({'bold': True})
+
+    row_num = 0
+    col_num = 0
+    ws_out.write_row(row_num, col_num, hdr, bold); row_num += 1
+    for k,v in excel_data.iteritems():
+        ws_out.write_row(row_num, col_num, v)
+        row_num += 1
+
+    wb_out.close()
+
+
 #        for row in range(0, number_of_rows):
 #            if sheet.cell(row, 0).value != "":
 #                label_object = {
@@ -379,8 +435,9 @@ def write_workbook(licence_category='Flora Industry'):
     ws_meta = wb.add_worksheet('Meta')
 
     bold = wb.add_format({'bold': True})
-    unlocked = wb.add_format({'locked': 0})
-    locked = wb.add_format({'locked': 1})
+    bold_unlocked = wb.add_format({'bold': True, 'locked': False})
+    unlocked = wb.add_format({'locked': False})
+    locked = wb.add_format({'locked': True})
     wrap = wb.add_format({'text_wrap': True})
     unlocked_wrap = wb.add_format({'text_wrap': True, 'locked': False})
     integer = wb.add_format({'num_format': '0', 'align': 'center'})
@@ -412,7 +469,7 @@ def write_workbook(licence_category='Flora Industry'):
         #ws.write(row_num, col_num, short_name, bold); col_num += 1
 
         for col_name in activity_type_cols:
-            ws.write(row_num, col_num, col_name, bold)
+            ws.write(row_num, col_num, col_name, bold_unlocked)
             col_num += 1
 
     # Application data
@@ -495,7 +552,7 @@ def write_workbook(licence_category='Flora Industry'):
         ws_meta.write(row_num, col_num+6, xl_cell_to_rowcol(cell_dict[activity_name][1])[1])
         width = len(activity_name) if len(activity_name) > width else width
 
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     #  lock the System App Data section only
     #ws.protect()
     #ws.set_column('{}:{}'.format(xl_col_to_name(0), xl_col_to_name(xl_cell_to_rowcol(cell_dict['System'][1])[1])), None, locked)
