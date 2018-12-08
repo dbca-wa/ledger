@@ -62,24 +62,22 @@
                                                         </label>
                                                 </div>
                                                 <div v-if="returns.spreadsheet =='yes'" class="row">
-                                                  
                                                   <table class="return-table table table-striped table-bordered dataTable">
                                                     <thead>
                                                       <tr>
                                                         <div v-for="(item,index) in returns.table">
                                                         <th v-f="item.headers" v-for="header in item.headers">{{header.title}}
-                                                          </div>
-                                                        <!-- <th v-for="header in returns.table.headers">{{header.title}} -->
                                                         </th>
+                                                        </div>
                                                       </tr>
                                                     </thead>
                                                     <tbody>
                                                       <tr>
                                                         <div v-for="(item,index) in returns.table">
                                                         <td v-if="item.headers" v-for="header in item.headers">
-                                                          
-                                                          <input v-for="(title,key) in item.data" v-if="key == header.title" class="form-control returns" :name="`${item.name}::${header.title}`" :data-species="`${header.species}`" v-model="title.value">
-
+                                                          <div v-for ="item1 in item.data">
+                                                            <input v-for="(title,key) in item1" v-if="key == header.title" class="form-control returns" :name="`${item1.name}::${header.title}`" :data-species="`${header.species}`" v-model="title.value">
+                                                          </div>
                                                         </td>
                                                       </div>
                                                       </tr>
@@ -99,9 +97,9 @@
                           
                     </div>
                     <input type='hidden' name="table_name" :value="returns.table[0].name" />
-                    <button type="submit" class="btn btn-primary pull-right" name="lodge">Lodge</button>
+                    <button type="submit" class="btn btn-primary pull-right" name="lodge">Save and Exit</button>
                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                    <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Save Draft
+                    <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Submit
                     </button>
                     
                 </template>
@@ -149,48 +147,60 @@ export default {
 
       // })
 
-      // console.log("from save")
-      // console.log(document.forms.enter_return)
-      // console.log(vm.form)
-      // console.log(data)
+      
 
        // vm.$http.post('/api/returns.json',JSON.stringify(returns),{
         vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
                         emulateJSON:true,
                     }).then((response)=>{
-                        //vm.$parent.loading.splice('processing contact',1);
                         swal(
                              'Sent',
                              'successful returns',
                              'success'
                         );
-                        // vm.amendingApplication = true;
-                        // vm.close();
-                        // //vm.$emit('refreshFromResponse',response);
-                        // Vue.http.get(`/api/application/${vm.application_id}/internal_application.json`).then((response)=>
-                        // {
-                        //     vm.$emit('refreshFromResponse',response);
-                            
-                        // },(error)=>{
-                        //     console.log(error);
-                        // });
-                        // vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
-                     
+
                     },(error)=>{
                         console.log(error);
-                        // vm.errors = true;
-                        // vm.errorString = helpers.apiVueResourceError(error);
-                        // vm.amendingApplication = true;
-                        
+                        swal(
+                             'Sent',
+                             'Enter data in correct format',
+                             'success'
+                        );
                     });
     },
-    getReturnData: function(title){
-      let vm=this;
-      console.log(title)
-      console.log(vm.returns.table.data[title].value)
-      return vm.returns.table.data[title].value
-     
+
+    submit: function(e) {
+      let vm = this;
+      vm.form=document.forms.enter_return
+      let data = new FormData(vm.form);
+      // console.log('printing table name')
+      // console.log(vm.returns.table[0].name)
+      // data.returns_name=vm.returns.table[0].name
+      // data.id=vm.returns.id
+      // data.application=vm.returns.application
+      // data.table=vm.returns.table
+
+      // $('.returns').each((i,d) => {
+      //   console.log( $(d).data('species'))
+
+      // })
+
+      
+
+       // vm.$http.post('/api/returns.json',JSON.stringify(returns),{
+        vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
+                        emulateJSON:true,
+                    }).then((response)=>{
+                        swal(
+                             'Sent',
+                             'successful returns',
+                             'success'
+                        );
+                    },(error)=>{
+                        console.log(error);
+                    });
     },
+    
   },
   beforeRouteEnter: function(to, from, next) {
     console.log(to.params)

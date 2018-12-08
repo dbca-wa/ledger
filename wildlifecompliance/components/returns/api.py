@@ -76,33 +76,14 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             instance = self.get_object()
             returns_tables=self.request.data.get('table_name')
             print("===========Returns table=====")
-            # print(type(returns_tables.encode('utf-8')))
             print(returns_tables)
-            # list_returns_tables=eval(returns_tables)
-            # print(eval(returns_tables))
-            # print(returns_tables['name'])
             if _is_post_data_valid(instance, returns_tables.encode('utf-8'), request.POST):
                 print('True')
                 _create_return_data_from_post_data(instance, returns_tables.encode('utf-8'), request.POST)
-            # amend_data=self.request.data
-            # reason=amend_data.pop('reason')
-            # application =amend_data.pop('application')
-            # text=amend_data.pop('text')
-            # activity_type_id=amend_data.pop('activity_type_id')
-            # print(type(application))
-            # print(application)
-            # for item in activity_type_id:
-            #     data={
-            #         'application':application,
-            #         'reason': reason,
-            #         'text':text,
-            #         'licence_activity_type':item
-            #     }
-            #     serializer = self.get_serializer(data= data)
-            #     serializer.is_valid(raise_exception = True)
-            #     instance = serializer.save()
-            #     instance.generate_amendment(request)
-            # serializer = self.get_serializer(instance)
+            else:
+                return Response({'error': 'Enter data in correct format.'}, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

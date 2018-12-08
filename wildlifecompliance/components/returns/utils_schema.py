@@ -408,6 +408,7 @@ class Schema:
         return result
 
     def rows_validator(self, rows):
+        rows_list=[]
         for row in rows:
             yield self.validate_row(row)
 

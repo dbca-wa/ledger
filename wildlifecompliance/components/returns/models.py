@@ -48,15 +48,19 @@ class ReturnType(models.Model):
 
 class Return(models.Model):
     PROCESSING_STATUS_CHOICES = (('due', 'Due'), 
+                                 ('overdue','Overdue'),
+                                 ('draft','Draft'),
                                  ('future', 'Future'), 
-                                 ('with_assessor', 'With Assessor'),
-                                 ('approved', 'Approved'),
+                                 ('with_curator', 'With Curator'),
+                                 ('accepted', 'Accepted'),
                                  )
     CUSTOMER_STATUS_CHOICES = (('due', 'Due'),
+                                 ('overdue','Overdue'),
+                                 ('draft','Draft'),
                                  ('future', 'Future'),
-                                 ('with_assessor', 'Under Review'),
-                                 ('approved', 'Approved'),
-                                 ('discarded', 'Discarded'),
+                                 ('under_review', 'Under Review'),
+                                 ('accepted', 'Accepted'),
+                                 
                                  )
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     application = models.ForeignKey(Application,related_name='returns')
@@ -101,8 +105,6 @@ class Return(models.Model):
         tables = []
         for resource in self.return_type.resources:
             resource_name = resource.get('name')
-            # print(type(resource_name))
-            # print(resource_name)
             schema = Schema(resource.get('schema'))
             headers = []
             for f in schema.fields:
@@ -118,33 +120,29 @@ class Return(models.Model):
                 'name': resource_name,
                 'title': resource.get('title', resource.get('name')),
                 'headers': headers,
-                'data':None
+                'data': None
             }
-            # print(self.id)
-            # # print(self.returntable_set.all())
-            # print(resource_name)
-            # try:
-            #     return_table = self.returntable_set.get(name=resource_name)
-            #     rows = [return_row.data for return_row in return_table.returnrow_set.all()]
-            #     validated_rows = list(schema.rows_validator(rows))
-            #     table['data'] = validated_rows
-            # except ReturnTable.DoesNotExist:
-            #     pass
-            
-            # for f in schema.fields:
-            #     table['data'][f.name]={f.name:{'value':None}}
-            result = {}
-            # field validation
-            for field_name in schema.fields:
-                result[field_name.name] = {
-                    'value': None
-                }
-            table['data']=result    
-            print(table)
+            try:
+                return_table = self.returntable_set.get(name=resource_name)
+                rows = [return_row.data for return_row in return_table.returnrow_set.all()]
+                validated_rows = schema.rows_validator(rows)
+                table['data'] = validated_rows
+            except ReturnTable.DoesNotExist:
+                result = {}
+                results=[]
+                for field_name in schema.fields:
+                    result[field_name.name] = {
+                        'value': None
+                    }
+                results.append(result)
+                table['data']=results
         tables.append(table)
-
-
         return tables
+
+    def set_submitted(self,request):
+        self.customer_status="under_review"
+        self.processing_status="with_curator"
+
 
 
 class ReturnTable(RevisionedMixin):
