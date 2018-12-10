@@ -63,26 +63,27 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
     @renderer_classes((JSONRenderer,))
     def update_details(self, request, *args, **kwargs):
         try:
+            instance = self.get_object()
             print("print from api")
             print(self.request.data)
             print("==========posting keys=========")
             print(request.POST.keys())
             print("============printing getlist")
             for key in request.POST.keys():
-                print(key)
-                print(request.POST.getlist(key))
-            
+                if key=="nilYes":
+                    print("nil return")
+                    print(self.request.data.get('nilReason'))
+                    instance.nil_return= True
+                    instance.comments=self.request.data.get('nilReason')
+                    instance.save()
+                if key == "nilNo":
+                    returns_tables=self.request.data.get('table_name')
+                    if _is_post_data_valid(instance, returns_tables.encode('utf-8'), request.POST):
+                        print('True')
+                        _create_return_data_from_post_data(instance, returns_tables.encode('utf-8'), request.POST)
+                    else:
+                        return Response({'error': 'Enter data in correct format.'}, status=status.HTTP_404_NOT_FOUND)
 
-            instance = self.get_object()
-            returns_tables=self.request.data.get('table_name')
-            print("===========Returns table=====")
-            print(returns_tables)
-            if _is_post_data_valid(instance, returns_tables.encode('utf-8'), request.POST):
-                print('True')
-                _create_return_data_from_post_data(instance, returns_tables.encode('utf-8'), request.POST)
-            else:
-                return Response({'error': 'Enter data in correct format.'}, status=status.HTTP_404_NOT_FOUND)
-            
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:

@@ -76,6 +76,8 @@ class Return(models.Model):
     reminder_sent = models.BooleanField(default=False)
     post_reminder_sent = models.BooleanField(default=False)
     return_type=models.ForeignKey(ReturnType,null=True)
+    nil_return = models.BooleanField(default=False)
+    comments = models.TextField(blank=True, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'

@@ -37,10 +37,10 @@
                                                 <div class="row">
                                                     <label class="col-sm-4">Do you want to Lodge a nil Return?</label>
                                                         <label>
-                                                          <input type="radio"  name="NilYes" value="yes" v-model='returns.nil'> yes
+                                                          <input type="radio"  name="nilYes" value="yes" v-model='returns.nil'> yes
                                                         </label>
                                                         <label>
-                                                          <input type="radio"  name="NilNo" value="no" v-model='returns.nil'> no
+                                                          <input type="radio"  name="nilNo" value="no" v-model='returns.nil'> no
                                                         </label>
                                                 </div>
                                                 <div class="row">
@@ -51,6 +51,11 @@
                                                         <label>
                                                           <input type="radio"  name="SpreadsheetNo" value="no" v-model='returns.spreadsheet'> no
                                                         </label>
+                                                </div>
+                                                <div v-if="returns.nil == 'yes'" class="row">
+                                                  <label class="col-sm-4">Reason for providing a Nil return</label>
+                                                  <input type="textarea" name="nilReason" v-model="returns.nilReason">
+                                                  
                                                 </div>
                                                 <div v-if="returns.spreadsheet =='yes'" class="row">
                                                     <label class="col-sm-4">Do you want the data in spreadsheet added to or replace existing data?</label>
@@ -146,8 +151,6 @@ export default {
       //   console.log( $(d).data('species'))
 
       // })
-
-      
 
        // vm.$http.post('/api/returns.json',JSON.stringify(returns),{
         vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
