@@ -599,7 +599,8 @@ export default {
                   allowOutsideClick: false
                 }).then((value) => {
                         var loc = window.location;
-                        window.location = loc.protocol + '//' + loc.host + loc.pathname;
+//                        window.location = loc.protocol + '//' + loc.host + loc.pathname;
+                        window.location = loc.protocol + '//' + loc.host + '/map/';
 		});
 
 	},
