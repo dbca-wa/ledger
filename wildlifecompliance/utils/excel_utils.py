@@ -296,6 +296,9 @@ def get_applicant_details(applicant_name):
     org = get_applicant_org(applicant_name)
     return '{} \n{}'.format(org.name, org.postal_address)
 
+def get_index(values_list, name):
+    return values_list.index(name)
+
 def _read_workbook(input_filename):
     """
     Read the contents of input_filename and return
@@ -346,7 +349,7 @@ def read_workbook1(input_filename):
                 meta[purpose].update( {i[0]: i[1]} )
 
     return meta
-    
+
 def read_workbook(input_filename, licence_category='Fauna Other Purpose'):
     """
     Read the contents of input_filename and return
@@ -354,8 +357,8 @@ def read_workbook(input_filename, licence_category='Fauna Other Purpose'):
     :param input_filename: Filepath of the spreadsheet to read
     :return:  Dict of response sets
     """
-    wb_response_sets = {}
     meta = {}
+    meta = OrderedDict()
     if not os.path.isfile(input_filename):
         logger.warn('Cannot find file {}'.format(input_filename))
         return None
@@ -371,7 +374,7 @@ def read_workbook(input_filename, licence_category='Fauna Other Purpose'):
     for row in range(1, number_of_rows):
         row_values = sh_meta.row_values(row)
         purpose = row_values[0]
-        meta[purpose] = {}
+        meta.update([(purpose, {})])
         for i in zip(hdr, row_values)[1:]:
             meta[purpose].update( {i[0]: i[1]} )
 
@@ -383,13 +386,33 @@ def read_workbook(input_filename, licence_category='Fauna Other Purpose'):
     for row in range(1, number_of_rows):
         row_values = sh.row_values(row)
         lodgement_number = row_values[0]
+        idx_licence = row_values.index('licence_number')
+        licence_number = row_values[idx_licence]
+        application = Application.objects.get(lodgement_number=lodgement_number)
+        import ipdb; ipdb.set_trace()
+
+        for purpose in meta.keys():
+            try:
+                idx_start = meta[purpose]['First Col']
+                idx_end = meta[purpose]['Last Col']
+                purpose_row = row_values[idx_start, idx_end]
+
+
+                idx_to_be_issued = purpose_row.index('to_be_issued')
+                to_be_issued = purpose_row[idx_to_be_issued]
+                if to_be_issued in ['y', 'Y'] and not licence_number:
+                    # create licence, if not already created
+                    #if not licence_exists(purpose, lodgement_number):
+
+                    # check if user already has a licence. if so, re-use licence_number and update the licence_sequence
+                    create_licence(application, purpose)
+                activity_row = [idx_start, ]
+            except ValueError, e:
+                logger.error('Cannot find activity_type {} in Excel header./n{}'.format(activity_type, e))
+
         excel_data.update({lodgement_number: row_values})
 
-    
-
-
     out_filename = '/tmp/wc_apps_out_{}.xlsx'.format(licence_category.lower().replace(' ','_'))
-
     wb_out = xlsxwriter.Workbook(out_filename)
     ws_out = wb_out.add_worksheet(sheet_name)
 
@@ -439,7 +462,7 @@ def cols_common(qs_activity_type, activity_name):
         ('{}_issue_date'.format(code), qs_activity_type[0].issue_date if qs_activity_type else None),
         ('{}_start_date'.format(code), qs_activity_type[0].start_date if qs_activity_type else None),
         ('{}_expiry_date'.format(code), qs_activity_type[0].expiry_date if qs_activity_type else None),
-        ('{}_issued'.format(code), qs_activity_type[0].issued if qs_activity_type else None),
+        ('{}_to_be_issued'.format(code), qs_activity_type[0].issued if qs_activity_type else None),
         ('{}_processed'.format(code), qs_activity_type[0].processed if qs_activity_type else None),
     ])
     return ordered_dict
@@ -458,6 +481,14 @@ def cols_output(qs_activity_type, activity_name):
     ordered_dict.update(create_activity_type_fields(qs_activity_type, activity_name))
     ordered_dict.update(cols_common(qs_activity_type, activity_name))
     return ordered_dict
+
+
+def create_licence(application, activity_name='Importing Fauna (Non-Commercial)'):
+    submitter = User.objects.get(email__icontains='jawaid.mushtaq')
+    activity=WildlifeLicenceActivity.objects.get(name=activity_name)
+
+    licence = WildlifeLicence.objects.create(current_application=application, org_applicant=application.org_applicant, submitter=application.submitter, licence_type=activity)
+    return licence
 
 
 def write_workbook(licence_category='Flora Industry'):

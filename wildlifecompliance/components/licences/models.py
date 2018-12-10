@@ -38,7 +38,7 @@ class WildlifeLicenceActivity(models.Model):
     base_application_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
     base_licence_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
     fields=JSONField(default=list)
-    
+
     # application_schema = JSONField(blank=True, null=True)
 
     class Meta:
@@ -77,7 +77,7 @@ class WildlifeLicenceActivityType(models.Model):
     def __str__(self):
         return self.name
 
-    
+
 
 # class DefaultCondition(models.Model):
 #     condition = models.ForeignKey(Condition)
@@ -123,7 +123,7 @@ class DefaultActivityType(models.Model):
 
     def __str__(self):
         return '{} - {}'.format(self.licence_class,self.activity_type)
-    
+
 
 class DefaultActivity(models.Model):
     activity = models.ForeignKey(WildlifeLicenceActivity)
@@ -154,10 +154,10 @@ class WildlifeLicence(models.Model):
     cover_letter_document = models.ForeignKey(LicenceDocument, blank=True, null=True, related_name='cover_letter_document')
     replaced_by = models.ForeignKey('self', blank=True, null=True)
     current_application = models.ForeignKey(Application,related_name = '+')
-    activity = models.CharField(max_length=255)
-    region = models.CharField(max_length=255)
-    tenure = models.CharField(max_length=255,null=True)
-    title = models.CharField(max_length=255)
+    activity = models.CharField(max_length=255, blank=True, null=True)
+    region = models.CharField(max_length=255, blank=True, null=True)
+    tenure = models.CharField(max_length=255, blank=True, null=True)
+    title = models.CharField(max_length=255, blank=True, null=True)
     renewal_sent = models.BooleanField(default=False)
     issue_date = models.DateField(blank=True,null=True)
     original_issue_date = models.DateField(auto_now_add=True)
@@ -176,7 +176,7 @@ class WildlifeLicence(models.Model):
     licence_type=models.ForeignKey('WildlifeLicenceActivity',null=True)
 
     licence_number = models.CharField(max_length=64, blank=True, null=True)
-    licence_sequence = models.IntegerField(blank=True, default=0)
+    licence_sequence = models.IntegerField(blank=True, default=1)
 
     # licence_class = models.ForeignKey(WildlifeLicenceClass)
     # licence_activity_type = models.ForeignKey(WildlifeLicenceActivityType)
@@ -187,16 +187,14 @@ class WildlifeLicence(models.Model):
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return '{} {}-{}'.format(self.licence_activity_type, self.licence_number, self.licence_sequence)
+        return '{} {}-{}'.format(self.licence_type, self.licence_number, self.licence_sequence)
 
-    def save(self, *args, **kwargs): 
-        import ipdb; ipdb.set_trace()
-        super(WildlifeLicence, self).save(*args,**kwargs) 
-        self.licence_sequence = self.licence_sequence + 1
-        if not self.licence_number: 
+    def save(self, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        super(WildlifeLicence, self).save(*args,**kwargs)
+        if not self.licence_number:
             self.licence_number = 'L{0:06d}'.format(self.pk)
-        self.save() 
-        #super(WildlifeLicence, self).save(*args,**kwargs) 
+            self.save()
 
     @property
     def reference(self):
@@ -207,7 +205,7 @@ class WildlifeLicence(models.Model):
         return self.licence_number is not None and len(self.licence_number) > 0
 
     def generate_doc(self):
-        from wildlifecompliance.components.licences.pdf import create_licence_doc 
+        from wildlifecompliance.components.licences.pdf import create_licence_doc
         self.licence_document = create_licence_doc(self,self.current_application)
         self.save()
 
@@ -229,7 +227,7 @@ class LicenceLogEntry(CommunicationsLogEntry):
 class LicenceUserAction(UserAction):
     ACTION_CREATE_LICENCE = "Create licence {}"
     ACTION_UPDATE_LICENCE = "Create licence {}"
-    
+
     class Meta:
         app_label = 'wildlifecompliance'
         ordering = ('-when',)

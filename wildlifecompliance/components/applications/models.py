@@ -1561,7 +1561,8 @@ class ExcelApplication(models.Model):
             ('lodgement_number', self.lodgement_number),
             ('application_id', self.application.id),
             ('licence_number', self.licence_number),
-            ('applicant', self.applicant)
+            ('applicant', self.applicant_details)
+            ('applicant_id', self.org_applicant.id)
         ])
 
     @property
@@ -1578,8 +1579,12 @@ class ExcelApplication(models.Model):
         return self.application.licence.licence_number if self.application.licence else None
 
     @property
-    def applicant(self):
-        return self.application.applicant
+    def org_applicant(self):
+        return self.application.org_applicant
+
+    def applicant_details(self):
+        return '{} \n{}'.format(self.org_applicant.name, self.org_applicant.postal_address)
+
 
     @property
     def applicant_block(self):
