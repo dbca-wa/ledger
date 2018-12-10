@@ -169,7 +169,8 @@
                         </td>
                     </tr>
                     <template v-if="site.showBreakdown"><tr v-for="(line, breakIndex) in site.breakdown" v-bind:key="breakIndex" class="breakdown">
-                        <td class="site">Site: {{ line.name }}</td>
+                        <td v-if="useAdminApi" class="site">Site: {{ line.name }}</td>
+                        <td v-if="!useAdminApi" class="site">Site:</td>
                         <td></td>
                         <td v-if="!useAdminApi" class="date" v-for="(day, availabilityIndex) in line.availability" v-bind:key="availabilityIndex" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
                         <td v-if="useAdminApi" class="date" v-for="(day, availabilityIndex) in line.availability" v-bind:key="availabilityIndex" v-bind:class="{available: day[0]}" >
