@@ -359,7 +359,7 @@
                                     <option value="0">Vessel</option>
                                 </select>
                                 <label for="'form-'+Number(index).toString()+'-vehicle_rego'" class="text-right">Vessel</label><label>&nbspRegistration:</label>
-                                <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" v-model="vehicle[1]" required v-on:change="searchRego()" style="text-transform:uppercase"/>
+                                <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" v-model="vehicle[1]" required v-on:change="searchRego()" style="text-transform:uppercase" readonly/>
                             </div>
                         </div>
                         <!-- <div class="col-md-4">
@@ -597,6 +597,7 @@
             draft: {{ details.vessel_draft }},
             beam: {{ details.vessel_beam }},
             weight: {{ details.vessel_weight }},
+            rego: {{ details.vessel_rego }},
             admissionFee: 0,
             nononline: false,
             override: false,
@@ -605,6 +606,7 @@
             override_reasons: [],
             overrideDetail: '',
             isStaff: {{ staff }},
+            isFirst: true,
             toc: false,
             booking_id: {{ booking.id }},
             }
@@ -720,10 +722,6 @@
                         method: 'GET',
                         success: function(data, stat, xhr) {
                             if(data[0]){
-                                vm.size = data[0].vessel_size;
-                                vm.weight = data[0].vessel_weight;
-                                vm.draft = data[0].vessel_draft;
-                                vm.beam = data[0].vessel_beam;
                                 if (vm.linesAdmissions.length > 0){
                                     if (data[0].admissionsPaid){
                                         vm.payingAdmissions = false;
@@ -731,7 +729,7 @@
                                         vm.payingAdmissions = true;
                                     }
                                     vm.calculateTotal();
-                                }
+                                }                                
                             } else {
                                 console.log("Registration was not found.");
                                 if (vm.linesAdmissions.length > 0){
@@ -744,6 +742,7 @@
                             }
                         }
                     });
+                    vm.isFirst = false;
                 }
             },
             calculateTotal: function () {
@@ -953,12 +952,14 @@
                 }
             }
             //Set the rego if entered.
-            var x = document.cookie.split('vessel_rego=');
-            if(x.length == 2){
-                var secondHalf = x[1].split(';');
-                var rego = secondHalf[0];
-                vm.vehicles = [[0, rego, true]];
+            vm.isFirst = true;
+            if (vm.rego !== 0){
+                console.log(vm.rego);
+                vm.vehicles = [[0, vm.rego.toString(), true]];
+                console.log(vm.vehicles);
+                vm.searchRego(vm.rego);
             }
+            
             $.get("/api/discountReasons/",function (data) {
                 vm.override_reasons = data;
             });

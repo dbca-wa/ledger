@@ -3,6 +3,7 @@ from io import BytesIO
 from django.conf import settings
 
 from mooring import pdf
+from mooring.models import MooringsiteBooking
 from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.models import Invoice
 
@@ -21,7 +22,7 @@ class TemplateEmailBase(EmailBase):
 
 def send_admissions_booking_invoice(admissionsBooking):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Your booking invoice for {}'.format(admissionsBooking.arrivalDate)
+    email_obj.subject = 'Admission fee payment invoice for {}'.format(admissionsBooking.arrivalDate)
     email_obj.html_template = 'mooring/email/admissions_invoice.html'
     email_obj.txt_template = 'mooring/email/admissions_invoice.txt'
 
@@ -60,7 +61,7 @@ def send_booking_invoice(booking):
 
 def send_admissions_booking_confirmation(admissionsBooking, request):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Your booking {} on {} is confirmed'.format(admissionsBooking.confirmation_number,admissionsBooking.arrivalDate)
+    email_obj.subject = 'Admission Fee Payment Confirmation {} on {}'.format(admissionsBooking.confirmation_number,admissionsBooking.arrivalDate)
     email_obj.html_template = 'mooring/email/admissions_confirmation.html'
     email_obj.txt_template = 'mooring/email/admissions_confirmation.txt'
     email = admissionsBooking.customer.email
@@ -76,7 +77,7 @@ def send_admissions_booking_confirmation(admissionsBooking, request):
     att = BytesIO()
     pdf.create_admissions_confirmation(att, admissionsBooking)
     att.seek(0)
-    filename = 'confirmation-AD{}.pdf'.format(admissionsBooking.id)
+    filename = 'confirmation-AD{}({}).pdf'.format(admissionsBooking.id, admissionsBooking.customer.get_full_name())
     email_obj.send([email], from_address=rottnest_email, context=context, cc=cc, bcc=bcc, attachments=[(filename, att.read(), 'application/pdf')])
 
 def send_booking_confirmation(booking,request):
@@ -117,7 +118,7 @@ def send_booking_confirmation(booking,request):
     
     
     additional_info = booking.mooringarea.additional_info if booking.mooringarea.additional_info else ''
-
+    
     context = {
         'booking': booking,
         'phone_number': tel,
@@ -129,7 +130,10 @@ def send_booking_confirmation(booking,request):
     }
 
     att = BytesIO()
-    pdf.create_confirmation(att, booking)
+    mooring_booking = []
+    if MooringsiteBooking.objects.filter(booking=booking).count() > 0:
+        mooring_booking = MooringsiteBooking.objects.filter(booking=booking)
+    pdf.create_confirmation(att, booking, mooring_booking)
     att.seek(0)
 
 

@@ -157,10 +157,11 @@ def abort_booking_view(request, *args, **kwargs):
             vessel_draft = booking.details['vessel_draft']
             vessel_beam = booking.details['vessel_beam']
             vessel_weight = booking.details['vessel_weight']
+            vessel_rego = booking.details['vessel_rego']
             # Redirect to the availability screen
             #return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
             #mooring_availaiblity2_selector
-            return redirect(reverse('mooring_availaiblity2_selector') + '?site_id={}&num_adult={}&num_children={}&num_infants={}&vessel_size={}&vessel_draft={}&vessel_beam={}&vessel_weight={}'.format(c_id, num_adults, num_children, num_infants, vessel_size, vessel_draft, vessel_beam, vessel_weight))
+            return redirect(reverse('mooring_availaiblity2_selector') + '?site_id={}&num_adult={}&num_children={}&num_infants={}&vessel_size={}&vessel_draft={}&vessel_beam={}&vessel_weight={}&vessel_rego={}'.format(c_id, num_adults, num_children, num_infants, vessel_size, vessel_draft, vessel_beam, vessel_weight, vessel_rego))
         else:
             # only ever delete a booking object if it's marked as temporary
             if booking.booking_type == 3:
@@ -207,7 +208,8 @@ class MakeBookingsView(TemplateView):
             'vessel_size':0,
             'vessel_draft':0,
             'vessel_beam':0,
-            'vessel_weight':0
+            'vessel_weight':0,
+            'vessel_rego':0,
         }
         lines = []
 
@@ -663,9 +665,6 @@ class AdmissionsCostView(TemplateView):
                 return render(self.request, self.template_name)
             return redirect('ps_home')
         return redirect('ps_home')
-
-class BookingPeriodView(TemplateView):
-    template_name = 'mooring/dash/dash_booking_period.html'
 
 class MarinastayRoutingView(TemplateView):
     template_name = 'mooring/index.html'

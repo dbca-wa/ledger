@@ -187,7 +187,7 @@ def create_confirmation(confirmation_buffer, booking, mooring_bookings):
             fee_text = "Not Applicable"
             table_data.append([Paragraph('Admission Fees', styles['BoldLeft']), Paragraph('{}'.format(fee_text), styles['Left'])])
         
-
+    
 #    table_data.append([Paragraph('Number of guests', styles['BoldLeft']), Paragraph(booking.stay_guests, styles['Left'])])
     table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} {} ({})'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''), booking.customer.email if booking.customer else None), styles['Left'])])
     table_data.append([Paragraph('Booking confirmation number', styles['BoldLeft']), Paragraph(booking.confirmation_number, styles['Left'])])
@@ -237,14 +237,13 @@ def create_admissions_confirmation(confirmation_buffer, admissionsBooking):
 
     elements = []
 
-    elements.append(Paragraph('ADMISSIONS BOOKING CONFIRMATION', styles['InfoTitleVeryLargeCenter']))
+    elements.append(Paragraph('ADMISSIONS FEE PAYMENT CONFIRMATION', styles['InfoTitleVeryLargeCenter']))
    
     table_data = []
     table_data.append([Paragraph('Date', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.arrivalDate), styles['Left'])])
     table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} ({})'.format(admissionsBooking.customer.get_full_name(), admissionsBooking.customer.email if admissionsBooking.customer else None), styles['Left'])])
-    table_data.append([Paragraph('Booking confirmation number', styles['BoldLeft']), Paragraph(admissionsBooking.confirmation_number, styles['Left'])])
+    table_data.append([Paragraph('Admission Fee confirmation number', styles['BoldLeft']), Paragraph(admissionsBooking.confirmation_number, styles['Left'])])
     table_data.append([Paragraph('Overnight Stay', styles['BoldLeft']), Paragraph(u'{}'.format(overnightStay), styles['Left'])])
-    table_data.append([Paragraph('Total paid for attendees', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.total_admissions), styles['Left'])])
     if admissionsBooking.noOfAdults > 0:
         table_data.append([Paragraph('Adults', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfAdults), styles['Left'])])
     if admissionsBooking.noOfConcessions > 0:

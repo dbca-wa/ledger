@@ -1,32 +1,38 @@
 <template lang="html">
-    <div id="bookingperiod">
-        <div class="container">
-            <div class="well" style="overflow:auto;">
-                <div style="text-align:center">
-                    <h1>Booking Periods</h1>
+    <div id="bookingperiod" class="panel-group" role="tablist" aria-multiselectable="true">
+        <div class="row">
+            <div class="panel panel-default" style="overflow:auto;">
+                <div class="panel-heading" role="tab">
+                    <h4 class="panel-title">
+                        <h3 style="display:inline;">Booking Periods</h3>
+                    </h4>
                 </div>
-                <div class="col-lg-12">
-                    <div class="row">
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="newOption()">Add New Option</button>
+                <div id="details-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="details-heading">
+                    <div class="panel-body">
+                        <div class="col-lg-12">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="newOption()">Add New Option</button>
+                                </div>
+                                <div class="col-md-8"/>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="newPeriod()">Add New Period</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="editOption()">Edit Option</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-danger" style="width:100%;" @click.prevent="deleteOption()">Delete Option</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <datatable ref="optionsTable" :dtHeaders="dt_headers" :dtOptions="dt_options" id="op_table"></datatable>
+                            </div>
                         </div>
-                        <div class="col-md-8"/>
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="newPeriod()">Add New Period</button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="editOption()">Edit Option</button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-danger" style="width:100%;" @click.prevent="deleteOption()">Delete Option</button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <datatable ref="optionsTable" :dtHeaders="dt_headers" :dtOptions="dt_options" id="op_table"></datatable>
                     </div>
                 </div>
             </div>
