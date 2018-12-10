@@ -36,12 +36,12 @@
                         aria-expanded="false" aria-controls="contact-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Contact</h3>
-                                <span id="collapse_contact_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
+                                <span id="collapse_contact_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
                 </div>
-                <div id="contact-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="contact-heading">
+                <div id="contact-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="contact-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
@@ -62,12 +62,12 @@
                         aria-expanded="false" aria-controls="limits-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Vessel Limits</h3>
-                                <span id="collapse_limits_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
+                                <span id="collapse_limits_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
                 </div>
-                <div id="limits-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="limits-heading">
+                <div id="limits-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="limits-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
@@ -88,12 +88,12 @@
                         aria-expanded="false" aria-controls="images-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Mooring Images</h3>
-                                <span id="collapse_images_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
+                                <span id="collapse_images_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
                 </div>
-                <div id="images-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="images-heading">
+                <div id="images-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="images-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
@@ -114,12 +114,12 @@
                         aria-expanded="false" aria-controls="map-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Mooring Location</h3>
-                                <span id="collapse_map_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
+                                <span id="collapse_map_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
                 </div>
-                <div id="map-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="map-heading">
+                <div id="map-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="map-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
@@ -140,12 +140,12 @@
                         aria-expanded="false" aria-controls="additional-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Additional Details</h3>
-                                <span id="collapse_additional_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
+                                <span id="collapse_additional_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
                 </div>
-                <div id="additional-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="additional-heading">
+                <div id="additional-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="additional-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
@@ -166,12 +166,12 @@
                         aria-expanded="false" aria-controls="stayhistory-collapse" style="outline:none;">
                         <div>
                             <h3 style="display:inline;">Maximum Stay History</h3>
-                            <span id="collapse_stay_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
+                            <span id="collapse_stay_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
                         </div>
                         </a>
                     </h4>
                 </div>
-                <div id="stayhistory-collapse" class="panel-collapse collapse" role="tabpanel"
+                <div id="stayhistory-collapse" class="panel-collapse collapse in" role="tabpanel"
                     aria-labelledby="stayhistory-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
@@ -192,12 +192,12 @@
                         aria-expanded="false" aria-controls="bookingperiod-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Booking Period History</h3>
-                                <span id="collapse_booking_period_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
+                                <span id="collapse_booking_period_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
                 </div>
-                <div id="bookingperiod-collapse" class="panel-collapse collapse" role="tabpanel"
+                <div id="bookingperiod-collapse" class="panel-collapse collapse in" role="tabpanel"
                     aria-labelledby="bookingperiod-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
@@ -218,12 +218,12 @@
                         aria-expanded="false" aria-controls="closures-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Closure History</h3>
-                                <span id="collapse_closure_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
+                                <span id="collapse_closure_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
                 </div>
-                <div id="closures-collapse" class="panel-collapse collapse" role="tabpanel"
+                <div id="closures-collapse" class="panel-collapse collapse in" role="tabpanel"
                     aria-labelledby="closures-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
@@ -245,7 +245,7 @@
                 </a>
             </h4>
         </div>
-        <div class="panel-collapse collapse" role="tabpanel"
+        <div class="panel-collapse collapse in" role="tabpanel"
              aria-labelledby="applications-heading" id="campsites">
             <div class="panel-body">
                <div class="col-lg-12">
