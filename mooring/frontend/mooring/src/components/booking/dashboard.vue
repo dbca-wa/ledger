@@ -1,131 +1,157 @@
 <template lang="html" id="booking-dashboard">
 <div class="row">
   <div class="col-lg-12" v-show="!isLoading">
-      <div class="well"     style="overflow: visible;">
-          <div class="row">
-              <div class="col-lg-12" style="text-align:center;">
-                  <h1>Bookings</h1>
-                  <button v-if="!exportingCSV" type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
-                      <i class="fa fa-file-excel-o" aria-hidden="true"></i> Export to CSV
-                  </button>
-                  <button v-else type="button" class="btn btn-default pull-right" disabled>
-                      <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Exporting to CSV
-                  </button>
-              </div>
-          </div>
-          <div class="row">
-            <div class="col-md-4">
-                <div class="form-group">
-                  <label for="">Mooring</label>
-                  <select v-show="isLoading" class="form-control" >
-                      <option value="">Loading...</option>
-                  </select>
-                  <select ref="campgroundSelector" v-if="!isLoading" class="form-control" v-model="filterCampground" id="filterCampground">
-                      <option value="All">All</option>
-                      <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
-                  </select>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="form-group">
-                  <label for="">Region</label>
-                  <select v-show="isLoading" class="form-control" name="">
-                        <option value="">Loading...</option>
-                  </select>
-                  <select ref="regionSelector" v-if="!isLoading" class="form-control" v-model="filterRegion" id="filterRegion">
-                        <option value="All">All</option>
-                        <option v-for="region in regions" :value="region.id">{{region.name}}</option>
-                  </select>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="form-group">
-                  <label for="">Cancelled</label>
-                  <select class="form-control" v-model="filterCanceled" id="filterCanceled">
-                        <option value="True">Yes</option>
-                        <option value="False">No</option>
-                  </select>
-                </div>
-            </div>
-        </div>
-        <div class="row" style="margin-bottom:10px;">
-            <div class="col-md-4">
-                <label for="">Date From</label>
-                <div class="input-group date" id="booking-date-from">
-                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateFrom">
-                  <span class="input-group-addon">
-                      <span class="glyphicon glyphicon-calendar"></span>
-                  </span>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <label for="">Date To</label>
-                <div class="input-group date" id="booking-date-to">
-                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo">
-                  <span class="input-group-addon">
-                      <span class="glyphicon glyphicon-calendar"></span>
-                  </span>
-                </div>
-            </div>
-            <div class="col-md-4" v-if="filterCanceled == 'True'">
-                <div class="form-group">
-                  <label for="">Refund Status</label>
-                  <select class="form-control" v-model="filterRefundStatus" id="filterRefundStatus">
-                        <option value="All">All</option>
-                        <option value="Refunded">Refunded</option>
-                        <option value="Partially Refunded">Partially Refunded</option>
-                        <option value="Not Refunded">Not Refunded</option>
-                  </select>
-                </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-lg-12">
-                <datatable ref="bookings_table" id="bookings-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders"></datatable>
-            </div>
-          </div>
-      </div>
-      <changebooking ref="changebooking" :booking_id="selected_booking" :campgrounds="campgrounds"/>
-      <bookingHistory ref="bookingHistory" :booking_id="selected_booking" />
-  </div>
-   <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
-
-  <div class="col-lg-12" v-show="!isLoading2">
       <div class="well" style="overflow: visible;">
           <div class="row">
               <div class="col-lg-12" style="text-align:center;">
-                  <h1>Admission Fee Payments</h1>
-                  <button v-if="!exportingCSV2" type="button" class="btn btn-default pull-right" id="print-btn" @click="print2()">
-                      <i class="fa fa-file-excel-o" aria-hidden="true"></i> Export to CSV
-                  </button>
-                  <button v-else type="button" class="btn btn-default pull-right" disabled>
-                      <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Exporting to CSV
-                  </button>
+                    <div class="col-lg-10">
+                        <h1 style="margin-left:20%;">Bookings</h1>
+                    </div>
+                    <div class="col-lg-2">
+                        <div class="row">
+                            <button type="button" class="btn btn-default pull-right" id="collapse_bookings" @click="showhidebookings()">
+                                <span id="collapse_bookings_span" class="glyphicon glyphicon-menu-up"></span>
+                            </button>
+                        </div>
+                        <div class="row">
+                            <button v-if="!exportingCSV" type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
+                                <i class="fa fa-file-excel-o" aria-hidden="true"></i> Export to CSV
+                            </button>
+                            <button v-else type="button" class="btn btn-default pull-right" disabled>
+                                <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Exporting to CSV
+                            </button>
+                        </div>
+                    </div>
               </div>
           </div>
-        <div class="row" style="margin-bottom:10px;">
-            <div class="col-md-4">
-                <label for="">Date From</label>
-                <div class="input-group date" id="admission-date-from">
-                  <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterDateFrom2">
-                  <span class="input-group-addon">
-                      <span class="glyphicon glyphicon-calendar"></span>
-                  </span>
+          <div class="content_booking" id="content_booking" style="transition:max-height 0.2s ease-out;">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                    <label for="">Mooring</label>
+                    <select v-show="isLoading" class="form-control" >
+                        <option value="">Loading...</option>
+                    </select>
+                    <select ref="campgroundSelector" v-if="!isLoading" class="form-control" v-model="filterCampground" id="filterCampground">
+                        <option value="All">All</option>
+                        <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
+                    </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                    <label for="">Region</label>
+                    <select v-show="isLoading" class="form-control" name="">
+                            <option value="">Loading...</option>
+                    </select>
+                    <select ref="regionSelector" v-if="!isLoading" class="form-control" v-model="filterRegion" id="filterRegion">
+                            <option value="All">All</option>
+                            <option v-for="region in regions" :value="region.id">{{region.name}}</option>
+                    </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                    <label for="">Cancelled</label>
+                    <select class="form-control" v-model="filterCanceled" id="filterCanceled">
+                            <option value="True">Yes</option>
+                            <option value="False">No</option>
+                    </select>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <label for="">Date To</label>
-                <div class="input-group date" id="admission-date-to">
-                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo2">
-                  <span class="input-group-addon">
-                      <span class="glyphicon glyphicon-calendar"></span>
-                  </span>
+            <div class="row" style="margin-bottom:10px;">
+                <div class="col-md-4">
+                    <label for="">Date From</label>
+                    <div class="input-group date" id="booking-date-from">
+                    <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateFrom">
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label for="">Date To</label>
+                    <div class="input-group date" id="booking-date-to">
+                    <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo">
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                    </div>
+                </div>
+                <div class="col-md-4" v-if="filterCanceled == 'True'">
+                    <div class="form-group">
+                    <label for="">Refund Status</label>
+                    <select class="form-control" v-model="filterRefundStatus" id="filterRefundStatus">
+                            <option value="All">All</option>
+                            <option value="Refunded">Refunded</option>
+                            <option value="Partially Refunded">Partially Refunded</option>
+                            <option value="Not Refunded">Not Refunded</option>
+                    </select>
+                    </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <datatable ref="bookings_table" id="bookings-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders"></datatable>
+                </div>
+            </div>
+        </div>
+        <changebooking ref="changebooking" :booking_id="selected_booking" :campgrounds="campgrounds"/>
+        <bookingHistory ref="bookingHistory" :booking_id="selected_booking" />
+    </div>
+    <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
+   </div>
+
+    <div class="col-lg-12" v-show="!isLoading2">
+        <div class="well" style="overflow: visible;">
+            <div class="row">
+                <div class="col-lg-12" style="text-align:center;">
+                    <div class="col-lg-10">
+                        <h1 style="margin-left:20%;">Admission Fee Payments</h1>
+                    </div>
+                    <div class="col-lg-2">
+                        <div class="row">
+                            <button type="button" class="btn btn-default pull-right" id="collapse_admissions" @click="showhideadmissions()">
+                                <span id="collapse_admissions_span" class="glyphicon glyphicon-menu-up"></span>
+                            </button>
+                        </div>
+                        <div class="row">
+                            <button v-if="!exportingCSV2" type="button" class="btn btn-default pull-right" id="print-btn" @click="print2()">
+                                <i class="fa fa-file-excel-o" aria-hidden="true"></i> Export to CSV
+                            </button>
+                            <button v-else type="button" class="btn btn-default pull-right" disabled>
+                                <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Exporting to CSV
+                            </button>
+                        </div>
+                    </div>
+              </div>
           </div>
-          <div class="row">
-            <div class="col-lg-12">
-                <datatable ref="admissions_bookings_table" id="admissions-bookings-table" :dtOptions="dtOptions2" :dtHeaders="dtHeaders2"></datatable>
+          <div class="content_admissions" id="content_admissions" style="transition:max-height 0.2s ease-out;margin-bttom:10px;">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="">Date From</label>
+                    <div class="input-group date" id="admission-date-from">
+                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterDateFrom2">
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label for="">Date To</label>
+                    <div class="input-group date" id="admission-date-to">
+                    <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo2">
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <datatable ref="admissions_bookings_table" id="admissions-bookings-table" :dtOptions="dtOptions2" :dtHeaders="dtHeaders2"></datatable>
+                </div>
             </div>
           </div>
       </div>
@@ -303,11 +329,14 @@ export default {
                                 column += record_payment;
                             }
                             if (full.editable){
+                                if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
                                 var change_booking = "<a href='/view-booking/"+full.id+"' class='text-primary' > Change</a><br/>";
                                 var cancel_booking = "<a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>";
                                 column += cancel_booking;
                                 column += change_booking;
+				}
                             }
+
                             full.has_history ? column += "<a href='/view-booking/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
                             $.each(full.active_invoices,(i,v) =>{
                                 invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
@@ -462,6 +491,32 @@ export default {
         ]),
     },
     methods:{
+        showhidebookings: function(){
+            var content = $('#content_booking');
+            var span = $('#collapse_bookings_span');
+            if (content.css("display") !== "none"){
+                content.css("display", "none");
+                span.removeClass("glyphicon glyphicon-menu-up");
+                span.addClass("glyphicon glyphicon-menu-down");
+            } else {
+                content.css("display", "block");
+                span.removeClass("glyphicon glyphicon-menu-down");
+                span.addClass("glyphicon glyphicon-menu-up");
+            }
+        },
+        showhideadmissions: function(){
+            var content = $('#content_admissions')
+            var span = $('#collapse_admissions_span');
+            if (content.css("display") !== "none"){
+                content.css("display", "none");
+                span.removeClass("glyphicon glyphicon-menu-up");
+                span.addClass("glyphicon glyphicon-menu-down");
+            } else {
+                content.css("display", "block");
+                span.removeClass("glyphicon glyphicon-menu-down");
+                span.addClass("glyphicon glyphicon-menu-up");
+            }
+        },
         fetchCampgrounds:function () {
             let vm =this;
             vm.loading.push('fetching campgrounds');

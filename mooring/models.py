@@ -919,7 +919,9 @@ class MooringsiteBooking(models.Model):
         (0, 'Reception booking'),
         (1, 'Internet booking'),
         (2, 'Black booking'),
-        (3, 'Temporary reservation')
+        (3, 'Temporary reservation'),
+        (4, 'Cancelled Booking'),
+        (5, 'Changed Booking')
     )
 
     campsite = models.ForeignKey('Mooringsite', db_index=True, on_delete=models.PROTECT)
@@ -1028,7 +1030,9 @@ class Booking(models.Model):
         (0, 'Reception booking'),
         (1, 'Internet booking'),
         (2, 'Black booking'),
-        (3, 'Temporary reservation')
+        (3, 'Temporary reservation'),
+        (4, 'Cancelled Booking'),
+        (5, 'Changed Booking')
     )
 
     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
@@ -1052,6 +1056,7 @@ class Booking(models.Model):
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
     canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
+    old_booking = models.ForeignKey('Booking', null=True, blank=True)
 
     # Properties
     # =================================
@@ -1208,8 +1213,8 @@ class Booking(models.Model):
         other_bookings = Booking.objects.filter(Q(departure__gt=arrival,departure__lte=departure) | Q(arrival__gte=arrival,arrival__lt=departure),customer=customer)
         if self.pk:
             other_bookings.exclude(id=self.pk)
-        if customer and other_bookings and self.booking_type != 3:
-            raise ValidationError('You cannot make concurrent bookings.')
+        #if customer and other_bookings and (self.booking_type != 3 or self.booking_type != 4):
+        #    raise ValidationError('You cannot make concurrent bookings.')
         #if not self.mooringarea.oracle_code:
         #    raise ValidationError('Campground does not have an Oracle code.')
         if self.mooringarea.park.entry_fee_required and not self.mooringarea.park.oracle_code:

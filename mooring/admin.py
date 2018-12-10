@@ -54,7 +54,7 @@ class MooringsiteBookingInline(admin.TabularInline):
 
 @admin.register(models.Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('arrival','departure','mooringarea','legacy_id','legacy_name','cost_total')
+    list_display = ('arrival','departure','booking_type','mooringarea','legacy_id','legacy_name','cost_total')
     ordering = ('-arrival',)
     search_fileds = ('arrival','departure')
     list_filter = ('arrival','departure','mooringarea')

@@ -556,9 +556,11 @@ class BookingSuccessView(TemplateView):
     template_name = 'mooring/booking/success.html'
 
     def get(self, request, *args, **kwargs):
+        print " BOOKING SUCCESS " 
         try:
             booking = utils.get_session_booking(request.session)
             invoice_ref = request.GET.get('invoice')
+            print "SUCCESS 2 "
             if booking.booking_type == 3:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
@@ -579,6 +581,22 @@ class BookingSuccessView(TemplateView):
                     # FIXME: replace with server side notify_url callback
                     book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
 
+                    if booking.old_booking:
+                        old_booking = Booking.objects.get(id=booking.old_booking.id)
+                        logger.info("old booking")
+                        old_booking.booking_type = 4
+                        old_booking.save()
+                        logger.info("old logger 2")
+                        booking_items = MooringsiteBooking.objects.filter(booking=old_booking)
+                        logger.info("old logger 3")
+                        for bi in booking_items:
+                            logger.info("old logger 4")
+                            bi.booking_type = 4
+                            bi.save()
+ 
+
+                          
+
                     # set booking to be permanent fixture
                     booking.booking_type = 1  # internet booking
                     booking.expiry_time = None
@@ -591,11 +609,13 @@ class BookingSuccessView(TemplateView):
                     
                     # send out the invoice before the confirmation is sent
                     emails.send_booking_invoice(booking)
+                    print "SUCCESS 3"
                     # for fully paid bookings, fire off confirmation email
                     if booking.paid:
                         emails.send_booking_confirmation(booking,request)
 
         except Exception as e:
+            print e
             if 'ps_booking_internal' in request.COOKIES:
                 return redirect('home')
             elif ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
@@ -650,6 +670,117 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
             # 'admissions_invoice': AdmissionsBookingInvoice.objects.filter(admissions_booking__in=admissions)
         }
         return render(request, self.template_name, context)
+
+class ViewBookingView(LoginRequiredMixin, TemplateView):
+    template_name = 'mooring/booking/change_booking.html'
+
+    def get(self, request, *args, **kwargs):
+        booking_id = kwargs['pk']
+        booking = None
+        if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+#             booking = Booking.objects.get(customer=request.user, booking_type__in=(0, 1), is_canceled=False, pk=booking_id)
+             booking = Booking.objects.get(pk=booking_id)
+        context = {
+           'booking_id': booking_id,
+           'booking': booking
+ #           'past_bookings': bk_past,
+ #           'current_admissions': ad_current,
+ #           'past_admissions': ad_past,
+            # 'admissions_invoice': AdmissionsBookingInvoice.objects.filter(admissions_booking__in=admissions)
+        }
+        return render(request, self.template_name, context)
+
+
+class ChangeBookingView(LoginRequiredMixin, TemplateView):
+    template_name = 'mooring/booking/change_booking.html'
+
+    def get(self, request, *args, **kwargs):
+        booking_id = kwargs['pk']
+        booking = None
+        if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+
+#             booking = Booking.objects.get(customer=request.user, booking_type__in=(0, 1), is_canceled=False, pk=booking_id)
+             booking = Booking.objects.get(pk=booking_id)
+             if booking.booking_type == 4:
+                  print "BOOKING HAS BEEN CANCELLED"
+                  return HttpResponseRedirect(reverse('home'))
+                 
+             booking_temp = Booking.objects.create(mooringarea=booking.mooringarea,
+                                                   booking_type=3,
+                                                   expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
+                                                   details=booking.details,
+                                                   arrival=booking.arrival,departure=booking.departure, old_booking=booking)
+       
+	     #request.session['ps_booking'] = booking_temp.id
+             #request.session.modified = True
+             booking_items = MooringsiteBooking.objects.filter(booking=booking)
+             for bi in booking_items:
+                  cb =  MooringsiteBooking.objects.create(
+                         campsite=bi.campsite,
+                         booking_type=3,
+                         date=bi.date,
+                         from_dt=bi.from_dt,
+                         to_dt=bi.to_dt,
+                         booking=booking_temp,
+                         amount=bi.amount,
+                         booking_period_option=bi.booking_period_option
+                       )
+
+             request.session['ps_booking'] = booking_temp.id
+             #request.session['ps_booking_old'] =  booking.id
+             request.session.modified = True
+             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector'))
+         
+#        ad_currents = admissions.filter(arrivalDate__gte=today).order_by('arrivalDate')
+#        ad_current = []
+#        for ad in ad_currents:
+#            to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
+#            ad_current.append(to_add)
+#        ad_pasts = admissions.filter(arrivalDate__lt=today).order_by('-arrivalDate')
+#        ad_past = []
+#        for ad in ad_pasts:
+#            to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
+#            ad_past.append(to_add)
+#
+#        bk_currents = bookings.filter(departure__gte=today).order_by('arrival')
+#        bk_current = []
+#        for bk in bk_currents:
+#            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
+#            bk_current.append(to_add)
+#        bk_pasts = bookings.filter(departure__lt=today).order_by('-arrival')
+#        bk_past = []
+#        for bk in bk_pasts:
+#            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
+#            bk_past.append(to_add)
+ #       context = {
+#           'booking_id': booking_id,    
+#           'booking': booking
+ #           'past_bookings': bk_past,
+ #           'current_admissions': ad_current,
+ #           'past_admissions': ad_past,
+            # 'admissions_invoice': AdmissionsBookingInvoice.objects.filter(admissions_booking__in=admissions)
+#        }
+#        return render(request, self.template_name, context)
+
+
+
+#        cb =    MooringsiteBooking.objects.create(
+#                  campsite=mooringsite,
+#                  booking_type=3,
+#                  date=booking_date,
+#                  from_dt=start_booking_date+' '+str(booking_period.start_time),
+#                  to_dt=finish_booking_date+' '+str(booking_period.finish_time),
+#                  booking=booking,
+#                  amount=amount,
+#                  booking_period_option=booking_period
+#                  )
+
+#        response_data['result'] = 'success'
+#        response_data['message'] = ''
+
+
+        return HttpResponseRedirect(reverse('home'))
+
 
 class AdmissionFeesView(TemplateView):
     template_name = 'mooring/admissions/admissions_form.html'
