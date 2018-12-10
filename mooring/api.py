@@ -600,6 +600,7 @@ def add_booking(request, *args, **kwargs):
     vessel_draft = request.POST.get('vessel_draft', 0)
     vessel_beam = request.POST.get('vessel_beam', 0)
     vessel_weight = request.POST.get('vessel_weight', 0)
+    vessel_rego = request.POST.get('vessel_rego', 0)
 
     start_booking_date = request.POST['date']
     finish_booking_date = request.POST['date']
@@ -620,6 +621,7 @@ def add_booking(request, *args, **kwargs):
             booking.details['vessel_draft'] = vessel_draft
             booking.details['vessel_beam'] = vessel_beam
             booking.details['vessel_weight'] = vessel_weight
+            booking.details['vessel_rego'] = vessel_rego
             booking.save()
     else:
         details = {
@@ -629,7 +631,8 @@ def add_booking(request, *args, **kwargs):
            'vessel_size' : vessel_size,
            'vessel_draft': vessel_draft,
            'vessel_beam' : vessel_beam,
-           'vessel_weight': vessel_weight,
+           'vessel_weight' : vessel_weight,
+           'vessel_rego' : vessel_rego,
         }
         mooringarea = MooringArea.objects.get(id=request.POST['mooring_id'])
         booking = Booking.objects.create(mooringarea=mooringarea,booking_type=3,expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),details=details,arrival=booking_period_start,departure=booking_period_finish)
@@ -738,7 +741,10 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         #print request.GET.get("formatted", False)
         formatted = bool(request.GET.get("formatted", False))
-        instance.mooring_group =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],moorings__in=[instance.id,])
+        if MooringAreaGroup.objects.filter(members__in=[request.user.id,],moorings__in=[instance.id,]).count() > 0:
+            instance.mooring_group =  MooringAreaGroup.objects.get(members__in=[request.user.id,],moorings__in=[instance.id,]).id
+        else:
+            instance.mooring_group = None
         if Mooringsite.objects.filter(mooringarea__id=instance.id).exists():
            pass
         else:
@@ -768,6 +774,8 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance =serializer.save()
             instance.mooring_group = None
+
+            cache.set('moorings_dt', self.get_queryset(), 3600)
         
             # Get and Validate campground images
             initial_image_serializers = [MooringAreaImageSerializer(data=image) for image in images_data] if images_data else []
@@ -796,7 +804,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 mg = MooringAreaGroup.objects.all()
                 for i in mg:
                     # i.campgrounds.clear()
-                    if i.id in mooring_group:
+                    if i.id == int(mooring_group):
                         m_all = i.moorings.all()
                         if instance.id in m_all:
                             pass
@@ -841,7 +849,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 mg = MooringAreaGroup.objects.all()
                 for i in mg:
                     # i.campgrounds.clear()
-                    if i.id in mooring_group:
+                    if i.id == int(mooring_group):
                         m_all = i.moorings.all()
                         if instance.id in m_all:
                             pass
@@ -1580,7 +1588,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             "vessel_size" : request.GET.get('vessel_size', 0),
             "vessel_draft" : request.GET.get('vessel_draft', 0),
             "vessel_beam" : request.GET.get('vessel_beam', 0),
-            "vessel_weight" : request.GET.get('vessel_weight', 0)
+            "vessel_weight" : request.GET.get('vessel_weight', 0),
+            "vessel_rego" : request.GET.get('vessel_rego', 0)
 #            "distance_radius" : request.GET.get('distance_radius', 0)
         }
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
@@ -1597,6 +1606,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         vessel_draft = serializer.validated_data['vessel_draft']
         vessel_beam = serializer.validated_data['vessel_beam']
         vessel_weight = serializer.validated_data['vessel_weight']
+        vessel_rego = serializer.validated_data['vessel_rego']
  #       distance_radius = serializer.validated_data['distance_radius']
 
         if ongoing_booking:
@@ -1606,6 +1616,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             ongoing_booking.details['vessel_draft'] = vessel_draft
             ongoing_booking.details['vessel_beam'] = vessel_beam
             ongoing_booking.details['vessel_weight'] = vessel_weight
+            ongoing_booking.details['vessel_rego'] = vessel_rego
             ongoing_booking.save()
         
 
@@ -3612,6 +3623,7 @@ def get_current_booking(ongoing_booking):
      cb['total_price'] = str(total_price)
      cb['ongoing_booking'] = True if ongoing_booking else False,
      cb['ongoing_booking_id'] = ongoing_booking.id if ongoing_booking else None,
+     cb['details'] = ongoing_booking.details if ongoing_booking else None,
      cb['expiry'] = expiry
      cb['timer'] = timer
 

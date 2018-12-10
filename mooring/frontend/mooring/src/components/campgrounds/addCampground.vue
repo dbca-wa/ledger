@@ -15,10 +15,9 @@
             <div class="panel-body">
                <div class="col-lg-12">
                   <div class="row">
-                    <div class="col-sm-12">
+                    <div class="col-sm-12" style="overflow:visible;">
                     </div>
-                     <campgroundAttr :campground.sync="campground" >
-                        <h1 slot="cg_name">My Slot</h1>
+                     <campgroundAttr :campground="campground" :loadingDetails="loadingDetails" @updated="updateCampground" @save="sendData">
                      </campgroundAttr>
                   </div>
                </div>
@@ -30,7 +29,7 @@
 </template>
 
 <script>
-import campgroundAttr from './campground-attr.vue'
+import campgroundAttr from './campground-details.vue'
 import {
     $,
     Moment,
@@ -50,12 +49,63 @@ export default {
                 address: {},
                 images:[]
             },
+            loadingDetails: false,
             title:'',
             errors:false,
             errorString: '',
         }
     },
     methods: {
+       updateCampground: function(value){
+            var vm = this;
+            vm.campground = value;
+        },
+        sendData: function(url, method, reload, section){
+            let vm = this;
+            $.ajax({
+                beforeSend: function(xhrObj) {
+                    xhrObj.setRequestHeader("Content-Type", "application/json");
+                    xhrObj.setRequestHeader("Accept", "application/json");
+                },
+                url: url,
+                method: method,
+                xhrFields: {
+                    withCredentials: true
+                },
+                data: JSON.stringify(vm.campground),
+                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                contentType: "application/x-www-form-urlencoded",
+                dataType: 'json',
+                success: function(data, stat, xhr) {
+                    console.log("SUCCESS!!");
+                    if (method == 'POST') {
+                        vm.$router.push({
+                            name: 'cg_detail',
+                            params: {
+                                id: data.id
+                            }
+                        });
+                    }
+                    else if (method == 'PUT') {
+                        vm.showUpdate = true;
+                    }
+                  vm.$store.dispatch("updateAlert",{
+                     visible:false,
+                     type:"danger",
+                     message: ""
+                  });
+                },
+                error: function(resp) {
+                    console.log("There was an error sending data.");
+                    console.log(resp);
+					vm.$store.dispatch("updateAlert",{
+						visible:true,
+						type:"danger",
+						message: helpers.apiError(resp)
+					});
+                }
+            });
+        }
     },
     mounted:function () {
     }

@@ -1,11 +1,9 @@
 <template id="stayHistory">
 <div class="row">
     <StayHistoryDetail :stay="stay" :mooringarea="mooringarea" ref="addMaxStayModal" @addCgStayHistory="addStayHistory()" @updateStayHistory="updateStayHistory()"></StayHistoryDetail>
-    <div class="well">
+    <div class="col-sm-12">
         <alert ref="retrieveStayAlert" :show.sync="retrieve_stay.error" type="danger" :duration="retrieve_stay.timeout">{{retrieve_stay.errorString}}</alert>
-        <div class="col-sm-8">
-            <h1>Maximum Stay History</h1>
-        </div>
+        <div class="col-sm-8"/>
         <div class="col-sm-4">
             <button @click="showAddStay()" class="btn btn-primary pull-right table_btn">Add Max Stay Period</button>
         </div>

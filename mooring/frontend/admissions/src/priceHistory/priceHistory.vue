@@ -2,7 +2,6 @@
 <div class="row">
     <parkPriceHistory v-if="addParkPrice" ref="historyModal" @addParkPriceHistory="addParkHistory()" @updateParkPriceHistory="updateParkHistory()" :priceHistory="parkPrice" @cancel="closeHistory()"/>
     <PriceHistoryDetail v-else ref="historyModal" @addPriceHistory="addHistory()" @updatePriceHistory="updateHistory()" :priceHistory="price"></PriceHistoryDetail>
-    <div class="well">
         <div class="col-sm-8">
             <h3>Price History</h3>
         </div>
@@ -10,7 +9,6 @@
             <button v-show="showAddBtn" @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
         </div>
         <datatable ref="history_dt" :dtHeaders ="dt_headers" :dtOptions="dt_options" id="ph_table"></datatable>
-    </div>
     <confirmbox id="deleteHistory" :options="deleteHistoryPrompt"></confirmbox>
 </div>
 </template>

@@ -9,7 +9,7 @@
                         <a role="button" data-toggle="collapse" href="#details-collapse"
                         aria-expanded="false" aria-controls="details-collapse" style="outline:none;">
                             <div>
-                                <h3 style="display:inline;">Mooring Details</h3>
+                                <h3 style="display:inline;">{{title}}</h3>
                                 <span id="collapse_details_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
                             </div>
                         </a>
@@ -17,141 +17,11 @@
                 </div>
                 <div id="details-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="details-heading">
                     <div class="panel-body">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <campgroundAttr :createCampground=false :campground="campground" :loadingDetails="loadingDetails" @updated="updateCampground" @save="sendData">
-                                </campgroundAttr>
-                            </div>
+                    <div class="col-lg-12">
+                        <div class="row">
+                            <campgroundAttr :createCampground=false :campground="campground" @updated="updateCampground()">
+                            </campgroundAttr>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row" style="margin-top:20px;">
-            <div class="panel panel-default" id="contact">
-                <div class="panel-heading" role="tab" id="contact-heading">
-                    <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#contact-collapse"
-                        aria-expanded="false" aria-controls="contact-collapse" style="outline:none;">
-                            <div>
-                                <h3 style="display:inline;">Contact</h3>
-                                <span id="collapse_contact_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
-                            </div>
-                        </a>
-                    </h4>
-                </div>
-                <div id="contact-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="contact-heading">
-                    <div class="panel-body">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <campgroundContact :createCampground=false :campground="campground" :loadingContact="loadingContact" @updated="updateCampground" @save="sendData">
-                                </campgroundContact>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row" style="margin-top:20px;">
-            <div class="panel panel-default" id="limits">
-                <div class="panel-heading" role="tab" id="limits-heading">
-                    <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#limits-collapse"
-                        aria-expanded="false" aria-controls="limits-collapse" style="outline:none;">
-                            <div>
-                                <h3 style="display:inline;">Vessel Limits</h3>
-                                <span id="collapse_limits_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
-                            </div>
-                        </a>
-                    </h4>
-                </div>
-                <div id="limits-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="limits-heading">
-                    <div class="panel-body">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <campgroundLimits :createCampground=false :campground="campground" :loadingLimits="loadingLimits" @updated="updateCampground" @save="sendData">
-                                </campgroundLimits>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row" style="margin-top:20px;">
-            <div class="panel panel-default" id="images">
-                <div class="panel-heading" role="tab" id="images-heading">
-                    <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#images-collapse"
-                        aria-expanded="false" aria-controls="images-collapse" style="outline:none;">
-                            <div>
-                                <h3 style="display:inline;">Mooring Images</h3>
-                                <span id="collapse_images_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
-                            </div>
-                        </a>
-                    </h4>
-                </div>
-                <div id="images-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="images-heading">
-                    <div class="panel-body">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <campgroundImages :createCampground=false :campground="campground" :loadingImages="loadingImages" @updated="updateCampground" @save="sendData">
-                                </campgroundImages>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row" style="margin-top:20px;">
-            <div class="panel panel-default" id="mappanel">
-                <div class="panel-heading" role="tab" id="map-heading">
-                    <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#map-collapse"
-                        aria-expanded="false" aria-controls="map-collapse" style="outline:none;">
-                            <div>
-                                <h3 style="display:inline;">Mooring Location</h3>
-                                <span id="collapse_map_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
-                            </div>
-                        </a>
-                    </h4>
-                </div>
-                <div id="map-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="map-heading">
-                    <div class="panel-body">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <campgroundMap :createCampground=false :campground="campground" :loadingMap="loadingMap" @updated="updateCampground" @save="sendData">
-                                </campgroundMap>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row" style="margin-top:20px;">
-            <div class="panel panel-default" id="additional">
-                <div class="panel-heading" role="tab" id="additional-heading">
-                    <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#additional-collapse"
-                        aria-expanded="false" aria-controls="additional-collapse" style="outline:none;">
-                            <div>
-                                <h3 style="display:inline;">Additional Details</h3>
-                                <span id="collapse_additional_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
-                            </div>
-                        </a>
-                    </h4>
-                </div>
-                <div id="additional-collapse" class="panel-collapse collapse" role="tabpanel" aria-labelledby="additional-heading">
-                    <div class="panel-body">
-                        <div class="col-lg-12">
-                            <div class="row">
-                                <campgroundAdditional :createCampground=false :campground="campground" :loadingAdditional="loadingAdditional" @updated="updateCampground" @save="sendData">
-                                </campgroundAdditional>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -171,7 +41,7 @@
                         </a>
                     </h4>
                 </div>
-                <div id="stayhistory-collapse" class="panel-collapse collapse" role="tabpanel"
+                <div id="stayhistory-collapse" class="panel-collapse collapse in" role="tabpanel"
                     aria-labelledby="stayhistory-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
@@ -197,7 +67,7 @@
                         </a>
                     </h4>
                 </div>
-                <div id="bookingperiod-collapse" class="panel-collapse collapse" role="tabpanel"
+                <div id="bookingperiod-collapse" class="panel-collapse collapse in" role="tabpanel"
                     aria-labelledby="bookingperiod-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
@@ -223,7 +93,7 @@
                         </a>
                     </h4>
                 </div>
-                <div id="closures-collapse" class="panel-collapse collapse" role="tabpanel"
+                <div id="closures-collapse" class="panel-collapse collapse in" role="tabpanel"
                     aria-labelledby="closures-heading">
                     <div class="panel-body">
                         <div class="col-lg-12">
@@ -245,7 +115,7 @@
                 </a>
             </h4>
         </div>
-        <div class="panel-collapse collapse" role="tabpanel"
+        <div class="panel-collapse collapse in" role="tabpanel"
              aria-labelledby="applications-heading" id="campsites">
             <div class="panel-body">
                <div class="col-lg-12">
@@ -273,11 +143,6 @@ import datatable from '../utils/datatable.vue'
 import closureHistory from '../utils/closureHistory.vue'
 import priceHistory from '../utils/priceHistory/priceHistory.vue'
 import campgroundAttr from './campground-details.vue'
-import campgroundContact from './campground-contact.vue'
-import campgroundLimits from './campground-limits.vue'
-import campgroundImages from './campground-images.vue'
-import campgroundMap from './campground-map.vue'
-import campgroundAdditional from './campground-additional.vue'
 import confirmbox from '../utils/confirmbox.vue'
 import bulkCloseCampsites from '../campsites/closureHistory/bulkClose.vue'
 import pkCsClose from '../campsites/closureHistory/closeCampsite.vue'
@@ -318,11 +183,6 @@ export default {
     components: {
         datatable,
         campgroundAttr,
-        campgroundContact,
-        campgroundLimits,
-        campgroundImages,
-        campgroundMap,
-        campgroundAdditional,
         confirmbox,
         pkCsClose,
         pkCsOpen,
@@ -359,15 +219,7 @@ export default {
         return {
             stayHistoryURL:api_endpoints.campgroundStayHistory(this.$route.params.id),
             campground: {
-                address:{},
-                images: []
             },
-            loadingDetails: false,
-            loadingContact: false,
-            loadingLimits: false,
-            loadingImages: false,
-            loadingMap: false,
-            loadingAdditional: false,
             campsites: [],
             isOpenOpenCS: false,
             isOpenCloseCS: false,
@@ -535,6 +387,19 @@ export default {
         updateCampground: function(value){
             var vm = this;
             vm.campground = value;
+            console.log(vm.campground.name);
+        },
+        fetchCampground:function () {
+            let vm =this;
+            $.ajax({
+                url: api_endpoints.campground(vm.$route.params.id),
+                dataType: 'json',
+                async: false,
+                success: function(data, stat, xhr) {
+                    vm.campground = data;
+                    bus.$emit('campgroundFetched');
+                }
+            });
         },
         deleteBookingRange: function(id) {
             var vm = this;
@@ -637,90 +502,6 @@ export default {
                     bus.$emit('campgroundFetched');
                 }
             });
-        },
-        loadSection: function(section){
-            let vm = this;
-            if (section == "details"){
-                vm.loadingDetails = true;
-            } else if (section == "contact"){
-                vm.loadingContact = true;
-            } else if (section == "limits"){
-                vm.loadingLimits = true;
-            } else if (section == "images"){
-                vm.loadingImages = true;
-            } else if (section == "map"){
-                vm.loadingMap = true;
-            } else if (section == "additional"){
-                vm.loadingAdditional = true;
-            }
-        },
-        stopLoadingSection: function(section){
-            let vm = this;
-            console.log(section);
-            console.log("ending the loading");
-            if (section == "details"){
-                vm.loadingDetails = false;
-            } else if (section == "contact"){
-                vm.loadingContact = false;
-            } else if (section == "limits"){
-                console.log("Ending limit loading");
-                vm.loadingLimits = false;
-            } else if (section == "images"){
-                vm.loadingImages = false;
-            } else if (section == "map"){
-                vm.loadingMap = false;
-            } else if (section == "additional"){
-                vm.loadingAdditional = false;
-            }
-        },
-        sendData: function(url, method, reload, section){
-            let vm = this;
-            vm.loadSection(section);
-            $.ajax({
-                beforeSend: function(xhrObj) {
-                    xhrObj.setRequestHeader("Content-Type", "application/json");
-                    xhrObj.setRequestHeader("Accept", "application/json");
-                },
-                url: url,
-                method: method,
-                xhrFields: {
-                    withCredentials: true
-                },
-                data: JSON.stringify(vm.campground),
-                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
-                contentType: "application/x-www-form-urlencoded",
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    console.log("SUCCESS!!");
-                    if (method == 'POST') {
-                        vm.$router.push({
-                            name: 'cg_detail',
-                            params: {
-                                id: data.data.id
-                            }
-                        });
-                    }
-                    else if (method == 'PUT') {
-                        vm.showUpdate = true;
-                    }
-                    vm.stopLoadingSection(section);
-					vm.$store.dispatch("updateAlert",{
-						visible:false,
-						type:"danger",
-						message: ""
-					});
-                },
-                error: function(resp) {
-                    vm.stopLoadingSection(section);
-                    console.log("There was an error sending data.");
-                    console.log(resp);
-					vm.$store.dispatch("updateAlert",{
-						visible:true,
-						type:"danger",
-						message: helpers.apiError(resp)
-					});
-                }
-            });
         }
 
     },
@@ -769,26 +550,6 @@ export default {
         $('#details-collapse').on('hidden.bs.collapse', function(){
             $('#collapse_details_span').removeClass("glyphicon glyphicon-menu-up");
             $('#collapse_details_span').addClass("glyphicon glyphicon-menu-down");
-        });
-        //Contact
-        $('#contact-collapse').on('shown.bs.collapse', function(){
-            $('#collapse_contact_span').removeClass("glyphicon glyphicon-menu-down");
-            $('#collapse_contact_span').addClass("glyphicon glyphicon-menu-up");
-
-        });
-        $('#contact-collapse').on('hidden.bs.collapse', function(){
-            $('#collapse_contact_span').removeClass("glyphicon glyphicon-menu-up");
-            $('#collapse_contact_span').addClass("glyphicon glyphicon-menu-down");
-        });
-        //Limits
-        $('#limits-collapse').on('shown.bs.collapse', function(){
-            $('#collapse_limits_span').removeClass("glyphicon glyphicon-menu-down");
-            $('#collapse_limits_span').addClass("glyphicon glyphicon-menu-up");
-
-        });
-        $('#limits-collapse').on('hidden.bs.collapse', function(){
-            $('#collapse_limits_span').removeClass("glyphicon glyphicon-menu-up");
-            $('#collapse_limits_span').addClass("glyphicon glyphicon-menu-down");
         });
         //Max stay
         $('#stayhistory-collapse').on('shown.bs.collapse', function(){

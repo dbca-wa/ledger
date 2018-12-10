@@ -132,33 +132,40 @@
             <div class="small-6 medium-6 large-2 columns" >
                 <label>
                     Vessel Details
-                    <input type="button" class="button formButton" value="Measurements ▼" data-toggle="measurements-dropdown"/>
+                    <input type="button" class="button formButton" value="Details ▼" data-toggle="measurements-dropdown"/>
                 </label>
                 <div class="dropdown-pane" id="measurements-dropdown" data-dropdown data-auto-focus="true">
                     <div class="row">
                         <div class="small-6 columns">
-                            <label for="vesselSize" class="text-right">Vessel Size (Meters)</label>
+                            <label for="vesselRego" class="text-left">Vessel Rego</label>
+                        </div><div class="small-6 columns">
+                            <input type="text" id="vesselRego" name="vessel_size" @blur="searchRego()" v-model="vesselRego"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="small-6 columns">
+                            <label for="vesselSize" class="text-left">Vessel Size (Meters)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="vesselSize" name="vessel_size" @change="update()" v-model="vesselSize" step="1"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
-                            <label for="vesselDraft" class="text-right">Vessel Draft (Meters)</label>
+                            <label for="vesselDraft" class="text-left">Vessel Draft (Meters)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="vesselDraft" name="vessel_draft" @change="update()" v-model="vesselDraft" step="1"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
-                            <label for="vesselBeam" class="text-right">Vessel Beams (Meters)</label>
+                            <label for="vesselBeam" class="text-left">Vessel Beams (Meters)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="vesselBeam" name="vessel_beam" @change="update()" v-model="vesselBeam" step="1"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
-                            <label for="vesselWeight" class="text-right">Vessel Weight (Tons)</label>
+                            <label for="vesselWeight" class="text-left">Vessel Weight (Tons)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="vesselWeight" name="vessel_weight" @change="update()" v-model="vesselWeight" step="1"/>
                         </div>
@@ -477,6 +484,7 @@ export default {
             vesselDraft: parseFloat(getQueryParam('vessel_draft', 0)),
             vesselBeam: parseFloat(getQueryParam('vessel_beam', 0)),
             vesselWeight: parseFloat(getQueryParam('vessel_weight', 0)),
+            vesselRego: parseFloat(getQueryParam('vessel_rego', 0)),
             distanceRadius: parseInt(getQueryParam('distance_radius', 100)),
             maxAdults: 30,
             maxChildren: 30,
@@ -656,6 +664,7 @@ export default {
                   vessel_draft: vm.vesselDraft,
                   vessel_beam: vm.vesselBeam,
                   vessel_weight: vm.vesselWeight,
+                  vessel_rego: vm.vesselRego,
                   num_adult: vm.numAdults,
                   num_children : vm.numChildren,
                   num_infant: vm.numInfants
@@ -750,8 +759,39 @@ export default {
                 vessel_draft: vm.vesselDraft,
                 vessel_beam: vm.vesselBeam,
                 vessel_weight: vm.vesselWeight,
+                vessel_rego: vm.vesselRego,
             });
             history.replaceState('', '', newHist);
+        },
+        searchRego: function(rego){
+            let vm = this;
+            if (rego){
+                var reg = rego;
+            } else {
+                var reg = vm.vesselRego
+            }
+            var data = {
+                'rego': reg
+            }
+            if(reg){
+                $.ajax({
+                    url: "/api/registeredVessels/",
+                    dataType: 'json',
+                    data: data,
+                    method: 'GET',
+                    success: function(data, stat, xhr) {
+                        if(data[0]){
+                            vm.vesselSize = Math.ceil(data[0].vessel_size);
+                            vm.vesselWeight = Math.ceil(data[0].vessel_weight);
+                            vm.vesselDraft = Math.ceil(data[0].vessel_draft);
+                            vm.vesselBeam = Math.ceil(data[0].vessel_beam);  
+                        } else {
+                            console.log("Registration was not found.");
+                        }
+                    }
+                });
+                vm.update();
+            }
         },
         update: function() {
             var vm = this;
@@ -768,6 +808,7 @@ export default {
                         vessel_draft: vm.vesselDraft,
                         vessel_beam: vm.vesselBeam,
                         vessel_weight: vm.vesselWeight,
+                        vessel_rego: vm.vesselRego,
                         distance_radius: vm.distanceRadius
                     };
 

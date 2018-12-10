@@ -823,6 +823,7 @@ export default {
                     'vessel_draft': this.vesselDraft,
                     'vessel_beam': this.vesselBeam,
                     'vessel_weight': this.vesselWeight,
+                    'vessel_rego': this.vesselRego,
                 };
                 if (this.arrivalDate && this.departureDate) {
                     params['arrival'] = this.arrivalDateString;
@@ -846,19 +847,12 @@ export default {
                     data: data,
                     method: 'GET',
                     success: function(data, stat, xhr) {
-                        var d = new Date();
-                        d.setTime(d.getTime() + (1*60*60*1000));
-                        document.cookie = "vessel_rego=" + reg + ";expires=" + d.toUTCString() + ";path=/;";
                         if(data[0]){
-                            vm.vesselWeight = data[0].vessel_weight;
-                            vm.vesselBeam = data[0].vessel_beam;
-                            vm.vesselSize = data[0].vessel_size;
-                            vm.vesselDraft = data[0].vessel_draft;
+                            vm.vesselWeight =  Math.ceil(data[0].vessel_weight);
+                            vm.vesselBeam = Math.ceil(data[0].vessel_beam);
+                            vm.vesselSize = Math.ceil(data[0].vessel_size);
+                            vm.vesselDraft = Math.ceil(data[0].vessel_draft);
                         } else {
-                            vm.vesselWeight = 0;
-                            vm.vesselBeam = 0;
-                            vm.vesselSize = 0;
-                            vm.vesselDraft = 0;
                             console.log("Registration was not found.");
                         }
                     }
@@ -868,9 +862,6 @@ export default {
                 vm.vesselBeam = 0;
                 vm.vesselSize = 0;
                 vm.vesselDraft = 0;
-                if (document.cookie.split('vessel_rego=').length==2 && (!this.vesselRego || this.vesselRego == "")){
-                    document.cookie = "vessel_rego=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                }
             }
         },
         weightBeam: function(f){
@@ -1609,7 +1600,14 @@ export default {
                 vm.total_booking = response.current_booking.total_price;
                 vm.timer = response.current_booking.timer;
                 vm.ongoing_booking = response.current_booking.ongoing_booking[0];
-              
+                vm.numAdults = parseInt(response.current_booking.details[0].num_adults) > 0 ? parseInt(response.current_booking.details[0].num_adults) : 2;
+                vm.numChildren = parseInt(response.current_booking.details[0].num_children) > 0 ? parseInt(response.current_booking.details[0].num_children) : 0;
+                vm.numInfants =  parseInt(response.current_booking.details[0].num_infants) > 0 ? parseInt(response.current_booking.details[0].num_infants) : 0;
+                vm.vesselSize = parseInt(response.current_booking.details[0].vessel_size) > 0 ? parseInt(response.current_booking.details[0].vessel_size) : 0;
+                vm.vesselDraft = parseInt(response.current_booking.details[0].vessel_draft) > 0 ? parseInt(response.current_booking.details[0].vessel_draft) : 0;
+                vm.vesselBeam = parseInt(response.current_booking.details[0].vessel_beam) > 0 ? parseInt(response.current_booking.details[0].vessel_beam) : 0;
+                vm.vesselWeight = parseInt(response.current_booking.details[0].vessel_weight) > 0 ? parseInt(response.current_booking.details[0].vessel_weight) : 0;
+                vm.vesselRego = response.current_booking.details[0].vessel_rego ? response.current_booking.details[0].vessel_rego : "";
             }
         });
 
@@ -1823,6 +1821,7 @@ export default {
                 params.num_mooring = vm.numMooring;
                 params.gear_type = vm.gearType;
                 params.pen_type = vm.penType;
+                
             }
             $.ajax({
                 url: urlBase+$.param(params),

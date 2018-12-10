@@ -67,6 +67,7 @@ class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     vessel_draft = serializers.IntegerField(default=0)
     vessel_beam = serializers.IntegerField(default=0)
     vessel_weight = serializers.IntegerField(default=0)
+    vessel_rego = serializers.CharField(default=None)
     #distance_radius = serializers.IntegerField(default=0)
 
 class MooringsiteBookingSerializer(serializers.Serializer):
@@ -333,7 +334,7 @@ class MooringAreaSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
     images = MooringAreaImageSerializer(read_only=True, many=True,required=False)
     mooring_map = serializers.FileField(read_only=True,required=False,allow_empty_file=True)
-    mooring_group = serializers.PrimaryKeyRelatedField(many=True, required=False, read_only=True,  allow_null=True) 
+    mooring_group = serializers.PrimaryKeyRelatedField(required=False, read_only=True,  allow_null=True) 
 
     class Meta:
         model = MooringArea

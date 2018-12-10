@@ -1,14 +1,14 @@
 <template lang="html" >
-    <div id="admissionsCost">
-       <div class="container">
-           <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h1 style="text-align:center;">Admission Fees</h1>
-                </div>
-                <div class="panel-body">
-                    <div class="col-lg-12">
-                        <price-history  :addParkPrice="true" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" level='park' ></price-history>
-                    </div>
+    <div id="admissionsCost" class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <h3 style="display:inline;">Admission Fees</h3>
+                </h4>
+            </div>
+            <div class="panel-body">
+                <div class="col-lg-12">
+                    <price-history  :addParkPrice="true" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" level='park' ></price-history>
                 </div>
             </div>
         </div>
