@@ -2051,6 +2051,9 @@ def create_admissions_booking(request, *args, **kwargs):
     )
     #Not strictly needed.
     #logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(admissionsBooking.customer.get_full_name(),admissionsBooking.customer.id) if admissionsBooking.customer else 'An anonymous user',admissionsBooking.id))
+    # if request.user.is_staff:
+    #     result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice, internal=True)
+    # else:
     result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice)
     print(result)
     if(result):
@@ -2170,7 +2173,7 @@ def get_admissions_confirmation(request, *args, **kwargs):
 
     # check payment status
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="confirmation-AD{}.pdf"'.format(booking_id)
+    response['Content-Disposition'] = 'filename="confirmation-AD{}.pdf"'.format(booking_id)
 
     pdf.create_admissions_confirmation(response, booking)
     return response

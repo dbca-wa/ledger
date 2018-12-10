@@ -134,7 +134,10 @@ def create_confirmation(confirmation_buffer, booking, mooring_bookings):
     lines = []
     from_date = ""
     to_date = ""
+    moorings = []
     for i, mb in enumerate(mooring_bookings):
+        if mb.campsite.mooringarea not in moorings:
+            moorings.append(mb.campsite.mooringarea)
         start = mb.from_dt
         timestamp = calendar.timegm(start.timetuple())
         local_dt = datetime.fromtimestamp(timestamp)
@@ -213,8 +216,15 @@ def create_confirmation(confirmation_buffer, booking, mooring_bookings):
     else:
         table_data.append([Paragraph('Vessel', styles['BoldLeft']), Paragraph('No vessel', styles['Left'])])
         
-    if booking.mooringarea.additional_info:        
-        table_data.append([Paragraph('Additional confirmation information', styles['BoldLeft']), Paragraph(booking.mooringarea.additional_info, styles['Left'])])
+    additional_info = ""
+
+    for mooring in moorings:
+        if mooring.additional_info:
+            additional_info += mooring.name + ": <br/>" 
+            additional_info += mooring.additional_info + "<br/>"
+
+    if additional_info:        
+        table_data.append([Paragraph('Additional confirmation information', styles['BoldLeft']), Paragraph(additional_info, styles['Left'])])
 
     elements.append(Table(table_data, colWidths=(200, None), style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
 

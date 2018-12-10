@@ -36,7 +36,7 @@
                         aria-expanded="false" aria-controls="contact-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Contact</h3>
-                                <span id="collapse_contact_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
+                                <span id="collapse_contact_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
@@ -62,7 +62,7 @@
                         aria-expanded="false" aria-controls="limits-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Vessel Limits</h3>
-                                <span id="collapse_limits_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
+                                <span id="collapse_limits_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
@@ -88,7 +88,7 @@
                         aria-expanded="false" aria-controls="images-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Mooring Images</h3>
-                                <span id="collapse_images_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
+                                <span id="collapse_images_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
@@ -114,7 +114,7 @@
                         aria-expanded="false" aria-controls="map-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Mooring Location</h3>
-                                <span id="collapse_map_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
+                                <span id="collapse_map_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
@@ -140,7 +140,7 @@
                         aria-expanded="false" aria-controls="additional-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Additional Details</h3>
-                                <span id="collapse_additional_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
+                                <span id="collapse_additional_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
@@ -166,7 +166,7 @@
                         aria-expanded="false" aria-controls="stayhistory-collapse" style="outline:none;">
                         <div>
                             <h3 style="display:inline;">Maximum Stay History</h3>
-                            <span id="collapse_stay_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
+                            <span id="collapse_stay_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
                         </div>
                         </a>
                     </h4>
@@ -192,7 +192,7 @@
                         aria-expanded="false" aria-controls="bookingperiod-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Booking Period History</h3>
-                                <span id="collapse_booking_period_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
+                                <span id="collapse_booking_period_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>
@@ -218,7 +218,7 @@
                         aria-expanded="false" aria-controls="closures-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Closure History</h3>
-                                <span id="collapse_closure_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
+                                <span id="collapse_closure_span" class="glyphicon glyphicon-menu-down" style="float:right;"></span>
                             </div>
                         </a>
                     </h4>

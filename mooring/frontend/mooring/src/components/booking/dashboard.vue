@@ -387,8 +387,9 @@ export default {
                         searchable:false
                     },
                     {
+                        data: "id",
                         mRender:function(data,type,full){
-                            return "<a href='/api/get_admissions_confirmation/"+full.id+"' target='_blank' class='text-primary'>AD"+full.id+"</a><br/>";
+                            return "<a href='/api/get_admissions_confirmation/"+data+"' target='_blank' class='text-primary'>AD"+data+"</a><br/>";
                         },
                         orderable:false,
                         searchable:false

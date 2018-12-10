@@ -38,6 +38,7 @@ from mooring.models import (MooringArea,
 from mooring import emails
 from ledger.accounts.models import EmailUser, Address
 from ledger.payments.models import Invoice
+from oscar.apps.order.models import Order
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta
 from decimal import *
@@ -219,14 +220,30 @@ class MakeBookingsView(TemplateView):
             details = booking.details
             # pricing_list = utils.get_visit_rates(Mooringsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
             # pricing_list = {}
-#            print (pricing_list)
-#            for x in pricing_list.values():
-#                print x['mooring']
-#                print "---------------------------"
-            # pricing['mooring'] = sum([float(x['mooring']) for x in pricing_list.values()])
-            # pricing['adult'] = sum([float(x['adult']) for x in pricing_list.values()])
-            # pricing['concession'] = sum([float(x['concession']) for x in pricing_list.values()])
-            # pricing['child'] = sum([float(x['child']) for x in pricing_list.values()])
+#            print (pricing_list)if request.user.is_staff:
+        #     result = utils.checkout(request, booking, lines, invoice_text=reservation, internal=True)    
+        # else:
+#            for x in pricing_lisif request.user.is_staff:
+        #     result = utils.checkout(request, booking, lines, invoice_text=reservation, internal=True)    
+        # else:s():
+#                print x['mooringif request.user.is_staff:
+        #     result = utils.checkout(request, booking, lines, invoice_text=reservation, internal=True)    
+        # else:
+#                print "---------if request.user.is_staff:
+        #     result = utils.checkout(request, booking, lines, invoice_text=reservation, internal=True)    
+        # else:-----------"
+            # pricing['mooring'] if request.user.is_staff:
+        #     result = utils.checkout(request, booking, lines, invoice_text=reservation, internal=True)    
+        # else:float(x['mooring']) for x in pricing_list.values()])
+            # pricing['adult'] = if request.user.is_staff:
+        #     result = utils.checkout(request, booking, lines, invoice_text=reservation, internal=True)    
+        # else:oat(x['adult']) for x in pricing_list.values()])
+            # pricing['concessionif request.user.is_staff:
+        #     result = utils.checkout(request, booking, lines, invoice_text=reservation, internal=True)    
+        # else:m([float(x['concession']) for x in pricing_list.values()])
+            # pricing['child'] = if request.user.is_staff:
+        #     result = utils.checkout(request, booking, lines, invoice_text=reservation, internal=True)    
+        # else:oat(x['child']) for x in pricing_list.values()])
             # pricing['infant'] = sum([float(x['infant']) for x in pricing_list.values()])
             for bm in booking_mooring:
                 # Convert the from and to dates of this booking to just plain dates in local time.
@@ -481,6 +498,9 @@ class MakeBookingsView(TemplateView):
         
         logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id))
 
+        # if request.user.is_staff:
+        #     result = utils.checkout(request, booking, lines, invoice_text=reservation, internal=True)    
+        # else:
         result = utils.checkout(request, booking, lines, invoice_text=reservation)
 #        result =  HttpResponse(
 #            content=response.content,
@@ -512,6 +532,9 @@ class AdmissionsBookingSuccessView(TemplateView):
             if booking.booking_type == 3:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
+                    order = Order.objects.get(number=inv.order_number)
+                    order.user = booking.customer
+                    order.save()
                 except Invoice.DoesNotExist:
                     logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
                     return redirect('admissions')
@@ -547,7 +570,9 @@ class AdmissionsBookingSuccessView(TemplateView):
                 invoice_ref = AdmissionsBookingInvoice.objects.get(admissions_booking=booking).invoice_reference
             else:
                 return redirect('home')
-        
+
+        if request.user.is_staff:
+            return redirect('home')
         context = {
             'admissionsBooking': booking,
             'admissionsInvoice': invoice_ref
@@ -566,6 +591,9 @@ class BookingSuccessView(TemplateView):
             if booking.booking_type == 3:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
+                    order = Order.objects.get(number=inv.order_number)
+                    order.user = booking.customer
+                    order.save()
                 except Invoice.DoesNotExist:
                     logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
                     return redirect('public_make_booking')
