@@ -1551,7 +1551,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
     def distance(self,origin, destination):
          lat1, lon1 = origin
          lat2, lon2 = destination
-         radius = 6371 * 1000 # km
+         radius = 6371 # km
 
          dlat = math.radians(lat2 - lat1)
          dlon = math.radians(lon2 - lon1)
