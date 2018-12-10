@@ -666,9 +666,11 @@ def add_booking(request, *args, **kwargs):
     from_dt_utc = from_dt_utc.replace(tzinfo=timezone.utc).isoformat()
     to_dt_utc =  to_dt_utc.replace(tzinfo=timezone.utc).isoformat()
     #to_dt__lte=to_dt_utc
-    validate_temp_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc,booking__expiry_time__gte=datetime.today(), booking_type=3).count()
-    validate_existing_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc).exclude(booking_type=3).count()
+    validate_temp_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc,booking__expiry_time__gte=datetime.today(), booking_type__in=[3]).count()
+    validate_existing_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc).exclude(booking_type__in=[3,4]).count()
 
+
+    
     if validate_temp_booking > 0 or validate_existing_booking > 0:
         response_data['result'] = 'error'
         response_data['message'] = 'Error '+str(validate_temp_booking)+' '+str(validate_existing_booking)
@@ -1317,6 +1319,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             "gear_type" : request.GET.get('gear_type', 'all'),
             "vessel_size" : request.GET.get('vessel_size', 0)
         }
+
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
 
@@ -1335,7 +1338,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'error': 'Mooring doesn\'t support online bookings'}, status=400)
    
         if ground.vessel_size_limit < vessel_size:
-             return Response({'name':'   ', 'error': 'Vessel size is too large for mooring', 'error_type': 'vessel_error', 'vessel_size': ground.vessel_size_limit}, status=200 )
+             return Response({'name':'   ', 'error': 'Vessel size is too large for mooring', 'error_type': 'vessel_error', 'vessel_size': ground.vessel_size_limit}, status=200)
 
 
         #if not ground._is_open(start_date):
@@ -1369,7 +1372,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
         }
         # fetch availability map
-        availability = utils.get_campsite_availability(sites_qs, start_date, end_date, None)
+        availability = utils.get_campsite_availability(sites_qs, start_date, end_date, None, None)
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,
@@ -1548,7 +1551,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
     def distance(self,origin, destination):
          lat1, lon1 = origin
          lat2, lon2 = destination
-         radius = 6371  # km
+         radius = 6371 * 1000 # km
 
          dlat = math.radians(lat2 - lat1)
          dlon = math.radians(lon2 - lon1)
@@ -1656,6 +1659,10 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #print distance_radius
         #print radius
 #       sites_qs = Mooringsite.objects.all().filter(**context)
+        sites_qs = []
+  #      if request.session['ps_booking_old']:
+#            sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context).exclude()
+ #       else:
         sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
 
         # # If the pen type has been included in filtering and is not 'all' then loop through the sites selected.
@@ -1707,7 +1714,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 #           current_booking.append(row)
  
 
-        availability = utils.get_campsite_availability(sites_qs, start_date, end_date, ongoing_booking)
+        availability = utils.get_campsite_availability(sites_qs, start_date, end_date, ongoing_booking, request)
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,
@@ -2044,6 +2051,9 @@ def create_admissions_booking(request, *args, **kwargs):
     )
     #Not strictly needed.
     #logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(admissionsBooking.customer.get_full_name(),admissionsBooking.customer.id) if admissionsBooking.customer else 'An anonymous user',admissionsBooking.id))
+    # if request.user.is_staff:
+    #     result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice, internal=True)
+    # else:
     result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice)
     print(result)
     if(result):
@@ -2163,7 +2173,7 @@ def get_admissions_confirmation(request, *args, **kwargs):
 
     # check payment status
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="confirmation-AD{}.pdf"'.format(booking_id)
+    response['Content-Disposition'] = 'filename="confirmation-AD{}.pdf"'.format(booking_id)
 
     pdf.create_admissions_confirmation(response, booking)
     return response
@@ -2622,7 +2632,11 @@ class BookingViewSet(viewsets.ModelViewSet):
                 booking = booking_map[bk['id']]       
                 cg = booking.mooringarea
                 bk['editable'] = booking.editable
-                bk['status'] = booking.status
+                if booking.booking_type == 4:
+                    bk['status'] = 'Cancelled'
+                else:
+                    bk['status'] = booking.status
+
                 bk['booking_type'] = booking.booking_type
                 bk['has_history'] = booking.has_history
                 bk['cost_total'] = booking.cost_total

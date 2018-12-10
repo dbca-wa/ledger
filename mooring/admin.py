@@ -54,10 +54,10 @@ class MooringsiteBookingInline(admin.TabularInline):
 
 @admin.register(models.Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('arrival','departure','mooringarea','legacy_id','legacy_name','cost_total')
-    ordering = ('-arrival',)
+    list_display = ('id','arrival','departure','booking_type','mooringarea','legacy_id','legacy_name','cost_total')
+    ordering = ('-id',)
     search_fileds = ('arrival','departure')
-    list_filter = ('arrival','departure','mooringarea')
+    list_filter = ('id','arrival','departure','mooringarea')
     inlines = [BookingInvoiceInline,MooringsiteBookingInline]
 
     def has_add_permission(self, request, obj=None):

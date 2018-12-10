@@ -3,66 +3,71 @@
     <pkCgClose></pkCgClose>
     <pkCgOpen></pkCgOpen>
     <div class="panel-group" id="returns-accordion" role="tablist" aria-multiselectable="true">
-        <div class="panel panel-default" id="returns">
-            <div class="panel-heading" role="tab" id="returns-heading">
-                <h4 class="panel-title">
-                   <a role="button" data-toggle="collapse" href="#returns-collapse"
-                      aria-expanded="true" aria-controls="collapseOne">
-                       <h3>{{title}}</h3>
-                   </a>
-               </h4>
-            </div>
-            <div id="returns-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="returns-heading">
-                <div class="panel-body">
-                    <div id="groundsList">
-                        <form class="form" id="campgrounds-filter-form">
-                            <div class="col-md-8">
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="campgrounds-filter-status">Status: </label>
-                                        <select v-model="selected_status" class="form-control" name="status" id="campgrounds-filter-status">
-                                        <option value="All">All</option>
-                                        <option value="Open">Open</option>
-                                        <option value="Temporarily Closed">Temporarily Closed</option>
-                                    </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="applications-filter-region">Region: </label>
-                                        <select class="form-control" v-model="selected_region">
-                                            <option value="All">All</option>
-                                            <option v-for="region in regions" :value="region.name">{{ region.name }}</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="applications-filter-region">District: </label>
-                                        <select class="form-control" v-model="selected_district">
-                                            <option value="All">All</option>
-                                            <option v-for="district in districts" :value="district.name">{{ district.name }}</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="applications-filter-region">Park: </label>
-                                        <select class="form-control" v-model="selected_park">
-                                            <option value="All">All</option>
-                                            <option v-for="park in parks" :value="park.name">{{ park.name }}</option>
-                                        </select>
-                                    </div>
-                                </div>
+        <div class="row">
+            <div class="panel panel-default" id="returns">
+                <div class="panel-heading" role="tab" id="returns-heading">
+                    <h4 class="panel-title">
+                        <a role="button" data-toggle="collapse" href="#returns-collapse"
+                            aria-expanded="true" aria-controls="collapseOne" style="outline:none;">
+                            <div>
+                                <h3 style="display:inline;">{{title}}</h3>
+                                <span id="collapse_returns_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group pull-right">
-                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Mooring</a>
-                                    <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Moorings</a>
+                        </a>
+                    </h4>
+                </div>
+                <div id="returns-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="returns-heading">
+                    <div class="panel-body">
+                        <div id="groundsList">
+                            <form class="form" id="campgrounds-filter-form">
+                                <div class="col-md-8">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="campgrounds-filter-status">Status: </label>
+                                            <select v-model="selected_status" class="form-control" name="status" id="campgrounds-filter-status">
+                                            <option value="All">All</option>
+                                            <option value="Open">Open</option>
+                                            <option value="Temporarily Closed">Temporarily Closed</option>
+                                        </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="applications-filter-region">Region: </label>
+                                            <select class="form-control" v-model="selected_region">
+                                                <option value="All">All</option>
+                                                <option v-for="region in regions" :value="region.name">{{ region.name }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="applications-filter-region">District: </label>
+                                            <select class="form-control" v-model="selected_district">
+                                                <option value="All">All</option>
+                                                <option v-for="district in districts" :value="district.name">{{ district.name }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="applications-filter-region">Park: </label>
+                                            <select class="form-control" v-model="selected_park">
+                                                <option value="All">All</option>
+                                                <option v-for="park in parks" :value="park.name">{{ park.name }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </form>
-                        <datatable :dtHeaders="['Mooring','Type', 'Status','Region','District','Park','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
+                                <div class="col-md-4">
+                                    <div class="form-group pull-right">
+                                        <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Mooring</a>
+                                        <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Moorings</a>
+                                    </div>
+                                </div>
+                            </form>
+                            <datatable :dtHeaders="['Mooring','Type', 'Status','Region','District','Park','Action']" :dtOptions="dtoptions" ref="dtGrounds" id="campground-table" ></datatable>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -317,6 +322,16 @@ module.exports = {
         vm.fetchRegions();
         vm.fetchParks();
         vm.fetchDistricts();
+
+        $('#returns-collapse').on('shown.bs.collapse', function(){
+            $('#collapse_returns_span').removeClass("glyphicon glyphicon-menu-down");
+            $('#collapse_returns_span').addClass("glyphicon glyphicon-menu-up");
+
+        });
+        $('#returns-collapse').on('hidden.bs.collapse', function(){
+            $('#collapse_returns_span').removeClass("glyphicon glyphicon-menu-up");
+            $('#collapse_returns_span').addClass("glyphicon glyphicon-menu-down");
+        });
     }
 };
 </script>

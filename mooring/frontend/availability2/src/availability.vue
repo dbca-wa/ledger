@@ -266,22 +266,22 @@
                                 <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
                             </template>
                         </td>
-                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >
-                                     <div v-for="bp in day[1].booking_period">
+                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" align='center'>
+                                     <div v-for="bp in day[1].booking_period" style='width:160px; '>
 
-                                        <div v-if="bp.status == 'open'">
-                                        <button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px;'  @click="addBooking(site.id,site.mooring_id,bp.id,bp.date)" >
+                                        <div v-if="bp.status == 'open'"  >
+                                        <button class="button" style='width: 160px; margin-bottom: 2px;'  @click="addBooking(site.id,site.mooring_id,bp.id,bp.date)" >
                                             <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }}</span></small>
                                         </button>
                                         </div>
-					<div v-else-if="bp.status == 'selected'">
+					<div v-else-if="bp.status == 'selected'" >
                                              <div style="position: relative; text-align: right; margin-right: 25px;"><a type="button" class="close" style="color: red; opacity: 1; position: absolute; padding-left: 5px;" @click="deleteBooking(bp.booking_row_id)" >x</a></div>
-                                        <button class="button" style='min-width: 150px; width: 80%; margin-bottom: 2px; background-color: #8bc8f1;' @click="deleteBooking(bp.booking_row_id)" > 
+                                        <button class="button" style='width: 160px; margin-bottom: 2px; background-color: #8bc8f1;' @click="deleteBooking(bp.booking_row_id)" > 
                                             <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }} </span></small>
                                         </button>
 					</div>
 					<div v-else >
-                                        <button class="button"  style='min-width: 150px; width: 80%; margin-bottom: 2px; background-color: rgb(255, 236, 236); text-decoration: line-through;color: #000;' >
+                                        <button class="button"  style='width: 160px; margin-bottom: 2px; background-color: rgb(255, 236, 236); text-decoration: line-through;color: #000;' >
                                              <small>{{ bp.period_name }}</small>
                                         </button>
 					</div>
@@ -607,7 +607,8 @@ export default {
                   allowOutsideClick: false
                 }).then((value) => {
                         var loc = window.location;
-                        window.location = loc.protocol + '//' + loc.host + loc.pathname;
+//                        window.location = loc.protocol + '//' + loc.host + loc.pathname;
+                        window.location = loc.protocol + '//' + loc.host + '/map/';
 		});
 
 	},

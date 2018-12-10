@@ -331,12 +331,15 @@ export default {
                                 column += record_payment;
                             }
                             if (full.editable){
-                                var change_booking = "<a href='edit/"+full.id+"' class='text-primary' data-change = '"+booking+"' > Change</a><br/>";
+                                if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
+                                var change_booking = "<a href='/view-booking/"+full.id+"' class='text-primary' > Change</a><br/>";
                                 var cancel_booking = "<a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>";
                                 column += cancel_booking;
                                 column += change_booking;
+				}
                             }
-                            full.has_history ? column += "<a href='edit/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
+
+                            full.has_history ? column += "<a href='/view-booking/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
                             $.each(full.active_invoices,(i,v) =>{
                                 invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
@@ -384,8 +387,9 @@ export default {
                         searchable:false
                     },
                     {
+                        data: "id",
                         mRender:function(data,type,full){
-                            return "<a href='/api/get_admissions_confirmation/"+full.id+"' target='_blank' class='text-primary'>AD"+full.id+"</a><br/>";
+                            return "<a href='/api/get_admissions_confirmation/"+data+"' target='_blank' class='text-primary'>AD"+data+"</a><br/>";
                         },
                         orderable:false,
                         searchable:false
@@ -584,15 +588,15 @@ export default {
             /* End Region Selector*/
             
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-change]',function (e) {
-                e.preventDefault();
-                var selected_booking = JSON.parse($(this).attr('data-change'));
-                vm.selected_booking = selected_booking.id;
-                vm.$router.push({
-                    'name':'edit-booking',
-                    params: {
-                        booking_id: selected_booking.id
-                    }
-                })
+                //e.preventDefault();
+                //var selected_booking = JSON.parse($(this).attr('data-change'));
+                //vm.selected_booking = selected_booking.id;
+               // vm.$router.push({
+               //     'name':'edit-booking',
+                //    params: {
+                //        booking_id: selected_booking.id
+                //    }
+               // })
                 //vm.$refs.changebooking.fetchBooking(vm.selected_booking);
             });
 
