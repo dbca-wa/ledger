@@ -545,21 +545,13 @@ class ExcelWriter():
         workbook.define_name('{0}!{1}'.format(APP_SHEET_NAME, 'System'), '={0}!{1}:{2}'.format(APP_SHEET_NAME, cell_dict['System'][0], cell_dict['System'][1]))
         # Hdr
         ws_meta.write(row_num, col_num, 'Purpose')
-        ws_meta.write(row_num, col_num+1, 'Start Cell')
-        ws_meta.write(row_num, col_num+2, 'End Cell')
-        ws_meta.write(row_num, col_num+3, 'First Row')
-        ws_meta.write(row_num, col_num+4, 'Last Row')
-        ws_meta.write(row_num, col_num+5, 'First Col')
-        ws_meta.write(row_num, col_num+6, 'Last Col')
+        ws_meta.write(row_num, col_num+1, 'First Col')
+        ws_meta.write(row_num, col_num+2, 'Last Col')
 
         # System
         ws_meta.write(row_num+1, col_num, 'System')                                         # Purpose
-        ws_meta.write(row_num+1, col_num+1, cell_dict['System'][0])                         # Start Cell
-        ws_meta.write(row_num+1, col_num+2, cell_dict['System'][1])                         # End Cell
-        ws_meta.write(row_num+1, col_num+3, xl_cell_to_rowcol(cell_dict['System'][0])[0])   # First Row
-        ws_meta.write(row_num+1, col_num+4, xl_cell_to_rowcol(cell_dict['System'][1])[0])   # Last Row
-        ws_meta.write(row_num+1, col_num+5, xl_cell_to_rowcol(cell_dict['System'][0])[1])   # First Col
-        ws_meta.write(row_num+1, col_num+6, xl_cell_to_rowcol(cell_dict['System'][1])[1])   # Last Col
+        ws_meta.write(row_num+1, col_num+1, xl_cell_to_rowcol(cell_dict['System'][0])[1])   # First Col
+        ws_meta.write(row_num+1, col_num+2, xl_cell_to_rowcol(cell_dict['System'][1])[1])   # Last Col
         #import ipdb; ipdb.set_trace()
 
         # Purposes
@@ -569,12 +561,8 @@ class ExcelWriter():
             #activity_name2 = replace_special_chars(activity_name)
             workbook.define_name('{0}!{1}'.format(APP_SHEET_NAME, self.replace_special_chars(activity_name)), '={0}!{1}:{2}'.format(APP_SHEET_NAME, cell_dict[activity_name][0], cell_dict[activity_name][1]))
             ws_meta.write(row_num, col_num, activity_name)                                          # Purpose
-            ws_meta.write(row_num, col_num+1, cell_dict[activity_name][0])                          # Start Cell
-            ws_meta.write(row_num, col_num+2, cell_dict[activity_name][1])                          # End Cell
-            ws_meta.write(row_num, col_num+3, xl_cell_to_rowcol(cell_dict[activity_name][0])[0])    # First Row
-            ws_meta.write(row_num, col_num+4, xl_cell_to_rowcol(cell_dict[activity_name][1])[0])    # Last Row
-            ws_meta.write(row_num, col_num+5, xl_cell_to_rowcol(cell_dict[activity_name][0])[1])    # First Col
-            ws_meta.write(row_num, col_num+6, xl_cell_to_rowcol(cell_dict[activity_name][1])[1])    # Last Col
+            ws_meta.write(row_num, col_num+1, xl_cell_to_rowcol(cell_dict[activity_name][0])[1])    # First Col
+            ws_meta.write(row_num, col_num+2, xl_cell_to_rowcol(cell_dict[activity_name][1])[1])    # Last Col
             width = len(activity_name) if len(activity_name) > width else width
 
         #import ipdb; ipdb.set_trace()
