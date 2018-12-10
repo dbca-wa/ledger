@@ -272,6 +272,7 @@ export default {
 			}
         },
         update: function() {
+			this.setFeatures()
 			if(this.validateForm()){
 				this.sendData(api_endpoints.campground(this.campground.id), 'PUT',true); 
 			}	
@@ -311,6 +312,7 @@ export default {
                 url: url,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
+                    
                     vm.features = data;
                 }
             });
@@ -322,7 +324,10 @@ export default {
             for (var i = 0; i < names.length; i++){
                 var feature = vm.features.find(feature => feature.name == names[i].name);
                 if (feature){
-                    id_list.push(feature.id.toString());
+                    console.log("FEATURE");
+                    console.log(feature.id);
+                    id_list.push(feature.id);
+                    // id_list.push(feature.id.toString());
                 }
             }
             vm.campground.features = id_list;
@@ -441,7 +446,7 @@ export default {
             }).
             on("select2:select", function (e){
                 var selected = $(e.currentTarget);
-                vm.campground.mooring_group = selected.val();
+                vm.campground.mooring_group.push(selected.val());
             }).
             on("select2:unselect", function (e){
                 var selected = $(e.currentTarget);
@@ -490,11 +495,13 @@ export default {
             on("select2:select", function (e){
                 var selected = $(e.currentTarget);
                 vm.campground.features = selected.val();
+                vm.$emit('updated', vm.campground);
                 console.log(vm.campground.features);
             }).
             on("select2:unselect", function (e){
                 var selected = $(e.currentTarget);
                 vm.campground.features = selected.val();
+                vm.$emit('updated', vm.campground);
             });
             if (vm.campground.features.length > 0){
                 vm.setFeatures();
@@ -505,10 +512,11 @@ export default {
                 vm.setFeatures();
                 $(vm.$refs.features).val(vm.campground.features).trigger('change');
             }
-            
 
         }, 1000);
-        
+       
+
+	vm.setFeatures(); 
 
 
     },

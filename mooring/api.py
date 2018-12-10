@@ -849,7 +849,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 mg = MooringAreaGroup.objects.all()
                 for i in mg:
                     # i.campgrounds.clear()
-                    if i.id == int(mooring_group):
+                    if i.id == mooring_group:
                         m_all = i.moorings.all()
                         if instance.id in m_all:
                             pass
