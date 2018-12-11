@@ -48,9 +48,9 @@
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
-                                    <input type="submit" class="btn btn-primary" value="Save and Exit"/>
+                                    <input type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="!requiresCheckout || wc_version == 1.0" type="submit" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="!requiresCheckout || wc_version == 1.0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
                                     <input v-if="requiresCheckout && wc_version != 1.0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                 </p>
                             </div>
@@ -166,10 +166,25 @@ export default {
         */
         return $("ul#tabs-section li.active")[0].textContent
     },
-    save: function(e) {
+    saveExit: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
       console.log(formData)
+      vm.$http.post(vm.application_form_url,formData).then(res=>{
+          swal(
+            'Saved',
+            'Your application has been saved',
+            'success'
+          ).then((result) => {
+            window.location.href = "/";
+          }
+      },err=>{
+
+      });
+    },
+    save: function(e) {
+      let vm = this;
+      let formData = new FormData(vm.form);
       vm.$http.post(vm.application_form_url,formData).then(res=>{
           swal(
             'Saved',
@@ -329,9 +344,6 @@ export default {
         }
         return vm.missing_fields.length
     },
-
-
-
     submit: function(){
         let vm = this;
         console.log('SUBMIT VM FORM and CHECKOUT');
