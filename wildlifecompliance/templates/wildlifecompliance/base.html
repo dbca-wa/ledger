@@ -110,8 +110,10 @@
                                                 {% for org in request.user.wildlifecompliance_organisations.all %}
                                                     {% for org_contact in org.contacts.all%}
                                                         {% ifequal org_contact.email request.user.email %}
-                                                            {% if (org_contact.is_admin or org_contact.is_consultant)and org_contact.user_status == 'active' %}
-                                                                <li><a href="/external/organisations/manage/{{org.id}}">Manage {{ org.organisation.name}} </a></li>
+                                                            {% if org_contact.user_status == 'active' %}
+                                                                {% if org_contact.is_admin or org_contact.check_consultant %}
+                                                                    <li><a href="/external/organisations/manage/{{org.id}}">Manage {{ org.organisation.name}} </a></li>
+                                                                {% endif %}
                                                             {% endif %}
                                                         {% endifequal %}
                                                     {% endfor %}
