@@ -268,6 +268,7 @@ export default {
 		},
         create: function() {
             console.log("CREATE");
+		this.setFeatures();
 			if(this.validateForm()){
 				this.sendData(api_endpoints.campgrounds, 'POST');
 			}
