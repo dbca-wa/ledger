@@ -1,4 +1,5 @@
 <template>
+  <form method="POST" name="enter_return" enctype="multipart/form-data">
 <div class="container" id="externalCompliance">
     
     <div class="row">
@@ -11,6 +12,7 @@
           <div class="col-md-8">
             <div class="row">
                 <template>
+                  
                      <div >
                         <ul class="nav nav-tabs">
                             <li ><a data-toggle="tab" :href="returnTab">Return</a></li>
@@ -18,6 +20,7 @@
                     </div>   
             
                     <div  class="tab-content">
+                      
                             <div :id="returnTab" class="tab-pane fade active in"> 
 
                                 <div class="panel panel-default">
@@ -29,15 +32,15 @@
                                         </h3>
                                     </div>
                                     <div class="panel-body panel-collapse in" :id="pdBody">
-                                        <form class="form-horizontal" name="personal_form" method="post">
                                             <div class="col-sm-12">
+                                              
                                                 <div class="row">
                                                     <label class="col-sm-4">Do you want to Lodge a nil Return?</label>
                                                         <label>
-                                                          <input type="radio"  name="NilYes" value="yes" v-model='returns.nil'> yes
+                                                          <input type="radio"  name="nilYes" value="yes" v-model='returns.nil'> yes
                                                         </label>
                                                         <label>
-                                                          <input type="radio"  name="NilNo" value="no" v-model='returns.nil'> no
+                                                          <input type="radio"  name="nilNo" value="no" v-model='returns.nil'> no
                                                         </label>
                                                 </div>
                                                 <div class="row">
@@ -48,6 +51,11 @@
                                                         <label>
                                                           <input type="radio"  name="SpreadsheetNo" value="no" v-model='returns.spreadsheet'> no
                                                         </label>
+                                                </div>
+                                                <div v-if="returns.nil == 'yes'" class="row">
+                                                  <label class="col-sm-4">Reason for providing a Nil return</label>
+                                                  <input type="textarea" name="nilReason" v-model="returns.nilReason">
+                                                  
                                                 </div>
                                                 <div v-if="returns.spreadsheet =='yes'" class="row">
                                                     <label class="col-sm-4">Do you want the data in spreadsheet added to or replace existing data?</label>
@@ -62,35 +70,49 @@
                                                   <table class="return-table table table-striped table-bordered dataTable">
                                                     <thead>
                                                       <tr>
-                                                        <th v-for="header in returns.headers">{{header.title}}
+                                                        <div v-for="(item,index) in returns.table">
+                                                        <th v-f="item.headers" v-for="header in item.headers">{{header.title}}
                                                         </th>
+                                                        </div>
                                                       </tr>
                                                     </thead>
                                                     <tbody>
                                                       <tr>
-                                                        <td v-for="header in returns.headers">
-                                                          <input>
+                                                        <div v-for="(item,index) in returns.table">
+                                                        <td v-if="item.headers" v-for="header in item.headers">
+                                                          <div v-for ="item1 in item.data">
+                                                            <input v-for="(title,key) in item1" v-if="key == header.title" class="form-control returns" :name="`${item1.name}::${header.title}`" :data-species="`${header.species}`" v-model="title.value">
+                                                          </div>
                                                         </td>
+                                                      </div>
                                                       </tr>
                                                     </tbody>
                                                   </table>
+                                                  
                                                 </div>
                                                 <div class="margin-left-20">
                                                 </div>
+                                                
                                             </div>
-                                        </form>
 
                                     </div>
                                 </div>
 
                             </div>
+                          
                     </div>
+                    <input type='hidden' name="table_name" :value="returns.table[0].name" />
+                    <button type="submit" class="btn btn-primary pull-right" name="lodge">Save and Exit</button>
+                    <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                    <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Submit
+                    </button>
+                    
                 </template>
             </div>
           </div>
     </div>
 </div>
-
+</form>
 </template>
 
 <script>
@@ -113,6 +135,76 @@ export default {
                     
     }
   },
+  methods: {
+    save: function(e) {
+      let vm = this;
+      vm.form=document.forms.enter_return
+      let data = new FormData(vm.form);
+      // console.log('printing table name')
+      // console.log(vm.returns.table[0].name)
+      // data.returns_name=vm.returns.table[0].name
+      // data.id=vm.returns.id
+      // data.application=vm.returns.application
+      // data.table=vm.returns.table
+
+      // $('.returns').each((i,d) => {
+      //   console.log( $(d).data('species'))
+
+      // })
+
+       // vm.$http.post('/api/returns.json',JSON.stringify(returns),{
+        vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
+                        emulateJSON:true,
+                    }).then((response)=>{
+                        swal(
+                             'Sent',
+                             'successful returns',
+                             'success'
+                        );
+
+                    },(error)=>{
+                        console.log(error);
+                        swal(
+                             'Sent',
+                             'Enter data in correct format',
+                             'success'
+                        );
+                    });
+    },
+
+    submit: function(e) {
+      let vm = this;
+      vm.form=document.forms.enter_return
+      let data = new FormData(vm.form);
+      // console.log('printing table name')
+      // console.log(vm.returns.table[0].name)
+      // data.returns_name=vm.returns.table[0].name
+      // data.id=vm.returns.id
+      // data.application=vm.returns.application
+      // data.table=vm.returns.table
+
+      // $('.returns').each((i,d) => {
+      //   console.log( $(d).data('species'))
+
+      // })
+
+      
+
+       // vm.$http.post('/api/returns.json',JSON.stringify(returns),{
+        vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
+                        emulateJSON:true,
+                    }).then((response)=>{
+                        swal(
+                             'Sent',
+                             'successful returns',
+                             'success'
+                        );
+                    },(error)=>{
+                        console.log(error);
+                    });
+    },
+    
+  },
   beforeRouteEnter: function(to, from, next) {
     console.log(to.params)
      Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
@@ -127,6 +219,14 @@ export default {
           console.log(err);
         });
    },
+   mounted: function(){
+        let vm = this;
+
+        vm.form = document.forms.enter_return;
+        console.log("from mounted")
+        console.log(vm.form)
+            
+    },
 
 }
 </script>

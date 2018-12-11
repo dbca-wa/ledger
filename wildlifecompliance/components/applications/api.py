@@ -26,7 +26,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser, Address 
+from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from ledger.checkout.utils import calculate_excl_gst
 from datetime import datetime, timedelta, date
@@ -70,7 +70,6 @@ from wildlifecompliance.components.applications.serializers import (
     ExternalAmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
     DTAssessmentSerializer
-    
 )
 
 
@@ -96,7 +95,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset() 
+        queryset = self.get_queryset()
         serializer = DTApplicationSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -155,7 +154,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.action_logs.all()
             serializer = ApplicationUserActionSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -172,7 +171,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.comms_logs.all()
             serializer = ApplicationLogEntrySerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -201,8 +200,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents
-                
-                return Response(serializer.data) 
+
+                return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -227,7 +226,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(qs)
 
             serializer = ApplicationConditionSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -245,7 +244,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             qs = instance.assessments
             serializer = AssessmentSerializer(qs,many=True)
             print(qs)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -296,6 +295,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
+            print("=====FRom Submit application")
+            print(request.POST.keys())
             instance = self.get_object()
             instance.submit(request,self)
             serializer = self.get_serializer(instance)
@@ -351,7 +352,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.accept_id_check(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -362,14 +363,14 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    
+
     @detail_route(methods=['POST',])
     def reset_id_check(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             instance.reset_id_check(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -386,7 +387,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.request_id_check(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -403,7 +404,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.accept_character_check(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -421,7 +422,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(request.data)
             # instance.send_to_assessor(request)
             # serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -438,7 +439,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.assign_officer(request,request.user)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -463,7 +464,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError('A user with the id passed in does not exist')
             instance.assign_officer(request,user)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -480,7 +481,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.unassign(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -504,7 +505,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     raise serializers.ValidationError('The status provided is not allowed')
             instance.update_activity_status(request,activity_id,status)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -526,7 +527,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(selected_assessment_id)
             instance.complete_assessment(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -548,7 +549,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance.proposed_licence(request,serializer.validated_data)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -569,7 +570,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             # qs = instance.decisions.filter(action='propose_issue')
             # print(qs)
             serializer = ApplicationProposedIssueSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -591,7 +592,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(request.data)
             instance.final_decision(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -612,7 +613,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance.proposed_decline(request,serializer.validated_data)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -682,7 +683,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
-            
             app_data = self.request.data
             licence_class_data=app_data.pop('licence_class_data')
             licence_type_name = app_data.pop('licence_type_name')
@@ -691,6 +691,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             proxy_applicant=request.data.get('proxy_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
+            #import ipdb; ipdb.set_trace()
             data = {
                 'schema':schema_data,
                 'submitter': request.user.id,
@@ -735,7 +736,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['GET',])
     def assessment_details(self, request, *args, **kwargs):
-        # queryset = self.get_queryset() 
+        # queryset = self.get_queryset()
         instance = self.get_object()
         queryset =  Assessment.objects.filter(application=instance.id)
         licence_activity_type = self.request.query_params.get('licence_activity_type', None)
@@ -782,7 +783,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, context={'request':request})
-        return Response(serializer.data) 
+        return Response(serializer.data)
 
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
@@ -821,7 +822,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.remind(request)
             serializer = InternalApplicationSerializer(instance.application,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -838,7 +839,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.recall(request)
             serializer = InternalApplicationSerializer(instance.application,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -855,7 +856,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.resend(request)
             serializer = InternalApplicationSerializer(instance.application,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -952,7 +953,7 @@ class ApplicationStandardConditionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ApplicationStandardConditionSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset() 
+        queryset = self.get_queryset()
         search = request.GET.get('search')
         if search:
             queryset = queryset.filter(text__icontains=search)
@@ -1005,7 +1006,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.remind_assessment(request)
             serializer = self.get_serializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -1022,7 +1023,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.recall_assessment(request)
             serializer = self.get_serializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -1039,7 +1040,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.resend_assessment(request)
             serializer = self.get_serializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -1122,7 +1123,7 @@ class AmendmentRequestReasonChoicesView(views.APIView):
 
         return Response(choices_list)
 
-    
 
-    
+
+
 

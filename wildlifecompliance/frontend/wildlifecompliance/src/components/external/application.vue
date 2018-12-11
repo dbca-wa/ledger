@@ -50,7 +50,7 @@
                                     </span>
                                     <input type="submit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="!requiresCheckout" type="submit" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="!requiresCheckout || wc_version == 1.0" type="submit" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
                                     <input v-if="requiresCheckout && wc_version != 1.0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                 </p>
                             </div>
@@ -94,10 +94,45 @@ export default {
       pBody: 'pBody',
       application_customer_status_onload: '',
  	  missing_fields: [],
+      //current_tab_id: null,
+      //current_tab: '',
+      //previous_tab: '',
     }
   },
   components: {
     Application
+  },
+  /*
+  watch: {
+    // whenever current_tab changes, this function will run
+    currentTab: function () {
+        // The on tab shown event
+        $('.nav-tabs a').on('shown.bs.tab', function (e) {
+            alert('Tab has changed');
+            //vm.current_tab = e.target;
+            //vm.previous_tab = e.relatedTarget;
+            vm.current_tab_id = parseInt(e.target.href.split('#')[1]);
+        });        
+    }
+  },
+  */
+    watch: {
+        // whenever current_tab changes, this function will run
+        //tabID: function () {
+        //current_tab: function () {
+        tab_changed: function () {
+            let vm = this;
+            // The on tab shown event
+            $('.nav-tabs a').on('shown.bs.tab', function (e) {
+                console.log('Tab has changed: ***' );
+                vm.currentTab = $("ul#tabs-section li.active")[0].textContent;
+                console.log('Tab has changed: ' + vm.currentTab + ' - ' + vm.tabID);
+            });
+        }    
+    },
+
+  created: function () {
+    this.debouncedTabChange = _.debounce(this.get_current_tab, 500)
   },
   computed: {
     isLoading: function() {
@@ -114,12 +149,27 @@ export default {
     },
     wc_version: function (){
         return this.$root.wc_version;
-    }
+    },
+    tab_changed: function() {
+      return this.current_tab;
+    },
   },
   methods: {
+    getSelectedTab: function(obj) {
+        alert('Selected Tab Event');
+    },
+    get_current_tab: function() {
+        /*
+        vm.previous_tab = vm.current_tab
+        vm.current_tab = $("ul#tabs-section li.active")[0].textContent
+        return vm.current_tab;
+        */
+        return $("ul#tabs-section li.active")[0].textContent
+    },
     save: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
+      console.log(formData)
       vm.$http.post(vm.application_form_url,formData).then(res=>{
           swal(
             'Saved',
@@ -162,6 +212,8 @@ export default {
 
     validate: function(){
         let vm = this;
+        var required_fields = [];
+        var tab_dict = {};
 
         // reset default colour
         for (var field of vm.missing_fields) {
@@ -169,67 +221,112 @@ export default {
         }
         vm.missing_fields = [];
 
-        // get all required fields, that are not hidden in the DOM
-        var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden');
+        /*
+        $("#tabs").each(function() {
+            $(this).find(".nav-tabs li").each(function(index, element) {
+                required_fields.concat(
+                    $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden')
+                );
+            });
+        });
+        */
+
+        //$("#tabs-section").find("li").each(function(index, element) {
+        //$('ul.nav-tabs>li').each(function() {
+        /*
+        for (var i of $('ul.nav-tabs>li')) {
+            // get all required fields, that are not hidden in the DOM
+            //var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden');
+            i.tab('show')
+            required_fields.concat(
+                $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden')
+            );
+        }
+        */
+
+
+        /*
+        for (var tab of $('ul.nav-tabs>li>a')) {
+            // get all required fields, that are not hidden in the DOM
+            tab
+                .click()
+                .on('shown.bs.tab', function(event){
+                    alert('tab shown');
+                    var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden');
+                    tab_dict[tab.textContent] = required_fields;
+                });
+        }
+        */
+
+        var tab_dict = {};
+        for (var tab of $('ul.nav-tabs>li>a')) {
+            // get all required fields, that are not hidden in the DOM
+            var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden');
+            tab_dict[tab.textContent] = required_fields;
+        }
 
         // loop through all (non-hidden) required fields, and check data has been entered
-        required_fields.each(function() {
-            //console.log('type: ' + this.type + ' ' + this.name)
-            var id = 'id_' + this.name
-            if (this.type == 'radio') {
-                //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
-                if (!$("input[name="+this.name+"]").is(':checked')) {
-                    var text = $('#'+id).text()
-                    console.log('radio not checked: ' + this.type + ' ' + text)
-                    vm.missing_fields.push({id: id, label: text});
+        //required_fields.each(function() {
+        for (var key in tab_dict){
+            var required_fields = tab_dict[key];
+            required_fields.each(function() {
+                //console.log('type: ' + this.type + ' ' + this.name)
+                var id = 'id_' + this.name
+                if (this.type == 'radio') {
+                    //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
+                    if (!$("input[name="+this.name+"]").is(':checked')) {
+                        var text = $('#'+id).text()
+                        console.log('radio not checked: ' + this.type + ' ' + text)
+                        vm.missing_fields.push({id: id, label: text});
+                    }
                 }
-            }
 
-            if (this.type == 'checkbox') {
-                //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
-                var id = 'id_' + this.classList['value']
-                if ($("[class="+this.classList['value']+"]:checked").length == 0) {
-                    var text = $('#'+id).text()
-                    console.log('checkbox not checked: ' + this.type + ' ' + text)
-                    vm.missing_fields.push({id: id, label: text});
+                if (this.type == 'checkbox') {
+                    //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
+                    var id = 'id_' + this.classList['value']
+                    if ($("[class="+this.classList['value']+"]:checked").length == 0) {
+                        var text = $('#'+id).text()
+                        console.log('checkbox not checked: ' + this.type + ' ' + text)
+                        vm.missing_fields.push({id: id, label: text});
+                    }
                 }
-            }
 
-            if (this.type == 'select-one') {
-                if ($(this).val() == '') {
-                    var text = $('#'+id).text()  // this is the (question) label
-                    var id = 'id_' + $(this).prop('name'); // the label id
-                    console.log('selector not selected: ' + this.type + ' ' + text)
-                    vm.missing_fields.push({id: id, label: text});
+                if (this.type == 'select-one') {
+                    if ($(this).val() == '') {
+                        var text = $('#'+id).text()  // this is the (question) label
+                        var id = 'id_' + $(this).prop('name'); // the label id
+                        console.log('selector not selected: ' + this.type + ' ' + text)
+                        vm.missing_fields.push({id: id, label: text});
+                    }
                 }
-            }
 
-            if (this.type == 'file') {
-                var num_files = $('#'+id).attr('num_files')
-                if (num_files == "0") {
-                    var text = $('#'+id).text()
-                    console.log('file not uploaded: ' + this.type + ' ' + this.name)
-                    vm.missing_fields.push({id: id, label: text});
+                if (this.type == 'file') {
+                    var num_files = $('#'+id).attr('num_files')
+                    if (num_files == "0") {
+                        var text = $('#'+id).text()
+                        console.log('file not uploaded: ' + this.type + ' ' + this.name)
+                        vm.missing_fields.push({id: id, label: text});
+                    }
                 }
-            }
 
-            if (this.type == 'text') {
-                if (this.value == '') {
-                    var text = $('#'+id).text()
-                    console.log('text not provided: ' + this.type + ' ' + this.name)
-                    vm.missing_fields.push({id: id, label: text});
+                if (this.type == 'text') {
+                    if (this.value == '') {
+                        var text = $('#'+id).text()
+                        console.log('text not provided: ' + this.type + ' ' + this.name)
+                        vm.missing_fields.push({id: id, label: text});
+                    }
                 }
-            }
 
-            if (this.type == 'textarea') {
-                if (this.value == '') {
-                    var text = $('#'+id).text()
-                    console.log('textarea not provided: ' + this.type + ' ' + this.name)
-                    vm.missing_fields.push({id: id, label: text});
+                if (this.type == 'textarea') {
+                    if (this.value == '') {
+                        var text = $('#'+id).text()
+                        console.log('textarea not provided: ' + this.type + ' ' + this.name)
+                        vm.missing_fields.push({id: id, label: text});
+                    }
                 }
-            }
 
-        });
+            });
+        }
         return vm.missing_fields.length
     },
 
@@ -240,6 +337,7 @@ export default {
         console.log('SUBMIT VM FORM and CHECKOUT');
         let formData = new FormData(vm.form);
 
+        /*
         var num_missing_fields = vm.validate()
         if (num_missing_fields > 0) {
             vm.highlight_missing_fields()
@@ -249,10 +347,11 @@ export default {
             }, 1);
             return false;
         }
+        */
 
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
-        if (vm.requiresCheckout) {
+        if (vm.requiresCheckout && vm.wc_version != "1.0") {
             swal_title = 'Submit Application and Checkout'
             swal_html = 'Are you sure you want to submit this application and proceed to checkout?<br><br>' +
                 'Upon proceeding, you agree that the system will charge the same credit card used to ' +
@@ -270,7 +369,7 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
                     
-                    if (vm.requiresCheckout) {
+                    if (vm.requiresCheckout && vm.wc_version != "1.0") {
                         vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
                             window.location.href = "/ledger/checkout/checkout/payment-details/";
                         },err=>{
@@ -314,6 +413,7 @@ export default {
   
   mounted: function() {
     let vm = this;
+    //vm.current_tab = vm.get_current_tab();
     vm.form = document.forms.new_application;
 
   },

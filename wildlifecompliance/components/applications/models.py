@@ -19,6 +19,7 @@ from ledger.licence.models import Licence
 from ledger.payments.invoice.models import Invoice
 from wildlifecompliance import exceptions
 
+from ledger.accounts.models import OrganisationAddress
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
@@ -34,6 +35,7 @@ from wildlifecompliance.components.applications.email import (
     send_application_decline_notification
     )
 from wildlifecompliance.ordered_model import OrderedModel
+from collections import OrderedDict
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
 
 
@@ -133,9 +135,9 @@ class ApplicationAssessorGroup(models.Model):
 
     @property
     def current_applications(self):
-        assessable_states = ['with_assessor','with_referral','with_assessor_conditions'] 
+        assessable_states = ['with_assessor','with_referral','with_assessor_conditions']
         return Application.objects.filter(processing_status__in=assessable_states)
-        
+
 class TaggedApplicationApproverGroupRegions(TaggedItemBase):
     content_object = models.ForeignKey("ApplicationApproverGroup")
 
@@ -183,9 +185,9 @@ class ApplicationApproverGroup(models.Model):
 
     @property
     def current_applications(self):
-        assessable_states = ['with_approver'] 
+        assessable_states = ['with_approver']
         return Application.objects.filter(processing_status__in=assessable_states)
-        
+
 class ApplicationDocument(Document):
     application = models.ForeignKey('Application',related_name='documents')
     _file = models.FileField(upload_to=update_application_doc_filename)
@@ -220,14 +222,14 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to view an application (read-only)
     CUSTOMER_VIEWABLE_STATE = ['with_assessor', 'under_review', 'id_required', 'returns_required', 'approved', 'declined']
 
-    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'), 
-                                 ('with_officer', 'With Officer'), 
+    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'),
+                                 ('with_officer', 'With Officer'),
                                  ('with_assessor', 'With Assessor'),
                                  ('with_referral', 'With Referral'),
                                  ('with_assessor_conditions', 'With Assessor (Conditions)'),
                                  ('with_approver', 'With Approver'),
                                  ('renewal', 'Renewal'),
-                                 ('licence_amendment', 'Licence Amendment'), 
+                                 ('licence_amendment', 'Licence Amendment'),
                                  ('awaiting_applicant_response', 'Awaiting Applicant Response'),
                                  ('awaiting_assessor_response', 'Awaiting Assessor Response'),
                                  ('awaiting_responses', 'Awaiting Responses'),
@@ -269,6 +271,7 @@ class Application(RevisionedMixin):
     comment_data = JSONField(blank=True, null=True)
     licence_type_data = JSONField(blank=True, null=True)
     licence_type_name = models.CharField(max_length=255,null=True,blank=True)
+    licence_category = models.CharField(max_length=64,null=True,blank=True)
     schema = JSONField(blank=False, null=False)
     proposed_issuance_licence = JSONField(blank=True, null=True)
     #hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
@@ -327,6 +330,8 @@ class Application(RevisionedMixin):
         if self.lodgement_number == '':
             new_lodgment_id = 'A{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
+            #self.licence_category = self.licence_type_data['short_name'] if 'short_name' in self.licence_type_data else None
+            self.licence_category = self.licence_type_name.split(' - ')[0] if self.licence_type_name else None
             self.save()
 
     @property
@@ -423,7 +428,8 @@ class Application(RevisionedMixin):
 
     @property
     def licence_type_short_name(self):
-        return self.licence_type_name.split(' - ')[0] if self.licence_type_name else None
+        #return self.licence_type_name.split(' - ')[0] if self.licence_type_name else None
+        return self.licence_category
 
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
@@ -431,14 +437,14 @@ class Application(RevisionedMixin):
             try:
                 check_group = ApplicationAssessorGroup.objects.filter(
                     activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list         
+                    regions__name__in=self.regions_list
                 ).distinct()
                 if check_group:
                     return check_group[0]
             except ApplicationAssessorGroup.DoesNotExist:
                 pass
         default_group = ApplicationAssessorGroup.objects.get(default=True)
- 
+
         return default_group
 
     def __approver_group(self):
@@ -447,14 +453,14 @@ class Application(RevisionedMixin):
             try:
                 check_group = ApplicationApproverGroup.objects.filter(
                     activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list         
+                    regions__name__in=self.regions_list
                 ).distinct()
                 if check_group:
                     return check_group[0]
             except ApplicationApproverGroup.DoesNotExist:
                 pass
         default_group = ApplicationApproverGroup.objects.get(default=True)
- 
+
         return default_group
 
     def __check_application_filled_out(self):
@@ -482,22 +488,22 @@ class Application(RevisionedMixin):
 
     def has_assessor_mode(self,user):
         status_without_assessor = ['With Officer','With Assessor']
-        if self.processing_status in status_without_assessor: 
+        if self.processing_status in status_without_assessor:
             return False
         else:
-            if self.assigned_officer: 
+            if self.assigned_officer:
                 if self.assigned_officer == user:
                     return self.__assessor_group() in user.applicationassessorgroup_set.all()
                 else:
                     return False
             else:
                 return self.__assessor_group() in user.applicationassessorgroup_set.all()
-        
+
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)
 
     def submit(self,request,viewset):
-        from wildlifecompliance.components.applications.utils import save_proponent_data 
+        from wildlifecompliance.components.applications.utils import save_proponent_data
         from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType
         with transaction.atomic():
             if self.can_user_edit:
@@ -510,19 +516,19 @@ class Application(RevisionedMixin):
                 # if missing_fields:
                 #     error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
                 #     raise exceptions.ApplicationMissingFields(detail=error_text)
-                
-                
+
+
                 self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
                 #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.lodgement_date = timezone.now()
-                # if amendment is submitted change the status of only particular activity type 
+                # if amendment is submitted change the status of only particular activity type
                 # else if the new application is submitted change the status of all the activity types
                 if (self.amendment_requests):
                     qs = self.amendment_requests.filter(status = "requested")
                     if (qs):
-                        for q in qs:    
+                        for q in qs:
                             q.status = 'amended'
                             for activity_type in self.licence_type_data['activity_type']:
                                 if q.licence_activity_type.id==activity_type["id"]:
@@ -587,7 +593,7 @@ class Application(RevisionedMixin):
                 self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
             else:
                 self.submitter.log_user_action(ApplicationUserAction.ACTION_ACCEPT_ID.format(self.id),request)
-            
+
     def reset_id_check(self,request):
             self.id_check_status = 'not_checked'
             self.save()
@@ -626,7 +632,7 @@ class Application(RevisionedMixin):
             elif self.proxy_applicant:
                 self.proxy_applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
             else:
-                self.submitter.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)    
+                self.submitter.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
 
     # def send_to_assessor(self,request):
     #         self.processing_status = 'with_assessor'
@@ -634,7 +640,7 @@ class Application(RevisionedMixin):
     #         # Create a log entry for the application
     #         self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
     #         # Create a log entry for the organisation
-    #         self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)        
+    #         self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
 
 
     def send_referral(self,request,referral_email):
@@ -654,7 +660,7 @@ class Application(RevisionedMixin):
                         if not department_user:
                             raise ValidationError('The user you want to send the referral to is not a member of the department')
                         # Check if the user is in ledger or create
-                        
+
                         user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
                         if created:
                             user.first_name = department_user['given_name']
@@ -668,7 +674,7 @@ class Application(RevisionedMixin):
                         referral = Referral.objects.create(
                             application = self,
                             referral=user,
-                            sent_by=request.user 
+                            sent_by=request.user
                         )
                     # Create a log entry for the application
                     self.log_user_action(ApplicationUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
@@ -685,7 +691,7 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             try:
                 # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized() 
+                #     raise exceptions.ApplicationNotAuthorized()
                 # if not self.can_assess(officer):
                 #     raise ValidationError('The selected person is not authorised to be assigned to this application')
                 if self.processing_status == 'with_approver':
@@ -711,10 +717,10 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             try:
                 if not self.can_assess(request.user):
-                    raise exceptions.ApplicationNotAuthorized() 
+                    raise exceptions.ApplicationNotAuthorized()
                 if self.processing_status == 'with_approver':
                     if self.assigned_approver:
-                        self.assigned_approver = None 
+                        self.assigned_approver = None
                         self.save()
                         # Create a log entry for the application
                         self.log_user_action(ApplicationUserAction.ACTION_UNASSIGN_APPROVER.format(self.id),request)
@@ -722,7 +728,7 @@ class Application(RevisionedMixin):
                         self.applicant.log_user_action(ApplicationUserAction.ACTION_UNASSIGN_APPROVER.format(self.id),request)
                 else:
                     if self.assigned_officer:
-                        self.assigned_officer = None 
+                        self.assigned_officer = None
                         self.save()
                         # Create a log entry for the application
                         self.log_user_action(ApplicationUserAction.ACTION_UNASSIGN_ASSESSOR.format(self.id),request)
@@ -747,18 +753,18 @@ class Application(RevisionedMixin):
             except:
                 raise
 
-    
+
 
     def complete_assessment(self,request):
         with transaction.atomic():
             try:
                 #Get the assessor groups the current user is member of for the selected activity type tab
                 qs = ApplicationGroupType.objects.filter(type='assessor',licence_activity_type_id=request.data.get('selected_assessment_tab'),members__email=request.user.email)
-                
+
                 #For each assessor groups get the assessments of current application whose status is awaiting_assessment and mark it as complete
                 for q in qs:
                     assessments = Assessment.objects.filter(licence_activity_type_id=request.data.get('selected_assessment_tab'),assessor_group=q,status='awaiting_assessment',application=self)
-                   
+
                     for q1 in assessments:
                         q1.status='completed'
                         q1.save()
@@ -788,7 +794,7 @@ class Application(RevisionedMixin):
         	       #          self.save()
 
 
-        	    
+
 
             except:
                 raise
@@ -813,7 +819,7 @@ class Application(RevisionedMixin):
                         cc_email=details.get('cc_email',None),
                         licence_activity_type_id=item1
                     )
-                
+
                 for item in activity_type :
                     for activity_type in  self.licence_type_data['activity_type']:
                         if activity_type["id"]==item:
@@ -885,7 +891,7 @@ class Application(RevisionedMixin):
     def get_proposed_decisions(self,request):
         with transaction.atomic():
             try:
-            	proposed_states = ['propose_decline','propose_issue'] 
+            	proposed_states = ['propose_decline','propose_issue']
                 qs=ApplicationDecisionPropose.objects.filter(application=self,proposed_action__in =proposed_states)
                 for q in qs:
                 	if ApplicationDecisionPropose.objects.filter(application=self,licence_activity_type=q.licence_activity_type,decision_action__isnull=False).exists():
@@ -923,6 +929,16 @@ class Application(RevisionedMixin):
                                 activity_type["processing_status"] = "With Officer-Finalisation"
                                 self.save()
 
+                try:
+                    ApplicationDecisionPropose.objects.get(application=self, licence_activity_type_id=details.get('licence_activity_type_id'))
+                    raise ValidationError('This activity type has already been proposed to issue')
+                except ApplicationDecisionPropose.DoesNotExist:
+                    ApplicationDecisionPropose.objects.update_or_create(application = self,officer=request.user,proposed_action='propose_issue',reason=details.get('details'),cc_email=details.get('cc_email',None),proposed_start_date=details.get('start_date',None),proposed_end_date=details.get('expiry_date',None),licence_activity_type_id=details.get('licence_activity_type_id'))
+                    for activity_type in  self.licence_type_data['activity_type']:
+                        if activity_type["id"]==details.get('licence_activity_type_id'):
+                            activity_type["processing_status"]="With Officer-Finalisation"
+                            self.save()
+
                 # Log application action
                 self.log_user_action(ApplicationUserAction.ACTION_PROPOSED_LICENCE.format(self.id),request)
                 # Log entry for organisation
@@ -945,7 +961,7 @@ class Application(RevisionedMixin):
                 #     raise ValidationError('You cannot issue the licence if it is not with an approver')
                 # if not self.applicant.organisation.postal_address:
                 #     raise ValidationError('The applicant needs to have set their postal address before approving this application.')
-                
+
 
                 for item in request.data.get('activity_type'):
                     if item['final_status'] == "Issue":
@@ -1147,9 +1163,9 @@ class AmendmentRequest(ApplicationRequest):
                     if self.licence_activity_type.id==item["id"] :
                         item["processing_status"]="Draft"
                         # self.application.save()
-                self.application.customer_status='amendment_required'        
+                self.application.customer_status='amendment_required'
                 self.application.save()
-                
+
                 # Create a log entry for the application
                 self.application.log_user_action(ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
                 # send email
@@ -1381,7 +1397,7 @@ class ApplicationUserAction(UserAction):
     ACTION_REMIND_REFERRAL = "Send reminder for referral {} for application {} to {}"
     RECALL_REFERRAL = "Referral {} for application {} has been recalled"
     CONCLUDE_REFERRAL = "Referral {} for application {} has been concluded by {}"
-    
+
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1415,7 +1431,7 @@ class Referral(models.Model):
     linked = models.BooleanField(default=False)
     sent_from = models.SmallIntegerField(choices=SENT_CHOICES,default=SENT_CHOICES[0][0])
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
-                                         default=PROCESSING_STATUS_CHOICES[0][0]) 
+                                         default=PROCESSING_STATUS_CHOICES[0][0])
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1423,13 +1439,13 @@ class Referral(models.Model):
 
     def __str__(self):
         return 'Application {} - Referral {}'.format(self.application.id,self.id)
-    
+
     # Methods
 
     def recall(self,request):
         with transaction.atomic():
             if not self.application.can_assess(request.user):
-                raise exceptions.ApplicationNotAuthorized() 
+                raise exceptions.ApplicationNotAuthorized()
             self.processing_status = 'recalled'
             self.save()
             # TODO Log application action
@@ -1440,7 +1456,7 @@ class Referral(models.Model):
     def remind(self,request):
         with transaction.atomic():
             if not self.application.can_assess(request.user):
-                raise exceptions.ApplicationNotAuthorized() 
+                raise exceptions.ApplicationNotAuthorized()
             # Create a log entry for the application
             self.application.log_user_action(ApplicationUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.application.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
             # Create a log entry for the organisation
@@ -1451,7 +1467,7 @@ class Referral(models.Model):
     def resend(self,request):
         with transaction.atomic():
             if not self.application.can_assess(request.user):
-                raise exceptions.ApplicationNotAuthorized() 
+                raise exceptions.ApplicationNotAuthorized()
             self.processing_status = 'with_referral'
             self.application.processing_status = 'with_referral'
             self.application.save()
@@ -1498,7 +1514,7 @@ class Referral(models.Model):
                         if not department_user:
                             raise ValidationError('The user you want to send the referral to is not a member of the department')
                         # Check if the user is in ledger or create
-                        
+
                         user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
                         if created:
                             user.first_name = department_user['given_name']
@@ -1549,6 +1565,93 @@ class Referral(models.Model):
 
     def can_assess_referral(self,user):
         return self.processing_status == 'with_referral'
+
+class ExcelApplication(models.Model):
+    application = models.ForeignKey(Application, related_name='excel_applications')
+    data = JSONField(blank=True, null=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    @property
+    def cols_output(self):
+        return OrderedDict([
+            ('lodgement_number', self.lodgement_number),
+            ('application_id', self.application.id),
+            ('licence_number', self.licence_number),
+            ('applicant', self.applicant_details),
+            ('applicant_id', self.org_applicant.id),
+        ])
+
+    @property
+    def licence_class(self):
+        #return self.application.licence_class
+        return self.application.licence_type_short_name
+
+    @property
+    def lodgement_number(self):
+        return self.application.lodgement_number
+
+    @property
+    def licence_number(self):
+        return self.application.licence.licence_number if self.application.licence else None
+
+    @property
+    def org_applicant(self):
+        return self.application.org_applicant
+
+    @property
+    def applicant_details(self):
+        return '{} \n{}'.format(self.org_applicant.name, self.org_applicant.address)
+
+#    @property
+#    def applicant_block(self):
+#        return '{}\n{}'.format(self.applicant, OrganisationAddress.objects.get(organisation__name=self.applicant.name).__str__())
+
+
+class ExcelActivityType(models.Model):
+    excel_app = models.ForeignKey(ExcelApplication, related_name='excel_activity_types')
+    activity_name = models.CharField(max_length=68, blank=True)
+    name = models.CharField(max_length=68, blank=True)
+    short_name = models.CharField(max_length=24, blank=True)
+    data = JSONField(blank=True, null=True)
+    conditions = models.TextField(blank=True, null=True)
+    issue_date = models.DateTimeField(blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    expiry_date = models.DateField(blank=True, null=True)
+    issued = models.NullBooleanField(default=None)
+    processed = models.NullBooleanField(default=None)
+
+    class Meta:
+        unique_together = (('excel_app','short_name'))
+        app_label = 'wildlifecompliance'
+
+#    def save(self, *args, **kwargs):
+#        super(ExcelActivityType, self).save(*args, **kwargs)
+#        if self.short_name == '':
+#           self.short_name = self.excel_app.licence_class
+#            self.save()
+
+    @property
+    def application(self):
+        return self.excel_app.application
+
+    @property
+    def code(self):
+        return self.short_name[:2].lower()
+
+#    @property
+#    def cols_output(self):
+#        return OrderedDict([
+#            #('short_name', self.short_name),
+#            ('{}-conditions'.format(self.code), self.conditions),
+#            ('{}-application_id'.format(self.code), self.issue_date),
+#            ('{}-licence_number'.format(self.code), self.start_date),
+#            ('{}-applicant'.format(self.code), self.expiry_date),
+#            ('{}-issued'.format(self.code), self.issued),
+#            ('{}-processed'.format(self.code), self.processed),
+#        ])
+
 
 @receiver(pre_delete, sender=Application)
 def delete_documents(sender, instance, *args, **kwargs):
