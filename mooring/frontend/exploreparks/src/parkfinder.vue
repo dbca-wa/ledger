@@ -279,7 +279,8 @@
                                 <span class="searchTitle">{{ f.name }}</span>
                             </div>
                             <div class="small-12 medium-12 large-12 columns" >
-                                <img class="thumbnail" src="/static/exploreparks/mooring_photo_scaled.png"/>
+                                <img v-if="f.images[0]" class="thumbnail" v-bind:src="f.images[0].image" />
+                                <img v-else class="thumbnail" src="/static/exploreparks/mooring_photo_scaled.png"/>
                             </div>
                             <div class="small-12 medium-9 large-9 columns">
                                 <div v-html="f.description"/>
