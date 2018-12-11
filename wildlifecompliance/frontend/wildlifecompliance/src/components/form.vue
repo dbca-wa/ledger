@@ -83,7 +83,7 @@ from '@/utils/hooks'
             }
             else{
                 tabs.map(tsec => {
-                    $('#tabs-section').append(`<li><a onclick="vue.setSelectedTabId(this)" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
+                    $('#tabs-section').append(`<li><a onclick="vue.setSelectedTabId(this);" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
                 });
 
             }
@@ -163,8 +163,8 @@ from '@/utils/hooks'
                             </div>
                           </div>
                         </div>
-                        <div class="col-md-9">
-                            <ul class="nav nav-tabs" id="tabs-section">
+                        <div class="col-md-9" id="tabs">
+                            <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
 
                             </ul>
                             <div class="tab-content">
@@ -180,8 +180,8 @@ from '@/utils/hooks'
             else{
                 if (vm.form_width == 'inherit'){
                     return (
-                        <div>
-                            <ul class="nav nav-tabs" id="tabs-section">
+                        <div id="tabs">
+                            <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
 
                             </ul>
                             <div class="tab-content">
