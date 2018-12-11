@@ -3393,6 +3393,7 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
     @list_route(methods=['post'],)
     def add_price(self, request, format='json', pk=None):
         try:
+            print (request.data)
             http_status = status.HTTP_200_OK
             serializer =  AdmissionsRateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
