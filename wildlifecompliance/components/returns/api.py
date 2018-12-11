@@ -68,7 +68,10 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             print(self.request.data)
             print("==========posting keys=========")
             print(request.POST.keys())
-            print("============printing getlist")
+            print("============printing post data")
+            if 'save_continue' in request.POST:
+                print('inside save continue ==========')
+            print(request.POST)
             for key in request.POST.keys():
                 if key=="nilYes":
                     print("nil return")
