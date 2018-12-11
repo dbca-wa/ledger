@@ -37,3 +37,5 @@ django-reset-migrations==0.3.1
 django-ckeditor==5.4.0
 djangorestframework-datatables==0.4.0
 django-confy==1.0.4
+xlwt==1.3.0
+xlsxwriter==1.1.2

@@ -10,7 +10,12 @@ from wildlifecompliance.components.organisations.models import (
                                 OrganisationLogEntry,
                                 ledger_organisation,
                             )
-from wildlifecompliance.components.organisations.utils import can_manage_org, can_admin_org,is_consultant
+from wildlifecompliance.components.organisations.utils import (
+                                can_manage_org,
+                                can_admin_org,
+                                is_consultant,
+                                can_change_role,
+                            )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
 
@@ -86,6 +91,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
 class MyOrganisationsSerializer(serializers.ModelSerializer):
     is_admin = serializers.SerializerMethodField(read_only=True)
     is_consultant = serializers.SerializerMethodField(read_only=True)
+    can_change_role = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Organisation
@@ -94,7 +100,8 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
             'name',
             'abn',
             'is_admin',
-            'is_consultant'
+            'is_consultant',
+            'can_change_role'
         )
 
     def get_is_consultant(self, obj):
@@ -107,6 +114,10 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
         # Check if the request user is among the first five delegates in the organisation
         return can_admin_org(obj, user)
 
+    def get_can_change_role(self, obj):
+        user = self.context['request'].user
+        # Check if the request user can change their role within the organisation.
+        return can_change_role(obj, user)
 
 
 class DetailsSerializer(serializers.ModelSerializer):

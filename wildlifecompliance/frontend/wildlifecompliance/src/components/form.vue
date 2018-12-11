@@ -83,7 +83,7 @@ from '@/utils/hooks'
             }
             else{
                 tabs.map(tsec => {
-                    $('#tabs-section').append(`<li><a onclick="vue.setSelectedTabId(this)" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
+                    $('#tabs-section').append(`<li><a onclick="vue.setSelectedTabId(this);" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
                 });
 
             }
@@ -103,7 +103,7 @@ from '@/utils/hooks'
                         _mnu2 = '';
                       }
                       _tabid++;
-                      _mnu1 = _mnu1 + `<li class='dropdown-submenu'><a class='section-menu' href='#section-submenu' data-toggle='collapse' aria-expanded='false'>` + tabs[parseInt(sec.name.split('_')[1])].name + `<span class='caret'></span></a><ul class='dropdown-menu' id='section-submenu' >` +_mnu2;
+                      _mnu1 = _mnu1 + `<li class='dropdown-submenu'><a tabindex='-1' class='section-menu' href='#section-submenu' data-toggle='collapse' aria-expanded='false'>` + tabs[parseInt(sec.name.split('_')[1])].name + `<span class='caret'></span></a><ul class='dropdown-menu' id='section-submenu' >` +_mnu2;
                    };
                    _mnu2 = _mnu2 + `<li><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`;
                 });
@@ -163,8 +163,8 @@ from '@/utils/hooks'
                             </div>
                           </div>
                         </div>
-                        <div class="col-md-9">
-                            <ul class="nav nav-tabs" id="tabs-section">
+                        <div class="col-md-9" id="tabs">
+                            <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
 
                             </ul>
                             <div class="tab-content">
@@ -180,8 +180,8 @@ from '@/utils/hooks'
             else{
                 if (vm.form_width == 'inherit'){
                     return (
-                        <div>
-                            <ul class="nav nav-tabs" id="tabs-section">
+                        <div id="tabs">
+                            <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
 
                             </ul>
                             <div class="tab-content">

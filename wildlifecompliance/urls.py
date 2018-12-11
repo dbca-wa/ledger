@@ -72,6 +72,8 @@ urlpatterns = [
         name='internal-application-detail'),
     url(r'^application_submit/submit_with_invoice/', ApplicationSuccessView.as_view(), name='external-application-success-invoice'),
 
+    url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
+
 ] + ledger_patterns
 
 if settings.DEBUG:  # Serve media locally in development.
