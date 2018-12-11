@@ -53,7 +53,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="control-label">Mooring Features</label>
-                                        <select class="form-control" id="features" name="features" ref="features" v-model="campground.features" multiple>
+                                        <select class="form-control" id="features" name="features" ref="features" v-model="features_selected" multiple>
                                             <option v-for="f in features" :value="f.id">{{ f.name }}</option>
                                         </select>
                                     </div>
@@ -61,7 +61,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group ">
                                         <label class="control-label" >Mooring Group (Permissions)</label>
-                                        <select class="form-control" ref="group_permissions" v-model="campground.mooring_group" id='mooring_groups' name='mooring_groups' >
+                                        <select class="form-control" ref="group_permissions" v-model="campground.mooring_group" id='mooring_groups' name='mooring_groups' multiple >
                                             <option v-for="m in mooring_groups" :value="m.id" >{{m.name}}</option>
                                         </select>
                                     </div>
@@ -160,6 +160,7 @@ export default {
             features: [],
             selected_features_loaded: false,
             selected_features: Array(),
+            features_selected:[],
             form: null,
             errors: false,
             errorString: '',
@@ -272,6 +273,7 @@ export default {
 			}
         },
         update: function() {
+			this.setFeatures()
 			if(this.validateForm()){
 				this.sendData(api_endpoints.campground(this.campground.id), 'PUT',true); 
 			}	
@@ -311,21 +313,14 @@ export default {
                 url: url,
                 dataType: 'json',
                 success: function(data, stat, xhr) {
+                    
                     vm.features = data;
                 }
             });
         },
         setFeatures: function(){
             let vm = this;
-            let names = vm.campground.features;
-            var id_list = []
-            for (var i = 0; i < names.length; i++){
-                var feature = vm.features.find(feature => feature.name == names[i].name);
-                if (feature){
-                    id_list.push(feature.id.toString());
-                }
-            }
-            vm.campground.features = id_list;
+            vm.campground.features = vm.features_selected;
             vm.$emit('updated', vm.campground);
         },
         fetchCampground:function () {
@@ -337,6 +332,9 @@ export default {
                 success: function(data, stat, xhr) {
                     vm.campground = data;
                     bus.$emit('campgroundFetched');
+                    for (var i = 0; i < data.features.length; i++){
+                        vm.features_selected.push(data.features[i].id);
+                    }
                     console.log("Finished fetching campground");
                 }
             });
@@ -409,7 +407,6 @@ export default {
             vm.$emit('updated', vm.campground);
         });
 
-
         setTimeout( function(){
             //Park selector
             $(vm.$refs.park).select2({
@@ -441,11 +438,30 @@ export default {
             }).
             on("select2:select", function (e){
                 var selected = $(e.currentTarget);
-                vm.campground.mooring_group = selected.val();
+                var mooringgroups = [];
+                console.log(selected.val());
+                var select_array = selected.val();
+                console.log(select_array);
+                for (var i = 0; i < select_array.length; i++){
+                    var val = select_array[i];
+                    console.log(val);
+                    var intval = parseInt(select_array[i]);
+                    console.log(intval);
+                    mooringgroups.push(intval);
+                }
+                console.log(mooringgroups);
+                vm.campground.mooring_group = mooringgroups;
             }).
             on("select2:unselect", function (e){
                 var selected = $(e.currentTarget);
-                vm.campground.mooring_group = selected.val();
+                var mooringgroups = [];
+                var select_array = selected.val();
+                for (var i = 0; i < select_array.length; i++){
+                    var val = select_array[i];
+                    var intval = parseInt(select_array[i]);
+                    mooringgroups.push(intval);
+                }
+                vm.campground.mooring_group = mooringgroups;
             });
             //Physical Type
             $(vm.$refs.type_physical).select2({
@@ -489,28 +505,26 @@ export default {
             }).
             on("select2:select", function (e){
                 var selected = $(e.currentTarget);
-                vm.campground.features = selected.val();
-                console.log(vm.campground.features);
+                vm.features_selected = selected.val();
             }).
             on("select2:unselect", function (e){
                 var selected = $(e.currentTarget);
-                vm.campground.features = selected.val();
+                vm.features_selected = selected.val();
             });
-            if (vm.campground.features.length > 0){
-                vm.setFeatures();
-                $(vm.$refs.features).val(vm.campground.features).trigger('change');
-            } else {
-                console.log("else");
-                vm.fetchCampground();
-                vm.setFeatures();
-                $(vm.$refs.features).val(vm.campground.features).trigger('change');
-            }
-            
+            // if (vm.campground.features.length > 0){
+                // vm.setFeatures();
+            $(vm.$refs.features).val(vm.features_selected).trigger('change');
+            vm.$emit('updated', vm.campground);
+            // } 
+            // else {
+            //     vm.fetchCampground();
+            //     // vm.setFeatures();
+            //     $(vm.$refs.features).val(vm.campground.features).trigger('change');
+            // }
 
         }, 1000);
-        
 
-
+       
     },
 }
 

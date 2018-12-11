@@ -1,5 +1,5 @@
 <template id="PriceHistoryDetail">
-<bootstrapModal :title="title" :large=true @ok="addHistory()" @close="close()">
+<bootstrapModal title="Add Booking Period" :large=true @ok="addHistory()" @close="close()">
 
     <div class="modal-body">
         <form name="priceForm" class="form-horizontal">

@@ -741,10 +741,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         #print request.GET.get("formatted", False)
         formatted = bool(request.GET.get("formatted", False))
-        if MooringAreaGroup.objects.filter(members__in=[request.user.id,],moorings__in=[instance.id,]).count() > 0:
-            instance.mooring_group =  MooringAreaGroup.objects.get(members__in=[request.user.id,],moorings__in=[instance.id,]).id
-        else:
-            instance.mooring_group = None
+        instance.mooring_group =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],moorings__in=[instance.id,])
         if Mooringsite.objects.filter(mooringarea__id=instance.id).exists():
            pass
         else:
@@ -845,11 +842,13 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             instance.mooring_group = None
             if "mooring_group" in request.data:
                 mooring_group = request.data.pop("mooring_group")
-#                mg = MooringAreaGroup.objects.filter(id__in=mooring_group)
+                
+                # mg = MooringAreaGroup.objects.filter(id__in=mooring_group)
+
                 mg = MooringAreaGroup.objects.all()
                 for i in mg:
                     # i.campgrounds.clear()
-                    if i.id == int(mooring_group):
+                    if i.pk in mooring_group: 
                         m_all = i.moorings.all()
                         if instance.id in m_all:
                             pass
@@ -860,6 +859,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                         for b in m_all:
                            if instance.id == b.id:
                               i.moorings.remove(b)
+
                  
             if "images" in request.data:
                 images_data = request.data.pop("images")
@@ -907,6 +907,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 if current_images:
                     current_images.delete()
             self.perform_update(serializer)
+            instance.mooring_group = MooringAreaGroup.objects.filter(moorings__in=[instance.id])
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -1547,20 +1548,23 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
     queryset = MooringArea.objects.all()
     serializer_class = MooringAreaSerializer
- 
+
+
     def distance(self,origin, destination):
          lat1, lon1 = origin
          lat2, lon2 = destination
-         radius = 6371 * 1000 # km
+         radius = 6371 # km
 
-         dlat = math.radians(lat2 - lat1)
-         dlon = math.radians(lon2 - lon1)
-         a = (math.sin(dlat / 2) * math.sin(dlat / 2) +
-             math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
-             math.sin(dlon / 2) * math.sin(dlon / 2))
-         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-         d = radius * c
-         return d
+
+         dlon = lon2 - lon1
+         dlat = lat2 - lat1
+         a = (math.sin(dlat/2))**2 + math.cos(lat1) * math.cos(lat2) * (math.sin(dlon/2))**2
+         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+         distance = radius * c
+
+         return distance
+
+
  
     def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
         """Fetch full campsite availability for a campground."""
@@ -3393,12 +3397,18 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
     @list_route(methods=['post'],)
     def add_price(self, request, format='json', pk=None):
         try:
-            print (request.data)
+            print (request.data['period_start'])
             http_status = status.HTTP_200_OK
+            start = datetime.strptime(request.data['period_start'], '%Y-%m-%d').date() + timedelta(days=-1)
+            request.POST._mutable = True
+            request.data['period_start'] = start
+            request.POST._mutable = False
+            print (start)
             serializer =  AdmissionsRateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             res = serializer.data
+            print (res)
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise

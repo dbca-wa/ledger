@@ -201,7 +201,6 @@ export default {
     mounted: function() {
         let vm = this;
         vm.fetchCampground();
-
         vm.editor = new Editor('#editor', {
             modules: {
                 toolbar: true
@@ -213,7 +212,6 @@ export default {
             vm.campground.description = text;
 			vm.validateEditor($('#editor'));
         });
-        
         vm.form = $('#additionalForm');
 
         $('.form-control').blur(function(){

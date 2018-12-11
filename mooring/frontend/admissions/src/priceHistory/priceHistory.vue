@@ -23,7 +23,8 @@ import {
     $,
     Moment,
     api_endpoints,
-    helpers
+    helpers,
+    datetimepicker
 }
 from '../hooks.js'
 
@@ -193,6 +194,12 @@ export default {
         },
         addParkHistory: function() {
             var data = this.validateNewPrice(this.parkPrice)
+            var start = this.parkPrice.period_start.split("/");
+            this.parkPrice.period_start = start[2] + "-" + start[1] + "-" + start[0];
+            if (this.parkPrice.period_end){
+                var end = this.parkPrice.period_end.split("/") 
+                this.parkPrice.period_end = end[2] + "-" + end[1] +"-" + end[0];
+            }
             this.sendData(api_endpoints.park_add_price(),'POST',JSON.stringify(data));
         },
         validateNewPrice: function(data){
