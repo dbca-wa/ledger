@@ -11,3 +11,11 @@ class ReturnTypeAdmin(admin.ModelAdmin):
 @admin.register(models.Return)
 class ReturnAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(models.ReturnTable)
+class ReturnTable(admin.ModelAdmin):
+    pass
+
+@admin.register(models.ReturnRow)
+class ReturnRow(admin.ModelAdmin):
+    pass

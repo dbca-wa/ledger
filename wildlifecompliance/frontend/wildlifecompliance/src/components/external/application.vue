@@ -169,6 +169,7 @@ export default {
     save: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
+      console.log(formData)
       vm.$http.post(vm.application_form_url,formData).then(res=>{
           swal(
             'Saved',

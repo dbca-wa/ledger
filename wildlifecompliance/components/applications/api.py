@@ -295,6 +295,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
+            print("=====FRom Submit application")
+            print(request.POST.keys())
             instance = self.get_object()
             instance.submit(request,self)
             serializer = self.get_serializer(instance)
@@ -681,7 +683,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
-
             app_data = self.request.data
             licence_class_data=app_data.pop('licence_class_data')
             licence_type_name = app_data.pop('licence_type_name')
