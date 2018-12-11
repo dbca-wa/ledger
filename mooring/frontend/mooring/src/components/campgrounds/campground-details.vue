@@ -273,7 +273,7 @@ export default {
 			}
         },
         update: function() {
-			this.setFeatures()
+			this.setFeatures();
 			if(this.validateForm()){
 				this.sendData(api_endpoints.campground(this.campground.id), 'PUT',true); 
 			}	
@@ -321,6 +321,7 @@ export default {
         setFeatures: function(){
             let vm = this;
             vm.campground.features = vm.features_selected;
+            console.log("Features updated");
             vm.$emit('updated', vm.campground);
         },
         fetchCampground:function () {
@@ -335,6 +336,8 @@ export default {
                     for (var i = 0; i < data.features.length; i++){
                         vm.features_selected.push(data.features[i].id);
                     }
+                    setTimeout("vm.setFeatures();", 1500);
+                    
                     console.log("Finished fetching campground");
                 }
             });

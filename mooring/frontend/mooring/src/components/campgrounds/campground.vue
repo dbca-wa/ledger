@@ -368,6 +368,7 @@ export default {
             loadingImages: false,
             loadingMap: false,
             loadingAdditional: false,
+            features_selected: [],
             campsites: [],
             isOpenOpenCS: false,
             isOpenCloseCS: false,
@@ -535,6 +536,7 @@ export default {
         updateCampground: function(value){
             var vm = this;
             vm.campground = value;
+            console.log("Campground updated");
         },
         deleteBookingRange: function(id) {
             var vm = this;
@@ -635,6 +637,12 @@ export default {
                     vm.campground = data;
                     vm.fetchCampsites();
                     bus.$emit('campgroundFetched');
+                    for (var i = 0; i < data.features.length; i++){
+                        vm.features_selected.push(data.features[i].id);
+                    }
+                    vm.campground.features = vm.features_selected;
+                    console.log("Features updated");
+                    vm.$emit('updated', vm.campground);
                 }
             });
         },

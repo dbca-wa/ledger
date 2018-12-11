@@ -227,6 +227,12 @@ export default {
                 success: function(data, stat, xhr) {
                     vm.campground = data;
                     bus.$emit('campgroundFetched');
+                    for (var i = 0; i < data.features.length; i++){
+                        vm.features_selected.push(data.features[i].id);
+                    }
+                    vm.campground.features = vm.features_selected;
+                    console.log("Features updated");
+                    vm.$emit('updated', vm.campground);
                 }
             });
         },
