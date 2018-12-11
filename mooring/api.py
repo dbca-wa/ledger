@@ -1549,23 +1549,19 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
     queryset = MooringArea.objects.all()
     serializer_class = MooringAreaSerializer
 
-
     def distance(self,origin, destination):
          lat1, lon1 = origin
          lat2, lon2 = destination
          radius = 6371 # km
 
-
          dlon = lon2 - lon1
          dlat = lat2 - lat1
          a = (math.sin(dlat/2))**2 + math.cos(lat1) * math.cos(lat2) * (math.sin(dlon/2))**2
          c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-         distance = radius * c
+         distance = radius * c / 100 * 1.60934
 
          return distance
 
-
- 
     def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
         """Fetch full campsite availability for a campground."""
         # convert GET parameters to objects
@@ -1867,7 +1863,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                 #    print d
                 #    if d[0] == 'open':
                 #       pass
-                distance_from_selection = int(self.distance(ground.wkb_geometry,k.mooringarea.wkb_geometry))
+                distance_from_selection = round(self.distance(ground.wkb_geometry,k.mooringarea.wkb_geometry),2)
 
                 availability_map = []
                 date_rotate = start_date
