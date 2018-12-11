@@ -101,8 +101,10 @@
                                             <ul class="dropdown-menu">
                                                 {% if is_wildlifecompliance_admin_login %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                                    <li><a href="{% url 'export_applications' %}">Export all applications</a></li>
                                                     <li role="separator" class="divider"></li>
                                                 {% endif %}
+
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
                                                 <li><a href="{% url 'manage-profiles' %}">Manage Profiles</a></li>
                                                 {% for org in request.user.wildlifecompliance_organisations.all %}

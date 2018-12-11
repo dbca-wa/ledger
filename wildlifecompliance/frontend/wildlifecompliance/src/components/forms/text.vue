@@ -24,7 +24,12 @@
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
-            <input :readonly="readonly" :type="type" class="form-control" :name="name" :value="value" :required="isRequired" />
+            <span v-if="min!='' || max!=''">
+                <input :readonly="readonly" :type="type" :min="min" :max="max" class="form-control" :name="name" :value="value" :required="isRequired" />
+            <span>
+            <span v-else>
+                <input :readonly="readonly" :type="type" class="form-control" :name="name" :value="value" :required="isRequired" />
+            <span>
         </div>
         <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
     </div>
@@ -35,7 +40,7 @@ import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 export default {
-    props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly", "help_text_url", "help_text_assessor_url"],
+    props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly", "help_text_url", "help_text_assessor_url", "min", "max"],
     components: {Comment, HelpText, HelpTextUrl},
     data(){
         let vm = this;
