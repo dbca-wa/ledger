@@ -177,7 +177,7 @@ export default {
             'success'
           ).then((result) => {
             window.location.href = "/";
-          }
+          });
       },err=>{
 
       });
