@@ -113,6 +113,7 @@ export default {
             showUpdate: false,
             isLoading: false,
             reload : false,
+            features_selected: [],
         }
     },
     props: {
@@ -207,6 +208,12 @@ export default {
                 success: function(data, stat, xhr) {
                     vm.campground = data;
                     bus.$emit('campgroundFetched');
+                    for (var i = 0; i < data.features.length; i++){
+                        vm.features_selected.push(data.features[i].id);
+                    }
+                    vm.campground.features = vm.features_selected;
+                    console.log("Features updated");
+                    vm.$emit('updated', vm.campground);
                 }
             });
         },
@@ -381,9 +388,7 @@ var source = new ol.source.Vector({wrapX: false, features: [iconFeature]});
         // End Map Point Selection
 
         $('.form-control').blur(function(){
-            if (vm.validateLimits()){
-                vm.$emit('updated', vm.campground);
-            }
+            vm.$emit('updated', vm.campground);
         });
     },
     updated: function() {
