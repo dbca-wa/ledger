@@ -48,7 +48,7 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter by org
         org_id = request.GET.get('org_id',None)
         if org_id:
-            queryset = queryset.filter(application__org_applicant_id=org_id)
+            queryset = queryset.filter(application__applicant_id=org_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -86,6 +86,9 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
                         _create_return_data_from_post_data(instance, returns_tables.encode('utf-8'), request.POST)
                     else:
                         return Response({'error': 'Enter data in correct format.'}, status=status.HTTP_404_NOT_FOUND)
+            instance.set_submitted(request)
+            instance.submitter = request.user
+            instance.save()
 
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
