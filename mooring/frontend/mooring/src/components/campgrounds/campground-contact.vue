@@ -252,11 +252,9 @@ export default {
 		}, (error) => {
 			console.log(error);
 		});
-
         $('.form-control').blur(function(){
             vm.$emit('updated', vm.campground);
         });
-
         setTimeout( function(){
             //Contact
             $(vm.$refs.contact).select2({

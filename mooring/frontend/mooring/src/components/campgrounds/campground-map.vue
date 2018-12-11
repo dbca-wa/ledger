@@ -243,7 +243,6 @@ export default {
         });
         
         vm.form = $('#attForm');
-
         // Load Map Point Selection
         var raster = new ol.layer.Tile({
             source: new ol.source.OSM({noWrap: true, wrapX: false,})
@@ -257,7 +256,6 @@ export default {
 //                layer: 'public:mapbox-streets',
 //		})
 //       });
-
 
 var iconFeature = null;
 var lat = 0;
@@ -273,7 +271,6 @@ if (vm.campground.wkb_geometry) {
 
     }
 }
-
 var coords = ol.proj.transform([lat,lon], 'EPSG:4326', 'EPSG:3857');
 // var coords = ol.proj.transform([-106.63694687814734,42.46614905892275], 'EPSG:4326', 'EPSG:3857');
 

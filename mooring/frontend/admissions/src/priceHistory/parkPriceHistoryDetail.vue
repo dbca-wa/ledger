@@ -1,28 +1,28 @@
 <template id="ParkPriceHistoryDetail">
-<bootstrapModal title="Add Park Price History" :large=true @ok="addHistory()" @cancel="close()" @close="close()">
+<bootstrapModal title="Add Price History" :large=true @ok="addHistory()" @cancel="close()" @close="close()">
 
-    <div class="modal-body">
-        <form name="priceForm" class="form-horizontal">
+    <div class="modal-body" style="overflow:visible;">
+        <form name="priceForm" class="form-horizontal" style="overflow:visible;">
 			<alert :show.sync="showError" type="danger">{{errorString}}</alert>
-            <div class="row">
-                <div class="form-group">
+            <div class="row" style="overflow:visible;">
+                <div class="form-group" style="overflow:visible;">
                     <div class="col-md-2">
                         <label>Period start: </label>
                     </div>
-                    <div class="col-md-4">
-                        <div class='input-group date'>
-                            <input name="period_start" v-model="priceHistory.period_start" @blur="validatePeriodStart()" type='text' class="form-control" />
+                    <div class="col-md-4" style="overflow:visible;">
+                        <div class="input-group date" >
+                            <input type="text" id="period_start" class="form-control"  placeholder="DD/MM/YYYY" v-model="priceHistory.period_start">
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-2" style="display:none;">
                         <label>Period end: </label>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4" style="overflow:visible;display:none;">
                         <div class='input-group date'>
-                            <input name="period_end" v-model="priceHistory.period_end" type='text' class="form-control" />
+                            <input name="period_end" v-model="priceHistory.period_end" type='text' id="period_end" class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -112,9 +112,13 @@
 </template>
 
 <script>
+import 'foundation-sites';
+import 'foundation-datepicker/js/foundation-datepicker';
+import moment from 'moment'
+import JQuery from 'jquery'
 import bootstrapModal from '../utils/bootstrap-modal.vue'
 import reason from '../utils/reasons.vue'
-import { $, datetimepicker, api_endpoints, validate, helpers, bus } from '../hooks'
+import { api_endpoints, validate, helpers, bus } from '../hooks'
 import alert from '../utils/alert.vue'
 module.exports = {
     name: 'ParkPriceHistoryDetail',
@@ -131,6 +135,7 @@ module.exports = {
             title: '',
             current_closure: '',
             closeStartPicker: '',
+            arrivalData: '',
             showDetails: false,
             closeEndPicker: '',
             errors: false,
@@ -292,27 +297,95 @@ module.exports = {
         var vm = this;
         $('[data-toggle="tooltip"]').tooltip()
         vm.form = document.forms.priceForm;
-        var picker = $(vm.form.period_start).closest('.date');
+
         var today = new Date();
         today.setDate(today.getDate()+1);
         var tomorrow = new Date(today);
-        picker.datetimepicker({
-            format: 'DD/MM/YYYY',
-            useCurrent: false,
-            minDate: tomorrow
-        });
-        picker.on('dp.change', function(e){
-            vm.priceHistory.period_start = picker.data('DateTimePicker').date().format('YYYY-MM-DD');
-        });
-        var picker2 = $(vm.form.period_end).closest('.date');
-        picker2.datetimepicker({
-            format: 'DD/MM/YYYY',
-            useCurrent: false,
-            minDate: tomorrow
-        })
-        picker2.on('dp.change', function(e){
-            vm.priceHistory.period_end = picker2.data('DateTimePicker').date().format('YYYY-MM-DD');
-        });
+
+        // var datepickerOptions = {
+        //     format: 'DD/MM/YYYY',
+        //     showClear:true,
+        //     useCurrent:false,
+        //     keepInvalid:true,
+        //     allowInputToggle:true
+        // }
+
+        // var picker = $('#period_start').datetimepicker(datepickerOptions);
+        // var picker2 = $('#period_end').datetimepicker(datepickerOptions);
+
+        // picker.on('dp.change',function (e) {
+        //     if (picker.data('DateTimePicker').date()) {
+        //         vm.priceHistory.period_start = e.date.format('DD/MM/YYYY');
+        //     }
+        //     else if (vm.dateFromPicker.data('date') === "") {
+        //         vm.priceHistory.period_start = "";
+        //     }
+
+        // });
+
+        // picker2.on('dp.change',function (e) {
+        //     if (picker2.data('DateTimePicker').date()) {
+        //         vm.priceHistory.period_end = e.date.format('DD/MM/YYYY');
+        //     }
+        //     else if (vm.dateFromPicker.data('date') === "") {
+        //         vm.priceHistory.period_end = "";
+        //     }
+
+        // });
+
+        $(document).foundation();
+        var arrivalEl = $('#period_start');
+        var arrivalDate = null;
+
+        this.arrivalData = arrivalEl.fdatepicker({
+            format: 'dd/mm/yyyy',
+            onRender: function (date) {
+                return;
+            }
+        }).on('changeDate', function (ev) {
+            ev.target.dispatchEvent(new CustomEvent('change'));
+        }).on('change', function (ev) {
+            vm.arrivalData.hide();
+            // console.log(vm.arrivalData.date);
+            // vm.priceHistory.period_start = moment(vm.arrivalData.date, "DD/MM/YYYY");
+            console.log(ev.target.value);
+            vm.priceHistory.period_start = ev.target.value;
+
+            // console.log(vm.priceHistory.period_start);
+        }).on('keydown', function (ev) {
+            if (ev.keyCode == 13) {
+                ev.target.dispatchEvent(new CustomEvent('change'));
+            }
+        }).data('datepicker');
+
+        if (arrivalDate != null){
+            this.arrivalData.date = arrivalDate.toDate();
+            this.arrivalData.setValue();
+            this.arrivalData.fill();
+        }
+
+
+        // var picker = $(vm.form.period_start).closest('.date');
+        // picker.datetimepicker({
+        //     format: 'DD/MM/YYYY',
+        //     useCurrent: false,
+        //     minDate: tomorrow
+        // });
+        // picker.on('dp.change', function(e){
+        //     vm.priceHistory.period_start = picker.data('DateTimePicker').date().format('DD/MM/YYYY');
+        // });
+        // var picker2 = $(vm.form.period_end).closest('.date');
+        // picker2.datetimepicker({
+        //     format: 'DD/MM/YYYY',
+        //     useCurrent: false,
+        //     minDate: tomorrow
+        // })
+        // picker2.on('dp.change', function(e){
+        //     vm.priceHistory.period_end = picker2.data('DateTimePicker').date().format('DD/MM/YYYY');
+        // });
+
+
+
         vm.addFormValidations();
         bus.$once('reasons',setReasons => {
             vm.reasons = setReasons;

@@ -269,6 +269,13 @@
 </template>
 
 <script>
+import {
+    $,
+    Moment,
+    api_endpoints,
+    helpers
+}
+from '../../hooks.js'
 import datatable from '../utils/datatable.vue'
 import closureHistory from '../utils/closureHistory.vue'
 import priceHistory from '../utils/priceHistory/priceHistory.vue'
@@ -287,13 +294,6 @@ import {
     bus
 }
 from '../utils/eventBus.js'
-import {
-    $,
-    Moment,
-    api_endpoints,
-    helpers
-}
-from '../../hooks.js'
 import { mapGetters } from 'vuex'
 
 $.extend($.fn.dataTableExt.oSort, {
@@ -820,7 +820,6 @@ export default {
             $('#collapse_closure_span').removeClass("glyphicon glyphicon-menu-up");
             $('#collapse_closure_span').addClass("glyphicon glyphicon-menu-down");
         });
-
     }
 }
 

@@ -269,7 +269,6 @@ export default {
         vm.fetchCampground();
         vm.form = $('#limitsForm');
         vm.addFormValidations();
-
         $('.form-control').blur(function(){
             if (vm.validateLimits()){
                 vm.$emit('updated', vm.campground);

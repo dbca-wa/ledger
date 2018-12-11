@@ -21,6 +21,7 @@ import {
     api_endpoints,
     helpers,
     select2,
+    datetimepicker,
     Moment
 }
 from './hooks.js'
