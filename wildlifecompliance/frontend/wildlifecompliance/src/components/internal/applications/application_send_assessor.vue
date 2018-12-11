@@ -34,8 +34,11 @@
 //import $ from 'jquery'
 import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
-import api_endpoints from '../api'
-import {helpers} from "@/utils/hooks.js"
+//import api_endpoints from '../api'
+import {
+    api_endpoints,
+    helpers
+} from "@/utils/hooks.js"
 export default {
     name:'Add-Organisation-Contact',
     components:{
@@ -85,18 +88,9 @@ export default {
             this.isModalOpen = false;
             this.contact = {};
         },
-        fetchContact: function(id){
-            let vm = this;
-            vm.$http.get(api_endpoints.contact(id)).then((response) => {
-                vm.contact = response.body; vm.isModalOpen = true;
-            },(error) => {
-                console.log(error);
-            } );
-        },
         sendData:function(){
             let vm = this;
             vm.errors = false;
-            console.log(JSON.stringify(vm.assessment))
             let assessment = JSON.parse(JSON.stringify(vm.assessment));
             vm.$http.post('/api/assessment.json',JSON.stringify(assessment),{
                         emulateJSON:true,
@@ -112,17 +106,10 @@ export default {
                         for (var i=0;i<vm.$parent.$refs.assessorDatatable.length;i++){
                             vm.$parent.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
                         }
+                        vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,assessment.application+'/internal_application')).then((res) => {
+                            vm.$emit('refreshFromResponse',res);
+                        });
                         vm.close();
-                        //vm.$emit('refreshFromResponse',response);
-                        // Vue.http.get(`/api/proposal/${vm.proposal_id}/internal_proposal.json`).then((response)=>
-                        // {
-                        //     vm.$emit('refreshFromResponse',response);
-                            
-                        // },(error)=>{
-                        //     console.log(error);
-                        // });
-                        // vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
-                     
                     },(error)=>{
                         console.log(error);
                         vm.errors = true;
@@ -182,7 +169,6 @@ export default {
        let vm =this;
        vm.form = document.forms.addContactForm;
        vm.addFormValidations();
-       //console.log(validate);
    }
 }
 </script>

@@ -9,10 +9,10 @@
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <label class="control-label"  for="Name">Select licensed activities for decline </label>
-                                        <div  v-for="item in application_licence_type">
+                                        <label class="control-label" for="Name">Select licensed activities to Propose Decline</label>
+                                        <div v-for="item in application_licence_type">
                                             <div v-for="item1 in item">
-                                                <div  v-if="item1.name && item1.processing_status=='With Officer-Conditions'">
+                                                <div v-if="item1.name && item1.processing_status=='With Officer-Conditions'">
                                                     <input type="checkbox" :value ="item1.id" :id="item1.id" v-model="propose_decline.activity_type">{{item1.name}}
                                                 </div>
                                             </div>
@@ -23,8 +23,7 @@
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <label v-if="processing_status == 'With Approver'" class="control-label"  for="Name">Details</label>
-                                        <label v-else class="control-label"  for="Name">Provide Reason for the proposed decline </label>
+                                        <label class="control-label" for="Name">Provide Reason for the proposed decline </label>
                                         <textarea style="width: 70%;"class="form-control" name="reason" v-model="propose_decline.reason"></textarea>
                                     </div>
                                 </div>
@@ -32,8 +31,7 @@
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <label v-if="processing_status == 'With Approver'" class="control-label"  for="Name">CC email</label>
-                                        <label v-else class="control-label"  for="Name">Proposed CC email</label>
+                                        <label class="control-label" for="Name">Proposed CC email</label>
                                         <input type="text" style="width: 70%;"class="form-control" name="cc_email" v-model="propose_decline.cc_email"/>
                                     </div>
                                 </div>
@@ -43,8 +41,8 @@
                 </div>
             </div>
             <div slot="footer">
-                <button type="button" v-if="decliningApplication" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Declining</button>
-                <button type="button" v-else class="btn btn-default" @click="ok">Decline</button>
+                <button type="button" v-if="decliningApplication" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i>Proposing Decline</button>
+                <button type="button" v-else class="btn btn-danger" @click="ok">Propose Decline</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
@@ -57,7 +55,7 @@ import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
 import {helpers,api_endpoints} from "@/utils/hooks.js"
 export default {
-    name:'Decline-Application',
+    name:'ProposedDecline',
     components:{
         modal,
         alert
@@ -81,11 +79,10 @@ export default {
         return {
             isModalOpen:false,
             form:null,
-            decline: {
-                activity_types:[]
-            },
             propose_decline:{
-                activity_type:[]
+                activity_type:[],
+                cc_email:null,
+                reason:null,
             },
             selected_activity_type:null,
             decliningApplication: false,
@@ -102,7 +99,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            return this.processing_status == 'With Approver' ? 'Decline': 'Proposed Decline';
+            return 'Proposed Decline';
         }
     },
     methods:{
@@ -117,7 +114,11 @@ export default {
         },
         close:function () {
             this.isModalOpen = false;
-            this.propose_decline = {};
+            this.propose_decline = {
+                activity_type:[],
+                cc_email:null,
+                reason:null,
+            };
             this.errors = false;
             $('.has-error').removeClass('has-error');
             this.validation_form.resetForm();
@@ -127,37 +128,40 @@ export default {
             vm.errors = false;
             let propose_decline = JSON.parse(JSON.stringify(vm.propose_decline));
             vm.decliningApplication = true;
-            if (vm.processing_status != 'With Approver'){
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_decline'),JSON.stringify(propose_decline),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        swal(
-                             'Sent',
-                             'An Application has been proposed to decline',
-                             'success'
-                        );
-                        vm.decliningApplication = false;
-                        vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
-                        vm.close();
-                        vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.decliningApplication = false;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
-            }
-            else{
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/final_decline'),JSON.stringify(decline),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        vm.decliningApplication = false;
-                        vm.close();
-                        vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.decliningApplication = false;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
+            if (propose_decline.activity_type.length > 0){
+                if (vm.processing_status == 'Under Review'){
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_decline'),JSON.stringify(propose_decline),{
+                            emulateJSON:true,
+                        }).then((response)=>{
+                            swal(
+                                 'Propose Decline',
+                                 'The selected licenced activities have been proposed for Decline.',
+                                 'success'
+                            )
+                            vm.decliningApplication = false;
+                            vm.close();
+                            vm.$emit('refreshFromResponse',response);
+                        },(error)=>{
+                            vm.errors = true;
+                            vm.decliningApplication = false;
+                            vm.errorString = helpers.apiVueResourceError(error);
+                        });
+                }
+                else{
+                    vm.decliningApplication = false;
+                    swal(
+                         'Propose Decline',
+                         'The licenced activity must be in status "With Officer-Conditions".',
+                         'error'
+                    )
+                }
+            } else {
+                vm.decliningApplication = false;
+                swal(
+                     'Propose Decline',
+                     'Please select at least once licenced activity to Propose Decline.',
+                     'error'
+                )
             }
         },
         addFormValidations: function() {
@@ -167,10 +171,6 @@ export default {
                     reason:"required",
                 },
                 messages: {
-                    arrival:"field is required",
-                    departure:"field is required",
-                    campground:"field is required",
-                    campsite:"field is required"
                 },
                 showErrors: function(errorMap, errorList) {
                     $.each(this.validElements(), function(index, element) {

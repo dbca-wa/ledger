@@ -236,7 +236,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
         try:
             res = requests.get(url,cookies=self.request.COOKIES)
             res.raise_for_status()
-            print(res.content)
             response = json.loads(res.content.decode('utf-8')).get('status')
             if response != 'approved':
                 error = json.loads(res.content.decode('utf-8')).get('error',None)

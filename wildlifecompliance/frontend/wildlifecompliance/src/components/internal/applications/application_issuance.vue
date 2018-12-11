@@ -4,7 +4,7 @@
                     <div class="row" v-for="(item,index) in licence.activity_type">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3 class="panel-title">Issue {{item.name}}
+                                <h3 class="panel-title">Issue/Decline - {{item.name}}
                                     <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
                                         <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                                     </a>
@@ -148,7 +148,7 @@
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="details" style="width: 70%;">
                                             <button v-if="isIdCheckAccepted" disabled class="btn btn-light">Accepted</button>
-                                            <label v-if="isIdNotChecked">Has not been accepted. Override to Issue</label><input v-if="isIdNotChecked" type="checkbox" v-model="licence.id_check" >
+                                            <label v-if="isIdNotChecked">Has not been accepted. Override to Issue: </label><input v-if="isIdNotChecked" type="checkbox" v-model="licence.id_check" >
                                             
                                         </div>
                                     </div>
@@ -161,23 +161,24 @@
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="cc_email" style="width: 70%;">
                                             <button v-if="isCharacterCheckAccepted" disabled class="btn btn-light">Accepted</button>
-                                            <label v-if="isCharacterNotChecked">Has not been accepted. Override to Issue</label><input v-if="isCharacterNotChecked" type="checkbox" v-model="licence.character_check" >
+                                            <label v-if="isCharacterNotChecked">Has not been accepted. Override to Issue: </label><input v-if="isCharacterNotChecked" type="checkbox" v-model="licence.character_check" >
                                             
                                             
                                         </div>
                                     </div>
                                 </div>
-                                <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
-                                    <div class="navbar-inner">
-                                        <div class="container">
-                                            <p class="pull-right" style="margin-top:5px;">
-                                                <button v-if="licence.id_check && licence.character_check" class="btn btn-primary pull-right" @click.prevent="ok()">Issue</button>
-                                                <button v-else disabled class="btn btn-primary pull-right">Issue</button>
-                                            </p>
-                                        </div>
-                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-bottom:50px;">
+                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                            <div class="navbar-inner">
+                                <div class="container">
+                                    <p class="pull-right" style="margin-top:5px;">
+                                        <button v-if="licence.id_check && licence.character_check" class="btn btn-primary pull-right" @click.prevent="ok()">Issue/Decline</button>
+                                        <button v-else disabled class="btn btn-primary pull-right">Issue/Decline</button>
+                                    </p>
                                 </div>
-
                             </div>
                         </div>
                     </div>

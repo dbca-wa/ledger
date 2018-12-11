@@ -28,7 +28,7 @@
                                             <div class="col-md-8" v-if="campsites.length > 0"></div>
                                             <div class="col-md-8" >
                                                 <select class="form-control" style="width: 100%;" id="multi-campsites" name="campground" placeholder="" multiple v-model="selected_campsites">
-                                                    <option v-for="c in campsites" v-bind:value="c.id">{{c.name}}</option>
+                                                    <option v-for="c in campsites" v-bind:value="c.id">{{c.name}} - {{c.status}}</option>
                                                 </select>
                                             </div>                                           
                                             <div class="col-md-8" v-else>
@@ -253,7 +253,7 @@ export default {
                     price: 0,
                     description: "Vehicle Registration",
                     rego: "",
-                    entry_fee: true
+                    entry_fee: false
                 },
                 {
                     id: "concession",
@@ -263,7 +263,7 @@ export default {
                     description: "Concession Vehicle Registration",
                     helpText: "accepted concession cards",
                     rego: "",
-                    entry_fee: true
+                    entry_fee: false
                 },
                 {
                     id: "motorbike",
@@ -272,7 +272,7 @@ export default {
                     price: 0,
                     description: "Motorbike Registration",
                     rego: "",
-                    entry_fee: true
+                    entry_fee: false
                 }
             ],
             park: {
@@ -527,10 +527,8 @@ export default {
             vm.arrivalPicker = $(vm.bookingForm.arrival).closest('.date');
             vm.departurePicker = $(vm.bookingForm.departure).closest('.date');
             vm.arrivalPicker.datetimepicker({
-                //defaultDate: Moment(vm.selected_arrival,"DD/MM/YYYY"),
                 format: 'DD/MM/YYYY',
-                minDate: new Date(),
-                //maxDate: Moment().add(parseInt(vm.campground.max_advance_booking), 'days')
+                minDate: Moment().startOf('day'),
             });
             vm.departurePicker.datetimepicker({
                 format: 'DD/MM/YYYY',
@@ -559,22 +557,6 @@ export default {
             });
             // Set the initial minimum departure date for the booking
             vm.departurePicker.data("DateTimePicker").minDate(Moment(vm.selected_arrival,"DD/MM/YYYY").add(1,'days'));
-
-            // TODO implement price widget when the dates are changed
-            /*vm.$http.get(api_endpoints.campgroundCampsites(vm.campground.id)).then((response) => {
-                var campsites = response.body;
-                vm.$http.get(api_endpoints.campsite_current_price(campsites[0].id,Moment().format("YYYY-MM-DD"),Moment().add(1,'days').format("YYYY-MM-DD"))).then((response)=>{
-                    vm.priceHistory = null;
-                    vm.priceHistory = response.body;
-                    vm.loading.splice('updating prices',1);
-                },(error)=>{
-                    console.log(error);
-                    vm.loading.splice('updating prices',1);
-                });
-            }, (error) => {
-                console.log(error);
-            });*/
-
         },
         addGuestCount: function(guest) {
             let vm = this;
@@ -889,7 +871,7 @@ export default {
                         vm.addVehicleCount(vp)
                     }
                     vp.rego = '';
-                    vp.entry_fee = true;
+                    vp.entry_fee = false;
                     return vp;
                 });
             })

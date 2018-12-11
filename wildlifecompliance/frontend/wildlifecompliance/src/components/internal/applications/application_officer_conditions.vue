@@ -1,6 +1,6 @@
 <template id="application_conditions">
 
-                    <div class="col-md-12">
+                <div class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -13,14 +13,15 @@
                             <div class="panel-body panel-collapse collapse in" :id="panelBody">
                                 <form class="form-horizontal" action="index.html" method="post">
                                     <div class="col-sm-12">
-                                        <button v-if="hasAssessorMode" @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
+                                        <button v-if="hasAssessorMode && !final_view_conditions" @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
                                     </div>
-                                    <datatable ref="conditions_datatable" :id="'conditions-datatable-'+_uid" :dtOptions="condition_options" :dtHeaders="condition_headers"/>
+                                    <datatable v-if="!final_view_conditions" ref="conditions_datatable" :id="'conditions-datatable-'+_uid" :dtOptions="condition_options" :dtHeaders="condition_headers"/>
+                                    <datatable v-else ref="conditions_datatable" :id="'conditions-datatable-'+_uid" :dtOptions="condition_view_options" :dtHeaders="condition_view_headers"/>
                                 </form>
                             </div>
                         </div>
                     </div>
-                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions"/>
+                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_type_tab="licence_activity_type_tab"/>
                 </div>
 
             
@@ -36,8 +37,9 @@ import ConditionDetail from './application_add_condition.vue'
 export default {
     name: 'InternalApplicationConditions',
     props: {
-        application: Object
-
+        application: Object,
+        licence_activity_type_tab: Number,
+        final_view_conditions: Boolean
     },
     data: function() {
         let vm = this;
@@ -45,6 +47,7 @@ export default {
             panelBody: "application-conditions-"+vm._uid,
             conditions: [],
             condition_headers:["Condition","Due Date","Recurrence","Action","Order"],
+            condition_view_headers:["Condition","Due Date","Recurrence"],
             condition_options:{
                 autoWidth: false,
                 language: {
@@ -52,7 +55,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/conditions'),
+                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity_type='+vm.licence_activity_type_tab),
                     "dataSrc": ''
                 },
                 order: [],
@@ -128,6 +131,51 @@ export default {
                     $('.dtMoveUp').click(vm.moveUp);
                     $('.dtMoveDown').click(vm.moveDown);
                 }
+            },
+            condition_view_options:{
+                autoWidth: false,
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                ajax: {
+                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity_type='+vm.licence_activity_type_tab),
+                    "dataSrc": ''
+                },
+                order: [],
+                columns: [
+                    {
+                        data: "condition",
+                        orderable: false
+                    },
+                    {
+                        data: "due_date",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? moment(data).format('DD/MM/YYYY'): '';
+                        },
+                        orderable: false
+                    },
+                    {
+                        data: "recurrence",
+                        mRender:function (data,type,full) {
+                            if (full.recurrence){
+                                switch(full.recurrence_pattern){
+                                    case 1:
+                                        return `Once per ${full.recurrence_schedule} week(s)`;
+                                    case 2:
+                                        return `Once per ${full.recurrence_schedule} month(s)`;
+                                    case 3:
+                                        return `Once per ${full.recurrence_schedule} year(s)`;
+                                    default:
+                                        return '';
+                                }
+                            }
+                            return '';
+                        },
+                        orderable: false
+                    }
+                ],
+                processing: false,
             }
         }
     },
@@ -148,12 +196,10 @@ export default {
     },
     methods:{
         addCondition(){
-
             var selectedTabTitle = $("li.active");
             var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
-            
-            this.$refs.condition_detail.licence_activity_type=tab_id
 
+            this.$refs.condition_detail.licence_activity_type=tab_id
             this.$refs.condition_detail.isModalOpen = true;
         },
         removeCondition(_id){

@@ -53,6 +53,7 @@
 </div>
 </template>
 <script>
+import Vue from 'vue'
 import $ from 'jquery'
 import datatable from '@vue-utils/datatable.vue'
 import {
@@ -73,6 +74,8 @@ export default {
         organisationChoices: [],
         applicantChoices: [],
         statusChoices: [],
+        members:[],
+        profile: {},
         dtOptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -112,7 +115,14 @@ export default {
                                 var column = "<a href='/internal/organisations/access/\__ID__\' >View </a>";
                             }
                             else{
-                                var column = "<a href='/internal/organisations/access/\__ID__\'> Process </a>";
+                                if(vm.is_assessor)
+                                {
+                                   var column = "<a href='/internal/organisations/access/\__ID__\'> Process </a>"; 
+                                }
+                                else{
+                                    var column = "<a href='/internal/organisations/access/\__ID__\' >View </a>";
+                                }
+                                //var column = "<a href='/internal/organisations/access/\__ID__\'> Process </a>";
                             }
                             return column.replace(/__ID__/g, data);
                         }
@@ -185,8 +195,46 @@ export default {
             return this.loading.length == 0;
         }
     },
-    methods: {},
+    methods: {
+        is_assessor: function(){
+            return this.check_assessor()
+        },
+
+        fetchAccessGroupMembers: function(){
+        let vm = this;
+        //vm.loading.push('Loading Access Group Members');
+        vm.$http.get(api_endpoints.organisation_access_group_members).then((response) => {
+            vm.members = response.body
+            //vm.loading.splice('Loading Access Group Members',1);
+        },(error) => {
+            console.log(error);
+            //vm.loading.splice('Loading Access Group Members',1);
+        })
+        },
+        fetchProfile: function(){
+        let vm = this;
+        Vue.http.get(api_endpoints.profile).then((response) => {
+            vm.profile = response.body
+                              
+         },(error) => {
+            console.log(error);
+                
+        })
+        },
+        check_assessor: function(){
+            let vm = this;            
+            var assessor = vm.members.filter(function(elem){
+                        return(elem.name==vm.profile.full_name);
+                    });
+                    if (assessor.length > 0)
+                        return true;
+                    else
+                        return false;
+        },
+    },
     mounted: function () {
+        this.fetchAccessGroupMembers();
+        this.fetchProfile();
     }
 }
 </script>

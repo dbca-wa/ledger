@@ -11,7 +11,7 @@ from django.template import loader
 def send_validation(strategy, backend, code, partial_token=None):
     url = reverse('accounts:token_login', args=(code.code, code.email))
     url = strategy.request.build_absolute_uri(url)
-    template = loader.render_to_string('email/login.txt', context={'login_url': url})
+    template = loader.render_to_string('email/login.txt', context={'login_url': url, 'system_name': settings.SYSTEM_NAME})
 
     send_mail('Your login URL for the customer portal', template,
-              settings.EMAIL_FROM, [code.email], fail_silently=False)
+              settings.DEFAULT_FROM_EMAIL, [code.email], fail_silently=False)

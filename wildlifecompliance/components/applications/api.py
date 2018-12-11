@@ -10,6 +10,7 @@ from django.db.models import Q, Min
 from django.db import transaction
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.contrib import messages
@@ -25,7 +26,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser, Address 
+from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from ledger.checkout.utils import calculate_excl_gst
 from datetime import datetime, timedelta, date
@@ -61,14 +62,14 @@ from wildlifecompliance.components.applications.serializers import (
     ApplicationConditionSerializer,
     ApplicationStandardConditionSerializer,
     ProposedLicenceSerializer,
-    PropedDeclineSerializer,
+    ProposedDeclineSerializer,
     AssessmentSerializer,
     ApplicationGroupTypeSerializer,
     SaveAssessmentSerializer,
     AmendmentRequestSerializer,
     ExternalAmendmentRequestSerializer,
-    ApplicationProposedIssueSerializer
-    
+    ApplicationProposedIssueSerializer,
+    DTAssessmentSerializer
 )
 
 
@@ -94,10 +95,58 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset() 
+        queryset = self.get_queryset()
         serializer = DTApplicationSerializer(queryset, many=True)
         return Response(serializer.data)
 
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def process_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            action = request.POST.get('action')
+            section = request.POST.get('input_name')
+            if action == 'list' and 'input_name' in request.POST:
+                pass
+
+            elif action == 'delete' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.documents.get(id=document_id)
+
+                if document._file and os.path.isfile(document._file.path) and document.can_delete:
+                    os.remove(document._file.path)
+
+                document.delete()
+                instance.save(version_comment='Approval File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
+
+            elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
+                application_id = request.POST.get('application_id')
+                filename = request.POST.get('filename')
+                _file = request.POST.get('_file')
+                if not _file:
+                    _file = request.FILES.get('_file')
+
+                document = instance.documents.get_or_create(input_name=section, name=filename)[0]
+                path = default_storage.save('applications/{}/documents/{}'.format(application_id, filename), ContentFile(_file.read()))
+
+                document._file = path
+                document.save()
+                instance.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
+
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.documents.filter(input_name=section) if d._file] )
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET',])
     def action_log(self, request, *args, **kwargs):
@@ -105,7 +154,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.action_logs.all()
             serializer = ApplicationUserActionSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -122,7 +171,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.comms_logs.all()
             serializer = ApplicationLogEntrySerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -151,8 +200,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents
-                
-                return Response(serializer.data) 
+
+                return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -177,7 +226,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(qs)
 
             serializer = ApplicationConditionSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -195,7 +244,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             qs = instance.assessments
             serializer = AssessmentSerializer(qs,many=True)
             print(qs)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -230,6 +279,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         user_orgs = [org.id for org in request.user.wildlifecompliance_organisations.all()];
         qs = []
         qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
+        qs.extend(list(self.get_queryset().filter(proxy_applicant = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         qs.extend(list(self.get_queryset().filter(org_applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         queryset = list(set(qs))
         serializer = DTApplicationSerializer(queryset, many=True)
@@ -302,7 +352,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.accept_id_check(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -313,14 +363,14 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    
+
     @detail_route(methods=['POST',])
     def reset_id_check(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             instance.reset_id_check(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -337,7 +387,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.request_id_check(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -354,7 +404,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.accept_character_check(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -372,7 +422,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(request.data)
             # instance.send_to_assessor(request)
             # serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -389,7 +439,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.assign_officer(request,request.user)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -414,7 +464,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError('A user with the id passed in does not exist')
             instance.assign_officer(request,user)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -431,7 +481,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.unassign(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -443,18 +493,19 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
-    def switch_status(self, request, *args, **kwargs):
+    def update_activity_status(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            activity_id = request.data.get('activity_id')
             status = request.data.get('status')
-            if not status:
-                raise serializers.ValidationError('Status is required')
+            if not status or not activity_id:
+                raise serializers.ValidationError('Status and activity id is required')
             else:
-                if not status in ['with_assessor','with_assessor_conditions','with_approver']:
+                if status not in Application.ACTIVITY_PROCESSING_STATUS_CHOICES:
                     raise serializers.ValidationError('The status provided is not allowed')
-            instance.move_to_status(request,status)
+            instance.update_activity_status(request,activity_id,status)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -476,7 +527,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(selected_assessment_id)
             instance.complete_assessment(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -498,7 +549,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             instance.proposed_licence(request,serializer.validated_data)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -519,7 +570,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             # qs = instance.decisions.filter(action='propose_issue')
             # print(qs)
             serializer = ApplicationProposedIssueSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -541,7 +592,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(request.data)
             instance.final_decision(request)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -558,34 +609,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def proposed_decline(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = PropedDeclineSerializer(data=request.data)
+            serializer = ProposedDeclineSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            # print(serializer.validated_data)
             instance.proposed_decline(request,serializer.validated_data)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e,'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-
-    @detail_route(methods=['POST',])
-    def final_decline(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = PropedDeclineSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance.final_decline(request,serializer.validated_data)
-            serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -655,21 +683,22 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
-            print("from application create==========")
-            print(request.POST.keys())
             app_data = self.request.data
             licence_class_data=app_data.pop('licence_class_data')
             licence_type_name = app_data.pop('licence_type_name')
             schema_data=get_activity_type_schema(licence_class_data)
             org_applicant=request.data.get('org_applicant')
+            proxy_applicant=request.data.get('proxy_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
+            #import ipdb; ipdb.set_trace()
             data = {
                 'schema':schema_data,
                 'submitter': request.user.id,
                 'licence_type_data':licence_class_data,
                 'licence_type_name': licence_type_name,
                 'org_applicant': org_applicant,
+                'proxy_applicant': proxy_applicant,
                 'application_fee': application_fee,
                 'licence_fee': licence_fee
             }
@@ -707,7 +736,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['GET',])
     def assessment_details(self, request, *args, **kwargs):
-        # queryset = self.get_queryset() 
+        # queryset = self.get_queryset()
         instance = self.get_object()
         queryset =  Assessment.objects.filter(application=instance.id)
         licence_activity_type = self.request.query_params.get('licence_activity_type', None)
@@ -754,7 +783,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, context={'request':request})
-        return Response(serializer.data) 
+        return Response(serializer.data)
 
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
@@ -793,7 +822,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.remind(request)
             serializer = InternalApplicationSerializer(instance.application,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -810,7 +839,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.recall(request)
             serializer = InternalApplicationSerializer(instance.application,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -827,7 +856,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.resend(request)
             serializer = InternalApplicationSerializer(instance.application,context={'request':request})
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -924,7 +953,7 @@ class ApplicationStandardConditionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ApplicationStandardConditionSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset() 
+        queryset = self.get_queryset()
         search = request.GET.get('search')
         if search:
             queryset = queryset.filter(text__icontains=search)
@@ -934,6 +963,19 @@ class ApplicationStandardConditionViewSet(viewsets.ReadOnlyModelViewSet):
 class AssessmentViewSet(viewsets.ModelViewSet):
     queryset = Assessment.objects.all()
     serializer_class = AssessmentSerializer
+
+    @list_route(methods=['GET',])
+    def user_list(self, request, *args, **kwargs):
+        # Get the assessor groups the current user is member of
+        assessor_groups = ApplicationGroupType.objects.filter(type='assessor', members__email=request.user.email)
+
+        # For each assessor groups get the assessments
+        queryset = self.get_queryset().none()
+        for group in assessor_groups:
+            queryset = queryset | Assessment.objects.filter(assessor_group=group)
+
+        serializer = DTAssessmentSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
@@ -964,7 +1006,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.remind_assessment(request)
             serializer = self.get_serializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -981,7 +1023,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.recall_assessment(request)
             serializer = self.get_serializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -998,7 +1040,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.resend_assessment(request)
             serializer = self.get_serializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -1015,16 +1057,17 @@ class AssessorGroupViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationGroupTypeSerializer
     renderer_classes = [JSONRenderer,]
 
-    # def list(self, request, *args, **kwargs):
-    #     queryset = self.get_queryset()
-    #     # licence_activity_type = request.GET.get('licence_activity_type')
-    #     # if licence_activity_type:
-    #     #     queryset = queryset.filter(licence_activity_type=licence_activity_type)
-    #     serializer = ApplicationGroupTypeSerializer(queryset, many=True)
-    #     return Response(serializer.data)
+    @list_route(methods=['POST',])
+    def user_list(self, request, *args, **kwargs):
+        app_id = request.data.get('application_id')
+        application = Application.objects.get(id=app_id)
+        id_list = set()
+        for assessment in application.assessments:
+            id_list.add(assessment.assessor_group.id)
+        queryset = self.get_queryset().exclude(id__in=id_list)
+        serializer = self.get_serializer(queryset, many=True)
 
-    # def get_queryset(self):
-    #     return self.queryset.filter(name='assessor')
+        return Response(serializer.data)
 
 
 class AmendmentRequestViewSet(viewsets.ModelViewSet):
@@ -1051,6 +1094,7 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(data= data)
                 serializer.is_valid(raise_exception = True)
                 instance = serializer.save()
+                instance.reason = reason
                 instance.generate_amendment(request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
@@ -1079,7 +1123,7 @@ class AmendmentRequestReasonChoicesView(views.APIView):
 
         return Response(choices_list)
 
-    
 
-    
+
+
 

@@ -1,12 +1,12 @@
 <template lang="html">
     <div class="form-group">
-        <label for="label" v-html="value"></label>
+        <label :id="id" for="label" v-html="value"></label>
     </div>
 </template>
 
 <script>
 export default {
-    props:["value"]
+    props:["value", "id"]
 }
 </script>
 

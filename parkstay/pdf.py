@@ -116,11 +116,20 @@ def create_confirmation(confirmation_buffer, booking):
     table_data.append([Paragraph('Campground', styles['BoldLeft']), Paragraph('{}, {}'.format(booking.campground.name, booking.campground.park.name), styles['BoldLeft'])])
     
     if booking.first_campsite_list:
-        campsite = ""
-        for item in booking.first_campsite_list:
-            campsite += ' {},'.format(item.name if item else "")
+        campsites = []
+        if booking.campground.site_type == 0:
+            for item in booking.first_campsite_list:
+                campsites.append(item.name if item else "" )
+        elif booking.campground.site_type == 1 or 2:
+            for item in booking.first_campsite_list:
+                campsites.append(item.type.split(':',1)[0] if item else "")
+        campsite = ', '.join(campsites)
+        result = {x:campsites.count(x) for x in campsites}
+        for key, value in result.items():
+            campsite = ', '.join(['%sx %s' % (value, key) for (key, value) in result.items()])
 
-    #campsite = u'{}'.format(booking.first_campsite_list) if booking.campground.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
+                 
+
     table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
     
     table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph(booking.stay_dates, styles['Left'])])

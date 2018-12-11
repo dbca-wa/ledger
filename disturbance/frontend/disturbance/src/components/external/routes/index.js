@@ -5,6 +5,7 @@ import ProposalSubmit from '../proposal_submit.vue'
 import Organisation from '../organisations/manage.vue'
 import Compliance from '../compliances/access.vue'
 import ComplianceSubmit from '../compliances/submit.vue'
+import Approval from '../approvals/approval.vue'
 export default
 {
     path: '/external',
@@ -33,6 +34,10 @@ export default
             path: 'compliance/submit',
             component: ComplianceSubmit,
             name:"submit_compliance"
+        },
+        {
+            path: 'approval/:approval_id',
+            component: Approval,           
         },       
         {
             path: 'proposal',

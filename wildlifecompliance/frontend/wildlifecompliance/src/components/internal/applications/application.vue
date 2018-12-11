@@ -32,7 +32,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div v-if="wc_version != 1.0" class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         Workflow 
@@ -46,7 +46,7 @@
                                     
                                     <div v-for="item1 in item">
                                         <div v-if="item1.name">
-                                            {{item1.name}}:{{item1.processing_status}}
+                                            <strong>{{item1.name}}: </strong>{{item1.processing_status}}
                                         </div>
                                     </div>
                                 </div>
@@ -90,112 +90,54 @@
                                 </div>
                             </template>
                               <div class="col-sm-12 top-buffer-s" >
-                                        <template v-if="showingApplication">
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <strong>Action</strong><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Send to Assessor</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleOfficerConditions()">Back to Officer Review</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-info top-buffer-s" @click.prevent="toggleConditions()">Propose Conditions</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="">Return to Conditions</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="finalDecline()">Decline</button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue</button>
-                                                </div>
-                                            </div>
-                                        </template>
-
-                                        <template v-if="isSendingToAssessor">
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <strong>Action</strong><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
-                                                </div>
-                                            </div>
-                                            
-                                        </template>
-                                       <!--  <template v-if="assessmentComplete">
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <strong>Action</strong><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Resend To Assessor</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
-                                                </div>
-                                            </div>
-                                        </template> -->
-                                        <template v-if="showingConditions">
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <strong>Action</strong><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeAssessment()">Complete Assessment</button><br/>
-                                                </div>
-                                            </div>
-                                            
-                                        </template>
+                                <template v-if="showingApplication">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
+                                    <div v-if="!applicationIsDraft && canRequestAmendment" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
+                                        </div>
+                                    </div>
+                                    <div v-if="!applicationIsDraft && canSendToAssessor" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Send to Assessor</button><br/>
+                                        </div>
+                                    </div>
+                                    <div v-if="canOfficerReviewConditions" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
+                                        </div>
+                                    </div>
+                                    <div v-if="canProposeIssueOrDecline" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-danger top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
+                                            <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
+                                        </div>
+                                    </div>
+                                    <div v-if="canIssueDecline" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleFinalViewConditions()">View Final Conditions</button>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
+                                    <div v-if="isSendingToAssessor || isOfficerConditions || isFinalViewConditions || showingConditions || isofficerfinalisation"class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back to Application</button><br/>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -216,75 +158,97 @@
                         <ul class="nav nav-tabs" id="conditiontabs">
                             <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
-            
-                    </div>   
+                    </div>
                     <div  class="tab-content">
                         <div v-for="item in application.licence_type_data">
-                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`" class="tab-pane fade active in"> 
+                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`" class="tab-pane fade in">
                                 <Conditions :application="application" :licence_activity_type_tab="selected_assessment_tab"/>
                             </div>
                         </div>
                     </div>
+                    <div class="row" style="margin-bottom:50px;">
+                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                            <div class="navbar-inner">
+                                <div class="container">
+                                    <p class="pull-right" style="margin-top:5px;">
+                                        <button class="btn btn-primary" @click.prevent="completeAssessment()">Complete Assessment</button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </template>
                 <template v-if="isOfficerConditions">
                     <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Officer-Conditions'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                        </ul>
+                    </div>
+                    <div class="tab-content">
+                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status=='With Officer-Conditions'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                            <OfficerConditions :application="application" :licence_activity_type_tab="item1.id" :final_view_conditions="false"/>
+                        </div>
+                    </div>
+                </template>
+                <template v-if="isFinalViewConditions">
+                    <div v-for="item in application.licence_type_data">
+                        <ul class="nav nav-tabs" id="conditiontabs">
                             <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
                         </ul>
-            
-                    </div>   
-                    <div  class="tab-content">
-                        <div v-for="item in application.licence_type_data">
-                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" :id="`${item1.id}`+_uid" class="tab-pane fade active in"> 
-                                <OfficerConditions :application="application"/>
-                            </div>
+                    </div>
+                    <div class="tab-content">
+                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                            <OfficerConditions :application="application" :licence_activity_type_tab="item1.id" :final_view_conditions="true"/>
                         </div>
                     </div>
                 </template>
                 <template v-if="isSendingToAssessor && !showingConditions">
                     <div>
-                        <ul class="nav nav-tabs" id="assessortabs">
-                            <li v-for="(item1,index) in application.licence_type_data.activity_type"><a v-if="item1.name && item1.processing_status!='Draft'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                        <ul id="tabs-assessor" class="nav nav-tabs">
+                            <li v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && (item1.processing_status=='With Officer' || item1.processing_status=='With Officer-Conditions' || item1.processing_status=='With Assessor')" :class="setAssessorTab(index)" @click.prevent="clearSendToAssessorForm()">
+                                <a data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a>
+                            </li>
                         </ul>
                     </div>
                         
                     <div class="tab-content">
-                            <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status!='Draft'" :id="`${item1.id}`+_uid" class="tab-pane fade">
-                                <div>
-                                        <div class="panel panel-default">
-                                            <div class="panel-heading">
-                                                <h3 class="panel-title">Send to Assessor
-                                                    <a class="panelClicker" :href="`#${item1.id}`+assessorsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="assessorsBody">
-                                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                                    </a>
-                                                </h3>
+                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && (item1.processing_status=='With Officer' || item1.processing_status=='With Officer-Conditions' || item1.processing_status=='With Assessor')" :id="`${item1.id}`+_uid" :class="setAssessorTabContent(index)">
+                            <div>
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        <h3 class="panel-title">Send to Assessor
+                                            <a class="panelClicker" :href="`#${item1.id}`+assessorsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="assessorsBody">
+                                                <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                            </a>
+                                        </h3>
+                                    </div>
+                                    <div class="panel-body panel-collapse collapse in" :id="`${item1.id}`+assessorsBody">
+                                        <div class="row">
+                                           <div class="col-sm-10" style="margin-bottom: 10px">
+                                                    <label class="control-label pull-left"  for="Name">Assessor Group</label>
+                                                    <select class="form-control" v-model="selectedAssessor">
+                                                        <option v-for="assessor in assessorGroup" :id="assessor.id"
+                                                        :value="assessor" v-if="application.licence_type_data.id == assessor.licence_class && item1.id == assessor.licence_activity_type">{{assessor.display_name}}</option>
+                                                    </select>
                                             </div>
-                                            <div class="panel-body panel-collapse collapse in" :id="`${item1.id}`+assessorsBody">
-                                                        <div class="row">
-                                                           <div class="col-sm-10" style="margin-bottom: 10px">
-                                                                    <label class="control-label pull-left"  for="Name">Assessor Group</label>
-                                                                    <select class="form-control" v-model="selectedAssessor">
-                                                                        <option v-for="assessor in assessorGroup" :id="assessor.id" 
-                                                                        :value="assessor" v-if="application.licence_type_data.id == assessor.licence_class && item1.id == assessor.licence_activity_type">{{assessor.display_name}}</option>
-                                                                    </select>
-                                                            </div> 
-                                                            <div class="col-sm-2">
-                                                                <a class="btn btn-primary" style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)">Send</a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row">
-                                                            <datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options[`${item1.id}`]" :dtHeaders="assessors_headers" />
-                                                        </div>
+                                            <div class="col-sm-2">
+                                                <a class="btn btn-primary" style="cursor:pointer;text-decoration:none;" @click.prevent="sendtoAssessor(item1.id)">Send</a>
                                             </div>
                                         </div>
+                                        <div class="row">
+                                            <datatable ref="assessorDatatable" :data-index="index" :id="`${item1.id}`+_uid+'assessor_datatable'" :dtOptions="assessors_options[`${item1.id}`]" :dtHeaders="assessors_headers" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
                     </div>
                 </template>
-                <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised">
+                <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised && !isOfficerConditions && !isFinalViewConditions">
                     <div>
-                    <ul class="nav nav-tabs">
-                        <li class="active"><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
+                    <ul class="nav nav-tabs" id="tabs-main">
+                        <li><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
                         <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
                     </ul>
                     <div class="tab-content">
@@ -312,6 +276,28 @@
                                             <label for="" class="col-sm-3 control-label" >ABN/ACN</label>
                                             <div class="col-sm-6">
                                                 <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="application.org_applicant.abn">
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                                <div v-if="applicantType == 'proxy'" class="panel-body panel-collapse collapse in" :id="detailsBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Given Name(s)</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.proxy_applicant.first_name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Surname</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.proxy_applicant.last_name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Date of Birth</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="application.proxy_applicant.dob">
                                             </div>
                                           </div>
                                       </form>
@@ -351,7 +337,7 @@
                                         </a>
                                     </h3>
                                 </div>
-                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                <div v-if="applicantType == 'org' && application.org_applicant.organisation.identification" class="panel-body panel-collapse collapse" :id="identificationBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Identification</label>
@@ -361,7 +347,17 @@
                                           </div>
                                       </form>
                                 </div>
-                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                <div v-if="applicantType == 'proxy' && application.proxy_applicant.identification.file" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Identification</label>
+                                            <div class="col-sm-8">
+                                                <img width="100%" name="applicantIdentification" v-bind:src="application.proxy_applicant.identification.file" />
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                                <div v-if="applicantType == 'submitter' && application.submitter.identification.file" class="panel-body panel-collapse collapse" :id="identificationBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Identification</label>
@@ -384,7 +380,7 @@
                                         </a>
                                     </h3> 
                                 </div>
-                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse" :id="addressBody">
+                                <div v-if="applicantType == 'org' && application.org_applicant.address" class="panel-body panel-collapse collapse" :id="addressBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
@@ -416,7 +412,39 @@
                                           </div>
                                        </form>
                                 </div>
-                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="addressBody">
+                                <div v-if="applicantType == 'proxy' && application.proxy_applicant.residential_address" class="panel-body panel-collapse collapse" :id="addressBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Street</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="street" placeholder="" v-model="application.proxy_applicant.residential_address.line1">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="application.proxy_applicant.residential_address.locality">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">State</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="country" placeholder="" v-model="application.proxy_applicant.residential_address.state">
+                                            </div>
+                                            <label for="" class="col-sm-2 control-label">Postcode</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="application.proxy_applicant.residential_address.postcode">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Country</label>
+                                            <div class="col-sm-4">
+                                                <input disabled type="text" class="form-control" name="country" v-model="application.proxy_applicant.residential_address.country"/>
+                                            </div>
+                                          </div>
+                                       </form>
+                                </div>
+                                <div v-if="applicantType == 'submitter' && application.submitter.residential_address" class="panel-body panel-collapse collapse" :id="addressBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
@@ -465,6 +493,28 @@
                                     <table ref="contacts_datatable" :id="contacts_table_id" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
                                     </table>
                                 </div>
+                                <div v-if="applicantType == 'proxy'" class="panel-body panel-collapse collapse" :id="contactsBody">
+                                  <form class="form-horizontal">
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantPhoneNumber" placeholder="" v-model="application.proxy_applicant.phone_number">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Mobile</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantMobileNumber" placeholder="" v-model="application.proxy_applicant.mobile_number">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Email</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantEmail" placeholder="" v-model="application.proxy_applicant.email">
+                                        </div>
+                                      </div>
+                                  </form>
+                                </div>
                                 <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="contactsBody">
                                   <form class="form-horizontal">
                                       <div class="form-group">
@@ -492,7 +542,7 @@
                         </div>
                     </div>
                     <div class="col-md-12">
-                        <div class ="row">
+                        <div v-if="wc_version != 1.0" class ="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h3 class="panel-title">Check List
@@ -549,12 +599,15 @@
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                                     <input type='hidden' name="application_id" :value="1" />
+                                    <input type='hidden' id="selected_activity_type_tab_id" v-model="selected_activity_type_tab_id" :value=0 />
                                     <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
-                                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                                        <div v-if="wc_version != 1.0" class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                                             <div class="navbar-inner">
                                                 <div class="container">
                                                     <p class="pull-right" style="margin-top:5px;">
-                                                        <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
+                                                        <button v-if="canReturnToConditions" class="btn btn-primary" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
+                                                        <button v-if="canCompleteAssessment" class="btn btn-info" @click.prevent="toggleConditions()">Assess</button>
+                                                        <button v-if="!applicationIsDraft && canRequestAmendment" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
                                                     </p>
                                                 </div>
                                             </div>
@@ -564,28 +617,24 @@
                             </form>
                         </div>
                     </div>
-                    
-
                 </div>
-                
         </div>
-
     </template>
         </div>
         </div>
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
-        <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
-        <SendToAssessor ref="send_to_assessor" :application_id="application.id" ></SendToAssessor>
-        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"/>
-        
+        <AmendmentRequest ref="amendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
+        <SendToAssessor ref="send_to_assessor" :application_id="application.id" @refreshFromResponse="refreshFromResponse"></SendToAssessor>
+        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedLicence>
+
     </div>
 </template>
 <script>
 import Application from '../../form.vue'
 import Vue from 'vue'
 import ProposedDecline from './application_proposed_decline.vue'
-import AmmendmentRequest from './ammendment_request.vue'
+import AmendmentRequest from './amendment_request.vue'
 import SendToAssessor from './application_send_assessor.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Conditions from './application_conditions.vue'
@@ -624,6 +673,7 @@ export default {
             selected_referral: '',
             selected_assessment_tab:null,
             selected_assessment_id:null,
+            selected_activity_type_tab_id:null,
             form: null,
             members: [],
             department_users : [],
@@ -634,6 +684,7 @@ export default {
             showingConditions:false,
             assessmentComplete:false,
             isOfficerConditions:false,
+            isFinalViewConditions:false,
             isofficerfinalisation:false,
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
@@ -689,7 +740,7 @@ export default {
         Application,
         datatable,
         ProposedDecline,
-        AmmendmentRequest,
+        AmendmentRequest,
         SendToAssessor,
         Conditions,
         OfficerConditions,
@@ -707,6 +758,71 @@ export default {
     watch: {
     },
     computed: {
+        applicationIsDraft: function(){
+            return this.application.processing_status == 'Draft';
+        },
+        selectedTabId: function(){
+            return this.selected_activity_type_tab_id;
+        },
+        selectedActivityType: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].id == this.selectedTabId){
+                    return activity_types_list[i];
+                }
+            }
+        },
+        canIssueDecline: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer-Finalisation'){
+                    return true;
+                }
+            }
+            return false;
+        },
+        canRequestAmendment: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer'){
+                    return true;
+                }
+            }
+            return false;
+        },
+        canSendToAssessor: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer' || activity_types_list[i].processing_status == 'With Officer-Conditions' || activity_types_list[i].processing_status == 'With Assessor'){
+                    return true;
+                }
+            }
+            return false;
+        },
+        canReturnToConditions: function(){
+            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Finalisation' ? true : false;
+        },
+        canOfficerReviewConditions: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer-Conditions'){
+                    return true;
+                }
+            }
+            return false;
+        },
+        canProposeIssueOrDecline: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer-Conditions'){
+                    return true;
+                }
+            }
+            return false;
+        },
+        canCompleteAssessment: function(){
+            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Assessor' ? true : false;
+        },
         contactsURL: function(){
             return this.application!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.application.org_applicant.id+'/contacts') : '';
         },
@@ -738,11 +854,9 @@ export default {
 
             }
             if(flag>0 && flag==len){
-                console.log('inside is finalised true')
                 return true;
             }
             else{
-                console.log('inside is finalised false')
                 return false;
             }
             
@@ -757,11 +871,9 @@ export default {
 
             }
             if(flag>0 && flag!=len){
-                console.log('inside is partially finalised true')
                 return true;
             }
             else{
-                console.log('inside is partially finalised false')
                 return false;
             }
             
@@ -773,23 +885,18 @@ export default {
             return this.application && this.application.assessor_mode.has_assessor_mode ? true : false;
         },
         isIdCheckAccepted: function(){
-            console.log(this.application.id_check_status)
             return this.application.id_check_status == 'Accepted';
         },
         isIdNotChecked: function(){
-            console.log(this.application.id_check_status)
             return this.application.id_check_status == 'Not Checked';
         },
         isIdCheckRequested: function(){
-            console.log(this.application.id_check_status)
             return this.application.id_check_status == 'Awaiting Update';
         },
         isIdCheckUpdated: function(){
-            console.log(this.application.id_check_status)
             return this.application.id_check_status == 'Updated';
         },
         isCharacterCheckAccepted: function(){
-            console.log(this.application.id_check_status)
             return this.application.character_check_status == 'Accepted';
         },
         canAction: function(){
@@ -810,6 +917,9 @@ export default {
         },
         canSeeSubmission: function(){
             return this.application && (this.application.processing_status != 'With Assessor (Conditions)' && this.application.processing_status != 'With Approver' && !this.isFinalised)
+        },
+        wc_version: function (){
+            return this.$root.wc_version;
         }
     },
     methods: {
@@ -820,16 +930,11 @@ export default {
             // Listeners for Send to Assessor datatable actions
             if (vm.$refs.assessorDatatable) {
                 for (var i=0; i < vm.$refs.assessorDatatable.length; i++) {
-                    console.log('printing datatable in loop');
-                    console.log(datatable);
                     vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_remind',(e) => {
-                    console.log("inside assessment remind")
-                    e.preventDefault();
+                        e.preventDefault();
 
-                    let assessment_id = $(e.target).data('assessmentid');
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
-                    console.log(e.target.parentElement);
-                        console.log('successful')
+                        let assessment_id = $(e.target).data('assessmentid');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/remind_assessment'))).then((response)=>{
                             //vm.$parent.loading.splice('processing contact',1);
                             swal(
                                  'Sent',
@@ -847,11 +952,10 @@ export default {
                     });
 
                     vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_resend',(e) => {
-                    e.preventDefault();
+                        e.preventDefault();
 
-                    let assessment_id = $(e.target).data('assessmentid');
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/resend_assessment'))).then((response)=>{
-                        console.log('successful')
+                        let assessment_id = $(e.target).data('assessmentid');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/resend_assessment'))).then((response)=>{
                             //vm.$parent.loading.splice('processing contact',1);
                             swal(
                                  'Sent',
@@ -859,6 +963,10 @@ export default {
                                  'success'
                             )
                             vm.refreshAssessorDatatables();
+                            vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/internal_application')).then((res) => {
+                                vm.refreshFromResponse(res);
+                            });
+
                         },(error)=>{
                             console.log(error);
                             vm.errors = true;
@@ -869,12 +977,10 @@ export default {
                     });
 
                     vm.$refs.assessorDatatable[i].vmDataTable.on('click','.assessment_recall',(e) => {
-                    console.log("inside assessment remind")
-                    e.preventDefault();
+                        e.preventDefault();
 
-                    let assessment_id = $(e.target).data('assessmentid');
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/recall_assessment'))).then((response)=>{
-                        console.log('successful')
+                        let assessment_id = $(e.target).data('assessmentid');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessment,(assessment_id+'/recall_assessment'))).then((response)=>{
                             //vm.$parent.loading.splice('processing contact',1);
                             swal(
                                  'Success',
@@ -882,6 +988,9 @@ export default {
                                  'success'
                             )
                             vm.refreshAssessorDatatables();
+                            vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/internal_application')).then((res) => {
+                                vm.refreshFromResponse(res);
+                            });
                         },(error)=>{
                             console.log(error);
                             vm.errors = true;
@@ -895,7 +1004,7 @@ export default {
         },
         initialiseOrgContactTable: function(){
             let vm = this;
-            if (vm.application && !vm.contacts_table_initialised){
+            if (vm.application && vm.applicantType == 'org' && !vm.contacts_table_initialised){
                 vm.contacts_options.ajax.url = helpers.add_endpoint_json(api_endpoints.organisations,vm.application.org_applicant.id+'/contacts');
                 vm.contacts_table = $('#'+vm.contacts_table_id).DataTable(vm.contacts_options);
                 vm.contacts_table_initialised = true;
@@ -908,36 +1017,31 @@ export default {
             this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
-        finalDecline:function(){
-            let vm=this;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_decline'),JSON.stringify(licence),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        swal(
-                             'Issue activity type',
-                             'The activity type is successfully issued',
-                             'success'
-                        );
-                        vm.close();
-                        vm.$parent.refreshFromResponse(response)
-                        // vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
-
-        },
         sendtoAssessor: function(item1){
             let vm=this;
-            // var selectedTabTitle = $("#tabs-section li.active");
-            // console.log($(selectedTabTitle))
-            // console.log($(selectedTabTitle).text())
-            // console.log($(item1))
             this.$refs.send_to_assessor.assessment.licence_activity_type=item1;
             this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id;
             this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name;
             this.$refs.send_to_assessor.assessment.text='';
-            this.$refs.send_to_assessor.isModalOpen=true;
+            if (typeof this.selectedAssessor.id == 'undefined' || typeof this.selectedAssessor.display_name == 'undefined'){
+              swal(
+                'Error',
+                'Please select an Assessor Group to send the request to.',
+                'error'
+              )
+            } else {
+                this.$refs.send_to_assessor.isModalOpen=true;
+            }
+        },
+        clearSendToAssessorForm(){
+            this.$refs.send_to_assessor.assessment.text='';
+            this.selectedAssessor={};
+        },
+        setAssessorTab(_index){
+            return _index === 0 ? 'active' : '';
+        },
+        setAssessorTabContent(_index){
+            return _index === 0 ? 'tab-pane fade in active' : 'tab-pane fade in';
         },
         proposedLicence: function(){
             var activity_type_name=[]
@@ -947,8 +1051,6 @@ export default {
             
             this.$refs.proposed_licence.propose_issue.licence_activity_type_id=tab_id
             this.$refs.proposed_licence.propose_issue.licence_activity_type_name=selectedTabTitle.text();
-            console.log(tab_id)
-            console.log(this.$refs.proposed_licence.propose_issue.licence_activity_type_name)
             // this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
             this.$refs.proposed_licence.isModalOpen = true;
         },
@@ -959,12 +1061,9 @@ export default {
             this.isSendingToAssessor=false;
             this.showingConditions=false;
             this.isOfficerConditions=false;
+            this.isFinalViewConditions=false;
             this.assessmentComplete=false;
-            this.isofficerfinalisation=true
-        },
-        declineApplication:function(){
-            this.$refs.proposed_decline.decline = helpers.copyObject(this.application.applicationdeclineddetails);
-            this.$refs.proposed_decline.isModalOpen = true;
+            this.isofficerfinalisation=true;
         },
         acceptIdRequest: function() {
             let vm = this;
@@ -978,7 +1077,6 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_id_check')))
                     .then((response) => {
-                        console.log(response);
                         vm.application = response.body;
                     }, (error) => {
                         console.log(error);
@@ -999,7 +1097,6 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/reset_id_check')))
                     .then((response) => {
-                        console.log(response);
                         vm.application = response.body;
                     }, (error) => {
                         console.log(error);
@@ -1010,8 +1107,6 @@ export default {
         },
         updateIdRequest: function() {
             let vm = this;
-            console.log(vm.application.schema[0].name)
-            console.log(vm.application.schema[0].status)
             swal({
                 title: "Request Update ID Check",
                 text: "Are you sure you want to request this ID Check update?",
@@ -1022,7 +1117,6 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/request_id_check')))
                     .then((response) => {
-                        console.log(response);
                         vm.application = response.body;
                     }, (error) => {
                         console.log(error);
@@ -1043,7 +1137,6 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_character_check')))
                     .then((response) => {
-                        console.log(response);
                         vm.application = response.body;
                     }, (error) => {
                         console.log(error);
@@ -1054,60 +1147,73 @@ export default {
         },
         refreshAssessorDatatables: function(){
             var vm = this;
-            console.log(vm.$refs.assessorDatatable);
             for (var i=0;i<vm.$refs.assessorDatatable.length;i++){
                 vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
             }
         },
-        ammendmentRequest: function(){
+        amendmentRequest: function(){
+            let vm = this;
+            vm.save_wo();
             let values = '';
-            let tab_name='';
             var activity_type_name=[];
             var activity_type_id=[];
-            var selectedTabTitle
-            // var selected = $("#tabs-section").tabs( "option", "selected" );
-            // var selectedTabTitle = $("#tabs-section li.active");
-            // console.log($(selectedTabTitle))
-            // console.log($(selectedTabTitle).text())
+            var selectedTabTitle;
+
             $('.deficiency').each((i,d) => {
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
-                
-                tab_name = $(d).data('tabname')
-                if ($(d).val() != '' && (activity_type_name.indexOf(tab_name) < 0) ){
-                    activity_type_name.push(tab_name)
-                    
-                    activity_type_id.push($(d).data('tabid'))
-                }
-                // console.log('from inside internal application')
-                // console.log(activity_type_name)
-                // console.log(activity_type_id)
-                // console.log($(d).data('tabname'))
-            }); 
-            
-            this.$refs.ammendment_request.amendment.text = values;
-            this.$refs.ammendment_request.amendment.activity_type_name = activity_type_name;
-            this.$refs.ammendment_request.amendment.activity_type_id = activity_type_id;
-            console.log(this.$refs.ammendment_request.amendment.activity_type_name)
-            this.$refs.ammendment_request.isModalOpen = true;
+            });
+
+            selectedTabTitle = $("#tabs-section li.active");
+            vm.tab_name = $(selectedTabTitle).text();
+            vm.tab_id = selectedTabTitle.children().attr('href').split('#')[1];
+
+            activity_type_id.push(vm.tab_id);
+            activity_type_name.push(vm.tab_name);
+
+            vm.$refs.amendment_request.amendment.text = values;
+            vm.$refs.amendment_request.amendment.activity_type_name = activity_type_name;
+            vm.$refs.amendment_request.amendment.activity_type_id = activity_type_id;
+            vm.$refs.amendment_request.isModalOpen = true;
+
+            if (values === ''){
+               swal(
+                  'Amendment Request',
+                  'There are no deficiencies entered for this Application.',
+                  'error'
+               )
+               vm.$refs.amendment_request.isModalOpen = false;
+            }
         },
         togglesendtoAssessor:function(){
             let vm=this;
+            $('#tabs-main li').removeClass('active');
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
-            vm.showingConditions=false;
+            vm.showingConditions = false;
+            setTimeout(function(){
+                $('#tabs-assessor li:first-child a')[0].click();
+            }, 50);
+            vm.fetchAssessorGroup();
         },
-        
         save: function(e) {
-          let vm = this;
-          let formData = new FormData(vm.form);
-          vm.$http.post(vm.application_form_url,formData).then(res=>{
+            let vm = this;
+            let formData = new FormData(vm.form);
+            vm.$http.post(vm.application_form_url,formData).then(res=>{
               swal(
                 'Saved',
                 'Your application has been saved',
                 'success'
               )
-          },err=>{
-          });
+            },err=>{
+            });
+        },
+        save_wo: function() {
+            let vm = this;
+            let formData = new FormData(vm.form);
+            vm.$http.post(vm.application_form_url,formData).then(res=>{
+
+            },err=>{
+            });
         },
         toggleApplication:function(){
             this.showingApplication = !this.showingApplication;
@@ -1117,25 +1223,70 @@ export default {
             if(this.showingConditions){
                 this.showingConditions=!this.showingConditions
             }
+            if(this.isOfficerConditions){
+                this.isOfficerConditions=!this.isOfficerConditions
+            }
+            if(this.isFinalViewConditions){
+                this.isFinalViewConditions=!this.isFinalViewConditions
+            }
+            if(this.isofficerfinalisation){
+                this.isofficerfinalisation=!this.isofficerfinalisation
+            }
+            setTimeout(function(){
+                $('#tabs-main li a')[1].click();
+            }, 50);
         },
         toggleConditions:function(){
             this.showingConditions = true;
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.isOfficerConditions=false;
+            this.isFinalViewConditions=false;
             this.assessmentComplete=false;
             var selectedTabTitle = $("#tabs-section li.active");
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
-            
             this.selected_assessment_tab=tab_id
-
+            setTimeout(function(){
+                $('#conditiontabs li a')[0].click();
+            }, 50);
+        },
+        returnToOfficerConditions: function(){
+            let vm = this;
+            vm.updateActivityStatus(vm.selectedActivityType.id,'With Officer-Conditions');
+            swal(
+                 'Return to Officer - Conditions',
+                 'The licenced activity has been returned to Officer - Conditions.',
+                 'success'
+            );
         },
         toggleOfficerConditions:function(){
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
             this.isOfficerConditions=true;
+            this.isFinalViewConditions=false;
             this.assessmentComplete=false;
+            var selectedTabTitle = $("#tabs-section li.active");
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
+            this.selected_assessment_tab=tab_id
+            setTimeout(function(){
+                $('#conditiontabs li a')[0].click();
+            }, 50);
+
+        },
+        toggleFinalViewConditions:function(){
+            this.showingApplication = false;
+            this.isSendingToAssessor=false;
+            this.showingConditions=false;
+            this.isOfficerConditions=false;
+            this.isFinalViewConditions=true;
+            this.assessmentComplete=false;
+            var selectedTabTitle = $("#tabs-section li.active");
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
+            this.selected_assessment_tab=tab_id
+            setTimeout(function(){
+                $('#conditiontabs li a')[0].click();
+            }, 50);
 
         },
         updateAssignedOfficerSelect:function(){
@@ -1182,7 +1333,12 @@ export default {
                 )
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
@@ -1197,11 +1353,21 @@ export default {
             .then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 vm.updateAssignedOfficerSelect();
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
@@ -1214,7 +1380,12 @@ export default {
             let vm = this;
             vm.original_application = helpers.copyObject(response.body);
             vm.application = helpers.copyObject(response.body);
-            vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+            if (vm.applicantType == 'org') {
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+            };
+            if (vm.applicantType == 'proxy') {
+                vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+            };
             vm.$nextTick(() => {
                 vm.initialiseAssignedOfficerSelect(true);
                 vm.updateAssignedOfficerSelect();
@@ -1238,11 +1409,21 @@ export default {
                 }).then((response) => {
                     vm.application = response.body;
                     vm.original_application = helpers.copyObject(response.body);
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                 }, (error) => {
                     vm.application = helpers.copyObject(vm.original_application)
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                     swal(
                         'Application Error',
@@ -1256,11 +1437,21 @@ export default {
                 .then((response) => {
                     vm.application = response.body;
                     vm.original_application = helpers.copyObject(response.body);
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                 }, (error) => {
                     vm.application = helpers.copyObject(vm.original_application)
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                     swal(
                         'Application Error',
@@ -1270,24 +1461,36 @@ export default {
                 });
             }
         },
-        switchStatus: function(status){
+        updateActivityStatus: function(activity_id, status){
             let vm = this;
-            vm.isSendingToAssessor = !vm.isSendingToAssessor;
-            let data = {'status': status}
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/switch_status')),JSON.stringify(data),{
+            //vm.isSendingToAssessor = !vm.isSendingToAssessor;
+            let data = {
+                'activity_id' : activity_id,
+                'status': status
+            }
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/update_activity_status')),JSON.stringify(data),{
                 emulateJSON:true,
-            })
-            .then((response) => {
+            }).then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                vm.$nextTick(() => {
-                    vm.initialiseAssignedOfficerSelect(true);
-                    vm.updateAssignedOfficerSelect();
-                });
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
+//                vm.$nextTick(() => {
+//                    vm.initialiseAssignedOfficerSelect(true);
+//                    vm.updateAssignedOfficerSelect();
+//                });
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 swal(
                     'Application Error',
                     helpers.apiVueResourceError(error),
@@ -1308,23 +1511,16 @@ export default {
         },
         fetchAssessorGroup: function(){
             let vm = this;
+            let data = {'application_id' : vm.application.id };
             vm.loading.push('Fetching assessor group');
-            vm.$http.get(api_endpoints.assessor_group).then((response) => {
-                vm.assessorGroup = response.body
-                console.log('this is assessor group')
-                console.log(vm.assessorGroup)
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessor_group,'user_list'),JSON.stringify(data),{
+                emulateJSON:true,
+            }).then((response) => {
+                vm.assessorGroup = response.body;
             },(error) => {
                 console.log(error);
-                // console.log(response.body)
-            })
+            });
         },
-        // fetchActivityType: function(){
-        //     let vm = this;
-        //     console.log('fetching activity type data')
-        //     console.log(vm.application.licence_type_data.activity_type)
-        //     vm.activity_type_data=vm.application.licence_type_data.activity_type
-        //     console.log(vm.activity_type_data)
-        // },
         initialiseAssignedOfficerSelect:function(reinit=false){
             let vm = this;
             if (reinit){
@@ -1471,18 +1667,14 @@ export default {
                     'error'
                 )
             });
-        }        
+        },
     },
     mounted: function() {
         let vm = this;
         vm.fetchDeparmentUsers();
-        vm.fetchAssessorGroup();
         vm.$nextTick(function () {
-            console.log('application licence_type_data');
-            console.log(vm.application.licence_type_data);
             for (var i=0;i<vm.application.licence_type_data.activity_type.length;i++) {
                 var activity_type_id = vm.application.licence_type_data.activity_type[i].id
-                console.log(activity_type_id);
                 vm.assessors_options[activity_type_id] = {
                      language: {
                         processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -1540,17 +1732,12 @@ export default {
               next(vm => {
                 vm.application = res.body;
                 vm.original_application = helpers.copyObject(res.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                // vm.fetchActivityType();
-                // var tabs=vm.activity_type_data
-                // console.log('printing tabs')
-                // console.log(tabs.length)
-                // for(i=0;i<tabs.length;i++){
-                //     $('#assessor-section').append(`<li><a data-toggle="tab" href='#${tabs[i].id}+_uid'>${tabs[i].name}</a></li>`);
-                // }
-                // // tabs.map(tsec => {
-                // //     $('#assessor-section').append(`<li><a data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
-                // // });
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
               });
             },
             err => {
@@ -1562,7 +1749,12 @@ export default {
               next(vm => {
                 vm.application = res.body;
                 vm.original_application = helpers.copyObject(res.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
               });
             },
             err => {
@@ -1570,6 +1762,7 @@ export default {
             });
     }
 }
+
 </script>
 <style scoped>
 .top-buffer-s {

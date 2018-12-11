@@ -462,7 +462,12 @@ export default {
                                     links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="suspend_contact">Suspend</a><br/>`;
                                     if(full.user_role == 'Organisation User'){
                                         links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_admin_contact">Make Organisation Admin</a><br/>`;
+                                        links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_consultant">Make Organisation Consultant</a><br/>`;
+                                    } else if (full.user_role == 'Organisation Admin') {
+                                        links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_user_contact">Make Organisation User</a><br/>`;
+                                        links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_consultant">Make Organisation Consultant</a><br/>`;
                                     } else {
+                                        links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_admin_contact">Make Organisation Admin</a><br/>`;
                                         links +=  `<a data-email='${full.email}'  data-firstname='${full.first_name}' data-lastname='${full.last_name}' data-id='${full.id}' data-mobile='${full.mobile_number}' data-phone='${full.phone_number}' class="make_user_contact">Make Organisation User</a><br/>`;
                                     }
                                 } else if(full.user_status == 'Unlinked'){
@@ -1033,6 +1038,53 @@ export default {
                 },(error) => {
                 });
             });
+
+            vm.$refs.contacts_datatable_user.vmDataTable.on('click','.make_consultant',(e) => {
+                e.preventDefault();
+
+                let firstname = $(e.target).data('firstname');
+                let lastname = $(e.target).data('lastname');
+                let name = firstname + ' ' + lastname;
+                let email = $(e.target).data('email');
+                let id = $(e.target).data('id');
+                let mobile = $(e.target).data('mobile');
+                let phone = $(e.target).data('phone');
+                let role = 'consultant';
+
+                vm.contact_user.first_name= firstname
+                vm.contact_user.last_name= lastname
+                vm.contact_user.email= email
+                vm.contact_user.mobile_number= mobile
+                vm.contact_user.phone_number= phone
+                vm.contact_user.user_role= role
+
+                swal({
+                    title: "Organisation Consultant",
+                    text: "Are you sure you want to make " + name + " (" + email + ") an Organisation Consultant?",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/make_consultant'),JSON.stringify(vm.contact_user),{
+                            emulateJSON:true
+                        }).then((response) => {
+                            swal({
+                                title: 'Organisation Consultant',
+                                text: 'You have successfully made ' + name + ' an Organisation Consultant.',
+                                type: 'success',
+                                confirmButtonText: 'Okay'
+                            }).then(() => {
+                                vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
+                            },(error) => {
+                            });
+                        }, (error) => {
+                            swal('Company Admin','There was an error making ' + name + ' an Organisation Consultant.','error')
+                        });
+                    }
+                },(error) => {
+                });
+            });
+
 
         },
         updateDetails: function() {

@@ -24,8 +24,6 @@ def create_basket_session(request, parameters):
     custom = serializer.validated_data.get('custom_basket')
     # validate product list
     if custom:
-        print(' --- custom basket --- ')
-        print(serializer.initial_data.get('products'))
         product_serializer = serializers.CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'), many=True)
     else:
         product_serializer = serializers.CheckoutProductSerializer(data=serializer.initial_data.get('products'), many=True)
@@ -61,6 +59,9 @@ def create_checkout_session(request, parameters):
 
     session_data = CheckoutSessionData(request) 
 
+    # reset method of payment when creating a new session
+    session_data.pay_by(None)
+    
     session_data.use_system(serializer.validated_data['system'])
     session_data.charge_by(serializer.validated_data['card_method'])
     session_data.use_shipping_method(serializer.validated_data['shipping_method'])
