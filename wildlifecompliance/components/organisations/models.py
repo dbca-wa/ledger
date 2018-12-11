@@ -10,7 +10,7 @@ from django.contrib.postgres.fields.jsonb import JSONField
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from wildlifecompliance.components.main.models import UserAction,CommunicationsLogEntry
-from wildlifecompliance.components.organisations.utils import random_generator
+from wildlifecompliance.components.organisations.utils import random_generator, can_change_role
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
                         send_organisation_request_amendment_requested_email_notification,
@@ -279,6 +279,30 @@ class Organisation(models.Model):
             self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_USER.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
             send_organisation_contact_user_email_notification(user,request.user,self,request)
+
+    def make_consultant(self, user, request):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self, user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # Validate for Organisation Admin
+            if not can_change_role(self, user):
+                raise ValidationError('Cannot change last Admin role for {}'.format(str(self.organisation)))
+            # add consultant
+            try:
+                org_contact = OrganisationContact.objects.get(organisation=self, email=delegate.user.email)
+                org_contact.user_role = 'consultant'
+                org_contact.is_admin = False
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_USER.format('{} {}({})'.format(
+                            delegate.user.first_name, delegate.user.last_name, delegate.user.email)), request)
+            # send email
+            send_organisation_contact_user_email_notification(user, request.user, self, request)
+
 
     def suspend_user(self,user,request):
         with transaction.atomic():
