@@ -125,6 +125,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     class_name = serializers.SerializerMethodField(read_only=True)
     activity_type_names = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
+    can_be_processed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
