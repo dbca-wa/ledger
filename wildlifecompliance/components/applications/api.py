@@ -96,7 +96,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        serializer = DTApplicationSerializer(queryset, many=True)
+        serializer = DTApplicationSerializer(queryset, many=True, context={'request':request})
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
@@ -282,7 +282,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         qs.extend(list(self.get_queryset().filter(proxy_applicant = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         qs.extend(list(self.get_queryset().filter(org_applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         queryset = list(set(qs))
-        serializer = DTApplicationSerializer(queryset, many=True)
+        serializer = DTApplicationSerializer(queryset, many=True,context={'request':request})
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])
