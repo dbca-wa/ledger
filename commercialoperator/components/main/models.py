@@ -87,6 +87,20 @@ class Park(models.Model):
         return self.name
 
 @python_2_unicode_compatible
+class Trail(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=10, blank=True)
+    
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+        #unique_together = ('id', 'proposal',)
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
 class ApplicationType(models.Model):
     name = models.CharField(max_length=64, unique=True)
     order = models.PositiveSmallIntegerField(default=0)

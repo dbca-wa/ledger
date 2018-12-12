@@ -2,7 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from commercialoperator.components.proposals import models
 from commercialoperator.components.proposals import forms
-from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, Park
+from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, Park, Trail
 #from commercialoperator.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
@@ -108,5 +108,10 @@ class ApplicationTypeAdmin(admin.ModelAdmin):
 @admin.register(Park)
 class ParkAdmin(admin.ModelAdmin):
     list_display = ['name', 'district']
+    ordering = ('name',)
+
+@admin.register(Trail)
+class TrailAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code']
     ordering = ('name',)
 

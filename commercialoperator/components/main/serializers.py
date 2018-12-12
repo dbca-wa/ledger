@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park
+from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park, Trail
 from ledger.accounts.models import EmailUser
 #from commercialoperator.components.proposals.serializers import ProposalTypeSerializer 
 
@@ -30,6 +30,11 @@ class CommunicationLogEntrySerializer(serializers.ModelSerializer):
 class ParkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Park
+        fields = '__all__'
+
+class TrailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Trail
         fields = '__all__'
         
 

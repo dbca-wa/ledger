@@ -7,8 +7,8 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
-from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer, VehicleSerializer, AccessTypeSerializer, ParkSerializer
+from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park, Trail
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer, VehicleSerializer, AccessTypeSerializer, ParkSerializer, TrailSerializer
 from django.core.exceptions import ValidationError
 
 
@@ -61,3 +61,7 @@ class AccessTypeViewSet(viewsets.ReadOnlyModelViewSet):
 class ParkViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Park.objects.all().order_by('id')
     serializer_class = ParkSerializer
+
+class TrailViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Trail.objects.all().order_by('id')
+    serializer_class = TrailSerializer
