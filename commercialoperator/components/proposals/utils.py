@@ -307,9 +307,17 @@ def save_proponent_data(instance,request,viewset):
 #                'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
 #            }
             data = {}
+
+            #import ipdb; ipdb.set_trace()
+            # s=request.data.get('selected')
+            # print type(s)
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
+
+            # for p in request.data['parks']:
+            #     park_data = ProposalPark.objects.get_or_create(park=p, proposal=proposal)
+            #     print park_data
         except:
             raise
 

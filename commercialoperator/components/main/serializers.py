@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park
 from ledger.accounts.models import EmailUser
+#from commercialoperator.components.proposals.serializers import ProposalTypeSerializer 
 
 class CommunicationLogEntrySerializer(serializers.ModelSerializer):
     customer = serializers.PrimaryKeyRelatedField(queryset=EmailUser.objects.all(),required=False)

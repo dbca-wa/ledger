@@ -14,11 +14,12 @@ from commercialoperator.components.proposals.models import (
                                     ProposalApplicantDetails,
                                     ProposalActivitiesLand,
                                     ProposalActivitiesMarine,
+                                    ProposalPark,
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
                             )
-from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer
+from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer, ParkSerializer
 from rest_framework import serializers
 
 class ProposalTypeSerializer(serializers.ModelSerializer):
@@ -55,6 +56,12 @@ class ProposalActivitiesMarineSerializer(serializers.ModelSerializer):
         model = ProposalActivitiesMarine
         fields = ('id','activities_marine')
 
+class ProposalParkSerializer(serializers.ModelSerializer):
+    park=ParkSerializer()
+    class Meta:
+        model = ProposalPark
+        fields = '__all__'
+
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
@@ -64,6 +71,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     applicant_details = ProposalApplicantDetailsSerializer(required=False)
     activities_land = ProposalActivitiesLandSerializer(required=False)
     activities_marine = ProposalActivitiesMarineSerializer(required=False)
+    parks=ProposalParkSerializer(many=True)
 
     get_history = serializers.ReadOnlyField()
 
@@ -117,6 +125,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'applicant_details',
                 'activities_land',
                 'activities_marine',
+                'parks'
                 )
         read_only_fields=('documents',)
 

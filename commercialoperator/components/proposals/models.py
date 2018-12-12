@@ -18,7 +18,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -213,6 +213,7 @@ class ProposalActivitiesMarine(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+
 
 
 class Proposal(RevisionedMixin):
@@ -1242,6 +1243,13 @@ class ProposalLogEntry(CommunicationsLogEntry):
         if not self.reference:
             self.reference = self.proposal.reference
         super(ProposalLogEntry, self).save(**kwargs)
+
+class ProposalPark(models.Model):
+    park = models.ForeignKey(Park, blank=True, null=True, related_name='proposals')
+    proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='parks')
+
+    class Meta:
+        app_label = 'commercialoperator'
 
 class ProposalRequest(models.Model):
     proposal = models.ForeignKey(Proposal)

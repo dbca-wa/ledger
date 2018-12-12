@@ -892,6 +892,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def draft(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            search_word=['parks']
             save_proponent_data(instance,request,self)
             return redirect(reverse('external'))
         except serializers.ValidationError:

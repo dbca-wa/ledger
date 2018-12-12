@@ -35,12 +35,12 @@
               </div>
             </div>
           </form>
-          <form>
+          <!-- <form> -->
             <div class="form-horizontal col-sm-12">
               <label class="control-label">Select Parks</label>
               <div class="" v-for="r in api_regions">
                 <div class="form-check">
-                  <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                  <input :onclick="isClickable" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                   {{ r.name }}
                 </div>
                 <div class="col-sm-12" v-for="d in r.districts">
@@ -50,7 +50,7 @@
                   </div>
                   <div class="" v-for="p in d.parks">
                     <div class="form-check col-sm-12">
-                      <input :onclick="isClickable"  v-model="selected" :value="p.name" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                      <input :onclick="isClickable"  name="selected" v-model="selected" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                     {{ p.name }}
                     </div>
                   </div>
@@ -59,9 +59,10 @@
             </div>
 
             <div>{{selected}}</div>
+            <div>{{proposal.parks}}</div>
 
-          </form>
-        </div>
+<!--           </form>
+ -->        </div>
       </div>
     </div>
   </div>
@@ -98,7 +99,17 @@ export default {
                 accessTypes:null,
                 api_regions:null,
                 selected:[],
+                activities:[],
+                access:[],
             }
+        },
+        watch:{
+          selected: function() {
+            let vm = this;
+            if (vm.proposal) {
+                vm.proposal.parks = vm.selected
+            } 
+        },
         },
         methods:{
           fetchRegions: function(){
@@ -126,6 +137,10 @@ export default {
                         console.log(err);
                   }); 
             vm.fetchRegions(); 
+            for (var i = 0; i < vm.proposal.parks.length; i++) {
+            this.selected.push(vm.proposal.parks[i].park.id);
+               }
+
             // vm.$http.get(api_endpoints.regions).then((response) => {
             // vm.api_regions = response.body;
             // console.log(vm.api_regions);

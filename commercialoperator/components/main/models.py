@@ -8,6 +8,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from django.contrib.postgres.fields.jsonb import JSONField
+#from commercialoperator.components.proposals.models import Proposal
 
 @python_2_unicode_compatible
 class Region(models.Model):
@@ -80,7 +81,7 @@ class Park(models.Model):
     class Meta:
         ordering = ['name']
         app_label = 'commercialoperator'
-        #unique_together = ('name', 'proposal',)
+        #unique_together = ('id', 'proposal',)
 
     def __str__(self):
         return self.name
