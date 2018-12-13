@@ -278,7 +278,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET',])
     def internal_datatable_list(self, request, *args, **kwargs):
-        queryset = Application.objects.all()
+        queryset = self.get_queryset()
         serializer = DTInternalApplicationSerializer(queryset, many=True,context={'request':request})
         return Response(serializer.data)
 
