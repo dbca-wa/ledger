@@ -369,7 +369,7 @@ class Application(RevisionedMixin):
         """
         :return: True if the application is in one of the editable status.
         """
-        return self.customer_status in self.CUSTOMER_EDITABLE_STATE
+        return self.customer_status in self.CUSTOMER_EDITABLE_STATE and self.processing_status == 'draft'
 
     @property
     def can_user_view(self):
