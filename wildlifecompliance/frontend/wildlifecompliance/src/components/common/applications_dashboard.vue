@@ -153,11 +153,12 @@ export default {
                     // Actions
                     mRender:function (data,type,full) {
                         let links = '';
-                        if (!vm.is_external){
+                        if (!vm.is_external && full.can_user_view){
                             links += `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
-                        if (full.can_user_edit) {
+                        if (full.can_current_user_edit) {
                             links +=  `<a href='/external/application/${full.id}'>Edit</a><br/>`;
+                            links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
                         }
                         return links;
                     }
@@ -213,11 +214,11 @@ export default {
                     // Actions
                     mRender:function (data,type,full) {
                         let links = '';
-                        if (!vm.is_external){
+                        if (!vm.is_external && full.can_user_view){
                             links +=  full.can_be_processed ? `<a href='/internal/application/${full.id}'>Process</a><br/>`: `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
                         else{
-                            if (full.can_user_edit) {
+                            if (full.can_current_user_edit) {
                                 links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
                                 links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
                             }
@@ -274,11 +275,11 @@ export default {
                     // Actions
                     mRender:function (data,type,full) {
                         let links = '';
-                        if (!vm.is_external){
+                        if (!vm.is_external && full.can_user_view){
                             links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
                         else{
-                            if (full.can_user_edit) {
+                            if (full.can_current_user_edit) {
                                 links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
                                 links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
                             }
@@ -333,11 +334,11 @@ export default {
                     // Actions
                     mRender:function (data,type,full) {
                         let links = '';
-                        if (!vm.is_external){
+                        if (!vm.is_external && full.can_user_view){
                             links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
                         else{
-                            if (full.can_user_edit) {
+                            if (full.can_current_user_edit) {
                                 links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
                                 links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
                             }
