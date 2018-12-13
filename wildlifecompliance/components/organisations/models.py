@@ -600,7 +600,7 @@ class OrganisationRequest(models.Model):
         ('employee','Employee'),
         ('consultant','Consultant')
         )
-    name = models.CharField(max_length=128, unique=True)
+    name = models.CharField(max_length=128)
     abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
     requester = models.ForeignKey(EmailUser)
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='org_request_assignee')
@@ -631,6 +631,7 @@ class OrganisationRequest(models.Model):
         org, created = Organisation.objects.get_or_create(organisation=ledger_org)
         # org.generate_pins()
         # Link requester to organisation
+        # Consultant is not a user delegate for pins.
         delegate = UserDelegation.objects.create(user=self.requester, organisation=org)
         # log who approved the request
         # org.log_user_action(OrganisationAction.ACTION_REQUEST_APPROVED.format(self.id),request)

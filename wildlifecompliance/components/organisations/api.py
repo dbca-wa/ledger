@@ -427,6 +427,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     @list_route(methods=['POST',])
     def existance(self, request, *args, **kwargs):
         try:
+            # Check if delegate or administrator exist on org for pins.
             serializer = OrganisationCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             data = Organisation.existance(serializer.validated_data['abn']) 
@@ -774,6 +775,10 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
+            abn = request.data.get('abn')
+            requests = OrganisationRequest.objects.filter(abn=abn, requester_id=request.user.id).exclude(status='declined')
+            if requests.exists():
+                raise serializers.ValidationError('A request already exists')
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.validated_data['requester'] = request.user
