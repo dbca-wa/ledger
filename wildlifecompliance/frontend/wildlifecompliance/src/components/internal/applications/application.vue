@@ -3,8 +3,7 @@
             <div class="row">
         <h3>Application: {{ application.lodgement_number }}</h3>
         <div class="col-md-3">
-            <CommsLogs v-if="wc_version != 1.0" :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
-            <CommsLogs v-else :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="true"/>
+            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="true"/>
             <div class="row" v-if="canSeeSubmission">
                 <div class="panel panel-default">
                     <div class="panel-heading">
