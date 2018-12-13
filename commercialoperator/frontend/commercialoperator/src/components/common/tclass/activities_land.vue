@@ -60,6 +60,9 @@
 
             <div>{{selected}}</div>
             <div>{{proposal.parks}}</div>
+            <div>
+              <VehicleTable :url="vehicles_url"></VehicleTable>
+            </div>
 
 <!--           </form>
  -->        </div>
@@ -81,6 +84,7 @@
 
 <script>
 import Vue from 'vue' 
+import VehicleTable from '@/components/common/vehicle_table.vue'
 import {
   api_endpoints,
   helpers
@@ -101,7 +105,11 @@ export default {
                 selected:[],
                 activities:[],
                 access:[],
+                vehicles_url: api_endpoints.vehicles,
             }
+        },
+        components: {
+          VehicleTable,
         },
         watch:{
           selected: function() {

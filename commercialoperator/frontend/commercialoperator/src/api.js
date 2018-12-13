@@ -25,6 +25,7 @@ module.exports = {
     vehicles:"/api/vehicles.json",
     access_types:"/api/access_types.json",
     parks:"/api/parks.json",
+    vehicles:"/api/vehicles.json",
 
     // used in internal and external dashboards
     proposals_paginated_external:   "/api/proposal_paginated/proposals_external/?format=datatables",

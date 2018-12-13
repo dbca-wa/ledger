@@ -46,17 +46,7 @@ class District(models.Model):
     def parks(self):
         return Parks.objects.filter(district=self)
 
-@python_2_unicode_compatible
-class Vehicle(models.Model):
-    capacity = models.CharField(max_length=200, blank=True)
-    rego = models.CharField(max_length=200, blank=True)
-    license = models.CharField(max_length=200, blank=True)
 
-    class Meta:
-        app_label = 'commercialoperator'
-
-    def __str__(self):
-        return self.rego
 
 @python_2_unicode_compatible
 class AccessType(models.Model):
@@ -69,6 +59,20 @@ class AccessType(models.Model):
 
     def __str__(self):
         return self.name
+
+@python_2_unicode_compatible
+class Vehicle(models.Model):
+    capacity = models.CharField(max_length=200, blank=True)
+    rego = models.CharField(max_length=200, blank=True)
+    license = models.CharField(max_length=200, blank=True)
+    access_type= models.ForeignKey(AccessType,null=True, related_name='vehicles')
+    rego_expiry= models.DateField(blank=True, null=True)
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.rego
 
 @python_2_unicode_compatible
 class Park(models.Model):

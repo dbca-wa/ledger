@@ -122,7 +122,7 @@
             Payment,
             Confirmation,
             Profile,
-            Organisation
+            Organisation,
         },
         methods:{
         },

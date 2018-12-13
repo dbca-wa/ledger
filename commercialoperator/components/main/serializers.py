@@ -83,13 +83,13 @@ class ApplicationTypeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'tenure_app_types')
 
 
-class VehicleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Vehicle
-        fields = ('id', 'capacity', 'rego', 'license')
-
 class AccessTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessType
         fields = ('id', 'name', 'visible')
 
+class VehicleSerializer(serializers.ModelSerializer):
+    access_type= AccessTypeSerializer()
+    class Meta:
+        model = Vehicle
+        fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
