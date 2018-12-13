@@ -153,7 +153,7 @@ export default {
                     // Actions
                     mRender:function (data,type,full) {
                         let links = '';
-                        if (!vm.is_external && full.can_user_view){
+                        if (!vm.is_external){
                             links += `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
                         if (full.can_current_user_edit) {
@@ -214,7 +214,7 @@ export default {
                     // Actions
                     mRender:function (data,type,full) {
                         let links = '';
-                        if (!vm.is_external && full.can_user_view){
+                        if (!vm.is_external){
                             links +=  full.can_be_processed ? `<a href='/internal/application/${full.id}'>Process</a><br/>`: `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
                         else{
@@ -275,7 +275,7 @@ export default {
                     // Actions
                     mRender:function (data,type,full) {
                         let links = '';
-                        if (!vm.is_external && full.can_user_view){
+                        if (!vm.is_external){
                             links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
                         else{
@@ -334,7 +334,7 @@ export default {
                     // Actions
                     mRender:function (data,type,full) {
                         let links = '';
-                        if (!vm.is_external && full.can_user_view){
+                        if (!vm.is_external){
                             links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
                         else{
