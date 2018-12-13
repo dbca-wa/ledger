@@ -17,7 +17,7 @@ export default {
     data() {
         let vm = this;
         return {
-            applications_url: api_endpoints.applications,
+            applications_url: helpers.add_endpoint_json(api_endpoints.applications,'internal_datatable_list'),
         }
     
     },

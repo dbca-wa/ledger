@@ -117,11 +117,11 @@ export default {
                 {data: "class_name"},
                 {data: "activity_type_names"},
                 {
-                    data: "title",
-                    'render': function (value) {
-                        return helpers.dtPopover(value);
-                    },
-                    'createdCell': helpers.dtPopoverCellFn
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
                 },
                 {
                     data: "submitter",
@@ -175,11 +175,11 @@ export default {
                 {data: "class_name"},
                 {data: "activity_type_names"},
                 {
-                    data: "title",
-                    'render': function (value) {
-                        return helpers.dtPopover(value);
-                    },
-                    'createdCell': helpers.dtPopoverCellFn
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
                 },
                 {
                     data: "submitter",
@@ -243,11 +243,11 @@ export default {
                 {data: "class_name"},
                 {data: "activity_type_names"},
                 {
-                    data: "title",
-                    'render': function (value) {
-                        return helpers.dtPopover(value);
-                    },
-                    'createdCell': helpers.dtPopoverCellFn
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
                 },
                 {
                     data: "submitter",
@@ -302,11 +302,11 @@ export default {
                 {data: "class_name"},
                 {data: "activity_type_names"},
                 {
-                    data: "title",
-                    'render': function (value) {
-                        return helpers.dtPopover(value);
-                    },
-                    'createdCell': helpers.dtPopoverCellFn
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
                 },
                 {
                     data: "submitter",
