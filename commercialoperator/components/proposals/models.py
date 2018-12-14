@@ -666,6 +666,26 @@ class Proposal(RevisionedMixin):
         self.activities_marine = ProposalActivitiesMarine.objects.create(activities_marine=request.data['activities_marine'])
         #self.save()
 
+    def save_parks(self,request,parks):
+        with transaction.atomic():
+            if parks:
+                try:
+                    current_parks=self.parks.all()
+                    if current_parks:
+                        print current_parks
+                        for p in current_parks:
+                            p.delete()
+                    for item in parks:
+                        try:
+                            park=Park.objects.get(id=item)
+                            ProposalPark.objects.create(proposal=self, park=park)
+                        except:
+                            raise                        
+                except:
+                    raise
+
+
+
     def update(self,request,viewset):
         from commercialoperator.components.proposals.utils import save_proponent_data
         with transaction.atomic():
@@ -1250,6 +1270,7 @@ class ProposalPark(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+        unique_together = ('park', 'proposal')
 
 class ProposalRequest(models.Model):
     proposal = models.ForeignKey(Proposal)

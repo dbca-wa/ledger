@@ -62,6 +62,12 @@ class ProposalParkSerializer(serializers.ModelSerializer):
         model = ProposalPark
         fields = '__all__'
 
+class SaveProposalParkSerializer(serializers.ModelSerializer):
+    #park=ParkSerializer()
+    class Meta:
+        model = ProposalPark
+        fields = '__all__'
+
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()

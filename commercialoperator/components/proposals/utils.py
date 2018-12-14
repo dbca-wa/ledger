@@ -3,7 +3,7 @@ from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from commercialoperator.components.proposals.models import ProposalDocument
-from commercialoperator.components.proposals.serializers import SaveProposalSerializer
+from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer
 import traceback
 import os
 
@@ -290,7 +290,7 @@ class SpecialFieldsSearch(object):
         return item_data
 
 
-def save_proponent_data(instance,request,viewset):
+def save_proponent_data(instance,request,viewset,parks):
     with transaction.atomic():
         try:
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
@@ -314,6 +314,28 @@ def save_proponent_data(instance,request,viewset):
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
+            if parks:
+                try:
+                    current_parks=instance.parks.all()
+                    if current_parks:
+                        print current_parks
+                        for p in current_parks:
+                            p.delete()
+                    for item in parks:
+                        try:
+                            # park=Park.objects.get(id=item)
+                            # ProposalPark.objects.create(proposal=self, park=park)
+                            data_park={
+                            'park': item,
+                            'proposal': instance.id
+                            }
+                            serializer=SaveProposalParkSerializer(data=data_park)
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except:
+                            raise                        
+                except:
+                    raise
 
             # for p in request.data['parks']:
             #     park_data = ProposalPark.objects.get_or_create(park=p, proposal=proposal)

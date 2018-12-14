@@ -10,6 +10,7 @@
           </h3>
         </div>
         <div class="panel-body collapse in" :id="pBody">
+          <div class="borderDecoration">
           <form class="form-horizontal col-sm-12" name="personal_form" method="post">
             <label class="control-label"> Select the required access and activities</label>
           </form>
@@ -60,12 +61,14 @@
 
             <div>{{selected}}</div>
             <div>{{proposal.parks}}</div>
-            <div>
-              <VehicleTable :url="vehicles_url"></VehicleTable>
-            </div>
-
+            
 <!--           </form>
- -->        </div>
+
+ -->    </div> 
+          <div class="borderDecoration">
+              <VehicleTable :url="vehicles_url"></VehicleTable>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -160,5 +163,11 @@ export default {
 </script>
 
 <style lang="css" scoped>
+.borderDecoration {
+    border: 1px solid;
+    border-radius: 5px;
+    padding: 5px;
+    margin-top: 5px;
+}
 </style>
 

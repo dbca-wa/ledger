@@ -892,14 +892,22 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def draft(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            search_word=['parks']
-            save_proponent_data(instance,request,self)
+            schema=request.data.get('schema')
+            import json
+            sc=json.loads(schema)
+            parks=sc['parks']
+            save_proponent_data(instance,request,self,parks)
+            # if parks:
+            #     instance.save_parks(request,parks)
             return redirect(reverse('external'))
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
         except ValidationError as e:
-            raise serializers.ValidationError(repr(e.error_dict))
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
         raise serializers.ValidationError(str(e))
