@@ -260,17 +260,19 @@ class Organisation(models.Model):
             # send email
             send_organisation_contact_adminuser_email_notification(user,request.user,self,request)
 
-
     def make_user(self,user,request):
         with transaction.atomic():
             try:
-                delegate = UserDelegation.objects.get(organisation=self,user=user)
+                delegate = UserDelegation.objects.get(organisation=self, user=user)
             except UserDelegation.DoesNotExist:
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # check user can change role.
+            if not can_change_role(self, user):
+                raise ValidationError('This user is the last Organisation Administrator')
             # delete contact person
             try:
-                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
-                org_contact.user_role ='organisation_user'
+                org_contact = OrganisationContact.objects.get(organisation=self, email=delegate.user.email)
+                org_contact.user_role = 'organisation_user'
                 org_contact.is_admin = False
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
@@ -278,7 +280,7 @@ class Organisation(models.Model):
             # log linking
             self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_USER.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
-            send_organisation_contact_user_email_notification(user,request.user,self,request)
+            send_organisation_contact_user_email_notification(user, request.user, self, request)
 
     def make_consultant(self, user, request):
         with transaction.atomic():
@@ -288,20 +290,19 @@ class Organisation(models.Model):
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
             # Validate for Organisation Admin
             if not can_change_role(self, user):
-                raise ValidationError('Cannot change last Admin role for {}'.format(str(self.organisation)))
+                raise ValidationError('This user is the last Organisation Administrator')
             # add consultant
             try:
                 org_contact = OrganisationContact.objects.get(organisation=self, email=delegate.user.email)
                 org_contact.user_role = 'consultant'
-                org_contact.is_admin = False
+                org_contact.is_admin = True
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
                 pass
             # log linking
-            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_USER.format('{} {}({})'.format(
-                            delegate.user.first_name, delegate.user.last_name, delegate.user.email)), request)
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_ADMIN.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
-            send_organisation_contact_user_email_notification(user, request.user, self, request)
+            send_organisation_contact_adminuser_email_notification(user, request.user, self, request)
 
 
     def suspend_user(self,user,request):
@@ -396,7 +397,20 @@ class Organisation(models.Model):
 
     @property
     def first_five(self):
-        return ','.join([user.get_full_name() for user in self.delegates.all()[:5]])
+        """
+        :return: A string of names for the first five Administrator delegates.
+        """
+        _names = ''
+        for user in self.delegates.all()[:5]:
+            _is_admin = OrganisationContact.objects.filter(organisation_id=self.id,
+                                                           last_name=user.last_name,
+                                                           user_role='organisation_admin',
+                                                           user_status='active',
+                                                           is_admin=True).exists()
+            if _is_admin:
+                _names += user.get_full_name() + ' '
+
+        return _names
 
     @property
     def first_five_admin(self):
@@ -631,7 +645,6 @@ class OrganisationRequest(models.Model):
         org, created = Organisation.objects.get_or_create(organisation=ledger_org)
         # org.generate_pins()
         # Link requester to organisation
-        # Consultant is not a user delegate for pins.
         delegate = UserDelegation.objects.create(user=self.requester, organisation=org)
         # log who approved the request
         # org.log_user_action(OrganisationAction.ACTION_REQUEST_APPROVED.format(self.id),request)

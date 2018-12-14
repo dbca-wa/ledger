@@ -517,11 +517,9 @@ export default {
         },
         uploadID: function() {
             let vm = this;
-            console.log('uploading id');
             vm.uploadingID = true;
             let data = new FormData();
             data.append('identification', vm.uploadedID);
-            console.log(data);
             if (vm.uploadedID == null){
                 vm.uploadingID = false;
                 swal({
