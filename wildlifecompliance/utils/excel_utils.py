@@ -7,7 +7,7 @@ from wildlifecompliance.components.licences.models import DefaultActivityType, W
 from wildlifecompliance.components.organisations.models import Organisation
 from ledger.accounts.models import OrganisationAddress
 from django.contrib.postgres.fields.jsonb import JSONField
-from wildlifecompliance.utils import SearchUtils
+from wildlifecompliance.utils import SearchUtils, search_multiple_keys
 from wildlifecompliance.components.licences.models import DefaultActivity
 from ledger.accounts.models import EmailUser
 
@@ -253,7 +253,7 @@ class ExcelWriter():
         indices = [i for i, s in enumerate(values_list) if name in s]
         return indices[0] if indices else None
 
-    def create_activity_type_fields(self, qs_activity_type, activity_name):
+    def _create_activity_type_fields(self, qs_activity_type, activity_name):
         """
         from wildlifecompliance.utils.excel_utils import create_activity_type_fields
         create_activity_type_fields('Importing Fauna (Non-Commercial)')
@@ -321,6 +321,53 @@ class ExcelWriter():
 
         return ordered_dict
 
+    def get_activity_type_sys_questions(self, activity_name):
+        """
+        Looks up the activity type schema and return all questions (marked isEditable) that need to be added to the Excel WB.
+        Allows us to know the block size for each activity type in the WB (start_col, end_col)
+        """
+        ordered_dict=OrderedDict([])
+
+        #import ipdb; ipdb.set_trace()
+        schema = WildlifeLicenceActivity.objects.get(name=activity_name).schema
+        res = search_multiple_keys(schema, 'isEditable', ['name', 'label'])
+
+        #sys_fields = [ordered_dict.update([(i['name'],i['label'] + ' (' + i['name'] + ')')]) for i in res] 
+        #sys_fields = [ordered_dict.update([(i['label'] + ' (' + i['name'] + ')', None)]) for i in res] 
+        [ordered_dict.update([(i['name'],i['label'])]) for i in res] 
+
+        return ordered_dict
+
+    def get_tab_index(self, qs_activity_type):
+        application = qs_activity_type[0].application
+        activity_name = qs_activity_type[0].name # 'Fauna Other - Importing'
+        return application.data[0][activity_name][0].keys()[0].split('_')[1]
+
+    def get_activity_type_sys_answers(self, qs_activity_type, activity_name):
+        """
+        Looks up the activity type return all answers for question marked isEditable that need to be added to the Excel WB.
+        """
+        ordered_dict=OrderedDict([])
+        questions = self.get_activity_type_sys_questions(activity_name)
+        for k,v in questions.iteritems():
+            # k - section name
+            # v - question
+
+            if qs_activity_type:
+                #import ipdb; ipdb.set_trace()
+                # must append tab index to 'section name'
+                k = k + '_' + self.get_tab_index(qs_activity_type) #, activity_name)
+                s = SearchUtils(qs_activity_type[0].application)
+                answer = s.search_value(k)
+                ordered_dict.update(OrderedDict([(v,answer)]))
+            else:
+                # this part for the Excel column  headers
+                ordered_dict.update(OrderedDict([(v,None)]))
+
+        return ordered_dict
+
+
+
     def create_excel_model(self, licence_category, cur_app_ids):
         """
         from wildlifecompliance.utils.excel_utils import write_excel_model
@@ -348,6 +395,41 @@ class ExcelWriter():
 
         return new_excel_apps
 
+
+    def create_workbook_template(self, input_filename, licence_category='Fauna Other Purpose'):
+        meta = OrderedDict()
+        if os.path.isfile(input_filename):
+            logger.warn('File already exists {}'.format(input_filename))
+            return None
+
+        self.cols_output(None, 'Importing Fauna (Non-Commercial)')
+
+        activity_name_list = self.get_purposes(licence_category)
+        for activity_name in activity_name_list:
+            self.cols_output(None, 'Importing Fauna (Non-Commercial)')
+            
+
+        col_num = 0
+        import ipdb; ipdb.set_trace()
+        for k,v in excel_app.cols_output.iteritems():
+            #ws.write(row_num, col_num, k, font_style)
+            ws.write(row_num, col_num, k, self.bold)
+            col_num += 1
+
+        for activity_name in activity_name_list:
+            #activity_type = excel_app.excel_activity_types.filter(activity_name=activity_name)
+            #import ipdb; ipdb.set_trace()
+            activity_type_cols = self.cols_output(None, activity_name).keys()
+
+            ws.write(row_num, col_num, '', self.bold); col_num += 1
+            #ws.write(row_num, col_num, short_name, bold); col_num += 1
+
+            for col_name in activity_type_cols:
+                ws.write(row_num, col_num, col_name, self.bold_unlocked)
+                col_num += 1
+
+
+        
 
     def read_workbook(self, input_filename, licence_category='Fauna Other Purpose'):
         """
@@ -478,6 +560,19 @@ class ExcelWriter():
 
             row_num += 1
 
+
+    @property
+    def cols_system(self, qs_activity_type, activity_name):
+        """ qs_excel_app --> ExcelApplication """
+        return OrderedDict([
+            ('lodgement_number', qs_activity_type[0].excel_app.lodgement_number if qs_activity_type else None),
+            ('application_id', qs_activity_type[0].excel_app.application.id if qs_activity_type else None),
+            ('licence_number', qs_activity_type[0].excel_app.licence_number if qs_activity_type else None),
+            ('applicant', qs_activity_type[0].excel_app.applicant_details if qs_activity_type else None),
+            ('applicant_id', qs_activity_type[0].excel_app.org_applicant.id if qs_activity_type else None),
+        ])
+
+
     def cols_common(self, qs_activity_type, activity_name):
         code = activity_name[:2].lower()
         ordered_dict = OrderedDict([
@@ -504,7 +599,7 @@ class ExcelWriter():
         ordered_dict = OrderedDict([
             ('{}'.format(activity_name), None),
         ])
-        ordered_dict.update(self.create_activity_type_fields(qs_activity_type, activity_name))
+        ordered_dict.update(self.get_activity_type_sys_answers(qs_activity_type, activity_name))
         ordered_dict.update(self.cols_common(qs_activity_type, activity_name))
         return ordered_dict
 
