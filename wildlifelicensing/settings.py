@@ -59,3 +59,4 @@ INVOICE_UNPAID_WARNING = env('INVOICE_UNPAID_WARNING', 'Your application cannot 
 
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
+DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
