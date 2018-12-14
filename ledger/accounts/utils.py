@@ -22,9 +22,9 @@ def get_department_user_minimal(email):
         if len(data) > 0:
             return data[0]
         else:
-            return None
+            return {}
     except:
-        raise
+        return {}
 
 def get_department_user_compact(email):
     try:
@@ -34,7 +34,7 @@ def get_department_user_compact(email):
         if len(data) > 0:
             return data[0]
         else:
-            return None
+            return {}
     except:
-        raise
+        return {}
 
