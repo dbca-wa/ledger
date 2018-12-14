@@ -1635,7 +1635,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 
         # get a length of the stay (in days), capped if necessary to the request maximum
         today = date.today()
-        length = max(0, (end_date-start_date).days)
+        end_date =end_date  + timedelta(days=1)
+        length = max(0, (end_date-start_date).days) 
         max_advance_booking_days = max(0, (start_date-today).days)
         #if length > settings.PS_MAX_BOOKING_LENGTH:
         #    length = settings.PS_MAX_BOOKING_LENGTH

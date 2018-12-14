@@ -319,6 +319,7 @@ def get_open_marinas(campsites_qs, start_date, end_date):
 def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_booking, request=None):
     """Fetch the availability of each mooring in a queryset over a range of visit dates."""
     # fetch all of the single-day MooringsiteBooking objects within the date range for the sites
+    end_date =end_date+timedelta(days=1)
     start_date_time = datetime.strptime(str(start_date)+str(' 00:00'), '%Y-%m-%d %H:%M')
     end_date_time = datetime.strptime(str(end_date)+str(' 23:59'), '%Y-%m-%d %H:%M')
     booking_id = None
@@ -348,22 +349,30 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
     # booking__expiry_time__gte=datetime.now()
     booking_qs = None
     # prefill all slots as 'open'
-    duration = (end_date-start_date).days
+    duration = (end_date-start_date).days 
     #results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
-
+    print "NEW SEARCH"
+    print duration
+    # Build Hash of open periods
     results = {}
     for site in campsites_qs:
         results[site.pk] = {}
+        cgbr_qs =    MooringAreaBookingRange.objects.filter(
+            Q(campground=site.mooringarea),
+            Q(status=1),
+            Q(range_start__lt=end_date_time+timedelta(days=1)) & (Q(range_end__gte=start_date_time-timedelta(days=3))|Q(range_end__isnull=True))
+        )
+        print "GET CLOSURES"
+        print cgbr_qs 
+ 
         for i in range(duration):
-            pass
             date_rotate_forward = start_date+timedelta(days=i)
             mooring_rate = None
             if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward ).count() > 0:
                 mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).order_by('-date_start')[0]
             else:
                 if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).count() > 0:
-                     mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None ).order_by('-date_start')[0]
-               
+                     mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).order_by('-date_start')[0]
 #            mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk)[0]
 
             booking_period = {}
@@ -373,7 +382,36 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                 for bp in bp_result:
                     booking_period[bp.pk] = 'open'
                     selection_period[bp.pk] = 0
-            results[site.pk][start_date+timedelta(days=i)] = ['closed',booking_period,selection_period, bp_result]
+                    start_dt = datetime.strptime(str(date_rotate_forward)+' '+str(bp.start_time), '%Y-%m-%d %H:%M:%S')
+                    finish_dt = datetime.strptime(str(date_rotate_forward)+' '+str(bp.finish_time), '%Y-%m-%d %H:%M:%S')
+                    if start_dt > finish_dt:
+                         finish_dt = finish_dt+timedelta(days=1)
+
+                    for closure in cgbr_qs:
+                        # CLOSURE INFORMATION
+                        start = max(start_date, (closure.range_start+ timedelta(hours=8)).date() -timedelta(days=2))
+                        end = min(end_date, (closure.range_end + timedelta(hours=8)).date()) if closure.range_end.date() else end_date
+                        closure_range = (end-start).days + 1
+
+                        closure_start = closure.range_start+ timedelta(hours=8)
+                        closure_finish = closure.range_end+timedelta(hours=8)
+                        
+                        # BOOKING PERIOD
+                        if closure_start.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                               if closure_start.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                                     booking_period[bp.pk] = 'closed'
+
+                        if closure_finish.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                               if closure_finish.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                                      booking_period[bp.pk] = 'closed'
+
+                        if closure_start.strftime('%Y-%m-%d %H:%M:%S') <= start_dt.strftime('%Y-%m-%d %H:%M:%S') and closure_finish.strftime('%Y-%m-%d %H:%M:%S') >= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
+                               booking_period[bp.pk] = 'closed'
+            results[site.pk][date_rotate_forward] = ['closed',booking_period,selection_period, bp_result]
+            #results[site.pk][start_date+timedelta(days=i)] = ['closed',booking_period,selection_period, bp_result]
+
+
+    # Determine availablity
 
     for b in bookings_qs:
         if b.booking.id == booking_old_id:
@@ -442,125 +480,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                                    results[b.campsite.id][date_rotate_forward][2][bp.id] = b.id
                             pass
 
-                    # Calculate Closed Times
-                       
 
-                
-
-
-
-                    #if datetime.strptime(str(date_rotate_forward), '%Y-%m-%d') <= datetime.now():
-                    #    if date_rotate_forward in results[b.campsite.id]:
-                    #        results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
-                    #results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
-#                    results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
-    # generate a campground-to-campsite-list map
     mooring_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.mooringarea.pk == cg[0]] for cg in campsites_qs.distinct('mooringarea').values_list('mooringarea')}
-    # strike out whole campground closures
-    cgbr_qs =    MooringAreaBookingRange.objects.filter(
-        Q(campground__in=mooring_map.keys()),
-        Q(status=1),
-        Q(range_start__lt=end_date_time) & (Q(range_end__gte=start_date_time)|Q(range_end__isnull=True))
-    )
-    for closure in cgbr_qs:
-        start = max(start_date, closure.range_start.date())
-        end = min(end_date, closure.range_end.date()) if closure.range_end.date() else end_date
-        start_time = (closure.range_start + timedelta(hours=8)).strftime('%H:%M:%S')
-        end_time = (closure.range_end + timedelta(hours=8)).strftime('%H:%M:%S')
-        today = date.today()
-        diff = (end-start).days + 1
-        for i in range(diff):
-            for cs in mooring_map[closure.campground.pk]:
-                #results[cs][start+timedelta(days=i)][0] = 'closed'
-                if start+timedelta(days=i) == today:
-                    if not closure.campground._is_open(start+timedelta(days=i)):
-                        if start+timedelta(days=i) in results[cs]:
-                            results[cs][start+timedelta(days=i)][0] = 'closed'
-#                            for b in results[cs][start+timedelta(days=i)][1]:
-#                                 results[cs][start+timedelta(days=i)][1][b] = 'closed'
-                            for p in results[cs][start+timedelta(days=i)][3]:
-                                 date_rotate_forward = start+timedelta(days=i)
-                                 start_dt = datetime.strptime(str(date_rotate_forward)+' '+str(p.start_time), '%Y-%m-%d %H:%M:%S')
-                                 finish_dt = datetime.strptime(str(date_rotate_forward)+' '+str(p.finish_time), '%Y-%m-%d %H:%M:%S')
-                                 closure_from_dt = datetime.strptime(str(date_rotate_forward)+' '+str(start_time), '%Y-%m-%d %H:%M:%S')
-                                 closure_to_dt = datetime.strptime(str(date_rotate_forward)+' '+str(end_time), '%Y-%m-%d %H:%M:%S')
-
-                                 if start_dt > finish_dt:
-                                     finish_dt = finish_dt+timedelta(days=1)
-                                 if closure_from_dt > closure_to_dt:
-                                     closure_to_dt = closure_to_dt+timedelta(days=1)
-
-                                 if closure_from_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
-                                     if closure_from_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
-                                         results[cs][start+timedelta(days=i)][1][p.id] = 'closed'
-                                 if closure_to_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
-                                     if closure_to_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
-                                         results[cs][start+timedelta(days=i)][1][p.id] = 'closed'
-                                 if closure_from_dt.strftime('%Y-%m-%d %H:%M:%S') <= start_dt.strftime('%Y-%m-%d %H:%M:%S') and closure_to_dt.strftime('%Y-%m-%d %H:%M:%S') >= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
-                                     results[cs][start+timedelta(days=i)][1][p.id] = 'closed'
-
-
-
-
-
-                else:
-                    if start+timedelta(days=i) in results[cs]:
-                        results[cs][start+timedelta(days=i)][0] = 'closed'
-                        for p in results[cs][start+timedelta(days=i)][3]:
-                             date_rotate_forward = start+timedelta(days=i)
-                             start_dt = datetime.strptime(str(date_rotate_forward)+' '+str(p.start_time), '%Y-%m-%d %H:%M:%S')
-                             finish_dt = datetime.strptime(str(date_rotate_forward)+' '+str(p.finish_time), '%Y-%m-%d %H:%M:%S')
-                             closure_from_dt = datetime.strptime(str(date_rotate_forward)+' '+str(start_time), '%Y-%m-%d %H:%M:%S')
-                             closure_to_dt = datetime.strptime(str(date_rotate_forward)+' '+str(end_time), '%Y-%m-%d %H:%M:%S')
-
-                             if start_dt > finish_dt:
-                                 finish_dt = finish_dt+timedelta(days=1)
-                             if closure_from_dt > closure_to_dt:
-                                 closure_to_dt = closure_to_dt+timedelta(days=1)          
-
-                             if closure_from_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
-                                 if closure_from_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
-                                      results[cs][start+timedelta(days=i)][1][p.id] = 'closed'
-                             if closure_to_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
-                                 if closure_to_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
-                                      results[cs][start+timedelta(days=i)][1][p.id] = 'closed'
-                             if closure_from_dt.strftime('%Y-%m-%d %H:%M:%S') <= start_dt.strftime('%Y-%m-%d %H:%M:%S') and closure_to_dt.strftime('%Y-%m-%d %H:%M:%S') >= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
-                                 results[cs][start+timedelta(days=i)][1][p.id] = 'closed'
-    
-    # strike out campsite closures
-    csbr_qs =    MooringsiteBookingRange.objects.filter(
-        Q(campsite__in=campsites_qs),
-        Q(status=1),
-        Q(range_start__lt=end_date) & (Q(range_end__gte=start_date)|Q(range_end__isnull=True))
-    )
-    for closure in csbr_qs:
-        start = max(start_date, closure.range_start.date())
-        end = min(end_date, closure.range_end.date()) if closure.range_end.date() else end_date
-        today = date.today()
-        diff = (end-start).days + 1
-        for i in range(diff):
-            #results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
-            if start+timedelta(days=i) == today:
-                if not closure.campsite._is_open(start+timedelta(days=i)):
-                    if start+timedelta(days=i) in results[closure.campsite.pk]:
-                        results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
-                        for b in results[closure.campsite.pk][start+timedelta(days=i)][1]:
-                               results[closure.campsite.pk][start+timedelta(days=i)][1][b] = 'closed'
-            else:
-                if start+timedelta(days=i) in results[closure.campsite.pk]:
-                    results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
-                    for b in results[closure.campsite.pk][start+timedelta(days=i)][1]:
-                          results[closure.campsite.pk][start+timedelta(days=i)][1][b] = 'closed'
-                
-    # strike out days before today
     today = date.today()
-#    if start_date < today:
-#        for i in range((min(today, end_date)-start_date).days):
-#            for key, val in results.items():
-#                val[start_date+timedelta(days=i)][0] = 'tooearly'
-#                for b in results[closure.campsite.pk][start+timedelta(days=i)][1]:
-#                      results[closure.campsite.pk][start+timedelta(days=i)][1][b] = 'closed'
-    #campsites_qs.count()
 
     # strike out days after the max_advance_booking
     for site in campsites_qs:
