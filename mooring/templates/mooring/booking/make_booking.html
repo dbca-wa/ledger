@@ -398,19 +398,19 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="num_adults" class="text-right">Adults (ages 12+):</label>
-                                    <input type="number" class="form-control" id="numAdults" name="num_adults" v-model="numAdults" v-on:change="calculateTotal()" min="0" max="16"/>
+                                    <input type="number" class="form-control" id="numAdults" name="num_adults" v-model="numAdults" v-on:change="guestsUpdated()" min="0" max="16"/>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="num_children" class="text-right">Children (ages 4-12):</label>
-                                    <input type="number" class="form-control" id="numChildren" name="num_children" v-model="numChildren" v-on:change="calculateTotal()" min="0" max="16"/>
+                                    <input type="number" class="form-control" id="numChildren" name="num_children" v-model="numChildren" v-on:change="guestsUpdated()" min="0" max="16"/>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="num_infants" class="text-right">Infants (ages 0-4):</label>
-                                    <input type="number" class="form-control" id="numInfants" name="num_infants" v-model="numInfants" v-on:change="calculateTotal()" min="0" max="16"/>
+                                    <input type="number" class="form-control" id="numInfants" name="num_infants" v-model="numInfants" v-on:change="guestsUpdated()" min="0" max="16"/>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -744,6 +744,60 @@
                     });
                     vm.isFirst = false;
                 }
+            },
+            getCookie: function(name){
+                var cookieValue = null;
+                if (document.cookie && document.cookie != ''){
+                    var cookies = document.cookie.split(';');
+                    for (var i = 0; i < cookies.length; i++){
+                        var cookie = $.trim(cookies[i]);
+                        if(cookie.substring(0, name.length +1) === (name + '=')){
+                            cookieValue = decodeURIComponent(cookie.substring(name.length +1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            },
+            csrfSafeMethod: function(method){
+                return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+            },
+            guestsUpdated: function() {
+                let vm = this;
+                console.log(vm.numAdults);
+                var details = {
+                    'num_adults' : parseInt(vm.numAdults),
+                    'num_children' : parseInt(vm.numChildren),
+                    'num_infants' : parseInt(vm.numInfants),
+                    'vessel_rego' : vm.rego,
+                    'vessel_size' : vm.size,
+                    'vessel_draft' : vm.draft,
+                    'vessel_beam' : vm.beam,
+                    'vessel_weight' : vm.weight
+
+                }
+                data = {
+                    booking : vm.booking_id,
+                    details : JSON.stringify(details)
+                }
+                csrftoken = vm.getCookie('csrftoken');
+                $.ajax({
+                    beforeSend: function(xhr, settings){
+                        if (!vm.csrfSafeMethod(settings.type) && !this.crossDomain){
+                            xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                        }
+                    },
+                    url: "/api/booking/" + vm.booking_id + "/",
+                    dataType: 'json',
+                    data: data,
+                    async: true,
+                    method: "PATCH",
+                    success: function(data, stat, xhr){
+                        console.log("Updated guests");
+
+                    }
+                });
+                vm.calculateTotal();
             },
             calculateTotal: function () {
                 var vm = this;

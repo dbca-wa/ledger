@@ -1,6 +1,6 @@
 <template lang="html">
     <div  id="cg_additional" >
-        <div v-show="!isLoading">
+        <div>
             <form id="additionalForm">
                 <div class="col-sm-12">
                 <alert :show.sync="showUpdate" type="success" :duration="7000">
@@ -15,7 +15,7 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label class="control-label" >Description</label>
-                                        <div id="editor" class="form-control"></div>
+                                        <div id="editor" name="description" class="form-control"></div>
                                     </div>
                                 </div>
                             </div>
@@ -27,7 +27,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row" style="margin-top: 40px;">
+                            <div class="row" style="margin-top: 40px;display:none;" >
                                 <div class="col-sm-8">
                                 </div>
                                 <div class="col-sm-4">
@@ -46,7 +46,6 @@
 
 			</form>
 		</div>
-		<loader :isLoading.sync="isLoading">Loading...</loader>
 	</div>
 </template>
 <style>
@@ -92,7 +91,6 @@ export default {
             showUpdate: false,
             isLoading: false,
             reload : false,
-            features_selected: [],
         }
     },
     props: {
@@ -186,28 +184,9 @@ export default {
         showAlert: function() {
             bus.$emit('showAlert', 'alert1');
         },
-        fetchCampground:function () {
-            let vm =this;
-            $.ajax({
-                url: api_endpoints.campground(vm.$route.params.id),
-                dataType: 'json',
-                async: false,
-                success: function(data, stat, xhr) {
-                    vm.campground = data;
-                    bus.$emit('campgroundFetched');
-                    for (var i = 0; i < data.features.length; i++){
-                        vm.features_selected.push(data.features[i].id);
-                    }
-                    vm.campground.features = vm.features_selected;
-                    console.log("Features updated");
-                    vm.$emit('updated', vm.campground);
-                }
-            });
-        },
     },
     mounted: function() {
         let vm = this;
-        vm.fetchCampground();
         vm.editor = new Editor('#editor', {
             modules: {
                 toolbar: true
@@ -222,7 +201,9 @@ export default {
         vm.form = $('#additionalForm');
 
         $('.form-control').blur(function(){
-            vm.$emit('updated', vm.campground);
+            if (vm.validateForm()){
+                vm.$emit('updated', vm.campground);
+            }
         });
     },
     updated: function() {

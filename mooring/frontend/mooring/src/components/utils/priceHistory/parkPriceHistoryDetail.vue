@@ -171,7 +171,7 @@ module.exports = {
                     concession: "Enter a concession rate",
                     motorbike: "Enter a motorbike rate",
                     period_start: "Enter a start date",
-                    details: "Details required if Other reason is selected"
+                    details: "Details required if other reason is selected",
                 },
                 showErrors: function(errorMap, errorList) {
 

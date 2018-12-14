@@ -1,6 +1,6 @@
 <template lang="html">
 <div  id="cg_attr" >
-	<div v-show="!isLoading">
+	<div>
 		<form id="attForm">
 		<div class="col-sm-12">
 			<alert :show.sync="showUpdate" type="success" :duration="7000">
@@ -15,29 +15,23 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="control-label" >Mooring Name</label>
-                                        <input type="text" name="name" id="name" class="form-control" v-model="campground.name" required/>
+                                        <input type="text" name="name" id="name" class="form-control" v-model="campground.name"/>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="control-label" >Mooring Oracle Code</label>
-                                        <input type="text" name="oracle_code" id="oracle_code" class="form-control" v-model="campground.oracle_code" required/>
+                                        <input type="text" name="oracle_code" id="oracle_code" class="form-control" v-model="campground.oracle_code"/>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group ">
                                         <label class="control-label" >Mooring Park</label>
-                                        <select name="park" v-show="!parks.length > 0" class="form-control" >
-                                            <option >Loading...</option>
-                                        </select>
-                                        <select name="park" ref="park" id="park" v-if="parks.length > 0" class="form-control" v-model="campground.park">
+                                        <select name="park" ref="park" id="park" class="form-control" v-model="campground.park">
                                             <option v-for="park in parks" :value="park.id">{{ park.name }}</option>
                                         </select>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div style="margin-top: 40px;margin-left:10px;" class="alert alert-danger" id="selected_features_warning">Please select at least 1 feature.</div>
                             </div>
                             <div class="row">
                                 <div class="col-md-0">
@@ -53,7 +47,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="control-label">Mooring Features</label>
-                                        <select class="form-control" id="features" name="features" ref="features" v-model="features_selected" multiple>
+                                        <select class="form-control" id="features" name="features" ref="features" v-model="campground.features" multiple>
                                             <option v-for="f in features" :value="f.id">{{ f.name }}</option>
                                         </select>
                                     </div>
@@ -101,7 +95,7 @@
                                 </div>
                             </div>
                                                                                                    
-                            <div class="row" >
+                            <div class="row" style="display:none;">
                                 <div class="col-sm-8">
                                 </div>
                                 <div class="col-sm-4">
@@ -120,7 +114,6 @@
 
 			</form>
 		</div>
-		<loader :isLoading.sync="isLoading">Loading...</loader>
 	</div>
 </template>
 <style>
@@ -128,6 +121,9 @@
     height:30px;
     line-height:30px;
     padding:7px 9px;
+}
+.select2-container--open {
+    z-index: 99999;
 }
 
 </style>
@@ -160,14 +156,12 @@ export default {
             features: [],
             selected_features_loaded: false,
             selected_features: Array(),
-            features_selected:[],
             form: null,
             errors: false,
             errorString: '',
             showUpdate: false,
             isLoading: false,
             reload : false,
-            contacts:[],
             mooring_groups: [],
             MooringGroups: [{ id: 1, name: 'Principal' }, { id: 2, name: 'Dessert' }, { id: 3, name: 'Drink' }],
         }
@@ -205,26 +199,6 @@ export default {
         allFeaturesSelected: function() {
             return this.features.length < 1;
         },
-        selected_contact_number: function() {
-            let id = this.campground.contact;
-            if(id != null) {
-                let contact = this.contacts.find(contact => contact.id == id);
-                return contact ? contact.phone_number: '';
-            }
-            else {
-                return '';
-            }
-        },
-        selected_contact_email: function(){
-            let id = this.campground.contact;
-            if(id != null){
-                let contact = this.contacts.find(contact => contact.id == id);
-                return contact ? contact.email: '';
-            }
-            else{
-                return '';
-            }
-        },
         jettyPen: function(){
             return this.campground.mooring_physical_type == 1;
         },
@@ -245,6 +219,10 @@ export default {
         campground: {
             handler: function() {
                 // this.loadSelectedFeatures();
+                let vm = this;
+                $(vm.$refs.campground_type).val(vm.campground.mooring_type).trigger('change');
+                $(vm.$refs.type_physical).val(vm.campground.mooring_physical_type).trigger('change');
+                $(vm.$refs.class).val(vm.campground.mooring_class).trigger('change');
             },
             deep: true,
 
@@ -255,16 +233,8 @@ export default {
             helpers.goBack(this);
         },
 		validateForm:function () {
-			let vm = this;
-            var isValid = true;
-            if(!vm.campground.features || vm.campground.features == ''){
-                $('#selected_features_warning').css("display","inline");
-                isValid = false;
-            } else {
-                $('#selected_features_warning').css("display","none");
-            }
-            
-            return  vm.form.valid() && isValid;
+			let vm = this;            
+            return  vm.form.valid();
 		},
         create: function() {
             console.log("CREATE");
@@ -274,7 +244,6 @@ export default {
 			}
         },
         update: function() {
-			this.setFeatures();
 			if(this.validateForm()){
 				this.sendData(api_endpoints.campground(this.campground.id), 'PUT',true); 
 			}	
@@ -319,216 +288,154 @@ export default {
                 }
             });
         },
-        setFeatures: function(){
-            let vm = this;
-            vm.campground.features = vm.features_selected;
-            console.log("Features updated");
-            vm.$emit('updated', vm.campground);
-        },
-        fetchCampground:function () {
-            let vm =this;
-            $.ajax({
-                url: api_endpoints.campground(vm.$route.params.id),
-                dataType: 'json',
-                async: false,
-                success: function(data, stat, xhr) {
-                    vm.campground = data;
-                    bus.$emit('campgroundFetched');
-                    for (var i = 0; i < data.features.length; i++){
-                        vm.features_selected.push(data.features[i].id);
-                    }
-                    setTimeout("vm.setFeatures();", 1500);
-                    
-                    console.log("Finished fetching campground");
-                }
-            });
-        },
-        addFormValidations: function() {
-            this.form.validate({
-				ignore:'div.ql-editor',
-                rules: {
-                    name: "required",
-                    park: "required",
-                    campground_type: "required",
-//                    site_type: "required",
-//                    street: "required",
-                    email: {
-                        required: true,
-                        email: true
-                    },
-                    telephone: "required",
-            //        postcode: "required",
- //                   price_level: "required"
+        // addFormValidations: function() {
+        //     this.form.validate({
+        //     ignore:'div.ql-editor',
+        //     rules: {
+        //         name: "required",
+        //         park: "required",
+        //         campground_type: "required",
+        //         campground_type_physical: "required",
+        //         campground_class: "required",
+        //     },
+        //     messages: {
+        //         name: "Enter a mooring name",
+        //         park: "Select a park from the options",
+        //         campground_type: "Select a booking type from the options",
+        //         campground_type_physical: "Select a mooring type from the options",
+        //         campground_class: "Select a mooring class from the options",
+        //     },
+        //     showErrors: function(errorMap, errorList) {
+        //         $.each(this.validElements(), function(index, element) {
+        //             var $element = $(element);
 
-                },
-                messages: {
-                    name: "Enter a mooring name",
-                    park: "Select a park from the options",
-                    campground_type: "Select a mooring type from the options",
-                    site_type: "Select a site type from the options",
-//                    price_level: "Select a price level from the options"
-                },
-                showErrors: function(errorMap, errorList) {
-                    $.each(this.validElements(), function(index, element) {
-                        var $element = $(element);
+        //             $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+        //         });
 
-                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
-                    });
+        //         // destroy tooltips on valid elements
+        //         $("." + this.settings.validClass).tooltip("destroy");
 
-                    // destroy tooltips on valid elements
-                    $("." + this.settings.validClass).tooltip("destroy");
-
-                    // add or update tooltips
-                    for (var i = 0; i < errorList.length; i++) {
-                        var error = errorList[i];
-                        $(error.element)
-                            .tooltip({
-                                trigger: "focus"
-                            })
-                            .attr("data-original-title", error.message)
-                            .parents('.form-group').addClass('has-error');
-                    }
-                }
-            });
-        },
+        //         // add or update tooltips
+        //         for (var i = 0; i < errorList.length; i++) {
+        //             var error = errorList[i];
+        //             $('#' + error.element.id).focus();
+        //             $(error.element)
+        //                 .tooltip({
+        //                     trigger: "focus"
+        //                 })
+        //                 .attr("data-original-title", error.message)
+        //                 .parents('.form-group').addClass('has-error');
+        //         }
+        //     }
+        // });
+        // },
     },
     mounted: function() {
         let vm = this;
-        vm.fetchCampground();
+        vm.isLoading = true;
         vm.loadParks();
         vm.loadFeatures();
         vm.loadMooringGroups();
 
         vm.form = $('#attForm');
-        vm.addFormValidations();
-		vm.$http.get(api_endpoints.contacts).then((response) => {
-			vm.contacts = response.body
-		}, (error) => {
-			console.log(error);
-		});
+        // vm.addFormValidations();
 
         $('.form-control').blur(function(){
             vm.$emit('updated', vm.campground);
         });
 
-        setTimeout( function(){
-            //Park selector
-            $(vm.$refs.park).select2({
-                "theme": "bootstrap",
-            }).
-            on("select2:select", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.park = selected.val();
-            }).
-            on("select2:unselect", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.park = selected.val();
-            });
-            //Mooring type selector
-            $(vm.$refs.campground_type).select2({
-                "theme": "bootstrap",
-            }).
-            on("select2:select", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.mooring_type = selected.val();
-            }).
-            on("select2:unselect", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.mooring_type = selected.val();
-            });
-            //Group permissions
-            $(vm.$refs.group_permissions).select2({
-                "theme": "bootstrap",
-            }).
-            on("select2:select", function (e){
-                var selected = $(e.currentTarget);
-                var mooringgroups = [];
-                console.log(selected.val());
-                var select_array = selected.val();
-                console.log(select_array);
-                for (var i = 0; i < select_array.length; i++){
-                    var val = select_array[i];
-                    console.log(val);
-                    var intval = parseInt(select_array[i]);
-                    console.log(intval);
-                    mooringgroups.push(intval);
-                }
-                console.log(mooringgroups);
-                vm.campground.mooring_group = mooringgroups;
-            }).
-            on("select2:unselect", function (e){
-                var selected = $(e.currentTarget);
-                var mooringgroups = [];
-                var select_array = selected.val();
-                for (var i = 0; i < select_array.length; i++){
-                    var val = select_array[i];
-                    var intval = parseInt(select_array[i]);
-                    mooringgroups.push(intval);
-                }
-                vm.campground.mooring_group = mooringgroups;
-            });
-            //Physical Type
-            $(vm.$refs.type_physical).select2({
-                "theme": "bootstrap",
-            }).
-            on("select2:select", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.mooring_physical_type = selected.val();
-            }).
-            on("select2:unselect", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.mooring_physical_type = selected.val();
-            });
-            //Class
-            $(vm.$refs.class).select2({
-                "theme": "bootstrap",
-            }).
-            on("select2:select", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.mooring_class = selected.val();
-            }).
-            on("select2:unselect", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.mooring_class = selected.val();
-            });
-            //Contact
-            $(vm.$refs.contact).select2({
-                "theme": "bootstrap",
-            }).
-            on("select2:select", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.contact = selected.val();
-            }).
-            on("select2:unselect", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.contact = selected.val();
-            });
-            //Features
-            $(vm.$refs.features).select2({
-                "theme": "bootstrap",
-            }).
-            on("select2:select", function (e){
-                var selected = $(e.currentTarget);
-                vm.features_selected = selected.val();
-            }).
-            on("select2:unselect", function (e){
-                var selected = $(e.currentTarget);
-                vm.features_selected = selected.val();
-            });
-            // if (vm.campground.features.length > 0){
-                // vm.setFeatures();
-            $(vm.$refs.features).val(vm.features_selected).trigger('change');
-            vm.$emit('updated', vm.campground);
-            // } 
-            // else {
-            //     vm.fetchCampground();
-            //     // vm.setFeatures();
-            //     $(vm.$refs.features).val(vm.campground.features).trigger('change');
-            // }
-
-        }, 1000);
-
-       
+        //Park
+        $(vm.$refs.park).select2({
+            "theme": "bootstrap",
+        }).
+        on("select2:select", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.park = selected.val();
+        }).
+        on("select2:unselect", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.park = selected.val();
+        });
+        //Mooring type selector
+        $(vm.$refs.campground_type).select2({
+            "theme": "bootstrap",
+        }).
+        on("select2:select", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.mooring_type = selected.val();
+        }).
+        on("select2:unselect", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.mooring_type = selected.val();
+        });
+        //Group permissions
+        $(vm.$refs.group_permissions).select2({
+            "theme": "bootstrap",
+        }).
+        on("select2:select", function (e){
+            var selected = $(e.currentTarget);
+            var mooringgroups = [];
+            console.log(selected.val());
+            var select_array = selected.val();
+            console.log(select_array);
+            for (var i = 0; i < select_array.length; i++){
+                var val = select_array[i];
+                console.log(val);
+                var intval = parseInt(select_array[i]);
+                console.log(intval);
+                mooringgroups.push(intval);
+            }
+            console.log(mooringgroups);
+            vm.campground.mooring_group = mooringgroups;
+        }).
+        on("select2:unselect", function (e){
+            var selected = $(e.currentTarget);
+            var mooringgroups = [];
+            var select_array = selected.val();
+            for (var i = 0; i < select_array.length; i++){
+                var val = select_array[i];
+                var intval = parseInt(select_array[i]);
+                mooringgroups.push(intval);
+            }
+            vm.campground.mooring_group = mooringgroups;
+        });
+        //Physical Type
+        $(vm.$refs.type_physical).select2({
+            "theme": "bootstrap",
+        }).
+        on("select2:select", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.mooring_physical_type = selected.val();
+        }).
+        on("select2:unselect", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.mooring_physical_type = selected.val();
+        });
+        //Class
+        $(vm.$refs.class).select2({
+            "theme": "bootstrap",
+        }).
+        on("select2:select", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.mooring_class = selected.val();
+        }).
+        on("select2:unselect", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.mooring_class = selected.val();
+        });
+        //Features
+        $(vm.$refs.features).select2({
+            "theme": "bootstrap",
+        }).
+        on("select2:select", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.features = selected.val();
+        }).
+        on("select2:unselect", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.features = selected.val();
+        });
+        vm.isLoading = false;       
     },
 }
 

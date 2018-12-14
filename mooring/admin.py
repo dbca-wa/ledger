@@ -140,10 +140,15 @@ class AdmissionsRate(admin.ModelAdmin):
 class AdmissionsReason(admin.ModelAdmin):
     list_display = ('id', 'text')
 
+class AdmissionLineInline(admin.TabularInline):
+    model = models.AdmissionsLine
+    extra = 0
+
 @admin.register(models.AdmissionsBooking)
 class AdmissionBooking(admin.ModelAdmin):
-    list_display = ('arrivalDate', 'confirmation_number')
-    search_fields = ('arrivalDate',)
+    list_display = ('confirmation_number', 'customer', 'totalCost')
+    inlines = [AdmissionLineInline]
+
 
 @admin.register(models.BookingPeriod)
 class BookingPeriod(admin.ModelAdmin):

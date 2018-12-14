@@ -180,7 +180,9 @@ module.exports = {
             }
         });
         vm.slide = vm.images.length;
-
+        
+        // $('#collapse_images').click();
+        // vm.slick_refresh();
     },
     updated:function () {
         let vm =this;
