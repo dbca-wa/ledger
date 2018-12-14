@@ -31,7 +31,11 @@
             form_width: {
                 type: String,
                 default: 'col-md-9'
-            }
+            },
+            showSections:{
+                type: Boolean,
+                default: false
+            },
         },
         data:function () {
             return{
@@ -85,7 +89,7 @@
                         <div id="scrollspy-heading" class="col-lg-12" >
                             <h3>Proposal: <small>{vm.proposal.lodgement_number}</small></h3>
                         </div>
-                        <div class="col-md-3" >
+                        <div v-show={vm.showSections} class="col-md-3" >
                             <div class="panel panel-default fixed">
                               <div class="panel-heading">
                                 <h5>Sections</h5>
