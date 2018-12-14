@@ -1,5 +1,5 @@
 <template lang="html">
-    <div class="panel-group" id="details-accordion" role="tablist" aria-multiselectable="true">
+    <div class="panel-group" id="details-accordion" role="tablist" aria-multiselectable="true" style="padding:0;">
         <pkCsClose ref="closeCampsite" @closeCampsite="closeCampsite()"></pkCsClose>
         <pkCsOpen ref="openCampsite" @openCampsite="openCampsite()"></pkCsOpen>
         <div class="row">
@@ -7,7 +7,7 @@
                 <div class="panel-heading" role="tab" id="details-heading">
                     <h4 class="panel-title">
                         <a role="button" data-toggle="collapse" href="#details-collapse"
-                        aria-expanded="false" aria-controls="details-collapse" style="outline:none;">
+                        aria-expanded="false" ref="top" aria-controls="details-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Mooring Details</h3>
                                 <span id="collapse_details_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
@@ -19,7 +19,7 @@
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
-                                <campgroundAttr :createCampground=false :campground="campground" :loadingDetails="loadingDetails" @updated="updateCampground" @save="sendData">
+                                <campgroundAttr :createCampground=false :campground="campground" @updated="updateCampground" @save="sendData">
                                 </campgroundAttr>
                             </div>
                         </div>
@@ -32,7 +32,7 @@
             <div class="panel panel-default" id="contact">
                 <div class="panel-heading" role="tab" id="contact-heading">
                     <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#contact-collapse"
+                        <a role="button" data-toggle="collapse" href="#contact-collapse" id="collapse_contact"
                         aria-expanded="false" aria-controls="contact-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Contact</h3>
@@ -45,7 +45,7 @@
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
-                                <campgroundContact :createCampground=false :campground="campground" :loadingContact="loadingContact" @updated="updateCampground" @save="sendData">
+                                <campgroundContact :createCampground=false :campground="campground" @error="swalMessage" @updated="updateCampground" @save="sendData">
                                 </campgroundContact>
                             </div>
                         </div>
@@ -58,7 +58,7 @@
             <div class="panel panel-default" id="limits">
                 <div class="panel-heading" role="tab" id="limits-heading">
                     <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#limits-collapse"
+                        <a role="button" data-toggle="collapse" href="#limits-collapse" id="collapse_limits"
                         aria-expanded="false" aria-controls="limits-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Vessel Limits</h3>
@@ -71,7 +71,7 @@
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
-                                <campgroundLimits :createCampground=false :campground="campground" :loadingLimits="loadingLimits" @updated="updateCampground" @save="sendData">
+                                <campgroundLimits :createCampground=false :campground="campground" @error="swalMessage" @updated="updateCampground" @save="sendData">
                                 </campgroundLimits>
                             </div>
                         </div>
@@ -84,7 +84,7 @@
             <div class="panel panel-default" id="images">
                 <div class="panel-heading" role="tab" id="images-heading">
                     <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#images-collapse"
+                        <a role="button" data-toggle="collapse" href="#images-collapse" id="collapse_images"
                         aria-expanded="false" aria-controls="images-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Mooring Images</h3>
@@ -97,7 +97,7 @@
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
-                                <campgroundImages :createCampground=false :campground="campground" :loadingImages="loadingImages" @updated="updateCampground" @save="sendData">
+                                <campgroundImages :createCampground=false :campground="campground" @updated="updateCampground" @save="sendData">
                                 </campgroundImages>
                             </div>
                         </div>
@@ -110,7 +110,7 @@
             <div class="panel panel-default" id="mappanel">
                 <div class="panel-heading" role="tab" id="map-heading">
                     <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#map-collapse"
+                        <a role="button" data-toggle="collapse" href="#map-collapse" id="collapse_map"
                         aria-expanded="false" aria-controls="map-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Mooring Location</h3>
@@ -123,7 +123,7 @@
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
-                                <campgroundMap :createCampground=false :campground="campground" :loadingMap="loadingMap" @updated="updateCampground" @save="sendData">
+                                <campgroundMap :createCampground=false :campground="campground" @error="swalMessage" @updated="updateCampground" @save="sendData">
                                 </campgroundMap>
                             </div>
                         </div>
@@ -136,7 +136,7 @@
             <div class="panel panel-default" id="additional">
                 <div class="panel-heading" role="tab" id="additional-heading">
                     <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#additional-collapse"
+                        <a role="button" data-toggle="collapse" href="#additional-collapse" id="collapse_additional"
                         aria-expanded="false" aria-controls="additional-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Additional Details</h3>
@@ -149,7 +149,7 @@
                     <div class="panel-body">
                         <div class="col-lg-12">
                             <div class="row">
-                                <campgroundAdditional :createCampground=false :campground="campground" :loadingAdditional="loadingAdditional" @updated="updateCampground" @save="sendData">
+                                <campgroundAdditional :createCampground=false :campground="campground" @updated="updateCampground" @save="sendData">
                                 </campgroundAdditional>
                             </div>
                         </div>
@@ -162,7 +162,7 @@
             <div class="panel panel-default" id="stayhistory">
                 <div class="panel-heading" role="tab" id="stayhistory-heading">
                     <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#stayhistory-collapse"
+                        <a role="button" data-toggle="collapse" href="#stayhistory-collapse" id="collapse_stayhistory"
                         aria-expanded="false" aria-controls="stayhistory-collapse" style="outline:none;">
                         <div>
                             <h3 style="display:inline;">Maximum Stay History</h3>
@@ -188,7 +188,7 @@
             <div class="panel panel-default" id="bookingperiod">
                 <div class="panel-heading" role="tab" id="bookingperiod-heading">
                     <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#bookingperiod-collapse"
+                        <a role="button" data-toggle="collapse" href="#bookingperiod-collapse" id="collapse_pricehistory"
                         aria-expanded="false" aria-controls="bookingperiod-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Booking Period History</h3>
@@ -210,11 +210,11 @@
             </div>
         </div>
 
-        <div class="row" style="margin-top:20px;">
+        <div class="row" style="margin-top:20px;margin-bottom:60px;">
             <div class="panel panel-default" id="closures">
                 <div class="panel-heading" role="tab" id="closures-heading">
                     <h4 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#closures-collapse"
+                        <a role="button" data-toggle="collapse" href="#closures-collapse" id="collapse_closurehistory"
                         aria-expanded="false" aria-controls="closures-collapse" style="outline:none;">
                             <div>
                                 <h3 style="display:inline;">Closure History</h3>
@@ -236,7 +236,7 @@
             </div>
         </div>
 
-      <div class="panel panel-default" id="applications" style="margin-top:50px; display:none;">
+    <div class="panel panel-default" id="applications" style="margin-top:50px; display:none;">
         <div class="panel-heading" role="tab" id="applications-heading">
             <h4 class="panel-title">
                 <a role="button" data-toggle="collapse" href="#campsites"
@@ -246,32 +246,53 @@
             </h4>
         </div>
         <div class="panel-collapse collapse in" role="tabpanel"
-             aria-labelledby="applications-heading" id="campsites">
+            aria-labelledby="applications-heading" id="campsites">
             <div class="panel-body">
-               <div class="col-lg-12">
-                  <div class="row">
-                     <div class="well">
-                        <div class="col-sm-offset-8 col-sm-4">
-                            <button @click="showBulkCloseCampsites = true" class="btn btn-primary pull-right table_btn" >Close Mooring Sites</button> 
-                            <router-link :to="{name:'add_campsite',params:{id:campground_id}}" class="btn btn-primary pull-right table_btn" style="margin-right: 1em;">Add Mooring site</router-link>
+                <div class="col-lg-12">
+                    <div class="row">
+                        <div class="well">
+                            <div class="col-sm-offset-8 col-sm-4">
+                                <button @click="showBulkCloseCampsites = true" class="btn btn-primary pull-right table_btn" >Close Mooring Sites</button> 
+                                <router-link :to="{name:'add_campsite',params:{id:campground_id}}" class="btn btn-primary pull-right table_btn" style="margin-right: 1em;">Add Mooring site</router-link>
+                            </div>
+                            <datatable ref="cg_campsites_dt" :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
                         </div>
-                        <datatable ref="cg_campsites_dt" :dtHeaders ="cs_headers" :dtOptions="cs_options" id="cs_table"></datatable>
-                     </div>
-                  </div>
-               </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <confirmbox id="deleteRange" :options="deletePrompt"></confirmbox>
     <bulk-close-campsites v-on:bulkCloseCampsites="bulkCloseCampsites" v-if="showBulkCloseCampsites" v-on:close="showBulkCloseCampsites = false" ref="bulkCloseCampsites" v-bind:campsites="campsites"/>
+    <div class="navbar navbar-default" id="footer">
+        <div class="container">
+            <div class="navbar navbar-nav navbar-right" style="margin-top:5px;">
+                <a href="#" class="btn btn-primary" @click.prevent="sendData">Update</a>
+                <a href="/dashboard/moorings/" class="btn btn-default">Cancel</a>
+            </div>
+        </div>
+    </div>
    </div>
-
 </template>
+
+<style>
+#footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 40px;
+    width: 100%;
+    margin: 0;
+    z-index:50;
+}
+</style>
 
 <script>
 import {
     $,
     Moment,
+    select2,
     api_endpoints,
     helpers
 }
@@ -290,6 +311,7 @@ import bulkCloseCampsites from '../campsites/closureHistory/bulkClose.vue'
 import pkCsClose from '../campsites/closureHistory/closeCampsite.vue'
 import pkCsOpen from '../campsites/closureHistory/openCampsite.vue'
 import stayHistory from '../utils/stayHistory/stayHistory.vue'
+import swal from 'sweetalert2';
 import {
     bus
 }
@@ -329,7 +351,7 @@ export default {
         closureHistory,
         priceHistory,
         "stay-history":stayHistory,
-        "bulk-close-campsites":bulkCloseCampsites
+        "bulk-close-campsites":bulkCloseCampsites,
     },
     computed: {
         ...mapGetters([
@@ -370,6 +392,7 @@ export default {
             loadingAdditional: false,
             features_selected: [],
             campsites: [],
+            editor: null,
             isOpenOpenCS: false,
             isOpenCloseCS: false,
             showBulkCloseCampsites: false,
@@ -632,7 +655,7 @@ export default {
             $.ajax({
                 url: api_endpoints.campground(vm.$route.params.id),
                 dataType: 'json', 
-                async: true,
+                async: false,
                 success: function(data, stat, xhr) {
                     vm.campground = data;
                     vm.fetchCampsites();
@@ -642,98 +665,352 @@ export default {
                     }
                     vm.campground.features = vm.features_selected;
                     console.log("Features updated");
-                    vm.$emit('updated', vm.campground);
                 }
             });
+            vm.updateCampground(vm.campground);
+            // vm.stopLoadingSection("all");
         },
-        loadSection: function(section){
+        // loadSection: function(section){
+        //     let vm = this;
+        //     if (section == "details"){
+        //         vm.loadingDetails = true;
+        //     } else if (section == "contact"){
+        //         vm.loadingContact = true;
+        //     } else if (section == "limits"){
+        //         vm.loadingLimits = true;
+        //     } else if (section == "images"){
+        //         vm.loadingImages = true;
+        //     } else if (section == "map"){
+        //         vm.loadingMap = true;
+        //     } else if (section == "additional"){
+        //         vm.loadingAdditional = true;
+        //     } else if (section == "all"){
+        //         vm.loadingDetails = true;
+        //         vm.loadingContact = true;
+        //         vm.loadingLimits = true;
+        //         vm.loadingImages = true;
+        //         vm.loadingMap = true;
+        //         vm.loadingAdditional = true;
+        //     }
+        // },
+        // stopLoadingSection: function(section){
+        //     let vm = this;
+        //     console.log(section);
+        //     console.log("ending the loading");
+        //     if (section == "details"){
+        //         vm.loadingDetails = false;
+        //     } else if (section == "contact"){
+        //         vm.loadingContact = false;
+        //     } else if (section == "limits"){
+        //         console.log("Ending limit loading");
+        //         vm.loadingLimits = false;
+        //     } else if (section == "images"){
+        //         vm.loadingImages = false;
+        //     } else if (section == "map"){
+        //         vm.loadingMap = false;
+        //     } else if (section == "additional"){
+        //         vm.loadingAdditional = false;
+        //     } else if (section == "all"){
+        //         vm.loadingDetails = false;
+        //         vm.loadingContact = false;
+        //         vm.loadingLimits = false;
+        //         vm.loadingImages = false;
+        //         vm.loadingMap = false;
+        //         vm.loadingAdditional = false;
+        //     }
+        // },
+        swalMessage: function(value){
+            swal({
+            title: value.title,
+            text: value.text,
+            type: value.type,
+            showCancelButton: false,
+            confirmButtonText: 'OK',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: false
+            });
+        },
+        addFormValidations: function() {
+            $('form').each(function(){
+                $(this).validate({
+                    ignore:'div.ql-editor',
+                    rules: {
+                        name: "required",
+                        park: "required",
+                        campground_type: "required",
+                        campground_type_physical: "required",
+                        campground_class: "required",
+                        contact: "required",
+                        email: {
+                            required: true,
+                            email: true
+                        },
+                        telephone: "required",
+                        vessel_size_limit: "required",
+                        vessel_draft_limit: "required",
+                        longitude: "required",
+                        latitude: "required",
+                        editor: "required",
+                        oracle_code: "required",
+                    },
+                    messages: {
+                        name: "Enter a mooring name",
+                        park: "Select a park from the options",
+                        campground_type: "Select a booking type from the options",
+                        campground_type_physical: "Select a mooring type from the options",
+                        campground_class: "Select a mooring class from the options",
+                        contact: "Select a contact",
+                        email: "Please select a contact",
+                        telephone: "Please select a contact",
+                        vessel_size_limit: "Please set a size limit greater than 0",
+                        vessel_draft_limit: "Please set a draft limit greater than 0",
+                        longitude: "Please set a longitude",
+                        latitude: "Please set a latitude",
+                        editor : "Please enter a valid description",
+                        oracle_code: "Enter a valid oracle code",
+                    },
+                    showErrors: function(errorMap, errorList) {
+                        $.each(this.validElements(), function(index, element) {
+                            var $element = $(element);
+                            $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                        });
+
+                        // destroy tooltips on valid elements
+                        $("." + this.settings.validClass).tooltip("destroy");
+
+                        // add or update tooltips
+                        for (var i = 0; i < errorList.length; i++) {
+                            var error = errorList[i];
+                            $('#' + error.element.id).focus();
+                            $(error.element)
+                                .tooltip({
+                                    trigger: "focus"
+                                })
+                                .attr("data-original-title", error.message)
+                                .parents('.form-group').addClass('has-error');
+                        }
+                    }
+                });
+            });
+        },
+        validateSize: function(){
             let vm = this;
-            if (section == "details"){
-                vm.loadingDetails = true;
-            } else if (section == "contact"){
-                vm.loadingContact = true;
-            } else if (section == "limits"){
-                vm.loadingLimits = true;
-            } else if (section == "images"){
-                vm.loadingImages = true;
-            } else if (section == "map"){
-                vm.loadingMap = true;
-            } else if (section == "additional"){
-                vm.loadingAdditional = true;
+            var isValid = true;
+            if(!parseInt(vm.campground.vessel_size_limit) > 0){
+                isValid = false;
+                var error = {
+                    title : "Invalid Size",
+                    text : "Please select a size greater than 0",
+                    type : "warning",
+                }
+                $('#vessel_size_limit').focus();
+                vm.swalMessage(error);
             }
+            return isValid;
         },
-        stopLoadingSection: function(section){
+        validateDraft: function(){
             let vm = this;
-            console.log(section);
-            console.log("ending the loading");
-            if (section == "details"){
-                vm.loadingDetails = false;
-            } else if (section == "contact"){
-                vm.loadingContact = false;
-            } else if (section == "limits"){
-                console.log("Ending limit loading");
-                vm.loadingLimits = false;
-            } else if (section == "images"){
-                vm.loadingImages = false;
-            } else if (section == "map"){
-                vm.loadingMap = false;
-            } else if (section == "additional"){
-                vm.loadingAdditional = false;
+            var isValid = true;
+            if(!parseInt(vm.campground.vessel_draft_limit) > 0){
+                isValid = false;
+                var error = {
+                    title : "Invalid Draft",
+                    text : "Please select a draft greater than 0",
+                    type : "warning",
+                }
+                $('#vessel_draft_limit').focus();
+                vm.swalMessage(error);
             }
+            return isValid;
         },
-        sendData: function(url, method, reload, section){
+        validateBeamWeight: function(){
             let vm = this;
-            vm.loadSection(section);
-            $.ajax({
-                beforeSend: function(xhrObj) {
-                    xhrObj.setRequestHeader("Content-Type", "application/json");
-                    xhrObj.setRequestHeader("Accept", "application/json");
-                },
-                url: url,
-                method: method,
-                xhrFields: {
-                    withCredentials: true
-                },
-                data: JSON.stringify(vm.campground),
-                headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
-                contentType: "application/x-www-form-urlencoded",
-                dataType: 'json',
-                success: function(data, stat, xhr) {
-                    console.log("SUCCESS!!");
-                    if (method == 'POST') {
-                        vm.$router.push({
-                            name: 'cg_detail',
-                            params: {
-                                id: data.data.id
-                            }
+            var isValid = true;
+            if(vm.campground.mooring_physical_type == 1) {
+                if(!parseInt(vm.campground.vessel_beam_limit) > 0){
+                    isValid = false;
+                    var error = {
+                        title : "Invalid Beam",
+                        text : "Please select a beam greater than 0",
+                        type : "warning",
+                    }
+                    $('#vessel_beam_limit').focus();
+                    vm.swalMessage(error);
+                }
+            } else {
+                if(!parseInt(vm.campground.vessel_weight_limit) > 0){
+                    isValid = false;
+                    var error = {
+                        title : "Invalid Weight",
+                        text : "Please select a weight greater than 0",
+                        type : "warning",
+                    }
+                    $('#vessel_weight_limit').focus();
+                    vm.swalMessage(error);
+                }
+            }
+            return isValid;
+        },
+        validateContact: function(){
+            let vm = this;
+            var isValid = true;
+            if (vm.campground.contact == "undefined"){
+                isValid = false;
+                var error = {
+                    title: "Invalid Contact",
+                    text: "Please select a valid contact from the list",
+                    type: "warning"
+                }
+                $('#contact').focus();
+                vm.swalMessage(error);
+            }
+            return isValid;
+        },
+        validateMooringGroups: function(){
+            let vm = this;
+            var isValid = true;
+            if (vm.campground.mooring_group.length == 0){
+                isValid = false;
+                var error = {
+                    title: "No Group",
+                    text: "Please select at least 1 mooring group (permissions)",
+                    type: "warning"
+                }
+                $('#mooring_groups').focus();
+                vm.swalMessage(error);
+            }
+
+            return isValid;
+        },
+        validateDescription: function(){
+            let vm = this;
+            var isValid = true;
+            if (vm.campground.description){
+                if (vm.campground.description.trim().length <= 11){
+                    isValid = false;
+                }
+            } else {
+                isValid = false;
+            }
+            if (!isValid){
+                var error = {
+                    title: "Invalid Description",
+                    text: "Please enter some valid description text.\nMust be 5 characters or more.",
+                    type: "warning",
+                }
+                $("#editor").focus();
+                vm.swalMessage(error);
+            }
+            return isValid;
+        },
+        validateForm: function(){
+            let vm = this;
+            var isValid = true;
+            isValid = vm.validateContact();
+            if (isValid){
+                isValid = vm.validateSize();
+            }
+            if (isValid){
+                isValid = vm.validateDraft();
+            }
+            if (isValid){
+                isValid = vm.validateBeamWeight();
+            }
+            if (isValid){
+                isValid = vm.validateMooringGroups();
+            }
+            if (isValid){
+                isValid = vm.validateDescription();
+            }
+
+            if (isValid){
+                console.log("Page has found to be valid up until form checks")
+                $('form').each(function(){
+                    if (!$(this).valid()){
+                        isValid = false;
+                        var message = {
+                            title: "Failure",
+                            text: "Mooring not updated, there was an error.\nPlease check all mandatory fields are complete.",
+                            type: "error"
+                        }
+                        vm.swalMessage(message);
+                        return false;
+                    }
+                }); 
+            }
+            
+            return isValid;
+        },
+        sendData: function(){
+            let vm = this;
+            var isValid = vm.validateForm();
+            // vm.loadSection(section);
+            if (isValid){
+                $.ajax({
+                    beforeSend: function(xhrObj) {
+                        xhrObj.setRequestHeader("Content-Type", "application/json");
+                        xhrObj.setRequestHeader("Accept", "application/json");
+                    },
+                    url: api_endpoints.campground(this.campground.id),
+                    method: "PUT",
+                    xhrFields: {
+                        withCredentials: true
+                    },
+                    data: JSON.stringify(vm.campground),
+                    headers: {'X-CSRFToken': helpers.getCookie('csrftoken')},
+                    contentType: "application/x-www-form-urlencoded",
+                    dataType: 'json',
+                    success: function(data, stat, xhr) {
+                        console.log("SUCCESS!!");
+                        // if (method == 'POST') {
+                        //     vm.$router.push({
+                        //         name: 'cg_detail',
+                        //         params: {
+                        //             id: data.data.id
+                        //         }
+                        //     });
+                        // }
+                        // else if (method == 'PUT') {
+                            // vm.showUpdate = true;
+                        // }
+                        // vm.stopLoadingSection(section);
+                        vm.$store.dispatch("updateAlert",{
+                            visible:false,
+                            type:"danger",
+                            message: ""
+                        });
+                        var message = {
+                            title: "Success",
+                            text: "Mooring updated",
+                            type: "success"
+                        }
+                        vm.swalMessage(message);
+                    },
+                    error: function(resp) {
+                        // vm.stopLoadingSection(section);
+                        console.log("There was an error sending data.");
+                        console.log(resp);
+                        var message = {
+                            title: "Failure",
+                            text: "Mooring not updated, there was an error.\nPlease check all mandatory fields are complete.",
+                            type: "error"
+                        }
+                        vm.swalMessage(message);
+                        vm.$store.dispatch("updateAlert",{
+                            visible:true,
+                            type:"danger",
+                            message: helpers.apiError(resp)
                         });
                     }
-                    else if (method == 'PUT') {
-                        vm.showUpdate = true;
-                    }
-                    vm.stopLoadingSection(section);
-					vm.$store.dispatch("updateAlert",{
-						visible:false,
-						type:"danger",
-						message: ""
-					});
-                },
-                error: function(resp) {
-                    vm.stopLoadingSection(section);
-                    console.log("There was an error sending data.");
-                    console.log(resp);
-					vm.$store.dispatch("updateAlert",{
-						visible:true,
-						type:"danger",
-						message: helpers.apiError(resp)
-					});
-                }
-            });
+                });
+            }
+            // vm.addFormValidations();
         }
 
     },
     mounted: function() {
         var vm = this;
+        // vm.loadSection("all");
         vm.$store.dispatch("fetchBookingPeriods");
         vm.$refs.cg_campsites_dt.vmDataTable.on('click', '.detailRoute', function(e) {
             e.preventDefault();
@@ -798,15 +1075,45 @@ export default {
             $('#collapse_limits_span').removeClass("glyphicon glyphicon-menu-up");
             $('#collapse_limits_span').addClass("glyphicon glyphicon-menu-down");
         });
+        //Images
+        $('#images-collapse').on('shown.bs.collapse', function(){
+            $('#collapse_images_span').removeClass("glyphicon glyphicon-menu-down");
+            $('#collapse_images_span').addClass("glyphicon glyphicon-menu-up");
+
+        });
+        $('#images-collapse').on('hidden.bs.collapse', function(){
+            $('#collapse_images_span').removeClass("glyphicon glyphicon-menu-up");
+            $('#collapse_images_span').addClass("glyphicon glyphicon-menu-down");
+        });
+        //Map
+        $('#map-collapse').on('shown.bs.collapse', function(){
+            $('#collapse_map_span').removeClass("glyphicon glyphicon-menu-down");
+            $('#collapse_map_span').addClass("glyphicon glyphicon-menu-up");
+
+        });
+        $('#map-collapse').on('hidden.bs.collapse', function(){
+            $('#collapse_map_span').removeClass("glyphicon glyphicon-menu-up");
+            $('#collapse_map_span').addClass("glyphicon glyphicon-menu-down");
+        });
+        //Additional
+        $('#additional-collapse').on('shown.bs.collapse', function(){
+            $('#collapse_additional_span').removeClass("glyphicon glyphicon-menu-down");
+            $('#collapse_additional_span').addClass("glyphicon glyphicon-menu-up");
+
+        });
+        $('#additional-collapse').on('hidden.bs.collapse', function(){
+            $('#collapse_additional_span').removeClass("glyphicon glyphicon-menu-up");
+            $('#collapse_additional_span').addClass("glyphicon glyphicon-menu-down");
+        });
         //Max stay
         $('#stayhistory-collapse').on('shown.bs.collapse', function(){
-            $('#collapse_stay__span').removeClass("glyphicon glyphicon-menu-down");
-            $('#collapse_stay__span').addClass("glyphicon glyphicon-menu-up");
+            $('#collapse_stay_span').removeClass("glyphicon glyphicon-menu-down");
+            $('#collapse_stay_span').addClass("glyphicon glyphicon-menu-up");
 
         });
         $('#stayhistory-collapse').on('hidden.bs.collapse', function(){
-            $('#collapse_stay__span').removeClass("glyphicon glyphicon-menu-up");
-            $('#collapse_stay__span').addClass("glyphicon glyphicon-menu-down");
+            $('#collapse_stay_span').removeClass("glyphicon glyphicon-menu-up");
+            $('#collapse_stay_span').addClass("glyphicon glyphicon-menu-down");
         });
         //Booking Period
         $('#bookingperiod-collapse').on('shown.bs.collapse', function(){
@@ -828,6 +1135,18 @@ export default {
             $('#collapse_closure_span').removeClass("glyphicon glyphicon-menu-up");
             $('#collapse_closure_span').addClass("glyphicon glyphicon-menu-down");
         });
+
+        // $('#collapse_contact').click();
+        // $('#collapse_limits').click();
+        // $('#collapse_additional').click();
+        // $('#collapse_stayhistory').click();
+        // $('#collapse_pricehistory').click();
+        // $('#collapse_closurehistory').click();
+
+        setTimeout(function(){
+            $(vm.$refs.top).focus();
+            vm.addFormValidations();
+        }, 50);
     }
 }
 

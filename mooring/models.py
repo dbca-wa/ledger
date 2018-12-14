@@ -1057,6 +1057,7 @@ class Booking(models.Model):
     created = models.DateTimeField(default=timezone.now)
     canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
     old_booking = models.ForeignKey('Booking', null=True, blank=True)
+    admission_payment = models.ForeignKey('AdmissionsBooking', null=True, blank=True)
 
     # Properties
     # =================================
@@ -1592,8 +1593,6 @@ class AdmissionsBooking(models.Model):
     )
     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
-    arrivalDate = models.DateField()
-    overnightStay = models.BooleanField(default=False)
     vesselRegNo = models.CharField(max_length=200, blank=True )
     noOfAdults = models.IntegerField()
     noOfConcessions = models.IntegerField()
@@ -1602,6 +1601,9 @@ class AdmissionsBooking(models.Model):
     warningReferenceNo = models.CharField(max_length=200, blank=True)
     totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
 
+    def __str__(self):
+        return 'AD{} : {}'.format(self.id,self.customer.email)
+
     @property
     def confirmation_number(self):
         return 'AD{}'.format(self.id)
@@ -1609,6 +1611,13 @@ class AdmissionsBooking(models.Model):
     @property
     def total_admissions(self):
         return self.noOfAdults + self.noOfConcessions + self.noOfChildren + self.noOfInfants
+
+class AdmissionsLine(models.Model):
+    arrivalDate = models.DateField()
+    overnightStay = models.BooleanField(default=False)
+    admissionsBooking = models.ForeignKey(AdmissionsBooking, on_delete=models.PROTECT, blank=False, null=False)
+    cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    
 
 class AdmissionsOracleCode(models.Model):
     oracle_code = models.CharField(max_length=50, null=True,blank=True)

@@ -801,7 +801,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 mg = MooringAreaGroup.objects.all()
                 for i in mg:
                     # i.campgrounds.clear()
-                    if i.id == int(mooring_group):
+                    if i.id in mooring_group:
                         m_all = i.moorings.all()
                         if instance.id in m_all:
                             pass
@@ -2842,6 +2842,27 @@ class BookingViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    def partial_update(self, request, pk):
+        booking = self.get_object()
+        if 'details' in request.data:
+            request.POST._mutable = True
+            detail = {}
+            b = '{}"'
+            for char in b:
+                request.POST['details'] = request.POST['details'].replace(char, "")
+            items = request.POST['details'].split(",")
+            for item in items:
+                itm = item.split(':')
+                key = itm[0]
+                value = itm[1]
+                detail[key] = value
+            request.POST['details'] = detail
+        serializer = self.get_serializer(booking, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=201, data=serializer.data)
+        return Reponse(status=400, data="wrong params")
+
     def destroy(self, request, *args, **kwargs):
         http_status = status.HTTP_200_OK
         try:
@@ -2955,6 +2976,8 @@ class BookingViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    
 
 
 class MooringsiteRateViewSet(viewsets.ModelViewSet):

@@ -1,6 +1,6 @@
 <template lang="html">
     <div  id="cg_limits" >
-        <div v-show="!isLoading">
+        <div>
             <form id="limitsForm">
                 <div class="col-sm-12">
                     <alert :show.sync="showUpdate" type="success" :duration="7000">
@@ -17,37 +17,25 @@
                                         <div class="form-group">
                                             <div class="col-md-4">
                                                 <label class="control-label" >Maximum Vessel Size (Meters)</label>
-                                                <div class="row">
-                                                    <div class="alert alert-danger" id="vessel_size_warning" role="alert">Size limit must be greater than 0.</div>
-                                                </div>
-                                                <input type="number" name="vessel_size_limit" id="vessel_size_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_size_limit" required/>
+                                                <input type="number" name="vessel_size_limit" id="vessel_size_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_size_limit" @blur="validateSize()"required/>
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="control-label" >Maximum Vessel Draft (Meters)</label>
-                                                <div class="row">
-                                                    <div class="alert alert-danger" id="vessel_draft_warning" role="alert">Draft limit must be greater than 0.</div>
-                                                </div>
-                                                <input type="number" name="vessel_draft_limit" id="vessel_draft_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_draft_limit" required/>
+                                                <input type="number" name="vessel_draft_limit" id="vessel_draft_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_draft_limit" @blur="validateDraft()" required/>
                                             </div>
                                             <div class="col-md-4" v-if="jettyPen">
                                                 <label class="control-label" >Maximum Vessel Beam (Meters)</label>
-                                                <div class="row">
-                                                    <div class="alert alert-danger" id="vessel_beam_warning" role="alert">Beam limit must be greater than 0.</div>
-                                                </div>
-                                                <input type="number" name="vessel_beam_limit" id="vessel_beam_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_beam_limit" required/>
+                                                <input type="number" name="vessel_beam_limit" id="vessel_beam_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_beam_limit" @blur="validateBeamWeight()" required/>
                                             </div>
                                             <div class="col-md-4" v-else>
                                                 <label class="control-label" >Maximum Vessel Weight (Tons)</label>
-                                                <div class="row">
-                                                    <div class="alert alert-danger" id="vessel_weight_warning" role="alert">Weight limit must be greater than 0.</div>
-                                                </div>
-                                                <input type="number" name="vessel_weight_limit" id="vessel_weight_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_weight_limit" required/>
+                                                <input type="number" name="vessel_weight_limit" id="vessel_weight_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_weight_limit" @blur="validateBeamWeight()" required/>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
+                            <div class="row" style="display:none;">
                                 <div class="col-md-12" style="margin-top:20px;">
                                     <div class="form-group pull-right">
                                         <a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
@@ -61,7 +49,6 @@
                 </div>
 			</form>
 		</div>
-		<loader :isLoading.sync="isLoading">Loading...</loader>
 	</div>
 </template>
 <style>
@@ -151,36 +138,69 @@ export default {
 		goBack: function() {
             helpers.goBack(this);
         },
-        validateLimits: function(){
+        validateSize: function(){
             let vm = this;
             var isValid = true;
             if(!parseInt(vm.campground.vessel_size_limit) > 0){
-                $('#vessel_size_warning').css('display', 'inline');
                 isValid = false;
-            } else {
-                $('#vessel_size_warning').css('display', 'none');
+                var error = {
+                    title : "Invalid Size",
+                    text : "Please select a size greater than 0",
+                    type : "warning",
+                }
+                vm.$emit('error', error);
             }
+            return isValid;
+        },
+        validateDraft: function(){
+            let vm = this;
+            var isValid = true;
             if(!parseInt(vm.campground.vessel_draft_limit) > 0){
-                $('#vessel_draft_warning').css('display', 'inline');
                 isValid = false;
-            } else {
-                $('#vessel_draft_warning').css('display', 'none');
+                var error = {
+                    title : "Invalid Draft",
+                    text : "Please select a draft greater than 0",
+                    type : "warning",
+                }
+                vm.$emit('error', error);
             }
+            return isValid;
+        },
+        validateBeamWeight: function(){
+            let vm = this;
+            var isValid = true;
             if(vm.campground.mooring_physical_type == 1) {
                 if(!parseInt(vm.campground.vessel_beam_limit) > 0){
-                    $('#vessel_beam_warning').css('display', 'inline');
                     isValid = false;
-                } else {
-                    $('#vessel_beam_warning').css('display', 'none');
+                    var error = {
+                        title : "Invalid Beam",
+                        text : "Please select a beam greater than 0",
+                        type : "warning",
+                    }
+                    vm.$emit('error', error);
                 }
             } else {
                 if(!parseInt(vm.campground.vessel_weight_limit) > 0){
-                    $('#vessel_weight_warning').css('display', 'inline');
-                    console.log("Weight is 0!");
                     isValid = false;
-                } else {
-                    $('#vessel_weight_warning').css('display', 'none');
+                    var error = {
+                        title : "Invalid Weight",
+                        text : "Please select a weight greater than 0",
+                        type : "warning",
+                    }
+                    vm.$emit('error', error);
                 }
+            }
+            return isValid;
+        },
+        validateLimits: function() {
+            let vm = this;
+            var isValid = true;
+            isValid = vm.validateSize();
+            if (isValid){
+                isValid = vm.validateDraft();
+            }
+            if (isValid){
+                isValid = vm.validateBeamWeight();
             }
             return isValid;
         },
@@ -218,67 +238,47 @@ export default {
         showAlert: function() {
             bus.$emit('showAlert', 'alert1');
         },
-        fetchCampground:function () {
-            let vm =this;
-            $.ajax({
-                url: api_endpoints.campground(vm.$route.params.id),
-                dataType: 'json',
-                async: false,
-                success: function(data, stat, xhr) {
-                    vm.campground = data;
-                    bus.$emit('campgroundFetched');
-                    for (var i = 0; i < data.features.length; i++){
-                        vm.features_selected.push(data.features[i].id);
-                    }
-                    vm.campground.features = vm.features_selected;
-                    console.log("Features updated");
-                    vm.$emit('updated', vm.campground);
-                }
-            });
-        },
-        addFormValidations: function() {
-            this.form.validate({
-				ignore:'div.ql-editor',
-                rules: {
-                    vessel_size_limit: "required",
-                    vessel_draft_limit: "required",
-                },
-                messages: {
-                    vessel_size_limit: "Please set a size limit greater than 0",
-                    vessel_draft_limit: "Please set a draft limit greater than 0",
-                },
-                showErrors: function(errorMap, errorList) {
-                    $.each(this.validElements(), function(index, element) {
-                        var $element = $(element);
+        // addFormValidations: function() {
+        //     this.form.validate({
+		// 		ignore:'div.ql-editor',
+        //         rules: {
+        //             vessel_size_limit: "required",
+        //             vessel_draft_limit: "required",
+        //         },
+        //         messages: {
+        //             vessel_size_limit: "Please set a size limit greater than 0",
+        //             vessel_draft_limit: "Please set a draft limit greater than 0",
+        //         },
+        //         showErrors: function(errorMap, errorList) {
+        //             $.each(this.validElements(), function(index, element) {
+        //                 var $element = $(element);
 
-                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
-                    });
+        //                 $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+        //             });
 
-                    // destroy tooltips on valid elements
-                    $("." + this.settings.validClass).tooltip("destroy");
+        //             // destroy tooltips on valid elements
+        //             $("." + this.settings.validClass).tooltip("destroy");
 
-                    // add or update tooltips
-                    for (var i = 0; i < errorList.length; i++) {
-                        var error = errorList[i];
-                        $(error.element).tooltip({
-                                trigger: "focus"
-                            })
-                            .attr("data-original-title", error.message)
-                            .parents('.form-group').addClass('has-error');
-                    }
-                }
-            });
-        },
+        //             // add or update tooltips
+        //             for (var i = 0; i < errorList.length; i++) {
+        //                 var error = errorList[i];
+        //                 $('#'+ error.element.id).focus();
+        //                 $(error.element).tooltip({
+        //                         trigger: "focus"
+        //                     })
+        //                     .attr("data-original-title", error.message)
+        //                     .parents('.form-group').addClass('has-error');
+        //             }
+        //         }
+        //     });
+        // },
     },
     mounted: function() {
         let vm = this;
-        vm.fetchCampground();
         vm.form = $('#limitsForm');
-        vm.addFormValidations();
+        // vm.addFormValidations();
         $('.form-control').blur(function(){
-            if (vm.validateLimits()){
-                vm.$emit('updated', vm.campground);
-            }
+            vm.$emit('updated', vm.campground);
         });
     },
 }

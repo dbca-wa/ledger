@@ -1,6 +1,6 @@
 <template lang="html">
     <div  id="cg_contact" >
-        <div v-show="!isLoading">
+        <div>
             <form id="contactForm">
                 <div class="col-sm-12">
                     <alert :show.sync="showUpdate" type="success" :duration="7000">
@@ -17,7 +17,7 @@
                                         <div class="form-group">
                                             <div class="col-md-6">
                                                 <label class="control-label">Customer Contact</label>
-                                                <select class="form-control" ref="contact" name="contact" v-model="campground.contact">
+                                                <select class="form-control" ref="contact" id="contact" name="contact" v-model="campground.contact">
                                                     <option value="undefined">Select Contact</option>
                                                     <option v-for="c in contacts" :value="c.id">{{ c.name }}</option>
                                                 </select>
@@ -38,7 +38,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
+                            <div class="row" style="display:none;">
                                 <div class="col-md-12" style="margin-top:20px;">
                                     <div class="form-group pull-right">
                                         <a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
@@ -52,7 +52,6 @@
                 </div>
             </form>
         </div>
-        <loader :isLoading.sync="isLoading">Loading...</loader>
     </div>
 </template>
 <style>
@@ -95,7 +94,6 @@ export default {
             isLoading: false,
             reload : false,
             contacts:[],
-            features_selected: [],
         }
     },
     props: {
@@ -168,7 +166,17 @@ export default {
         },
 		validateForm:function () {
 			let vm = this;
-            return  vm.form.valid()
+            var isValid = true;
+            if (vm.campground.contact == "undefined"){
+                isValid = false;
+                var error = {
+                    title: "Invalid Contact",
+                    text: "Please select a valid contact from the list",
+                    type: "warning"
+                }
+                vm.$emit('error', error);
+            }
+            return  vm.form.valid() && isValid
 		},
         create: function() {
             console.log("CREATE");
@@ -191,69 +199,54 @@ export default {
         showAlert: function() {
             bus.$emit('showAlert', 'alert1');
         },
-        fetchCampground:function () {
-            let vm =this;
-            $.ajax({
-                url: api_endpoints.campground(vm.$route.params.id),
-                dataType: 'json',
-                async: false,
-                success: function(data, stat, xhr) {
-                    vm.campground = data;
-                    bus.$emit('campgroundFetched');
-                    for (var i = 0; i < data.features.length; i++){
-                        vm.features_selected.push(data.features[i].id);
-                    }
-                    vm.campground.features = vm.features_selected;
-                    console.log("Features updated");
-                    vm.$emit('updated', vm.campground);
-                }
-            });
-        },
-        addFormValidations: function() {
-            this.form.validate({
-				ignore:'div.ql-editor',
-                rules: {
-                    email: {
-                        required: true,
-                        email: true
-                    },
-                    telephone: "required",
+        // addFormValidations: function() {
+        //     this.form.validate({
+		// 		ignore:'div.ql-editor',
+        //         rules: {
+        //             contact: "required",
+        //             email: {
+        //                 required: true,
+        //                 email: true
+        //             },
+        //             telephone: "required",
 
-                },
-                messages: {
-                    email: "Please select a contact",
-                    telephone: "Please select a contact",
-                },
-                showErrors: function(errorMap, errorList) {
-                    $.each(this.validElements(), function(index, element) {
-                        var $element = $(element);
+        //         },
+        //         messages: {
+        //             contact: "Please select a contact",
+        //             email: "Please select a contact",
+        //             telephone: "Please select a contact",
+        //         },
+        //         showErrors: function(errorMap, errorList) {
+        //             $.each(this.validElements(), function(index, element) {
+        //                 var $element = $(element);
 
-                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
-                    });
+        //                 $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+        //             });
 
-                    // destroy tooltips on valid elements
-                    $("." + this.settings.validClass).tooltip("destroy");
+        //             // destroy tooltips on valid elements
+        //             $("." + this.settings.validClass).tooltip("destroy");
 
-                    // add or update tooltips
-                    for (var i = 0; i < errorList.length; i++) {
-                        var error = errorList[i];
-                        $(error.element)
-                            .tooltip({
-                                trigger: "focus"
-                            })
-                            .attr("data-original-title", error.message)
-                            .parents('.form-group').addClass('has-error');
-                    }
-                }
-            });
-        },
+        //             // add or update tooltips
+        //             for (var i = 0; i < errorList.length; i++) {
+        //                 var error = errorList[i];
+        //                 $('#contact').focus();
+        //                 $(error.element)
+        //                     .tooltip({
+        //                         trigger: "focus"
+        //                     })
+        //                     .attr("data-original-title", error.message)
+        //                     .parents('.form-group').addClass('has-error');
+        //             }
+        //         }
+        //     });
+        // },
     },
     mounted: function() {
         let vm = this;
-        vm.fetchCampground();
+        vm.isLoading = true;
   
         vm.form = $('#contactForm');
-        vm.addFormValidations();
+        // vm.addFormValidations();
 		vm.$http.get(api_endpoints.contacts).then((response) => {
 			vm.contacts = response.body
 		}, (error) => {
@@ -262,20 +255,19 @@ export default {
         $('.form-control').blur(function(){
             vm.$emit('updated', vm.campground);
         });
-        setTimeout( function(){
-            //Contact
-            $(vm.$refs.contact).select2({
-                "theme": "bootstrap",
-            }).
-            on("select2:select", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.contact = selected.val();
-            }).
-            on("select2:unselect", function (e){
-                var selected = $(e.currentTarget);
-                vm.campground.contact = selected.val();
-            });
-        }, 1000);
+        //Contact
+        $(vm.$refs.contact).select2({
+            "theme": "bootstrap",
+        }).
+        on("select2:select", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.contact = selected.val();
+        }).
+        on("select2:unselect", function (e){
+            var selected = $(e.currentTarget);
+            vm.campground.contact = selected.val();
+        });
+        vm.isLoading = false;
     },
 }
 

@@ -1,6 +1,6 @@
 <template lang="html">
 <div  id="cg_images" >
-	<div v-show="!isLoading">
+	<div>
 		<form id="imageForm">
 		<div class="col-sm-12">
 			<alert :show.sync="showUpdate" type="success" :duration="7000">
@@ -12,7 +12,7 @@
 					<div class="row">
 						<div class="col-lg-12">
                             <imagePicker :images="campground.images"></imagePicker>
-                            <div class="row">
+                            <div class="row" style="display:none;">
                                 <div class="col-md-12" style="margin-top:20px;">
                                     <div class="form-group pull-right">
                                         <a href="#" v-if="createCampground" class="btn btn-primary" @click.prevent="create">Create</a>
@@ -27,7 +27,6 @@
 
 			</form>
 		</div>
-		<loader :isLoading.sync="isLoading">Loading...</loader>
 	</div>
 </template>
 <style>
@@ -72,7 +71,6 @@ export default {
             showUpdate: false,
             isLoading: false,
             reload : false,
-            features_selected: [],
         }
     },
     props: {
@@ -140,28 +138,9 @@ export default {
         showAlert: function() {
             bus.$emit('showAlert', 'alert1');
         },
-        fetchCampground:function () {
-            let vm =this;
-            $.ajax({
-                url: api_endpoints.campground(vm.$route.params.id),
-                dataType: 'json',
-                async: false,
-                success: function(data, stat, xhr) {
-                    vm.campground = data;
-                    bus.$emit('campgroundFetched');
-                    for (var i = 0; i < data.features.length; i++){
-                        vm.features_selected.push(data.features[i].id);
-                    }
-                    vm.campground.features = vm.features_selected;
-                    console.log("Features updated");
-                    vm.$emit('updated', vm.campground);
-                }
-            });
-        },
     },
     mounted: function() {
         let vm = this;
-        vm.fetchCampground();
     },
 }
 
