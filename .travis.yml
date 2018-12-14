@@ -21,7 +21,6 @@ env:
         - EMAIL_INSTANCE="TEST"
         - NON_PROD_EMAIL="travis@dpaw.wa.gov.au"
         - BPAY_ALLOWED=True
-        - DEPT_DOMAINS=['dpaw.wa.gov.au','dbca.wa.gov.au']
 sudo: true
 install:
     - sudo apt-get install postgresql-9.4-postgis-2.3 -y -q
