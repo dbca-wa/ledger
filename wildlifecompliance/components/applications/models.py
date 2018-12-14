@@ -205,7 +205,8 @@ class ApplicationDocument(Document):
 
 class Application(RevisionedMixin):
 
-    CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'),
+    PROCESSING_STATUS_DRAFT = ('draft', 'Draft')
+    CUSTOMER_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
                                ('under_review', 'Under Review'),
                                ('amendment_required', 'Amendment Required'),
                                ('accepted', 'Accepted'),
@@ -215,14 +216,14 @@ class Application(RevisionedMixin):
 
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = ['temp',
-                                'draft',
+                                PROCESSING_STATUS_DRAFT[0],
                                 'amendment_required',
                             ]
 
     # List of statuses from above that allow a customer to view an application (read-only)
     CUSTOMER_VIEWABLE_STATE = ['with_assessor', 'under_review', 'id_required', 'returns_required', 'approved', 'declined']
 
-    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'),
+    PROCESSING_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
                                  ('with_officer', 'With Officer'),
                                  ('with_assessor', 'With Assessor'),
                                  ('with_referral', 'With Referral'),
@@ -241,7 +242,7 @@ class Application(RevisionedMixin):
                                  ('under_review', 'Under Review'),
                                  )
 
-    ACTIVITY_PROCESSING_STATUS_CHOICES = ['Draft','With Officer','With Assessor','With Officer-Conditions',
+    ACTIVITY_PROCESSING_STATUS_CHOICES = [PROCESSING_STATUS_DRAFT[1],'With Officer','With Assessor','With Officer-Conditions',
                                           'With Officer-Finalisation','Accepted','Declined']
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
@@ -385,7 +386,7 @@ class Application(RevisionedMixin):
         1 - It is a draft
         2- or if the application has been pushed back to the user
         """
-        return self.customer_status == 'draft' or self.processing_status == 'awaiting_applicant_response'
+        return self.customer_status == PROCESSING_STATUS_DRAFT[0] or self.processing_status == 'awaiting_applicant_response'
 
     @property
     def is_deletable(self):
@@ -393,7 +394,7 @@ class Application(RevisionedMixin):
         An application can be deleted only if it is a draft and it hasn't been lodged yet
         :return:
         """
-        return self.customer_status == 'draft' and not self.lodgement_number
+        return self.customer_status == PROCESSING_STATUS_DRAFT[0] and not self.lodgement_number
 
     @property
     def payment_status(self):
@@ -1143,7 +1144,7 @@ class AmendmentRequest(ApplicationRequest):
                 # This is to change the status of licence activity type
                 for item in  self.application.licence_type_data['activity_type']:
                     if self.licence_activity_type.id==item["id"] :
-                        item["processing_status"]="Draft"
+                        item["processing_status"]=Application.PROCESSING_STATUS_DRAFT[1]
                         # self.application.save()
                 self.application.customer_status='amendment_required'
                 self.application.save()

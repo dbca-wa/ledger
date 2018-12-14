@@ -62,7 +62,7 @@ def write_excel_model(licence_category):
     write_excel_model('Fauna Other Purpose')
     """
 
-    applications = Application.objects.filter(licence_category=licence_category)
+    applications = Application.objects.filter(licence_category=licence_category).exclude(processing_status=Application.PROCESSING_STATUS_DRAFT[0])
     #applications = Application.objects.filter(id__in=id)
 
     for application in applications:
@@ -109,40 +109,40 @@ def create_activity_type_fields(qs_activity_type, activity_name):
 
     ________________________________
 
-	c=WildlifeLicenceClass.objects.get(short_name='Fauna Other Purpose')
+    c=WildlifeLicenceClass.objects.get(short_name='Fauna Other Purpose')
 
-	In [4]: c.short_name
-	Out[4]: u'Fauna Other Purpose'
-
-
-	for i in DefaultActivityType.objects.filter(licence_class__name=c.name):  	--> Maps licence class to activity_type
-		...:     print i.activity_type_id, i
-
-	16 Fauna (Other Purposes) Licence - Fauna Other - Taking
-	17 Fauna (Other Purposes) Licence - Fauna Other - Disturbing
-	18 Fauna (Other Purposes) Licence - Fauna Other - Possessing
-	19 Fauna (Other Purposes) Licence - Fauna Other - Importing
-	20 Fauna (Other Purposes) Licence - Fauna Other - Exporting
-
-	{'activity_type_id': 20,
-	 'id': 21,
-	 'licence_class_id': 2}
-
-	____________________________________
+    In [4]: c.short_name
+    Out[4]: u'Fauna Other Purpose'
 
 
-	DefaultActivity.objects.get(activity_type_id=19).__dict__
-	Out[117]:
-	{'_state': <django.db.models.base.ModelState at 0x7f0c4f66c090>,
-	 'activity_id': 27,
-	 'activity_type_id': 19,
-	 'id': 28}
+    for i in DefaultActivityType.objects.filter(licence_class__name=c.name):    --> Maps licence class to activity_type
+        ...:     print i.activity_type_id, i
 
-	In [112]: WildlifeLicenceActivity.objects.get(id=27)
-	Out[112]: <WildlifeLicenceActivity: Importing Fauna (Non-Commercial)>
+    16 Fauna (Other Purposes) Licence - Fauna Other - Taking
+    17 Fauna (Other Purposes) Licence - Fauna Other - Disturbing
+    18 Fauna (Other Purposes) Licence - Fauna Other - Possessing
+    19 Fauna (Other Purposes) Licence - Fauna Other - Importing
+    20 Fauna (Other Purposes) Licence - Fauna Other - Exporting
 
-	WildlifeLicenceActivity.objects.get(id=27).fields
-	Out[120]: {u'Species1-1_0': u'species', u'Species1-2_0': u'number_of_animals'}
+    {'activity_type_id': 20,
+     'id': 21,
+     'licence_class_id': 2}
+
+    ____________________________________
+
+
+    DefaultActivity.objects.get(activity_type_id=19).__dict__
+    Out[117]:
+    {'_state': <django.db.models.base.ModelState at 0x7f0c4f66c090>,
+     'activity_id': 27,
+     'activity_type_id': 19,
+     'id': 28}
+
+    In [112]: WildlifeLicenceActivity.objects.get(id=27)
+    Out[112]: <WildlifeLicenceActivity: Importing Fauna (Non-Commercial)>
+
+    WildlifeLicenceActivity.objects.get(id=27).fields
+    Out[120]: {u'Species1-1_0': u'species', u'Species1-2_0': u'number_of_animals'}
 
     """
     ordered_dict=OrderedDict([])
@@ -267,7 +267,7 @@ class ExcelWriter():
         Out[4]: u'Fauna Other Purpose'
 
 
-        for i in DefaultActivityType.objects.filter(licence_class__name=c.name):  	--> Maps licence class to activity_type
+        for i in DefaultActivityType.objects.filter(licence_class__name=c.name):    --> Maps licence class to activity_type
             ...:     print i.activity_type_id, i
 
         16 Fauna (Other Purposes) Licence - Fauna Other - Taking
@@ -300,6 +300,7 @@ class ExcelWriter():
         ordered_dict=OrderedDict([])
 
         try:
+            import ipdb; ipdb.set_trace()
             fields = WildlifeLicenceActivity.objects.get(name=activity_name).fields
             if isinstance(fields, dict):
                 for k,v in fields.iteritems():
@@ -320,14 +321,47 @@ class ExcelWriter():
 
         return ordered_dict
 
+    def create_excel_model(self, licence_category, cur_app_ids):
+        """
+        from wildlifecompliance.utils.excel_utils import write_excel_model
+        write_excel_model('Fauna Other Purpose')
+        """
+
+        applications = Application.objects.filter(licence_category=licence_category).exclude(processing_status=Application.PROCESSING_STATUS_DRAFT[0]).exclude(id__in=cur_app_ids)
+        #applications = Application.objects.filter(id__in=id)
+
+        #new_app_ids = []
+        new_excel_apps = []
+        for application in applications:
+            excel_app, created = ExcelApplication.objects.get_or_create(application=application)
+            new_excel_apps.append(excel_app)
+
+            activities = self.get_purposes(application.licence_type_data['short_name']).values_list('activity_type__short_name', flat=True)
+            for activity_type in application.licence_type_data['activity_type']:
+                if activity_type['short_name'] in list(activities):
+                    excel_activity_type, created = ExcelActivityType.objects.get_or_create(
+                        excel_app=excel_app,
+                        activity_name=activity_type['activity'][0]['name'],
+                        name=activity_type['name'],
+                        short_name=activity_type['short_name']
+                    )
+
+        return new_excel_apps
+
+
     def read_workbook(self, input_filename, licence_category='Fauna Other Purpose'):
         """
         Read the contents of input_filename and return
         :param logger:         The logger
         :param input_filename: Filepath of the spreadsheet to read
         :return:  Dict of response sets
+
+        for meta:
+            schema = WildlifeLicenceActivity.objects.get(name='Importing Fauna (Non-Commercial)').schema
+            In [30]: [{i['name'],i['label']} for i in search_multiple_keys(schema, 'isEditable', ['name', 'label'])]
+            Out[30]: [{u'Species', u'Species1-1'}, {u'Number of animals', u'Species1-2'}]
         """
-        meta = {}
+        #meta = {}
         meta = OrderedDict()
         if not os.path.isfile(input_filename):
             logger.warn('Cannot find file {}'.format(input_filename))
@@ -347,8 +381,7 @@ class ExcelWriter():
             for i in zip(hdr, row_values)[1:]:
                 meta[purpose].update( {i[0]: i[1]} )
 
-        #return meta
-
+        # Read Application Data
         excel_data = {}
         number_of_rows = sh.nrows
         hdr = sh.row_values(0)
@@ -386,6 +419,7 @@ class ExcelWriter():
 
             excel_data.update({lodgement_number: row_values})
 
+        # Re-output Application Data with licence_numbers
         out_filename = '/tmp/wc_apps_out_{}.xlsx'.format(licence_category.lower().replace(' ','_'))
         wb_out = xlsxwriter.Workbook(out_filename)
         self.set_formats(wb_out)
@@ -399,7 +433,50 @@ class ExcelWriter():
             ws_out.write_row(row_num, col_num, v)
             row_num += 1
 
+        # Append new applications to output
+        #import ipdb; ipdb.set_trace()
+        #cur_app_ids = [int(v[1]) for k,v in excel_data.iteritems()] # existing app id's
+        #new_app_ids = Application.objects.exclude(processing_status='draft').exclude(id__in=cur_app_ids)
+        self.write_new_app_data(excel_data, meta, licence_category, ws_out, row_num)
+
         wb_out.close()
+
+    def write_new_app_data(self, excel_data, meta, licence_category, worksheet, next_row):
+        cur_app_ids = [int(v[1]) for k,v in excel_data.iteritems()] # existing app id's
+        new_excel_apps = self.create_excel_model(licence_category, cur_app_ids)
+
+        row_num = next_row
+        for excel_app in new_excel_apps:
+
+            # System data
+            col_num = int(meta['System']['First Col'])
+            for k,v in excel_app.cols_output.iteritems():
+                worksheet.write(row_num, col_num, v, self.locked)
+                col_num += 1
+
+
+            # Application data
+            import ipdb; ipdb.set_trace()
+            for purpose in meta.keys():
+                #import ipdb; ipdb.set_trace()
+
+                if purpose != "System":
+                    activity_type = excel_app.excel_activity_types.filter(activity_name=purpose)
+                    activity_type_cols = self.cols_output(activity_type, purpose)
+
+                    col_num = int(meta[purpose]['First Col']) + 1
+                    if activity_type.exists():
+                        for k,v in activity_type_cols.iteritems():
+                            #ws.write('B1', 'Here is\nsome long text\nthat\nwe wrap',      wrap)
+                            worksheet.write(row_num, col_num, v, self.unlocked_wrap)
+                            col_num += 1
+                    else:
+                        # create a blank activity_type bilock
+                        for _ in activity_type_cols.keys():
+                            worksheet.write(row_num, col_num, '', self.unlocked)
+                            col_num += 1
+
+            row_num += 1
 
     def cols_common(self, qs_activity_type, activity_name):
         code = activity_name[:2].lower()
