@@ -149,7 +149,9 @@ module.exports = {
                             <HelpText help_text={help_text_assessor} assessorMode={assessorMode} isForAssessor={true}/>
                             <HelpTextUrl help_text_url={help_text_url}/>
                             <HelpTextUrl help_text_url={help_text_assessor_url} assessorMode={assessorMode} isForAssessor={true}/>
-                            <CommentRadioCheckBox assessor_readonly={assessor_visibility} name={c.name} comment_value={comment_val} assessorMode={assessorMode} label={c.label}/>
+                            if (wc_version != "1.0"){
+                                <CommentRadioCheckBox assessor_readonly={assessor_visibility} name={c.name} comment_value={comment_val} assessorMode={assessorMode} label={c.label}/>
+                            }
                             {c.options.map(op =>{
                                 return(
                                     <Radio name={c.name} label={op.label} value={op.value} isRequired={op.isRequired} id={id1} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly}/>

@@ -54,7 +54,7 @@ from wildlifecompliance.components.organisations.serializers import (
                                         MyOrganisationsSerializer,
                                     )
 from wildlifecompliance.components.applications.serializers import (
-                                        DTApplicationSerializer,
+                                        BaseApplicationSerializer,
                                     )
 
 from wildlifecompliance.components.organisations.emails import (
@@ -395,7 +395,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.org_applications.all()
-            serializer = DTApplicationSerializer(qs,many=True)
+            serializer = BaseApplicationSerializer(qs,many=True)
             return Response(serializer.data) 
         except serializers.ValidationError:
             print(traceback.print_exc())

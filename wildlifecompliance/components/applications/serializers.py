@@ -22,6 +22,7 @@ from wildlifecompliance.components.licences.models import WildlifeLicenceActivit
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
 from wildlifecompliance.components.users.serializers import UserAddressSerializer,DocumentSerializer
+from wildlifecompliance import helpers, settings
 
 from rest_framework import serializers
 
@@ -125,7 +126,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     class_name = serializers.SerializerMethodField(read_only=True)
     activity_type_names = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
-    can_be_processed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -167,7 +167,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'licence_fee',
                 'class_name',
                 'activity_type_names',
-                'can_be_processed'
+                'can_be_processed',
+                'can_current_user_edit'
                 )
         read_only_fields=('documents',)
 
@@ -227,18 +228,86 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     def get_can_be_processed(self, obj):
         return obj.processing_status == 'under_review'
 
+    def get_can_current_user_edit(self, obj):
+        result = False
+        is_proxy_applicant = False
+        is_in_org_applicant = False
+        is_officer = helpers.is_officer(self.context['request'])
+        is_submitter = obj.submitter == self.context['request'].user
+        if obj.proxy_applicant:
+            is_proxy_applicant = obj.proxy_applicant == self.context['request'].user
+        if obj.org_applicant:
+            user_orgs = [org.id for org in self.context['request'].user.wildlifecompliance_organisations.all()]
+            is_in_org_applicant = obj.org_applicant_id in user_orgs
+        if obj.can_user_edit and (is_officer or is_submitter or is_proxy_applicant or is_in_org_applicant):
+            result = True
+        return result
 
-class DTApplicationSerializer(BaseApplicationSerializer):
+
+class DTInternalApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
-    org_applicant = serializers.CharField(source='org_applicant.organisation.name')
     proxy_applicant = EmailUserSerializer()
     processing_status = serializers.SerializerMethodField(read_only=True)
-    review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
-    assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
-    can_be_processed = serializers.SerializerMethodField(read_only=True)
+    can_current_user_edit = serializers.SerializerMethodField(read_only=True)
 
+    if settings.WC_VERSION != "1.0":
+        assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
+        can_be_processed = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Application
+        fields = (
+            'id',
+            'customer_status',
+            'processing_status',
+            'applicant',
+            'proxy_applicant',
+            'submitter',
+            'lodgement_number',
+            'lodgement_date',
+            'class_name',
+            'activity_type_names',
+            'can_user_view',
+            'can_current_user_edit'
+        )
+        if settings.WC_VERSION != "1.0":
+            fields += (
+                'payment_status',
+                'assigned_officer',
+                'can_be_processed'
+            )
+
+
+class DTExternalApplicationSerializer(BaseApplicationSerializer):
+    submitter = EmailUserSerializer()
+    applicant = serializers.CharField(read_only=True)
+    proxy_applicant = EmailUserSerializer()
+    processing_status = serializers.SerializerMethodField(read_only=True)
+    customer_status = serializers.SerializerMethodField(read_only=True)
+    can_current_user_edit = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Application
+        fields = (
+            'id',
+            'customer_status',
+            'processing_status',
+            'applicant',
+            'proxy_applicant',
+            'submitter',
+            'lodgement_number',
+            'lodgement_date',
+            'class_name',
+            'activity_type_names',
+            'can_user_view',
+            'can_current_user_edit'
+        )
+        if settings.WC_VERSION != "1.0":
+            fields += (
+                'payment_status',
+            )
 
 class ApplicationSerializer(BaseApplicationSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
@@ -247,6 +316,7 @@ class ApplicationSerializer(BaseApplicationSerializer):
     customer_status = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
     can_be_processed = serializers.SerializerMethodField(read_only=True)
+    can_current_user_edit = serializers.SerializerMethodField(read_only=True)
 
     def get_readonly(self,obj):
         return obj.can_user_view
