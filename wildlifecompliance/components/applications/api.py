@@ -53,7 +53,9 @@ from wildlifecompliance.components.applications.serializers import (
     ApplicationSerializer,
     InternalApplicationSerializer,
     SaveApplicationSerializer,
-    DTApplicationSerializer,
+    BaseApplicationSerializer,
+    DTInternalApplicationSerializer,
+    DTExternalApplicationSerializer,
     ApplicationUserActionSerializer,
     ApplicationLogEntrySerializer,
     DTReferralSerializer,
@@ -62,14 +64,14 @@ from wildlifecompliance.components.applications.serializers import (
     ApplicationConditionSerializer,
     ApplicationStandardConditionSerializer,
     ProposedLicenceSerializer,
-    PropedDeclineSerializer,
+    ProposedDeclineSerializer,
     AssessmentSerializer,
     ApplicationGroupTypeSerializer,
     SaveAssessmentSerializer,
     AmendmentRequestSerializer,
     ExternalAmendmentRequestSerializer,
-    ApplicationProposedIssueSerializer
-
+    ApplicationProposedIssueSerializer,
+    DTAssessmentSerializer
 )
 
 
@@ -96,7 +98,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        serializer = DTApplicationSerializer(queryset, many=True)
+        serializer = BaseApplicationSerializer(queryset, many=True, context={'request':request})
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
@@ -275,13 +277,20 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @list_route(methods=['GET',])
+    def internal_datatable_list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = DTInternalApplicationSerializer(queryset, many=True,context={'request':request})
+        return Response(serializer.data)
+
+    @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
         user_orgs = [org.id for org in request.user.wildlifecompliance_organisations.all()];
         qs = []
         qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
+        qs.extend(list(self.get_queryset().filter(proxy_applicant = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         qs.extend(list(self.get_queryset().filter(org_applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         queryset = list(set(qs))
-        serializer = DTApplicationSerializer(queryset, many=True)
+        serializer = DTExternalApplicationSerializer(queryset, many=True,context={'request':request})
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])
@@ -294,6 +303,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
+            print("=====FRom Submit application")
+            print(request.POST.keys())
             instance = self.get_object()
             instance.submit(request,self)
             serializer = self.get_serializer(instance)
@@ -493,7 +504,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def update_activity_status(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            print(request.data)
             activity_id = request.data.get('activity_id')
             status = request.data.get('status')
             if not status or not activity_id:
@@ -607,9 +617,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def proposed_decline(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = PropedDeclineSerializer(data=request.data)
+            serializer = ProposedDeclineSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            # print(serializer.validated_data)
             instance.proposed_decline(request,serializer.validated_data)
             serializer = InternalApplicationSerializer(instance,context={'request':request})
             return Response(serializer.data)
@@ -682,12 +691,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
-
             app_data = self.request.data
             licence_class_data=app_data.pop('licence_class_data')
             licence_type_name = app_data.pop('licence_type_name')
             schema_data=get_activity_type_schema(licence_class_data)
             org_applicant=request.data.get('org_applicant')
+            proxy_applicant=request.data.get('proxy_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
             #import ipdb; ipdb.set_trace()
@@ -697,6 +706,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 'licence_type_data':licence_class_data,
                 'licence_type_name': licence_type_name,
                 'org_applicant': org_applicant,
+                'proxy_applicant': proxy_applicant,
                 'application_fee': application_fee,
                 'licence_fee': licence_fee
             }
@@ -962,6 +972,19 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     queryset = Assessment.objects.all()
     serializer_class = AssessmentSerializer
 
+    @list_route(methods=['GET',])
+    def user_list(self, request, *args, **kwargs):
+        # Get the assessor groups the current user is member of
+        assessor_groups = ApplicationGroupType.objects.filter(type='assessor', members__email=request.user.email)
+
+        # For each assessor groups get the assessments
+        queryset = self.get_queryset().none()
+        for group in assessor_groups:
+            queryset = queryset | Assessment.objects.filter(assessor_group=group)
+
+        serializer = DTAssessmentSerializer(queryset, many=True)
+        return Response(serializer.data)
+
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
         try:
@@ -1042,16 +1065,17 @@ class AssessorGroupViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationGroupTypeSerializer
     renderer_classes = [JSONRenderer,]
 
-    # def list(self, request, *args, **kwargs):
-    #     queryset = self.get_queryset()
-    #     # licence_activity_type = request.GET.get('licence_activity_type')
-    #     # if licence_activity_type:
-    #     #     queryset = queryset.filter(licence_activity_type=licence_activity_type)
-    #     serializer = ApplicationGroupTypeSerializer(queryset, many=True)
-    #     return Response(serializer.data)
+    @list_route(methods=['POST',])
+    def user_list(self, request, *args, **kwargs):
+        app_id = request.data.get('application_id')
+        application = Application.objects.get(id=app_id)
+        id_list = set()
+        for assessment in application.assessments:
+            id_list.add(assessment.assessor_group.id)
+        queryset = self.get_queryset().exclude(id__in=id_list)
+        serializer = self.get_serializer(queryset, many=True)
 
-    # def get_queryset(self):
-    #     return self.queryset.filter(name='assessor')
+        return Response(serializer.data)
 
 
 class AmendmentRequestViewSet(viewsets.ModelViewSet):
@@ -1078,6 +1102,7 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(data= data)
                 serializer.is_valid(raise_exception = True)
                 instance = serializer.save()
+                instance.reason = reason
                 instance.generate_amendment(request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)

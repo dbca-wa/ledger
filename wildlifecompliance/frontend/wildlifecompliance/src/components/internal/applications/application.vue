@@ -32,7 +32,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div v-if="wc_version != 1.0" class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         Workflow 
@@ -46,7 +46,7 @@
                                     
                                     <div v-for="item1 in item">
                                         <div v-if="item1.name">
-                                            {{item1.name}}:{{item1.processing_status}}
+                                            <strong>{{item1.name}}: </strong>{{item1.processing_status}}
                                         </div>
                                     </div>
                                 </div>
@@ -96,17 +96,31 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
+                                    <div v-if="!applicationIsDraft && canRequestAmendment" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
+                                        </div>
+                                    </div>
                                     <div v-if="!applicationIsDraft && canSendToAssessor" class="row">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Send to Assessor</button><br/>
                                         </div>
                                     </div>
-                                    <div v-if="!applicationIsDraft && canRequestAmendment" class="row">
+                                    <div v-if="canOfficerReviewConditions" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="ammendmentRequest()">Request Amendment</button><br/>
+                                            <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
+                                        </div>
+                                    </div>
+                                    <div v-if="canProposeIssueOrDecline" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-danger top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
+                                            <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
                                         </div>
                                     </div>
                                     <div v-if="canIssueDecline" class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleFinalViewConditions()">View Final Conditions</button>
+                                        </div>
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
                                         </div>
@@ -118,14 +132,9 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
-                                    <div v-if="isSendingToAssessor || isOfficerConditions || showingConditions"class="row">
+                                    <div v-if="isSendingToAssessor || isOfficerConditions || isFinalViewConditions || showingConditions || isofficerfinalisation"class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back To Application</button><br/>
-                                        </div>
-                                    </div>
-                                    <div v-if="showingConditions"class="row">
-                                        <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeAssessment()">Complete Assessment</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back to Application</button><br/>
                                         </div>
                                     </div>
                                 </template>
@@ -149,8 +158,7 @@
                         <ul class="nav nav-tabs" id="conditiontabs">
                             <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
-            
-                    </div>   
+                    </div>
                     <div  class="tab-content">
                         <div v-for="item in application.licence_type_data">
                             <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status=='With Assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`" class="tab-pane fade in">
@@ -158,14 +166,40 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row" style="margin-bottom:50px;">
+                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                            <div class="navbar-inner">
+                                <div class="container">
+                                    <p class="pull-right" style="margin-top:5px;">
+                                        <button class="btn btn-primary" @click.prevent="completeAssessment()">Complete Assessment</button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </template>
                 <template v-if="isOfficerConditions">
+                    <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in application.licence_type_data.activity_type"><a v-if="item1.name && item1.processing_status=='With Officer-Conditions' && item1.id == selected_assessment_tab" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Officer-Conditions'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
                         </ul>
-                    <div  class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status=='With Officer-Conditions' && item1.id == selected_assessment_tab" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
-                            <OfficerConditions :application="application" :licence_activity_type_tab="selected_assessment_tab"/>
+                    </div>
+                    <div class="tab-content">
+                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status=='With Officer-Conditions'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                            <OfficerConditions :application="application" :licence_activity_type_tab="item1.id" :final_view_conditions="false"/>
+                        </div>
+                    </div>
+                </template>
+                <template v-if="isFinalViewConditions">
+                    <div v-for="item in application.licence_type_data">
+                        <ul class="nav nav-tabs" id="conditiontabs">
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                        </ul>
+                    </div>
+                    <div class="tab-content">
+                        <div v-for="(item1,index) in application.licence_type_data.activity_type" v-if="item1.name && item1.processing_status=='With Officer-Finalisation'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                            <OfficerConditions :application="application" :licence_activity_type_tab="item1.id" :final_view_conditions="true"/>
                         </div>
                     </div>
                 </template>
@@ -211,7 +245,7 @@
                         </div>
                     </div>
                 </template>
-                <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised && !isOfficerConditions">
+                <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised && !isOfficerConditions && !isFinalViewConditions">
                     <div>
                     <ul class="nav nav-tabs" id="tabs-main">
                         <li><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
@@ -242,6 +276,28 @@
                                             <label for="" class="col-sm-3 control-label" >ABN/ACN</label>
                                             <div class="col-sm-6">
                                                 <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="application.org_applicant.abn">
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                                <div v-if="applicantType == 'proxy'" class="panel-body panel-collapse collapse in" :id="detailsBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Given Name(s)</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.proxy_applicant.first_name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Surname</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="application.proxy_applicant.last_name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Date of Birth</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="application.proxy_applicant.dob">
                                             </div>
                                           </div>
                                       </form>
@@ -281,7 +337,7 @@
                                         </a>
                                     </h3>
                                 </div>
-                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                <div v-if="applicantType == 'org' && application.org_applicant.organisation.identification" class="panel-body panel-collapse collapse" :id="identificationBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Identification</label>
@@ -291,7 +347,17 @@
                                           </div>
                                       </form>
                                 </div>
-                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                <div v-if="applicantType == 'proxy' && application.proxy_applicant.identification.file" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Identification</label>
+                                            <div class="col-sm-8">
+                                                <img width="100%" name="applicantIdentification" v-bind:src="application.proxy_applicant.identification.file" />
+                                            </div>
+                                          </div>
+                                      </form>
+                                </div>
+                                <div v-if="applicantType == 'submitter' && application.submitter.identification.file" class="panel-body panel-collapse collapse" :id="identificationBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Identification</label>
@@ -314,7 +380,7 @@
                                         </a>
                                     </h3> 
                                 </div>
-                                <div v-if="applicantType == 'org'" class="panel-body panel-collapse collapse" :id="addressBody">
+                                <div v-if="applicantType == 'org' && application.org_applicant.address" class="panel-body panel-collapse collapse" :id="addressBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
@@ -346,7 +412,39 @@
                                           </div>
                                        </form>
                                 </div>
-                                <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="addressBody">
+                                <div v-if="applicantType == 'proxy' && application.proxy_applicant.residential_address" class="panel-body panel-collapse collapse" :id="addressBody">
+                                      <form class="form-horizontal">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Street</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="street" placeholder="" v-model="application.proxy_applicant.residential_address.line1">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="application.proxy_applicant.residential_address.locality">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">State</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="country" placeholder="" v-model="application.proxy_applicant.residential_address.state">
+                                            </div>
+                                            <label for="" class="col-sm-2 control-label">Postcode</label>
+                                            <div class="col-sm-2">
+                                                <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="application.proxy_applicant.residential_address.postcode">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Country</label>
+                                            <div class="col-sm-4">
+                                                <input disabled type="text" class="form-control" name="country" v-model="application.proxy_applicant.residential_address.country"/>
+                                            </div>
+                                          </div>
+                                       </form>
+                                </div>
+                                <div v-if="applicantType == 'submitter' && application.submitter.residential_address" class="panel-body panel-collapse collapse" :id="addressBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Street</label>
@@ -395,6 +493,28 @@
                                     <table ref="contacts_datatable" :id="contacts_table_id" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
                                     </table>
                                 </div>
+                                <div v-if="applicantType == 'proxy'" class="panel-body panel-collapse collapse" :id="contactsBody">
+                                  <form class="form-horizontal">
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantPhoneNumber" placeholder="" v-model="application.proxy_applicant.phone_number">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Mobile</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantMobileNumber" placeholder="" v-model="application.proxy_applicant.mobile_number">
+                                        </div>
+                                      </div>
+                                      <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Email</label>
+                                        <div class="col-sm-6">
+                                            <input disabled type="text" class="form-control" name="applicantEmail" placeholder="" v-model="application.proxy_applicant.email">
+                                        </div>
+                                      </div>
+                                  </form>
+                                </div>
                                 <div v-if="applicantType == 'submitter'" class="panel-body panel-collapse collapse" :id="contactsBody">
                                   <form class="form-horizontal">
                                       <div class="form-group">
@@ -422,7 +542,7 @@
                         </div>
                     </div>
                     <div class="col-md-12">
-                        <div class ="row">
+                        <div v-if="wc_version != 1.0" class ="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h3 class="panel-title">Check List
@@ -481,16 +601,13 @@
                                     <input type='hidden' name="application_id" :value="1" />
                                     <input type='hidden' id="selected_activity_type_tab_id" v-model="selected_activity_type_tab_id" :value=0 />
                                     <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
-                                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                                        <div v-if="wc_version != 1.0" class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                                             <div class="navbar-inner">
                                                 <div class="container">
                                                     <p class="pull-right" style="margin-top:5px;">
-                                                        <button v-if="canReturnToConditions" class="btn btn-success" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
-                                                        <button v-if="canProposeIssue" class="btn btn-success" @click.prevent="proposedLicence()">Propose Issue</button>
-                                                        <button v-if="canProposeDecline" class="btn btn-danger" @click.prevent="proposedDecline()">Propose Decline</button>
-                                                        <button v-if="canOfficerReviewConditions" class="btn btn-warning" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
+                                                        <button v-if="canReturnToConditions" class="btn btn-primary" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
                                                         <button v-if="canCompleteAssessment" class="btn btn-info" @click.prevent="toggleConditions()">Assess</button>
-                                                        <button v-if="!applicationIsDraft" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
+                                                        <button v-if="!applicationIsDraft && canRequestAmendment" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
                                                     </p>
                                                 </div>
                                             </div>
@@ -500,28 +617,24 @@
                             </form>
                         </div>
                     </div>
-                    
-
                 </div>
-                
         </div>
-
     </template>
         </div>
         </div>
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
-        <AmmendmentRequest ref="ammendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data"></AmmendmentRequest>
+        <AmendmentRequest ref="amendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
         <SendToAssessor ref="send_to_assessor" :application_id="application.id" @refreshFromResponse="refreshFromResponse"></SendToAssessor>
-        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"/>
-        
+        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedLicence>
+
     </div>
 </template>
 <script>
 import Application from '../../form.vue'
 import Vue from 'vue'
 import ProposedDecline from './application_proposed_decline.vue'
-import AmmendmentRequest from './ammendment_request.vue'
+import AmendmentRequest from './amendment_request.vue'
 import SendToAssessor from './application_send_assessor.vue'
 import datatable from '@vue-utils/datatable.vue'
 import Conditions from './application_conditions.vue'
@@ -571,6 +684,7 @@ export default {
             showingConditions:false,
             assessmentComplete:false,
             isOfficerConditions:false,
+            isFinalViewConditions:false,
             isofficerfinalisation:false,
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
@@ -626,7 +740,7 @@ export default {
         Application,
         datatable,
         ProposedDecline,
-        AmmendmentRequest,
+        AmendmentRequest,
         SendToAssessor,
         Conditions,
         OfficerConditions,
@@ -689,13 +803,22 @@ export default {
             return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Finalisation' ? true : false;
         },
         canOfficerReviewConditions: function(){
-            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Conditions' ? true : false;
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer-Conditions'){
+                    return true;
+                }
+            }
+            return false;
         },
-        canProposeDecline: function(){
-            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Conditions' ? true : false;
-        },
-        canProposeIssue: function(){
-            return this.selectedTabId && this.selectedActivityType.processing_status == 'With Officer-Conditions' ? true : false;
+        canProposeIssueOrDecline: function(){
+            var activity_types_list = this.application.licence_type_data.activity_type
+            for(var i=0;i<activity_types_list.length;i++){
+                if(activity_types_list[i].processing_status == 'With Officer-Conditions'){
+                    return true;
+                }
+            }
+            return false;
         },
         canCompleteAssessment: function(){
             return this.selectedTabId && this.selectedActivityType.processing_status == 'With Assessor' ? true : false;
@@ -795,6 +918,9 @@ export default {
         canSeeSubmission: function(){
             return this.application && (this.application.processing_status != 'With Assessor (Conditions)' && this.application.processing_status != 'With Approver' && !this.isFinalised)
         },
+        wc_version: function (){
+            return this.$root.wc_version;
+        }
     },
     methods: {
         
@@ -878,7 +1004,7 @@ export default {
         },
         initialiseOrgContactTable: function(){
             let vm = this;
-            if (vm.application && !vm.contacts_table_initialised){
+            if (vm.application && vm.applicantType == 'org' && !vm.contacts_table_initialised){
                 vm.contacts_options.ajax.url = helpers.add_endpoint_json(api_endpoints.organisations,vm.application.org_applicant.id+'/contacts');
                 vm.contacts_table = $('#'+vm.contacts_table_id).DataTable(vm.contacts_options);
                 vm.contacts_table_initialised = true;
@@ -935,8 +1061,9 @@ export default {
             this.isSendingToAssessor=false;
             this.showingConditions=false;
             this.isOfficerConditions=false;
+            this.isFinalViewConditions=false;
             this.assessmentComplete=false;
-            this.isofficerfinalisation=true
+            this.isofficerfinalisation=true;
         },
         acceptIdRequest: function() {
             let vm = this;
@@ -1024,7 +1151,9 @@ export default {
                 vm.$refs.assessorDatatable[i].vmDataTable.ajax.reload();
             }
         },
-        ammendmentRequest: function(){
+        amendmentRequest: function(){
+            let vm = this;
+            vm.save_wo();
             let values = '';
             var activity_type_name=[];
             var activity_type_id=[];
@@ -1035,25 +1164,24 @@ export default {
             });
 
             selectedTabTitle = $("#tabs-section li.active");
-            this.tab_name = $(selectedTabTitle).text();
-            this.tab_id = selectedTabTitle.children().attr('href').split('#')[1];
+            vm.tab_name = $(selectedTabTitle).text();
+            vm.tab_id = selectedTabTitle.children().attr('href').split('#')[1];
 
-            activity_type_id.push(this.tab_id);
-            activity_type_name.push(this.tab_name);
+            activity_type_id.push(vm.tab_id);
+            activity_type_name.push(vm.tab_name);
 
-            this.$refs.ammendment_request.amendment.text = values;
-            this.$refs.ammendment_request.amendment.activity_type_name = activity_type_name;
-            this.$refs.ammendment_request.amendment.activity_type_id = activity_type_id;
-            this.$refs.ammendment_request.isModalOpen = true;
+            vm.$refs.amendment_request.amendment.text = values;
+            vm.$refs.amendment_request.amendment.activity_type_name = activity_type_name;
+            vm.$refs.amendment_request.amendment.activity_type_id = activity_type_id;
+            vm.$refs.amendment_request.isModalOpen = true;
 
             if (values === ''){
-               swal({
-                  type: 'error',
-                  title:  'Oops...',
-                  text: 'Something went wrong!',
-                  footer: '<a href>There are no deficiencies for this Activity.</a>'
-               })
-               this.$refs.ammendment_request.isModalOpen = false;
+               swal(
+                  'Amendment Request',
+                  'There are no deficiencies entered for this Application.',
+                  'error'
+               )
+               vm.$refs.amendment_request.isModalOpen = false;
             }
         },
         togglesendtoAssessor:function(){
@@ -1065,18 +1193,27 @@ export default {
             setTimeout(function(){
                 $('#tabs-assessor li:first-child a')[0].click();
             }, 50);
+            vm.fetchAssessorGroup();
         },
         save: function(e) {
-          let vm = this;
-          let formData = new FormData(vm.form);
-          vm.$http.post(vm.application_form_url,formData).then(res=>{
+            let vm = this;
+            let formData = new FormData(vm.form);
+            vm.$http.post(vm.application_form_url,formData).then(res=>{
               swal(
                 'Saved',
                 'Your application has been saved',
                 'success'
               )
-          },err=>{
-          });
+            },err=>{
+            });
+        },
+        save_wo: function() {
+            let vm = this;
+            let formData = new FormData(vm.form);
+            vm.$http.post(vm.application_form_url,formData).then(res=>{
+
+            },err=>{
+            });
         },
         toggleApplication:function(){
             this.showingApplication = !this.showingApplication;
@@ -1089,6 +1226,12 @@ export default {
             if(this.isOfficerConditions){
                 this.isOfficerConditions=!this.isOfficerConditions
             }
+            if(this.isFinalViewConditions){
+                this.isFinalViewConditions=!this.isFinalViewConditions
+            }
+            if(this.isofficerfinalisation){
+                this.isofficerfinalisation=!this.isofficerfinalisation
+            }
             setTimeout(function(){
                 $('#tabs-main li a')[1].click();
             }, 50);
@@ -1098,6 +1241,7 @@ export default {
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.isOfficerConditions=false;
+            this.isFinalViewConditions=false;
             this.assessmentComplete=false;
             var selectedTabTitle = $("#tabs-section li.active");
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
@@ -1120,6 +1264,22 @@ export default {
             this.isSendingToAssessor=false;
             this.showingConditions=false;
             this.isOfficerConditions=true;
+            this.isFinalViewConditions=false;
+            this.assessmentComplete=false;
+            var selectedTabTitle = $("#tabs-section li.active");
+            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
+            this.selected_assessment_tab=tab_id
+            setTimeout(function(){
+                $('#conditiontabs li a')[0].click();
+            }, 50);
+
+        },
+        toggleFinalViewConditions:function(){
+            this.showingApplication = false;
+            this.isSendingToAssessor=false;
+            this.showingConditions=false;
+            this.isOfficerConditions=false;
+            this.isFinalViewConditions=true;
             this.assessmentComplete=false;
             var selectedTabTitle = $("#tabs-section li.active");
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
@@ -1173,7 +1333,12 @@ export default {
                 )
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
@@ -1188,11 +1353,21 @@ export default {
             .then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 vm.updateAssignedOfficerSelect();
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
@@ -1205,7 +1380,12 @@ export default {
             let vm = this;
             vm.original_application = helpers.copyObject(response.body);
             vm.application = helpers.copyObject(response.body);
-            vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+            if (vm.applicantType == 'org') {
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+            };
+            if (vm.applicantType == 'proxy') {
+                vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+            };
             vm.$nextTick(() => {
                 vm.initialiseAssignedOfficerSelect(true);
                 vm.updateAssignedOfficerSelect();
@@ -1229,11 +1409,21 @@ export default {
                 }).then((response) => {
                     vm.application = response.body;
                     vm.original_application = helpers.copyObject(response.body);
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                 }, (error) => {
                     vm.application = helpers.copyObject(vm.original_application)
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                     swal(
                         'Application Error',
@@ -1247,11 +1437,21 @@ export default {
                 .then((response) => {
                     vm.application = response.body;
                     vm.original_application = helpers.copyObject(response.body);
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                 }, (error) => {
                     vm.application = helpers.copyObject(vm.original_application)
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    if (vm.applicantType == 'org') {
+                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                    };
+                    if (vm.applicantType == 'proxy') {
+                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                    };
                     vm.updateAssignedOfficerSelect();
                     swal(
                         'Application Error',
@@ -1273,14 +1473,24 @@ export default {
             }).then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
 //                vm.$nextTick(() => {
 //                    vm.initialiseAssignedOfficerSelect(true);
 //                    vm.updateAssignedOfficerSelect();
 //                });
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
                 swal(
                     'Application Error',
                     helpers.apiVueResourceError(error),
@@ -1301,12 +1511,15 @@ export default {
         },
         fetchAssessorGroup: function(){
             let vm = this;
+            let data = {'application_id' : vm.application.id };
             vm.loading.push('Fetching assessor group');
-            vm.$http.get(api_endpoints.assessor_group).then((response) => {
-                vm.assessorGroup = response.body
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessor_group,'user_list'),JSON.stringify(data),{
+                emulateJSON:true,
+            }).then((response) => {
+                vm.assessorGroup = response.body;
             },(error) => {
                 console.log(error);
-            })
+            });
         },
         initialiseAssignedOfficerSelect:function(reinit=false){
             let vm = this;
@@ -1459,7 +1672,6 @@ export default {
     mounted: function() {
         let vm = this;
         vm.fetchDeparmentUsers();
-        vm.fetchAssessorGroup();
         vm.$nextTick(function () {
             for (var i=0;i<vm.application.licence_type_data.activity_type.length;i++) {
                 var activity_type_id = vm.application.licence_type_data.activity_type[i].id
@@ -1520,7 +1732,12 @@ export default {
               next(vm => {
                 vm.application = res.body;
                 vm.original_application = helpers.copyObject(res.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
               });
             },
             err => {
@@ -1532,7 +1749,12 @@ export default {
               next(vm => {
                 vm.application = res.body;
                 vm.original_application = helpers.copyObject(res.body);
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                if (vm.applicantType == 'org') {
+                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+                };
+                if (vm.applicantType == 'proxy') {
+                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+                };
               });
             },
             err => {

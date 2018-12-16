@@ -1,0 +1,14 @@
+{%  extends 'disturbance/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Approval has been surrendered:
+
+    Approval : {{ approval.lodgement_number}}
+
+    Surrender Details : {{details}}
+
+    Surrender Date : {{ surrender_date}}
+
+   
+
+{%  endblock %}

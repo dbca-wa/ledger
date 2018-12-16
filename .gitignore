@@ -4,6 +4,7 @@ venv/
 venv2/
 node_modules/
 cronjobs
+mooring/cache/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -29,6 +30,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+*.bak
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -94,10 +96,14 @@ importo.py
 uwsgi*.ini
 *.djcache
 
-uwsgi.ini
+# wildlifecompliance build static files
+wildlifecompliance/static/wildlifecompliance_vue/static/*
+
+disturbance/static/disturbance_vue/static/css/app.css
+disturbance/static/disturbance_vue/static/js/app.js
+disturbance/static/disturbance_vue/static/js/manifest.js
+disturbance/static/disturbance_vue/static/js/vendor.js
+disturbance/static/disturbance_vue/static/js/babel-polyfill.js
 
 # npm locks
 *-lock.json
-
-# wildlifecompliance static temporary while in dev
-wildlifecompliance/static/wildlifecompliance_vue/

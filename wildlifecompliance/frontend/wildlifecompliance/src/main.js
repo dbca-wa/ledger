@@ -62,6 +62,11 @@ window.vue = new Vue( {
     components: {
         App
     },
+    computed: {
+        wc_version: function (){
+            return wc_version;
+        }
+    },
     created:function() {
         this.globalVar = "It's will change global var";
     },

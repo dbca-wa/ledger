@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 
 from datetime import datetime, timedelta
 
-from wildlifecompliance.helpers import is_officer, is_departmentUser
+from wildlifecompliance.helpers import is_internal
 from wildlifecompliance.forms import *
 from wildlifecompliance.components.applications.models import Referral,Application
 from wildlifecompliance.components.returns.models import Return
@@ -30,12 +30,13 @@ class InternalView(UserPassesTestMixin, TemplateView):
     template_name = 'wildlifecompliance/dash/index.html'
 
     def test_func(self):
-        return is_officer(self.request.user)
+        return is_internal(self.request)
 
     def get_context_data(self, **kwargs):
         context = super(InternalView, self).get_context_data(**kwargs)
         context['dev'] = settings.DEV_STATIC
         context['dev_url'] = settings.DEV_STATIC_URL
+        context['wc_version'] = settings.WC_VERSION
         return context
 
 class ExternalView(LoginRequiredMixin, TemplateView):
@@ -45,6 +46,7 @@ class ExternalView(LoginRequiredMixin, TemplateView):
         context = super(ExternalView, self).get_context_data(**kwargs)
         context['dev'] = settings.DEV_STATIC
         context['dev_url'] = settings.DEV_STATIC_URL
+        context['wc_version'] = settings.WC_VERSION
         return context
 
 class ReferralView(ReferralOwnerMixin, DetailView):
@@ -60,7 +62,7 @@ class WildlifeComplianceRoutingView(TemplateView):
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
-            if is_officer(self.request.user) or is_departmentUser(self.request.user):
+            if is_internal(self.request):
                 return redirect('internal')
             return redirect('external')
         kwargs['form'] = LoginForm

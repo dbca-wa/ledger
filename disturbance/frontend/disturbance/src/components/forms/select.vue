@@ -1,17 +1,22 @@
 <template lang="html">
     <div>
         <div class="form-group">
-            <label>{{ label }}</label>
+            <label :id="id">{{ label }}</label>
 
-       
             <template v-if="help_text">
-                
                 <HelpText :help_text="help_text" />
             </template>
             <template v-if="help_text_assessor && assessorMode">
-                
                 <HelpText  :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
             </template> 
+
+            <template v-if="help_text_url">
+                <HelpText :help_text_url="help_text_url" />
+            </template>
+            <template v-if="help_text_assessor_url && assessorMode">
+                <HelpTextUrl  :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
+            </template> 
+
 
             <template v-if="assessorMode && !assessor_readonly">
                 <template v-if="!showingComment">
@@ -31,18 +36,18 @@
                     <option v-for="op in options"  :value="op.value" :selected="multipleSelection(op.value)">{{ op.label }}</option>
                 </select>
                 <template v-if="isMultiple">
-                    <input v-for="v in value" input type="hidden" :name="name" :value="v"/>
+                    <input v-for="v in value" input type="hidden" :name="name" :value="v" :required="isRequired"/>
                 </template>
                 <template v-else>
-                    <input type="hidden" :name="name" :value="value"/>
+                    <input type="hidden" :name="name" :value="value" :required="isRequired"/>
                 </template>
             </template>
             <template v-else>
-                <select v-if="!isMultiple" ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
+                <select v-if="!isMultiple" ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%" :required="isRequired">
                     <option value="">Select...</option>
                     <option v-for="op in options"  :value="op.value" @change="handleChange" :selected="op.value == value">{{ op.label }}</option>
                 </select>
-                <select v-else ref="selectB" :id="selectid" :name="name" class="form-control" multiple style="width:100%">
+                <select v-else ref="selectB" :id="selectid" :name="name" class="form-control" multiple style="width:100%" :required="isRequired">
                     <option value="">Select...</option>
                     <option v-for="op in options"  :value="op.value" :selected="multipleSelection(op.value)">{{ op.label }}</option>
                 </select>
@@ -50,7 +55,7 @@
         </div>
 
         
-        <Comment :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
+        <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
 
 
     </div>
@@ -62,12 +67,17 @@ require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
     props:{
         'name':String,
         'label':String,
+        'id': String,
+        'isRequired': String,
         'help_text':String,
         'help_text_assessor':String,
+        'help_text_url':String,
+        'help_text_assessor_url':String,
         "value":[String,Array],
         "comment_value": String,
         "assessor_readonly": Boolean,
@@ -101,7 +111,7 @@ export default {
             return JSON.stringify(this.conditions);
         },
     },
-    components: { Comment, HelpText, },
+    components: { Comment, HelpText, HelpTextUrl,},
     methods:{
         toggleComment(){
             this.showingComment = ! this.showingComment;
@@ -157,5 +167,9 @@ export default {
 <style lang="css">
 .select2-container {
   width: 100% !important;
+}
+
+input {
+    box-shadow:none;
 }
 </style>

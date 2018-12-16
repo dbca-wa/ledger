@@ -219,34 +219,36 @@ export default {
           {
             data: "campground_site_type",
             mRender: function(data, type, full) {
-              if (data.length == 1) {
+              var typeCondensed = {};
+              var resultList = [];
+              for (var i = 0; i < data.length; i++) {
+                if (data[i].campground_type === 0) {
+                  resultList.push(data[i].name);
+                  continue;
+                }
+                if (typeCondensed[data[i].type] == undefined) {
+                  typeCondensed[data[i].type] = 0;
+                }                
+                typeCondensed[data[i].type] += 1;
+              }
+              for (var index in typeCondensed) {
+                var count = typeCondensed[index];
+                var site_type = index.split(':', 1)[0];
+                resultList.push(`${count}x ${site_type}`);
+              }
+              if (resultList.length == 1) {
                 var max_length = 15;
-                var name = (data[0].type.length > max_length) ? data[0].type.substring(0,max_length-1)+'...' : data[0].type;
+                var name = (resultList[0] > max_length) ? resultList[0].substring(0,max_length-1): resultList[0];
                 var column = '<td> <div class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >'+ name +'</div></td>';
-                return column.replace('__NAME__', data[0].type);
-              } else if (data.length > 1) {
-                var results = {};
-                for (var i = 0; i < data.length; i++) {
-                  if (results[data[i].name] == undefined) {
-                    results[data[i].name] = 0;
-                  }
-                  results[data[i].name] += 1;
-                }
-                var resultList = [];
-                for (var index in results) {
-                  resultList.push(`${index}`);
-                }
+                return column.replace('__NAME__', resultList[0]);
+              } 
+              else if (data.length > 1) {                           
                 var resultString = resultList.join(", ");
-
                 var max_length = 15;
                 var name = "Multiple";
-                var column =
-                  '<td><span style="padding: 0;" class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >' +
-                  name +
-                  "</span></td>";
+                var column ='<td><span class="name_popover" tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__" >' +name +"</span></td>";
                 return column.replace("__NAME__", resultString);
               }
-
               return "<td></td>";
             },
             orderable: false,
@@ -620,7 +622,7 @@ export default {
           var fields = ["Created"];
           //var fields = [...vm.dtHeaders];
           var fields = [...fields, ...vm.dtHeaders];
-          fields.splice(vm.dtHeaders.length - 1, 1);
+          fields.splice(fields.length - 1, 1);
           fields = [
             ...fields,
             "Adults",
@@ -636,9 +638,11 @@ export default {
           fields.splice(4, 0, "Email");
           fields.splice(5, 0, "Phone");
           fields.splice(9, 0, "Booking Total");
-          fields.splice(10, 0, "Amount Paid");
-          fields.splice(22, 0, "Booking Type");
-          fields.splice(23, 0, "Override Reason");
+          fields.splice(10, 0, "Booking Override Price");
+          fields.splice(11, 0, "Override Reason");
+          fields.splice(12, 0, "Amount Paid");
+          fields.splice(24, 0, "Booking Type");
+          
           var booking_types = {
             0: "Reception booking",
             1: "Internet booking",
@@ -676,16 +680,22 @@ export default {
                   bk[field] = booking.id;
                   break;
                 case 7:
-                  var results = {};
-                  for (var i = 0; i < booking.campground_site_type.length; i++) {
-                    if (results[booking.campground_site_type[i].name] == undefined) {
-                      results[booking.campground_site_type[i].name] = 0;
-                    }
-                    results[booking.campground_site_type[i].name] += 1;
-                  }
+                  var typeCondensed = {};
                   var resultList = [];
-                  for (var index in results) {
-                    resultList.push(`${index}`);
+                  for (var i = 0; i < booking.campground_site_type.length; i++) {
+                    if (booking.campground_site_type[i].campground_type === 0) {
+                      resultList.push(booking.campground_site_type[i].name);
+                      continue;
+                    }
+                    if (typeCondensed[booking.campground_site_type[i].type] == undefined) {
+                      typeCondensed[booking.campground_site_type[i].type] = 0;
+                    }                    
+                    typeCondensed[booking.campground_site_type[i].type] += 1;
+                  }
+                  for (var index in typeCondensed) {
+                    var count = typeCondensed[index];
+                    var site_type = index.split(':', 1)[0];
+                    resultList.push(`${count}x ${site_type}`);
                   }
                   var resultString = resultList.join(", ");
                   bk[field] = resultString;
@@ -697,27 +707,38 @@ export default {
                   bk[field] = booking.cost_total;
                   break;
                 case 10:
-                  bk[field] = booking.amount_paid;
+                  if(booking.override_reason == null)
+                  {
+                    bk[field] = "";
+                  } else {
+                    bk[field] = booking.cost_total - booking.discount;                    
+                  }                   
                   break;
                 case 11:
-                  bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
+                  bk[field] = booking.override_reason;
                   break;
                 case 12:
-                  bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
+                  bk[field] = booking.amount_paid;
                   break;
                 case 13:
-                  bk[field] = booking.guests.adults;
+                  bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
                   break;
                 case 14:
-                  bk[field] = booking.guests.concession;
+                  bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
                   break;
                 case 15:
-                  bk[field] = booking.guests.children;
+                  bk[field] = booking.guests.adults;
                   break;
                 case 16:
-                  bk[field] = booking.guests.infants;
+                  bk[field] = booking.guests.concession;
                   break;
                 case 17:
+                  bk[field] = booking.guests.children;
+                  break;
+                case 18:
+                  bk[field] = booking.guests.infants;
+                  break;
+                case 19:
                   bk[field] = booking.vehicle_payment_status
                     .map(r => {
                       var val = Object.keys(r).map(k => {
@@ -740,23 +761,23 @@ export default {
                     })
                     .join(" | ");
                   break;
-                case 18:
+                case 20:
                   bk[field] = booking.is_canceled;
                   break;
-                case 19:
+                case 21:
                   bk[field] = booking.cancelation_reason;
                   break;
-                case 20:
+                case 22:
                   bk[field] = booking.cancelation_time
                     ? Moment(booking.cancelation_time).format(
                         "DD/MM/YYYY HH:mm:ss"
                       )
                     : "";
                   break;
-                case 21:
+                case 23:
                   bk[field] = booking.canceled_by;
                   break;
-                case 22:
+                case 24:
                   if (
                     typeof booking_types[booking.booking_type] !== "undefined"
                   ) {
@@ -764,9 +785,6 @@ export default {
                   } else {
                     bk[field] = booking.booking_type;
                   }
-                  break;
-                case 23:
-                  bk[field] = booking.override_reason;
                   break;
               }
             });

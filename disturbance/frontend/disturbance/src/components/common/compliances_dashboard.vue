@@ -60,7 +60,7 @@ a<template id="proposal_dashboard">
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-lg-12">
+                        <div class="col-lg-12" style="margin-top:25px;">
                             <datatable ref="proposal_datatable" :id="datatable_id" :dtOptions="proposal_options" :dtHeaders="proposal_headers"/>
                         </div>
                     </div>
@@ -115,7 +115,7 @@ export default {
                 'Due',
                 'Future',
                 'Under Review',
-                'Approved'                
+                'Approved',
             ],
             internal_status:[
                 'Due',
@@ -127,33 +127,61 @@ export default {
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region/District","Activity","Title","Approval","Holder","Status","Due Date","Assigned To","Action"],
+            proposal_headers:["Number","Region/District","Activity","Title","Approval","Holder","Status","Due Date","Assigned To", "CustomerStatus", "Reference","Action"],
             proposal_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                serverSide: true,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data',
+
+                    // adding extra GET params for Custom filtering
+                    "data": function ( d ) {
+                        //d.regions = vm.filterProposalRegion.join();
+                        d.date_from = vm.filterComplianceDueFrom != '' && vm.filterComplianceDueFrom != null ? moment(vm.filterComplianceDueFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterComplianceDueTo != '' && vm.filterComplianceDueTo != null ? moment(vm.filterComplianceDueTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                    }
+
                 },
+                dom: 'lBfrtip',
+                buttons:[
+                'excel', 'csv', ],
                 columns: [
                     {
                         data: "id",
                         mRender:function (data,type,full) {
-                            return `C${data}`;
-                        }
+                            //return `C${data}`;
+                            return full.reference;
+                        },
+                        name: "id, lodgement_number",
                     },
-                    {data: "regions"},
-                    {data: "activity"},
-                    {data: "title"},
                     {
-                        data: "approval",
+                        data: "regions",
+                        name: "proposal__region__name" // will be use like: Approval.objects.filter(proposal__region__name='Kimberley')
+                    },
+                    {
+                        data: "activity",
+                        name: "proposal__activity",
+                    },
+                    {
+                        data: "title",
+                        name: "proposal__title",
+                    },
+                    {
+                        data: "approval_lodgement_number",
                         mRender:function (data,type,full) {
                             return `A${data}`;
-                        }
+                        },
+                        name: "approval__lodgement_number"
                     },
-                    {data: "holder"},
+                    {
+                        data: "holder",
+                        name: "proposal__applicant__organisation__name"
+                    },
                     {data: "processing_status",
                         mRender:function(data,type,full){
                             return vm.level == 'external' ? full.customer_status: data;
@@ -166,8 +194,13 @@ export default {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
                     },
-                    {data: "assigned_to"},
                     {
+                        data: "assigned_to",
+                        name: "assigned_to__first_name, assigned_to__last_name, assigned_to__email"
+                        // visible: false
+                    },
+                    {
+                        data: '',
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
@@ -189,10 +222,16 @@ export default {
                                 }
                             }
                             return links;
-                        }
-                    }
+                        },
+                        name: ''
+                    },
+                    {data: "reference", visible: false},
+                    {data: "customer_status", visible: false},
+                    {data: "can_user_view", visible: false},
+
                 ],
                 processing: true,
+                /*
                 initComplete: function () {
                     // Grab Regions from the data in the table
                     var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
@@ -228,6 +267,7 @@ export default {
                         vm.status = statusTitles;
                     });
                 }
+                */
             }
         }
     },
@@ -235,6 +275,15 @@ export default {
         datatable
     },
     watch:{
+        filterProposalRegion: function() {
+            //this.$refs.proposal_datatable.vmDataTable.draw();
+            let vm = this;
+            if (vm.filterProposalRegion!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(1).search('').draw();
+            }
+        },
         filterProposalActivity: function() {
             let vm = this;
             if (vm.filterProposalActivity!= 'All') {
@@ -250,9 +299,6 @@ export default {
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
             }
-        },
-        filterProposalRegion: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
         },
         filterProposalSubmitter: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
@@ -275,6 +321,20 @@ export default {
         
     },
     methods:{
+        fetchFilterLists: function(){
+            let vm = this;
+
+            vm.$http.get(api_endpoints.filter_list_compliances).then((response) => {
+                vm.proposal_regions = response.body.regions;
+                vm.proposal_activityTitles = response.body.activities;
+                vm.status = vm.level == 'external' ? vm.external_status: vm.internal_status;
+            },(error) => {
+                console.log(error);
+            })
+            //console.log(vm.regions);
+        },
+
+
         addEventListeners: function(){
             let vm = this;
             // Initialise Proposal Date Filters
@@ -390,6 +450,7 @@ export default {
     },
     mounted: function(){
         let vm = this;
+        vm.fetchFilterLists();
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {
@@ -400,6 +461,11 @@ export default {
             vm.addEventListeners();
             vm.initialiseSearch();
         });
+        if(vm.is_external){
+            var column = vm.$refs.proposal_datatable.vmDataTable.columns(8); //Hide 'Assigned To column for external'
+            column.visible(false);
+        }
+        
     }
 }
 </script>

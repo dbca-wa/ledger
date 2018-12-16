@@ -2,7 +2,16 @@
     <div class="top-buffer bottom-buffer">
         <div class="panel panel-default">
             <div class="panel-body">
-                <h4 class="inline">{{label}} <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i></h4>
+                <label :id="id" class="inline">{{label}}</label>
+                    <!--<i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>-->
+                <template v-if="help_text">
+                    <HelpText :help_text="help_text" /> 
+                </template>
+
+                <template v-if="help_text_url">
+                    <HelpTextUrl :help_text_url="help_text_url" /> 
+                </template>
+                
                 <a class="collapse-link-top pull-right" @click.prevent="expand"><span class="glyphicon glyphicon-chevron-down"></span></a>
                 <div class="children-anchor-point collapse in" style="padding-left: 0px"></div>
                 <span :class="{'hidden':isRemovable}" v-if="isPreviewMode">
@@ -20,14 +29,17 @@
 </template>
 
 <script>
+import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
     name:"group",
-    props:["label","name","help_text","isRemovable","isPreviewMode"],
+    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode"],
     data:function () {
         return{
             isExpanded:true
         }
     },
+    components: {HelpText, HelpTextUrl},
     methods:{
         expand:function(e) {
             this.isExpanded = true;

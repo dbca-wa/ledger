@@ -87,15 +87,35 @@ from '@/utils/hooks'
                 });
 
             }
-            
-            if (this.withSectionsSelector){
+            // Initialise by setting all first tabs.
+            $('#tabs-section li:first-child a').click();
+            $('#tabs-main li:first-child a').click();
 
-                Renderer.sections.map(sec => {
-                    $('#scrollspy-section').append(`<li class="list-group-item" ><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`);
+            if (this.withSectionsSelector){
+                var _tabid = 0;
+                var _settab = '';
+                var _mnu1 = '';
+                var _mnu2 = '';
+                Renderer.sections.map((sec,i) => {
+                   if (parseInt(sec.name.split('_')[1])===_tabid) {
+                      if (_tabid !== 0) {
+                        _mnu1 = _mnu1 + _mnu2 + '</ul></li>';
+                        _mnu2 = '';
+                      }
+                      _tabid++;
+                      _mnu1 = _mnu1 + `<li class='dropdown-submenu'><a tabindex='-1' class='section-menu' href='#section-submenu' data-toggle='collapse' aria-expanded='false'>` + tabs[parseInt(sec.name.split('_')[1])].name + `<span class='caret'></span></a><ul class='dropdown-menu' id='section-submenu' >` +_mnu2;
+                   };
+                   _mnu2 = _mnu2 + `<li><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`;
                 });
+                _mnu1 = _mnu1 + _mnu2 + '</ul></li>';
+                _tabid = 0;
+                $('#scrollspy-section').append(_mnu1);
 
                 $('a.page-scroll').bind('click', function(event) {
                    var $anchor = $(this);
+                   _tabid = parseInt(($anchor.attr('href')).split('_')[1]);
+                   _settab = '#tabs-section li:nth-child(' + ++_tabid + ') a';
+                   $(_settab).click();
                    $('html, body').stop().animate({
                        scrollTop: ($($anchor.attr('href')).offset().top)
                    }, 1000, 'easeInOutExpo');
@@ -115,11 +135,9 @@ from '@/utils/hooks'
 
             }
 
-            // Initialise by setting all first tabs.
-            $('#tabs-section li:first-child a').click();
-            $('#tabs-main li:first-child a').click();
+
         },
-        render(h) {
+       render(h) {
             let vm =this;
             Renderer.tabs_list = [];
             Renderer.store_status_data(vm.application.readonly,vm.application.assessor_data,vm.application.comment_data,vm.application.current_assessor,vm.application.assessor_mode,vm.application.can_user_edit,vm.application.documents_url,vm.application.id);
@@ -130,16 +148,20 @@ from '@/utils/hooks'
                             <h3>Application {vm.application.id}: {vm.application.licence_type_short_name}</h3>
                         </div>
                         <div class="col-md-3" >
-                            <div class="panel panel-default fixed">
-                              <div class="panel-heading">
-                                <h5>Sections</h5>
-                              </div>
-                              <div class="panel-body" style="padding:0">
-                                  <ul class="list-group" id="scrollspy-section" style="margin-bottom:0">
-
+                          <div class="panel panel-default fixed">
+                            <div class="panel-heading">
+                               <div class="dropdown">
+                                  <ul class="list-unstyled">
+                                    <li ><a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><h5>Sections<span class="caret"></span></h5></a>
+                                      <ul class="dropdown-menu" id="scrollspy-section" >
+                                      </ul>
+                                    </li>
                                   </ul>
-                              </div>
+                                </div>
                             </div>
+                            <div class="panel-body" style="padding:0">
+                            </div>
+                          </div>
                         </div>
                         <div class="col-md-9" id="tabs">
                             <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
@@ -191,4 +213,11 @@ from '@/utils/hooks'
             }
         }
     }
+    $(document).ready(function(){
+      $('.dropdown-submenu a.section-menu').on("click", function(e){
+        $(this).next('ul').toggle();
+        e.stopPropagation();
+        e.preventDefault();
+      });
+    });
 </script>

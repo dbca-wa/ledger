@@ -20,7 +20,7 @@ class ReturnSerializer(serializers.ModelSerializer):
             'assigned_to',
             'licence',
             'resources',
-            'headers'
+            'table'
         )
 
 class ReturnTypeSerializer(serializers.ModelSerializer):

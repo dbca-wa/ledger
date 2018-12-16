@@ -44,14 +44,14 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <span v-if="requiresCheckout"style="margin-right: 5px; font-size: 18px;">
+                                    <span v-if="requiresCheckout && wc_version != 1.0"style="margin-right: 5px; font-size: 18px;">
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
-                                    <input type="submit" class="btn btn-primary" value="Save and Exit"/>
+                                    <input type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="!requiresCheckout" type="submit" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
-                                    <input v-else type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
+                                    <input v-if="!requiresCheckout || wc_version == 1.0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="requiresCheckout && wc_version != 1.0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                 </p>
                             </div>
                         </div>
@@ -147,6 +147,9 @@ export default {
     requiresCheckout: function() {
         return this.application.application_fee > 0 && this.application_customer_status_onload == 'Draft'
     },
+    wc_version: function (){
+        return this.$root.wc_version;
+    },
     tab_changed: function() {
       return this.current_tab;
     },
@@ -162,6 +165,22 @@ export default {
         return vm.current_tab;
         */
         return $("ul#tabs-section li.active")[0].textContent
+    },
+    saveExit: function(e) {
+      let vm = this;
+      let formData = new FormData(vm.form);
+      console.log(formData)
+      vm.$http.post(vm.application_form_url,formData).then(res=>{
+          swal(
+            'Saved',
+            'Your application has been saved',
+            'success'
+          ).then((result) => {
+            window.location.href = "/";
+          });
+      },err=>{
+
+      });
     },
     save: function(e) {
       let vm = this;
@@ -325,9 +344,6 @@ export default {
         }
         return vm.missing_fields.length
     },
-
-
-
     submit: function(){
         let vm = this;
         console.log('SUBMIT VM FORM and CHECKOUT');
@@ -347,7 +363,7 @@ export default {
 
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
-        if (vm.requiresCheckout) {
+        if (vm.requiresCheckout && vm.wc_version != "1.0") {
             swal_title = 'Submit Application and Checkout'
             swal_html = 'Are you sure you want to submit this application and proceed to checkout?<br><br>' +
                 'Upon proceeding, you agree that the system will charge the same credit card used to ' +
@@ -365,7 +381,7 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
                     
-                    if (vm.requiresCheckout) {
+                    if (vm.requiresCheckout && vm.wc_version != "1.0") {
                         vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
                             window.location.href = "/ledger/checkout/checkout/payment-details/";
                         },err=>{

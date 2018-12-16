@@ -370,7 +370,7 @@ class Application(RevisionedMixin):
         """
         :return: True if the application is in one of the editable status.
         """
-        return self.customer_status in self.CUSTOMER_EDITABLE_STATE
+        return self.customer_status in self.CUSTOMER_EDITABLE_STATE and self.processing_status == 'draft'
 
     @property
     def can_user_view(self):
@@ -806,12 +806,11 @@ class Application(RevisionedMixin):
             try:
                 # if not self.can_assess(request.user):
                 #     raise exceptions.ApplicationNotAuthorized()
-                for activity_type in  self.licence_type_data['activity_type']:
+                for activity_type in self.licence_type_data['activity_type']:
                     if activity_type["id"]==details.get('activity_type'):
                         if activity_type["processing_status"] !="With Officer-Conditions":
-                            raise ValidationError('You cannot propose for licence if it is not with assessor for conditions')
+                            raise ValidationError('You cannot propose for licence if it is not with officer for conditions')
                 activity_type=details.get('activity_type')
-                print(type(activity_type))
                 for item1 in activity_type:
                     ApplicationDecisionPropose.objects.update_or_create(
                         application = self,
@@ -907,10 +906,29 @@ class Application(RevisionedMixin):
             try:
                 # if not self.can_assess(request.user):
                 #     raise exceptions.ApplicationNotAuthorized()
-                for activity_type in  self.licence_type_data['activity_type']:
-                    if activity_type["id"]==details.get('licence_activity_type_id'):
+                for activity_type in self.licence_type_data['activity_type']:
+                    if activity_type["id"]==details.get('activity_type'):
                         if activity_type["processing_status"] !="With Officer-Conditions":
-                            raise ValidationError('You cannot propose for licence if it is not with assessor for conditions')
+                            raise ValidationError('You cannot propose for licence if it is not with officer for conditions')
+                    activity_type = details.get('activity_type')
+                    for item1 in activity_type:
+                        ApplicationDecisionPropose.objects.update_or_create(
+                            application=self,
+                            officer=request.user,
+                            proposed_action='propose_issue',
+                            reason=details.get('reason'),
+                            cc_email=details.get('cc_email', None),
+                            proposed_start_date=details.get('start_date',None),
+                            proposed_end_date=details.get('expiry_date',None),
+                            licence_activity_type_id=item1
+                        )
+
+                    for item in activity_type:
+                        for activity_type in self.licence_type_data['activity_type']:
+                            if activity_type["id"] == item:
+                                activity_type["proposed_issue"] = True
+                                activity_type["processing_status"] = "With Officer-Finalisation"
+                                self.save()
 
                 try:
                     ApplicationDecisionPropose.objects.get(application=self, licence_activity_type_id=details.get('licence_activity_type_id'))

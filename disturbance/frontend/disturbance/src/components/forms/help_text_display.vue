@@ -4,7 +4,6 @@
             <div class="form-group">
                 <div class="row">
                   <p class="col-md-9" v-html="help_text"></p>
-                  
                 </div>
             </div>
         </div>

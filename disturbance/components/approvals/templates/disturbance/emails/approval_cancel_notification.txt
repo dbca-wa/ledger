@@ -1,0 +1,14 @@
+{%  extends 'disturbance/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Approval has been cancelled:
+
+    Approval : {{ approval.lodgement_number}}
+
+    Cancellation Details : {{ approval.cancellation_details}}
+
+    Cancellation Date : {{ approval.cancellation_date}}
+
+    
+
+{%  endblock %}
