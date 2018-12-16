@@ -332,9 +332,9 @@ class ExcelWriter():
         schema = WildlifeLicenceActivity.objects.get(name=activity_name).schema
         res = search_multiple_keys(schema, 'isEditable', ['name', 'label'])
 
-        #sys_fields = [ordered_dict.update([(i['name'],i['label'] + ' (' + i['name'] + ')')]) for i in res] 
-        #sys_fields = [ordered_dict.update([(i['label'] + ' (' + i['name'] + ')', None)]) for i in res] 
-        [ordered_dict.update([(i['name'],i['label'])]) for i in res] 
+        #sys_fields = [ordered_dict.update([(i['name'],i['label'] + ' (' + i['name'] + ')')]) for i in res]
+        #sys_fields = [ordered_dict.update([(i['label'] + ' (' + i['name'] + ')', None)]) for i in res]
+        [ordered_dict.update([(i['name'],i['label'])]) for i in res]
 
         return ordered_dict
 
@@ -396,40 +396,44 @@ class ExcelWriter():
         return new_excel_apps
 
 
-    def create_workbook_template(self, input_filename, licence_category='Fauna Other Purpose'):
+    def create_workbook_template(self, filename, licence_category='Fauna Other Purpose'):
+        """
+        Creates a blank template with purposes and column headings only
+        """
         meta = OrderedDict()
-        if os.path.isfile(input_filename):
-            logger.warn('File already exists {}'.format(input_filename))
+        if os.path.isfile(filename):
+            logger.warn('File already exists {}'.format(filename))
             return None
 
-        self.cols_output(None, 'Importing Fauna (Non-Commercial)')
+        wb = xlsxwriter.Workbook(filename)
+        ws = wb.add_worksheet(APP_SHEET_NAME)
+        self.set_formats(wb)
+
+        row_num = 0
+        col_num = 0
+        cell_dict = {}
+        cell_start = xl_rowcol_to_cell(row_num, col_num, row_abs=True, col_abs=True)
+        sys_cols = self.cols_system(None, 'System').keys()
+        for col_name in sys_cols:
+            ws.write(row_num, col_num, col_name, self.bold_unlocked)
+            col_num += 1
+        cell_end = xl_rowcol_to_cell(row_num, col_num-1, row_abs=True, col_abs=True)
+        cell_dict.update({'System': [cell_start, cell_end]})
 
         activity_name_list = self.get_purposes(licence_category)
         for activity_name in activity_name_list:
-            self.cols_output(None, 'Importing Fauna (Non-Commercial)')
-            
-
-        col_num = 0
-        import ipdb; ipdb.set_trace()
-        for k,v in excel_app.cols_output.iteritems():
-            #ws.write(row_num, col_num, k, font_style)
-            ws.write(row_num, col_num, k, self.bold)
-            col_num += 1
-
-        for activity_name in activity_name_list:
-            #activity_type = excel_app.excel_activity_types.filter(activity_name=activity_name)
-            #import ipdb; ipdb.set_trace()
+            #cols = self.cols_output(None, 'Importing Fauna (Non-Commercial)')
             activity_type_cols = self.cols_output(None, activity_name).keys()
-
             ws.write(row_num, col_num, '', self.bold); col_num += 1
-            #ws.write(row_num, col_num, short_name, bold); col_num += 1
-
+            cell_start = xl_rowcol_to_cell(row_num, col_num, row_abs=True, col_abs=True)
             for col_name in activity_type_cols:
                 ws.write(row_num, col_num, col_name, self.bold_unlocked)
                 col_num += 1
+            cell_end = xl_rowcol_to_cell(row_num, col_num-1, row_abs=True, col_abs=True)
+            cell_dict.update({activity_name: [cell_start, cell_end]})
 
-
-        
+        self.write_sheet_meta(wb, cell_dict, activity_name_list)
+        wb.close()
 
     def read_workbook(self, input_filename, licence_category='Fauna Other Purpose'):
         """
@@ -446,8 +450,8 @@ class ExcelWriter():
         #meta = {}
         meta = OrderedDict()
         if not os.path.isfile(input_filename):
-            logger.warn('Cannot find file {}'.format(input_filename))
-            return None
+            logger.warn('Cannot find file {}. Creating ...'.format(input_filename))
+            self.create_workbook_template(input_filename, licence_category)
 
         wb = xlrd.open_workbook(input_filename)
         sh = wb.sheet_by_name(APP_SHEET_NAME)
@@ -561,7 +565,6 @@ class ExcelWriter():
             row_num += 1
 
 
-    @property
     def cols_system(self, qs_activity_type, activity_name):
         """ qs_excel_app --> ExcelApplication """
         return OrderedDict([
