@@ -16,19 +16,19 @@ var css = require('./hooks-css.js');
 Vue.use(VueRouter);
 Vue.use(resource);
 Vue.use(VModal);
-
+console.log('main loaded');
 require('custom-event-polyfill');
-
+console.log(costs);
 const routes = [
     {
-        path: '/admissions',
-        component: admissions,
-        name: 'admissions'
+        path: '/admissions/',
+        component: admissions, 
+//        name: 'admissions'
     },
     {
-        path: '/admissions-cost',
+        path: '/admissions-cost/',
         component: costs,
-        name: 'cost'
+//        name: 'cost'
     }
 ];
 
@@ -37,6 +37,8 @@ const router = new VueRouter({
   mode: 'history',
 });
 
+
+//console.log(router);
 new Vue({
     router,
 }).$mount('#menu');
@@ -45,7 +47,7 @@ const app = new Vue({
     router,
     store,
     components:{
-        alert
+       alert
     },
     watch:{
         $route:function () {
@@ -61,8 +63,8 @@ const app = new Vue({
         ...mapGetters([
             "showAlert",
             "alertType",
-            "alertMessage"
+           "alertMessage"
         ])
     },
     render: h => h(App)
-}).$mount('#app');
+}).$mount('#appdiv');
