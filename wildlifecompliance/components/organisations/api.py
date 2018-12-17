@@ -774,13 +774,14 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            abn = request.data.get('abn')
-            requests = OrganisationRequest.objects.filter(abn=abn, requester_id=request.user.id).exclude(status='declined')
-            if requests.exists():
-                raise serializers.ValidationError('A request already exists')
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.validated_data['requester'] = request.user
+            if request.data.get('role') == 'employee':
+                abn = request.data.get('abn')
+                org_requests = OrganisationRequest.objects.filter(abn=abn, role='employee').exclude(status='declined')
+                if org_requests.exists():
+                    raise serializers.ValidationError('A request has already been submitted.')
             with transaction.atomic():
                 instance = serializer.save()
                 instance.log_user_action(OrganisationRequestUserAction.ACTION_LODGE_REQUEST.format(instance.id),request)
