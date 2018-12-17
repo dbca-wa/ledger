@@ -2,7 +2,9 @@ from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from wildlifecompliance.components.returns.models import (
     Return,
-    ReturnType
+    ReturnType,
+    ReturnUserAction,
+    ReturnLogEntry
 )
 from rest_framework import serializers
 
@@ -30,3 +32,16 @@ class ReturnTypeSerializer(serializers.ModelSerializer):
             'id',
             'resources'
             )
+
+class ReturnActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+    class Meta:
+        model = ReturnUserAction
+        fields = '__all__'
+
+class ReturnCommsSerializer(serializers.ModelSerializer):
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = ReturnLogEntry
+        fields = '__all__'
+    

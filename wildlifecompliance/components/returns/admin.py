@@ -23,3 +23,7 @@ class ReturnRow(admin.ModelAdmin):
 @admin.register(models.ReturnUserAction)
 class ReturnUserActionAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(models.ReturnLogEntry)
+class ReturnLogEntryAdmin(admin.ModelAdmin):
+    pass
