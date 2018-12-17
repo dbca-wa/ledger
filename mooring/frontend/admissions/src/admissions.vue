@@ -198,8 +198,8 @@
 <script>
 import 'foundation-sites';
 import 'foundation-datepicker/js/foundation-datepicker';
-import moment from 'moment'
-import JQuery from 'jquery'
+import moment from 'moment';
+import JQuery from 'jquery';
 import { api_endpoints } from './hooks';
 
 let $ = JQuery
