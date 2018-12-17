@@ -325,6 +325,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
     booking_id = None
     booking_period_option = None
     today = date.today()
+    nowtime =  datetime.today() 
 
     if ongoing_booking:
        booking_id = ongoing_booking.id
@@ -362,8 +363,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
             Q(status=1),
             Q(range_start__lt=end_date_time+timedelta(days=1)) & (Q(range_end__gte=start_date_time-timedelta(days=3))|Q(range_end__isnull=True))
         )
-        print "GET CLOSURES"
-        print cgbr_qs 
  
         for i in range(duration):
             date_rotate_forward = start_date+timedelta(days=i)
@@ -382,10 +381,16 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                 for bp in bp_result:
                     booking_period[bp.pk] = 'open'
                     selection_period[bp.pk] = 0
+                    nowtimewa = nowtime+timedelta(hours=8)
                     start_dt = datetime.strptime(str(date_rotate_forward)+' '+str(bp.start_time), '%Y-%m-%d %H:%M:%S')
                     finish_dt = datetime.strptime(str(date_rotate_forward)+' '+str(bp.finish_time), '%Y-%m-%d %H:%M:%S')
                     if start_dt > finish_dt:
                          finish_dt = finish_dt+timedelta(days=1)
+                    if date_rotate_forward < today:
+                        booking_period[bp.pk] = 'closed'
+                    if today == date_rotate_forward:
+                         if nowtime > start_dt:
+                               booking_period[bp.pk] = 'closed' 
 
                     for closure in cgbr_qs:
                         # CLOSURE INFORMATION

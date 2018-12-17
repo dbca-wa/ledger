@@ -1620,8 +1620,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             ongoing_booking.save()
         
 
-        
-
         # if campground doesn't support online bookings, abort!
         if ground.mooring_type != 0:
             return Response({'error': 'Mooring doesn\'t support online bookings'}, status=400)
@@ -1638,6 +1636,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         end_date =end_date  + timedelta(days=1)
         length = max(0, (end_date-start_date).days) 
         max_advance_booking_days = max(0, (start_date-today).days)
+
         #if length > settings.PS_MAX_BOOKING_LENGTH:
         #    length = settings.PS_MAX_BOOKING_LENGTH
         #    end_date = start_date+timedelta(days=settings.PS_MAX_BOOKING_LENGTH)
@@ -1887,8 +1886,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                                bp['booking_row_id'] = avbp_map2[bp['id']]
                          bp_new.append(bp)
                          # Close everything thats in the past 
-                         if datetime.strptime(str(date_rotate), '%Y-%m-%d') <= datetime.now():
-                               bp['status'] = 'closed'
+                         # if datetime.strptime(str(date_rotate), '%Y-%m-%d') <= datetime.now():
+                         #      bp['status'] = 'closed'
                          
                      v[2][date_rotate]['booking_period'] = bp_new
  
