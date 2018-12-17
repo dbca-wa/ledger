@@ -349,6 +349,33 @@ class Application(RevisionedMixin):
             return "{} {}".format(self.submitter.first_name, self.submitter.last_name)
 
     @property
+    def applicant_details(self):
+        if self.org_applicant:
+            return '{} \n{}'.format(self.org_applicant.organisation.name, self.org_applicant.address)
+        elif self.proxy_applicant:
+            return "{} {}\n{}".format(self.proxy_applicant.first_name, self.proxy_applicant.last_name, self.proxy_applicant.addresses.all().first())
+        else:
+            return "{} {}\n{}".format(self.submitter.first_name, self.submitter.last_name, self.submitter.addresses.all().first())
+
+    @property
+    def applicant_id(self):
+        if self.org_applicant:
+            return self.org_applicant.id
+        elif self.proxy_applicant:
+            return self.proxy_applicant.id
+        else:
+            return self.submitter.id
+
+    @property
+    def applicant_type(self):
+        if self.org_applicant:
+            return "ORG"
+        elif self.proxy_applicant:
+            return "PRX"
+        else:
+            return "SUB"
+
+    @property
     def has_amendment(self):
         qs = self.amendment_requests
         qs = qs.filter(status = 'requested')
@@ -1580,10 +1607,11 @@ class ExcelApplication(models.Model):
             ('lodgement_number', self.lodgement_number),
             ('application_id', self.application.id),
             ('licence_number', self.licence_number),
-            #('applicant', self.applicant_details),
-            #('applicant_id', self.org_applicant.id),
-            ('applicant', None),
-            ('applicant_id', None),
+            ('applicant', self.applicant_details),
+            ('applicant_type', self.applicant_type),
+            ('applicant_id', self.applicant_id),
+            #('applicant', None),
+            #('applicant_id', None),
         ])
 
     @property
@@ -1600,18 +1628,20 @@ class ExcelApplication(models.Model):
         return self.application.licence.licence_number if self.application.licence else None
 
     @property
-    def org_applicant(self):
-        return self.application.org_applicant
+    def applicant(self):
+        return self.application.applicant
+
+    @property
+    def applicant_id(self):
+        return self.application.applicant_id
 
     @property
     def applicant_details(self):
-        try:
-            if self.org_applicant:
-                return '{} \n{}'.format(self.org_applicant.name, self.org_applicant.address)
-            elif self.applicant:
-                return '{}'.format(self.applicant)
-        except:
-            return None
+        return self.application.applicant_details
+
+    @property
+    def applicant_type(self):
+        return self.application.applicant_type
 
 #    @property
 #    def applicant_block(self):

@@ -14,6 +14,7 @@ from ledger.accounts.models import EmailUser
 import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell, xl_cell_to_rowcol, xl_col_to_name
 import xlrd#, xlwt
+import openpyxl
 import os
 import re
 
@@ -453,7 +454,6 @@ class ExcelWriter():
             In [30]: [{i['name'],i['label']} for i in search_multiple_keys(schema, 'isEditable', ['name', 'label'])]
             Out[30]: [{u'Species', u'Species1-1'}, {u'Number of animals', u'Species1-2'}]
         """
-        #meta = {}
         import ipdb; ipdb.set_trace()
         meta = OrderedDict()
         if not os.path.isfile(input_filename):
@@ -485,7 +485,8 @@ class ExcelWriter():
             application_id = int(row_values[hdr.index('application_id')])
             licence_number = row_values[hdr.index('licence_number')]
             applicant = row_values[hdr.index('applicant')]
-            applicant_id = row_values[hdr.index('applicant_id')]
+            applicant_type = row_values[hdr.index('applicant_type')]
+            applicant_id = int(row_values[hdr.index('applicant_id')])
             application = Application.objects.get(lodgement_number=lodgement_number)
 
             for purpose in meta.keys():
@@ -504,7 +505,8 @@ class ExcelWriter():
                             #if not licence_exists(purpose, lodgement_number):
 
                             # check if user already has a licence. if so, re-use licence_number and update the licence_sequence
-                            licence_number = self.create_licence(application, purpose).reference
+                            #licence_number = self.create_licence(application, purpose).reference
+                            licence_number = self.create_licence(application, purpose, applicant_type, applicant_id).reference
                             #purpose_row[idx_start:idx_start]
                             row_values[hdr.index('licence_number')] = licence_number
                     except ValueError, e:
@@ -526,12 +528,17 @@ class ExcelWriter():
         ws = wb.get_worksheet_by_name(APP_SHEET_NAME)
         #sh_meta = wb.sheet_by_name(META_SHEET_NAME)
 
+        wb = openpyxl.load_workbook(input_filename)
+        ws = wb.get_sheet_by_name(APP_SHEET_NAME)
+
         row_num = 0
         col_num = 0
-        ws.write_row(row_num, col_num, hdr, self.bold); row_num += 1
+        #ws.write_row(row_num, col_num, hdr, self.bold); row_num += 1
+        self.write_row(row_num, col_num, hdr, ws); row_num += 1
         for k,v in excel_data.iteritems():
             #import ipdb; ipdb.set_trace()
-            ws.write_row(row_num, col_num, v)
+            #ws.write_row(row_num, col_num, v)
+            self.write_row(row_num, col_num, v, ws)
             row_num += 1
 
         # Append new applications to output
@@ -540,8 +547,18 @@ class ExcelWriter():
         #new_app_ids = Application.objects.exclude(processing_status='draft').exclude(id__in=cur_app_ids)
         self.write_new_app_data(excel_data, meta, licence_category, ws, row_num)
 
-        wb_out.close()
+        #wb_out.close()
+        wb.save(input_filename)
 
+    def write_row(self, row_num, col_num, values, worksheet):
+        """ writes values as a row of datai. If values is a single value, writes to a single cell """
+        if not isinstance(values, list):
+            #import ipdb; ipdb.set_trace()
+            values = [values] if values else ['']
+
+        for col, val in enumerate(values, start=col_num):
+            worksheet.cell(row=row_num+1, column=col+1, value=val) # openpyxl count rows and cols from 1
+        
     def write_new_app_data(self, excel_data, meta, licence_category, worksheet, next_row):
         cur_app_ids = [int(v[1]) for k,v in excel_data.iteritems()] # existing app id's
         new_excel_apps = self.create_excel_model(licence_category, cur_app_ids)
@@ -552,7 +569,8 @@ class ExcelWriter():
             # System data
             col_num = int(meta['System']['First Col'])
             for k,v in excel_app.cols_output.iteritems():
-                worksheet.write(row_num, col_num, v, self.locked)
+                #worksheet.write(row_num, col_num, v, self.locked)
+                self.write_row(row_num, col_num, v, worksheet)
                 col_num += 1
 
 
@@ -565,16 +583,18 @@ class ExcelWriter():
                     activity_type = excel_app.excel_activity_types.filter(activity_name=purpose)
                     activity_type_cols = self.cols_output(activity_type, purpose)
 
-                    col_num = int(meta[purpose]['First Col']) + 1
+                    col_num = int(meta[purpose]['First Col'])# + 1
                     if activity_type.exists():
                         for k,v in activity_type_cols.iteritems():
                             #ws.write('B1', 'Here is\nsome long text\nthat\nwe wrap',      wrap)
-                            worksheet.write(row_num, col_num, v, self.unlocked_wrap)
+                            #worksheet.write(row_num, col_num, v, self.unlocked_wrap)
+                            self.write_row(row_num, col_num, v, worksheet)
                             col_num += 1
                     else:
                         # create a blank activity_type bilock
                         for _ in activity_type_cols.keys():
-                            worksheet.write(row_num, col_num, '', self.unlocked)
+                            #worksheet.write(row_num, col_num, '', self.unlocked)
+                            self.write_row(row_num, col_num, '', worksheet)
                             col_num += 1
 
             row_num += 1
@@ -587,7 +607,8 @@ class ExcelWriter():
             ('application_id', qs_activity_type[0].excel_app.application.id if qs_activity_type else None),
             ('licence_number', qs_activity_type[0].excel_app.licence_number if qs_activity_type else None),
             ('applicant', qs_activity_type[0].excel_app.applicant_details if qs_activity_type else None),
-            ('applicant_id', qs_activity_type[0].excel_app.org_applicant.id if qs_activity_type else None),
+            ('applicant_type', qs_activity_type[0].excel_app.applicant_type if qs_activity_type else None),
+            ('applicant_id', qs_activity_type[0].excel_app.applicant_id if qs_activity_type else None),
         ])
 
 
@@ -622,12 +643,73 @@ class ExcelWriter():
         return ordered_dict
 
 
-    def create_licence(self, application, activity_name='Importing Fauna (Non-Commercial)'):
-        #import ipdb; ipdb.set_trace()
+    def create_licence(self, application, activity_name, applicant_type, applicant_id):
+        """ activity_name='Importing Fauna (Non-Commercial)' """
+        import ipdb; ipdb.set_trace()
+        licence = None
         activity=WildlifeLicenceActivity.objects.get(name=activity_name)
-        licence = WildlifeLicence.objects.create(current_application=application, org_applicant=application.org_applicant, submitter=application.submitter, licence_type=activity)
-        return licence
+        if applicant_type == "ORG": # Applicant is an Organisation
+            qs_licence = WildlifeLicence.objects.filter(org_applicant_id=applicant_id)
+            if qs_licence.exists():
+                # use existing licence, just increment sequence_number
+                licence = WildlifeLicence.objects.create(
+                    licence_number=qs_licence.last().licence_number,
+                    licence_sequence=qs_licence.last().licence_sequence + 1,
+                    current_application=application,
+                    org_applicant_id=applicant_id,
+                    submitter=application.submitter,
+                    licence_type=activity
+                )
+            else:
+                licence = WildlifeLicence.objects.create(
+                    current_application=application,
+                    org_applicant_id=applicant_id,
+                    submitter=application.submitter,
+                    licence_type=activity
+                )
 
+        elif applicant_type == "PRX": # Applicant is a proxy_applicant
+            qs_licence = WildlifeLicence.objects.filter(proxy_applicant_id=applicant_id)
+            if not qs_licence.exists():
+                # use existing licence, just increment sequence_number
+                licence = WildlifeLicence.objects.create(
+                    licence_number=qs_licence.last().licence_number,
+                    licence_sequence=qs_licence.last().licence_sequence + 1,
+                    current_application=application,
+                    proxy_applicant_id=applicant_id,
+                    submitter=application.submitter,
+                    licence_type=activity
+                )
+            else:
+                licence = WildlifeLicence.objects.create(
+                    current_application=application,
+                    proxy_applicant_id=applicant_id,
+                    submitter=application.submitter,
+                    licence_type=activity
+                )
+
+
+        elif applicant_type == "SUB": # Applicant is the submitter
+            qs_licence = WildlifeLicence.objects.filter(submitter_id=applicant_id)
+            if not qs_licence.exists():
+                # use existing licence, just increment sequence_number
+                licence = WildlifeLicence.objects.create(
+                    licence_number=qs_licence.last().licence_number,
+                    licence_sequence=qs_licence.last().licence_sequence + 1,
+                    current_application=application,
+                    #proxy_applicant_id=applicant_id,
+                    submitter_id=applicant_id,
+                    licence_type=activity
+                )
+            else:
+                licence = WildlifeLicence.objects.create(
+                    current_application=application,
+                    #org_applicant_id=applicant_id,
+                    submitter_id=applicant_id,
+                    licence_type=activity
+                )
+
+        return licence
 
     def write_workbook(self, licence_category='Flora Industry'):
         """
