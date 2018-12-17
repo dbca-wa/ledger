@@ -427,6 +427,11 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     @list_route(methods=['POST',])
     def existance(self, request, *args, **kwargs):
         try:
+            # Check no requests awaiting approval.
+            abn = request.data.get('abn')
+            org_requests = OrganisationRequest.objects.filter(abn=abn, role='employee').exclude(status='declined')
+            if org_requests.exists():
+                raise serializers.ValidationError('A request already submitted - Pending Approval.')
             serializer = OrganisationCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             data = Organisation.existance(serializer.validated_data['abn']) 
@@ -777,11 +782,6 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.validated_data['requester'] = request.user
-            if request.data.get('role') == 'employee':
-                abn = request.data.get('abn')
-                org_requests = OrganisationRequest.objects.filter(abn=abn, role='employee').exclude(status='declined')
-                if org_requests.exists():
-                    raise serializers.ValidationError('A request has already been submitted.')
             with transaction.atomic():
                 instance = serializer.save()
                 instance.log_user_action(OrganisationRequestUserAction.ACTION_LODGE_REQUEST.format(instance.id),request)
