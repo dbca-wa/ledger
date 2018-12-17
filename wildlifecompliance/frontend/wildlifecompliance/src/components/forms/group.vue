@@ -25,6 +25,7 @@
                 </div>
             </div>
         </div>
+        <a v-if=isRepeatable class="btn btn-primary">Add Another</span>
     </div>
 </template>
 
@@ -33,7 +34,7 @@ import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 export default {
     name:"group",
-    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode"],
+    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode", "isRepeatable"],
     data:function () {
         return{
             isExpanded:true
