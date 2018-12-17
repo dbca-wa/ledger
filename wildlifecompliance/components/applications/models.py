@@ -1580,8 +1580,10 @@ class ExcelApplication(models.Model):
             ('lodgement_number', self.lodgement_number),
             ('application_id', self.application.id),
             ('licence_number', self.licence_number),
-            ('applicant', self.applicant_details),
-            ('applicant_id', self.org_applicant.id),
+            #('applicant', self.applicant_details),
+            #('applicant_id', self.org_applicant.id),
+            ('applicant', None),
+            ('applicant_id', None),
         ])
 
     @property
@@ -1603,7 +1605,13 @@ class ExcelApplication(models.Model):
 
     @property
     def applicant_details(self):
-        return '{} \n{}'.format(self.org_applicant.name, self.org_applicant.address)
+        try:
+            if self.org_applicant:
+                return '{} \n{}'.format(self.org_applicant.name, self.org_applicant.address)
+            elif self.applicant:
+                return '{}'.format(self.applicant)
+        except:
+            return None
 
 #    @property
 #    def applicant_block(self):

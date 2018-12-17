@@ -184,10 +184,17 @@ def write_excel_model_test(ids=[145]):
 
 APP_SHEET_NAME = 'Applications'
 META_SHEET_NAME = 'Meta'
+PATH = '/tmp'
 
 class ExcelWriter():
     def __init__(self):
         pass
+
+    def update_workooks(self):
+        for licence_category in WildlifeLicenceClass.objects.all():
+            #print i.short_name
+            filename = '{}.xlsx'.format(self.replace_special_chars(licence_category.short_name))
+            self.read_workbook(PATH + '/' + filename)
 
     def set_formats(self, workbook):
         self.bold = workbook.add_format({'bold': True})
@@ -198,9 +205,8 @@ class ExcelWriter():
         self.unlocked_wrap = workbook.add_format({'text_wrap': True, 'locked': False})
         self.integer = workbook.add_format({'num_format': '0', 'align': 'center'})
 
-
     def replace_special_chars(self, input_str, new_char='_'):
-        return re.sub('[^A-Za-z0-9]+', new_char, input_str)
+        return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
 
     def get_purposes(self, licence_class_short_name):
         """
@@ -379,7 +385,7 @@ class ExcelWriter():
 
         #new_app_ids = []
         new_excel_apps = []
-        for application in applications:
+        for application in applications.order_by('id'):
             excel_app, created = ExcelApplication.objects.get_or_create(application=application)
             new_excel_apps.append(excel_app)
 
@@ -448,6 +454,7 @@ class ExcelWriter():
             Out[30]: [{u'Species', u'Species1-1'}, {u'Number of animals', u'Species1-2'}]
         """
         #meta = {}
+        import ipdb; ipdb.set_trace()
         meta = OrderedDict()
         if not os.path.isfile(input_filename):
             logger.warn('Cannot find file {}. Creating ...'.format(input_filename))
@@ -505,25 +512,33 @@ class ExcelWriter():
 
             excel_data.update({lodgement_number: row_values})
 
+        #wb.release_resources()
+        #del wb
+
         # Re-output Application Data with licence_numbers
-        out_filename = '/tmp/wc_apps_out_{}.xlsx'.format(licence_category.lower().replace(' ','_'))
-        wb_out = xlsxwriter.Workbook(out_filename)
-        self.set_formats(wb_out)
-        ws_out = wb_out.add_worksheet(APP_SHEET_NAME)
+        #out_filename = '/tmp/wc_apps_out_{}.xlsx'.format(licence_category.lower().replace(' ','_'))
+        #wb_out = xlsxwriter.Workbook(out_filename)
+        import ipdb; ipdb.set_trace()
+        wb = xlsxwriter.Workbook(input_filename)
+        #self.set_formats(wb_out)
+        #ws_out = wb_out.add_worksheet(APP_SHEET_NAME)
+
+        ws = wb.get_worksheet_by_name(APP_SHEET_NAME)
+        #sh_meta = wb.sheet_by_name(META_SHEET_NAME)
 
         row_num = 0
         col_num = 0
-        ws_out.write_row(row_num, col_num, hdr, self.bold); row_num += 1
+        ws.write_row(row_num, col_num, hdr, self.bold); row_num += 1
         for k,v in excel_data.iteritems():
             #import ipdb; ipdb.set_trace()
-            ws_out.write_row(row_num, col_num, v)
+            ws.write_row(row_num, col_num, v)
             row_num += 1
 
         # Append new applications to output
         #import ipdb; ipdb.set_trace()
         #cur_app_ids = [int(v[1]) for k,v in excel_data.iteritems()] # existing app id's
         #new_app_ids = Application.objects.exclude(processing_status='draft').exclude(id__in=cur_app_ids)
-        self.write_new_app_data(excel_data, meta, licence_category, ws_out, row_num)
+        self.write_new_app_data(excel_data, meta, licence_category, ws, row_num)
 
         wb_out.close()
 
@@ -542,7 +557,7 @@ class ExcelWriter():
 
 
             # Application data
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             for purpose in meta.keys():
                 #import ipdb; ipdb.set_trace()
 
@@ -643,7 +658,7 @@ class ExcelWriter():
         #short_name_list = get_purposes(licence_class).values_list('activity_type__short_name', flat=True)
         activity_name_list = self.get_purposes(licence_class)#[:2]
         col_num = 0
-        import ipdb; ipdb.set_trace()
+        i#import ipdb; ipdb.set_trace()
         for k,v in excel_app.cols_output.iteritems():
             #ws.write(row_num, col_num, k, font_style)
             ws.write(row_num, col_num, k, self.bold)
