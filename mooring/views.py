@@ -528,6 +528,8 @@ class AdmissionsBookingSuccessView(TemplateView):
     def get(self, request, *args, **kwargs):
         try:
             booking = utils.get_session_admissions_booking(request.session)
+            arrival = AdmissionsLine.objects.filter(admissionsBooking=booking)[0].arrivalDate
+            overnight = AdmissionsLine.objects.filter(admissionsBooking=booking)[0].overnightStay
             invoice_ref = request.GET.get('invoice')
 
             if booking.booking_type == 3:
@@ -568,6 +570,8 @@ class AdmissionsBookingSuccessView(TemplateView):
             print(e)
             if ('ad_last_booking' in request.session) and AdmissionsBooking.objects.filter(id=request.session['ad_last_booking']).exists():
                 booking = AdmissionsBooking.objects.get(id=request.session['ad_last_booking'])
+                arrival = AdmissionsLine.objects.filter(admissionsBooking=booking)[0].arrivalDate
+                overnight = AdmissionsLine.objects.filter(admissionsBooking=booking)[0].overnightStay
                 invoice_ref = AdmissionsBookingInvoice.objects.get(admissions_booking=booking).invoice_reference
             else:
                 return redirect('home')
@@ -576,6 +580,8 @@ class AdmissionsBookingSuccessView(TemplateView):
             return redirect('home')
         context = {
             'admissionsBooking': booking,
+            'arrival' : arrival,
+            'overnight': overnight,
             'admissionsInvoice': invoice_ref
         }
         return render(request, self.template_name, context)
@@ -676,16 +682,15 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         ad_current = []
         for ad in ad_currents:
             adl = AdmissionsLine.objects.filter(admissionsBooking=ad)
-            conf = Booking.objects.filter(admission_payment=ad)
             if adl.count() > 1:
-                arrival = "See Booking PS" + conf.id
-                overnight = "See Booking PS" + conf.id
+                conf = Booking.objects.filter(admission_payment=ad)[0].id
+                arrival = "See Booking PS" + str(conf)
+                overnight = "See Booking PS" + str(conf)
             else :
                 arrival = adl[0].arrivalDate
                 overnight = adl[0].overnightStay
             to_add = [ad, arrival, overnight, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
             ad_current.append(to_add)
-        print ad_current
         ad_pasts = admissions.distinct().filter(admissionsline__arrivalDate__lt=today)
         ad_past = []
         for ad in ad_pasts:

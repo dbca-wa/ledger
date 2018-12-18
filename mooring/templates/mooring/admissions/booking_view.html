@@ -29,7 +29,11 @@
                 </div>
                 <div class="col-sm-7">
                     {% if overnight %}
-                        Yes
+                        {% if "See Booking PS" in overnight %}
+                            {{ overnight }}
+                        {% else %}
+                            Yes
+                        {% endif %}
                     {% else %}
                         No
                     {% endif %}
