@@ -92,7 +92,7 @@ module.exports = {
         var id1 = id + '_1'
         var id2 = id + '_2'
         var id3 = id + '_3'
-
+        console.log(c.type);
         switch (c.type) {
             case 'text':
 				readonly = (c.readonly) ? (c.readonly): (readonly);
@@ -165,7 +165,7 @@ module.exports = {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
                 _elements.push(
-					<Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={c.isRepeatable}>
+					<Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={c.isRepeatable} renderer={this} groupObject={c}>
                         {c.children.map(c=>{
                             return (
                                 <div>
@@ -175,6 +175,11 @@ module.exports = {
                         })}
                     </Group>
                 )
+                if(c.isRepeatable){
+                    _elements.push(
+                        <a class="btn btn-primary">Add Another 2</a>
+                    )
+                }
                 break;
             case 'section':
                 var value = null;
@@ -266,6 +271,7 @@ module.exports = {
             // Merge assessor boxes to _elements array
             Array.prototype.push.apply(_elements,boxes);
         }
+        console.log(_elements);
         return _elements;
     },
     handleRadioChange(e){
