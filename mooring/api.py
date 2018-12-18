@@ -68,6 +68,7 @@ from mooring.models import (MooringArea,
                                 BookingVehicleRego,
                                 MooringAreaGroup,
                                 AdmissionsBooking,
+                                AdmissionsLine,
                                 AdmissionsRate,
                                 AdmissionsBookingInvoice,
                                 BookingPeriodOption,
@@ -127,6 +128,7 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     BookingHistorySerializer,
                                     MooringAreaGroupSerializer,
                                     AdmissionsBookingSerializer,
+                                    AdmissionsLineSerializer,
                                     AdmissionsRateSerializer,
                                     BookingPeriodOptionsSerializer,
                                     BookingPeriodSerializer,
@@ -1978,7 +1980,6 @@ class AvailabilityAdminViewSet(BaseAvailabilityViewSet):
 @require_http_methods(['POST'])
 def create_admissions_booking(request, *args, **kwargs):
     data = {
-        'arrivalDate' : request.POST.get('arrival'),
         'vesselRegNo': request.POST.get('vesselReg'),
         'noOfAdults': request.POST.get('noOfAdults', 0),
         'noOfConcessions': request.POST.get('noOfConcessions', 0),
@@ -1986,20 +1987,15 @@ def create_admissions_booking(request, *args, **kwargs):
         'noOfInfants': request.POST.get('noOfInfants', 0),
         'warningReferenceNo': request.POST.get('warningRefNo'),
     }
+
     
-    if(request.POST.get('overnightStay') == 'yes'):
-        data['overnightStay'] = 'True'
-    else:
-        data['overnightStay'] = 'False'
-    dateAsString = data['arrivalDate']
-    data['arrivalDate'] = datetime.strptime(dateAsString, "%Y/%m/%d").date()
 
     serializer = AdmissionsBookingSerializer(data=data)
     serializer.is_valid(raise_exception=True)
 
+    
+
     admissionsBooking = AdmissionsBooking.objects.create(
-        arrivalDate = serializer.validated_data['arrivalDate'],
-        overnightStay = serializer.validated_data['overnightStay'],
         vesselRegNo = serializer.validated_data['vesselRegNo'],
         noOfAdults = serializer.validated_data['noOfAdults'],
         noOfConcessions = serializer.validated_data['noOfConcessions'],
@@ -2007,6 +2003,26 @@ def create_admissions_booking(request, *args, **kwargs):
         noOfInfants = serializer.validated_data['noOfInfants'],
         warningReferenceNo = serializer.validated_data['warningReferenceNo'],
         booking_type = 3
+    )
+    data2 = {
+        'arrivalDate' : request.POST.get('arrival'),
+        'admissionsBooking' : admissionsBooking.pk
+    }
+    
+    if(request.POST.get('overnightStay') == 'yes'):
+        data2['overnightStay'] = 'True'
+    else:
+        data2['overnightStay'] = 'False'
+    dateAsString = data2['arrivalDate']
+    data2['arrivalDate'] = datetime.strptime(dateAsString, "%Y/%m/%d").date()
+    
+    serializer2 = AdmissionsLineSerializer(data=data2)
+    serializer2.is_valid(raise_exception=True)
+
+    admissionsLine = AdmissionsLine.objects.create(
+        arrivalDate = serializer2.validated_data['arrivalDate'],
+        overnightStay = serializer2.validated_data['overnightStay'],
+        admissionsBooking = admissionsBooking
     )
 
     #Lookup price and set lines.
@@ -2040,6 +2056,8 @@ def create_admissions_booking(request, *args, **kwargs):
     admissionsBooking.customer = customer
     admissionsBooking.totalCost = total
     admissionsBooking.save()
+    admissionsLine.cost = total
+    admissionsLine.save()
 
     request.session['ad_booking'] = admissionsBooking.pk
     logger = logging.getLogger('booking_checkout')
@@ -2048,7 +2066,7 @@ def create_admissions_booking(request, *args, **kwargs):
     # generate invoice
     invoice = u"Invoice for {} on {}".format(
             u'{} {}'.format(admissionsBooking.customer.first_name, admissionsBooking.customer.last_name),
-            admissionsBooking.arrivalDate.strftime('%d-%m-%Y')
+            admissionsLine.arrivalDate.strftime('%d-%m-%Y')
     )
     #Not strictly needed.
     #logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(admissionsBooking.customer.get_full_name(),admissionsBooking.customer.id) if admissionsBooking.customer else 'An anonymous user',admissionsBooking.id))
@@ -2451,7 +2469,8 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         http_status = status.HTTP_200_OK
         try:
-            data = AdmissionsBooking.objects.filter(booking_type__in=(0, 1)).order_by('arrivalDate', 'pk')
+            data = AdmissionsBooking.objects.filter(booking_type__in=(0, 1)).order_by('pk')
+            print data
             recordsTotal = len(data)
             search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
             start = request.GET.get('start') if request.GET.get('start') else 0
@@ -2469,24 +2488,32 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                 data2 = data.filter(Q(warningReferenceNo__icontains=search) | Q(vesselRegNo__icontains=search) | Q(customer__first_name__icontains=search) | Q(customer__last_name__icontains=search) | Q(id__icontains=search))
             if(date_from):
                 if(data2):
-                    data2 = data2.filter(arrivalDate__gte=date_from)
+                    data2 = data2.filter(admissionsLine__arrivalDate__gte = date_from)
                 else:
-                    data2 = data.filter(arrivalDate__gte=date_from)
+                    data2 = data.filter(admissionsLine__arrivalDate__gte=date_from)
             if(date_to):
                 if(data2):
-                    data2 = data2.filter(arrivalDate__lte=date_to)
+                    data2 = data2.filter(admissionsLine__arrivalDate__lte=date_to)
                 else:
-                    data2 = data.filter(arrivalDate__lte=date_to)
+                    data2 = data.filter(admissionsLine__arrivalDate__lte=date_to)
             if(data2):
                 recordsFiltered = int(len(data2))
+                print recordsFiltered
                 data2 = data2[int(start):int(length)+int(start)]
             else:
                 recordsFiltered = int(len(data))
+                print recordsFiltered
                 data2 = data[int(start):int(length)+int(start)]
             serializer = AdmissionsBookingSerializer(data2,many=True)
             res = serializer.data
             for r in res:
                 ad = AdmissionsBooking.objects.get(pk=r['id'])
+                adLines = AdmissionsLine.objects.filter(admissionsBooking=ad)
+                lines = []
+                for line in adLines:
+                    lines.append({'date' : line.arrivalDate, 'overnight': line.overnightStay})
+                if adLines and lines != []:
+                    r.update({'lines' : lines})
                 adi = AdmissionsBookingInvoice.objects.get(admissions_booking=ad)
                 r.update({'invoice_ref': adi.invoice_reference})
                 if(r['customer']):
@@ -2495,6 +2522,8 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                     r.update({'customerName': name, 'email': email})
                 else:
                     r.update({'customerName': 'No customer', 'email': "No customer"})
+
+            
             
         except Exception as e:
             res ={

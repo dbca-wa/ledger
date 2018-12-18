@@ -17,7 +17,7 @@ from pytz import timezone as pytimezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate)
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
@@ -824,9 +824,17 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
     rate_list = {}
     invoice_lines = []
     line = lines
+    daily_rates = []
     # Create line items for customers
-    daily_rates = get_admissions_entry_rate(request,admissionsBooking.arrivalDate.strftime('%Y-%m-%d'))
-    if not daily_rates:
+    admissionsLines = AdmissionsLine.objects.filter(admissionsBooking=admissionsBooking)
+    for adLine in admissionsLines:
+        rate = get_admissions_entry_rate(request,adLine.arrivalDate.strftime('%Y-%m-%d'))
+        daily_rate = {'date' : adLine.arrivalDate.strftime('%d/%m/%Y'), 'rate' : rate}
+        daily_rates.append(daily_rate)
+
+    print daily_rates
+
+    if not daily_rates or daily_rates == []:
         raise Exception('There was an error while trying to get the daily rates.')
 
     if AdmissionsOracleCode.objects.count() == 0:
@@ -873,29 +881,32 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
 
     people = {'Adults': adults,'Concessions': admissionsBooking.noOfConcessions,'Children': children,'Infants': admissionsBooking.noOfInfants, 'Family': family}
 
-    for group, amount in people.items():
-        if line:
-            if(amount > 0):
-                if group == 'Adults':
-                    gr = 'adult'
-                elif group == 'Children':
-                    gr = group
-                elif group == 'Infants':
-                    gr = 'infant'
-                elif group == 'Family':
-                    gr = 'family'
-                if admissionsBooking.overnightStay:
-                    costfield = gr.lower() + "_overnight_cost"
-                    overnightStay = "Overnight Included"
-                else:
-                    costfield = gr.lower() + "_cost"
-                    overnightStay = "Day Visit Only"
-                price = daily_rates.get(costfield)
-                invoice_lines.append({'ledger_description':'Admission fee on {} ({}) {}'.format(admissionsBooking.arrivalDate, group, overnightStay),"quantity":amount,"price_incl_tax":price, "oracle_code":AdmissionsOracleCode.objects.all().first().oracle_code})
-            
-        else:
-            price = Decimal(daily_rates)
-            total_cost += price
+    for adLine in admissionsLines:
+        for group, amount in people.items():
+            if line:
+                if(amount > 0):
+                    if group == 'Adults':
+                        gr = 'adult'
+                    elif group == 'Children':
+                        gr = group
+                    elif group == 'Infants':
+                        gr = 'infant'
+                    elif group == 'Family':
+                        gr = 'family'
+                    if adLine.overnightStay:
+                        costfield = gr.lower() + "_overnight_cost"
+                        overnightStay = "Overnight Included"
+                    else:
+                        costfield = gr.lower() + "_cost"
+                        overnightStay = "Day Visit Only"
+                    daily_rate = next(item for item in daily_rates if item['date'] == adLine.arrivalDate.strftime('%d/%m/%Y'))['rate']
+                    price = daily_rate.get(costfield)
+                    invoice_lines.append({'ledger_description':'Admission fee on {} ({}) {}'.format(adLine.arrivalDate, group, overnightStay),"quantity":amount,"price_incl_tax":price, "oracle_code":AdmissionsOracleCode.objects.all().first().oracle_code})
+                
+            else:
+                daily_rate = daily_rates[adLine.arrivalDate.strftime('%d/%m/%Y')]
+                price = Decimal(daily_rate)
+                total_cost += price
 
     if line:
         return invoice_lines
