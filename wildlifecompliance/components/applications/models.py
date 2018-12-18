@@ -1652,7 +1652,7 @@ class ExcelActivityType(models.Model):
     excel_app = models.ForeignKey(ExcelApplication, related_name='excel_activity_types')
     activity_name = models.CharField(max_length=68, blank=True)
     name = models.CharField(max_length=68, blank=True)
-    short_name = models.CharField(max_length=24, blank=True)
+    short_name = models.CharField(max_length=68, blank=True)
     data = JSONField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
     issue_date = models.DateTimeField(blank=True, null=True)

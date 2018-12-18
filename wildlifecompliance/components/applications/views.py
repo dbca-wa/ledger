@@ -11,6 +11,7 @@ from wildlifecompliance.exceptions import BindApplicationException
 import xlwt
 from wildlifecompliance.utils import serialize_export, unique_column_names
 from datetime import datetime
+from wildlifecompliance.utils.excel_utils import ExcelWriter
 
 class ApplicationView(TemplateView):
     template_name = 'wildlifecompliance/application.html'
@@ -72,6 +73,9 @@ class ApplicationSuccessView(TemplateView):
         delete_session_application(request.session)
         return render(request, self.template_name, context)
 
+def update_workbooks(request):
+    writer = ExcelWriter()
+    writer.update_workbooks()
 
 def export_applications(request):
     filename = 'wildlife_compliance_applications_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))

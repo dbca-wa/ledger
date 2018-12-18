@@ -17,6 +17,7 @@ import xlrd#, xlwt
 import openpyxl
 import os
 import re
+import shutil
 
 import logging
 logger = logging.getLogger(__name__)
@@ -191,11 +192,21 @@ class ExcelWriter():
     def __init__(self):
         pass
 
-    def update_workooks(self):
+    def update_workbooks(self):
         for licence_category in WildlifeLicenceClass.objects.all():
-            #print i.short_name
+            print licence_category.short_name
             filename = '{}.xlsx'.format(self.replace_special_chars(licence_category.short_name))
-            self.read_workbook(PATH + '/' + filename)
+            self.archive_workbook(filename)
+            self.read_workbook(PATH + '/' + filename, licence_category.short_name)
+
+    def archive_workbook(self, filename):
+        src_file = PATH + '/' + filename
+        archive_dir = '{}/archive/{}'.format(PATH, datetime.now().strftime('%Y%m%dT%H%M%S'))
+        dest_file = archive_dir + '/' + filename
+        if not os.path.exists(archive_dir):
+            os.makedirs(archive_dir)
+        shutil.copyfile(src_file, dest_file)
+
 
     def set_formats(self, workbook):
         self.bold = workbook.add_format({'bold': True})
@@ -454,7 +465,7 @@ class ExcelWriter():
             In [30]: [{i['name'],i['label']} for i in search_multiple_keys(schema, 'isEditable', ['name', 'label'])]
             Out[30]: [{u'Species', u'Species1-1'}, {u'Number of animals', u'Species1-2'}]
         """
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         meta = OrderedDict()
         if not os.path.isfile(input_filename):
             logger.warn('Cannot find file {}. Creating ...'.format(input_filename))
@@ -502,12 +513,12 @@ class ExcelWriter():
                         to_be_issued = purpose_row[idx_to_be_issued]
                         if to_be_issued in ['y', 'Y'] and not licence_number:
                             # create licence, if not already created
-                            #if not licence_exists(purpose, lodgement_number):
-
                             # check if user already has a licence. if so, re-use licence_number and update the licence_sequence
-                            #licence_number = self.create_licence(application, purpose).reference
-                            licence_number = self.create_licence(application, purpose, applicant_type, applicant_id).reference
-                            #purpose_row[idx_start:idx_start]
+                            #import ipdb; ipdb.set_trace()
+                            if application.licences.all().count() > 0:
+                                licence_number = application.licences.all().first().reference
+                            else:
+                                licence_number = self.create_licence(application, purpose, applicant_type, applicant_id).reference
                             row_values[hdr.index('licence_number')] = licence_number
                     except ValueError, e:
                         logger.error('Cannot find activity_type {} in Excel header./n{}'.format(activity_type, e))
@@ -520,7 +531,7 @@ class ExcelWriter():
         # Re-output Application Data with licence_numbers
         #out_filename = '/tmp/wc_apps_out_{}.xlsx'.format(licence_category.lower().replace(' ','_'))
         #wb_out = xlsxwriter.Workbook(out_filename)
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         wb = xlsxwriter.Workbook(input_filename)
         #self.set_formats(wb_out)
         #ws_out = wb_out.add_worksheet(APP_SHEET_NAME)
@@ -558,7 +569,7 @@ class ExcelWriter():
 
         for col, val in enumerate(values, start=col_num):
             worksheet.cell(row=row_num+1, column=col+1, value=val) # openpyxl count rows and cols from 1
-        
+
     def write_new_app_data(self, excel_data, meta, licence_category, worksheet, next_row):
         cur_app_ids = [int(v[1]) for k,v in excel_data.iteritems()] # existing app id's
         new_excel_apps = self.create_excel_model(licence_category, cur_app_ids)
@@ -645,7 +656,7 @@ class ExcelWriter():
 
     def create_licence(self, application, activity_name, applicant_type, applicant_id):
         """ activity_name='Importing Fauna (Non-Commercial)' """
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         licence = None
         activity=WildlifeLicenceActivity.objects.get(name=activity_name)
         if applicant_type == "ORG": # Applicant is an Organisation
@@ -670,7 +681,7 @@ class ExcelWriter():
 
         elif applicant_type == "PRX": # Applicant is a proxy_applicant
             qs_licence = WildlifeLicence.objects.filter(proxy_applicant_id=applicant_id)
-            if not qs_licence.exists():
+            if qs_licence.exists():
                 # use existing licence, just increment sequence_number
                 licence = WildlifeLicence.objects.create(
                     licence_number=qs_licence.last().licence_number,
@@ -690,8 +701,9 @@ class ExcelWriter():
 
 
         elif applicant_type == "SUB": # Applicant is the submitter
-            qs_licence = WildlifeLicence.objects.filter(submitter_id=applicant_id)
-            if not qs_licence.exists():
+            qs_licence = WildlifeLicence.objects.filter(submitter_id=applicant_id, org_applicant__isnull=True, proxy_applicant__isnull=True)
+            if qs_licence.exists():
+                #import ipdb; ipdb.set_trace()
                 # use existing licence, just increment sequence_number
                 licence = WildlifeLicence.objects.create(
                     licence_number=qs_licence.last().licence_number,
@@ -702,6 +714,7 @@ class ExcelWriter():
                     licence_type=activity
                 )
             else:
+                #import ipdb; ipdb.set_trace()
                 licence = WildlifeLicence.objects.create(
                     current_application=application,
                     #org_applicant_id=applicant_id,
