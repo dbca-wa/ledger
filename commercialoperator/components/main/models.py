@@ -105,6 +105,56 @@ class Trail(models.Model):
         return self.name
 
 @python_2_unicode_compatible
+class ActivityType(models.Model):
+    ACTIVITY_TYPE_CHOICES = (
+        ('land', 'Land'),
+        ('marine', 'Marine'),
+        ('Film', 'Film'),
+    )
+    type_name = models.CharField('Activity Type', max_length=40, choices=ACTIVITY_TYPE_CHOICES,
+                                        default=ACTIVITY_TYPE_CHOICES[0][0])
+    visible = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['type_name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.type_name
+
+@python_2_unicode_compatible
+class ActivityCategory(models.Model):
+    ACTIVITY_TYPE_CHOICES = (
+        ('land', 'Land'),
+        ('marine', 'Marine'),
+        ('Film', 'Film'),
+    )
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
+    activity_type = models.CharField('Activity Type', max_length=40, choices=ACTIVITY_TYPE_CHOICES,
+                                        default=ACTIVITY_TYPE_CHOICES[0][0])
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
+class Activity(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
+    activity_category = models.ForeignKey(ActivityCategory, related_name='activities')
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
 class ApplicationType(models.Model):
     name = models.CharField(max_length=64, unique=True)
     order = models.PositiveSmallIntegerField(default=0)

@@ -2,7 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from commercialoperator.components.proposals import models
 from commercialoperator.components.proposals import forms
-from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, Park, Trail, Vehicle
+from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, Park, Trail, Vehicle,ActivityType, ActivityCategory, Activity
 #from commercialoperator.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
@@ -120,3 +120,17 @@ class VehicleAdmin(admin.ModelAdmin):
     list_display = ['access_type','capacity', 'rego', 'license', 'rego_expiry']
     ordering = ('access_type',)
 
+# @admin.register(ActivityType)
+# class ActivityTypeAdmin(admin.ModelAdmin):
+#     list_display = ['name', 'visible']
+#     ordering = ('name',)
+
+@admin.register(ActivityCategory)
+class ActivityCategory(admin.ModelAdmin):
+    list_display = ['name', 'visible', 'activity_type']
+    ordering = ('name',)
+
+@admin.register(Activity)
+class Activity(admin.ModelAdmin):
+    list_display = ['name', 'visible', 'activity_category']
+    ordering = ('name',)

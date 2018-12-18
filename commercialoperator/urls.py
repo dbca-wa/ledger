@@ -43,7 +43,8 @@ router.register(r'vehicles', main_api.VehicleViewSet)
 router.register(r'parks', main_api.ParkViewSet)
 router.register(r'trails', main_api.TrailViewSet)
 router.register(r'vehicles', main_api.VehicleViewSet)
-
+router.register(r'land_activities', main_api.LandActivitiesViewSet)
+router.register(r'marine_activities', main_api.MarineActivitiesViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),

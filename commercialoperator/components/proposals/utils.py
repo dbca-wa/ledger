@@ -323,8 +323,6 @@ def save_proponent_data(instance,request,viewset,parks):
                             p.delete()
                     for item in parks:
                         try:
-                            # park=Park.objects.get(id=item)
-                            # ProposalPark.objects.create(proposal=self, park=park)
                             data_park={
                             'park': item,
                             'proposal': instance.id
@@ -336,10 +334,6 @@ def save_proponent_data(instance,request,viewset,parks):
                             raise                        
                 except:
                     raise
-
-            # for p in request.data['parks']:
-            #     park_data = ProposalPark.objects.get_or_create(park=p, proposal=proposal)
-            #     print park_data
         except:
             raise
 

@@ -7,9 +7,10 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
-from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park, Trail
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer, VehicleSerializer, AccessTypeSerializer, ParkSerializer, TrailSerializer
+from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park, Trail, ActivityCategory, Activity
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer, VehicleSerializer, AccessTypeSerializer, ParkSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 
 class DistrictViewSet(viewsets.ReadOnlyModelViewSet):
@@ -65,3 +66,20 @@ class ParkViewSet(viewsets.ReadOnlyModelViewSet):
 class TrailViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Trail.objects.all().order_by('id')
     serializer_class = TrailSerializer
+
+class LandActivitiesViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Activity.objects.none()
+    serializer_class = ActivitySerializer
+
+    def get_queryset(self):
+        categories=ActivityCategory.objects.filter(activity_type='land')
+        activities=Activity.objects.filter(Q(activity_category__in = categories)& Q(visible=True))
+        return activities
+
+class MarineActivitiesViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ActivityCategory.objects.none()
+    serializer_class = ActivityCategorySerializer
+
+    def get_queryset(self):
+        categories=ActivityCategory.objects.filter(activity_type='marine')
+        return categories

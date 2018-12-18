@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park, Trail
+from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park, Trail, Activity, ActivityCategory
 from ledger.accounts.models import EmailUser
 #from commercialoperator.components.proposals.serializers import ProposalTypeSerializer 
 
@@ -93,3 +93,14 @@ class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
+
+class ActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Activity
+        fields = ('id','name')
+
+class ActivityCategorySerializer(serializers.ModelSerializer):
+    activities = ActivitySerializer(many=True)
+    class Meta:
+        model = ActivityCategory
+        fields = ('id', 'name','activities')
