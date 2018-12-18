@@ -16,7 +16,7 @@
     <div class="container"><div class="row">
         <div class="col-sm-12">
             <h2>Upcoming Bookings and Admission Fee Payments</h2>
-{% if not current_bookings %}
+{% if not current_bookings and not current_admissions %}
             <div class="well">
                 <h3>You do not have any upcoming bookings!</h3>
                 <p>Please visit the <a href="{{EXPLORE_PARKS_SEARCH}}">mooring map</a> to book a mooring.</p>
@@ -26,7 +26,7 @@
         {% include "mooring/booking/booking_view.html" with booking=bk.0 book_inv=bk.1 %}
     {% endfor %}
     {% for ad in current_admissions %}
-        {% include "mooring/admissions/booking_view.html" with admissionsBooking=ad.0 admissionsInvoice=ad.1 %}
+        {% include "mooring/admissions/booking_view.html" with admissionsBooking=ad.0 arrival=ad.1 overnight=ad.2 admissionsInvoice=ad.3 %}
     {% endfor %}
 {% endif %}
 {% if past_bookings %}
