@@ -1410,6 +1410,11 @@ class OutstandingBookingRecipient(models.Model):
     def __str__(self):
         return self.email
 
+class RefundPricePeriod(models.Model):
+    percentage = models.FloatField()
+    days = models.IntegerField()
+    created = models.DateTimeField(auto_now_add=True)
+
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
@@ -1602,7 +1607,10 @@ class AdmissionsBooking(models.Model):
     totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
 
     def __str__(self):
-        return 'AD{} : {}'.format(self.id,self.customer.email)
+        email = ''
+        if self.customer:
+            email = self.customer.email
+        return 'AD{} : {}'.format(self.id, email)
 
     @property
     def confirmation_number(self):
