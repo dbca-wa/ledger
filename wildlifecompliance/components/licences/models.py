@@ -177,6 +177,7 @@ class WildlifeLicence(models.Model):
 
     licence_number = models.CharField(max_length=64, blank=True, null=True)
     licence_sequence = models.IntegerField(blank=True, default=1)
+    #licence_sequence = models.IntegerField(blank=True, unique=True, default=seq_idx)
 
     # licence_class = models.ForeignKey(WildlifeLicenceClass)
     # licence_activity_type = models.ForeignKey(WildlifeLicenceActivityType)
@@ -195,6 +196,13 @@ class WildlifeLicence(models.Model):
         if not self.licence_number:
             self.licence_number = 'L{0:06d}'.format(self.pk)
             self.save()
+
+#    def seq_idx():
+#        no = WildlifeLicence.objects.get().aggregate(Max(order))
+#        if no == None:
+#            return 1
+#        else:
+#            return no + 1
 
     @property
     def reference(self):

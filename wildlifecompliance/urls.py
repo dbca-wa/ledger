@@ -72,7 +72,8 @@ urlpatterns = [
         name='internal-application-detail'),
     url(r'^application_submit/submit_with_invoice/', ApplicationSuccessView.as_view(), name='external-application-success-invoice'),
 
-    url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
+    #url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
+    url(r'^mgt-commands/$', views.ManagementCommandsView.as_view(), name='mgt-commands'),
 
 ] + ledger_patterns
 
