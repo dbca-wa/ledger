@@ -5,7 +5,7 @@
 {% load static %}
 
 {% block extra_css %}
-    <link type="text/css" href="{% static 'wl/css/index.css' %}" rel="stylesheet">
+    <link type="text/css" href="{% static 'wl/css/index.css' %}?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet">
 {% endblock %}
 
 {% block messages %}

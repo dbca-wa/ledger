@@ -96,8 +96,8 @@
     <script type="text/javascript">
         var parkstayUrl = window.location.protocol + '//' + window.location.host;
     </script>
-    <script type="text/javascript" src="{% static 'admissions/js/manifest.js' %}"></script>
-    <script type="text/javascript" src="{% static 'admissions/js/vendor.js' %}"></script>
-    <script type="text/javascript" src="{% static 'admissions/js/app.js' %}"></script>
+    <script type="text/javascript" src="{% static 'admissions/js/manifest.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script type="text/javascript" src="{% static 'admissions/js/vendor.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script type="text/javascript" src="{% static 'admissions/js/app.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
 
 {% endblock %}
