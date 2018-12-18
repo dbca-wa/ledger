@@ -460,6 +460,12 @@ class RefundPricePeriod(models.Model):
     days = models.IntegerField()
     created = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        if self.calulation_type == 0:
+           return 'Percentage - {}% for {} day/s'.format(str(self.percentage), str(self.days))
+        else:
+           return 'Fixed Price - ${} for {} day/s'.format(str(self.amount), str(self.days))
+
 class RefundGroup(models.Model):
     name = models.CharField(max_length=100)
     refund_period = models.ManyToManyField(RefundPricePeriod, related_name='refund_period_options')

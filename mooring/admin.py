@@ -52,6 +52,11 @@ class MooringsiteBookingInline(admin.TabularInline):
     model = models.MooringsiteBooking
     extra = 0
 
+@admin.register(models.RefundGroup)
+class RefundGroupAdmin(admin.ModelAdmin):
+    list_display = ('id','name')
+    ordering = ('-id',)
+
 @admin.register(models.RefundPricePeriod)
 class RefundPricePeriodAdmin(admin.ModelAdmin):
     list_display = ('id','percentage','days')
