@@ -52,6 +52,7 @@ from wildlifecompliance.components.organisations.serializers import (
                                         OrganisationUnlinkUserSerializer,
                                         OrgUserAcceptSerializer,
                                         MyOrganisationsSerializer,
+                                        OrganisationCheckExistSerializer,
                                     )
 from wildlifecompliance.components.applications.serializers import (
                                         DTApplicationSerializer,
@@ -429,15 +430,20 @@ class OrganisationViewSet(viewsets.ModelViewSet):
         try:
             # Check no org requests awaiting approval.
             abn = request.data.get('abn')
-            org_requests = OrganisationRequest.objects.filter(abn=abn, role='employee').exclude(status__in=('declined','approved'))
+            org_requests = OrganisationRequest.objects.filter(abn=abn, role='employee')\
+                .exclude(status__in=('declined','approved'))
             if org_requests.exists():
                 raise serializers.ValidationError('A request already submitted - Pending Approval.')
             serializer = OrganisationCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             data = Organisation.existance(serializer.validated_data['abn'])
-            # Check requester is unlinked.
-            # data.update([('relink', False)])
-            return Response(data)
+            # Check requestor cannot be relinked to org.
+            if data['exists']:
+                data.update([('user', request.user.id)])
+                serializer = OrganisationCheckExistSerializer(data)
+                if serializer.data['can_relink_user']:
+                    raise serializers.ValidationError('Please contact {} to re-link to Organisation'.format(serializer.data['first_five']))
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -784,6 +790,14 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.validated_data['requester'] = request.user
+            if request.data['role'] == 'consultant':
+                # Check if consultant can be relinked to org.
+                data = Organisation.existance(request.data['abn'])
+                if data['exists']:
+                    data.update([('user', request.user.id)])
+                    org = OrganisationCheckExistSerializer(data)
+                    if org.data['can_relink_user']:
+                        raise serializers.ValidationError('Please contact {} to re-link to Organisation'.format(org.data['first_five']))
             with transaction.atomic():
                 instance = serializer.save()
                 instance.log_user_action(OrganisationRequestUserAction.ACTION_LODGE_REQUEST.format(instance.id),request)

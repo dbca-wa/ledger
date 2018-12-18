@@ -15,6 +15,7 @@ from wildlifecompliance.components.organisations.utils import (
                                 can_admin_org,
                                 is_consultant,
                                 can_change_role,
+                                can_relink,
                             )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -86,6 +87,21 @@ class OrganisationSerializer(serializers.ModelSerializer):
                 return None
         except KeyError:
             return None
+
+
+class OrganisationCheckExistSerializer(serializers.Serializer):
+    exists = serializers.BooleanField(default=False)
+    id = serializers.IntegerField(default=0)
+    first_five = serializers.CharField()
+    can_relink_user = serializers.SerializerMethodField()
+
+    def get_can_relink_user(self, data):
+        relink_user = False
+        if data['exists']:
+            user = EmailUser.objects.get(id=data['user'])
+            org = Organisation.objects.get(id=data['id'])
+            relink_user = can_relink(org, user)
+        return relink_user
 
 
 class MyOrganisationsSerializer(serializers.ModelSerializer):
@@ -170,6 +186,7 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
     # def get_role(self,obj):
     #     return obj.get_role_display()
 
+
 class OrganisationRequestDTSerializer(OrganisationRequestSerializer):
     assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
     requester = serializers.SerializerMethodField()
@@ -221,7 +238,6 @@ class OrganisationUnlinkUserSerializer(serializers.Serializer):
         except EmailUser.DoesNotExist:
             raise serializers.ValidationError('The user you want to unlink does not exist.')
         return obj
-        
 
 class OrgUserAcceptSerializer(serializers.Serializer):
 
