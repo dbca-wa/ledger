@@ -92,9 +92,9 @@
 
 {% block custom_js %}
 {% if not DEV_STATIC %}
-    <script type="text/javascript" src="{% static 'parkstay/js/manifest.js' %}"></script>
-    <script type="text/javascript" src="{% static 'parkstay/js/vendor.js' %}"></script>
-    <script type="text/javascript" src="{% static 'parkstay/js/parkstay.js' %}"></script>
+    <script type="text/javascript" src="{% static 'parkstay/js/manifest.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script type="text/javascript" src="{% static 'parkstay/js/vendor.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script type="text/javascript" src="{% static 'parkstay/js/parkstay.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
 {% else %}
     <script type="text/javascript" src="{{ DEV_STATIC_URL }}"></script>
 {% endif %}

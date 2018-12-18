@@ -17,7 +17,7 @@
 {% if ground_id %}    var parkstayGroundId = '{{ ground_id|escapejs }}';
 {% endif %}
     </script>
-    <script src="{% static 'availability2/js/manifest.js' %}"></script>
-    <script src="{% static 'availability2/js/vendor.js' %}"></script>
-    <script src="{% static 'availability2/js/app.js' %}"></script>
+    <script src="{% static 'availability2/js/manifest.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script src="{% static 'availability2/js/vendor.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script src="{% static 'availability2/js/app.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
 {% endblock %}

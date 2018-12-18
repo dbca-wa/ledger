@@ -17,5 +17,9 @@ def mooring_url(request):
         'PARKSTAY_EXTERNAL_URL': settings.PARKSTAY_EXTERNAL_URL,
         'DEV_STATIC': settings.DEV_STATIC,
         'DEV_STATIC_URL': settings.DEV_STATIC_URL,
-        'TEMPLATE_GROUP' : template_group
+        'TEMPLATE_GROUP' : template_group,
+        'GIT_COMMIT_DATE' : settings.GIT_COMMIT_DATE,
+        'GIT_COMMIT_HASH' : settings.GIT_COMMIT_HASH,
+        'SYSTEM_NAME' : settings.SYSTEM_NAME
         }
+

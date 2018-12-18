@@ -105,3 +105,6 @@ PARKSTAY_EXTERNAL_URL = env('PARKSTAY_EXTERNAL_URL','https://mooring.dbca.wa.gov
 DEV_STATIC = env('DEV_STATIC',False)
 DEV_STATIC_URL = env('DEV_STATIC_URL')
 ROTTNEST_ISLAND_URL = env('ROTTNEST_URL', [])
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+GIT_COMMIT_DATE = os.popen('cd '+BASE_DIR+' ; git log -1 --format=%cd').read()
+GIT_COMMIT_HASH = os.popen('cd  '+BASE_DIR+' ; git log -1 --format=%H').read()

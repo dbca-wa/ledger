@@ -551,10 +551,10 @@
 {% block custom_js %}
 {{ block.super }}
 {% if booking %}
-<script src="/static/common/js/moment.min.js"></script>
-<script src="/static/common/js/vue.min.js"></script>
-<link href="/static/common/css/select2.min2.css" rel="stylesheet"/>
-<script src="/static/common/js/select2.min.js"></script>
+<script src="/static/common/js/moment.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script src="/static/common/js/vue.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<link href="/static/common/css/select2.min2.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+<script src="/static/common/js/select2.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script type="text/javascript">
     var book = new Vue({
         el: '#addBooking',
