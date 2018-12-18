@@ -34,14 +34,15 @@ from mooring.models import (MooringArea,
                                 AdmissionsBookingInvoice,
                                 AdmissionsRate,
                                 DiscountReason,
-                                RegisteredVessels
+                                RegisteredVessels,
+                                RefundPricePeriod
                                 )
 from mooring import emails
 from ledger.accounts.models import EmailUser, Address
 from ledger.payments.models import Invoice
 from oscar.apps.order.models import Order
 from django_ical.views import ICalFeed
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from decimal import *
 
 from mooring.helpers import is_officer
@@ -181,12 +182,53 @@ class MakeBookingsView(TemplateView):
     def render_page(self, request, booking, form, vehicles, show_errors=False):
         booking_mooring = None
         booking_total = '0.00'
+        nowtime =  datetime.today()
+        nowtimec = datetime.strptime(nowtime.strftime('%Y-%m-%d'),'%Y-%m-%d')
+
+        #datetime.strptime(str(date_rotate_forward)+' '+str(bp.start_time), '%Y-%m-%d %H:%M:%S')
+        today = date.today()
         # for now, we can assume that there's only one campsite per booking.
         # later on we might need to amend that
         expiry = booking.expiry_time.isoformat() if booking else ''
         timer = (booking.expiry_time-timezone.now()).seconds if booking else -1
         campsite = booking.campsites.all()[0].campsite if booking else None
         entry_fees = MarinaEntryRate.objects.filter(Q(period_start__lte = booking.arrival), Q(period_end__gt=booking.arrival)|Q(period_end__isnull=True)).order_by('-period_start').first() if (booking and campsite.mooringarea.park.entry_fee_required) else None
+        
+        print "OLD BOOKING"
+        if booking:
+            if booking.old_booking:
+                old_booking_mooring = MooringsiteBooking.objects.filter(booking=booking.old_booking)
+                booking_changes = MooringsiteBooking.objects.filter(booking=booking)
+                print old_booking_mooring
+
+                for ob in old_booking_mooring:
+                     changed = True
+                     print ob.id
+                     print ob.campsite
+                     print ob.from_dt
+                     print ob.to_dt
+                     print ob.booking_period_option
+                     for bc in booking_changes:
+                          if bc.campsite == ob.campsite and ob.from_dt == bc.from_dt and ob.to_dt == bc.to_dt and ob.booking_period_option == bc.booking_period_option:
+                               changed = False
+                     from_dt = datetime.strptime(ob.from_dt.strftime('%Y-%m-%d'),'%Y-%m-%d')
+                     daystillbooking =  (from_dt-nowtimec).days
+                     print "DAYS"
+                     print ob.from_dt
+                     print from_dt
+                     print nowtimec
+                     print daystillbooking
+
+                     print "CHANGED STATUS"
+                     print changed
+                     
+
+                refund_price_period = RefundPricePeriod.objects.all().order_by('days')
+                print refund_price_period
+        # RefundPricePeriod
+
+
+
         pricing = {
             'mooring': Decimal('0.00'),
             'adult': Decimal('0.00'),
@@ -203,6 +245,7 @@ class MakeBookingsView(TemplateView):
             'vehicle_conc': entry_fees.concession if entry_fees else Decimal('0.00'),
             'motorcycle': entry_fees.motorbike if entry_fees else Decimal('0.00')
         }
+
         details = {
             'num_adults':0,
             'num_children':0,
@@ -769,8 +812,9 @@ class ChangeBookingView(LoginRequiredMixin, TemplateView):
              request.session['ps_booking'] = booking_temp.id
              #request.session['ps_booking_old'] =  booking.id
              request.session.modified = True
-             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector'))
-         
+
+             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adults='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants']) )
+ 
 #        ad_currents = admissions.filter(arrivalDate__gte=today).order_by('arrivalDate')
 #        ad_current = []
 #        for ad in ad_currents:

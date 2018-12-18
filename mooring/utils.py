@@ -352,8 +352,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
     # prefill all slots as 'open'
     duration = (end_date-start_date).days 
     #results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
-    print "NEW SEARCH"
-    print duration
     # Build Hash of open periods
     results = {}
     for site in campsites_qs:

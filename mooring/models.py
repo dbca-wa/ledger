@@ -447,6 +447,28 @@ class MooringAreaImage(models.Model):
             pass
         super(MooringAreaImage,self).delete(*args,**kwargs)
 
+class RefundPricePeriod(models.Model):
+
+    REFUND_CALCULATION_TYPE = (
+        (0, 'Percentage'),
+        (1, 'Fixed Price'),
+    )
+
+    calulation_type = models.SmallIntegerField(choices=REFUND_CALCULATION_TYPE, default=0)
+    percentage = models.FloatField()
+    amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    days = models.IntegerField()
+    created = models.DateTimeField(auto_now_add=True)
+
+class RefundGroup(models.Model):
+    name = models.CharField(max_length=100)
+    refund_period = models.ManyToManyField(RefundPricePeriod, related_name='refund_period_options')
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
 class BookingPeriodOption(models.Model):
     period_name = models.CharField(max_length=15)
     option_description = models.CharField(max_length=255)
@@ -456,6 +478,7 @@ class BookingPeriodOption(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     finish_time = models.TimeField(null=True, blank=True)
     all_day = models.BooleanField(default=True)
+    refund_group = models.ForeignKey('RefundGroup',null=True,blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -1410,10 +1433,6 @@ class OutstandingBookingRecipient(models.Model):
     def __str__(self):
         return self.email
 
-class RefundPricePeriod(models.Model):
-    percentage = models.FloatField()
-    days = models.IntegerField()
-    created = models.DateTimeField(auto_now_add=True)
 
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
