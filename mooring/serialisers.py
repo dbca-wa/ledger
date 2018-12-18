@@ -34,6 +34,7 @@ from mooring.models import (MooringAreaPriceHistory,
                                 BookingVehicleRego,
                                 BookingHistory,
                                 AdmissionsBooking,
+                                AdmissionsLine,
                                 AdmissionsRate,
                                 BookingPeriodOption,
                                 BookingPeriod,
@@ -91,7 +92,10 @@ class AdmissionsBookingSerializer(serializers.ModelSerializer):
         model = AdmissionsBooking
         excludes = ('totalCost')
 
-
+class AdmissionsLineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdmissionsLine
+        excludes = ('cost')
 
 class BookingRangeSerializer(serializers.ModelSerializer):
 

@@ -30,6 +30,7 @@ from mooring.models import (MooringArea,
                                 MooringsiteRate,
                                 MarinaEntryRate,
                                 AdmissionsBooking,
+                                AdmissionsLine,
                                 AdmissionsBookingInvoice,
                                 AdmissionsRate,
                                 DiscountReason,
@@ -671,12 +672,21 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         admissions = AdmissionsBooking.objects.filter(customer=request.user, booking_type__in=(0, 1))
         today = timezone.now().date()
 
-        ad_currents = admissions.filter(arrivalDate__gte=today).order_by('arrivalDate')
+        ad_currents = admissions.distinct().filter(admissionsline__arrivalDate__gte=today)
         ad_current = []
         for ad in ad_currents:
-            to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
+            adl = AdmissionsLine.objects.filter(admissionsBooking=ad)
+            conf = Booking.objects.filter(admission_payment=ad)
+            if adl.count() > 1:
+                arrival = "See Booking PS" + conf.id
+                overnight = "See Booking PS" + conf.id
+            else :
+                arrival = adl[0].arrivalDate
+                overnight = adl[0].overnightStay
+            to_add = [ad, arrival, overnight, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
             ad_current.append(to_add)
-        ad_pasts = admissions.filter(arrivalDate__lt=today).order_by('-arrivalDate')
+        print ad_current
+        ad_pasts = admissions.distinct().filter(admissionsline__arrivalDate__lt=today)
         ad_past = []
         for ad in ad_pasts:
             to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]

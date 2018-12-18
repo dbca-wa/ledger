@@ -12,7 +12,7 @@
                     <b>Admission date:</b>
                 </div>
                 <div class="col-sm-7">
-                        {{ admissionsBooking.arrivalDate }}
+                        {{ arrival }}
                 </div>
             </div>
             <div class="row">
@@ -28,7 +28,7 @@
                     <b>Overnight Stay: </b>
                 </div>
                 <div class="col-sm-7">
-                    {% if admissionsBooking.overnightStay %}
+                    {% if overnight %}
                         Yes
                     {% else %}
                         No

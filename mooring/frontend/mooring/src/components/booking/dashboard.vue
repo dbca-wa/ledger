@@ -232,14 +232,12 @@ export default {
                 ],
                 columns:[
                     {
-                        data:"campground_name",
+                        data:"id",
                         orderable:false,
-                        searchable:false
-                    },
-                    {
-                        data:"campground_region",
-                        orderable:false,
-                        searchable:false
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            return full.status != 'Canceled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
+                        }
                     },
                     {
                         mRender: function(data, type, full) {
@@ -259,12 +257,27 @@ export default {
                         searchable:false
                     },
                     {
-                        data:"id",
+                        mRender: function(data, type, full){
+                            console.log(full.regos);
+                            if (full.regos.length > 0){
+                                var rego = full.regos[0].vessel;
+                            } else {
+                                var rego = "-"
+                            }
+                            return rego;
+                        },
                         orderable:false,
-                        searchable:false,
-                        mRender:function(data,type,full){
-                            return full.status != 'Canceled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
-                        }
+                        searchable:false
+                    },
+                    {
+                        data:"campground_name",
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        data:"campground_region",
+                        orderable:false,
+                        searchable:false
                     },
 //                    {
 //                        data:"campground_site_type",
@@ -281,19 +294,6 @@ export default {
 //                        searchable:false
 //                   },
                     {
-                        data:"status",
-                        orderable:false,
-                        searchable:false,
-                        mRender: function(data,type,full){
-                            if (data === 'Canceled' && full.cancellation_reason != null){
-                                let val = helpers.dtPopover(full.cancellation_reason);
-                                return `<span>${data}</span><br/><br/>${val}`;
-                            }
-                            return data;
-                        },
-                        'createdCell': helpers.dtPopoverCellFn
-                    },
-                    {
                         data:"arrival",
                         orderable:false,
                         searchable:false,
@@ -308,6 +308,19 @@ export default {
                         mRender:function(data,type,full){
                             return Moment(data).format('DD/MM/YYYY');
                         }
+                    },
+                    {
+                        data:"status",
+                        orderable:false,
+                        searchable:false,
+                        mRender: function(data,type,full){
+                            if (data === 'Canceled' && full.cancellation_reason != null){
+                                let val = helpers.dtPopover(full.cancellation_reason);
+                                return `<span>${data}</span><br/><br/>${val}`;
+                            }
+                            return data;
+                        },
+                        'createdCell': helpers.dtPopoverCellFn
                     },
                     {
                         mRender: function(data, type, full) {
@@ -374,19 +387,6 @@ export default {
                 },
                 columns:[
                     {
-                        data:"arrivalDate",
-                        orderable:false,
-                        searchable:false,
-                        mRender:function(data,type,full){
-                            return Moment(data).format('DD/MM/YYYY');
-                        }
-                    },
-                    {
-                        data: "customerName",
-                        orderable:false,
-                        searchable:false
-                    },
-                    {
                         data: "id",
                         mRender:function(data,type,full){
                             return "<a href='/api/get_admissions_confirmation/"+data+"' target='_blank' class='text-primary'>AD"+data+"</a><br/>";
@@ -395,9 +395,7 @@ export default {
                         searchable:false
                     },
                     {
-                        mRender:function(data,type,full){
-                            return full.noOfAdults + full.noOfChildren + full.noOfInfants;
-                        },
+                        data: "customerName",
                         orderable:false,
                         searchable:false
                     },
@@ -411,6 +409,25 @@ export default {
                         },
                         orderable:false,
                         searchable:false
+                    },
+                    {
+                        mRender:function(data,type,full){
+                            return full.noOfAdults + full.noOfChildren + full.noOfInfants;
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        data:"arrivalDate",
+                        orderable:false,
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            var dates = ""
+                            for (var no in full.lines){
+                                dates += Moment(full.lines[no].date).format("DD/MM/YYYY") + "<br/>";
+                            }
+                            return dates;
+                        }
                     },
                     {
                          mRender: function(data,type,full){
@@ -437,8 +454,8 @@ export default {
                     },
                 ]
             },
-            dtHeaders:["Mooring", "Region", "Person", "Confirmation #", "Status", "From", "To", "Action"],
-            dtHeaders2:["Admission Date", "Person", "Confirmation #", "Total Attendees", "Vessel Reg #", "Warning Ref #", "Action"],
+            dtHeaders:["Confirmation #", "Person", "Vessel Reg #", "Mooring", "Region", "From", "To", "Status", "Action"],
+            dtHeaders2:["Confirmation #", "Person", "Vessel Reg #", "Total Attendees", "Admission Date", "Warning Ref #", "Action"],
             dateFromPicker:null,
             dateToPicker:null,
             dateFromPicker2:null,
@@ -888,7 +905,7 @@ export default {
                 var data = res.body.results;
 
                 var json2csv = require('json2csv');
-                var fields = ["Arrival Date","Confirmation No", "Overnight Stay", "Customer", "Email", "Total Attendees", "Adults","Children","Infants", "Vessel Reg No", "Warning Reference", "Invoice Reference"]
+                var fields = ["Confirmation No", "Customer", "Email", "Overnight Stay", "Arrival Date", "Total Attendees", "Adults","Children","Infants", "Vessel Reg No", "Warning Reference", "Invoice Reference"]
                 
                 var bookings = [];
                 $.each(data,function (i,booking) {
@@ -896,24 +913,43 @@ export default {
                     $.each(fields,function (j,field) {
                         switch (j) {
                             case 0:
-                                bk[field] = Moment(booking.arrivalDate).format("DD/MM/YYYY HH:mm:ss");
+                                bk[field] = "AD" + booking.id;
+                                
                             break;
                             case 1:
-                                bk[field] = "AD" + booking.id;
+                                bk[field] = booking.customerName;
                             break;
                             case 2:
-                                if(booking.overnightStay){
-                                    var answer = "Yes"
-                                } else {
-                                    var answer = "No"
+                                bk[field] = booking.email;
+                            break;
+                            case 3:
+                                var answer = "";
+                                if(booking.lines){
+                                    for (var line in booking.lines){
+                                        if (line > 0){
+                                            answer += ", ";
+                                        }
+                                        if (booking.lines[line].overnight){
+                                            answer += "Yes";
+                                        } else {
+                                            answer += "No"
+                                        }
+                                        
+                                    }
                                 }
                                 bk[field] = answer;
                             break;
-                            case 3:
-                                bk[field] = booking.customerName;
-                            break;
                             case 4:
-                                bk[field] = booking.email;
+                                var dates = ""
+                                if (booking.lines){
+                                    for (var line in booking.lines){
+                                        if (line > 0){
+                                            dates += ", ";
+                                        }
+                                        dates += Moment(booking.lines[line].date).format("DD/MM/YYYY");
+                                    }
+                                }
+                                bk[field] = dates
                             break;
                             case 5:
                                 bk[field] = booking.noOfAdults + booking.noOfChildren + booking.noOfInfants;
