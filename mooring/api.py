@@ -2469,7 +2469,6 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
         http_status = status.HTTP_200_OK
         try:
             data = AdmissionsBooking.objects.filter(booking_type__in=(0, 1)).order_by('pk')
-            print data
             recordsTotal = len(data)
             search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
             start = request.GET.get('start') if request.GET.get('start') else 0
@@ -2484,26 +2483,16 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                         search = search[2:]
                     except:
                         pass
-                data2 = data.filter(Q(warningReferenceNo__icontains=search) | Q(vesselRegNo__icontains=search) | Q(customer__first_name__icontains=search) | Q(customer__last_name__icontains=search) | Q(id__icontains=search))
-            if(date_from):
-                if(data2):
-                    data2 = data2.filter(admissionsLine__arrivalDate__gte = date_from)
-                else:
-                    data2 = data.filter(admissionsLine__arrivalDate__gte=date_from)
-            if(date_to):
-                if(data2):
-                    data2 = data2.filter(admissionsLine__arrivalDate__lte=date_to)
-                else:
-                    data2 = data.filter(admissionsLine__arrivalDate__lte=date_to)
-            if(data2):
-                recordsFiltered = int(len(data2))
-                print recordsFiltered
-                data2 = data2[int(start):int(length)+int(start)]
-            else:
-                recordsFiltered = int(len(data))
-                print recordsFiltered
-                data2 = data[int(start):int(length)+int(start)]
-            serializer = AdmissionsBookingSerializer(data2,many=True)
+                data = data.filter(Q(warningReferenceNo__icontains=search) | Q(vesselRegNo__icontains=search) | Q(customer__first_name__icontains=search) | Q(customer__last_name__icontains=search) | Q(id__icontains=search))
+            if (date_from and date_to):
+                data = data.distinct().filter(admissionsline__arrivalDate__gte=date_from, admissionsline__arrivalDate__lte=date_to)
+            elif(date_from):
+                data = data.distinct().filter(admissionsline__arrivalDate__gte=date_from)
+            elif(date_to):
+                data = data.distinct().filter(admissionsline__arrivalDate__lte=date_to)
+            recordsFiltered = int(len(data))
+            data = data[int(start):int(length)+int(start)]
+            serializer = AdmissionsBookingSerializer(data,many=True)
             res = serializer.data
             for r in res:
                 ad = AdmissionsBooking.objects.get(pk=r['id'])
@@ -2520,9 +2509,7 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                     email = ad.customer.email
                     r.update({'customerName': name, 'email': email})
                 else:
-                    r.update({'customerName': 'No customer', 'email': "No customer"})
-
-            
+                    r.update({'customerName': 'No customer', 'email': "No customer"})            
             
         except Exception as e:
             res ={

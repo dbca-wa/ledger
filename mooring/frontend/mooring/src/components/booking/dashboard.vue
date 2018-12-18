@@ -905,7 +905,7 @@ export default {
                 var data = res.body.results;
 
                 var json2csv = require('json2csv');
-                var fields = ["Arrival Date","Confirmation No", "Overnight Stay", "Customer", "Email", "Total Attendees", "Adults","Children","Infants", "Vessel Reg No", "Warning Reference", "Invoice Reference"]
+                var fields = ["Confirmation No", "Customer", "Email", "Overnight Stay", "Arrival Date", "Total Attendees", "Adults","Children","Infants", "Vessel Reg No", "Warning Reference", "Invoice Reference"]
                 
                 var bookings = [];
                 $.each(data,function (i,booking) {
@@ -913,24 +913,43 @@ export default {
                     $.each(fields,function (j,field) {
                         switch (j) {
                             case 0:
-                                bk[field] = Moment(booking.arrivalDate).format("DD/MM/YYYY HH:mm:ss");
+                                bk[field] = "AD" + booking.id;
+                                
                             break;
                             case 1:
-                                bk[field] = "AD" + booking.id;
+                                bk[field] = booking.customerName;
                             break;
                             case 2:
-                                if(booking.overnightStay){
-                                    var answer = "Yes"
-                                } else {
-                                    var answer = "No"
+                                bk[field] = booking.email;
+                            break;
+                            case 3:
+                                var answer = "";
+                                if(booking.lines){
+                                    for (var line in booking.lines){
+                                        if (line > 0){
+                                            answer += ", ";
+                                        }
+                                        if (booking.lines[line].overnight){
+                                            answer += "Yes";
+                                        } else {
+                                            answer += "No"
+                                        }
+                                        
+                                    }
                                 }
                                 bk[field] = answer;
                             break;
-                            case 3:
-                                bk[field] = booking.customerName;
-                            break;
                             case 4:
-                                bk[field] = booking.email;
+                                var dates = ""
+                                if (booking.lines){
+                                    for (var line in booking.lines){
+                                        if (line > 0){
+                                            dates += ", ";
+                                        }
+                                        dates += Moment(booking.lines[line].date).format("DD/MM/YYYY");
+                                    }
+                                }
+                                bk[field] = dates
                             break;
                             case 5:
                                 bk[field] = booking.noOfAdults + booking.noOfChildren + booking.noOfInfants;
