@@ -295,7 +295,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         elif in_dbca_domain(self):
             # checks and updates department user details from address book after every login
             user_details = get_department_user_compact(self.email)
-            if user_details != {}:
+            if user_details:
                 self.phone_number = user_details.get('telephone')
                 self.mobile_number = user_details.get('mobile_phone')
                 self.title = user_details.get('title')
