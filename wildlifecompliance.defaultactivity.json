@@ -1,1 +1,0 @@
-[{"model": "wildlifecompliance.defaultactivity", "pk": 1, "fields": {"activity": 1, "activity_type": 1}}, {"model": "wildlifecompliance.defaultactivity", "pk": 2, "fields": {"activity": 2, "activity_type": 1}}, {"model": "wildlifecompliance.defaultactivity", "pk": 3, "fields": {"activity": 1, "activity_type": 3}}]

@@ -283,10 +283,10 @@
                                       <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="">
                                   </div>
                                   <div class="col-sm-2">
-                                      <button @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
+                                      <button v-if="newOrg.detailsChecked" @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
                                   </div>
                               </div>
-                              <div class="form-group" v-if="newOrg.detailsChecked">
+                              <div class="form-group">
                                     <label class="col-sm-12" style="text-align:left;">
                                       Please upload a letter on organisation letter head stating that you are a consultant for the organisation.
                                         <span class="btn btn-info btn-file">
@@ -301,7 +301,7 @@
 
 
                                     <div class="col-sm-12">
-                                      <button v-if="!registeringOrg" @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
+                                      <button v-if="!registeringOrg" @click.prevent="orgConsultRequest()" class="btn btn-primary pull-left">Submit</button>
                                       <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
                                     </div>
                               </div>
@@ -348,6 +348,22 @@
                               <div class="form-group" v-else-if="!newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;">
                                     This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this organisation.</br>
+                                  </label>
+                                  <div class="col-sm-12">
+                                    <span class="btn btn-info btn-file pull-left">
+                                        Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                    </span>
+                                    <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
+                                  </div>
+                                  <label for="" class="col-sm-10 control-label" style="text-align:left;">You will be notified by email once the Department has checked the organisation details.</label>
+                                  <div class="col-sm-12">
+                                    <button v-if="!registeringOrg" @click.prevent="orgRequest()" class="btn btn-primary pull-right">Submit</button>
+                                    <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
+                                  </div>
+                              </div>
+                              <div class="form-group" v-else-if="newOrg.exists && !newOrg.detailsChecked">
+                                  <label class="col-sm-12" style="text-align:left;">
+                                    Please upload a letter on organisation head stating that you are an employee of this organisation.</br>
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-info btn-file pull-left">
@@ -678,6 +694,7 @@ export default {
             });
         },
         checkOrganisation: function() {
+            console.log('Entered CheckOrg')
             let vm = this;
             let new_organisation = vm.newOrg;
             for (var organisation in vm.profile.wildlifecompliance_organisations) {
@@ -699,8 +716,12 @@ export default {
             }).then((response) => {
                 this.newOrg.exists = response.body.exists;
                 this.newOrg.id = response.body.id;
-                if (response.body.first_five){this.newOrg.first_five = response.body.first_five }
-                this.newOrg.detailsChecked = true;
+                this.newOrg.detailsChecked = false;
+                if (response.body.first_five) {
+                  this.newOrg.first_five = response.body.first_five;
+                  this.newOrg.detailsChecked = true;
+                }
+                this.newOrg.detailsChecked = this.newOrg.exists ? this.newOrg.detailsChecked : true;
             }, (error) => {
                 this.newOrg.detailsChecked = false;
                 let error_msg = '<br/>';
@@ -794,6 +815,66 @@ export default {
             let vm = this;
             vm.registeringOrg = true;
             let data = new FormData();
+            data.append('name', vm.newOrg.name);
+            data.append('abn', vm.newOrg.abn);
+            data.append('identification', vm.uploadedFile);
+            data.append('role',vm.role);
+            if (vm.newOrg.name == '' || vm.newOrg.abn == '' || vm.uploadedFile == null){
+                vm.registeringOrg = false;
+                swal(
+                    'Error submitting organisation request',
+                    'Please enter the organisation details and attach a file before submitting your request.',
+                    'error'
+                )
+            } else {
+                vm.$http.post(api_endpoints.organisation_requests,data,{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    swal({
+                        title: 'Sent',
+                        html: 'Your organisation request has been successfully submitted.',
+                        type: 'success',
+                    }).then(() => {
+                        window.location.reload(true);
+                    });
+                }, (error) => {
+                    console.log(error);
+                    vm.registeringOrg = false;
+                    let error_msg = '<br/>';
+                    for (var key in error.body) {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                    swal(
+                        'Error submitting organisation request',
+                        error_msg,
+                        'error'
+                    );
+                });
+            }
+        },
+        orgConsultRequest: function() {
+            let vm = this;
+            vm.registeringOrg = true;
+            let data = new FormData();
+            let new_organisation = vm.newOrg;
+            for (var organisation in vm.profile.wildlifecompliance_organisations) {
+                if (new_organisation.abn && vm.profile.wildlifecompliance_organisations[organisation].abn == new_organisation.abn) {
+                    swal({
+                        title: 'Checking Organisation',
+                        html: 'You are already associated with this organisation.',
+                        type: 'info'
+                    })
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    return;
+                }
+            }
             data.append('name', vm.newOrg.name);
             data.append('abn', vm.newOrg.abn);
             data.append('identification', vm.uploadedFile);
