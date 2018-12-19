@@ -59,6 +59,10 @@ APPLICANT_TYPE_SUBMITTER = 'SUB'
 class ExcelWriter():
     def __init__(self):
         self.cur_datetime = datetime.now()
+        if not ExcelApplication.objects.exists():
+            # hack to allow templates to run when no ExcelApplication exists yet - need the System header columns from the excel_app object (cols_output)
+            app = Application.objects.all().last()
+            self.create_excel_model(app.licence_category, use_id=app.id)
 
     def update_workbooks(self):
         for licence_category in WildlifeLicenceClass.objects.all():
@@ -156,13 +160,18 @@ class ExcelWriter():
 
         return ordered_dict
 
-    def create_excel_model(self, licence_category, cur_app_ids):
+    def create_excel_model(self, licence_category, cur_app_ids=[], use_id=None):
         """
         from wildlifecompliance.utils.excel_utils import write_excel_model
         write_excel_model('Fauna Other Purpose')
         """
 
-        applications = Application.objects.filter(licence_category=licence_category).exclude(processing_status=Application.PROCESSING_STATUS_DRAFT[0]).exclude(id__in=cur_app_ids)
+        #import ipdb; ipdb.set_trace()
+        if use_id:
+            # get a filterset with single application
+            applications = Application.objects.filter(id=Application.objects.all().last().id)
+        else:
+            applications = Application.objects.filter(licence_category=licence_category).exclude(processing_status=Application.PROCESSING_STATUS_DRAFT[0]).exclude(id__in=cur_app_ids)
 
         new_excel_apps = []
         for application in applications.order_by('id'):
@@ -328,7 +337,7 @@ class ExcelWriter():
 
     def write_new_app_data(self, excel_data, meta, licence_category, worksheet, next_row):
         cur_app_ids = [int(v[1]) for k,v in excel_data.iteritems()] # existing app id's
-        new_excel_apps = self.create_excel_model(licence_category, cur_app_ids)
+        new_excel_apps = self.create_excel_model(licence_category, cur_app_ids=cur_app_ids)
 
         row_num = next_row
         for excel_app in new_excel_apps:

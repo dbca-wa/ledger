@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
+from django.db.models import Avg, Case, Count, F, Max, Min, Prefetch, Q, Sum, When
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -192,13 +193,13 @@ class WildlifeLicence(models.Model):
         return '{} {}-{}'.format(self.licence_type, self.licence_number, self.licence_sequence)
 
     def save(self, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
         super(WildlifeLicence, self).save(*args,**kwargs)
         if not self.licence_number:
-            #self.licence_number = 'L{0:06d}'.format(self.next_licence_number_id)
-            self.licence_number = 'L{0:06d}'.format(self.pk)
+            self.licence_number = 'L{0:06d}'.format(self.next_licence_number_id)
+            #self.licence_number = 'L{0:06d}'.format(self.pk)
             self.save()
 
+    @property
     def next_licence_number_id(self):
         licence_number_max = WildlifeLicence.objects.all().aggregate(Max('licence_number'))['licence_number__max']
         if licence_number_max == None:
