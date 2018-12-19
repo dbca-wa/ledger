@@ -19,7 +19,7 @@
               <label class="control-label">Access</label>
               <div class="" v-for="a in accessTypes">
                 <div class="form-check">
-                  <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required   />
+                  <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_access" :value="a.name" data-parsley-required   />
                   {{ a.name }}
                 </div>
               </div>
@@ -28,9 +28,9 @@
           <form>
             <div class="form-horizontal col-sm-6">
               <label class="control-label">Activities</label>
-              <div class="" v-for="a in accessTypes">
+              <div class="" v-for="a in activities">
                 <div class="form-check">
-                  <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required  />
+                  <input :onclick="isClickable" class="form-check-input" v-model="selected_activities" :value="a.name" ref="Checkbox" type="checkbox" data-parsley-required  />
                   {{ a.name }}
                 </div>
               </div>
@@ -60,7 +60,8 @@
             </div>
 
             <div>{{selected}}</div>
-            <div>{{proposal.parks}}</div>
+            <div>{{selected_activities}}</div>
+            <div>{{selected_access}}</div>
             
 <!--           </form>
 
@@ -106,6 +107,8 @@ export default {
                 accessTypes:null,
                 api_regions:null,
                 selected:[],
+                selected_access:[],
+                selected_activities:[],
                 activities:[],
                 access:[],
                 vehicles_url: api_endpoints.vehicles,
@@ -119,6 +122,9 @@ export default {
             let vm = this;
             if (vm.proposal) {
                 vm.proposal.parks = vm.selected
+               //  for (var i = 0; i < vm.proposal.parks.length; i++) {
+               //  this.selected.push(vm.proposal.parks[i].activities);
+               // }
             } 
         },
         },
@@ -142,6 +148,14 @@ export default {
             let vm = this;
             Vue.http.get('/api/access_types.json').then((res) => {
                       vm.accessTypes=res.body;
+                      //console.log(vm.accessTypes);                  
+                },
+              err => { 
+                        console.log(err);
+                  }); 
+            Vue.http.get('/api/land_activities.json').then((res) => {
+                      vm.activities=res.body;
+                      console.log(vm.activities)
                       //console.log(vm.accessTypes);                  
                 },
               err => { 

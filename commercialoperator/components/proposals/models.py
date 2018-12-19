@@ -18,13 +18,14 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
 from commercialoperator.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
 import copy
 import subprocess
+from django.db.models import Q
 
 import logging
 logger = logging.getLogger(__name__)
@@ -1271,6 +1272,14 @@ class ProposalPark(models.Model):
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('park', 'proposal')
+
+    @property
+    def land_activities(self):
+        qs=self.activities.all()
+        categories=ActivityCategory.objects.filter(activity_type='land')
+        activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
+        return activities
+
 
 class ProposalParkActivity(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='activities')

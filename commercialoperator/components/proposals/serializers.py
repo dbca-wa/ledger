@@ -15,11 +15,12 @@ from commercialoperator.components.proposals.models import (
                                     ProposalActivitiesLand,
                                     ProposalActivitiesMarine,
                                     ProposalPark,
+                                    ProposalParkActivity,
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
                             )
-from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer, ParkSerializer
+from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer, ParkSerializer, ActivitySerializer
 from rest_framework import serializers
 
 class ProposalTypeSerializer(serializers.ModelSerializer):
@@ -56,11 +57,19 @@ class ProposalActivitiesMarineSerializer(serializers.ModelSerializer):
         model = ProposalActivitiesMarine
         fields = ('id','activities_marine')
 
+class ProposalParkActivitySerializer(serializers.ModelSerializer):
+    activity=ActivitySerializer()
+    class Meta:
+        model = ProposalParkActivity
+        fields = '__all__'
+
 class ProposalParkSerializer(serializers.ModelSerializer):
     park=ParkSerializer()
+    land_activities=ProposalParkActivitySerializer(many=True)
     class Meta:
         model = ProposalPark
         fields = '__all__'
+
 
 class SaveProposalParkSerializer(serializers.ModelSerializer):
     #park=ParkSerializer()
