@@ -475,6 +475,34 @@ class RefundGroup(models.Model):
         return self.name
 
 
+class CancelPricePeriod(models.Model):
+
+    REFUND_CALCULATION_TYPE = (
+        (0, 'Percentage'),
+        (1, 'Fixed Price'),
+    )
+
+    calulation_type = models.SmallIntegerField(choices=REFUND_CALCULATION_TYPE, default=0)
+    percentage = models.FloatField()
+    amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    days = models.IntegerField()
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.calulation_type == 0:
+           return 'Percentage - {}% for {} day/s'.format(str(self.percentage), str(self.days))
+        else:
+           return 'Fixed Price - ${} for {} day/s'.format(str(self.amount), str(self.days))
+
+class CancelGroup(models.Model):
+    name = models.CharField(max_length=100)
+    cancel_period = models.ManyToManyField(CancelPricePeriod, related_name='cancel_period_options')
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
 class BookingPeriodOption(models.Model):
     period_name = models.CharField(max_length=15)
     option_description = models.CharField(max_length=255)
@@ -485,6 +513,7 @@ class BookingPeriodOption(models.Model):
     finish_time = models.TimeField(null=True, blank=True)
     all_day = models.BooleanField(default=True)
     refund_group = models.ForeignKey('RefundGroup',null=True,blank=True)
+    cancel_group = models.ForeignKey('CancelGroup',null=True,blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

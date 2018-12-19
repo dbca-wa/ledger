@@ -62,6 +62,16 @@ class RefundPricePeriodAdmin(admin.ModelAdmin):
     list_display = ('id','percentage','days')
     ordering = ('-days',)
 
+@admin.register(models.CancelGroup)
+class CancelGroupAdmin(admin.ModelAdmin):
+    list_display = ('id','name')
+    ordering = ('-id',)
+
+@admin.register(models.CancelPricePeriod)
+class CancelPricePeriodAdmin(admin.ModelAdmin):
+    list_display = ('id','percentage','days')
+    ordering = ('-days',)
+
 @admin.register(models.Booking)
 class BookingAdmin(admin.ModelAdmin):
     list_display = ('id','arrival','departure','booking_type','mooringarea','legacy_id','legacy_name','cost_total')
