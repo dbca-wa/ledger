@@ -19,10 +19,11 @@ def get_department_user_minimal(email):
         res = requests.get('{}/api/users/?minimal&email={}'.format(settings.CMS_URL,email), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
         res.raise_for_status()
         data = json.loads(res.content).get('objects')
-        if len(data) > 0 and data[0].get('org_data').get('cost_centre'):
-            return data[0]
-        else:
-            return {}
+        if len(data) > 0:
+			user_obj = data[0]
+		    if 'org_data' in user_obj and 'cost_centre' in user_obj['org_data'] and user_obj['org_data']['cost_centre']:
+        		return user_obj
+		return {}
     except:
         return {}
 
@@ -31,10 +32,11 @@ def get_department_user_compact(email):
         res = requests.get('{}/api/users/fast/?compact&email={}'.format(settings.CMS_URL,email), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
         res.raise_for_status()
         data = json.loads(res.content).get('objects')
-        if len(data) > 0 and data[0].get('org_data').get('cost_centre'):
-            return data[0]
-        else:
-            return {}
+        if len(data) > 0:
+			user_obj = data[0]
+		    if 'org_data' in user_obj and 'cost_centre' in user_obj['org_data'] and user_obj['org_data']['cost_centre']:
+        		return user_obj
+		return {}
     except:
         return {}
 
