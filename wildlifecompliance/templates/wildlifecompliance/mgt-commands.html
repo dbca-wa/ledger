@@ -1,0 +1,16 @@
+{% extends 'wildlifecompliance/base.html' %}
+
+{% block content %}
+    <div>
+        <H4>Hover over button to see help text.</H4>
+        <form action="" method="POST">
+            {% csrf_token %}
+            <button type="submit" name="script" value="update_workbooks" {% if update_workbooks == 'true' %}style="color:green" {% endif %} title="Run command to update Excel workbooks from the system">Run Script 'update_workbooks'</button><br><br>
+        </form>
+        <br>
+    </div>
+    <br />
+    {{ ret }}
+    {{ block.super }}
+{% endblock %}
+
