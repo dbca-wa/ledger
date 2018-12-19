@@ -19,7 +19,7 @@ def get_department_user_minimal(email):
         res = requests.get('{}/api/users/?minimal&email={}'.format(settings.CMS_URL,email), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
         res.raise_for_status()
         data = json.loads(res.content).get('objects')
-        if len(data) > 0:
+        if len(data) > 0 and data[0].get('org_data').get('cost_centre'):
             return data[0]
         else:
             return {}
@@ -31,7 +31,7 @@ def get_department_user_compact(email):
         res = requests.get('{}/api/users/fast/?compact&email={}'.format(settings.CMS_URL,email), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
         res.raise_for_status()
         data = json.loads(res.content).get('objects')
-        if len(data) > 0:
+        if len(data) > 0 and data[0].get('org_data').get('cost_centre'):
             return data[0]
         else:
             return {}
