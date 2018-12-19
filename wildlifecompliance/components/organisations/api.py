@@ -836,10 +836,3 @@ class MyOrganisationsViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
     serializer_class = MyOrganisationsSerializer
 
-    def get_queryset(self):
-        # queryset = self.queryset
-        # query_set = queryset.filter(delegates__id__contains=self.request.user.id).distinct()
-        query_set = self.queryset.all()
-        if not self.request.user.is_staff:
-            query_set = query_set.none()
-        return query_set
