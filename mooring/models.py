@@ -109,6 +109,7 @@ class PromoArea(models.Model):
 def update_mooring_map_filename(instance, filename):
     return 'mooring/mooring_maps/{}/{}'.format(instance.id,filename)
 
+
 class MooringArea(models.Model):
 
     MOORING_TYPE_CHOICES = (
@@ -340,6 +341,7 @@ class MooringArea(models.Model):
                     cr = MooringsiteRate(**data)
                     cr.campsite = c
                     cr.save()
+                    MooringsiteRateLog.objects.create(change_type=0,mooringarea=self,booking_period=cr.booking_period, date_start=cr.date_start, date_end=cr.date_end,reason=cr.reason,details=cr.details)
         except Exception as e:
             raise
 
@@ -353,6 +355,7 @@ class MooringArea(models.Model):
                 for r in rates:
                     if r.campsite in campsites and r.update_level == 0:
                         r.update(_new)
+                        MooringsiteRateLog.objects.create(change_type=1,mooringarea=self,booking_period=_new['booking_period'], date_start=r.date_start, date_end=_new['date_end'],reason=_new['reason'],details=_new['details'])
         except Exception as e:
             raise
 
@@ -365,7 +368,9 @@ class MooringArea(models.Model):
             with transaction.atomic():
                 for r in rates:
                     if r.campsite in campsites and r.update_level == 0:
+                        MooringsiteRateLog.objects.create(change_type=2,mooringarea=self,booking_period=r.booking_period, date_start=r.date_start, date_end=r.date_end,reason=r.reason,details=r.details)
                         r.delete()
+
         except Exception as e:
             raise
 
@@ -446,6 +451,7 @@ class MooringAreaImage(models.Model):
         except:
             pass
         super(MooringAreaImage,self).delete(*args,**kwargs)
+
 
 class RefundPricePeriod(models.Model):
 
@@ -659,6 +665,24 @@ class MooringAreaBookingRange(BookingRange):
                 raise ValidationError('The start date can\'t be in the past')
         super(MooringAreaBookingRange,self).clean(*args, **kwargs)
 
+class MooringsiteRateLog(models.Model):
+    CHANGE_TYPE = (
+        (0, 'New'),
+        (1, 'Change'),
+        (2, 'Delete')
+    )
+
+    change_type = models.SmallIntegerField(choices=CHANGE_TYPE, default=None, null=True, blank=True)
+    mooringarea= models.ForeignKey('MooringArea', on_delete=models.PROTECT, related_name='marinearea')
+    booking_period = models.ForeignKey(BookingPeriod, on_delete=models.PROTECT, null=True, blank=True)
+    date_start = models.DateField(default=date.today)
+    date_end = models.DateField(null=True, blank=True)
+    reason = models.ForeignKey('PriceReason')
+    details = models.TextField(null=True,blank=True)
+    created = models.DateTimeField(auto_now_add=True, null=True,blank=True)
+
+    def __str__(self):
+        return self.mooringarea
 
 class Mooringsite(models.Model):
     mooringarea = models.ForeignKey('MooringArea', db_index=True, on_delete=models.PROTECT, related_name='campsites')
@@ -1073,7 +1097,7 @@ class MooringsiteRate(models.Model):
         today = datetime.now().date()
         if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
             return True
-        return False
+        return True 
 
     # Methods
     # =================================
@@ -1620,7 +1644,10 @@ class ViewPriceHistory(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
+        #if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
+        if self.date_end is None:
+             return True
+        elif self.date_end > today:
             return True
         return False
 

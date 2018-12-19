@@ -52,6 +52,11 @@ class MooringsiteBookingInline(admin.TabularInline):
     model = models.MooringsiteBooking
     extra = 0
 
+@admin.register(models.MooringsiteRateLog)
+class MooringsiteRateLogAdmin(admin.ModelAdmin):
+    list_display = ('id','mooringarea','change_type','booking_period','date_start','date_end','reason','details','created')
+    ordering = ('-id',)
+
 @admin.register(models.RefundGroup)
 class RefundGroupAdmin(admin.ModelAdmin):
     list_display = ('id','name')

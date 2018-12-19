@@ -280,9 +280,11 @@ export default {
                     var booking_period_id = $(this).data('booking_period_id');
                     vm.$refs.historyModal.selected_rate= rate;
                     vm.price.period_start = Moment(start).format('D/MM/YYYY');
+                    vm.price.period_end = Moment(end).format('D/MM/YYYY');
                     vm.price.booking_period_id = booking_period_id;
                     vm.price.original = {
                         'date_start': start,
+                        'date_end' : end,
                         'rate_id': rate,
                         'reason': reason,
                         'details': details,

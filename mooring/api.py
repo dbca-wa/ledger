@@ -1031,6 +1031,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 data = {
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
+                    'date_end': serializer.validated_data['period_end'],
                     'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
                     'details': serializer.validated_data.get('details',None),
                     'booking_period': period,
@@ -1084,7 +1085,8 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 serializer.validated_data['rate']= rate
                 new_data = {
                     'rate': rate,
-                    'date_start': serializer.validated_data['period_start'],
+#                    'date_start': serializer.validated_data['period_start'],
+                    'date_end': serializer.validated_data['period_end'],
                     'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
                     'details': serializer.validated_data.get('details',None),
                     'booking_period': period,
@@ -2420,6 +2422,7 @@ class MooringsiteClassViewSet(viewsets.ModelViewSet):
                 new_data = {
                     'rate': rate,
                     'date_start': serializer.validated_data['period_start'],
+                    'date_end' : serializer.validated_data['period_end'],
                     'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
                     'details': serializer.validated_data.get('details',None),
                     'update_level': 1

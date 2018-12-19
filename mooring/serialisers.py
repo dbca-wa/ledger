@@ -594,6 +594,7 @@ class RateDetailSerializer(serializers.Serializer):
     child = serializers.DecimalField(max_digits=5, decimal_places=2,  required=False, default='0.00')
     infant = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default='0.00')
     period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
+    period_end = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
     reason = serializers.IntegerField()
     details = serializers.CharField(required=False,allow_blank=True)
     campsite = serializers.IntegerField(required=False)

@@ -194,40 +194,6 @@ class MakeBookingsView(TemplateView):
         campsite = booking.campsites.all()[0].campsite if booking else None
         entry_fees = MarinaEntryRate.objects.filter(Q(period_start__lte = booking.arrival), Q(period_end__gt=booking.arrival)|Q(period_end__isnull=True)).order_by('-period_start').first() if (booking and campsite.mooringarea.park.entry_fee_required) else None
         
-        print "OLD BOOKING"
-        if booking:
-            if booking.old_booking:
-                old_booking_mooring = MooringsiteBooking.objects.filter(booking=booking.old_booking)
-                booking_changes = MooringsiteBooking.objects.filter(booking=booking)
-                print old_booking_mooring
-
-                for ob in old_booking_mooring:
-                     changed = True
-                     print ob.id
-                     print ob.campsite
-                     print ob.from_dt
-                     print ob.to_dt
-                     print ob.booking_period_option
-                     for bc in booking_changes:
-                          if bc.campsite == ob.campsite and ob.from_dt == bc.from_dt and ob.to_dt == bc.to_dt and ob.booking_period_option == bc.booking_period_option:
-                               changed = False
-                     from_dt = datetime.strptime(ob.from_dt.strftime('%Y-%m-%d'),'%Y-%m-%d')
-                     daystillbooking =  (from_dt-nowtimec).days
-                     print "DAYS"
-                     print ob.from_dt
-                     print from_dt
-                     print nowtimec
-                     print daystillbooking
-
-                     print "CHANGED STATUS"
-                     print changed
-                     
-
-                refund_price_period = RefundPricePeriod.objects.all().order_by('days')
-                print refund_price_period
-        # RefundPricePeriod
-
-
 
         pricing = {
             'mooring': Decimal('0.00'),
@@ -302,6 +268,43 @@ class MakeBookingsView(TemplateView):
                     local_dt = datetime.fromtimestamp(timestamp)
                     to_dt = local_dt.replace(microsecond=to_dt.microsecond)
                     lines.append({'from': from_dt, 'to': to_dt})
+
+
+
+
+        print "OLD BOOKING"
+        if booking:
+            if booking.old_booking:
+                old_booking_mooring = MooringsiteBooking.objects.filter(booking=booking.old_booking)
+                booking_changes = MooringsiteBooking.objects.filter(booking=booking)
+                print old_booking_mooring
+
+                for ob in old_booking_mooring:
+                     changed = True
+                     print ob.id
+                     print ob.campsite
+                     print ob.from_dt
+                     print ob.to_dt
+                     print ob.booking_period_option
+                     for bc in booking_changes:
+                          if bc.campsite == ob.campsite and ob.from_dt == bc.from_dt and ob.to_dt == bc.to_dt and ob.booking_period_option == bc.booking_period_option:
+                               changed = False
+                     from_dt = datetime.strptime(ob.from_dt.strftime('%Y-%m-%d'),'%Y-%m-%d')
+                     daystillbooking =  (from_dt-nowtimec).days
+                     print "DAYS"
+                     print ob.from_dt
+                     print from_dt
+                     print nowtimec
+                     print daystillbooking
+
+                     print "CHANGED STATUS"
+                     print changed
+
+
+                refund_price_period = RefundPricePeriod.objects.all().order_by('days')
+                print refund_price_period
+
+
             # Sort the list by date from.
             new_lines = sorted(lines, key=lambda line: line['from'])
             i = 0
