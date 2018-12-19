@@ -34,8 +34,8 @@ def can_change_role(organisation, user):
         _is_admin = _admin_contacts.filter(email=user.email).exists()
         if _is_admin and _admin_contacts.count() < 2:
             _can_change = False
-    except OrganisationContact.doesNotExist:
-        pass
+    except OrganisationContact.DoesNotExist:
+        _can_change = False
     return _can_change
 
 

@@ -117,11 +117,11 @@ export default {
                 {data: "class_name"},
                 {data: "activity_type_names"},
                 {
-                    data: "title",
-                    'render': function (value) {
-                        return helpers.dtPopover(value);
-                    },
-                    'createdCell': helpers.dtPopoverCellFn
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
                 },
                 {
                     data: "submitter",
@@ -156,8 +156,9 @@ export default {
                         if (!vm.is_external){
                             links += `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
-                        if (full.can_user_edit) {
+                        if (full.can_current_user_edit) {
                             links +=  `<a href='/external/application/${full.id}'>Edit</a><br/>`;
+                            links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
                         }
                         return links;
                     }
@@ -174,11 +175,11 @@ export default {
                 {data: "class_name"},
                 {data: "activity_type_names"},
                 {
-                    data: "title",
-                    'render': function (value) {
-                        return helpers.dtPopover(value);
-                    },
-                    'createdCell': helpers.dtPopoverCellFn
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
                 },
                 {
                     data: "submitter",
@@ -217,12 +218,136 @@ export default {
                             links +=  full.can_be_processed ? `<a href='/internal/application/${full.id}'>Process</a><br/>`: `<a href='/internal/application/${full.id}'>View</a><br/>`;
                         }
                         else{
-                            if (full.can_user_edit) {
+                            if (full.can_current_user_edit) {
                                 links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
                                 links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
                             }
                             else if (full.can_user_view) {
                                 links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
+                            }
+                        }
+                        return links;
+                    }
+                }
+            ]
+        }
+        let external_columns = [];
+        if (wc_version == "1.0") {
+            external_columns = [
+                {
+                    data: "lodgement_number",
+                    mRender:function(data,type,full){
+                        return data;
+                    }
+                },
+                {data: "class_name"},
+                {data: "activity_type_names"},
+                {
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
+                },
+                {
+                    data: "submitter",
+                    mRender:function (data,type,full) {
+                        if (data) {
+                            return `${data.first_name} ${data.last_name}`;
+                        }
+                        return ''
+                    }
+                },
+                {data: "applicant"},
+                {
+                    data: "processing_status",
+                    mRender:function(data,type,full){
+                        return vm.level == 'external' ? full.customer_status: data;
+                    }
+                },
+                {
+                    data: "lodgement_date",
+                    mRender:function (data,type,full) {
+                        return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                    }
+                },
+                {
+                    // Actions
+                    mRender:function (data,type,full) {
+                        let links = '';
+                        if (!vm.is_external){
+                            links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
+                        }
+                        else{
+                            if (full.can_current_user_edit) {
+                                links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
+                                links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
+                            }
+                            else if (full.can_user_view) {
+                                links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
+                            }
+                        }
+                        return links;
+                    }
+                }
+            ]
+        } else {
+            external_columns = [
+                {
+                    data: "lodgement_number",
+                    mRender:function(data,type,full){
+                        return data;
+                    }
+                },
+                {data: "class_name"},
+                {data: "activity_type_names"},
+                {
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
+                },
+                {
+                    data: "submitter",
+                    mRender:function (data,type,full) {
+                        if (data) {
+                            return `${data.first_name} ${data.last_name}`;
+                        }
+                        return ''
+                    }
+                },
+                {data: "applicant"},
+                {
+                    data: "processing_status",
+                    mRender:function(data,type,full){
+                        return vm.level == 'external' ? full.customer_status: data;
+                    }
+                },
+                {
+                    data: "lodgement_date",
+                    mRender:function (data,type,full) {
+                        return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                    }
+                },
+                {
+                    // Actions
+                    mRender:function (data,type,full) {
+                        let links = '';
+                        if (!vm.is_external){
+                            links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
+                        }
+                        else{
+                            if (full.can_current_user_edit) {
+                                links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
+                                links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
+                            }
+                            else if (full.can_user_view) {
+                                links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
+
+                                if (full.payment_status == 'unpaid'){
+                                    links +=  `<a href='#${full.id}' data-pay-application-fee='${full.id}'>Pay Application Fee</a><br/>`;
+                                }
                             }
                         }
                         return links;
@@ -261,68 +386,7 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
-                columns: [
-                    {
-                        data: "lodgement_number",
-                        mRender:function(data,type,full){
-                            return data;
-                        }
-                    },
-                    {data: "class_name"},
-                    {data: "activity_type_names"},
-                    {
-                        data: "title",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn
-                    },
-                    {
-                        data: "submitter",
-                        mRender:function (data,type,full) {
-                            if (data) {
-                                return `${data.first_name} ${data.last_name}`;
-                            }
-                            return ''
-                        }
-                    },
-                    {data: "applicant"},
-                    {
-                        data: "processing_status",
-                        mRender:function(data,type,full){
-                            return vm.level == 'external' ? full.customer_status: data;
-                        }
-                    },
-                    {
-                        data: "lodgement_date",
-                        mRender:function (data,type,full) {
-                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
-                    },
-                    {
-                        // Actions
-                        mRender:function (data,type,full) {
-                            let links = '';
-                            if (!vm.is_external){
-                                links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
-                            }
-                            else{
-                                if (full.can_user_edit) {
-                                    links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                                }
-                                else if (full.can_user_view) {
-                                    links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
-
-                                    if (full.payment_status == 'unpaid'){
-                                        links +=  `<a href='#${full.id}' data-pay-application-fee='${full.id}'>Pay Application Fee</a><br/>`;
-                                    }
-                                }
-                            }
-                            return links;
-                        }
-                    }
-                ],
+                columns: external_columns,
                 processing: true,
                 initComplete: function () {
                     // Grab Regions from the data in the table

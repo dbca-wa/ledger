@@ -132,6 +132,13 @@ from '@/utils/hooks'
                         $('.fixed').width('100%');
                     }
                 });
+                $(document).ready(function(){
+                    $('.dropdown-submenu a.section-menu').on("click", function(e){
+                        $(this).next('ul').toggle();
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+                });
 
             }
 
@@ -213,11 +220,4 @@ from '@/utils/hooks'
             }
         }
     }
-    $(document).ready(function(){
-      $('.dropdown-submenu a.section-menu').on("click", function(e){
-        $(this).next('ul').toggle();
-        e.stopPropagation();
-        e.preventDefault();
-      });
-    });
 </script>

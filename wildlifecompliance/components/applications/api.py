@@ -53,7 +53,9 @@ from wildlifecompliance.components.applications.serializers import (
     ApplicationSerializer,
     InternalApplicationSerializer,
     SaveApplicationSerializer,
-    DTApplicationSerializer,
+    BaseApplicationSerializer,
+    DTInternalApplicationSerializer,
+    DTExternalApplicationSerializer,
     ApplicationUserActionSerializer,
     ApplicationLogEntrySerializer,
     DTReferralSerializer,
@@ -96,7 +98,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        serializer = DTApplicationSerializer(queryset, many=True)
+        serializer = BaseApplicationSerializer(queryset, many=True, context={'request':request})
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
@@ -275,6 +277,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @list_route(methods=['GET',])
+    def internal_datatable_list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = DTInternalApplicationSerializer(queryset, many=True,context={'request':request})
+        return Response(serializer.data)
+
+    @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
         user_orgs = [org.id for org in request.user.wildlifecompliance_organisations.all()];
         qs = []
@@ -282,7 +290,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         qs.extend(list(self.get_queryset().filter(proxy_applicant = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         qs.extend(list(self.get_queryset().filter(org_applicant_id__in = user_orgs).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         queryset = list(set(qs))
-        serializer = DTApplicationSerializer(queryset, many=True)
+        serializer = DTExternalApplicationSerializer(queryset, many=True,context={'request':request})
         return Response(serializer.data)
 
     @detail_route(methods=['GET',])
