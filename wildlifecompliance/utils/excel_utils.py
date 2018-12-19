@@ -58,7 +58,7 @@ APPLICANT_TYPE_SUBMITTER = 'SUB'
 
 class ExcelWriter():
     def __init__(self):
-        pass
+        self.cur_datetime = datetime.now()
 
     def update_workbooks(self):
         for licence_category in WildlifeLicenceClass.objects.all():
@@ -70,11 +70,11 @@ class ExcelWriter():
     def archive_workbook(self, filename):
         src_file = settings.EXCEL_OUTPUT_PATH + '/' + filename
         if os.path.isfile(src_file):
-			archive_dir = '{}/archive/{}'.format(settings.EXCEL_OUTPUT_PATH, datetime.now().strftime('%Y%m%dT%H%M%S'))
-			dest_file = archive_dir + '/' + filename
-			if not os.path.exists(archive_dir):
-				os.makedirs(archive_dir)
-			shutil.copyfile(src_file, dest_file)
+            archive_dir = '{}/archive/{}'.format(settings.EXCEL_OUTPUT_PATH, self.cur_datetime.strftime('%Y%m%dT%H%M%S'))
+            dest_file = archive_dir + '/' + filename
+            if not os.path.exists(archive_dir):
+                os.makedirs(archive_dir)
+            shutil.copyfile(src_file, dest_file)
 
 
     def set_formats(self, workbook):
@@ -147,10 +147,12 @@ class ExcelWriter():
                 k = k + '_' + self.get_tab_index(qs_activity_type) #, activity_name)
                 s = SearchUtils(qs_activity_type[0].application)
                 answer = s.search_value(k)
-                ordered_dict.update(OrderedDict([(v,answer)]))
+                #ordered_dict.update(OrderedDict([(v,answer)]))
+                ordered_dict.update(OrderedDict([(k,answer)]))
             else:
                 # this part for the Excel column  headers
-                ordered_dict.update(OrderedDict([(v,None)]))
+                #ordered_dict.update(OrderedDict([(v,None)]))
+                ordered_dict.update(OrderedDict([(k,None)]))
 
         return ordered_dict
 
@@ -272,10 +274,13 @@ class ExcelWriter():
                             if application.licences.all().count() > 0:
                                 licence_number = application.licences.all().first().reference
                             else:
-                                licence_number = self.create_licence(application, purpose, applicant_type, applicant_id).reference
+                                licence_number = self.create_licence(application, purpose, licence_category, applicant_type, applicant_id).reference
                             row_values[hdr.index(LICENCE_NUMBER)] = licence_number
                     except ValueError, e:
-                        logger.error('Cannot find activity_type {} in Excel header./n{}'.format(activity_type, e))
+                        logger.error('Cannot find activity_type {} in Excel header./n{}'.format(purpose, e))
+#                        import ipdb; ipdb.set_trace()
+#                    except Exception, e:
+#                        import ipdb; ipdb.set_trace()
 
             excel_data.update({lodgement_number: row_values})
 
@@ -369,8 +374,8 @@ class ExcelWriter():
 #            ('applicant_id', qs_activity_type[0].excel_app.applicant_id if qs_activity_type else None),
 #        ])
 
-    def cols_common(self, qs_activity_type, activity_name):
-        code = activity_name[:2].lower()
+    def cols_common(self, qs_activity_type, activity_name, code):
+        #code = activity_name[:2].lower()
         ordered_dict = OrderedDict([
             ('{}_{}'.format(code, COVER_PROCESSED), None),
             ('{}_{}'.format(code, COVER_PROCESSED_DATE), None),
@@ -390,78 +395,88 @@ class ExcelWriter():
         activity_type = excel_app.excel_activity_types.filter(activity_name='Importing Fauna (Non-Commercial)')[0]
         cols_output(activity_type, 'Importing', 'Importing Fauna (Non-Commercial)')
         """
+        code = WildlifeLicenceActivity.objects.get(name=activity_name).code
         ordered_dict = OrderedDict([
             ('{}'.format(activity_name), None),
+            ('{}'.format(code), None),
         ])
         ordered_dict.update(self.get_activity_type_sys_answers(qs_activity_type, activity_name))
-        ordered_dict.update(self.cols_common(qs_activity_type, activity_name))
+        ordered_dict.update(self.cols_common(qs_activity_type, activity_name, code))
         return ordered_dict
 
 
-    def create_licence(self, application, activity_name, applicant_type, applicant_id):
+    #def create_licence(self, application, activity_name, applicant_type, applicant_id):
+    def create_licence(self, application, activity_name, licence_category, applicant_type, applicant_id):
         """ activity_name='Importing Fauna (Non-Commercial)' """
         licence = None
         activity=WildlifeLicenceActivity.objects.get(name=activity_name)
+        licence_class = WildlifeLicenceClass.objects.get(short_name=licence_category)
+        #import ipdb; ipdb.set_trace()
         if applicant_type == APPLICANT_TYPE_ORGANISATION:
             qs_licence = WildlifeLicence.objects.filter(org_applicant_id=applicant_id)
             if qs_licence.exists():
-                # use existing licence, just increment sequence_number
-                licence = WildlifeLicence.objects.create(
-                    licence_number=qs_licence.last().licence_number,
-                    licence_sequence=qs_licence.last().licence_sequence + 1,
-                    current_application=application,
-                    org_applicant_id=applicant_id,
-                    submitter=application.submitter,
-                    licence_type=activity
-                )
+                qs_licence_for_given_class =  qs_licence.filter(licence_class=licence_class)
+                if qs_licence_for_given_class.exists():
+                    # use existing licence, just increment sequence_number
+                    licence = WildlifeLicence.objects.create(
+                        licence_number=qs_licence.last().licence_number,
+                        licence_sequence=qs_licence.last().licence_sequence + 1,
+                        current_application=application,
+                        org_applicant_id=applicant_id,
+                        submitter=application.submitter,
+                        licence_type=activity,
+                        licence_class=licence_class
+                    )
+                else:
+                    licence = WildlifeLicence.objects.create(current_application=application,org_applicant_id=applicant_id,submitter=application.submitter,
+                                  licence_type=activity,licence_class=licence_class)
             else:
-                licence = WildlifeLicence.objects.create(
-                    current_application=application,
-                    org_applicant_id=applicant_id,
-                    submitter=application.submitter,
-                    licence_type=activity
-                )
+                licence = WildlifeLicence.objects.create(current_application=application,org_applicant_id=applicant_id,submitter=application.submitter,
+                              licence_type=activity,licence_class=licence_class)
+           
 
         elif applicant_type == APPLICANT_TYPE_PROXY:
             qs_licence = WildlifeLicence.objects.filter(proxy_applicant_id=applicant_id)
             if qs_licence.exists():
-                # use existing licence, just increment sequence_number
-                licence = WildlifeLicence.objects.create(
-                    licence_number=qs_licence.last().licence_number,
-                    licence_sequence=qs_licence.last().licence_sequence + 1,
-                    current_application=application,
-                    proxy_applicant_id=applicant_id,
-                    submitter=application.submitter,
-                    licence_type=activity
-                )
+                qs_licence_for_given_class =  qs_licence.filter(licence_class=licence_class)
+                if qs_licence_for_given_class.exists():
+                    # use existing licence, just increment sequence_number
+                    licence = WildlifeLicence.objects.create(
+                        licence_number=qs_licence.last().licence_number,
+                        licence_sequence=qs_licence.last().licence_sequence + 1,
+                        current_application=application,
+                        proxy_applicant_id=applicant_id,
+                        submitter=application.submitter,
+                        licence_type=activity,
+                        licence_class=licence_class
+                    )
+                else:
+                    licence = WildlifeLicence.objects.create(current_application=application, proxy_applicant_id=applicant_id, submitter=application.submitter,
+                                  licence_type=activity, licence_class=licence_class)
             else:
-                licence = WildlifeLicence.objects.create(
-                    current_application=application,
-                    proxy_applicant_id=applicant_id,
-                    submitter=application.submitter,
-                    licence_type=activity
-                )
+                licence = WildlifeLicence.objects.create(current_application=application, proxy_applicant_id=applicant_id, submitter=application.submitter,
+                              licence_type=activity, licence_class=licence_class)
 
-
-        elif applicant_type == APPLICANT_TYPE_SUBMITTER:
+        #elif applicant_type == APPLICANT_TYPE_SUBMITTER:
+        else: # assume applicant is the submitter
             qs_licence = WildlifeLicence.objects.filter(submitter_id=applicant_id, org_applicant__isnull=True, proxy_applicant__isnull=True)
             if qs_licence.exists():
-                # use existing licence, just increment sequence_number
-                licence = WildlifeLicence.objects.create(
-                    licence_number=qs_licence.last().licence_number,
-                    licence_sequence=qs_licence.last().licence_sequence + 1,
-                    current_application=application,
-                    #proxy_applicant_id=applicant_id,
-                    submitter_id=applicant_id,
-                    licence_type=activity
-                )
+                qs_licence_for_given_class =  qs_licence.filter(licence_class=licence_class)
+                if qs_licence_for_given_class.exists():
+                    # use existing licence, just increment sequence_number
+                    licence = WildlifeLicence.objects.create(
+                        licence_number=qs_licence.last().licence_number,
+                        licence_sequence=qs_licence.last().licence_sequence + 1,
+                        current_application=application,
+                        #proxy_applicant_id=applicant_id,
+                        submitter_id=applicant_id,
+                        licence_type=activity,
+                        licence_class=licence_class
+                    )
+                else:
+                    licence = WildlifeLicence.objects.create(current_application=application, submitter_id=applicant_id, licence_type=activity, licence_class=licence_class)
             else:
-                licence = WildlifeLicence.objects.create(
-                    current_application=application,
-                    #org_applicant_id=applicant_id,
-                    submitter_id=applicant_id,
-                    licence_type=activity
-                )
+                licence = WildlifeLicence.objects.create(current_application=application, submitter_id=applicant_id, licence_type=activity, licence_class=licence_class)
 
         return licence
 
@@ -498,3 +513,55 @@ class ExcelWriter():
         ws_meta.set_column(0, 0, width)
 
 
+
+def read_codes():
+    code_list = [
+         ('Bioprospecting - Flora or Fauna', 'BIO'),
+         ('Exporting Flora (Non-Commercial)', 'EFLN'),
+         ('Taking Flora for Biological Survey', 'TFLB'),
+         ('Taking Flora from Crown Land (Non-Commercial)', 'TFLN'),
+         ('Exporting Sandalwood (Commercial)', 'ES'),
+         ('Dealing in Sandalwood', 'DS'),
+         ('Sandalwood Processing Establishment', 'SPE'),
+         ('Private Property Supplier of Sandalwood', 'SS'),
+         ('Taking Sandalwood from Crown Land (Commercial)', 'TSC'),
+         ('Exporting Flora (Commercial)', 'EFLC'),
+         ('Dealing in Flora', 'DFL'),
+         ('Flora Processing Establishment', 'FLPE'),
+         ('Private Property Supplier', 'PPS'),
+         ('Taking Flora from Crown Land (Commercial)', 'TFLC'),
+         ('Exporting Fauna (Non-Commercial)', 'EFA'),
+         ('Importing Fauna (Non-Commercial)', 'IFA'),
+         ('Possessing Fauna, Pet Keeping', 'PFAP'),
+         ('Possessing Fauna for Research', 'PFAR'),
+         ('Possessing Derelict Fauna', 'PDFA'),
+         ('Fauna Interaction (Non-Commercial)', 'FAIN'),
+         ('Salvage and Translocation of Fauna', 'STFA'),
+         ('Fauna Biological Survey', 'FABS'),
+         ('Fauna Causing Damage', 'FACD'),
+         ('Taking Dangerous Fauna  ', 'TDFA'),
+         ('Scientific / Education / Research', 'SCER'),
+         ('Exporting Kangaroo Products', 'EKP'),
+         ('Dealing in Kangaroo Products', 'DKP'),
+         ('Processing Kangaroos', 'PK'),
+         ('Possessing Kangaroos (Including in chiller facilities)', 'POK'),
+         ('Taking Fauna (Kangaroos)', 'TFAK'),
+         ('Exporting Fauna (Commercial)', 'EFAC'),
+         ('Importing Fauna (Commercial)', 'IFAC'),
+         ('Pet Dealer', 'PDE'),
+         ('Dealer', 'DE'),
+         ('Processing Fauna (e.g. crocodiles)', 'PFA'),
+         ('Commercial Display of Fauna (includes Wildlife Parks)', 'DFA'),
+         ('Feeding of Fauna for Commercial Purposes', 'FFA'),
+         ('Fauna Interaction (commercial)', 'FAIC'),
+         ('Taking Live Fauna for Commercial Purpose', 'TFAC'),
+         ('Taking Fauna (destroying)', 'TFAD')
+    ]
+
+    for j,i in enumerate(code_list):
+        try:
+            a = WildlifeLicenceActivity.objects.get(name=i[0].strip())
+            a.code = i[1]
+            a.save()
+        except Exception, e:
+            print j, i[0], i[1], e
