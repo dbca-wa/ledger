@@ -43,6 +43,9 @@ APPLICANT = 'applicant'
 APPLICANT_TYPE = 'applicant_type'
 APPLICANT_ID = 'applicant_id'
 
+PURPOSE = 'purpose'
+ADDITIONAL_INFO = 'additional_info'
+STANDARD_ADVANCED = 'standard_advanced'
 COVER_PROCESSED = 'cover_processed'
 COVER_PROCESSED_DATE = 'cover_processed_date'
 COVER_PROCESSED_BY = 'cover_processed_by'
@@ -394,6 +397,9 @@ class ExcelWriter():
     def cols_common(self, qs_activity_type, activity_name, code):
         #code = activity_name[:2].lower()
         ordered_dict = OrderedDict([
+            ('{}_{}'.format(code, PURPOSE), None),
+            ('{}_{}'.format(code, ADDITIONAL_INFO), None),
+            ('{}_{}'.format(code, STANDARD_ADVANCED), None),
             ('{}_{}'.format(code, COVER_PROCESSED), None),
             ('{}_{}'.format(code, COVER_PROCESSED_DATE), None),
             ('{}_{}'.format(code, COVER_PROCESSED_BY), None),
