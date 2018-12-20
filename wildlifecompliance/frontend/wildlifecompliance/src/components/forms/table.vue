@@ -28,43 +28,54 @@
             <textarea :readonly="readonly" class="form-control" rows="5" :name="name" :required="isRequired">{{ value }}</textarea><br/>
             -->
 
-			<table id="dynamic-table" class=" table order-list">
-				<thead>
-					<tr>
-						<td>Name</td>
-						<td>Gmail</td>
-						<td>Phone</td>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td class="col-sm-4">
-							<input type="text" name="name" class="form-control" />
-						</td>
-						<td class="col-sm-4">
-							<input type="mail" name="mail"  class="form-control"/>
-						</td>
-						<td class="col-sm-3">
-							<input type="text" name="phone"  class="form-control"/>
-						</td>
-						<td class="col-sm-2"><a class="deleteRow"></a>
+            <div id="content-editable-table">
+              <h1>Editable Table to JSON with Vue.js</h1>
+              <table class="table table-striped editable-table">
+                <thead v-if="table.thead.length">
+                  <tr>
+                    <th v-for="(heading, index) in table.thead">
+                      {{ table.thead[index] }}
+                    </th>
 
-						</td>
-					</tr>
-				</tbody>
-				<tfoot>
-					<tr>
-						<td colspan="5" style="text-align: left;">
-							<input type="button" class="btn btn-lg btn-block " id="addrow" value="Add Row" />
-						</td>
-					</tr>
-					<tr>
-					</tr>
-				</tfoot>
-		    </table>
+                    <th>
+                      <button class="btn btn-primary" type="button" v-on:click="addColumn()" title="Add Column">+</button>
+                    </th>
+                  </tr>
+                </thead>
 
-            {{rows}}
-		    <pre class="output">
+                <tbody>
+                  <tr v-for="row in table.tbody">
+                    <td v-for="(value, index) in row">
+                      <input type="text" v-model="row[index]" />
+                    </td>
+                    <td>&nbsp;</td>
+                  </tr>
+
+                  <tr>
+                    <td  v-bind:colspan="table.thead.length + 1">
+                      <button class="btn btn-primary" type="button" v-on:click="addRow()" title="Add Row">+</button>
+                    </td>
+                  </tr>
+                </tbody>
+
+<!--
+                <tfoot v-if="table.tfoot.length">
+                  <tr>
+                    <td v-for="(foot, index) in table.tfoot">
+                      <input type="text" v-model="table.tfoot[index]" />
+                    </td>
+                    <td>&nbsp;</td>
+                  </tr>
+                </tfoot>
+-->
+              </table>
+
+              <pre class="output">
+                {{tableJSON}}
+              </pre>
+            </div>
+
+            <pre class="output">
                 {{rows}}
             </pre>
 
@@ -102,110 +113,114 @@ export default {
         },
         readonly:Boolean,
         rows: [],
+
+
     },
 
     components: {Comment, HelpText, HelpTextUrl},
     data(){
         let vm = this;
         return {
-            showingComment: false
+            showingComment: false,
+
+            tableJSON: '',
+            table: {
+              thead: [
+                'Heading 1',
+                'Heading 2',
+                'Heading 3',
+                'Heading 4'
+              ],
+              tbody: [
+                ['R:1 V:1', 'R:1 V:2', 'R:1 V:3', 'R:1 V:4'],
+              ],
+              tfoot: [
+              ],
+            }
+
         }
+
     },
     methods: {
         toggleComment(){
             this.showingComment = ! this.showingComment;
         },
 
-		// https://bootsnipp.com/snippets/402bQ
-		init_table() {
-            let vm = this;
-			var counter = 0;
-
-			$("#addrow").on("click", function () {
-				var newRow = $("<tr>");
-				var cols = "";
-
-				cols += '<td><input type="text" class="form-control" name="name' + counter + '"/></td>';
-				cols += '<td><input type="text" class="form-control" name="mail' + counter + '"/></td>';
-				cols += '<td><input type="text" class="form-control" name="phone' + counter + '"/></td>';
-
-				cols += '<td><input type="button" class="ibtnDel btn btn-md btn-danger "  value="Delete"></td>';
-				newRow.append(cols);
-				$("table.order-list").append(newRow);
-				counter++;
- 
-		        vm.rows = vm.tableToJSON()		
-				
-			});
-
-			$("table.order-list").on("click", ".ibtnDel", function (event) {
-				$(this).closest("tr").remove();       
-				counter -= 1
-			});
+        updateTableJSON: function() {
+          this.tableJSON = JSON.stringify(this.table);
         },
 
-		calculateRow(row) {
-			var price = +row.find('input[name^="price"]').val();
-		},
+        addColumn: function() {
+          this.table.thead.push('Heading ' + (this.table.thead.length + 1));
 
-		calculateGrandTotal() {
-			var grandTotal = 0;
-			$("table.order-list").find('input[name^="price"]').each(function () {
-				grandTotal += +$(this).val();
-			});
-			$("#grandtotal").text(grandTotal.toFixed(2));
-		},
+          for(var i = 0, length = this.table.tbody.length; i < length; i++) {
+            this.table.tbody[i].push('R:' + (i + 1) + ' V:' + this.table.thead.length);
+          }
 
-		tableToJSON() {
-			//var $table = $("#dynamic-table"),
-			var $table = $("table"),
-				rows = [],
-				header = [];
+          this.table.tfoot.push('Footer ' + this.table.thead.length);
 
-			$table.find("thead td").each(function () {
-				header.push($(this).html());
-			});
+          this.updateTableJSON();
+        },
 
-			$table.find("tbody tr").each(function () {
-				var row = {};
+        addRow: function() {
+          var newRow = [];
 
-				$(this).find("td input").each(function (i) {
-					var key = header[i],
-						//value = $(this).html();
-						value = $(this).text();
+          for(var i = 0, length = this.table.thead.length; i < length; i++) {
+            newRow.push('R:' + (this.table.tbody.length + 1) + ' V:' + (i + 1))
+          }
 
-					row[key] = value;
-				});
+          this.table.tbody.push(newRow);
 
-				rows.push(row);
-			});
-
-			//console.log(JSON.stringify(rows))
-			return rows
-		}
-
+          this.updateTableJSON();
+        }
     },
+
     computed:{
         wc_version: function (){
             return this.$root.wc_version;
         },
+
+
     },
 
 
-	mounted:function () {
-		let vm = this;
-		vm.init_table();
+    mounted:function () {
+        let vm = this;
 
-		vm.rows = vm.tableToJSON();
-		//console.log(table)
 
-		console.log(JSON.stringify(vm.rows))
+        vm.updateTableJSON();
+
+        $('#content-editable-table').on('change', '[type="text"]', function() {
+          vm.updateTableJSON();
+        });
+
     },
 }
 </script>
 
 <style lang="css">
-    input {
-        box-shadow:none;
+    .container {
+      padding: 30px;
+      width: 100%;
+    }
+
+    .editable-table {
+
+      [type="text"] {
+        background: none;
+        border: none;
+        display: block;
+        width: 100%;
+      }
+    }
+
+    .output {
+      white-space: normal;
+    }
+
+    input[id="header"] {
+        outline-style: none;
     }
 </style>
+:w
+
