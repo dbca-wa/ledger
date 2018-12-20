@@ -204,6 +204,7 @@ class MooringAreaMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'info_url',
             'images',
             'vessel_size_limit',
+            'vessel_draft_limit',
             'max_advance_booking'
 #            'price_hint'
         )
@@ -341,7 +342,8 @@ class MooringAreaSerializer(serializers.ModelSerializer):
             'mooring_map',
             'additional_info',
             'mooring_group',
-            'vessel_size_limit'
+            'vessel_size_limit',
+            'vessel_draft_limit'
         )
         read_only_fields = ('mooring_group',)
 
