@@ -127,13 +127,19 @@
                         <alert v-if="showContactError" type="danger" style="color:red"><div v-for="item in errorListContact"><strong>{{item}}</strong></div></alert>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Phone (work)</label>
-                            <div class="col-sm-6">
+                            <div v-if="profile.is_department_user" class="col-sm-6">
+                                <input readonly="readonly" type="text" class="form-control" id="phone" name="Phone" placeholder="" v-model="profile.phone_number">
+                            </div>
+                            <div v-else class="col-sm-6">
                                 <input type="text" class="form-control" id="phone" name="Phone" placeholder="" v-model="profile.phone_number">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Mobile</label>
-                            <div class="col-sm-6">
+                            <div v-if="profile.is_department_user" class="col-sm-6">
+                                <input readonly="readonly" type="text" class="form-control" id="mobile" name="Mobile" placeholder="" v-model="profile.mobile_number">
+                            </div>
+                            <div v-else class="col-sm-6">
                                 <input type="text" class="form-control" id="mobile" name="Mobile" placeholder="" v-model="profile.mobile_number">
                             </div>
                           </div>
@@ -167,7 +173,7 @@
                   <div class="panel-body collapse" :id="oBody">
                       <form class="form-horizontal" name="orgForm" method="post">
                           <div class="form-group">
-                            <label for="" class="col-sm-5 control-label">Do you manage approvals on behalf of an organisation?</label>
+                            <label for="" class="col-sm-5 control-label">Are you responsible for preparing proposals on behalf of an organisation?</label>
                             <div class="col-sm-4">
                                 <label class="radio-inline">
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
@@ -247,7 +253,7 @@
                               </div>
                               <div class="form-group" v-else-if="!newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;">
-                                    This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this origanisation.</br>
+                                    This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this organisation.</br>
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-primary btn-file pull-left">
@@ -423,7 +429,7 @@ export default {
             required_fields.each(function() {
             if (this.value == '') {
                     //var text = $('#'+id).text()
-                    console.log(this);
+                    //console.log(this);
                     vm.errorListContact.push('Value not provided: ' + this.name)
                     vm.missing_fields.push({id: this.id});
                 }

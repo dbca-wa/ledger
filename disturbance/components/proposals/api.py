@@ -169,6 +169,13 @@ class ProposalFilterBackend(DatatablesFilterBackend):
 
             if date_to:
                 queryset = queryset.filter(due_date__lte=date_to)
+
+            if request.GET.get('processing_status'):
+                queryset = queryset.filter(processing_status__icontains=request.GET.get('processing_status'))
+
+            if request.GET.get('customer_status'):
+                queryset = queryset.filter(customer_status__icontains=request.GET.get('customer_status'))
+
         elif queryset.model is Referral:
             if date_from:
                 queryset = queryset.filter(proposal__lodgement_date__gte=date_from)
