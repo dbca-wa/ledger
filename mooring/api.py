@@ -1000,6 +1000,28 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 print(traceback.print_exc())
                 raise serializers.ValidationError(str(e[0]))
 
+    def checkOverrlapDates(self,mooring_id,date_start,date_end,exclude_id):
+
+         start_period_count =None
+         end_period_count=None
+         start_end_within_period=None
+
+         if exclude_id:  
+             start_period_count =  MooringAreaPriceHistory.objects.filter(id=mooring_id,date_start__lte=date_start,date_end__gte=date_start).exclude(price_id=exclude_id).count()
+             end_period_count = MooringAreaPriceHistory.objects.filter(id=mooring_id,date_start__lte=date_end,date_end__gte=date_end).exclude(price_id=exclude_id).count()
+             start_end_within_period = MooringAreaPriceHistory.objects.filter(id=mooring_id,date_start__gte=date_start,date_end__lte=date_end).exclude(price_id=exclude_id).count()
+         else:
+             start_period_count =  MooringAreaPriceHistory.objects.filter(id=mooring_id,date_start__lte=date_start,date_end__gte=date_start).count()
+             end_period_count = MooringAreaPriceHistory.objects.filter(id=mooring_id,date_start__lte=date_end,date_end__gte=date_end).count()
+             start_end_within_period = MooringAreaPriceHistory.objects.filter(id=mooring_id,date_start__gte=date_start,date_end__lte=date_end).count()
+
+         if start_period_count > 0 or end_period_count > 0 or start_end_within_period > 0:
+              return True
+         else:
+              return False
+
+
+
     @detail_route(methods=['post'],)
     def addPrice(self, request, format='json', pk=None):
         try:
@@ -1023,6 +1045,10 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                     booking = BookingPeriod.objects.get(pk=serializer.validated_data.get('booking_period_id', None))
                 except BookingPeriod.DoesNotExist as e:
                     raise serializers.ValidationError('The selected booking period does not exist')
+                overlapcheck = self.checkOverrlapDates(self.get_object().id,serializer.validated_data['period_start'], serializer.validated_data['period_end'],None)
+                if overlapcheck is True:
+                     raise serializers.ValidationError('Dates overlap existing periods')
+                #MooringAreaPriceHistory.objects.filter() 
                 if booking:
                     period = booking
                 else:
@@ -1059,12 +1085,17 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             original_data = request.data.pop('original')
+            price_id = request.data.pop('price_id')
             original_serializer = MooringAreaPriceHistorySerializer(data=original_data,method='post')
             original_serializer.is_valid(raise_exception=True)
 
             serializer = RateDetailSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             rate_id = serializer.validated_data.get('rate',None)
+            overlapcheck = self.checkOverrlapDates(self.get_object().id,serializer.validated_data['period_start'], serializer.validated_data['period_end'], price_id)
+            if overlapcheck is True:
+                raise serializers.ValidationError('Dates overlap existing periods')
+
             if rate_id:
                 try:
                     rate = Rate.objects.get(id=rate_id)

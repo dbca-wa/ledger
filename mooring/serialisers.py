@@ -599,6 +599,7 @@ class RateDetailSerializer(serializers.Serializer):
     details = serializers.CharField(required=False,allow_blank=True)
     campsite = serializers.IntegerField(required=False)
     booking_period_id = serializers.IntegerField(required=False)
+    price_id = serializers.IntegerField(required=False)
 
     def validate_rate(self, value):
         if value:
@@ -628,10 +629,11 @@ class BookingPeriodSerializer(serializers.ModelSerializer):
 class MooringAreaPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
     details = serializers.CharField(required=False,allow_blank=True)
+    #price_id = serializers.IntegerField(required=False)
     class Meta:
         model = MooringAreaPriceHistory
-        fields = ('id','date_start','date_end','rate_id','mooring','adult','concession','child','infant','editable','deletable','reason','details', 'booking_period_id')
-        read_only_fields = ('id','editable','deletable','mooring','adult','concession','child','infant')
+        fields = ('id','date_start','date_end','rate_id','mooring','adult','concession','child','infant','editable','deletable','reason','details', 'booking_period_id','price_id')
+        read_only_fields = ('id','editable','deletable','mooring','adult','concession','child','infant','price_id')
 
     def validate(self,obj):
         if obj.get('reason') == 1 and not obj.get('details'):

@@ -126,6 +126,17 @@
                     </div>
                 </div>
             </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                    </div>
+                    <div class="col-md-5" id='pricehistory_error' style='color: red; font-weight: bold;'>
+                    </div>
+                </div>
+            </div>
+
+
         </form>
     </div>
 
@@ -311,6 +322,7 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
+        $('#pricehistory_error').html("");
         vm.$store.dispatch("fetchBookingPeriods");
         $('[data-toggle="tooltip"]').tooltip()
         vm.form = document.forms.priceForm;

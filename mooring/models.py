@@ -1072,7 +1072,7 @@ class MooringsiteRate(models.Model):
     reason = models.ForeignKey('PriceReason')
     details = models.TextField(null=True,blank=True)
     update_level = models.SmallIntegerField(choices=UPDATE_LEVEL_CHOICES, default=0)
-
+   
     def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
         return self.rate.adult*num_adult + self.rate.concession*num_concession + \
                 self.rate.child*num_child + self.rate.infant*num_infant
@@ -1613,9 +1613,12 @@ class AdmissionsReason(Reason):
 class DiscountReason(Reason):
     pass
 
+
 # VIEWS
 # =====================================
 class ViewPriceHistory(models.Model):
+
+    # Created because id was used as a primary_key to a foriegn model link as such need to create unique row id..
     id = models.IntegerField(primary_key=True)
     date_start = models.DateField()
     date_end = models.DateField()
@@ -1628,12 +1631,14 @@ class ViewPriceHistory(models.Model):
     details = models.TextField()
     reason_id = models.IntegerField()
     infant = models.DecimalField(max_digits=8, decimal_places=2)
+    price_id = models.IntegerField()
 
     class Meta:
         abstract =True
 
     # Properties
     # ====================================
+
     @property
     def deletable(self):
         today = datetime.now().date()
