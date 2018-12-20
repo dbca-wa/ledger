@@ -35,6 +35,7 @@ SYSTEM = 'System'
 FIRST_COL = 'First Col'
 LAST_COL = 'Last Col'
 
+NSYS_COLS = 6 # number of system columns (cols --> 0 to 5)
 LODGEMENT_NUMBER = 'lodgement_number'
 APPLICATION_ID = 'application_id'
 LICENCE_NUMBER = 'licence_number'
@@ -309,13 +310,11 @@ class ExcelWriter():
         row_num = 0
         col_num = 0
         #ws.write_row(row_num, col_num, hdr, self.bold); row_num += 1
-        self.write_row(row_num, col_num, hdr, ws, protect=True); row_num += 1
+        #import ipdb; ipdb.set_trace()
+        self.write_row(row_num, col_num, hdr, ws, is_header=True); row_num += 1
         for k,v in excel_data.iteritems():
             #ws.write_row(row_num, col_num, v)
-            if col_num < 6:
-                self.write_row(row_num, col_num, v, ws, protect=True)
-            else:
-                self.write_row(row_num, col_num, v, ws, protect=False)
+            self.write_row(row_num, col_num, v, ws)
             row_num += 1
 
         # Append new applications to output
@@ -324,16 +323,24 @@ class ExcelWriter():
         self.write_new_app_data(excel_data, meta, licence_category, ws, row_num)
 
         #wb_out.close()
-        wb.save(input_filename)
+        try:
+            wb.save(input_filename)
+        except IOError, e:
+            raise Exception("Cannot write to file {}. File is already open. Please close the file first".format(input_filename))
 
-    def write_row(self, row_num, col_num, values, worksheet, protect=False): # openpyxl helper function
+
+    def write_row(self, row_num, col_num, values, worksheet, is_header=False): # openpyxl helper function
         """ Openpyxl helper function. Writes values as a row of data. If values is a single value, writes to a single cell """
         if not isinstance(values, list):
             values = [values] if values else ['']
 
         for col, val in enumerate(values, start=col_num):
             cell = worksheet.cell(row=row_num+1, column=col+1, value=val) # openpyxl count rows and cols from 1
-            cell.protection = Protection(locked=protect)
+            if not is_header and col > NSYS_COLS:
+                # don't protect data cells
+                cell.protection = Protection(locked=False)
+            else:
+                cell.protection = Protection(locked=True)
 
     def write_new_app_data(self, excel_data, meta, licence_category, worksheet, next_row):
 
@@ -347,7 +354,7 @@ class ExcelWriter():
             col_num = int(meta[SYSTEM][FIRST_COL])
             for k,v in excel_app.cols_output.iteritems():
                 #worksheet.write(row_num, col_num, v, self.locked)
-                self.write_row(row_num, col_num, v, worksheet, protect=True)
+                self.write_row(row_num, col_num, v, worksheet)
                 col_num += 1
 
             # Application data
@@ -362,13 +369,13 @@ class ExcelWriter():
                         for k,v in activity_type_cols.iteritems():
                             #ws.write('B1', 'Here is\nsome long text\nthat\nwe wrap',      wrap)
                             #worksheet.write(row_num, col_num, v, self.unlocked_wrap)
-                            self.write_row(row_num, col_num, v, worksheet, protect=False)
+                            self.write_row(row_num, col_num, v, worksheet)
                             col_num += 1
                     else:
                         # create a blank activity_type bilock
                         for _ in activity_type_cols.keys():
                             #worksheet.write(row_num, col_num, '', self.unlocked)
-                            self.write_row(row_num, col_num, '', worksheet, protect=False)
+                            self.write_row(row_num, col_num, '', worksheet)
                             col_num += 1
 
             row_num += 1
