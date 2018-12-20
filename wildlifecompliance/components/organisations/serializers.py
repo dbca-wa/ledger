@@ -17,7 +17,7 @@ from wildlifecompliance.components.organisations.utils import (
                                 can_change_role,
                                 can_relink,
                             )
-from rest_framework import serializers
+from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
 
 
@@ -27,8 +27,16 @@ class LedgerOrganisationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class OrganisationCheckSerializer(serializers.Serializer):
+    # Validation serializer for new Organisations
     abn = serializers.CharField()
     name = serializers.CharField()
+
+    def validate(self, data):
+        requests = OrganisationRequest.objects.filter(abn=data['abn'], role='employee')\
+            .exclude(status__in=('declined', 'approved'))
+        if requests.exists():
+            raise serializers.ValidationError('A request already submitted - Pending Approval.')
+        return data
 
 class OrganisationPinCheckSerializer(serializers.Serializer):
     pin1 = serializers.CharField()
@@ -90,18 +98,20 @@ class OrganisationSerializer(serializers.ModelSerializer):
 
 
 class OrganisationCheckExistSerializer(serializers.Serializer):
+    # Validation Serializer for existing Organisations
     exists = serializers.BooleanField(default=False)
     id = serializers.IntegerField(default=0)
-    first_five = serializers.CharField()
-    can_relink_user = serializers.SerializerMethodField()
+    first_five = serializers.CharField(default='')
+    user = serializers.IntegerField()
 
-    def get_can_relink_user(self, data):
-        relink_user = False
+    def validate(self, data):
         if data['exists']:
             user = EmailUser.objects.get(id=data['user'])
             org = Organisation.objects.get(id=data['id'])
-            relink_user = can_relink(org, user)
-        return relink_user
+            if can_relink(org, user):
+                raise serializers.ValidationError('Please contact {} to re-link to Organisation'
+                                                  .format(data['first_five']))
+        return data
 
 
 class MyOrganisationsSerializer(serializers.ModelSerializer):
