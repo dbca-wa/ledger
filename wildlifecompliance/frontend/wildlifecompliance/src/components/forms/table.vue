@@ -29,7 +29,6 @@
             -->
 
             <div id="content-editable-table">
-              <h1>Editable Table to JSON with Vue.js</h1>
               <table class="table table-striped editable-table">
                 <thead v-if="table.thead.length">
                   <tr>
@@ -37,9 +36,11 @@
                       {{ table.thead[index] }}
                     </th>
 
+                    <!--
                     <th>
                       <button class="btn btn-primary" type="button" v-on:click="addColumn()" title="Add Column">+</button>
                     </th>
+                    -->
                   </tr>
                 </thead>
 
@@ -47,6 +48,9 @@
                   <tr v-for="row in table.tbody">
                     <td v-for="(value, index) in row">
                       <input type="text" v-model="row[index]" />
+                    </td>
+                    <td>
+                        <button class="btn btn-md" type="button"> <a class="ibtnDel fa fa-trash-o" title="Delete row" style="cursor: pointer; color:red;"></a> </button>
                     </td>
                     <td>&nbsp;</td>
                   </tr>
@@ -58,16 +62,6 @@
                   </tr>
                 </tbody>
 
-<!--
-                <tfoot v-if="table.tfoot.length">
-                  <tr>
-                    <td v-for="(foot, index) in table.tfoot">
-                      <input type="text" v-model="table.tfoot[index]" />
-                    </td>
-                    <td>&nbsp;</td>
-                  </tr>
-                </tfoot>
--->
               </table>
 
               <pre class="output">
@@ -173,6 +167,7 @@ export default {
 
           this.updateTableJSON();
         }
+
     },
 
     computed:{
@@ -194,6 +189,9 @@ export default {
           vm.updateTableJSON();
         });
 
+        $("#content-editable-table").on("click", ".ibtnDel", function (event) {
+            $(this).closest("tr").remove();
+        });
     },
 }
 </script>
