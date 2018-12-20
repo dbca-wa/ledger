@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
+from django.db.models import Avg, Case, Count, F, Max, Min, Prefetch, Q, Sum, When
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -34,6 +35,7 @@ class LicenceDocument(Document):
 class WildlifeLicenceActivity(models.Model):
     name = models.CharField(max_length = 100)
     short_name = models.CharField(max_length=30, default='')
+    code = models.CharField(max_length=4, default='')
     schema=JSONField(default=list)
     base_application_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
     base_licence_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
@@ -177,25 +179,34 @@ class WildlifeLicence(models.Model):
 
     licence_number = models.CharField(max_length=64, blank=True, null=True)
     licence_sequence = models.IntegerField(blank=True, default=1)
+    licence_class = models.ForeignKey(WildlifeLicenceClass)
     #licence_sequence = models.IntegerField(blank=True, unique=True, default=seq_idx)
 
-    # licence_class = models.ForeignKey(WildlifeLicenceClass)
     # licence_activity_type = models.ForeignKey(WildlifeLicenceActivityType)
     # licence_descriptor = models.ForeignKey(WildlifeLicenceDescriptor)
 
     class Meta:
-        unique_together = (('licence_number','licence_sequence'))
+        unique_together = (('licence_number','licence_sequence','licence_class'))
         app_label = 'wildlifecompliance'
 
     def __str__(self):
         return '{} {}-{}'.format(self.licence_type, self.licence_number, self.licence_sequence)
 
     def save(self, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
         super(WildlifeLicence, self).save(*args,**kwargs)
         if not self.licence_number:
-            self.licence_number = 'L{0:06d}'.format(self.pk)
+            self.licence_number = 'L{0:06d}'.format(self.next_licence_number_id)
+            #self.licence_number = 'L{0:06d}'.format(self.pk)
             self.save()
+
+    @property
+    def next_licence_number_id(self):
+        licence_number_max = WildlifeLicence.objects.all().aggregate(Max('licence_number'))['licence_number__max']
+        if licence_number_max == None:
+            return self.pk
+        else:
+            return int(licence_number_max.split('L')[1]) + 1
+
 
 #    def seq_idx():
 #        no = WildlifeLicence.objects.get().aggregate(Max(order))

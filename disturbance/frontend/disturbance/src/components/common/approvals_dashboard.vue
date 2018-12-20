@@ -247,10 +247,13 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if(vm.check_assessor(full)){
-                                    if(full.can_reissue){
+                                if(full.can_approver_reissue){
                                         links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
-                                    }
+                                }
+                                if(vm.check_assessor(full)){
+                                    // if(full.can_approver_reissue){
+                                    //     links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
+                                    // }
                                     if(full.can_reissue && full.can_action){
                                         links +=  `<a href='#${full.id}' data-cancel-approval='${full.id}'>Cancel</a><br/>`;
                                         links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
@@ -266,11 +269,15 @@ export default {
                                 }
                                 else{
                                     links +=  `<a href='/internal/approval/${full.id}'>View</a><br/>`;
+
                                 }
                                 if(full.renewal_document && full.renewal_sent){
                                   links +=  `<a href='${full.renewal_document}' target='_blank'>Renewal Notice</a><br/>`;  
 
                                 }
+                                // if(full.can_approver_reissue){
+                                //         links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
+                                // }
                             }
                             else{
                                 if (full.can_reissue) {
@@ -576,13 +583,16 @@ export default {
 
         check_assessor: function(proposal){
             let vm = this;         
-            
+            //console.log(proposal.id, proposal.can_approver_reissue);
             var assessor = proposal.allowed_assessors.filter(function(elem){
-                    return(elem.id=vm.profile.id)
+                    return(elem.id==vm.profile.id)
+
                 });
                 
-            if (assessor.length > 0)
+            if (assessor.length > 0){
+                //console.log(proposal.id, assessor)
                 return true;
+            }
             else
                 return false;       
             
