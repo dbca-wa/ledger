@@ -32,10 +32,14 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.components.returns.utils import _is_post_data_valid,_get_table_rows_from_post,_create_return_data_from_post_data
 from wildlifecompliance.components.returns.models import (
-   Return
+   Return,
+   ReturnUserAction,
+   ReturnLogEntry
 )
 from wildlifecompliance.components.returns.serializers import (
-    ReturnSerializer
+    ReturnSerializer,
+    ReturnActionSerializer,
+    ReturnCommsSerializer
 )
 
 
@@ -76,7 +80,10 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             print(self.request.data)
             print("==========posting keys=========")
             print(request.POST.keys())
-            print("============printing getlist")
+            print("============printing post data")
+            if 'save_continue' in request.POST:
+                print('inside save continue ==========')
+            print(request.POST)
             for key in request.POST.keys():
                 if key=="nilYes":
                     print("nil return")
@@ -91,6 +98,9 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
                         _create_return_data_from_post_data(instance, returns_tables.encode('utf-8'), request.POST)
                     else:
                         return Response({'error': 'Enter data in correct format.'}, status=status.HTTP_404_NOT_FOUND)
+            instance.set_submitted(request)
+            instance.submitter = request.user
+            instance.save()
 
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
@@ -106,3 +116,71 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+
+    @detail_route(methods=['GET',])
+    def comms_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.comms_logs.all()
+            serializer = ReturnCommsSerializer(qs,many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def add_comms_log(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request.data['compliance'] = u'{}'.format(instance.id)
+                request.data['staff'] = u'{}'.format(request.user.id)
+                serializer = ComplianceCommsSerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+                # Save the files
+                for f in request.FILES:
+                    document = comms.documents.create()
+                    document.name = str(request.FILES[f])
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+
+                return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    @detail_route(methods=['GET',])
+    def action_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.action_logs.all()
+            serializer = ReturnActionSerializer(qs,many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+

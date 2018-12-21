@@ -22,6 +22,8 @@ from wildlifecompliance.components.returns.utils_schema import Schema, create_re
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import ApplicationCondition,Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
+from wildlifecompliance.components.returns.email import send_external_submit_email_notification
+
 
 
 class ReturnType(models.Model):
@@ -141,9 +143,29 @@ class Return(models.Model):
         tables.append(table)
         return tables
 
+    def log_user_action(self, action, request):
+        return ReturnUserAction.log_action(self, action, request.user)
+
     def set_submitted(self,request):
-        self.customer_status="under_review"
-        self.processing_status="with_curator"
+        with transaction.atomic():
+            try:
+                if self.processing_status=='future' or 'due':
+                    self.customer_status="under_review"
+                    self.processing_status="with_curator"
+                    self.submitter=request.user
+                    self.save()
+
+                #code for amendment returns is still to be added, so lodgement_date is set outside if statement
+                self.lodgement_date = timezone.now()
+                self.save()
+                #this below code needs to be reviewed
+                # self.save(version_comment='Return submitted:{}'.format(self.id))
+                # self.application.save(version_comment='Return submitted:{}'.format(self.id))
+                self.log_user_action(ReturnUserAction.ACTION_SUBMIT_REQUEST.format(self.id),request)
+                send_external_submit_email_notification(request,self)
+                # send_submit_email_notification(request,self)
+            except:
+                raise
 
 
 
@@ -163,4 +185,42 @@ class ReturnRow(RevisionedMixin):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+
+class ReturnUserAction(UserAction):
+    ACTION_CREATE = "Lodge Return {}"
+    ACTION_SUBMIT_REQUEST = "Submit Return {}"
+    ACTION_ASSIGN_TO = "Assign to {}"
+    ACTION_UNASSIGN = "Unassign"
+    ACTION_DECLINE_REQUEST = "Decline request"
+    ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
+    ACTION_REMINDER_SENT = "Reminder sent for return {}"
+    ACTION_STATUS_CHANGE = "Change status to Due for return {}"
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        ordering = ('-when',)
+
+    @classmethod
+    def log_action(cls, return_obj, action, user):
+        return cls.objects.create(
+            return_obj=return_obj,
+            who=user,
+            what=str(action)
+        )
+
+    return_obj = models.ForeignKey(Return, related_name='action_logs')
+
+
+class ReturnLogEntry(CommunicationsLogEntry):
+    return_obj = models.ForeignKey(Return, related_name='comms_logs')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def save(self, **kwargs):
+        # save the application reference if the reference not provided
+        if not self.reference:
+            self.reference = self.return_obj.id
+        super(ReturnLogEntry, self).save(**kwargs)
 

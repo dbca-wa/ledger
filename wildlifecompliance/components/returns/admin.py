@@ -19,3 +19,11 @@ class ReturnTable(admin.ModelAdmin):
 @admin.register(models.ReturnRow)
 class ReturnRow(admin.ModelAdmin):
     pass
+
+@admin.register(models.ReturnUserAction)
+class ReturnUserActionAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(models.ReturnLogEntry)
+class ReturnLogEntryAdmin(admin.ModelAdmin):
+    pass

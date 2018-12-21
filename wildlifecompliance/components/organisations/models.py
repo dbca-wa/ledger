@@ -311,6 +311,9 @@ class Organisation(models.Model):
                 delegate = UserDelegation.objects.get(organisation=self,user=user)
             except UserDelegation.DoesNotExist:
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # check user can be suspended.
+            if not can_change_role(self, user):
+                raise ValidationError('This user is the last Organisation Administrator')
             # delete contact person
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
