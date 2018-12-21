@@ -103,7 +103,7 @@
                     </div>
                     <input type='hidden' name="table_name" :value="returns.table[0].name" />
                     <button type="submit" class="btn btn-primary pull-right" name="lodge">Save and Exit</button>
-                    <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                    <input type="button" @click.prevent="save" class="btn btn-primary" name="save_continue"/>Save and Continue
                     <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Submit
                     </button>
                     
@@ -140,6 +140,8 @@ export default {
       let vm = this;
       vm.form=document.forms.enter_return
       let data = new FormData(vm.form);
+      console.log(data)
+      console.log(JSON.stringify(data))
       // console.log('printing table name')
       // console.log(vm.returns.table[0].name)
       // data.returns_name=vm.returns.table[0].name
