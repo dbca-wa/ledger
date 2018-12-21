@@ -15,6 +15,7 @@ import AssessorText from '../components/forms/readonly_text.vue'
 import HelpText from '../components/forms/help_text.vue'
 import HelpTextUrl from '../components/forms/help_text_url.vue'
 import CommentRadioCheckBox from '../components/forms/comment_icon_checkbox_radio.vue'
+import Table from '../components/forms/table.vue'
 import {helpers,api_endpoints} from "@/utils/hooks.js"
 
 module.exports = {
@@ -130,6 +131,11 @@ module.exports = {
             case 'text_area':
                 _elements.push(
 					<TextArea readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} assessorMode={assessorMode} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                )
+                break;
+            case 'table':
+                _elements.push(
+					<Table readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} assessorMode={assessorMode} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
                 break;
             case 'label':
