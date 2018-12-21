@@ -1,5 +1,5 @@
 <template lang="html">
-    <div ref="container" class="top-buffer bottom-buffer">
+    <div class="top-buffer bottom-buffer">
         <div class="panel panel-default">
             <div class="panel-body">
                 <label :id="id" class="inline">{{label}}</label>
@@ -25,7 +25,6 @@
                 </div>
             </div>
         </div>
-        <a v-if=isRepeatable class="btn btn-primary" @click.prevent="addAnotherGroup">Add Another</a>
     </div>
 </template>
 
@@ -35,7 +34,7 @@ import HelpTextUrl from './help_text_url.vue'
 import Group from './group.vue'
 export default {
     name:"group",
-    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode", "isRepeatable", "renderer", "groupObject"],
+    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode"],
     data:function () {
         return{
             isExpanded:true
@@ -48,21 +47,6 @@ export default {
         },
         minimize:function(e) {
             this.isExpanded = false;
-        },
-        addAnotherGroup:function(e) {
-            let vm = this;
-    //        console.log(vm);
-    //        console.log(vm.$root);
-    //        var s = document.createElement("span");
-    //        console.log(vm.$root.$createElement);
-            console.log('add another group');
-            console.log(this.groupObject);
-            console.log(e.target);
-            var s = vm.groupObject.children.map(d =>{
-                        return vm.renderer.renderChildren(vm.$root.$createElement,d)
-                    })
-            console.log(s);
-            this.$refs.container.insertBefore(s, e.target);
         }
     },
     mounted:function () {
