@@ -28,6 +28,6 @@ module.exports = {
       return `/api/application/${id}/`;
     },
     site_url: site_url,
-    system_name: 'Wildlife Compliance System',
+    system_name: 'Wildlife Licensing System',
 }
 

@@ -75,8 +75,8 @@ if DEV_STATIC and not DEV_STATIC_URL:
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None 
 
 # Department details
-SYSTEM_NAME = env('SYSTEM_NAME', 'Wildlife Compliance System')
-SYSTEM_EMAIL = env('SYSTEM_EMAIL','wildlifecompliance@dbca.wa.gov.au')
+SYSTEM_NAME = env('SYSTEM_NAME', 'Wildlife Licensing System')
+SYSTEM_EMAIL = env('SYSTEM_EMAIL','wildlifelicensing@dbca.wa.gov.au')
 WC_PAYMENT_SYSTEM_ID = env('WC_PAYMENT_SYSTEM_ID', 'S999')
 if not VALID_SYSTEMS:
     VALID_SYSTEMS = [WC_PAYMENT_SYSTEM_ID]
@@ -86,7 +86,7 @@ DEP_FAX = env('DEP_FAX','(08) 9423 8242')
 DEP_POSTAL = env('DEP_POSTAL','Locked Bag 104, Bentley Delivery Centre, Western Australia 6983')
 DEP_NAME = env('DEP_NAME','Department of Biodiversity, Conservation and Attractions')
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
-SITE_URL = env('SITE_URL','https://wildlifecompliance-uat.dpaw.wa.gov.au')
-EXT_USER_API_ROOT_URL = env('EXT_USER_API_ROOT_URL','https://itassets.dbca.wa.gov.au')
+SITE_URL = env('SITE_URL','https://wildlifels.dbca.wa.gov.au')
+EXT_USER_API_ROOT_URL = env('EXT_USER_API_ROOT_URL', None)
 WC_VERSION = env('WC_VERSION','RELEASE')
 EXCEL_OUTPUT_PATH = env('EXCEL_OUTPUT_PATH')
