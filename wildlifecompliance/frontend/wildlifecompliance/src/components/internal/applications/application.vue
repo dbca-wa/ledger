@@ -347,7 +347,7 @@
                                           </div>
                                       </form>
                                 </div>
-                                <div v-if="applicantType == 'proxy' && application.proxy_applicant.identification.file" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                <div v-if="applicantType == 'proxy' && application.proxy_applicant.identification && application.proxy_applicant.identification.file" class="panel-body panel-collapse collapse" :id="identificationBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Identification</label>
@@ -357,7 +357,7 @@
                                           </div>
                                       </form>
                                 </div>
-                                <div v-if="applicantType == 'submitter' && application.submitter.identification.file" class="panel-body panel-collapse collapse" :id="identificationBody">
+                                <div v-if="applicantType == 'submitter' && application.submitter.identification && application.submitter.identification.file" class="panel-body panel-collapse collapse" :id="identificationBody">
                                       <form class="form-horizontal">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Identification</label>
