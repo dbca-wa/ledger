@@ -15,6 +15,7 @@ from wildlifecompliance.components.returns.models import Return
 from wildlifecompliance.components.applications.mixins import ReferralOwnerMixin
 from wildlifecompliance.components.main import utils
 from wildlifecompliance.exceptions import BindApplicationException
+from django.core.management import call_command
 
 
 
@@ -106,3 +107,18 @@ class HealthCheckView(TemplateView):
         context['page_title'] = 'Wildlife Licensing application status'
         context['status'] = 'HEALTHY'
         return context
+
+
+class ManagementCommandsView(LoginRequiredMixin, TemplateView):
+    template_name = 'wildlifecompliance/mgt-commands.html'
+
+    def post(self, request):
+        data = {}
+        command_script = request.POST.get('script', None)
+        if command_script:
+            print 'running {}'.format(command_script)
+            call_command(command_script)
+            data.update({command_script: 'true'})
+
+        return render(request, self.template_name, data)
+

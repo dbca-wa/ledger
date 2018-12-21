@@ -427,10 +427,17 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     @list_route(methods=['POST',])
     def existance(self, request, *args, **kwargs):
         try:
+            # Check no org requests awaiting approval.
+            abn = request.data.get('abn')
+            org_requests = OrganisationRequest.objects.filter(abn=abn, role='employee').exclude(status__in=('declined','approved'))
+            if org_requests.exists():
+                raise serializers.ValidationError('A request already submitted - Pending Approval.')
             serializer = OrganisationCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            data = Organisation.existance(serializer.validated_data['abn']) 
-            return Response(data);
+            data = Organisation.existance(serializer.validated_data['abn'])
+            # Check requester is unlinked.
+            # data.update([('relink', False)])
+            return Response(data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

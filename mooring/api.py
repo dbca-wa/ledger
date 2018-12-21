@@ -1045,7 +1045,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             "num_infant" : request.GET.get('num_infant', 0),
             "num_mooring" : request.GET.get('num_mooring', 0),
             "gear_type" : request.GET.get('gear_type', 'all'),
-            "vessel_size" : request.GET.get('vessel_size', 0)
+            "vessel_size" : request.GET.get('vessel_size', 0),
+            "vessel_draft": request.GET.get('vessel_draft', 0)
         }
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -1059,7 +1060,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         num_mooring = serializer.validated_data['num_mooring']
         gear_type = serializer.validated_data['gear_type']
         vessel_size = serializer.validated_data['vessel_size'] 
-
+        #vessel_draft = serializer.validated_data['vessel_draft']
+ 
         # if campground doesn't support online bookings, abort!
         if ground.mooring_type != 0:
             return Response({'error': 'Mooring doesn\'t support online bookings'}, status=400)
@@ -1115,6 +1117,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'sites': [],
             'classes': {},
             'vessel_size' : ground.vessel_size_limit,
+            'vessel_draft' : ground.vessel_draft_limit,
             'max_advance_booking': ground.max_advance_booking 
         }
 
