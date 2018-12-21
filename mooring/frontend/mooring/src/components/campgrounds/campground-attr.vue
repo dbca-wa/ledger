@@ -23,7 +23,7 @@
 												<input type="text" name="name" id="name" class="form-control" v-model="campground.name" required/>
 											</div>
 										</div>
-										<div class="col-md-3">
+										<div class="col-md-2">
 											<div class="form-group">
 												<label class="control-label" >Mooring Oracle Code</label>
 												<input type="text" name="oracle_code" id="oracle_code" class="form-control" v-model="campground.oracle_code" required/>
@@ -40,12 +40,19 @@
 												</select>
 											</div>
 										</div>
-                                                                                <div class="col-md-3">
+                                                                                <div class="col-md-2">
                                                                                         <div class="form-group">
                                                                                                 <label class="control-label" >Vessel Size</label>
                                                                                                 <input type="text" name="vessel_size_limit" id="vessel_size_limit" class="form-control" v-model="campground.vessel_size_limit" required/>
                                                                                         </div>
                                                                                 </div>
+                                                                                <div class="col-md-2">
+                                                                                        <div class="form-group">
+                                                                                                <label class="control-label" >Vessel Draft</label>
+                                                                                                <input type="text" name="vessel_draft_limit" id="vessel_draft_limit" class="form-control" v-model="campground.vessel_draft_limit" required/>
+                                                                                        </div>
+                                                                                </div>
+
 
 									</div>
 									<div class="row">

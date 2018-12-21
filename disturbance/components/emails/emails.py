@@ -84,6 +84,7 @@ class TemplateEmailBase(object):
         msg.attach_alternative(html_body, 'text/html')
         try:
             msg.send(fail_silently=False)
+            logger.info("Email sent to: {} - subject: {}".format(to_addresses, self.subject))
             return msg
         except Exception as e:
             logger.exception("Error while sending email to {}: {}".format(to_addresses, e))

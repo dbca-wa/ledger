@@ -205,7 +205,8 @@ class ApplicationDocument(Document):
 
 class Application(RevisionedMixin):
 
-    CUSTOMER_STATUS_CHOICES = (('draft', 'Draft'),
+    PROCESSING_STATUS_DRAFT = ('draft', 'Draft')
+    CUSTOMER_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
                                ('under_review', 'Under Review'),
                                ('amendment_required', 'Amendment Required'),
                                ('accepted', 'Accepted'),
@@ -215,14 +216,14 @@ class Application(RevisionedMixin):
 
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = ['temp',
-                                'draft',
+                                PROCESSING_STATUS_DRAFT[0],
                                 'amendment_required',
                             ]
 
     # List of statuses from above that allow a customer to view an application (read-only)
     CUSTOMER_VIEWABLE_STATE = ['with_assessor', 'under_review', 'id_required', 'returns_required', 'approved', 'declined']
 
-    PROCESSING_STATUS_CHOICES = (('draft', 'Draft'),
+    PROCESSING_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
                                  ('with_officer', 'With Officer'),
                                  ('with_assessor', 'With Assessor'),
                                  ('with_referral', 'With Referral'),
@@ -241,7 +242,7 @@ class Application(RevisionedMixin):
                                  ('under_review', 'Under Review'),
                                  )
 
-    ACTIVITY_PROCESSING_STATUS_CHOICES = ['Draft','With Officer','With Assessor','With Officer-Conditions',
+    ACTIVITY_PROCESSING_STATUS_CHOICES = [PROCESSING_STATUS_DRAFT[1],'With Officer','With Assessor','With Officer-Conditions',
                                           'With Officer-Finalisation','Accepted','Declined']
 
     ID_CHECK_STATUS_CHOICES = (('not_checked', 'Not Checked'), ('awaiting_update', 'Awaiting Update'),
@@ -348,6 +349,33 @@ class Application(RevisionedMixin):
             return "{} {}".format(self.submitter.first_name, self.submitter.last_name)
 
     @property
+    def applicant_details(self):
+        if self.org_applicant:
+            return '{} \n{}'.format(self.org_applicant.organisation.name, self.org_applicant.address)
+        elif self.proxy_applicant:
+            return "{} {}\n{}".format(self.proxy_applicant.first_name, self.proxy_applicant.last_name, self.proxy_applicant.addresses.all().first())
+        else:
+            return "{} {}\n{}".format(self.submitter.first_name, self.submitter.last_name, self.submitter.addresses.all().first())
+
+    @property
+    def applicant_id(self):
+        if self.org_applicant:
+            return self.org_applicant.id
+        elif self.proxy_applicant:
+            return self.proxy_applicant.id
+        else:
+            return self.submitter.id
+
+    @property
+    def applicant_type(self):
+        if self.org_applicant:
+            return "ORG"
+        elif self.proxy_applicant:
+            return "PRX"
+        else:
+            return "SUB"
+
+    @property
     def has_amendment(self):
         qs = self.amendment_requests
         qs = qs.filter(status = 'requested')
@@ -385,7 +413,7 @@ class Application(RevisionedMixin):
         1 - It is a draft
         2- or if the application has been pushed back to the user
         """
-        return self.customer_status == 'draft' or self.processing_status == 'awaiting_applicant_response'
+        return self.customer_status == PROCESSING_STATUS_DRAFT[0] or self.processing_status == 'awaiting_applicant_response'
 
     @property
     def is_deletable(self):
@@ -393,7 +421,7 @@ class Application(RevisionedMixin):
         An application can be deleted only if it is a draft and it hasn't been lodged yet
         :return:
         """
-        return self.customer_status == 'draft' and not self.lodgement_number
+        return self.customer_status == PROCESSING_STATUS_DRAFT[0] and not self.lodgement_number
 
     @property
     def payment_status(self):
@@ -1161,7 +1189,7 @@ class AmendmentRequest(ApplicationRequest):
                 # This is to change the status of licence activity type
                 for item in  self.application.licence_type_data['activity_type']:
                     if self.licence_activity_type.id==item["id"] :
-                        item["processing_status"]="Draft"
+                        item["processing_status"]=Application.PROCESSING_STATUS_DRAFT[1]
                         # self.application.save()
                 self.application.customer_status='amendment_required'
                 self.application.save()
@@ -1580,7 +1608,10 @@ class ExcelApplication(models.Model):
             ('application_id', self.application.id),
             ('licence_number', self.licence_number),
             ('applicant', self.applicant_details),
-            ('applicant_id', self.org_applicant.id),
+            ('applicant_type', self.applicant_type),
+            ('applicant_id', self.applicant_id),
+            #('applicant', None),
+            #('applicant_id', None),
         ])
 
     @property
@@ -1597,12 +1628,20 @@ class ExcelApplication(models.Model):
         return self.application.licence.licence_number if self.application.licence else None
 
     @property
-    def org_applicant(self):
-        return self.application.org_applicant
+    def applicant(self):
+        return self.application.applicant
+
+    @property
+    def applicant_id(self):
+        return self.application.applicant_id
 
     @property
     def applicant_details(self):
-        return '{} \n{}'.format(self.org_applicant.name, self.org_applicant.address)
+        return self.application.applicant_details
+
+    @property
+    def applicant_type(self):
+        return self.application.applicant_type
 
 #    @property
 #    def applicant_block(self):
@@ -1613,7 +1652,7 @@ class ExcelActivityType(models.Model):
     excel_app = models.ForeignKey(ExcelApplication, related_name='excel_activity_types')
     activity_name = models.CharField(max_length=68, blank=True)
     name = models.CharField(max_length=68, blank=True)
-    short_name = models.CharField(max_length=24, blank=True)
+    short_name = models.CharField(max_length=68, blank=True)
     data = JSONField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
     issue_date = models.DateTimeField(blank=True, null=True)

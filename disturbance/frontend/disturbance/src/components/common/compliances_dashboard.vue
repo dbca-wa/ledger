@@ -71,6 +71,7 @@ a<template id="proposal_dashboard">
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
+import Vue from 'vue'
 import {
     api_endpoints,
     helpers
@@ -96,6 +97,8 @@ export default {
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'proposal-datatable-'+vm._uid,
+            //Profile to check if user has access to process Proposal
+            profile: {},
             // Filters for Proposals
             filterProposalRegion: 'All',
             filterProposalActivity: 'All',
@@ -144,6 +147,13 @@ export default {
                         //d.regions = vm.filterProposalRegion.join();
                         d.date_from = vm.filterComplianceDueFrom != '' && vm.filterComplianceDueFrom != null ? moment(vm.filterComplianceDueFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterComplianceDueTo != '' && vm.filterComplianceDueTo != null ? moment(vm.filterComplianceDueTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        if (vm.level == 'external') { // hack to allow for correct Django choicelist in qs filter ProposalFilterBackend.filter_quesryset()
+                            d.customer_status = vm.filterComplianceStatus == 'Under Review' ? 'with_assessor': vm.filterComplianceStatus != 'All' ? vm.filterComplianceStatus: '';
+                            d.processing_status = '';
+                        } else {
+                            d.processing_status = vm.filterComplianceStatus == 'With Assessor' ? 'with_assessor': vm.filterComplianceStatus != 'All' ? vm.filterComplianceStatus: '';
+                            d.customer_status = '';
+                        }
                     }
 
                 },
@@ -182,11 +192,10 @@ export default {
                         data: "holder",
                         name: "proposal__applicant__organisation__name"
                     },
-                    {data: "processing_status",
-                        mRender:function(data,type,full){
-                            return vm.level == 'external' ? full.customer_status: data;
-                        }
 
+                    {
+                        data: vm.level == 'external'? "customer_status" : "processing_status",
+                        searchable: false,
                     },
                     {
                         data: "due_date",
@@ -204,7 +213,7 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if (full.can_user_view) {
+                                if (full.processing_status=='With Assessor' && vm.check_assessor(full)) {
                                     links +=  `<a href='/internal/compliance/${full.id}'>Process</a><br/>`;
                                     
                                 }
@@ -228,7 +237,7 @@ export default {
                     {data: "reference", visible: false},
                     {data: "customer_status", visible: false},
                     {data: "can_user_view", visible: false},
-
+                    {data: "allowed_assessors", visible: false},
                 ],
                 processing: true,
                 /*
@@ -292,13 +301,8 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
             }
         },
-        filterComplianceStatus: function() {
-            let vm = this;
-            if (vm.filterComplianceStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search(vm.filterComplianceStatus).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
-            }
+        filterComplianceStatus: function(){
+            this.$refs.proposal_datatable.vmDataTable.draw();
         },
         filterProposalSubmitter: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
@@ -446,11 +450,38 @@ export default {
                     }
                 }
             );
+        },
+        fetchProfile: function(){
+            let vm = this;
+            Vue.http.get(api_endpoints.profile).then((response) => {
+                vm.profile = response.body
+                              
+            },(error) => {
+                console.log(error);
+                
+            })
+        },
+        check_assessor: function(compliance){
+            let vm = this;         
+            
+            var assessor = compliance.allowed_assessors.filter(function(elem){
+                    return(elem.id==vm.profile.id)
+                });
+                
+            if (assessor.length > 0){
+                //console.log(proposal.id, assessor)
+                return true;
+            }
+            else
+                return false;       
+            
+            return false;       
         }
     },
     mounted: function(){
         let vm = this;
         vm.fetchFilterLists();
+        vm.fetchProfile();
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {
