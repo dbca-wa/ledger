@@ -11,7 +11,7 @@ from wildlifecompliance.components.emails.emails import TemplateEmailBase
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_NAME = 'Wildlife Compliance Automated Message'
+SYSTEM_NAME = 'Wildlife Licensing Automated Message'
 class ReferralSendNotificationEmail(TemplateEmailBase):
     subject = 'A referral for a application has been sent to you'
     html_template = 'wildlifecompliance/emails/applications/send_referral_notification.html'

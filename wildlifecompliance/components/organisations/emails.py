@@ -9,7 +9,7 @@ from wildlifecompliance.components.emails.emails import TemplateEmailBase
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_NAME = 'Wildlife Compliance Automated Message'
+SYSTEM_NAME = 'Wildlife Licensing Automated Message'
 class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation request has been accepted.'
     html_template = 'wildlifecompliance/emails/organisation_request_accept_notification.html'

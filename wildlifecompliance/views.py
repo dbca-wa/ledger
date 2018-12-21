@@ -103,6 +103,6 @@ class HealthCheckView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(HealthCheckView, self).get_context_data(**kwargs)
-        context['page_title'] = 'Wildlife Compliance application status'
+        context['page_title'] = 'Wildlife Licensing application status'
         context['status'] = 'HEALTHY'
         return context

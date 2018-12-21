@@ -4,7 +4,7 @@
         <div class="col-sm-12">
             <div class="well well-sm">
                 <p>
-                    Welcome to the Wildlife Compliance online system dashboard.<br/><br/> Here you can access your existing licences, view any applications in progress, lodge new<br/> applications or submit information required to comply with conditions listed
+                    Welcome to the Wildlife Licensing online system dashboard.<br/><br/> Here you can access your existing licences, view any applications in progress, lodge new<br/> applications or submit information required to comply with conditions listed
                     on your licence
                 </p>
             </div>

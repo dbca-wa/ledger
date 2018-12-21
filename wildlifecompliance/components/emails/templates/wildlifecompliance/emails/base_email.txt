@@ -8,13 +8,13 @@ Dear Sir/Madam,
 {% block signature %}
 Yours sincerely,
 
-Wildlife Compliance Section
+Wildlife Licensing Section
 {% endblock %}
 
 
 
 {% block reply_statement %}
 Should you need to contact the licensing section of the Department of 
-Biodiversity, Conservation and Attractions, please send emails to wildlifecompliance@dbca.wa.gov.au or call (08) 9219 9000.
+Biodiversity, Conservation and Attractions, please send emails to wildlifelicensing@dbca.wa.gov.au or call (08) 9219 9000.
 {% endblock %}
 
