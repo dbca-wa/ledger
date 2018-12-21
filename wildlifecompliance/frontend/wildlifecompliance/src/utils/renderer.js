@@ -92,6 +92,7 @@ module.exports = {
         var id1 = id + '_1'
         var id2 = id + '_2'
         var id3 = id + '_3'
+
         switch (c.type) {
             case 'text':
 				readonly = (c.readonly) ? (c.readonly): (readonly);

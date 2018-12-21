@@ -31,7 +31,6 @@
 <script>
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
-import Group from './group.vue'
 export default {
     name:"group",
     props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode"],
