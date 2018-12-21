@@ -7,10 +7,12 @@
                 </div>
             </div>
         </div>
+        <editVehicle ref="edit_vehicle" :vehicle_id="vehicle_id" @refreshFromResponse="refreshFromResponse"></editVehicle>
     </div>
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
+import editVehicle from './edit_vehicle.vue'
 import {
     api_endpoints,
     helpers
@@ -115,6 +117,7 @@ export default {
                         data: '',
                         mRender:function (data,type,full) {
                             let links = '';
+                            links +=  `<a href='#${full.id}' data-edit-vehicle='${full.id}'>Edit Vehicle</a><br/>`;
                         //     if (!vm.is_external){
                         //         if (full.can_user_view) {
                         //             links +=  `<a href='/internal/compliance/${full.id}'>Process</a><br/>`;
@@ -184,7 +187,8 @@ export default {
         }
     },
     components:{
-        datatable
+        datatable,
+        editVehicle
     },
     watch:{
         
@@ -212,8 +216,19 @@ export default {
             // })
             //console.log(vm.regions);
         },
+        editVehicle: function(id){
+            //console.log(vehicle);
+            this.$refs.edit_vehicle.vehicle_id = id;
+            this.$refs.edit_vehicle.isModalOpen = true;
+        },
         addEventListeners: function(){
             let vm = this;
+            vm.$refs.vehicle_datatable.vmDataTable.on('click', 'a[data-edit-vehicle]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-edit-vehicle');
+                console.log(id);
+                vm.editVehicle(id);
+            });
         },
         initialiseSearch:function(){
             

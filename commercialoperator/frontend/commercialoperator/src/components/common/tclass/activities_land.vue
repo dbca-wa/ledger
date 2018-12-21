@@ -30,7 +30,7 @@
               <label class="control-label">Activities</label>
               <div class="" v-for="a in activities">
                 <div class="form-check">
-                  <input :onclick="isClickable" class="form-check-input" v-model="selected_activities" :value="a.name" ref="Checkbox" type="checkbox" data-parsley-required  />
+                  <input :onclick="isClickable" class="form-check-input" v-model="selected_activities" :value="a.id" ref="Checkbox" type="checkbox" data-parsley-required  />
                   {{ a.name }}
                 </div>
               </div>
@@ -61,7 +61,7 @@
 
             <div>{{selected}}</div>
             <div>{{selected_activities}}</div>
-            <div>{{selected_access}}</div>
+            <div>{{selected_parks_activities}}</div>
             
 <!--           </form>
 
@@ -112,6 +112,7 @@ export default {
                 activities:[],
                 access:[],
                 vehicles_url: api_endpoints.vehicles,
+                selected_parks_activities:[]
             }
         },
         components: {
@@ -122,9 +123,18 @@ export default {
             let vm = this;
             if (vm.proposal) {
                 vm.proposal.parks = vm.selected
-               //  for (var i = 0; i < vm.proposal.parks.length; i++) {
-               //  this.selected.push(vm.proposal.parks[i].activities);
+               // for (var i = 0; i < vm.proposal.parks.length; i++) {
+               //  vm.proposal.parks[i].land_activities=vm.selected_activities;
                // }
+               vm.selected_parks_activities=[]
+               for (var i = 0; i < vm.selected.length; i++) {
+                 var data=null;
+                 data={
+                  'park': vm.selected[i],
+                  'activities': vm.selected_activities
+                 }
+                 vm.selected_parks_activities.push(data);
+               }
             } 
         },
         },
@@ -147,24 +157,25 @@ export default {
         mounted: function() {
             let vm = this;
             Vue.http.get('/api/access_types.json').then((res) => {
-                      vm.accessTypes=res.body;
-                      //console.log(vm.accessTypes);                  
+                      vm.accessTypes=res.body;                 
                 },
               err => { 
                         console.log(err);
                   }); 
             Vue.http.get('/api/land_activities.json').then((res) => {
-                      vm.activities=res.body;
-                      console.log(vm.activities)
-                      //console.log(vm.accessTypes);                  
+                      vm.activities=res.body;                 
                 },
               err => { 
                         console.log(err);
                   }); 
             vm.fetchRegions(); 
             for (var i = 0; i < vm.proposal.parks.length; i++) {
-            this.selected.push(vm.proposal.parks[i].park.id);
+              this.selected.push(vm.proposal.parks[i].park.id);
+              for (var j = 0; j < vm.proposal.parks[i].land_activities.length; j++) {
+                this.selected_activities.push(vm.proposal.parks[i].land_activities[j].activity.id);
                }
+
+            }
 
             // vm.$http.get(api_endpoints.regions).then((response) => {
             // vm.api_regions = response.body;
