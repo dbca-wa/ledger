@@ -20,9 +20,10 @@ def get_department_user_minimal(email):
         res.raise_for_status()
         data = json.loads(res.content).get('objects')
         if len(data) > 0:
-            return data[0]
-        else:
-            return {}
+            user_obj = data[0]
+            if 'org_data' in user_obj and 'cost_centre' in user_obj['org_data'] and user_obj['org_data']['cost_centre']:
+                return user_obj
+        return {}
     except:
         return {}
 
@@ -32,9 +33,10 @@ def get_department_user_compact(email):
         res.raise_for_status()
         data = json.loads(res.content).get('objects')
         if len(data) > 0:
-            return data[0]
-        else:
-            return {}
+            user_obj = data[0]
+            if 'org_data' in user_obj and 'cost_centre' in user_obj['org_data'] and user_obj['org_data']['cost_centre']:
+                return user_obj
+        return {}
     except:
         return {}
 
