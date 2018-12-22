@@ -40,7 +40,8 @@
                 <tbody>
                   <tr v-for="row in table.tbody">
                     <td v-for="(value, index) in row">
-                        <input type="text" v-model="row[index]" />
+                        <!-- <input type="text" v-model="row[index]" /> -->
+                        <input class="tbl_input" :type="col_types[index]" min="0" v-model="row[index]" />
                     </td>
                     <td>
                         <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;"></a>
@@ -120,19 +121,31 @@ export default {
     },
 
     components: {Comment, HelpText, HelpTextUrl},
+
+    /* Example schema config
+       {
+        "type": "table",
+        "headers": "{\"Heading 1\": \"text\", \"Heading 2\": \"number\"}",
+        "name": "Section2-0",
+        "label": "The first table in section 2"
+       }
+    */
     data(){
         let vm = this;
         var value  =JSON.parse(vm.value);
-        var headers  = vm.headers.split(',')
+
+        var headers = JSON.parse(vm.headers)
+        var col_headers = Object.keys(headers);
+        vm.col_types = Object.values(headers);
 
         // setup initial empty rpw for display
         var init_row = [];
-        for(var i = 0, length = headers.length; i < length; i++) { init_row.push('')  }
+        for(var i = 0, length = col_headers.length; i < length; i++) { init_row.push('')  }
 
         if (value == null) {
             vm.table = {
                     //thead: ['Heading 1'],
-                    thead: headers,
+                    thead: col_headers,
                     tbody: [
                         //['No header specified']
                         init_row
@@ -200,7 +213,8 @@ export default {
 
         vm.updateTableJSON();
 
-        $('#content-editable-table').on('change', '[type="text"]', function() {
+        //$('#content-editable-table').on('change', '[type="text"]', function() {
+        $('#content-editable-table').on('change', '.tbl_input', function() {
             vm.updateTableJSON();
         });
 
