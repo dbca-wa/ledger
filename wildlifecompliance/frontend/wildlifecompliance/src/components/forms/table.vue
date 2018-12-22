@@ -28,6 +28,8 @@
             <textarea :readonly="readonly" class="form-control" rows="5" :name="name" :required="isRequired">{{ value }}</textarea><br/>
             -->
 
+            <textarea readonly="readonly" class="form-control" rows="5" :name="name" style="display:none;">{{ value }}</textarea><br/>
+
             <div id="content-editable-table">
               <table class="table table-striped editable-table">
                 <thead v-if="table.thead.length">
@@ -35,12 +37,6 @@
                     <th v-for="(heading, index) in table.thead">
                       {{ table.thead[index] }}
                     </th>
-
-                    <!--
-                    <th>
-                      <button class="btn btn-primary" type="button" v-on:click="addColumn()" title="Add Column">+</button>
-                    </th>
-                    -->
                   </tr>
                 </thead>
 
@@ -49,14 +45,21 @@
                     <td v-for="(value, index) in row">
                       <input type="text" v-model="row[index]" />
                     </td>
+                    <!--
                     <td>
                         <button class="btn btn-md" type="button"> <a class="ibtnDel fa fa-trash-o" title="Delete row" style="cursor: pointer; color:red;"></a> </button>
+                    </td>
+                    -->
+                    <td>
+                        <!--<button class="btn btn-md" type="button" v-on:click="deleteRow(row)" title="Delete Row">-</button>-->
+                        <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;"></a>
                     </td>
                     <td>&nbsp;</td>
                   </tr>
 
                   <tr>
-                    <td  v-bind:colspan="table.thead.length + 1">
+                    <!--<td  v-bind:colspan="table.thead.length + 1">-->
+                    <td>
                       <button class="btn btn-primary" type="button" v-on:click="addRow()" title="Add Row">+</button>
                     </td>
                   </tr>
@@ -65,13 +68,10 @@
               </table>
 
               <pre class="output">
-                {{tableJSON}}
+                <!-- {{tableJSON}} -->
+                {{ value }}
               </pre>
             </div>
-
-            <pre class="output">
-                {{rows}}
-            </pre>
 
         </div>
         <!--<Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> -->
@@ -108,16 +108,55 @@ export default {
         readonly:Boolean,
         rows: [],
 
+        /*
+        tableJSON:{
+            default:function () {
+                return '';
+            }
+        },
+
+        table:{
+            default:function () {
+                return {
+                    thead: [],
+                    tbody: [],
+                }
+            }
+        }
+        */
 
     },
 
     components: {Comment, HelpText, HelpTextUrl},
     data(){
         let vm = this;
+        var value  =JSON.parse(vm.value);
+
+        /*
+            vm.table = {
+                    thead: value['thead'],
+                    tbody: value['tbody']
+            }
+        */
+
+        if (value == null) {
+            vm.table = {
+                    thead: ['Heading 1'],
+                    tbody: [
+                        ['No header specified']
+                    ]
+            }
+        } else {
+            vm.table = {
+                    thead: value['thead'],
+                    tbody: value['tbody']
+            }
+        }
+
         return {
             showingComment: false,
 
-            tableJSON: '',
+            /*
             table: {
               thead: [
                 'Heading 1',
@@ -126,11 +165,13 @@ export default {
                 'Heading 4'
               ],
               tbody: [
-                ['R:1 V:1', 'R:1 V:2', 'R:1 V:3', 'R:1 V:4'],
+                //['R:1 V:1', 'R:1 V:2', 'R:1 V:3', 'R:1 V:4'],
+                ['', '', '', ''],
               ],
               tfoot: [
               ],
             }
+            */
 
         }
 
@@ -141,31 +182,40 @@ export default {
         },
 
         updateTableJSON: function() {
-          this.tableJSON = JSON.stringify(this.table);
-        },
-
-        addColumn: function() {
-          this.table.thead.push('Heading ' + (this.table.thead.length + 1));
-
-          for(var i = 0, length = this.table.tbody.length; i < length; i++) {
-            this.table.tbody[i].push('R:' + (i + 1) + ' V:' + this.table.thead.length);
-          }
-
-          this.table.tfoot.push('Footer ' + this.table.thead.length);
-
-          this.updateTableJSON();
+          let vm = this;
+          vm.tableJSON = JSON.stringify(vm.table);
+          vm.value = vm.tableJSON;
         },
 
         addRow: function() {
+          let vm = this;
           var newRow = [];
 
-          for(var i = 0, length = this.table.thead.length; i < length; i++) {
-            newRow.push('R:' + (this.table.tbody.length + 1) + ' V:' + (i + 1))
+          for(var i = 0, length = vm.table.thead.length; i < length; i++) {
+            newRow.push('R:' + (vm.table.tbody.length + 1) + ' V:' + (i + 1))
           }
 
-          this.table.tbody.push(newRow);
+          vm.table.tbody.push(newRow);
 
-          this.updateTableJSON();
+          vm.updateTableJSON();
+        },
+
+        deleteRow: function(row) {
+            let vm = this;
+            //$(this).closest("tr").remove();
+            var td = event.target.parentNode; 
+            var tr = td.parentNode; // the row to be removed
+            //tr.parentNode.removeChild(tr);
+
+
+            //var row_idx = vm.table.tbody.indexOf(row);
+
+            vm.table.tbody = vm.table.tbody.filter(function(item) {
+                return item !== row
+            })
+
+            //vm.table.tbody.pop(row_idx);
+            vm.updateTableJSON();
         }
 
     },
@@ -175,24 +225,23 @@ export default {
             return this.$root.wc_version;
         },
 
-
     },
 
 
     mounted:function () {
         let vm = this;
 
-
         vm.updateTableJSON();
 
         $('#content-editable-table').on('change', '[type="text"]', function() {
-          vm.updateTableJSON();
+            vm.updateTableJSON();
         });
 
         $("#content-editable-table").on("click", ".ibtnDel", function (event) {
             $(this).closest("tr").remove();
+            //vm.updateTableJSON();
         });
-    },
+    }
 }
 </script>
 
@@ -220,5 +269,4 @@ export default {
         outline-style: none;
     }
 </style>
-:w
 
