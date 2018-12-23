@@ -41,15 +41,15 @@
                   <tr v-for="row in table.tbody">
                     <td v-for="(value, index) in row">
                         <!-- <input type="text" v-model="row[index]" /> -->
-                        <input class="tbl_input" :type="col_types[index]" min="0" v-model="row[index]" />
+                        <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" v-model="row[index]" :required="isRequired" :onclick="isClickable"/>
                     </td>
-                    <td>
+                    <td v-if="!readonly">
                         <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;"></a>
                     </td>
                   </tr>
 
                   <tr>
-                    <td>
+                    <td v-if="!readonly">
                       <button class="btn btn-primary" type="button" v-on:click="addRow()" title="Add Row">+</button>
                     </td>
                   </tr>
@@ -58,12 +58,14 @@
               </table>
 
               <!-- for debugging -->
+              <!--
               <pre class="output">
                 {{ value }}
               </pre>
               <pre class="output">
                 {{ headers }}
               </pre>
+              -->
             </div>
 
         </div>
@@ -125,7 +127,7 @@ export default {
     /* Example schema config
        {
         "type": "table",
-        "headers": "{\"Heading 1\": \"text\", \"Heading 2\": \"number\"}",
+        "headers": "{\"Species\": \"text\", \"Quantity\": \"number\", \"Date\": \"date\", \"Taken\": \"checkbox\"}",
         "name": "Section2-0",
         "label": "The first table in section 2"
        }
@@ -138,7 +140,7 @@ export default {
         var col_headers = Object.keys(headers);
         vm.col_types = Object.values(headers);
 
-        // setup initial empty rpw for display
+        // setup initial empty row for display
         var init_row = [];
         for(var i = 0, length = col_headers.length; i < length; i++) { init_row.push('')  }
 
@@ -156,6 +158,12 @@ export default {
                     thead: value['thead'],
                     tbody: value['tbody']
             }
+        }
+
+        if(vm.readonly) {
+            return { isClickable: "return false;" }
+        } else {
+            return { isClickable: "return true;" }
         }
 
         return {
@@ -204,7 +212,6 @@ export default {
         wc_version: function (){
             return this.$root.wc_version;
         },
-
     },
 
 
@@ -221,6 +228,20 @@ export default {
         $("#content-editable-table").on("click", ".ibtnDel", function (event) {
             $(this).closest("tr").remove();
         });
+
+        if (vm.isChecked) {
+            var input = this.$refs.Checkbox;
+            var e = document.createEvent('HTMLEvents');
+            e.initEvent('change', true, true);
+
+            /* replacing input.disabled with onclick because disabled checkbox does NOT get posted with form on submit */
+            if(vm.readonly) {
+                vm.isClickable = "return false;";
+            } else {
+                vm.isClickable = "return true;";
+            }
+            input.dispatchEvent(e);
+        }
 
     }
 }
