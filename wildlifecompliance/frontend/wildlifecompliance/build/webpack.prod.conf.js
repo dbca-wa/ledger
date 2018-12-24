@@ -20,8 +20,8 @@ var webpackConfig = merge(baseWebpackConfig, {
       extract: true
     })
   },
-  // devtool: config.build.productionSourceMap ? '#source-map' : false,
-  devtool: '#cheap-module-eval-source-map',
+  devtool: config.build.productionSourceMap ? '#source-map' : false,
+  //devtool: '#cheap-module-eval-source-map',
   output: {
     path: config.build.assetsRoot,
     filename: utils.assetsPath('js/[name].js'),
