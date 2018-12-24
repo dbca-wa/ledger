@@ -40,10 +40,10 @@ from collections import OrderedDict
 
 
 def update_application_doc_filename(instance, filename):
-    return 'applications/{}/documents/{}'.format(instance.application.id,filename)
+    return 'wildlifecompliance/applications/{}/documents/{}'.format(instance.application.id,filename)
 
 def update_application_comms_log_filename(instance, filename):
-    return 'applications/{}/communications/{}/{}'.format(instance.log_entry.application.id,instance.id,filename)
+    return 'wildlifecompliance/applications/{}/communications/{}/{}'.format(instance.log_entry.application.id,instance.id,filename)
 
 class ApplicationType(models.Model):
     schema = JSONField()

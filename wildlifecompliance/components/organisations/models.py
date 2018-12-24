@@ -621,7 +621,7 @@ class OrganisationRequest(models.Model):
     abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
     requester = models.ForeignKey(EmailUser)
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='org_request_assignee')
-    identification = models.FileField(upload_to='organisation/requests/%Y/%m/%d', null=True, blank=True)
+    identification = models.FileField(upload_to='wildlifecompliance/organisation/requests/%Y/%m/%d', null=True, blank=True)
     status = models.CharField(max_length=100,choices=STATUS_CHOICES, default="with_assessor")
     role = models.CharField(max_length=100,choices=ROLE_CHOICES, default="employee")
     lodgement_date = models.DateTimeField(auto_now_add=True)

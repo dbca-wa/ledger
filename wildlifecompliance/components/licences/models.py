@@ -23,7 +23,7 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Us
 
 
 def update_licence_doc_filename(instance, filename):
-    return 'licences/{}/documents/{}'.format(instance.id,filename)
+    return 'wildlifecompliance/licences/{}/documents/{}'.format(instance.id,filename)
 
 class LicenceDocument(Document):
     licence = models.ForeignKey('WildlifeLicence',related_name='documents')
