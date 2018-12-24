@@ -4,6 +4,8 @@ from ledger.settings_base import *
 ROOT_URLCONF = 'wildlifecompliance.urls'
 SITE_ID = 1
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_wc')
+
 INSTALLED_APPS += [
     'bootstrap3',
     'wildlifecompliance',
