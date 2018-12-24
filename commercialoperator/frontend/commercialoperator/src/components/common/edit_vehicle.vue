@@ -5,7 +5,6 @@
                 <div class="row">
                     <form class="form-horizontal" name="vehicleForm">
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
-                        <div>{{vehicle_id}}</div>
                         <div class="col-sm-12">
                             <div class="form-group">
                                 <div class="row">
@@ -14,7 +13,7 @@
                                         <label class="control-label pull-left"  for="Name">Vehicle Type</label>
                                     </div>
                                     <div class="col-sm-9">
-                                        <select class="form-control" name="access_type" ref="access_type">
+                                        <select class="form-control" name="access_type" ref="access_type" v-model="vehicle.access_type.id">
                                             <option v-for="a in access_types" :value="a.id">{{a.name}}</option>
                                         </select>
                                     </div>
@@ -28,7 +27,7 @@
                                         <label class="control-label pull-left"  for="Name">Seating Capcity</label>
                                     </div>
                                     <div class="col-sm-9">
-                                        <input class="form-control" name="capacity" ref="capacity" type="text">
+                                        <input class="form-control" name="capacity" ref="capacity" v-model="vehicle.capacity" type="text">
                                     </div>
                                 </div>
                             </div>
@@ -40,7 +39,23 @@
                                         <label class="control-label pull-left"  for="Name">Registration No.</label>
                                     </div>
                                     <div class="col-sm-9">
-                                        <input class="form-control" name="rego" ref="rego" type="text">
+                                        <input class="form-control" name="rego" ref="rego" v-model="vehicle.rego" type="text">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <label class="control-label pull-left"  for="Name">Registration Expiry</label>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <div class="input-group date" ref="rego_expiry" style="width: 70%;">
+                                            <input type="text" class="form-control" placeholder="DD/MM/YYYY" >
+                                            <span class="input-group-addon">
+                                                <span class="glyphicon glyphicon-calendar"></span>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -49,27 +64,10 @@
                                 <div class="row">
                                     <div class="col-sm-3">
                                         
-                                        <label class="control-label pull-left"  for="Name">Registration Expiry</label>
-                                    </div>
-                                    <div class="col-sm-9">
-                                        <div class="input-group date" ref="rego_expiry" style="width: 70%;">
-                                            <input type="text" class="form-control" name="rego_expiry" placeholder="DD/MM/YYYY">
-                                            <span class="input-group-addon">
-                                                <span class="glyphicon glyphicon-calendar"></span>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <div class="row">
-                                    <div class="col-sm-3">
-                                        
                                         <label class="control-label pull-left"  for="Name">Transport licence no.</label>
                                     </div>
                                     <div class="col-sm-9">
-                                        <input class="form-control" name="licence_no" ref="licence_no" type="text">
+                                        <input class="form-control" name="license" ref="license" v-model="vehicle.license" type="text">
                                     </div>
                                 </div>
                             </div>
@@ -169,15 +167,14 @@ export default {
             let vm=this;
             Vue.http.get('/api/access_types.json').then((res) => {
                       vm.access_types=res.body; 
-                      console.log(vm.access_types)                
                 },
               err => { 
                         console.log(err);
                   });
         },
-        fetchVehicle: function(){
+        fetchVehicle: function(vid){
             let vm=this;
-            Vue.http.get(helpers.add_endpoint_json(api_endpoints.vehicles,vm.vehicle_id)).then((res) => {
+            Vue.http.get(helpers.add_endpoint_json(api_endpoints.vehicles,vid)).then((res) => {
                       vm.vehicle=res.body; 
                       console.log(vm.vehicle)                
                 },
@@ -261,8 +258,10 @@ export default {
                 vm.vehicle.access_type_id = selected.val();
             });
 
-            // Initialise Date Picker
-            
+
+
+            //Initialise Date Picker TODO: Check why this is not working
+            console.log($(vm.$refs.rego_expiry).datetimepicker(vm.datepickerOptions))
             $(vm.$refs.rego_expiry).datetimepicker(vm.datepickerOptions);
             $(vm.$refs.rego_expiry).on('dp.change', function(e){
                 if ($(vm.$refs.rego_expiry).data('DateTimePicker').date()) {
@@ -277,23 +276,11 @@ export default {
    mounted:function () {
         let vm =this;
         vm.fetchAccessTypes();
-        //console.log(vm.approval_id)
-        //vm.fetchVehicle();
         
         vm.form = document.forms.vehicleForm;
         vm.addFormValidations();
         this.$nextTick(()=>{
             vm.eventListeners();
-        });
-   },
-   created: function(){
-    let vm=this;
-    Vue.http.get(helpers.add_endpoint_json(api_endpoints.vehicles,vm.vehicle_id)).then((res) => {
-                      vm.vehicle=res.body; 
-                      console.log(vm.vehicle)                
-                },
-              err => { 
-                        console.log(err);
         });
    }
 }

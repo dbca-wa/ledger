@@ -217,8 +217,9 @@ export default {
             //console.log(vm.regions);
         },
         editVehicle: function(id){
-            //console.log(vehicle);
+            console.log('id here', id);
             this.$refs.edit_vehicle.vehicle_id = id;
+            this.$refs.edit_vehicle.fetchVehicle(id);
             this.$refs.edit_vehicle.isModalOpen = true;
         },
         addEventListeners: function(){
@@ -226,7 +227,6 @@ export default {
             vm.$refs.vehicle_datatable.vmDataTable.on('click', 'a[data-edit-vehicle]', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-edit-vehicle');
-                console.log(id);
                 vm.editVehicle(id);
             });
         },
