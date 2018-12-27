@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import json
 import datetime
+import re
 from django.db import models,transaction
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
@@ -44,6 +45,9 @@ def update_application_doc_filename(instance, filename):
 
 def update_application_comms_log_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/communications/{}/{}'.format(instance.log_entry.application.id,instance.id,filename)
+
+def replace_special_chars(input_str, new_char='_'):
+    return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
 
 class ApplicationType(models.Model):
     schema = JSONField()
@@ -916,6 +920,12 @@ class Application(RevisionedMixin):
         except WildlifeLicence.DoesNotExist:
             return None
 
+    @property
+    def activity_types(self):
+        """ returns a queryset of activity_type/purposes attached to application """
+        return ApplicationActivityType.objects.filter(application=self)
+
+
     def get_proposed_decisions(self,request):
         with transaction.atomic():
             try:
@@ -1691,6 +1701,62 @@ class ExcelActivityType(models.Model):
 #            ('{}-processed'.format(self.code), self.processed),
 #        ])
 
+class ApplicationActivityType(models.Model):
+    application = models.ForeignKey(Application, related_name='app_activity_types')
+    activity_name = models.CharField(max_length=68)
+    name = models.CharField(max_length=68)
+    short_name = models.CharField(max_length=68)
+    code = models.CharField(max_length=4)
+    data = JSONField(blank=True, null=True)
+    purpose = models.TextField(blank=True, null=True)
+    additional_info = models.TextField(blank=True, null=True)
+    advanced = models.NullBooleanField('Standard/Advanced', default=None)
+    conditions = models.TextField(blank=True, null=True)
+    issue_date = models.DateTimeField(blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    expiry_date = models.DateField(blank=True, null=True)
+    to_be_issued = models.NullBooleanField(default=None)
+    processed = models.NullBooleanField(default=None)
+
+    class Meta:
+        unique_together = (('application','short_name'))
+        app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return 'Application {} - Activity Name {} - Short Name {} - Name {}'.format(self.application.id, self.activity_name, self.short_name, self.name)
+
+    @property
+    def licence_class(self):
+        #return self.application.licence_class
+        return self.application.licence_type_short_name
+
+    @property
+    def lodgement_number(self):
+        return self.application.lodgement_number
+
+    @property
+    def licence_number(self):
+        return self.application.licence.licence_number if self.application.licence else None
+
+    @property
+    def applicant(self):
+        return self.application.applicant
+
+    @property
+    def applicant_id(self):
+        return self.application.applicant_id
+
+    @property
+    def applicant_details(self):
+        return self.application.applicant_details
+
+    @property
+    def applicant_type(self):
+        return self.application.applicant_type
+
+    @property
+    def activity_name_str(self):
+        return replace_special_chars(self.activity_name)
 
 @receiver(pre_delete, sender=Application)
 def delete_documents(sender, instance, *args, **kwargs):

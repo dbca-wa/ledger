@@ -19,6 +19,7 @@ from ledger.urls import urlpatterns as ledger_patterns
 # API patterns
 router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
+router.register(r'application_activity_type',application_api.ApplicationActivityTypeViewSet)
 router.register(r'application',application_api.ApplicationViewSet)
 router.register(r'referrals',application_api.ReferralViewSet)
 router.register(r'assessment',application_api.AssessmentViewSet)
@@ -66,6 +67,8 @@ urlpatterns = [
     url(r'^application/$', application_views.ApplicationView.as_view(), name='application'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
     url('^healthcheck/', views.HealthCheckView.as_view(), name='health_check'),
+    #url(r'^assess/(?P<application_pk>\d+)/$', application_views.AssessView.as_view(), name='assess'),
+    url(r'^assess/(?P<pk>\d+)/$', application_views.AssessView.as_view(), name='assess'),
 
     #following url is defined so that to include url path when sending application emails to users
     url(r'^internal/application/(?P<application_pk>\d+)/$', views.ApplicationView.as_view(),

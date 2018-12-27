@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import View, TemplateView
 from wildlifecompliance.components.applications.utils import create_data_from_form
-from wildlifecompliance.components.applications.models import Application
+from wildlifecompliance.components.applications.models import Application, ApplicationActivityType
 from wildlifecompliance.components.applications.email import send_application_invoice_email_notification
 from wildlifecompliance.components.main.utils import get_session_application, delete_session_application, bind_application_to_invoice
 import json,traceback
@@ -72,6 +72,49 @@ class ApplicationSuccessView(TemplateView):
         }
         delete_session_application(request.session)
         return render(request, self.template_name, context)
+
+class _AssessView(TemplateView):
+    template_name = 'wildlifecompliance/assess.html'
+
+    def post(self, request, *args, **kwargs):
+        extracted_fields = []
+        try:
+            print(' ---- applications views.py ---- ')
+            application_id = request.POST.pop('application_id')
+            application = Application.objects.get(application_id)
+            schema = json.loads(request.POST.pop('schema')[0])
+            extracted_fields = create_data_from_form(schema,request.POST, request.FILES)
+            application.schema = schema;
+            application.data = extracted_fields
+            print(application_id)
+            print(application)
+            application.save()
+            return redirect(reverse('external'))
+        except:
+            traceback.print_exc
+            return JsonResponse({error:"something went wrong"},safe=False,status=400)
+
+from django.views.generic.edit import UpdateView
+from wildlifecompliance.components.applications.forms import ApplicationActivityTypeForm
+class AssessView(UpdateView):
+    model = ApplicationActivityType
+    form_class = ApplicationActivityTypeForm
+    #fields = ['activity_name', 'short_name']
+    template_name = 'wildlifecompliance/application_update_form.html'
+    #template_name_suffix = '_update_form'
+
+    def get_context_data(self, **kwargs):
+        context = super(AssessView, self).get_context_data(**kwargs)
+        self.object = self.get_object()
+
+        d = {"Tab 1": "Value 1", "Tab 2": "Value 2"}
+
+        context.update({
+            #'form': BushfireSnapshotViewForm(instance=self.object.initial_snapshot),
+            'obj': self.object,
+            'tabs': d,
+        })
+        return context
 
 #def update_workbooks(request):
 #    writer = ExcelWriter()

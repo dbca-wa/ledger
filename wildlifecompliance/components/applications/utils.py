@@ -348,6 +348,40 @@ def save_assessor_data(instance,request,viewset):
         except:
             raise
 
+def save_assess_data(instance,request,viewset):
+    with transaction.atomic():
+        try:
+            import ipdb; ipdb.set_trace()
+            for activity_type in instance.activity_types:
+                code = WildlifeLicence.objects.get(name=activity_type.activity_name).code
+                activity_type.purpose = request.data[code + '_purpose']
+                activity_type.additional_info = request.data[code + '_additional_info']
+                activity_type.advanced = request.data[code + '_standard_advanced']
+                activity_type.conditions = request.data[code + '_conditions']
+                activity_type.issue_date = request.data[code + '_issue_date']
+                activity_type.start_date = request.data[code + '_start_date']
+                activity_type.expiry_date = request.data[code + '_expiry_date']
+                if request.data.has_key(code + '_to_be_issued'):
+                    activity_type.to_be_issued = request.data[code + '_to_be_issued']
+                if request.data.has_key(code + '_processed'):
+                    activity_type.processed = request.data[code + '_processed']
+
+                activity_type.save()
+
+
+        except:
+            raise
+
+"""
+        Purpose: <input type="text" :name="activity_type.code+'_purpose'" :value="activity_type.purpose"><br>
+        Additional Information: <input type="text" :name="activity_type.code+'_additional_info'" :value="activity_type.additional_info"><br>
+        Standard/Advanced: <input type="text" :name="activity_type.code+'_standard_advanced'" :value="activity_type.advanced"><br>
+        Conditions: <textarea class="form-control" rows="3" :name="activity_type.code+'_conditions'">{{ activity_type.conditions }}</textarea><br/>
+        Issue Date: <input type="date" :name="activity_type.code+'_issue_date'" :value="activity_type.issue_date"><br>
+        Start Date: <input type="date" :name="activity_type.code+'_start_date'" :value="activity_type.start_date"><br>
+        Expiry Date: <input type="date" :name="activity_type.code+'_expiry_date'" :value="activity_type.expiry_date"><br>
+"""
+
 
 def get_activity_type_schema(licence_class_data):
     schema_activity=[]

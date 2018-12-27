@@ -4,6 +4,7 @@ from ledger.accounts.models import EmailUser,Address,Document
 from wildlifecompliance.components.applications.models import (
                                     ApplicationType,
                                     Application,
+                                    ApplicationActivityType,
                                     ApplicationUserAction,
                                     ApplicationLogEntry,
                                     Referral,
@@ -26,6 +27,20 @@ from wildlifecompliance import helpers, settings
 
 from rest_framework import serializers
 
+
+class ApplicationActivityTypeSerializer(serializers.ModelSerializer):
+    activity_name_str = serializers.SerializerMethodField(read_only=True)
+    code = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = ApplicationActivityType
+        fields = '__all__'
+
+    def get_activity_name_str(self,obj):
+        return obj.activity_name_str
+
+    def get_code(self,obj):
+        return obj.code.lower()
+
 class ApplicationTypeSerializer(serializers.ModelSerializer):
     activities = serializers.SerializerMethodField()
     class Meta:
@@ -35,7 +50,6 @@ class ApplicationTypeSerializer(serializers.ModelSerializer):
             'schema',
             'activities'
         )
-
 
     def get_activities(self,obj):
         return obj.activities.names()
@@ -91,10 +105,6 @@ class ActivityTypeserializer(serializers.ModelSerializer):
         model= WildlifeLicenceActivityType
         fields=('id','name','short_name')
 
-
-
-
-
 class AmendmentRequestSerializer(serializers.ModelSerializer):
     reason = serializers.SerializerMethodField()
 
@@ -126,6 +136,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     class_name = serializers.SerializerMethodField(read_only=True)
     activity_type_names = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
+    activity_types = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -168,7 +179,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'class_name',
                 'activity_type_names',
                 'can_be_processed',
-                'can_current_user_edit'
+                'can_current_user_edit',
+                'licence_category',
+                'activity_types'
                 )
         read_only_fields=('documents',)
 
@@ -211,6 +224,10 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             activity_type.append(item["name"])
 
         return activity_type
+
+    def get_activity_types(self, obj):
+        application_activity_types = ApplicationActivityType.objects.filter(application_id=obj.id)
+        return ApplicationActivityTypeSerializer(application_activity_types, many=True).data
 
     def get_amendment_requests(self, obj):
         amendment_request_data=[]
@@ -423,6 +440,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     latest_referrals = ApplicationReferralSerializer(many=True)
     allowed_assessors = EmailUserSerializer(many=True)
     licences = serializers.SerializerMethodField(read_only=True)
+    activity_types = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -465,9 +483,15 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                 'proposed_issuance_licence',
                 'proposed_decline_status',
                 'applicationdeclineddetails',
-                'permit'
+                'permit',
+                'licence_category',
+                'activity_types'
                 )
         read_only_fields=('documents','conditions')
+
+    def get_activity_types(self, obj):
+        application_activity_types = ApplicationActivityType.objects.filter(application_id=obj.id)
+        return ApplicationActivityTypeSerializer(application_activity_types, many=True).data
 
     def get_assessor_mode(self,obj):
         # TODO check if the application has been accepted or declined
