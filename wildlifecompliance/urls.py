@@ -53,7 +53,7 @@ api_patterns = [
 # URL Patterns
 urlpatterns = [
     url(r'contact-us/$', TemplateView.as_view(template_name="wildlifecompliance/contact_us.html"), name='wc_contact'),
-    url(r'further-info/$', TemplateView.as_view(template_name="wildlifecompliance/further_info.html"), name='wc_further_info'),
+    url(r'further-info/$', RedirectView.as_view(url='https://www.dpaw.wa.gov.au/plants-and-animals/licences-and-permits'), name='wc_further_info'),
     url(r'^admin/', wildlifecompliance_admin_site.urls),
     url(r'', include(api_patterns)),
     url(r'^$', views.WildlifeComplianceRoutingView.as_view(), name='wc_home'),
