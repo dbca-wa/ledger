@@ -70,5 +70,5 @@ def user_by_email(backend, details, *args, **kwargs):
         return {'user': user}
 
 
-def user_is_new_session(backend, details, strategy, is_new, *args, **kwargs):
+def user_is_new_session(backend, details, strategy, is_new=False, *args, **kwargs):
     backend.strategy.session_set('is_new',is_new)
