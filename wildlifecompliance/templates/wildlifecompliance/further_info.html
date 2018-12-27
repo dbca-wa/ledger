@@ -1,0 +1,30 @@
+{% extends 'wildlifecompliance/base.html' %}
+
+{% load bootstrap3 %}
+
+{% load static %}
+
+{% block extra_css %}
+    <link type="text/css" href="{% static 'wildlifecompliance/css/index.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block left_menu_items %}
+    <li><a href="{% url 'wc_contact' %}">Contact Us</a></li>
+    <li><a href="{% url 'wc_further_info' %}">Further Information</a></li>
+{% endblock %}
+
+{% block messages %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <h2>
+                    Further Information
+                </h2>
+                <p>For further information, please email <b>wildlifelicensing@dbca.wa.gov.au</b>.</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
