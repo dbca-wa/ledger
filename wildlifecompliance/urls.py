@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.conf.urls import url, include
+from django.views.generic.base import TemplateView
 from django.conf.urls.static import static
 from rest_framework import routers
 
@@ -51,6 +52,8 @@ api_patterns = [
 
 # URL Patterns
 urlpatterns = [
+    url(r'contact-us/$', TemplateView.as_view(template_name="wildlifecompliance/contact_us.html"), name='wc_contact'),
+    url(r'further-info/$', TemplateView.as_view(template_name="wildlifecompliance/further_info.html"), name='wc_further_info'),
     url(r'^admin/', wildlifecompliance_admin_site.urls),
     url(r'', include(api_patterns)),
     url(r'^$', views.WildlifeComplianceRoutingView.as_view(), name='wc_home'),
