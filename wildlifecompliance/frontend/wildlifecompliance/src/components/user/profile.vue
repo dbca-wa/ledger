@@ -839,7 +839,9 @@ export default {
                         html: 'Your organisation request has been successfully submitted.',
                         type: 'success',
                     }).then(() => {
-                        window.location.reload(true);
+                        if (this.$route.name == 'account'){
+                           window.location.reload(true);
+                        }
                     });
                 }, (error) => {
                     console.log(error);
@@ -899,7 +901,9 @@ export default {
                         html: 'Your organisation request has been successfully submitted.',
                         type: 'success',
                     }).then(() => {
-                        window.location.reload(true);
+                        if (this.$route.name == 'account'){
+                           window.location.reload(true);
+                        }
                     });
                 }, (error) => {
                     console.log(error);
