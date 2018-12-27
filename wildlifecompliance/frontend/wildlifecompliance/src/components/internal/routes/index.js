@@ -6,6 +6,7 @@ import Organisation from '../organisations/manage.vue'
 import UserDashTable from '../users/dashboard.vue'
 import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
+import Assess from '../applications/assess.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
 import Returns from '../returns/access.vue'
@@ -90,7 +91,7 @@ export default
                     component: Organisation,
                     name:"internal-org-detail"
                 },
- 
+
             ]
         },
         {
@@ -119,9 +120,39 @@ export default
                         
                     ]
                 },
- 
+
             ]
         },
+        {
+            path: 'assess',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: ':application_id',
+                    component: {
+                        render(c)
+                        {
+                            return c('router-view')
+                        }
+                    },
+                    children: [
+                        {
+                            path: '/',
+                            component: Assess,
+                            name:"internal-assess"
+                        },
+                    ]
+                },
+
+            ]
+        },
+
+
         /*{
             path: 'application',
             component: Application,

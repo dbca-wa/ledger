@@ -2,6 +2,8 @@ from ledger.accounts.models import EmailUser
 # from wildlifecompliance.components.applications.utils import amendment_requests
 from wildlifecompliance.components.applications.models import (
     Application,
+    ApplicationType,
+    ApplicationActivityType,
     ApplicationUserAction,
     ApplicationLogEntry,
     ApplicationCondition,
@@ -23,6 +25,32 @@ from wildlifecompliance import helpers
 
 from rest_framework import serializers
 
+
+class ApplicationActivityTypeSerializer(serializers.ModelSerializer):
+    activity_name_str = serializers.SerializerMethodField(read_only=True)
+    code = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = ApplicationActivityType
+        fields = '__all__'
+
+    def get_activity_name_str(self,obj):
+        return obj.activity_name_str
+
+    def get_code(self,obj):
+        return obj.code.lower()
+
+class ApplicationTypeSerializer(serializers.ModelSerializer):
+    activities = serializers.SerializerMethodField()
+    class Meta:
+        model = ApplicationType
+        fields = (
+            'id',
+            'schema',
+            'activities'
+        )
+
+    def get_activities(self,obj):
+        return obj.activities.names()
 
 class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -139,6 +167,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     assigned_officer = serializers.CharField(
         source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
+    activity_types = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -182,7 +211,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'can_current_user_edit',
             'payment_status',
             'assigned_officer',
-            'can_be_processed'
+            'can_be_processed',
+            'licence_category',
+            'activity_types',
         )
         read_only_fields = ('documents',)
 
@@ -218,6 +249,10 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_activity_type_names(self, obj):
         return obj.licence_activity_type_names
+
+    def get_activity_types(self, obj):
+        application_activity_types = ApplicationActivityType.objects.filter(application_id=obj.id)
+        return ApplicationActivityTypeSerializer(application_activity_types, many=True).data
 
     def get_amendment_requests(self, obj):
         amendment_request_data = []
@@ -458,6 +493,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     assigned_officer = serializers.CharField(
         source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
+    activity_types = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -501,9 +537,15 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'permit',
             'payment_status',
             'assigned_officer',
-            'can_be_processed'
+            'can_be_processed',
+            'licence_category',
+            'activity_types'
         )
         read_only_fields = ('documents', 'conditions')
+
+    def get_activity_types(self, obj):
+        application_activity_types = ApplicationActivityType.objects.filter(application_id=obj.id)
+        return ApplicationActivityTypeSerializer(application_activity_types, many=True).data
 
     def get_assessor_mode(self, obj):
         # TODO check if the application has been accepted or declined

@@ -39,6 +39,7 @@ from wildlifecompliance.components.main.utils import checkout, set_session_appli
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.applications.models import (
     Application,
+    ApplicationActivityType,
     ApplicationDocument,
     ApplicationCondition,
     ApplicationStandardCondition,
@@ -48,6 +49,8 @@ from wildlifecompliance.components.applications.models import (
     ApplicationUserAction
 )
 from wildlifecompliance.components.applications.serializers import (
+    ApplicationTypeSerializer,
+    ApplicationActivityTypeSerializer,
     ApplicationSerializer,
     InternalApplicationSerializer,
     SaveApplicationSerializer,
@@ -718,6 +721,24 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def assess_save(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            import ipdb; ipdb.set_trace()
+            save_assess_data(instance,request,self)
+            return redirect(reverse('external'))
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
         try:
@@ -817,6 +838,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class ApplicationActivityTypeViewSet(viewsets.ModelViewSet):
+    queryset = ApplicationActivityType.objects.all()
+    serializer_class = ApplicationActivityTypeSerializer
 
 
 class ApplicationConditionViewSet(viewsets.ModelViewSet):
