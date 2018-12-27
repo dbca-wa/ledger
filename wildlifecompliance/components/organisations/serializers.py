@@ -101,7 +101,7 @@ class OrganisationCheckExistSerializer(serializers.Serializer):
     # Validation Serializer for existing Organisations
     exists = serializers.BooleanField(default=False)
     id = serializers.IntegerField(default=0)
-    first_five = serializers.CharField(default='')
+    first_five = serializers.CharField(allow_blank=True, required=False)
     user = serializers.IntegerField()
 
     def validate(self, data):
