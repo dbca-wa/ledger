@@ -90,6 +90,14 @@ class AccessTypeSerializer(serializers.ModelSerializer):
 
 class VehicleSerializer(serializers.ModelSerializer):
     access_type= AccessTypeSerializer()
+    rego_expiry=serializers.DateField(format="%d/%m/%Y")
+    class Meta:
+        model = Vehicle
+        fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
+
+class SaveVehicleSerializer(serializers.ModelSerializer):
+    #access_type= AccessTypeSerializer()
+    rego_expiry = serializers.DateField(input_formats=['%d/%m/%Y'], allow_null=True)
     class Meta:
         model = Vehicle
         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')

@@ -13,7 +13,7 @@
                                         <label class="control-label pull-left"  for="Name">Vehicle Type</label>
                                     </div>
                                     <div class="col-sm-9">
-                                        <select class="form-control" name="access_type" ref="access_type" v-model="vehicle.access_type.id">
+                                        <select class="form-control" name="access_type" ref="access_type" v-model="vehicle_access_id">
                                             <option v-for="a in access_types" :value="a.id">{{a.name}}</option>
                                         </select>
                                     </div>
@@ -44,7 +44,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-group">
+                            <!-- <div class="form-group">
                                 <div class="row">
                                     <div class="col-sm-3">
                                         <label class="control-label pull-left"  for="Name">Registration Expiry</label>
@@ -52,6 +52,24 @@
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="rego_expiry" style="width: 70%;">
                                             <input type="text" class="form-control" placeholder="DD/MM/YYYY" >
+                                            <span class="input-group-addon">
+                                                <span class="glyphicon glyphicon-calendar"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+ -->
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        
+                                        <label class="control-label pull-left"  for="Name">Registration Expiry</label>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <div class="input-group date" ref="rego_expiry" style="width: 70%;">
+                                            <input type="text" class="form-control" name="rego_expiry" placeholder="DD/MM/YYYY" v-model="vehicle.rego_expiry">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
@@ -70,8 +88,7 @@
                                         <input class="form-control" name="license" ref="license" v-model="vehicle.license" type="text">
                                     </div>
                                 </div>
-                            </div>
-                           
+                            </div>                           
                         </div>
                     </form>
                 </div>
@@ -111,6 +128,7 @@ export default {
             vehicle: Object,
             vehicle_id: Number,
             access_types: null,
+            vehicle_access_id: null,
             state: 'proposed_vehicle',
             issuingVehicle: false,
             validation_form: null,
@@ -118,6 +136,7 @@ export default {
             errorString: '',
             successString: '',
             success:false,
+            dateFormat:'YYYY-MM-DD',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
                 showClear:true,
@@ -176,7 +195,13 @@ export default {
             let vm=this;
             Vue.http.get(helpers.add_endpoint_json(api_endpoints.vehicles,vid)).then((res) => {
                       vm.vehicle=res.body; 
-                      console.log(vm.vehicle)                
+                      if(vm.vehicle.access_type)
+                      {
+                        vm.vehicle_access_id=vm.vehicle.access_type.id
+                      }
+                      // if(vm.vehicle.rego_expiry){
+                      //   vm.vehicle.rego_expiry=vm.vehicle.rego_expiry.format('DD/MM/YYYY')
+                      //   }
                 },
               err => { 
                         console.log(err);
@@ -186,36 +211,37 @@ export default {
         sendData:function(){
             let vm = this;
             vm.errors = false;
+            if(vm.vehicle_access_id!=null){
+                vm.vehicle.access_type=vm.vehicle_access_id
+            }
+            // if(vm.vehicle.rego_expiry){
+            //     vm.vehicle.rego_expiry=vm.vehicle.rego_expiry.format('YYYY-MM-DD')
+            // }
             let vehicle = JSON.parse(JSON.stringify(vm.vehicle));
             vm.issuingVehicle = true;
             
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.vehicles,vm.vehicle_id+'/vehicle_cancellation'),JSON.stringify(vehicle),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.vehicles,vm.vehicle_id+'/edit_vehicle'),JSON.stringify(vehicle),{
                         emulateJSON:true,
                     }).then((response)=>{
                         vm.issuingVehicle = false;
                         vm.close();
                         swal(
-                             'Cancelled',
-                             'An email has been sent to applicant about cancellation of this vehicle',
+                             'Saved',
+                             'Vehicle details has been saved.',
                              'success'
                         );
                         vm.$emit('refreshFromResponse',response);
-                       
-
                     },(error)=>{
                         vm.errors = true;
                         vm.issuingVehicle = false;
                         vm.errorString = helpers.apiVueResourceError(error);
                     });
-                        
-            
         },
         addFormValidations: function() {
             let vm = this;
             vm.validation_form = $(vm.form).validate({
                 rules: {
-                    cancellation_date:"required",                    
-                    cancellation_details:"required",
+                    access_type:"required",                    
                 },
                 messages: {
                 },
@@ -241,36 +267,46 @@ export default {
        },
        eventListeners:function () {
             let vm = this;
-            // Intialise select2
-            $(vm.$refs.access_type).select2({
-                "theme": "bootstrap",
-                allowClear: true,
-                placeholder:"Select access"
-            }).
-            on("select2:select",function (e) {
-                var selected = $(e.currentTarget);
-                vm.vehicle.access_type = selected.val();
-                vm.vehicle.access_type_id = selected.val();
-            }).
-            on("select2:unselect",function (e) {
-                var selected = $(e.currentTarget);
-                vm.vehicle.access_type = selected.val();
-                vm.vehicle.access_type_id = selected.val();
-            });
-
-
-
-            //Initialise Date Picker TODO: Check why this is not working
-            console.log($(vm.$refs.rego_expiry).datetimepicker(vm.datepickerOptions))
             $(vm.$refs.rego_expiry).datetimepicker(vm.datepickerOptions);
             $(vm.$refs.rego_expiry).on('dp.change', function(e){
                 if ($(vm.$refs.rego_expiry).data('DateTimePicker').date()) {
                     vm.vehicle.rego_expiry =  e.date.format('DD/MM/YYYY');
+                    //vm.vehicle.rego_expiry =  e.date.format('YYYY-MM-DD')
                 }
                 else if ($(vm.$refs.rego_expiry).data('date') === "") {
-                    vm.vehicle.rego_expiry = "";
+                    vm.vehicle.rego_expiry = null;
                 }
              });
+
+            // Intialise select2
+            // $(vm.$refs.access_type).select2({
+            //     "theme": "bootstrap",
+            //     allowClear: true,
+            //     placeholder:"Select access"
+            // }).
+            // on("select2:select",function (e) {
+            //     var selected = $(e.currentTarget);
+            //     //vm.vehicle.access_type = selected.val();
+            //     vm.vehicle_access_id = selected.val();
+            // }).
+            // on("select2:unselect",function (e) {
+            //     var selected = $(e.currentTarget);
+            //     //vm.vehicle.access_type = selected.val();
+            //     vm.vehicle_access_id = selected.val();
+            // });
+
+
+            //Initialise Date Picker TODO: Check why this is not working
+            // console.log($(vm.$refs.rego_expiry).datetimepicker(vm.datepickerOptions))
+            // $(vm.$refs.rego_expiry).datetimepicker(vm.datepickerOptions);
+            // $(vm.$refs.rego_expiry).on('dp.change', function(e){
+            //     if ($(vm.$refs.rego_expiry).data('DateTimePicker').date()) {
+            //         vm.vehicle.rego_expiry =  e.date.format('DD/MM/YYYY');
+            //     }
+            //     else if ($(vm.$refs.rego_expiry).data('date') === "") {
+            //         vm.vehicle.rego_expiry = "";
+            //     }
+            //  });
        }
    },
    mounted:function () {

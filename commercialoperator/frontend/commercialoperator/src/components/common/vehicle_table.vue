@@ -59,8 +59,8 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
-                serverSide: true,
-                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+                //serverSide: true,
+                //lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
                     "url": vm.url,
                     "dataSrc": '',
@@ -217,7 +217,6 @@ export default {
             //console.log(vm.regions);
         },
         editVehicle: function(id){
-            console.log('id here', id);
             this.$refs.edit_vehicle.vehicle_id = id;
             this.$refs.edit_vehicle.fetchVehicle(id);
             this.$refs.edit_vehicle.isModalOpen = true;
@@ -229,6 +228,9 @@ export default {
                 var id = $(this).attr('data-edit-vehicle');
                 vm.editVehicle(id);
             });
+        },
+        refreshFromResponse: function(){
+            this.$refs.vehicle_datatable.vmDataTable.ajax.reload();
         },
         initialiseSearch:function(){
             

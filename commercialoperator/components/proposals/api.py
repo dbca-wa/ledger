@@ -584,7 +584,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.submit(request,self)
             instance.tenure = search_tenure(instance)

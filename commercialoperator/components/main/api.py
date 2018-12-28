@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, B
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
 from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park, Trail, ActivityCategory, Activity
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer, VehicleSerializer, AccessTypeSerializer, ParkSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer, VehicleSerializer, AccessTypeSerializer, ParkSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, SaveVehicleSerializer
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 
@@ -51,9 +51,29 @@ class ApplicationTypeViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         return ApplicationType.objects.order_by('order').filter(visible=True)
 
-class VehicleViewSet(viewsets.ReadOnlyModelViewSet):
+class VehicleViewSet(viewsets.ModelViewSet):
     queryset = Vehicle.objects.all().order_by('id')
     serializer_class = VehicleSerializer
+
+    @detail_route(methods=['post'])
+    def edit_vehicle(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = SaveVehicleSerializer(instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 class AccessTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AccessType.objects.all().order_by('id')
