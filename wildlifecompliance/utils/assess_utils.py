@@ -44,19 +44,21 @@ def get_purposes(licence_class_short_name):
 
 
 
-def create_app_activity_type_model(licence_category, cur_app_ids=[], use_id=False):
+def create_app_activity_type_model(licence_category, app_ids=[], exclude_app_ids=[]):
     """
     from wildlifecompliance.utils.excel_utils import write_excel_model
     write_excel_model('Fauna Other Purpose')
     """
 
-    if use_id:
+    if app_ids:
         # get a filterset with single application
-        applications = Application.objects.filter(id=Application.objects.all().last().id)
+        applications = Application.objects.filter(id__in=app_ids)
     else:
-        applications = Application.objects.filter(licence_category=licence_category).exclude(processing_status=Application.PROCESSING_STATUS_DRAFT[0]).exclude(id__in=cur_app_ids)
+        #applications = Application.objects.filter(licence_category=licence_category).exclude(processing_status=Application.PROCESSING_STATUS_DRAFT[0]).exclude(id__in=cur_app_ids)
+        applications = Application.objects.filter(licence_category=licence_category).exclude(id__in=exclude_app_ids)
 
     obj_list = []
+    import ipdb; ipdb.set_trace()
     for application in applications.order_by('id'):
 
         activities = get_purposes(application.licence_type_data['short_name']).values_list('activity_type__short_name', flat=True)
