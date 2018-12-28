@@ -64,7 +64,7 @@
                                 <ul class="nav navbar-nav">
                                     {% block left_menu_items %}
                                         {% if is_internal_login %}
-                                            {% if wc_version != "1.0" %}
+                                            {% if wc_version|stringformat:"s" != "1.0" %}
                                                 <li><a href="/internal/licences">Licences</a></li>
                                                 <li><a href="/internal/returns">Returns</a></li>
                                                 <li><a href="/internal/tag_purchases">Tag Purchases</a></li>
