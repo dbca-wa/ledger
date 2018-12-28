@@ -6,12 +6,16 @@ from wildlifecompliance.components.applications.utils import create_data_from_fo
 from wildlifecompliance.components.applications.models import Application, ApplicationActivityType
 from wildlifecompliance.components.applications.email import send_application_invoice_email_notification
 from wildlifecompliance.components.main.utils import get_session_application, delete_session_application, bind_application_to_invoice
-import json,traceback
+import json
 from wildlifecompliance.exceptions import BindApplicationException
 import xlwt
 from wildlifecompliance.utils import serialize_export, unique_column_names
 from datetime import datetime
 from wildlifecompliance.utils.excel_utils import ExcelWriter
+from django.utils import timezone
+import os
+import subprocess
+import traceback
 
 class ApplicationView(TemplateView):
     template_name = 'wildlifecompliance/application.html'
@@ -115,6 +119,97 @@ class AssessView(UpdateView):
             'tabs': d,
         })
         return context
+
+def pdflatex(request, form_data):
+
+	now = timezone.localtime(timezone.now())
+	#report_date = now.strptime(request.GET.get('date'), '%Y-%m-%d').date()
+	report_date = now
+
+	#template = request.GET.get("template", "pfp")
+	template = "ministerial_auth_report"
+	response = HttpResponse(content_type='application/pdf')
+	#texname = template + ".tex"
+	#filename = template + ".pdf"
+	texname = template + "_" + request.user.username + ".tex"
+	filename = template + "_" + request.user.username + ".pdf"
+	timestamp = now.isoformat().rsplit(
+		".")[0].replace(":", "")
+	if template == "ministerial_auth_report":
+		downloadname = "ministerial_auth_report_" + report_date.strftime('%Y-%m-%d') + ".pdf"
+	else:
+		downloadname = "ministerial_auth_report_" + template + "_" + report_date.strftime('%Y-%m-%d') + ".pdf"
+	error_response = HttpResponse(content_type='text/html')
+	errortxt = downloadname.replace(".pdf", ".errors.txt.html")
+	error_response['Content-Disposition'] = (
+		'{0}; filename="{1}"'.format(
+		"inline", errortxt))
+
+	subtitles = {
+		"ministerial_report": "Ministerial Report",
+		#"form268a": "268a - Planned Burns",
+	}
+	embed = False if request.GET.get("embed") == "false" else True
+
+	context = {
+		'user': request.user.get_full_name(),
+		'report_date': report_date.strftime('%e %B %Y').strip(),
+		'time': report_date.strftime('%H:%M'),
+		'current_finyear': current_finyear(),
+		'rpt_map': self.rpt_map,
+		'item_map': self.item_map,
+		'form': form_data,
+		'embed': embed,
+		'headers': request.GET.get("headers", True),
+		'title': request.GET.get("title", "Bushfire Reporting System"),
+		'subtitle': subtitles.get(template, ""),
+		'timestamp': now,
+		'downloadname': downloadname,
+		'settings': settings,
+		'baseurl': request.build_absolute_uri("/")[:-1]
+	}
+	disposition = "attachment"
+	#disposition = "inline"
+	response['Content-Disposition'] = (
+		'{0}; filename="{1}"'.format(
+			disposition, downloadname))
+
+	directory = os.path.join(settings.MEDIA_ROOT, 'ministerial_report' + os.sep)
+	if not os.path.exists(directory):
+		logger.debug("Making a new directory: {}".format(directory))
+		os.makedirs(directory)
+
+	logger.debug('Starting  render_to_string step')
+	err_msg = None
+	try:
+		output = render_to_string("latex/" + template + ".tex", context, request=request)
+	except Exception as e:
+		import traceback
+		err_msg = u"PDF tex template render failed (might be missing attachments):"
+		logger.debug(err_msg + "\n{}".format(e))
+
+		error_response.write(err_msg + "\n\n{0}\n\n{1}".format(e,traceback.format_exc()))
+		return error_response
+
+	with open(directory + texname, "w") as f:
+		f.write(output.encode('utf-8'))
+		logger.debug("Writing to {}".format(directory + texname))
+
+	logger.debug("Starting PDF rendering process ...")
+	cmd = ['latexmk', '-cd', '-f', '-silent', '-pdf', directory + texname]
+	#cmd = ['latexmk', '-cd', '-f', '-pdf', directory + texname]
+	logger.debug("Running: {0}".format(" ".join(cmd)))
+	subprocess.call(cmd)
+
+	logger.debug("Cleaning up ...")
+	cmd = ['latexmk', '-cd', '-c', directory + texname]
+	logger.debug("Running: {0}".format(" ".join(cmd)))
+	subprocess.call(cmd)
+
+	logger.debug("Reading PDF output from {}".format(filename))
+	response.write(open(directory + filename).read())
+	logger.debug("Finally: returning PDF response.")
+	return response
 
 #def update_workbooks(request):
 #    writer = ExcelWriter()

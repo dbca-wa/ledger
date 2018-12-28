@@ -1,0 +1,152 @@
+{% load latex_tags %}\documentclass[10pt,a4paper,final]{report}
+\usepackage[left=5mm, right=5mm, top=5mm, bottom=5mm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\pagenumbering{gobble}
+
+\newlength\mylength
+\setlength\mylength{\dimexpr.5\columnwidth\tabcolsep-0.5\arrayrulewidth\relax}
+\setlength{\tabcolsep}{0.2cm}
+\renewcommand{\arraystretch}{1.7}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
+
+\DeclareGraphicsExtensions{.png,.jpg}
+
+{% with lb='{' %}
+\begin{document}
+
+\iffalse
+\hfill
+\begin{tabular}[t]{@{}c} 
+  {\huge \textbf{STATE OPERATIONS AIR DESK}}
+\end{tabular}`
+\hfill% move it to the right
+\begin{tabular}[t]{l@{}}
+   \textbf{A D F 0 1}
+\end{tabular}
+\fi
+
+\vspace{0.2cm}
+
+\begin{table}[ht]
+
+\begin{tabular}{|C{19.51cm}|}
+\hline \\
+{\LARGE \textbf{AERIAL FIRE SUPPRESSION REQUEST FORM}}              \\
+\\
+\end{tabular}
+
+\vspace{-0.04cm}
+
+\begin{tabular}{|m{3cm}|m{6.13cm}|m{3cm}|m{6.14cm}|}
+\hline
+\textbf{DATE} & {{bushfire.dispatch_aerial_date|date:"Y-m-d"}} & \textbf{TIME} & {{bushfire.dispatch_aerial_date|date:"H:i:s"}} \\
+
+\hline
+\end{tabular} 
+
+\vspace{-0.04cm}
+
+\begin{tabular}{|m{7.8cm}|p{11.3cm}|}
+
+\textbf{REQUESTING OFFICER / AGENCY} & {{bushfire.duty_officer}} / DBCA \\
+
+\hline
+\textbf{CONTROLLING AGENCY} & {{bushfire.initial_control_value | latex:'&'}} \\
+
+\hline
+\textbf{FIRE NUMBER} & {{bushfire.fire_number}}  \\
+
+\hline
+\textbf{FIRE NAME} & {{bushfire.name}} \\
+
+\hline
+\textbf{DFES INCIDENT NUMBER} & {{bushfire.dfes_incident_no}} \\
+
+\hline
+\textbf{AUTOMATIC/MANAGED RESPONSE} &
+\setlength{\tabcolsep}{0.04cm}
+\begin{tabular}{l|l|l|l}
+{% for resource in bushfire.FIRE_BOMBING_RESPONSES_LATEX %}{% if resource.0 > 1 %} & {% endif %} \begin{tabular}[c]{@{}l@{}}{% if resource.0 == bushfire.fire_bombing.response %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox_checked.png} {{resource.1}} {% else %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox.png} {{resource.1}} {% endif %} \end{tabular} {% endfor %} 
+\end{tabular}
+\\
+
+\hline
+\textbf{GROUND CONTROLLER / CALL SIGN} & {{bushfire.fire_bombing.ground_controller.username}} /{{bushfire.fire_bombing.ground_controller.callsign}} \\
+
+\hline
+\textbf{FIRE BOMBING RADIO CHANNEL} & {{bushfire.fire_bombing.radio_channel}} \\
+
+\hline
+\textbf{LOCATION OF FIRE}  & {{bushfire.fire_position}} \\
+
+\hline
+\textbf{POINT OF ORIGIN}  & 
+\begin{tabular}{@{}l@{}}
+{{bushfire.origin_geo|latex:'°'}} \\
+{{bushfire.origin_point_mga}} \\
+{% if bushfire.origin_point_grid %}{{bushfire.origin_point_grid}} \\ {% endif %}
+\end{tabular} \\
+
+\hline
+\textbf{FLIGHT HAZARDS (if known)} & {{bushfire.fire_bombing.flight_hazards}} \\
+
+\hline
+\begin{tabular}{@{}l@{}}
+\textbf{INDICATE REQUESTING ACTIVATION} \\
+\textbf{CRITERIA} 
+\end{tabular} &
+\begin{tabular}{@{}l@{}}
+{% for resource in bushfire.FIRE_BOMBING_ACTIVATION_CRITERIAS_LATEX %}{% if resource.0 in bushfire.fire_bombing.activation_criterias %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox_checked.png} {{resource.1}} {% else %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox.png} {{resource.1}} {% endif %} \\ {% endfor %} 
+\end{tabular} \\
+
+\hline
+\textbf{PREFERRED RESOURCE} &  
+{% for resource in bushfire.FIRE_BOMBING_RESOURCES %}{% if resource.0 in bushfire.fire_bombing.prefered_resources %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox_checked.png} {{resource.1}} \hspace{10pt} {% else %}\includegraphics[width=10pt]{{lb}}{{graphic_folder}}/checkbox.png} {{resource.1}} \hspace{10pt} {% endif %} {% endfor %} \\
+
+\hline
+\textbf{SAR ARRANGEMENTS} & {{bushfire.fire_bombing.sar_arrangements}} \\
+
+\hline
+\textbf{OPERATIONAL BASE ESTABLISHED} & {{bushfire.fire_bombing.operational_base_established}} \\
+
+\end{tabular}
+
+\vspace{-0.04cm}
+
+\begin{tabular}{|m{8.02cm}|m{5.33cm}|m{5.335cm}|}
+\hline
+\multicolumn{3}{|l|}{\textbf{\color[HTML]{FE0000} SOAD USE ONLY}}              \\
+\hline
+\textbf{Air Desk Officer} & \textbf{Time Received} & \textbf{Action Taken} \\
+\hline
+ & &  \\
+\end{tabular}
+
+\vspace{-0.04cm}
+\begin{tabular}{|m{4.5cm}|m{14.6cm}|}
+\hline
+\textbf{Resources Sent} & \\
+\hline
+\end{tabular}
+
+\vspace{0.5cm}
+
+\begin{center}
+\textbf {\large \textbf{\color[HTML]{FE0000} Uncontrolled when printed} }
+\end{center}
+\end{table}
+
+\end{document}
+{% endwith %}
+
+
+
+
+
+
