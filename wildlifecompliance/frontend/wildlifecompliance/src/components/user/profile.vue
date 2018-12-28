@@ -574,6 +574,11 @@ export default {
                             }).then(() => {
                                 vm.updatingPersonal = false;
                                 vm.profile.personal_details = true;
+                                if (vm.completedProfile) {
+                                    vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
+                                    },(error) => {
+                                    })
+                                }
                             });
                         }, (error) => {
                             vm.updatingPersonal = false;
@@ -617,6 +622,11 @@ export default {
                     }).then(() => {
                         vm.updatingPersonal = false;
                         vm.profile.personal_details = true;
+                        if (vm.completedProfile) {
+                            vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
+                            },(error) => {
+                            })
+                        }
                     });
                 }, (error) => {
                     vm.updatingPersonal = false;
@@ -651,6 +661,11 @@ export default {
                     html: 'Your contact details has been successfully updated.',
                     type: 'success',
                 })
+                if (vm.completedProfile) {
+                    vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
+                    },(error) => {
+                    })
+                }
             }, (error) => {
                 vm.updatingContact = false;
                 vm.profile.contact_details = false;
@@ -691,6 +706,11 @@ export default {
                     html: 'There was an error updating your address details.<br/>' + error_msg,
                     type: 'error'
                 })
+                if (vm.completedProfile) {
+                    vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
+                    },(error) => {
+                    })
+                }
             });
         },
         checkOrganisation: function() {
