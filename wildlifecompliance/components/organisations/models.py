@@ -119,42 +119,42 @@ class Organisation(models.Model):
             self.log_user_action(OrganisationAction.ACTION_CONTACT_DECLINED.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
             send_organisation_contact_decline_email_notification(user,request.user,self,request)
 
-    def link_user(self, user, request, admin_flag):
-        with transaction.atomic():
-            try:
-                UserDelegation.objects.get(organisation=self, user=user)
-                raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
-            except UserDelegation.DoesNotExist:
-                delegate = UserDelegation.objects.create(organisation=self, user=user)
-            if self.first_five_admin:
-                is_admin = True
-                role = 'organisation_admin'
-            elif admin_flag:
-                role = 'organisation_admin'
-                is_admin = True
-            else:
-                role = 'organisation_user'
-                is_admin = False
-
-            # Create contact person
-            OrganisationContact.objects.create(
-                organisation=self,
-                first_name=user.first_name,
-                last_name=user.last_name,
-                mobile_number=user.mobile_number,
-                phone_number=user.phone_number,
-                fax_number=user.fax_number,
-                email=user.email,
-                user_role=role,
-                user_status='pending',
-                is_admin=is_admin
-
-            )
-            # log linking
-            self.log_user_action(OrganisationAction.ACTION_LINK.format(
-                '{} {}({})'.format(delegate.user.first_name, delegate.user.last_name, delegate.user.email)), request)
-            # send email
-            send_organisation_link_email_notification(user, request.user, self, request)
+    # def link_user(self, user, request, admin_flag):
+    #     with transaction.atomic():
+    #         try:
+    #             UserDelegation.objects.get(organisation=self, user=user)
+    #             raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
+    #         except UserDelegation.DoesNotExist:
+    #             delegate = UserDelegation.objects.create(organisation=self, user=user)
+    #         if self.has_no_admins and ajsdhflkajhsdflkjhasdlkjfh:
+    #             role = 'organisation_admin'
+    #             is_admin = True
+    #         elif admin_flag:
+    #             role = 'organisation_admin'
+    #             is_admin = True
+    #         else:
+    #             role = 'organisation_user'
+    #             is_admin = False
+    #
+    #         # Create contact person
+    #         OrganisationContact.objects.create(
+    #             organisation=self,
+    #             first_name=user.first_name,
+    #             last_name=user.last_name,
+    #             mobile_number=user.mobile_number,
+    #             phone_number=user.phone_number,
+    #             fax_number=user.fax_number,
+    #             email=user.email,
+    #             user_role=role,
+    #             user_status='pending',
+    #             is_admin=is_admin
+    #
+    #         )
+    #         # log linking
+    #         self.log_user_action(OrganisationAction.ACTION_LINK.format(
+    #             '{} {}({})'.format(delegate.user.first_name, delegate.user.last_name, delegate.user.email)), request)
+    #         # send email
+    #         send_organisation_link_email_notification(user, request.user, self, request)
 
 
     def accept_declined_user(self, user, request):
@@ -164,15 +164,6 @@ class Organisation(models.Model):
                 raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
             except UserDelegation.DoesNotExist:
                 delegate = UserDelegation.objects.create(organisation=self, user=user)
-            if self.first_five_admin:
-                is_admin = True
-                role = 'organisation_admin'
-            elif admin_flag:
-                role = 'organisation_admin'
-                is_admin = True
-            else:
-                role = 'organisation_user'
-                is_admin = False
 
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
@@ -404,20 +395,17 @@ class Organisation(models.Model):
         :return: A string of names for the first five Administrator delegates.
         """
         _names = ''
-        for user in self.delegates.all()[:5]:
-            _is_admin = OrganisationContact.objects.filter(organisation_id=self.id,
-                                                           last_name=user.last_name,
-                                                           user_role='organisation_admin',
-                                                           user_status='active',
-                                                           is_admin=True).exists()
-            if _is_admin:
-                _names += user.get_full_name() + ' '
+        for user in OrganisationContact.objects.filter(organisation_id=self.id,
+                                                       user_role='organisation_admin',
+                                                       user_status='active',
+                                                       is_admin=True):
+            _names += '{0} {1} '.format(user.first_name,user.last_name)
 
         return _names
 
     @property
-    def first_five_admin(self):
-        return self.delegates.count() <5
+    def has_no_admins(self):
+        return self.contacts.filter(user_role='organisation_admin').count() < 1
 
     @property
     def can_contact_user_edit(self):
