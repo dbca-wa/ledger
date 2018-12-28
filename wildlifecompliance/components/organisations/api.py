@@ -61,6 +61,7 @@ from wildlifecompliance.components.applications.serializers import (
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_address_updated_email_notification,
                         send_organisation_id_upload_email_notification,
+                        send_organisation_request_email_notification,
                     )
 
 
@@ -132,7 +133,14 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = OrganisationPinCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)} 
+            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)}
+            group = OrganisationAccessGroup.objects.first()
+            if group:
+                members = []
+                for m in group.all_members:
+                    if m.id < 6:
+                        members.append({'name': m.get_full_name(), 'id': m.id})
+                send_organisation_request_email_notification(instance, members, request)
             return Response(data);
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -791,6 +799,13 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 instance = serializer.save()
                 instance.log_user_action(OrganisationRequestUserAction.ACTION_LODGE_REQUEST.format(instance.id),request)
+                group = OrganisationAccessGroup.objects.first()
+                if group:
+                    members = []
+                    for m in group.all_members:
+                        if m.id < 6:
+                            members.append({'name': m.get_full_name(), 'id': m.id})
+                    send_organisation_request_email_notification(request.data, members, request)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

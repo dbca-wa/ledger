@@ -15,6 +15,11 @@ class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/organisation_request_accept_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_accept_notification.txt'
 
+class OrganisationRequestNotificationEmail(TemplateEmailBase):
+    subject = 'Your organisation request has been sent for approval.'
+    html_template = 'wildlifecompliance/emails/organisation_request_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_request_notification.txt'
+
 class OrganisationRequestAmendmentRequestNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation has requested an amendment to your request.'
     html_template = 'wildlifecompliance/emails/organisation_amendment_requested_notification.html'
@@ -180,6 +185,19 @@ def send_organisation_unlink_email_notification(unlinked_user,unlinked_by,organi
     msg = email.send(unlinked_user.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, unlinked_user, sender=sender)
+
+
+def send_organisation_request_email_notification(org_request, members, request):
+    email = OrganisationRequestNotificationEmail()
+    context = {
+        'request': org_request
+    }
+
+    msg = email.send(members, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    # audit log not supporting send to multiple emails.
+    # _log_org_email(msg, org_request, members, sender=sender)
+
 
 def send_organisation_request_accept_email_notification(org_request,organisation,request):
     email = OrganisationRequestAcceptNotificationEmail()

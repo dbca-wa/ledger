@@ -1,0 +1,8 @@
+{%  extends 'wildlifecompliance/emails/base_email.html' %}
+
+{%  block content %}
+    <p>An organisation request has been sent for your approval:</p>
+    <p><strong>Organisation : {{ request.name }}</strong></p>
+    <p><strong>ABN : {{ request.abn}}</strong></p>
+    <p> </p>
+{%  endblock %}
