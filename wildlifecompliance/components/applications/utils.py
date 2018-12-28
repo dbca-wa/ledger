@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
@@ -485,20 +486,29 @@ def save_assessor_data(instance, request, viewset):
 def save_assess_data(instance,request,viewset):
     with transaction.atomic():
         try:
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             for activity_type in instance.activity_types:
-                code = WildlifeLicence.objects.get(name=activity_type.activity_name).code
+                code = WildlifeLicenceActivity.objects.get(name=activity_type.activity_name).code.lower()
                 activity_type.purpose = request.data[code + '_purpose']
                 activity_type.additional_info = request.data[code + '_additional_info']
-                activity_type.advanced = request.data[code + '_standard_advanced']
+                if request.data.has_key(code + '_standard_advanced'):
+                    activity_type.advanced = True if request.data[code + '_standard_advanced'] == 'on' else False
+                else:
+                    activity_type.advanced = False
+
                 activity_type.conditions = request.data[code + '_conditions']
-                activity_type.issue_date = request.data[code + '_issue_date']
-                activity_type.start_date = request.data[code + '_start_date']
-                activity_type.expiry_date = request.data[code + '_expiry_date']
+                activity_type.issue_date = datetime.strptime(request.data[code + '_issue_date'], "%d/%m/%Y")
+                activity_type.start_date = datetime.strptime(request.data[code + '_start_date'], "%d/%m/%Y")
+                activity_type.expiry_date = datetime.strptime(request.data[code + '_expiry_date'], "%d/%m/%Y")
                 if request.data.has_key(code + '_to_be_issued'):
-                    activity_type.to_be_issued = request.data[code + '_to_be_issued']
+                    activity_type.to_be_issued = True if request.data[code + '_to_be_issued'] == 'on' else False
+                else:
+                    activity_type.to_be_issued = False
                 if request.data.has_key(code + '_processed'):
-                    activity_type.processed = request.data[code + '_processed']
+                    activity_type.processed = True if request.data[code + '_processed'] == 'on' else False
+                else:
+                    activity_type.processed = False
+
 
                 activity_type.save()
 

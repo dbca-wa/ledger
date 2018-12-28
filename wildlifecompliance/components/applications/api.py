@@ -33,7 +33,7 @@ from ledger.checkout.utils import calculate_excl_gst
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.applications.utils import save_proponent_data, save_assessor_data, get_activity_type_schema
+from wildlifecompliance.components.applications.utils import save_proponent_data, save_assessor_data, get_activity_type_schema, save_assess_data
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
@@ -726,7 +726,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def assess_save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            import ipdb; ipdb.set_trace()
             save_assess_data(instance,request,self)
             return redirect(reverse('external'))
         except serializers.ValidationError:
