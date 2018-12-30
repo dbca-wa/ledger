@@ -57,13 +57,13 @@ class MooringsiteRateLogAdmin(admin.ModelAdmin):
     list_display = ('id','mooringarea','change_type','booking_period','date_start','date_end','reason','details','created')
     ordering = ('-id',)
 
-@admin.register(models.RefundGroup)
-class RefundGroupAdmin(admin.ModelAdmin):
+@admin.register(models.ChangeGroup)
+class ChangeGroupAdmin(admin.ModelAdmin):
     list_display = ('id','name')
     ordering = ('-id',)
 
-@admin.register(models.RefundPricePeriod)
-class RefundPricePeriodAdmin(admin.ModelAdmin):
+@admin.register(models.ChangePricePeriod)
+class ChangePricePeriodAdmin(admin.ModelAdmin):
     list_display = ('id','percentage','days')
     ordering = ('-days',)
 

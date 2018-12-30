@@ -35,7 +35,7 @@ from mooring.models import (MooringArea,
                                 AdmissionsRate,
                                 DiscountReason,
                                 RegisteredVessels,
-                                RefundPricePeriod
+                                ChangePricePeriod
                                 )
 from mooring import emails
 from ledger.accounts.models import EmailUser, Address
@@ -222,6 +222,7 @@ class MakeBookingsView(TemplateView):
             'vessel_weight':0,
             'vessel_rego':0,
         }
+
         lines = []
 
         if booking:
@@ -270,41 +271,13 @@ class MakeBookingsView(TemplateView):
                     lines.append({'from': from_dt, 'to': to_dt})
 
 
-
-
         print "OLD BOOKING"
+        booking_change_fees = {}
         if booking:
             if booking.old_booking:
-                old_booking_mooring = MooringsiteBooking.objects.filter(booking=booking.old_booking)
-                booking_changes = MooringsiteBooking.objects.filter(booking=booking)
-                print old_booking_mooring
-
-                for ob in old_booking_mooring:
-                     changed = True
-                     print ob.id
-                     print ob.campsite
-                     print ob.from_dt
-                     print ob.to_dt
-                     print ob.booking_period_option
-                     for bc in booking_changes:
-                          if bc.campsite == ob.campsite and ob.from_dt == bc.from_dt and ob.to_dt == bc.to_dt and ob.booking_period_option == bc.booking_period_option:
-                               changed = False
-                     from_dt = datetime.strptime(ob.from_dt.strftime('%Y-%m-%d'),'%Y-%m-%d')
-                     daystillbooking =  (from_dt-nowtimec).days
-                     print "DAYS"
-                     print ob.from_dt
-                     print from_dt
-                     print nowtimec
-                     print daystillbooking
-
-                     print "CHANGED STATUS"
-                     print changed
-
-
-                refund_price_period = RefundPricePeriod.objects.all().order_by('days')
-                print refund_price_period
-
-
+                booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
+                print "CHANGE FEES"
+                print booking_change_fees 
             # Sort the list by date from.
             new_lines = sorted(lines, key=lambda line: line['from'])
             i = 0
@@ -350,6 +323,8 @@ class MakeBookingsView(TemplateView):
         else:
             staff = "false"
 
+        #lines.append(booking_change_fees)
+
         return render(request, self.template_name, {
             'form': form, 
             'vehicles': vehicles,
@@ -363,7 +338,8 @@ class MakeBookingsView(TemplateView):
             'pricing': pricing,
             'show_errors': show_errors,
             'lines': lines,
-            'staff': staff
+            'staff': staff,
+            'booking_change_fees': booking_change_fees
          
         })
 
@@ -391,6 +367,7 @@ class MakeBookingsView(TemplateView):
 
 
     def post(self, request, *args, **kwargs):
+        
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
         mooring_booking = ""
         if booking:
@@ -444,7 +421,11 @@ class MakeBookingsView(TemplateView):
 
         admissionsJson = json.loads(request.POST.get('admissionsLines')) if request.POST.get('admissionsLines') else []
         admissions = []
+   
+        print "admissionsJson"
+        print admissionsJson
         for line in admissionsJson:
+            print line['from']
             admissions.append({
                 'from': line['from'],
                 'to': line['to'],
@@ -480,8 +461,13 @@ class MakeBookingsView(TemplateView):
 #                form.add_error('Number of people is less than the minimum allowed for the current campsite.')
 #                return self.render_page(request, booking, form, vehicles, show_errors=True)
         # generate final pricing
-        lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
         
+        #booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
+
+        lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
+        if booking.old_booking is not None:
+           booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
+           lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
         if booking.details['non_online_booking']:
             booking_line = utils.nononline_booking_lineitems(oracle_code)
             for line in booking_line:
@@ -498,7 +484,7 @@ class MakeBookingsView(TemplateView):
             pass
 #            lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
         except Exception as e:
-            form.add_error(None, '{} Please contact Marine Park and Visitors services with this error message and the time of the request.'.format(str(e)))
+            form.add_error(None, '{} Please contact mooring rentals with this error message and the time of the request.'.format(str(e)))
             return self.render_page(request, booking, form, vehicles, show_errors=True)
             
         #print(lines)
@@ -559,7 +545,7 @@ class MakeBookingsView(TemplateView):
         #if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
         #    basket_cookie = response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN]
         #    result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_cookie)
-        
+        return HttpResponse("/testing/") 
         return result
 
 class AdmissionsBasketCreated(TemplateView):

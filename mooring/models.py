@@ -453,7 +453,7 @@ class MooringAreaImage(models.Model):
         super(MooringAreaImage,self).delete(*args,**kwargs)
 
 
-class RefundPricePeriod(models.Model):
+class ChangePricePeriod(models.Model):
 
     REFUND_CALCULATION_TYPE = (
         (0, 'Percentage'),
@@ -472,9 +472,9 @@ class RefundPricePeriod(models.Model):
         else:
            return 'Fixed Price - ${} for {} day/s'.format(str(self.amount), str(self.days))
 
-class RefundGroup(models.Model):
+class ChangeGroup(models.Model):
     name = models.CharField(max_length=100)
-    refund_period = models.ManyToManyField(RefundPricePeriod, related_name='refund_period_options')
+    change_period = models.ManyToManyField(ChangePricePeriod, related_name='refund_period_options')
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -518,7 +518,7 @@ class BookingPeriodOption(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     finish_time = models.TimeField(null=True, blank=True)
     all_day = models.BooleanField(default=True)
-    refund_group = models.ForeignKey('RefundGroup',null=True,blank=True)
+    change_group = models.ForeignKey('ChangeGroup',null=True,blank=True)
     cancel_group = models.ForeignKey('CancelGroup',null=True,blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
