@@ -1,15 +1,14 @@
 {%  extends 'wildlifecompliance/emails/base_email.html' %}
 
 {%  block content %}
-    <p>A new organisation request has been submitted:</p>
+    <p>A request has been made to be linked to:</p>
     <p><strong>Organisation : {{ request.name }}</strong></p>
     <p><strong>ABN : {{ request.abn }}</strong></p>
     <br>
 
     <p>
-    You can access this Organisation Request using the following link:
+    You can accept/decline this request with Manage Account.
     </p>
-    <a href="{{url}}">Access Organisation Request</a>
     <br>
 
 {%  endblock %}

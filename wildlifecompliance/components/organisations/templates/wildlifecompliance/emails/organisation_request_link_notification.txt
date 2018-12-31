@@ -1,0 +1,15 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{%  block content %}
+    A request has been made to be linked to:
+
+    Organisation : {{ request.name }}
+
+    ABN : {{ request.abn}}
+
+    <p>
+    You can accept/decline this request with Manage Account.
+    </p>
+
+
+{%  endblock %}

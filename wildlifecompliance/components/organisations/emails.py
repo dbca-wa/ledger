@@ -16,9 +16,14 @@ class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/organisation_request_accept_notification.txt'
 
 class OrganisationRequestNotificationEmail(TemplateEmailBase):
-    subject = 'Your organisation request has been sent for approval.'
+    subject = 'An organisation request has been submitted for approval.'
     html_template = 'wildlifecompliance/emails/organisation_request_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_notification.txt'
+
+class OrganisationRequestLinkNotificationEmail(TemplateEmailBase):
+    subject = 'An organisation request to be linked has been sent for approval.'
+    html_template = 'wildlifecompliance/emails/organisation_request_link_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_request_link_notification.txt'
 
 class OrganisationRequestAmendmentRequestNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation has requested an amendment to your request.'
@@ -202,8 +207,17 @@ def send_organisation_request_email_notification(org_request, request, contact):
     msg = email.send(contact, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_request_email(msg, org_request, sender=sender)
-    # commenting out because Organisation does not yet exist - only OrganisationRequest exists
-    #_log_org_email(msg, organisation, org_request.requester, sender=sender)
+
+
+def send_organisation_request_link_email_notification(org_request, request, contact):
+    email = OrganisationRequestLinkNotificationEmail()
+    context = {
+        'request': org_request
+    }
+
+    msg = email.send(contact, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, org_request, request.user, sender=sender)
 
 
 def send_organisation_request_accept_email_notification(org_request,organisation,request):

@@ -136,12 +136,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)}
             if data['valid']:
                 # Notify each Admin member of request.
-                contacts = OrganisationContact.objects.filter(organisation_id=instance.id,
-                                                              user_role='organisation_admin',
-                                                              user_status='active',
-                                                              is_admin=True)
-                recipients = [c.email for c in contacts]
-                send_organisation_request_email_notification(instance, request, recipients)
+                instance.send_organisation_request_link_notification(request)
             return Response(data)
         except serializers.ValidationError:
             print(traceback.print_exc())

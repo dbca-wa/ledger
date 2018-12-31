@@ -22,7 +22,8 @@ from wildlifecompliance.components.organisations.emails import (
                         send_organisation_reinstate_email_notification,
                         send_organisation_contact_decline_email_notification,
                         send_organisation_request_decline_email_notification,
-                        send_organisation_request_email_notification
+                        send_organisation_request_email_notification,
+                        send_organisation_request_link_email_notification
                     )
 
 @python_2_unicode_compatible
@@ -347,6 +348,15 @@ class Organisation(models.Model):
 
     def _generate_pin(self):
         return random_generator()
+
+    def send_organisation_request_link_notification(self, request):
+        # Notify each Admin member of request to be linked to org.
+        contacts = OrganisationContact.objects.filter(organisation_id=self.id,
+                                                      user_role='organisation_admin',
+                                                      user_status='active',
+                                                      is_admin=True)
+        recipients = [c.email for c in contacts]
+        send_organisation_request_link_email_notification(self, request, recipients)
 
     @staticmethod
     def existance(abn):
