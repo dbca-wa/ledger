@@ -15,6 +15,11 @@ class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/organisation_request_accept_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_accept_notification.txt'
 
+class OrganisationRequestAcceptAdminNotificationEmail(TemplateEmailBase):
+    subject = 'An organisation request has been accepted by administration.'
+    html_template = 'wildlifecompliance/emails/organisation_request_accept_admin_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_request_accept_admin_notification.txt'
+
 class OrganisationRequestNotificationEmail(TemplateEmailBase):
     subject = 'An organisation request has been submitted for approval.'
     html_template = 'wildlifecompliance/emails/organisation_request_notification.html'
@@ -34,6 +39,11 @@ class OrganisationRequestDeclineNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation request has been declined.'
     html_template = 'wildlifecompliance/emails/organisation_request_decline_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_decline_notification.txt'
+
+class OrganisationRequestDeclineAdminNotificationEmail(TemplateEmailBase):
+    subject = 'An organisation request has been declined by an administrator.'
+    html_template = 'wildlifecompliance/emails/organisation_request_decline_admin_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_request_decline_admin_notification.txt'
 
 class OrganisationLinkNotificationEmail(TemplateEmailBase):
     subject = 'You have been linked to an organisation.'
@@ -231,6 +241,19 @@ def send_organisation_request_accept_email_notification(org_request,organisation
     _log_org_request_email(msg, org_request, sender=sender)
     # _log_org_email(msg, organisation, org_request.requester, sender=sender)
 
+
+def send_organisation_request_accept_admin_email_notification(org_request,organisation,request):
+    email = OrganisationRequestAcceptAdminNotificationEmail()
+    context = {
+        'request': org_request
+    }
+
+    msg = email.send(org_request.requester.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_request_email(msg, org_request, sender=sender)
+    # _log_org_email(msg, organisation, org_request.requester, sender=sender)
+
+
 def send_organisation_request_amendment_requested_email_notification(org_request,organisation,request):
     email = OrganisationRequestAmendmentRequestNotificationEmail()
     context = {
@@ -254,6 +277,19 @@ def send_organisation_request_decline_email_notification(org_request,request):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_request_email(msg, org_request, sender=sender)
     # _log_org_email(msg, organisation, org_request.requester, sender=sender)
+
+
+def send_organisation_request_decline_admin_email_notification(org_request, request):
+    email = OrganisationRequestDeclineNotificationEmail()
+
+    context = {
+        'request': org_request
+    }
+
+    msg = email.send(org_request.requester.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_request_email(msg, org_request, sender=sender)
+
 
 def send_organisation_address_updated_email_notification(address_updated_by,ledger_organisation,wc_organisation,request):
     from wildlifecompliance.components.organisations.models import OrganisationContact
