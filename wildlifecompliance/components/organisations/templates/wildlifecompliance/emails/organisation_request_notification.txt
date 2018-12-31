@@ -1,10 +1,15 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-    An organisation request has been sent for your approval:
+    A new organisation request has been submitted:
 
     Organisation : {{ request.name }}
 
     ABN : {{ request.abn}}
+
+    <p>
+    You can access this Organisation Request using the following link:
+    </p>
+    <a href="{{url}}">Access Organisation Request</a>
 
 {%  endblock %}

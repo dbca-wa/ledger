@@ -21,7 +21,8 @@ from wildlifecompliance.components.organisations.emails import (
                         send_organisation_contact_suspend_email_notification,
                         send_organisation_reinstate_email_notification,
                         send_organisation_contact_decline_email_notification,
-                        send_organisation_request_decline_email_notification
+                        send_organisation_request_decline_email_notification,
+                        send_organisation_request_email_notification
                     )
 
 @python_2_unicode_compatible
@@ -732,6 +733,13 @@ class OrganisationRequest(models.Model):
             self.log_user_action(OrganisationRequestUserAction.ACTION_DECLINE_REQUEST.format('{} {}({})'.format(request.user.first_name,request.user.last_name,request.user.email)),request)
             send_organisation_request_decline_email_notification(self,request)
 
+    def send_organisation_request_email_notification(self, request):
+        # user submits a new organisation request
+        # send email to organisation access group
+        group = OrganisationAccessGroup.objects.first()
+        if group:
+            org_access_recipients = [m.email for m in group.filtered_members]
+            send_organisation_request_email_notification(self, request, org_access_recipients)
 
     def log_user_action(self, action, request):
         return OrganisationRequestUserAction.log_action(self, action, request.user)
@@ -750,6 +758,10 @@ class OrganisationAccessGroup(models.Model):
         member_ids = [m.id for m in self.members.all()]
         all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
         return all_members
+
+    @property
+    def filtered_members(self):
+        return self.members.all()
 
     class Meta:
         app_label = 'wildlifecompliance'

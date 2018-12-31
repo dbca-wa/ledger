@@ -187,15 +187,23 @@ def send_organisation_unlink_email_notification(unlinked_user,unlinked_by,organi
     _log_org_email(msg, organisation, unlinked_user, sender=sender)
 
 
-def send_organisation_request_email_notification(org_request, contact, request):
+def send_organisation_request_email_notification(org_request, request, contact):
     email = OrganisationRequestNotificationEmail()
+
+    url = request.build_absolute_uri('/internal/organisations/access/{}'.format(org_request.id))
+    if "-internal" not in url:
+        url = '-internal.{}'.format(settings.SITE_URL).join(url.split('.' + settings.SITE_URL))
+
     context = {
-        'request': org_request
+        'request': request.data,
+        'url': url,
     }
 
-    msg = email.send(contact.email, context=context)
-    sender = settings.DEFAULT_FROM_EMAIL
-    # _log_org_request_email(msg, org_request, sender=sender)
+    msg = email.send(contact, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_request_email(msg, org_request, sender=sender)
+    # commenting out because Organisation does not yet exist - only OrganisationRequest exists
+    #_log_org_email(msg, organisation, org_request.requester, sender=sender)
 
 
 def send_organisation_request_accept_email_notification(org_request,organisation,request):
