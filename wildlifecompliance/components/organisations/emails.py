@@ -187,16 +187,15 @@ def send_organisation_unlink_email_notification(unlinked_user,unlinked_by,organi
     _log_org_email(msg, organisation, unlinked_user, sender=sender)
 
 
-def send_organisation_request_email_notification(org_request, members, request):
+def send_organisation_request_email_notification(org_request, contact, request):
     email = OrganisationRequestNotificationEmail()
     context = {
         'request': org_request
     }
 
-    msg = email.send(members, context=context)
-    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    # audit log not supporting send to multiple emails.
-    # _log_org_email(msg, org_request, members, sender=sender)
+    msg = email.send(contact.email, context=context)
+    sender = settings.DEFAULT_FROM_EMAIL
+    # _log_org_request_email(msg, org_request, sender=sender)
 
 
 def send_organisation_request_accept_email_notification(org_request,organisation,request):

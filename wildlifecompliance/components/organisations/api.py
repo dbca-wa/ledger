@@ -10,6 +10,7 @@ from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.models import Group, User
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
@@ -134,14 +135,16 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrganisationPinCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)}
-            group = OrganisationAccessGroup.objects.first()
-            if group:
-                members = []
-                for m in group.all_members:
-                    if m.id < 6:
-                        members.append({'name': m.get_full_name(), 'id': m.id})
-                send_organisation_request_email_notification(instance, members, request)
-            return Response(data);
+            if data['valid']:
+                # Notify each Admin member of request.
+                contacts = OrganisationContact.objects.filter(organisation_id=instance.id,
+                                                              user_role='organisation_admin',
+                                                              user_status='active',
+                                                              is_admin=True)
+                for member in contacts:
+                    contact = EmailUser.objects.get(email=member.email)
+                    send_organisation_request_email_notification(instance, contact, request)
+            return Response(data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -799,13 +802,14 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 instance = serializer.save()
                 instance.log_user_action(OrganisationRequestUserAction.ACTION_LODGE_REQUEST.format(instance.id),request)
-                group = OrganisationAccessGroup.objects.first()
-                if group:
-                    members = []
-                    for m in group.all_members:
-                        if m.id < 6:
-                            members.append({'name': m.get_full_name(), 'id': m.id})
-                    send_organisation_request_email_notification(request.data, members, request)
+                # retrieve org access assessors
+                # TODO: need to apply OrganisationAccessGroup for consistency
+                # if Group.objects.filter(name__iexact='wildlife compliance organisation access assessors').exists():
+                #    access_assessors = Group.objects.\
+                #        get(name__iexact='wildlife compliance organisation access assessors').\
+                #        user_set.filter(is_active=True, is_staff=True)
+                #    for member in access_assessors:
+                #        send_organisation_request_email_notification(request.data, member, request)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
