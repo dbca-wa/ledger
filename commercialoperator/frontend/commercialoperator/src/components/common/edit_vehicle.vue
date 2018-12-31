@@ -119,6 +119,10 @@ export default {
             type: Number,
             required: true
         },
+        vehicle_action:{
+            type: String,
+            default: 'edit'
+        }
     },
     data:function () {
         let vm = this;
@@ -152,7 +156,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            return 'Cancel Vehicle';
+            return this.vehicle_action == 'add' ? 'Add a new Vehicle record' : 'Edit a vehicle record';
         }
     },
     methods:{
@@ -219,7 +223,26 @@ export default {
             // }
             let vehicle = JSON.parse(JSON.stringify(vm.vehicle));
             vm.issuingVehicle = true;
-            
+            if(vm.vehicle_action=="add" && vm.vehicle_id==null)
+            {
+                vm.$http.post(api_endpoints.vehicles,JSON.stringify(vehicle),{
+                        emulateJSON:true,
+                    }).then((response)=>{
+                        vm.issuingVehicle = false;
+                        vm.close();
+                        swal(
+                             'Created',
+                             'New vehicle record has been created.',
+                             'success'
+                        );
+                        vm.$emit('refreshFromResponse',response);
+                    },(error)=>{
+                        vm.errors = true;
+                        vm.issuingVehicle = false;
+                        vm.errorString = helpers.apiVueResourceError(error);
+                    });
+            }
+            else{
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.vehicles,vm.vehicle_id+'/edit_vehicle'),JSON.stringify(vehicle),{
                         emulateJSON:true,
                     }).then((response)=>{
@@ -236,6 +259,7 @@ export default {
                         vm.issuingVehicle = false;
                         vm.errorString = helpers.apiVueResourceError(error);
                     });
+                }
         },
         addFormValidations: function() {
             let vm = this;

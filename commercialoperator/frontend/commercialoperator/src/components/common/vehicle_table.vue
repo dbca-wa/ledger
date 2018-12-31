@@ -1,6 +1,13 @@
 <template id="vehicle_table">
     <div class="row">
-        <div class="col-sm-12">  
+        <div class="col-sm-12"> 
+            <div class="row" >
+                <div class="col-md-3">
+                            <!-- <button style="margin-top:25px;" class="btn btn-primary pull-right">New Proposal</button> -->
+                            <input type="button" style="margin-top:25px;" @click.prevent="newVehicle" class="btn btn-primary" value="Add new vehicle"/>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-lg-12" style="margin-top:25px;">
                     <datatable ref="vehicle_datatable" :id="datatable_id" :dtOptions="vehicle_options" :dtHeaders="vehicle_headers"/>
@@ -36,6 +43,13 @@ export default {
     data() {
         let vm = this;
         return {
+            new_vehicle:{
+                access_type: null,
+                capacity:'',
+                rego:'',
+                rego_expiry:null,
+                license:'',
+            },
             pBody: 'pBody' + vm._uid,
             datatable_id: 'vehicle-datatable-'+vm._uid,
             // Filters for Vehicles
@@ -215,6 +229,13 @@ export default {
             //     console.log(error);
             // })
             //console.log(vm.regions);
+        },
+        newVehicle: function(){
+            this.$refs.edit_vehicle.vehicle_id = null;
+            //this.$refs.edit_vehicle.fetchVehicle(id);
+            this.$refs.edit_vehicle.vehicle=this.new_vehicle;
+            this.$refs.edit_vehicle.vehicle_action='add'
+            this.$refs.edit_vehicle.isModalOpen = true;
         },
         editVehicle: function(id){
             this.$refs.edit_vehicle.vehicle_id = id;
