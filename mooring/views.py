@@ -228,6 +228,7 @@ class MakeBookingsView(TemplateView):
         if booking:
             booking_mooring = MooringsiteBooking.objects.filter(booking=booking)
             booking_total = sum(Decimal(i.amount) for i in booking_mooring)
+            
             details = booking.details
             # pricing_list = utils.get_visit_rates(Mooringsite.objects.filter(pk=campsite.pk), booking.arrival, booking.departure)[campsite.pk]
             # pricing_list = {}
@@ -276,8 +277,7 @@ class MakeBookingsView(TemplateView):
         if booking:
             if booking.old_booking:
                 booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
-                print "CHANGE FEES"
-                print booking_change_fees 
+                booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_change_fees)
             # Sort the list by date from.
             new_lines = sorted(lines, key=lambda line: line['from'])
             i = 0
@@ -324,7 +324,23 @@ class MakeBookingsView(TemplateView):
             staff = "false"
 
         #lines.append(booking_change_fees)
+        print booking_change_fees
+        print { 'form': form,
+            'vehicles': vehicles,
+            'booking': booking,
+            'booking_mooring': booking_mooring,
+            'booking_total' : booking_total,
+            'campsite': campsite,
+            'expiry': expiry,
+            'timer': timer,
+            'details': details,
+            'pricing': pricing,
+            'show_errors': show_errors,
+            'lines': lines,
+            'staff': staff,
+            'booking_change_fees': booking_change_fees
 
+        }
         return render(request, self.template_name, {
             'form': form, 
             'vehicles': vehicles,
@@ -422,10 +438,7 @@ class MakeBookingsView(TemplateView):
         admissionsJson = json.loads(request.POST.get('admissionsLines')) if request.POST.get('admissionsLines') else []
         admissions = []
    
-        print "admissionsJson"
-        print admissionsJson
         for line in admissionsJson:
-            print line['from']
             admissions.append({
                 'from': line['from'],
                 'to': line['to'],
@@ -545,7 +558,8 @@ class MakeBookingsView(TemplateView):
         #if request.user.is_anonymous() and settings.OSCAR_BASKET_COOKIE_OPEN in response.history[0].cookies:
         #    basket_cookie = response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN]
         #    result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_cookie)
-        return HttpResponse("/testing/") 
+        
+        #return HttpResponse("/testing/") 
         return result
 
 class AdmissionsBasketCreated(TemplateView):

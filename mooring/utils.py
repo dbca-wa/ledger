@@ -1383,8 +1383,10 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         'system': settings.PS_PAYMENT_SYSTEM_ID,
         'custom_basket': True,
     }
+ 
+    print "BOOKING TOTAL"
+    print booking.cost_total
     basket, basket_hash = create_basket_session(request, basket_params)
-
     checkout_params = {
         'system': settings.PS_PAYMENT_SYSTEM_ID,
         'fallback_url': request.build_absolute_uri('/'),
@@ -1411,6 +1413,9 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
             secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
         )
+    if booking.cost_total < 0:
+        response = HttpResponseRedirect('/refund-payment')
+
     return response
 
 def iiicheckout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):

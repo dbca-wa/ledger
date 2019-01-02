@@ -117,7 +117,20 @@
                                     </div>
                                 </div>
                                 {% endfor %}
-                            </div>
+				</div>
+ 
+                                <BR> 
+				<div class="row">
+
+                                {% for bc in booking_change_fees %}
+                                  <div class="col-md-10">
+                                        {{ bc.description }}
+                                  </div>
+			          <div class="col-md-2"> 	
+					{{ bc.amount }}
+				  </div>
+				{% endfor %}
+                                </div>
                             <div v-if="payingAdmissions && linesAdmissions.length > 0" v-cloak>
                                 <div class="row">
                                     <div class="col-md-12">
@@ -535,7 +548,8 @@
                                     <div class="checkbox">
                                         <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
                                     </div>
-                                    <button :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
+                                    <button v-if="total >= 0" :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
+                                    <button v-else="total < 0" :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to Refund</button>
                                 </div>
                             </div>
                         </div>
@@ -609,6 +623,7 @@
             isFirst: true,
             toc: false,
             booking_id: {{ booking.id }},
+            booking_change_fees: {{ booking_change_fees|safe }}
             }
         },
         filters:{
@@ -1024,6 +1039,8 @@
 
 
             vm.calculateTotal();
+            console.log("FEE CHANGE");
+	    console.log(vm.booking_change_fees);
         }
     });
 </script>
