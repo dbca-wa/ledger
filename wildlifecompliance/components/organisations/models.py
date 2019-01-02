@@ -680,7 +680,7 @@ class OrganisationRequest(models.Model):
         send_organisation_request_accept_email_notification(self, org, request)
         # Notify other Organisation Access Group members of acceptance.
         group = OrganisationAccessGroup.objects.first()
-        if group.filtered_members.exclude(email=request.user.email):
+        if group and group.filtered_members.exclude(email=request.user.email):
             recipients = [c.email for c in group.filtered_members.exclude(email=request.user.email)]
             send_organisation_request_accept_admin_email_notification(self, request, recipients)
 
@@ -751,7 +751,7 @@ class OrganisationRequest(models.Model):
             send_organisation_request_decline_email_notification(self,request)
             # Notify other members of organisation access group of decline.
             group = OrganisationAccessGroup.objects.first()
-            if group.filtered_members.exclude(email=request.user.email):
+            if group and group.filtered_members.exclude(email=request.user.email):
                 recipients = [c.email for c in group.filtered_members.exclude(email=request.user.email)]
                 send_organisation_request_decline_admin_email_notification(self, request, recipients)
 
@@ -759,7 +759,7 @@ class OrganisationRequest(models.Model):
         # user submits a new organisation request
         # send email to organisation access group
         group = OrganisationAccessGroup.objects.first()
-        if group.filtered_members:
+        if group and group.filtered_members:
             org_access_recipients = [m.email for m in group.filtered_members]
             send_organisation_request_email_notification(self, request, org_access_recipients)
 
