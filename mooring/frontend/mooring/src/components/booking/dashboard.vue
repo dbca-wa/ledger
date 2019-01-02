@@ -395,6 +395,17 @@ export default {
                         searchable:false
                     },
                     {
+                        mRender: function(data, type, full){
+                            if (full.booking){
+                                return "<a href='/api/get_confirmation/"+full.booking+"' target='_blank' class='text-primary'>PS"+full.booking+"</a><br/>"
+                            } else {
+                                return "-"
+                            }
+                        },
+                        orderable: false,
+                        searchable: false,
+                    },
+                    {
                         data: "customerName",
                         orderable:false,
                         searchable:false
@@ -455,7 +466,7 @@ export default {
                 ]
             },
             dtHeaders:["Confirmation #", "Person", "Vessel Reg #", "Mooring", "Region", "From", "To", "Status", "Action"],
-            dtHeaders2:["Confirmation #", "Person", "Vessel Reg #", "Total Attendees", "Admission Date", "Warning Ref #", "Action"],
+            dtHeaders2:["Confirmation #", "Booking #", "Person", "Vessel Reg #", "Total Attendees", "Admission Date", "Warning Ref #", "Action"],
             dateFromPicker:null,
             dateToPicker:null,
             dateFromPicker2:null,

@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, date
 import traceback
 from decimal import *
 import json
+import calendar
 import geojson
 import requests
 from django.conf import settings
@@ -1539,3 +1540,47 @@ def daterange(start_date, end_date):
 def oracle_integration(date,override):
     system = '0516'
     oracle_codes = oracle_parser(date,system,'Mooring Booking',override=override)
+
+def admissions_lines(booking_mooring):
+    lines = []
+    for bm in booking_mooring:
+        # Convert the from and to dates of this booking to just plain dates in local time.
+        # Append them to a list.
+        if bm.campsite.mooringarea.park.entry_fee_required:
+            from_dt = bm.from_dt
+            timestamp = calendar.timegm(from_dt.timetuple())
+            local_dt = datetime.fromtimestamp(timestamp)
+            from_dt = local_dt.replace(microsecond=from_dt.microsecond)
+            to_dt = bm.to_dt
+            timestamp = calendar.timegm(to_dt.timetuple())
+            local_dt = datetime.fromtimestamp(timestamp)
+            to_dt = local_dt.replace(microsecond=to_dt.microsecond)
+            lines.append({'from': from_dt, 'to': to_dt})
+    # Sort the list by date from.
+    new_lines = sorted(lines, key=lambda line: line['from'])
+    i = 0
+    lines = []
+    latest_from = None
+    latest_to = None
+    # Loop through the list, if first instance, then this line's from date is the first admission fee.
+    # Then compare this TO value to the next FROM value. If they are not the same or overlapping dates
+    # add this date to the list, using the latest from and this TO value.
+    while i < len(new_lines):
+        if i == 0:
+            latest_from = new_lines[i]['from'].date()
+        if i < len(new_lines)-1:
+            if new_lines[i]['to'].date() < new_lines[i+1]['from'].date():
+                latest_to = new_lines[i]['to'].date()
+        else:
+            # if new_lines[i]['from'].date() > new_lines[i-1]['to'].date():
+            latest_to = new_lines[i]['to'].date()
+        
+        if latest_to:
+            lines.append({'from':datetime.strftime(latest_from, '%d %b %Y'), 'to': datetime.strftime(latest_to, '%d %b %Y'), 'admissionFee': 0})
+            if i < len(new_lines)-1:
+                latest_from = new_lines[i+1]['from'].date()
+                latest_to = None
+        i+= 1
+    
+    return lines
+    

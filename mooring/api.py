@@ -2502,6 +2502,9 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                     lines.append({'date' : line.arrivalDate, 'overnight': line.overnightStay})
                 if adLines and lines != []:
                     r.update({'lines' : lines})
+                if Booking.objects.filter(admission_payment=ad).count() > 0:
+                    booking = Booking.objects.filter(admission_payment=ad)[0]
+                    r.update({'booking': booking.id})
                 adi = AdmissionsBookingInvoice.objects.get(admissions_booking=ad)
                 r.update({'invoice_ref': adi.invoice_reference})
                 if(r['customer']):

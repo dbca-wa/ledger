@@ -36,6 +36,7 @@ from mooring.models import (MooringArea,
                                 DiscountReason,
                                 RegisteredVessels
                                 )
+from mooring.serialisers import AdmissionsBookingSerializer, AdmissionsLineSerializer
 from mooring import emails
 from ledger.accounts.models import EmailUser, Address
 from ledger.payments.models import Invoice
@@ -246,44 +247,45 @@ class MakeBookingsView(TemplateView):
         #     result = utils.checkout(request, booking, lines, invoice_text=reservation, internal=True)    
         # else:oat(x['child']) for x in pricing_list.values()])
             # pricing['infant'] = sum([float(x['infant']) for x in pricing_list.values()])
-            for bm in booking_mooring:
-                # Convert the from and to dates of this booking to just plain dates in local time.
-                # Append them to a list.
-                if bm.campsite.mooringarea.park.entry_fee_required:
-                    from_dt = bm.from_dt
-                    timestamp = calendar.timegm(from_dt.timetuple())
-                    local_dt = datetime.fromtimestamp(timestamp)
-                    from_dt = local_dt.replace(microsecond=from_dt.microsecond)
-                    to_dt = bm.to_dt
-                    timestamp = calendar.timegm(to_dt.timetuple())
-                    local_dt = datetime.fromtimestamp(timestamp)
-                    to_dt = local_dt.replace(microsecond=to_dt.microsecond)
-                    lines.append({'from': from_dt, 'to': to_dt})
-            # Sort the list by date from.
-            new_lines = sorted(lines, key=lambda line: line['from'])
-            i = 0
-            lines = []
-            latest_from = None
-            latest_to = None
-            # Loop through the list, if first instance, then this line's from date is the first admission fee.
-            # Then compare this TO value to the next FROM value. If they are not the same or overlapping dates
-            # add this date to the list, using the latest from and this TO value.
-            while i < len(new_lines):
-                if i == 0:
-                    latest_from = new_lines[i]['from'].date()
-                if i < len(new_lines)-1:
-                    if new_lines[i]['to'].date() < new_lines[i+1]['from'].date():
-                        latest_to = new_lines[i]['to'].date()
-                else:
-                    # if new_lines[i]['from'].date() > new_lines[i-1]['to'].date():
-                    latest_to = new_lines[i]['to'].date()
+            # for bm in booking_mooring:
+            #     # Convert the from and to dates of this booking to just plain dates in local time.
+            #     # Append them to a list.
+            #     if bm.campsite.mooringarea.park.entry_fee_required:
+            #         from_dt = bm.from_dt
+            #         timestamp = calendar.timegm(from_dt.timetuple())
+            #         local_dt = datetime.fromtimestamp(timestamp)
+            #         from_dt = local_dt.replace(microsecond=from_dt.microsecond)
+            #         to_dt = bm.to_dt
+            #         timestamp = calendar.timegm(to_dt.timetuple())
+            #         local_dt = datetime.fromtimestamp(timestamp)
+            #         to_dt = local_dt.replace(microsecond=to_dt.microsecond)
+            #         lines.append({'from': from_dt, 'to': to_dt})
+            # # Sort the list by date from.
+            # new_lines = sorted(lines, key=lambda line: line['from'])
+            # i = 0
+            # lines = []
+            # latest_from = None
+            # latest_to = None
+            # # Loop through the list, if first instance, then this line's from date is the first admission fee.
+            # # Then compare this TO value to the next FROM value. If they are not the same or overlapping dates
+            # # add this date to the list, using the latest from and this TO value.
+            # while i < len(new_lines):
+            #     if i == 0:
+            #         latest_from = new_lines[i]['from'].date()
+            #     if i < len(new_lines)-1:
+            #         if new_lines[i]['to'].date() < new_lines[i+1]['from'].date():
+            #             latest_to = new_lines[i]['to'].date()
+            #     else:
+            #         # if new_lines[i]['from'].date() > new_lines[i-1]['to'].date():
+            #         latest_to = new_lines[i]['to'].date()
                 
-                if latest_to:
-                    lines.append({'from':datetime.strftime(latest_from, '%d %b %Y'), 'to': datetime.strftime(latest_to, '%d %b %Y'), 'admissionFee': 0})
-                    if i < len(new_lines)-1:
-                        latest_from = new_lines[i+1]['from'].date()
-                        latest_to = None
-                i+= 1
+            #     if latest_to:
+            #         lines.append({'from':datetime.strftime(latest_from, '%d %b %Y'), 'to': datetime.strftime(latest_to, '%d %b %Y'), 'admissionFee': 0})
+            #         if i < len(new_lines)-1:
+            #             latest_from = new_lines[i+1]['from'].date()
+            #             latest_to = None
+            #     i+= 1
+            lines = utils.admissions_lines(booking_mooring)
 
 
             rate = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)))[0]
@@ -594,7 +596,6 @@ class BookingSuccessView(TemplateView):
         try:
             booking = utils.get_session_booking(request.session)
             invoice_ref = request.GET.get('invoice')
-            print "SUCCESS 2 "
             if booking.booking_type == 3:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
@@ -633,10 +634,93 @@ class BookingSuccessView(TemplateView):
  
 
                           
-
+                    msb = MooringsiteBooking.objects.filter(booking=booking).order_by('from_dt')
+                    from_date = msb[0].from_dt
+                    to_date = msb[msb.count()-1].to_dt
+                    booking.arrival = from_date.date()
+                    booking.departure = to_date.date()
                     # set booking to be permanent fixture
                     booking.booking_type = 1  # internet booking
                     booking.expiry_time = None
+
+                    #Calculate Admissions and create object
+                    rego = booking.details['vessel_rego']
+                    admissions_paid = RegisteredVessels.objects.filter(rego_no=rego)[0].admissionsPaid
+
+                    if not admissions_paid:
+                        lines = utils.admissions_lines(msb)
+                        adults = int(booking.details['num_adult'])
+                        children = int(booking.details['num_children'])
+                        infants = int(booking.details['num_infant'])
+                        data = {
+                            'customer' : booking.customer,
+                            'booking_type' : 1,
+                            'vesselRegNo' : rego,
+                            'noOfAdults' : adults,
+                            'noOfChildren' : children,
+                            'noOfInfants': infants
+                        }
+                        ad_booking = AdmissionsBooking.objects.create(customer=booking.customer, booking_type=1, vesselRegNo=rego,
+                                noOfAdults=adults, noOfConcessions=0, noOfChildren=children, noOfInfants=infants, totalCost=0.00)
+
+                        family = 0
+                        if adults > 1 and children > 1:
+                            if adults == children:
+                                if adults % 2 == 0:
+                                    family = adults/2
+                                    adults = 0
+                                    children = 0
+                                else:
+                                    adults -= 1;
+                                    family = adults/2;
+                                    adults = 1;
+                                    children = 1;
+
+                            elif adults > children:
+                                if children % 2 == 0:
+                                    family = children/2
+                                    adults -= children
+                                    children = 0
+                                else:
+                                    children -= 1
+                                    family = children/2
+                                    adults -= children
+                                    children = 1
+                                
+                            else:
+                                if adults % 2 == 0:
+                                    family = adults/2
+                                    children -= adults
+                                    adults = 0
+                                else:
+                                    adults -= 1
+                                    family = adults/2
+                                    children -= adults
+                                    adults = 1
+                        total = 0
+                        for i in range(0, len(lines)):
+                            thisAdmission = 0
+                            from_d = datetime.strptime(lines[i]['from'], '%d %b %Y')
+                            to_d = datetime.strptime(lines[i]['to'], '%d %b %Y')
+                            rate = AdmissionsRate.objects.filter(Q(period_start__lte=from_d), (Q(period_end=None) | Q(period_end__gte=to_d)))[0]
+                            if from_d != to_d:
+                                thisAdmission += (infants * rate.infant_overnight_cost)
+                                thisAdmission += (adults * rate.adult_overnight_cost)
+                                thisAdmission += (children * rate.children_overnight_cost)
+                                thisAdmission += (family * rate.family_overnight_cost)
+                                ad_line = AdmissionsLine.objects.create(arrivalDate=from_d, overnightStay=True, admissionsBooking=ad_booking, cost=thisAdmission)
+                            else:
+                                thisAdmission += (infants * rate.infant_cost)
+                                thisAdmission += (adults * rate.adult_cost)
+                                thisAdmission += (children * rate.children_cost)
+                                thisAdmission += (family * rate.family_cost)
+                                ad_line = AdmissionsLine.objects.create(arrivalDate=from_d, overnightStay=False, admissionsBooking=ad_booking, cost=thisAdmission)
+                            ad_line.save()
+                            total += thisAdmission
+
+                        ad_booking.totalCost = total
+                        ad_booking.save()
+                        booking.admission_payment = ad_booking
                     booking.save()
 
                     if not request.user.is_staff:
@@ -646,7 +730,6 @@ class BookingSuccessView(TemplateView):
                     
                     # send out the invoice before the confirmation is sent
                     emails.send_booking_invoice(booking)
-                    print "SUCCESS 3"
                     # for fully paid bookings, fire off confirmation email
                     if booking.paid:
                         emails.send_booking_confirmation(booking,request)

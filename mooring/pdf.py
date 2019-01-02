@@ -12,7 +12,7 @@ from reportlab.lib.colors import HexColor
 from django.core.files import File
 from django.conf import settings
 
-from mooring.models import Booking, BookingVehicleRego, AdmissionsBooking, RegisteredVessels
+from mooring.models import Booking, BookingVehicleRego, AdmissionsBooking, AdmissionsLine, RegisteredVessels
 
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring','img','mooring_header.png')
 
@@ -238,21 +238,23 @@ def create_admissions_confirmation(confirmation_buffer, admissionsBooking):
 
     doc = BaseDocTemplate(confirmation_buffer, pageTemplates=[every_page_template], pagesize=A4)
 
-    overnightStay = ""
-    if(admissionsBooking.overnightStay):
-        overnightStay = "Yes"
-    else:
-        overnightStay = "No"
+    adl = AdmissionsLine.objects.filter(admissionsBooking=admissionsBooking)
 
     elements = []
 
     elements.append(Paragraph('ADMISSIONS FEE PAYMENT CONFIRMATION', styles['InfoTitleVeryLargeCenter']))
    
     table_data = []
-    table_data.append([Paragraph('Date', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.arrivalDate), styles['Left'])])
     table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} ({})'.format(admissionsBooking.customer.get_full_name(), admissionsBooking.customer.email if admissionsBooking.customer else None), styles['Left'])])
     table_data.append([Paragraph('Admission Fee confirmation number', styles['BoldLeft']), Paragraph(admissionsBooking.confirmation_number, styles['Left'])])
-    table_data.append([Paragraph('Overnight Stay', styles['BoldLeft']), Paragraph(u'{}'.format(overnightStay), styles['Left'])])
+    for line in adl:
+        table_data.append([Paragraph('Date', styles['BoldLeft']), Paragraph(u'{}'.format(datetime.strftime(line.arrivalDate, '%d/%m/%Y')), styles['Left'])])
+        overnightStay = ""
+        if(line.overnightStay):
+            overnightStay = "Yes"
+        else:
+            overnightStay = "No"
+        table_data.append([Paragraph('Overnight Stay', styles['BoldLeft']), Paragraph(u'{}'.format(overnightStay), styles['Left'])])
     if admissionsBooking.noOfAdults > 0:
         table_data.append([Paragraph('Adults', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfAdults), styles['Left'])])
     if admissionsBooking.noOfConcessions > 0:
