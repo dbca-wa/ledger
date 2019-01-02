@@ -221,8 +221,14 @@ def send_organisation_request_email_notification(org_request, request, contact):
 
 def send_organisation_request_link_email_notification(org_request, request, contact):
     email = OrganisationRequestLinkNotificationEmail()
+
+    url = request.build_absolute_uri('/external/organisations/manage/{}'.format(org_request.id))
+    if "-external" not in url:
+        url = '-external.{}'.format(settings.SITE_URL).join(url.split('.' + settings.SITE_URL))
+
     context = {
-        'request': org_request
+        'request': org_request,
+        'url': url,
     }
 
     msg = email.send(contact, context=context)
