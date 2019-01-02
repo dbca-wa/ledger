@@ -787,7 +787,8 @@ class OrganisationAccessGroup(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
-        
+        verbose_name_plural = 'Organisation Access Group'
+
 class OrganisationRequestUserAction(UserAction):
     ACTION_LODGE_REQUEST = "Lodge request {}"
     ACTION_ASSIGN_TO = "Assign to {}"
