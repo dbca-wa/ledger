@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, Vehicle, AccessType, Park, Trail, Activity, ActivityCategory
+from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, Activity, ActivityCategory
 from ledger.accounts.models import EmailUser
 #from commercialoperator.components.proposals.serializers import ProposalTypeSerializer 
 
@@ -88,19 +88,19 @@ class AccessTypeSerializer(serializers.ModelSerializer):
         model = AccessType
         fields = ('id', 'name', 'visible')
 
-class VehicleSerializer(serializers.ModelSerializer):
-    access_type= AccessTypeSerializer()
-    rego_expiry=serializers.DateField(format="%d/%m/%Y")
-    class Meta:
-        model = Vehicle
-        fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
+# class VehicleSerializer(serializers.ModelSerializer):
+#     access_type= AccessTypeSerializer()
+#     rego_expiry=serializers.DateField(format="%d/%m/%Y")
+#     class Meta:
+#         model = Vehicle
+#         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
 
-class SaveVehicleSerializer(serializers.ModelSerializer):
-    #access_type= AccessTypeSerializer()
-    rego_expiry = serializers.DateField(input_formats=['%d/%m/%Y'], allow_null=True)
-    class Meta:
-        model = Vehicle
-        fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
+# class SaveVehicleSerializer(serializers.ModelSerializer):
+#     #access_type= AccessTypeSerializer()
+#     rego_expiry = serializers.DateField(input_formats=['%d/%m/%Y'], allow_null=True)
+#     class Meta:
+#         model = Vehicle
+#         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
 
 class ActivitySerializer(serializers.ModelSerializer):
     class Meta:

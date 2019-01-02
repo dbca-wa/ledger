@@ -18,7 +18,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -1288,6 +1288,21 @@ class ProposalParkActivity(models.Model):
     class Meta:
         app_label = 'commercialoperator' 
         unique_together = ('proposal_park', 'activity')
+
+@python_2_unicode_compatible
+class Vehicle(models.Model):
+    capacity = models.CharField(max_length=200, blank=True)
+    rego = models.CharField(max_length=200, blank=True)
+    license = models.CharField(max_length=200, blank=True)
+    access_type= models.ForeignKey(AccessType,null=True, related_name='vehicles')
+    rego_expiry= models.DateField(blank=True, null=True)
+    proposal = models.ForeignKey(Proposal, related_name='vehicles')
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.rego
 
 class ProposalRequest(models.Model):
     proposal = models.ForeignKey(Proposal)

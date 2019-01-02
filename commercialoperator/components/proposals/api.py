@@ -41,6 +41,7 @@ from commercialoperator.components.proposals.models import (
     ProposalStandardRequirement,
     AmendmentRequest,
     AmendmentReason,
+    Vehicle,
 
 )
 from commercialoperator.components.proposals.serializers import (
@@ -65,6 +66,8 @@ from commercialoperator.components.proposals.serializers import (
     ListProposalSerializer,
     ProposalReferralSerializer,
     AmendmentRequestDisplaySerializer,
+    SaveVehicleSerializer,
+    VehicleSerializer,
 )
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
@@ -495,6 +498,24 @@ class ProposalViewSet(viewsets.ModelViewSet):
             qs = instance.amendment_requests
             qs = qs.filter(status = 'requested')
             serializer = AmendmentRequestDisplaySerializer(qs,many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def vehicles(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.vehicles
+            #qs = qs.filter(status = 'requested')
+            serializer = VehicleSerializer(qs,many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -1385,6 +1406,49 @@ class SearchReferenceView(views.APIView):
                 raise serializers.ValidationError(repr(e.error_dict))
             else:
                 print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+class VehicleViewSet(viewsets.ModelViewSet):
+    queryset = Vehicle.objects.all().order_by('id')
+    serializer_class = VehicleSerializer
+
+    @detail_route(methods=['post'])
+    def edit_vehicle(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = SaveVehicleSerializer(instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def create(self, request, *args, **kwargs):
+        try:
+            #instance = self.get_object()
+            serializer = SaveVehicleSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())

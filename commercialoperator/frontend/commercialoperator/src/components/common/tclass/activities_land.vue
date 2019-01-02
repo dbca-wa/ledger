@@ -67,7 +67,7 @@
 
  -->    </div> 
           <div class="borderDecoration">
-              <VehicleTable :url="vehicles_url"></VehicleTable>
+              <VehicleTable :url="vehicles_url" :proposal="proposal"></VehicleTable>
           </div>
         </div>
       </div>
@@ -102,6 +102,7 @@ export default {
             }
         },
         data:function () {
+          let vm = this;
             return{
                 values:null,
                 accessTypes:null,
@@ -111,7 +112,8 @@ export default {
                 selected_activities:[],
                 activities:[],
                 access:[],
-                vehicles_url: api_endpoints.vehicles,
+                //vehicles_url: api_endpoints.vehicles,
+                vehicles_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/vehicles'),
                 selected_parks_activities:[]
             }
         },

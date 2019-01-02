@@ -35,6 +35,10 @@ export default {
         //         return options.indexOf(val) != -1 ? true: false;
         //     }
         // },
+        proposal:{
+                type: Object,
+                required:true
+        },
         url:{
             type: String,
             required: true
@@ -49,6 +53,7 @@ export default {
                 rego:'',
                 rego_expiry:null,
                 license:'',
+                proposal: vm.proposal.id
             },
             pBody: 'pBody' + vm._uid,
             datatable_id: 'vehicle-datatable-'+vm._uid,
