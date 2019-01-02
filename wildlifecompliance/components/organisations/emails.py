@@ -242,16 +242,15 @@ def send_organisation_request_accept_email_notification(org_request,organisation
     # _log_org_email(msg, organisation, org_request.requester, sender=sender)
 
 
-def send_organisation_request_accept_admin_email_notification(org_request,organisation,request):
+def send_organisation_request_accept_admin_email_notification(org_request, request, contact):
     email = OrganisationRequestAcceptAdminNotificationEmail()
     context = {
         'request': org_request
     }
 
-    msg = email.send(org_request.requester.email, context=context)
+    msg = email.send(contact, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_request_email(msg, org_request, sender=sender)
-    # _log_org_email(msg, organisation, org_request.requester, sender=sender)
 
 
 def send_organisation_request_amendment_requested_email_notification(org_request,organisation,request):
@@ -279,14 +278,14 @@ def send_organisation_request_decline_email_notification(org_request,request):
     # _log_org_email(msg, organisation, org_request.requester, sender=sender)
 
 
-def send_organisation_request_decline_admin_email_notification(org_request, request):
-    email = OrganisationRequestDeclineNotificationEmail()
+def send_organisation_request_decline_admin_email_notification(org_request, request, contact):
+    email = OrganisationRequestDeclineAdminNotificationEmail()
 
     context = {
         'request': org_request
     }
 
-    msg = email.send(org_request.requester.email, context=context)
+    msg = email.send(contact, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_request_email(msg, org_request, sender=sender)
 

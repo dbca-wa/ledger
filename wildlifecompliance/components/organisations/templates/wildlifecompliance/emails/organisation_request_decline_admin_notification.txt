@@ -1,7 +1,9 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-    An organisation request has been declined by an Administrator :
+    The following organisation access request has been declined :
+
+    Access Request No : {{ request.id }}
 
     Organisation : {{ request.name }}
 

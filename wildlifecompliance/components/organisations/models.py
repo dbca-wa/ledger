@@ -678,14 +678,11 @@ class OrganisationRequest(models.Model):
 
         # send email to requester
         send_organisation_request_accept_email_notification(self, org, request)
-
-        # TODO: Notify other Admin member of request to be linked to org.
-        # contacts = OrganisationContact.objects.filter(organisation_id=self.id,
-        #                                              user_role='organisation_admin',
-        #                                              user_status='active',
-        #                                              is_admin=True).exclude(email=request.user.email)
-        # recipients = [c.email for c in contacts]
-        # send_organisation_request_accept_admin_email_notification(self, request, recipients)
+        # Notify other Organisation Access Group members of acceptance.
+        group = OrganisationAccessGroup.objects.first()
+        if group.filtered_members.exclude(email=request.user.email):
+            recipients = [c.email for c in group.filtered_members.exclude(email=request.user.email)]
+            send_organisation_request_accept_admin_email_notification(self, request, recipients)
 
     def amendment_request(self, request):
         with transaction.atomic():
@@ -752,20 +749,17 @@ class OrganisationRequest(models.Model):
             )
             self.log_user_action(OrganisationRequestUserAction.ACTION_DECLINE_REQUEST.format('{} {}({})'.format(request.user.first_name,request.user.last_name,request.user.email)),request)
             send_organisation_request_decline_email_notification(self,request)
-
-            # TODO: Notify other Admin member of request to be linked to org.
-            # contacts = OrganisationContact.objects.filter(organisation_id=self.id,
-            #                                               user_role='organisation_admin',
-            #                                               user_status='active',
-            #                                               is_admin=True).exclude(email=request.user.email)
-            # recipients = [c.email for c in contacts]
-            # send_organisation_request_decline_admin_email_notification(self, request, recipients)
+            # Notify other members of organisation access group of decline.
+            group = OrganisationAccessGroup.objects.first()
+            if group.filtered_members.exclude(email=request.user.email):
+                recipients = [c.email for c in group.filtered_members.exclude(email=request.user.email)]
+                send_organisation_request_decline_admin_email_notification(self, request, recipients)
 
     def send_organisation_request_email_notification(self, request):
         # user submits a new organisation request
         # send email to organisation access group
         group = OrganisationAccessGroup.objects.first()
-        if group:
+        if group.filtered_members:
             org_access_recipients = [m.email for m in group.filtered_members]
             send_organisation_request_email_notification(self, request, org_access_recipients)
 
