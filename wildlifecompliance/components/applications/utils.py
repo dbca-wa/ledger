@@ -364,9 +364,9 @@ def save_assess_data(instance,request,viewset):
                     activity_type.advanced = False
 
                 activity_type.conditions = request.data[code + '_conditions']
-                activity_type.issue_date = datetime.strptime(request.data[code + '_issue_date'], "%d/%m/%Y")
-                activity_type.start_date = datetime.strptime(request.data[code + '_start_date'], "%d/%m/%Y")
-                activity_type.expiry_date = datetime.strptime(request.data[code + '_expiry_date'], "%d/%m/%Y")
+                activity_type.issue_date = datetime.strptime(request.data[code + '_issue_date'], "%d/%m/%Y") if request.data[code + '_issue_date'] else None
+                activity_type.start_date = datetime.strptime(request.data[code + '_start_date'], "%d/%m/%Y") if request.data[code + '_start_date'] else None
+                activity_type.expiry_date = datetime.strptime(request.data[code + '_expiry_date'], "%d/%m/%Y") if request.data[code + '_expiry_date'] else None
                 if request.data.has_key(code + '_to_be_issued'):
                     activity_type.to_be_issued = True if request.data[code + '_to_be_issued'] == 'on' else False
                 else:
@@ -380,9 +380,11 @@ def save_assess_data(instance,request,viewset):
                 activity_type.save()
 
                 #import ipdb; ipdb.set_trace()
+                new_app = True
                 if request.data.has_key('action') and request.data['action'] == 'process':
                     # create licences
-                    create_licence(instance, activity_name=activity_type.activity_name)
+                    create_licence(instance, activity_type.activity_name, new_app)
+                    new_app = False
 
 
         except:

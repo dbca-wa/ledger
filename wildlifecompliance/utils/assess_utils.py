@@ -75,64 +75,74 @@ def create_app_activity_type_model(licence_category, app_ids=[], exclude_app_ids
 
     return obj_list
 
-def create_licence(application, activity_name):
-	""" activity_name='Importing Fauna (Non-Commercial)' 
+def create_licence(application, activity_name, new_app):
+    """ activity_name='Importing Fauna (Non-Commercial)'
         licence_category ='Flora Other Purpose'
     """
-	licence = None
-	activity=WildlifeLicenceActivity.objects.get(name=activity_name)
-	licence_class = WildlifeLicenceClass.objects.get(short_name=application.licence_category)
-	if application.applicant_type == Application.APPLICANT_TYPE_ORGANISATION:
-		qs_licence = WildlifeLicence.objects.filter(org_applicant_id=application.applicant_id, licence_class=licence_class)
-		if qs_licence.exists():
-			# use existing licence, just increment sequence_number
-			licence = WildlifeLicence.objects.create(
-				licence_number=qs_licence.last().licence_number,
-				licence_sequence=qs_licence.last().licence_sequence + 1,
-				current_application=application,
-				org_applicant_id=application.applicant_id,
-				submitter=application.submitter,
-				licence_type=activity,
-				licence_class=licence_class
-			)
-		else:
-			licence = WildlifeLicence.objects.create(current_application=application,org_applicant_id=application.applicant_id,submitter=application.submitter,
-						  licence_type=activity,licence_class=licence_class)
+    licence = None
+    activity=WildlifeLicenceActivity.objects.get(name=activity_name)
+    licence_class = WildlifeLicenceClass.objects.get(short_name=application.licence_category)
+    import ipdb; ipdb.set_trace()
+    if application.applicant_type == Application.APPLICANT_TYPE_ORGANISATION:
+        qs_licence = WildlifeLicence.objects.filter(org_applicant_id=application.applicant_id, licence_class=licence_class)
+        if qs_licence.exists():
+            #licence_sequence = qs_licence.last().licence_sequence + 1 if qs_licence.filter(licence_type=activity).exists() else qs_licence.last().licence_sequence
+            licence_sequence = qs_licence.last().licence_sequence + 1 if new_app else qs_licence.last().licence_sequence
+            # use existing licence, just increment sequence_number
+            licence = WildlifeLicence.objects.create(
+                licence_number=qs_licence.last().licence_number,
+                #licence_sequence=qs_licence.last().licence_sequence + 1,
+                licence_sequence=licence_sequence,
+                current_application=application,
+                org_applicant_id=application.applicant_id,
+                submitter=application.submitter,
+                licence_type=activity,
+                licence_class=licence_class
+            )
+        else:
+            licence = WildlifeLicence.objects.create(current_application=application,org_applicant_id=application.applicant_id,submitter=application.submitter,
+                          licence_type=activity,licence_class=licence_class)
 
-	elif application.applicant_type == Application.APPLICANT_TYPE_PROXY:
-		qs_licence = WildlifeLicence.objects.filter(proxy_applicant_id=application.applicant_id, licence_class=licence_class)
-		if qs_licence.exists():
-			# use existing licence, just increment sequence_number
-			licence = WildlifeLicence.objects.create(
-				licence_number=qs_licence.last().licence_number,
-				licence_sequence=qs_licence.last().licence_sequence + 1,
-				current_application=application,
-				proxy_applicant_id=application.applicant_id,
-				submitter=application.submitter,
-				licence_type=activity,
-				licence_class=licence_class
-			)
-		else:
-			licence = WildlifeLicence.objects.create(current_application=application, proxy_applicant_id=applicant_id, submitter=application.submitter,
-						  licence_type=activity, licence_class=licence_class)
+    elif application.applicant_type == Application.APPLICANT_TYPE_PROXY:
+        qs_licence = WildlifeLicence.objects.filter(proxy_applicant_id=application.applicant_id, licence_class=licence_class)
+        if qs_licence.exists():
+            #licence_sequence = qs_licence.last().licence_sequence + 1 if qs_licence.filter(licence_type=activity).exists() else qs_licence.last().licence_sequence
+            licence_sequence = qs_licence.last().licence_sequence + 1 if new_app else qs_licence.last().licence_sequence
+            # use existing licence, just increment sequence_number
+            licence = WildlifeLicence.objects.create(
+                licence_number=qs_licence.last().licence_number,
+                #licence_sequence=qs_licence.last().licence_sequence + 1,
+                licence_sequence=licence_sequence,
+                current_application=application,
+                proxy_applicant_id=application.applicant_id,
+                submitter=application.submitter,
+                licence_type=activity,
+                licence_class=licence_class
+            )
+        else:
+            licence = WildlifeLicence.objects.create(current_application=application, proxy_applicant_id=applicant_id, submitter=application.submitter,
+                          licence_type=activity, licence_class=licence_class)
 
-	#elif application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER:
-	else: # assume applicant is the submitter
-		qs_licence = WildlifeLicence.objects.filter(submitter_id=application.applicant_id, org_applicant__isnull=True, proxy_applicant__isnull=True, licence_class=licence_class)
-		if qs_licence.exists():
-			# use existing licence, just increment sequence_number
-			licence = WildlifeLicence.objects.create(
-				licence_number=qs_licence.last().licence_number,
-				licence_sequence=qs_licence.last().licence_sequence + 1,
-				current_application=application,
-				submitter_id=application.applicant_id,
-				licence_type=activity,
-				 licence_class=licence_class
-			)
-		else:
-			licence = WildlifeLicence.objects.create(current_application=application, submitter_id=application.applicant_id, licence_type=activity, licence_class=licence_class)
+    #elif application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER:
+    else: # assume applicant is the submitter
+        qs_licence = WildlifeLicence.objects.filter(submitter_id=application.applicant_id, org_applicant__isnull=True, proxy_applicant__isnull=True, licence_class=licence_class)
+        if qs_licence.exists():
+            #licence_sequence = qs_licence.last().licence_sequence + 1 if qs_licence.filter(licence_type=activity).exists() else qs_licence.last().licence_sequence
+            licence_sequence = qs_licence.last().licence_sequence + 1 if new_app else qs_licence.last().licence_sequence
+            # use existing licence, just increment sequence_number
+            licence = WildlifeLicence.objects.create(
+                licence_number=qs_licence.last().licence_number,
+                #licence_sequence=qs_licence.last().licence_sequence + 1,
+                licence_sequence=licence_sequence,
+                current_application=application,
+                submitter_id=application.applicant_id,
+                licence_type=activity,
+                 licence_class=licence_class
+            )
+        else:
+            licence = WildlifeLicence.objects.create(current_application=application, submitter_id=application.applicant_id, licence_type=activity, licence_class=licence_class)
 
-	return licence
+    return licence
 
 def pdflatex(request):
 
@@ -220,7 +230,7 @@ def pdflatex(request):
     subprocess.call(cmd)
 
 
-	#LicenceDocument.object.create(licence_id)
+    #LicenceDocument.object.create(licence_id)
     logger.debug("Reading PDF output from {}".format(filename))
     response.write(open(directory + filename).read())
     logger.debug("Finally: returning PDF response.")
