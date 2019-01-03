@@ -37,6 +37,7 @@ from wildlifecompliance.components.applications.utils import save_proponent_data
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
+from wildlifecompliance.utils.assess_utils import create_app_activity_type_model
 from wildlifecompliance.components.applications.models import (
     Application,
     ApplicationActivityType,
@@ -749,7 +750,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             licence_fee = request.data.get('licence_fee')
             licence_activities = request.data.get('licence_activities')
             schema_data = get_activity_type_schema(licence_activities)
-            #import ipdb; ipdb.set_trace()
             data = {
                 'schema': schema_data,
                 'submitter': request.user.id,
@@ -765,6 +765,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer = CreateExternalApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+
+            #import ipdb; ipdb.set_trace()
+            create_app_activity_type_model(serializer.data['licence_category'], app_ids=[serializer.data['id']]) 
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())

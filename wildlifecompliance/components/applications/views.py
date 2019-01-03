@@ -187,6 +187,7 @@ def pdflatex(request):
         '{0}; filename="{1}"'.format(
             disposition, downloadname))
 
+    import ipdb; ipdb.set_trace()
     directory = os.path.join(settings.MEDIA_ROOT, 'wildlife_compliance_licence' + os.sep)
     if not os.path.exists(directory):
         logger.debug("Making a new directory: {}".format(directory))

@@ -259,6 +259,10 @@ class ApplicationDocument(Document):
 
 class Application(RevisionedMixin):
 
+    APPLICANT_TYPE_ORGANISATION = 'ORG'
+    APPLICANT_TYPE_PROXY = 'PRX'
+    APPLICANT_TYPE_SUBMITTER = 'SUB'
+
     PROCESSING_STATUS_DRAFT = ('draft', 'Draft')
     CUSTOMER_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
                                ('under_review', 'Under Review'),
@@ -513,11 +517,11 @@ class Application(RevisionedMixin):
     @property
     def applicant_type(self):
         if self.org_applicant:
-            return "ORG"
+            return self.APPLICANT_TYPE_ORGANISATION
         elif self.proxy_applicant:
-            return "PRX"
+            return self.APPLICANT_TYPE_PROXY
         else:
-            return "SUB"
+            return self.APPLICANT_TYPE_SUBMITTER
 
     @property
     def has_amendment(self):
@@ -779,13 +783,13 @@ class Application(RevisionedMixin):
                                         id=activity_type["id"]),
                                     return_type=q.return_type)
                         print(qs)
+
                 self.save()
 
                 officer_groups = ApplicationGroupType.objects.filter(
                     licence_class=self.licence_type_data["id"], name__icontains='officer')
 
                 if self.amendment_requests:
-                    print("insid if")
                     self.log_user_action(
                         ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(
                             self.id), request)

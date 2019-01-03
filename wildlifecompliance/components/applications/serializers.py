@@ -42,20 +42,20 @@ class ApplicationActivityTypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_activity_name_str(self,obj):
-        return obj.activity_name_str
+        return obj.activity_name_str if obj.activity_name_str else ''
 
     def get_code(self,obj):
-        return obj.code.lower()
+        return obj.code.lower() if obj.code else ''
 
     def get_issue_date(self,obj):
         #return obj.issue_date.strftime('%Y-%m-%d %H:%M')
-        return obj.issue_date.strftime('%Y/%m/%d %H:%M')
+        return obj.issue_date.strftime('%Y/%m/%d %H:%M') if obj.issue_date else ''
 
     def get_start_date(self,obj):
-        return obj.start_date.strftime('%Y/%m/%d')
+        return obj.start_date.strftime('%Y/%m/%d') if obj.start_date else ''
 
     def get_expiry_date(self,obj):
-        return obj.expiry_date.strftime('%Y/%m/%d')
+        return obj.expiry_date.strftime('%Y/%m/%d') if obj.expiry_date else ''
 
     def get_advanced(self,obj):
         return 'on' if obj.advanced else ''

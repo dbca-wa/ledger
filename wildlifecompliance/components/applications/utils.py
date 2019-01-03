@@ -7,7 +7,7 @@ from wildlifecompliance.components.applications.models import ApplicationDocumen
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
 import json
 from wildlifecompliance.components.licences.models import WildlifeLicenceActivity, DefaultActivity, WildlifeLicenceActivityType, DefaultActivityType
-
+from wildlifecompliance.utils.assess_utils import create_app_activity_type_model, create_licence
 import traceback
 
 
@@ -431,6 +431,7 @@ def save_proponent_data(instance, request, viewset):
                 instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
+
             # Save Documents
 #            for f in request.FILES:
 #                try:
@@ -511,6 +512,11 @@ def save_assess_data(instance,request,viewset):
 
 
                 activity_type.save()
+
+                #import ipdb; ipdb.set_trace()
+                if request.data.has_key('action') and request.data['action'] == 'process':
+                    # create licences
+                    create_licence(instance, activity_name=activity_type.activity_name)
 
 
         except:
