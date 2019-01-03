@@ -78,6 +78,8 @@ class ApplicationGroupType(models.Model):
     members = models.ManyToManyField(EmailUser,blank=True)
     class Meta:
         app_label = 'wildlifecompliance'
+        verbose_name = 'Licence activity group'
+        verbose_name_plural = 'Licence activity groups'
 
     def __str__(self):
         group = '{} - {}, {} ({} members)'.format(self.get_type_display(), self.licence_class, self.licence_activity_type, self.members.count())
