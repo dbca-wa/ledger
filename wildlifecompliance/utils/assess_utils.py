@@ -2,8 +2,11 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from django.db import models
+from django.core.files.base import ContentFile, File
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 from collections import OrderedDict
-from wildlifecompliance.components.applications.models import Application, ApplicationType, ApplicationActivityType
+from wildlifecompliance.components.applications.models import Application, ApplicationType, ApplicationActivityType, ApplicationDocument
 from wildlifecompliance.components.licences.models import DefaultActivityType, WildlifeLicence, WildlifeLicenceClass, WildlifeLicenceActivity
 from wildlifecompliance.components.organisations.models import Organisation
 from ledger.accounts.models import OrganisationAddress
@@ -11,6 +14,8 @@ from django.contrib.postgres.fields.jsonb import JSONField
 from wildlifecompliance.utils import SearchUtils, search_multiple_keys
 from wildlifecompliance.components.licences.models import DefaultActivity
 from ledger.accounts.models import EmailUser
+from django.utils import timezone
+import subprocess
 
 import os
 import re
@@ -82,7 +87,7 @@ def create_licence(application, activity_name, new_app):
     licence = None
     activity=WildlifeLicenceActivity.objects.get(name=activity_name)
     licence_class = WildlifeLicenceClass.objects.get(short_name=application.licence_category)
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     if application.applicant_type == Application.APPLICANT_TYPE_ORGANISATION:
         qs_licence = WildlifeLicence.objects.filter(org_applicant_id=application.applicant_id, licence_class=licence_class)
         if qs_licence.exists():
@@ -144,7 +149,15 @@ def create_licence(application, activity_name, new_app):
 
     return licence
 
-def pdflatex(request):
+def all_related_licences(application):
+    licence_number = application.licences.all().last().licence_number
+    return WildlifeLicence.objects.filter(licence_number=licence_number).order_by('id')
+
+def all_related_applications(application):
+    app_ids = WildlifeLicence.objects.filter(licence_number=application.licences.all().last().licence_number).values_list('current_application_id', flat=True).distinct()
+    return Application.objects.filter(id__in=app_ids).order_by('id')
+
+def pdflatex(request, application):
 
     now = timezone.localtime(timezone.now())
     report_date = now
@@ -180,6 +193,8 @@ def pdflatex(request):
         'report_date': report_date.strftime('%e %B %Y').strip(),
         'time': report_date.strftime('%H:%M'),
 #        'form': form_data,
+        'application': application,
+        'licences': all_related_licences(application),
         'embed': embed,
         'headers': request.GET.get("headers", True),
         'title': request.GET.get("title", "Wildlife Licensing System"),
@@ -195,7 +210,7 @@ def pdflatex(request):
         '{0}; filename="{1}"'.format(
             disposition, downloadname))
 
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     directory = os.path.join(settings.MEDIA_ROOT, 'wildlife_compliance_licence' + os.sep + str(application.id) + os.sep)
     if not os.path.exists(directory):
         logger.debug("Making a new directory: {}".format(directory))
@@ -230,10 +245,14 @@ def pdflatex(request):
     subprocess.call(cmd)
 
 
-    #LicenceDocument.object.create(licence_id)
+    #licence_pdf = ApplicationDocument.objects.create(application=application, _file='licence_pdf', can_delete=False)
+#    licence_pdf = ApplicationDocument.objects.create(application=application can_delete=False)
+    #licence_pdf.save(new_name, File(f))
+#    licence_pdf.save(filename, File( open(directory + filename).read() ))
+    #licence_pdf.save(filename, ContentFile( open(directory + filename).read() ))
     logger.debug("Reading PDF output from {}".format(filename))
-    response.write(open(directory + filename).read())
-    logger.debug("Finally: returning PDF response.")
-    return response
+    #response.write(open(directory + filename).read())
+    #logger.debug("Finally: returning PDF response.")
+    #return response
 
 

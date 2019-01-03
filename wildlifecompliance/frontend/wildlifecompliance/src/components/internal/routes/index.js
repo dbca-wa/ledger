@@ -6,7 +6,8 @@ import Organisation from '../organisations/manage.vue'
 import UserDashTable from '../users/dashboard.vue'
 import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
-import Assess from '../applications/assess.vue'
+import Application_v1 from '../applications/application_v1.vue'
+//import Assess from '../applications/assess.vue'
 import Referral from '../referrals/referral.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
@@ -108,7 +109,8 @@ export default
                     children: [
                         {
                             path: '/',
-                            component: Application,
+                            //component: Application,
+                            component: Application_v1,
                             name:"internal-application"
                         },
                         {
@@ -121,8 +123,9 @@ export default
 
             ]
         },
+        /*
         {
-            path: 'assess',
+            path: 'application_v1',
             component: {
                 render(c)
                 {
@@ -142,13 +145,14 @@ export default
                         {
                             path: '/',
                             component: Assess,
-                            name:"internal-assess"
+                            name:"internal-application_v1"
                         },
                     ]
                 },
 
             ]
         },
+        */
 
 
         /*{

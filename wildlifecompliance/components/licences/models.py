@@ -190,7 +190,7 @@ class WildlifeLicence(models.Model):
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return '{} {}-{}_{}'.format(self.licence_type, self.licence_number, self.licence_sequence, self.licence_type.code)
+        return '{} {}-{} {}'.format(self.licence_type, self.licence_number, self.licence_sequence, self.licence_type.code)
 
     def save(self, *args, **kwargs):
         super(WildlifeLicence, self).save(*args,**kwargs)
