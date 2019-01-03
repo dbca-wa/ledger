@@ -115,6 +115,7 @@ urlpatterns = [
         name='external-application-success-invoice'),
 
     # url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
+    url(r'^export/pdf/$', application_views.pdflatex, name='pdf_latex'),
     url(r'^mgt-commands/$',
         views.ManagementCommandsView.as_view(),
         name='mgt-commands'),

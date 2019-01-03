@@ -25,6 +25,7 @@ export default {
             return this.value == this.savedValue;
         },
         options:function () {
+            console.log(this.conditions)
             return JSON.stringify(this.conditions);
         }
     },

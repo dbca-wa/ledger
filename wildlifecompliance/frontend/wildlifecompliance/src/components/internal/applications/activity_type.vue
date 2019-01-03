@@ -20,6 +20,10 @@
         <Checkbox :name="activity_type.code+'_to_be_issued'" :value="activity_type.to_be_issued" label="To be issued" :id="'id_'+activity_type.code+'_to_be_issued'" />
         <Checkbox :name="activity_type.code+'_processed'" :value="activity_type.processed" label="Processed" :id="'id_'+activity_type.code+'_processed'" />
 
+<!--
+        <Radio name="activity_type.code+'_approve'" value="activity_type.approve" label="Approve/Decline" id="'id_'+activity_type.code+'_approve'" :options="activity_type.approve_options" />
+        <Radio name="activity_type.code+'_approve'" value="activity_type.approve" label="Approve/Decline" id="'id_'+activity_type.code+'_approve'" :options="activity_type.approve_options" />
+-->
       </div>
 
     </div>
@@ -48,10 +52,11 @@
     import TextArea from '@/components/forms/text-area.vue'
     import DateField from '@/components/forms/date-field.vue'
     import Checkbox from '@/components/forms/checkbox.vue'
+    import Radio from '@/components/forms/radio.vue'
     export default {
         //props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly", "help_text_url", "help_text_assessor_url"],
         props:["activity_type", "application", "id"],
-        components: {TextField, TextArea, DateField, Checkbox},
+        components: {TextField, TextArea, DateField, Checkbox, Radio},
         /*
         props:{
             activity_type:{

@@ -26,6 +26,7 @@
                       </div>
                     </div>
                     <button class="btn btn-primary" @click.prevent="save()">Save Changes</button>
+                    <button class="btn btn-primary" @click.prevent="process()">Process</button>
 
                 </form>
             </div>
