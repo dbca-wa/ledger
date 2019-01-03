@@ -37,6 +37,7 @@ class ApplicationActivityTypeSerializer(serializers.ModelSerializer):
     advanced = serializers.SerializerMethodField(read_only=True)
     to_be_issued = serializers.SerializerMethodField(read_only=True)
     processed = serializers.SerializerMethodField(read_only=True)
+    approve_options = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ApplicationActivityType
@@ -66,6 +67,9 @@ class ApplicationActivityTypeSerializer(serializers.ModelSerializer):
 
     def get_processed(self,obj):
         return 'on' if obj.processed else ''
+
+    def get_approve_options(self,obj):
+        return [{'label': 'Approved', 'value': 'approved'}, {'label': 'Declined', 'value': 'declined'}]
 
 
 class ApplicationTypeSerializer(serializers.ModelSerializer):

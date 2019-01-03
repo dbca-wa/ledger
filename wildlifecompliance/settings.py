@@ -7,6 +7,7 @@ SITE_ID = 1
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_wc')
 
 INSTALLED_APPS += [
+    'django.contrib.humanize',
     'bootstrap3',
     'wildlifecompliance',
     'wildlifecompliance.components.main',
@@ -35,6 +36,9 @@ MIDDLEWARE_CLASSES += [
     'wildlifecompliance.middleware.FirstTimeNagScreenMiddleware'
 ]
 
+LATEX_GRAPHIC_FOLDER = os.path.join(BASE_DIR,"templates","latex","images")
+
+TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'templates'))
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'wildlifecompliance', 'templates'))
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'wildlifecompliance','components','organisations', 'templates'))
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'wildlifecompliance','components','emails', 'templates'))
@@ -74,7 +78,7 @@ DEV_STATIC = env('DEV_STATIC',False)
 DEV_STATIC_URL = env('DEV_STATIC_URL')
 if DEV_STATIC and not DEV_STATIC_URL:
     raise ImproperlyConfigured('If running in DEV_STATIC, DEV_STATIC_URL has to be set')
-DATA_UPLOAD_MAX_NUMBER_FIELDS = None 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # Department details
 SYSTEM_NAME = env('SYSTEM_NAME', 'Wildlife Licensing System')
