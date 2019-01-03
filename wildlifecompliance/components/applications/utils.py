@@ -7,7 +7,7 @@ from wildlifecompliance.components.applications.models import ApplicationDocumen
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
 import json
 from wildlifecompliance.components.licences.models import WildlifeLicenceActivity, DefaultActivity, WildlifeLicenceActivityType, DefaultActivityType
-from wildlifecompliance.utils.assess_utils import create_app_activity_type_model, create_licence
+from wildlifecompliance.utils.assess_utils import create_app_activity_type_model, create_licence, pdflatex
 import traceback
 
 
@@ -485,6 +485,8 @@ def save_assessor_data(instance, request, viewset):
             raise
 
 def save_assess_data(instance,request,viewset):
+    can_process = True if request.data.has_key('action') and request.data['action'] == 'process' else False
+
     with transaction.atomic():
         try:
             #import ipdb; ipdb.set_trace()
@@ -514,25 +516,18 @@ def save_assess_data(instance,request,viewset):
                 activity_type.save()
 
                 #import ipdb; ipdb.set_trace()
-                new_app = True
-                if request.data.has_key('action') and request.data['action'] == 'process':
-                    # create licences
-                    create_licence(instance, activity_type.activity_name, new_app)
-                    new_app = False
+#                new_app = True
+#                if can_process:
+#                    # create licences
+#                    create_licence(instance, activity_type.activity_name, new_app)
+#                    new_app = False
 
+            #import ipdb; ipdb.set_trace()
+            if can_process:
+                pdflatex(request, instance)
 
         except:
             raise
-
-"""
-        Purpose: <input type="text" :name="activity_type.code+'_purpose'" :value="activity_type.purpose"><br>
-        Additional Information: <input type="text" :name="activity_type.code+'_additional_info'" :value="activity_type.additional_info"><br>
-        Standard/Advanced: <input type="text" :name="activity_type.code+'_standard_advanced'" :value="activity_type.advanced"><br>
-        Conditions: <textarea class="form-control" rows="3" :name="activity_type.code+'_conditions'">{{ activity_type.conditions }}</textarea><br/>
-        Issue Date: <input type="date" :name="activity_type.code+'_issue_date'" :value="activity_type.issue_date"><br>
-        Start Date: <input type="date" :name="activity_type.code+'_start_date'" :value="activity_type.start_date"><br>
-        Expiry Date: <input type="date" :name="activity_type.code+'_expiry_date'" :value="activity_type.expiry_date"><br>
-"""
 
 
 def get_activity_type_schema(activity_ids):

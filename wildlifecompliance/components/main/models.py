@@ -6,6 +6,7 @@ from django.db.models.signals import pre_delete
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+import os
 
 
 @python_2_unicode_compatible

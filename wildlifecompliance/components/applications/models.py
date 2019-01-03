@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import re
+import os
 from django.db import models, transaction
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
@@ -256,6 +257,12 @@ class ApplicationDocument(Document):
     class Meta:
         app_label = 'wildlifecompliance'
 
+#class PdfLicenceDocument(Document):
+#    application = models.ForeignKey('Application',related_name='pdf_licence_documents')
+#    _file = models.FileField(upload_to=update_licence_doc_filename)
+#
+#    class Meta:
+#        app_label = 'wildlifecompliance'
 
 class Application(RevisionedMixin):
 
@@ -437,6 +444,7 @@ class Application(RevisionedMixin):
         'wildlifecompliance.WildlifeLicence',
         null=True,
         blank=True)
+    #licence_pdf = models.ForeignKey(LicenceDocument, blank=True, null=True, related_name='licence_pdf')
 
     previous_application = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)

@@ -21,7 +21,7 @@
  \end{minipage}
  \begin{minipage}[t]{0.75\textwidth}
      %{{ form.author }} \hfill Date: {{report_date}} \\
-     {{ form.author }}{% if form.position %}, {{form.position}}{% endif %}{% if form.phone_no %}, {{form.phone_no}}{% endif %} \\
+     {{ application.applicant }}{% if form.position %}, {{form.position}}{% endif %}{% if form.phone_no %}, {{form.phone_no}}{% endif %} \\
      {{ form.branch }}{% if form.division %}, {{form.division}}{% endif %} \\
      {{form.your_ref}} \\
      {{form.our_ref}} \\
@@ -30,5 +30,16 @@
 
 \normalsize
 \subsection{COVER PAGE}
+
+%\footnotesize
+\scriptsize
+{% for licence in licences %}
+    %\textbf{ {{ region }} } & \textbf{ {{ data.pw_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.area_pw_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.total_all_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.total_area|floatformat:0|intcomma }} } \\
+    %\textbf{ {{ licence }} }  \\
+    {{ licence }} \\
+{% empty %}
+    %\multicolumn{5}{|X|}{No Data Returned} \\
+    \multicolumn{1}{|X|}{No Data Returned} \\
+{% endfor %}
 
 \clearpage
