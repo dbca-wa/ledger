@@ -35,6 +35,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data, save_assess_data, get_activity_type_schema
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
+from wildlifecompliance.utils.assess_utils import create_app_activity_type_model
 from wildlifecompliance.components.applications.models import (
     ApplicationType,
     Application,
@@ -718,7 +719,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             proxy_applicant=request.data.get('proxy_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
-            #import ipdb; ipdb.set_trace()
             data = {
                 'schema':schema_data,
                 'submitter': request.user.id,
@@ -732,6 +732,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer = SaveApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+
+            #import ipdb; ipdb.set_trace()
+            create_app_activity_type_model(serializer.data['licence_category'], app_ids=[serializer.data['id']]) 
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())

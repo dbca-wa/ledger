@@ -58,7 +58,7 @@ def create_app_activity_type_model(licence_category, app_ids=[], exclude_app_ids
         applications = Application.objects.filter(licence_category=licence_category).exclude(id__in=exclude_app_ids)
 
     obj_list = []
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     for application in applications.order_by('id'):
 
         activities = get_purposes(application.licence_type_data['short_name']).values_list('activity_type__short_name', flat=True)
@@ -74,5 +74,156 @@ def create_app_activity_type_model(licence_category, app_ids=[], exclude_app_ids
                 obj_list.append(app_activity_type)
 
     return obj_list
+
+def create_licence(application, activity_name):
+	""" activity_name='Importing Fauna (Non-Commercial)' 
+        licence_category ='Flora Other Purpose'
+    """
+	licence = None
+	activity=WildlifeLicenceActivity.objects.get(name=activity_name)
+	licence_class = WildlifeLicenceClass.objects.get(short_name=application.licence_category)
+	if application.applicant_type == Application.APPLICANT_TYPE_ORGANISATION:
+		qs_licence = WildlifeLicence.objects.filter(org_applicant_id=application.applicant_id, licence_class=licence_class)
+		if qs_licence.exists():
+			# use existing licence, just increment sequence_number
+			licence = WildlifeLicence.objects.create(
+				licence_number=qs_licence.last().licence_number,
+				licence_sequence=qs_licence.last().licence_sequence + 1,
+				current_application=application,
+				org_applicant_id=application.applicant_id,
+				submitter=application.submitter,
+				licence_type=activity,
+				licence_class=licence_class
+			)
+		else:
+			licence = WildlifeLicence.objects.create(current_application=application,org_applicant_id=application.applicant_id,submitter=application.submitter,
+						  licence_type=activity,licence_class=licence_class)
+
+	elif application.applicant_type == Application.APPLICANT_TYPE_PROXY:
+		qs_licence = WildlifeLicence.objects.filter(proxy_applicant_id=application.applicant_id, licence_class=licence_class)
+		if qs_licence.exists():
+			# use existing licence, just increment sequence_number
+			licence = WildlifeLicence.objects.create(
+				licence_number=qs_licence.last().licence_number,
+				licence_sequence=qs_licence.last().licence_sequence + 1,
+				current_application=application,
+				proxy_applicant_id=application.applicant_id,
+				submitter=application.submitter,
+				licence_type=activity,
+				licence_class=licence_class
+			)
+		else:
+			licence = WildlifeLicence.objects.create(current_application=application, proxy_applicant_id=applicant_id, submitter=application.submitter,
+						  licence_type=activity, licence_class=licence_class)
+
+	#elif application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER:
+	else: # assume applicant is the submitter
+		qs_licence = WildlifeLicence.objects.filter(submitter_id=application.applicant_id, org_applicant__isnull=True, proxy_applicant__isnull=True, licence_class=licence_class)
+		if qs_licence.exists():
+			# use existing licence, just increment sequence_number
+			licence = WildlifeLicence.objects.create(
+				licence_number=qs_licence.last().licence_number,
+				licence_sequence=qs_licence.last().licence_sequence + 1,
+				current_application=application,
+				submitter_id=application.applicant_id,
+				licence_type=activity,
+				 licence_class=licence_class
+			)
+		else:
+			licence = WildlifeLicence.objects.create(current_application=application, submitter_id=application.applicant_id, licence_type=activity, licence_class=licence_class)
+
+	return licence
+
+def pdflatex(request):
+
+    now = timezone.localtime(timezone.now())
+    report_date = now
+
+    template = "wildlife_compliance_licence"
+    response = HttpResponse(content_type='application/pdf')
+    #texname = template + ".tex"
+    #filename = template + ".pdf"
+    #texname = template + "_" + request.user.username + ".tex"
+    #filename = template + "_" + request.user.username + ".pdf"
+    texname = template + ".tex"
+    filename = template + ".pdf"
+    timestamp = now.isoformat().rsplit(
+        ".")[0].replace(":", "")
+    if template == "wildlife_compliance_licence":
+        downloadname = "wildlife_compliance_licence_" + report_date.strftime('%Y-%m-%d') + ".pdf"
+    else:
+        downloadname = "wildlife_compliance_licence_" + template + "_" + report_date.strftime('%Y-%m-%d') + ".pdf"
+    error_response = HttpResponse(content_type='text/html')
+    errortxt = downloadname.replace(".pdf", ".errors.txt.html")
+    error_response['Content-Disposition'] = (
+        '{0}; filename="{1}"'.format(
+        "inline", errortxt))
+
+    subtitles = {
+        "cover_page": "Cover Page",
+        "licence": "Licence",
+    }
+    embed = False if request.GET.get("embed") == "false" else True
+
+    context = {
+        'user': request.user.get_full_name(),
+        'report_date': report_date.strftime('%e %B %Y').strip(),
+        'time': report_date.strftime('%H:%M'),
+#        'form': form_data,
+        'embed': embed,
+        'headers': request.GET.get("headers", True),
+        'title': request.GET.get("title", "Wildlife Licensing System"),
+        'subtitle': subtitles.get(template, ""),
+        'timestamp': now,
+        'downloadname': downloadname,
+        'settings': settings,
+        'baseurl': request.build_absolute_uri("/")[:-1]
+    }
+    disposition = "attachment"
+    #disposition = "inline"
+    response['Content-Disposition'] = (
+        '{0}; filename="{1}"'.format(
+            disposition, downloadname))
+
+    import ipdb; ipdb.set_trace()
+    directory = os.path.join(settings.MEDIA_ROOT, 'wildlife_compliance_licence' + os.sep + str(application.id) + os.sep)
+    if not os.path.exists(directory):
+        logger.debug("Making a new directory: {}".format(directory))
+        os.makedirs(directory)
+
+    logger.debug('Starting  render_to_string step')
+    err_msg = None
+    try:
+        output = render_to_string("latex/" + template + ".tex", context, request=request)
+    except Exception as e:
+        import traceback
+        err_msg = u"PDF tex template render failed (might be missing attachments):"
+        logger.debug(err_msg + "\n{}".format(e))
+
+        error_response.write(err_msg + "\n\n{0}\n\n{1}".format(e,traceback.format_exc()))
+        return error_response
+
+    with open(directory + texname, "w") as f:
+        f.write(output.encode('utf-8'))
+        logger.debug("Writing to {}".format(directory + texname))
+
+    #import ipdb; ipdb.set_trace()
+    logger.debug("Starting PDF rendering process ...")
+    cmd = ['latexmk', '-cd', '-f', '-silent', '-pdf', directory + texname]
+    #cmd = ['latexmk', '-cd', '-f', '-pdf', directory + texname]
+    logger.debug("Running: {0}".format(" ".join(cmd)))
+    subprocess.call(cmd)
+
+    logger.debug("Cleaning up ...")
+    cmd = ['latexmk', '-cd', '-c', directory + texname]
+    logger.debug("Running: {0}".format(" ".join(cmd)))
+    subprocess.call(cmd)
+
+
+	#LicenceDocument.object.create(licence_id)
+    logger.debug("Reading PDF output from {}".format(filename))
+    response.write(open(directory + filename).read())
+    logger.debug("Finally: returning PDF response.")
+    return response
 
 

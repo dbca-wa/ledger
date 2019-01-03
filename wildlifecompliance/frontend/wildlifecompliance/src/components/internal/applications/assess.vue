@@ -220,6 +220,22 @@ export default {
             },err=>{
             });
         },
+        process: function(e) {
+            let vm = this;
+            vm.form = document.forms.new_application;
+            let formData = new FormData(vm.form);
+            formData.append('action', 'process');
+            vm.$http.post(vm.application_form_url,formData).then(res=>{
+              swal(
+                'Processed',
+                'Your application has been processed',
+                'success'
+              )
+            },err=>{
+            });
+        },
+
+
         save_wo: function() {
             let vm = this;
             let formData = new FormData(vm.form);
