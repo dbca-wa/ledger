@@ -207,7 +207,7 @@ def send_organisation_request_email_notification(org_request, request, contact):
 
     url = request.build_absolute_uri('/internal/organisations/access/{}'.format(org_request.id))
     if "-internal" not in url:
-        url = '-internal.{}'.format(settings.SITE_URL).join(url.split('.' + settings.SITE_URL))
+        url = '-internal.{}'.format(settings.SITE_DOMAIN).join(url.split('.' + settings.SITE_DOMAIN))
 
     context = {
         'request': request.data,
