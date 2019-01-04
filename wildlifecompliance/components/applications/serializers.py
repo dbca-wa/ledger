@@ -212,6 +212,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'can_be_processed',
                 'can_current_user_edit',
                 'licence_category',
+                'pdf_licence',
                 'activity_types'
                 )
         read_only_fields=('documents',)
@@ -420,6 +421,7 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
                 'licence_type_data',
                 'licence_type_name',
                 'licence_category',
+                'pdf_licence',
                 'application_fee',
                 'licence_fee'
                 )
@@ -516,6 +518,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                 'applicationdeclineddetails',
                 'permit',
                 'licence_category',
+                'pdf_licence',
                 'activity_types'
                 )
         read_only_fields=('documents','conditions')

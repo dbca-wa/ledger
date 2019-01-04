@@ -356,6 +356,7 @@ def save_assess_data(instance,request,viewset):
     with transaction.atomic():
         try:
             #import ipdb; ipdb.set_trace()
+            new_app = True
             for activity_type in instance.activity_types:
                 code = WildlifeLicenceActivity.objects.get(name=activity_type.activity_name).code.lower()
                 activity_type.purpose = request.data[code + '_purpose']
@@ -382,18 +383,19 @@ def save_assess_data(instance,request,viewset):
                 activity_type.save()
 
                 #import ipdb; ipdb.set_trace()
-#                new_app = True
-#                if can_process:
-#                    # create licences
-#                    create_licence(instance, activity_type.activity_name, new_app)
-#                    new_app = False
-
-            #import ipdb; ipdb.set_trace()
-            if can_process:
-                pdflatex(request, instance)
+                if can_process:
+                    # create licences
+                    create_licence(instance, activity_type.activity_name, new_app)
+                    new_app = False
 
         except:
             raise
+
+    #import ipdb; ipdb.set_trace()
+    if can_process:
+        pdflatex(request, instance)
+
+    return
 
 def get_activity_type_schema(licence_class_data):
     schema_activity=[]

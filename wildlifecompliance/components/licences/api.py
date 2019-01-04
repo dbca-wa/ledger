@@ -75,3 +75,5 @@ class LicenceViewSet(viewsets.ModelViewSet):
 class WildlifeLicenceClassViewSet(viewsets.ModelViewSet):
     queryset = WildlifeLicenceClass.objects.all()
     serializer_class = WildlifeLicenceClassSerializer
+
+

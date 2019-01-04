@@ -44,6 +44,9 @@ from collections import OrderedDict
 def update_application_doc_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/documents/{}'.format(instance.application.id,filename)
 
+def update_pdf_licence_filename(instance, filename):
+    return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id,filename)
+
 def update_application_comms_log_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/communications/{}/{}'.format(instance.log_entry.application.id,instance.id,filename)
 
@@ -320,6 +323,7 @@ class Application(RevisionedMixin):
 
     licence = models.ForeignKey('wildlifecompliance.WildlifeLicence',null=True,blank=True)
     #licence_pdf = models.ForeignKey(LicenceDocument, blank=True, null=True, related_name='licence_pdf')
+    pdf_licence = models.FileField(upload_to=update_pdf_licence_filename, blank=True, null=True)
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     proposed_decline_status = models.BooleanField(default=False)
