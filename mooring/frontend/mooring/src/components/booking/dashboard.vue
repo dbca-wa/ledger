@@ -258,7 +258,6 @@ export default {
                     },
                     {
                         mRender: function(data, type, full){
-                            console.log(full.regos);
                             if (full.regos.length > 0){
                                 var rego = full.regos[0].vessel;
                             } else {
@@ -270,12 +269,26 @@ export default {
                         searchable:false
                     },
                     {
-                        data:"campground_name",
-                        orderable:false,
-                        searchable:false
+                        mRender: function(data, type, full){
+                            var line = "<td>";
+                            for (var msb in full.mooringsite_bookings){
+                                line += '<tr>' + full.mooringsite_bookings[msb][0] + '<br/></tr>';
+                            }
+                            line += '</td>';
+                            return line;
+                        },
+                        orderable: false,
+                        searchable: false
                     },
                     {
-                        data:"campground_region",
+                        mRender: function(data, type, full){
+                            var line = '<td>';
+                            for (var msb in full.mooringsite_bookings){
+                                line += '<tr>' + full.mooringsite_bookings[msb][1] + '<br/></tr>';
+                            }
+                            line += '</td>';
+                            return line;
+                        },
                         orderable:false,
                         searchable:false
                     },
@@ -294,19 +307,29 @@ export default {
 //                        searchable:false
 //                   },
                     {
-                        data:"arrival",
                         orderable:false,
                         searchable:false,
                         mRender:function(data,type,full){
-                            return Moment(data).format('DD/MM/YYYY');
+                            var line = '<td>';
+                            for (var msb in full.mooringsite_bookings){
+                                var date = Moment(full.mooringsite_bookings[msb][2]).format('DD/MM/YYYY HH:mm');
+                                line += '<tr>' + date + '<br/></tr>';
+                            }
+                            line += '</td>';
+                            return line;
                         }
                     },
                     {
-                        data:"departure",
                         orderable:false,
                         searchable:false,
                         mRender:function(data,type,full){
-                            return Moment(data).format('DD/MM/YYYY');
+                            var line = '<td>';
+                            for (var msb in full.mooringsite_bookings){
+                                var date = Moment(full.mooringsite_bookings[msb][3]).format('DD/MM/YYYY HH:mm');
+                                line += '<tr>' + date + '<br/></tr>';
+                            }
+                            line += '</td>';
+                            return line;
                         }
                     },
                     {

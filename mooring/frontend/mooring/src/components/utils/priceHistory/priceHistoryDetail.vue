@@ -90,7 +90,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class='input-group date'>
-                            <input  name="period_start"  v-model="priceHistory.period_start" type='text' class="form-control" />
+                            <input  id='period_start' name="period_start"  v-model="priceHistory.period_start" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
                             </span>
@@ -98,6 +98,23 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Period end: </label>
+                    </div>
+                    <div class="col-md-4">
+                        <div class='input-group date'>
+                            <input  name="period_end"  v-model="priceHistory.period_end" type='text' class="form-control" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             <reason type="price" v-model="priceHistory.reason" ></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
@@ -109,6 +126,17 @@
                     </div>
                 </div>
             </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-md-2">
+                    </div>
+                    <div class="col-md-5" id='pricehistory_error' style='color: red; font-weight: bold;'>
+                    </div>
+                </div>
+            </div>
+
+
         </form>
     </div>
 
@@ -186,6 +214,7 @@ module.exports = {
                         vm.priceHistory.concession = rate.concession;
                         vm.priceHistory.child = rate.child;
                         vm.priceHistory.infant = rate.infant;
+                        $('#period_start').prop('disabled', true);
                     }
                 });
             }
@@ -196,6 +225,7 @@ module.exports = {
                 vm.priceHistory.concession = '0.00';
                 vm.priceHistory.child = '0.00';
                 vm.priceHistory.infant = '0.00';
+                $('#period_start').prop('disabled', false);
             }
         }
     },
@@ -241,6 +271,7 @@ module.exports = {
                     // infant:"required",
                     booking_period_id:"required",
                     period_start: "required",
+                    period_end: "required",
                     details: {
                         required: {
                             depends: function(el){
@@ -262,6 +293,7 @@ module.exports = {
                     infant: "Enter a infant rate",
                     booking_period_id: "Select a booking period",
                     period_start: "Enter a start date",
+                    period_end: "Enter a start end",
                     details: "Details required if other reason is selected"
                 },
                 showErrors: function(errorMap, errorList) {
@@ -290,21 +322,34 @@ module.exports = {
     },
     mounted: function() {
         var vm = this;
+        $('#pricehistory_error').html("");
         vm.$store.dispatch("fetchBookingPeriods");
         $('[data-toggle="tooltip"]').tooltip()
         vm.form = document.forms.priceForm;
         var picker = $(vm.form.period_start).closest('.date');
+        var picker2 = $(vm.form.period_end).closest('.date');
         var today = new Date();
         today.setDate(today.getDate()+1);
         var tomorrow = new Date(today);
+
         picker.datetimepicker({
             format: 'DD/MM/YYYY',
             useCurrent: false,
             minDate: tomorrow
         });
+        picker2.datetimepicker({
+            format: 'DD/MM/YYYY',
+            useCurrent: false,
+            minDate: tomorrow
+        });
+
         picker.on('dp.change', function(e){
             vm.priceHistory.period_start = picker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
+        picker2.on('dp.change', function(e){
+            vm.priceHistory.period_end = picker2.data('DateTimePicker').date().format('DD/MM/YYYY');
+        });
+
         vm.addFormValidations();
         vm.fetchRates();
         bus.$once('priceReasons',setReasons => {

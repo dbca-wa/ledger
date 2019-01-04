@@ -13,7 +13,7 @@ def belongs_to(user, group_name):
 
 
 def is_officer(user):
-    return user.is_authenticated() and (belongs_to(user, 'Marinastay Officers') or user.is_superuser)
+    return user.is_authenticated() and user.is_staff
 
 
 def is_customer(user):

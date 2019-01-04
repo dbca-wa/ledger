@@ -69,6 +69,7 @@ api_patterns = [
     url(r'^api/booking/create$', api.add_booking,name='add_booking'),
     url(r'^api/booking/delete$', api.delete_booking,name='del_booking'),
     url(r'^api/current_booking$', api.current_booking,name='current_booking'),
+    url(r'^api/global_settings$', api.GlobalSettingsView.as_view(), name='global_setting'),
     url(r'^api/',include(router.urls))
 ]
 

@@ -38,7 +38,8 @@ from mooring.models import (MooringAreaPriceHistory,
                                 AdmissionsRate,
                                 BookingPeriodOption,
                                 BookingPeriod,
-                                RegisteredVessels
+                                RegisteredVessels,
+                                GlobalSettings
                            )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -594,10 +595,12 @@ class RateDetailSerializer(serializers.Serializer):
     child = serializers.DecimalField(max_digits=5, decimal_places=2,  required=False, default='0.00')
     infant = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default='0.00')
     period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
+    period_end = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
     reason = serializers.IntegerField()
     details = serializers.CharField(required=False,allow_blank=True)
     campsite = serializers.IntegerField(required=False)
     booking_period_id = serializers.IntegerField(required=False)
+    price_id = serializers.IntegerField(required=False)
 
     def validate_rate(self, value):
         if value:
@@ -627,10 +630,11 @@ class BookingPeriodSerializer(serializers.ModelSerializer):
 class MooringAreaPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
     details = serializers.CharField(required=False,allow_blank=True)
+    #price_id = serializers.IntegerField(required=False)
     class Meta:
         model = MooringAreaPriceHistory
-        fields = ('id','date_start','date_end','rate_id','mooring','adult','concession','child','infant','editable','deletable','reason','details', 'booking_period_id')
-        read_only_fields = ('id','editable','deletable','mooring','adult','concession','child','infant')
+        fields = ('id','date_start','date_end','rate_id','mooring','adult','concession','child','infant','editable','deletable','reason','details', 'booking_period_id','price_id')
+        read_only_fields = ('id','editable','deletable','mooring','adult','concession','child','infant','price_id')
 
     def validate(self,obj):
         if obj.get('reason') == 1 and not obj.get('details'):
@@ -918,3 +922,20 @@ class OracleSerializer(serializers.Serializer):
     date = serializers.DateField(input_formats=['%d/%m/%Y','%Y-%m-%d'])
     override = serializers.BooleanField(default=False)
 
+class GlobalSettingsSerializer(serializers.ModelSerializer):
+    key = serializers.CharField(source='get_key_display')
+
+    class Meta:
+        model = GlobalSettings
+        fields = (
+            'key',
+            'value'
+        )
+
+class GlobalSettingsKeySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GlobalSettings
+        fields = (
+            'key',
+            'value'
+        )

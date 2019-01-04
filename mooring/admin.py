@@ -1,6 +1,49 @@
 from django.contrib import messages
 from django.contrib.gis import admin
+from django.contrib.admin import AdminSite
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group
+
+from django.db.models import Q
+
+from ledger.accounts import admin as ledger_admin
+from ledger.accounts.models import EmailUser
+from copy import deepcopy
+
 from mooring import models
+
+class MooringAdminSite(AdminSite):
+    site_header = 'Moorings Administration'
+    site_title = 'Moorings Bookings'
+
+mooring_admin_site = MooringAdminSite(name='mooringadmin')
+admin.site.unregister(EmailUser)
+@admin.register(EmailUser)
+class EmailUserAdmin(ledger_admin.EmailUserAdmin):
+    """
+    Override the EmailUserAdmin from ledger.accounts.admin to remove is_superuser checkbox field on Admin page
+    """
+    def get_fieldsets(self, request, obj=None):
+        """ Remove the is_superuser checkbox from the Admin page, is user is Mooring Admin or RIA Admin and NOT superuser."""
+        fieldsets = super(UserAdmin, self).get_fieldsets(request, obj)
+        if not obj:
+            return fieldsets
+        
+        if request.user.is_superuser:
+            return fieldsets
+
+        group = Group.objects.filter(name='Mooring Admin')
+        print group
+        if group and (group[0] in request.user.groups.all()):
+            print "group confirmed"
+            fieldsets = deepcopy(fieldsets)
+            for fieldset in fieldsets:
+                if 'is_superuser' in fieldset[1]['fields']:
+                    if type(fieldset[1]['fields']) == tuple:
+                        fieldset[1]['fields'] = list(fieldset[1]['fields'])
+                    fieldset[1]['fields'].remove('is_superuser')
+                    break
+        return fieldsets
 
 @admin.register(models.MooringsiteClass)
 class MooringsiteClassAdmin(admin.ModelAdmin):
@@ -52,8 +95,28 @@ class MooringsiteBookingInline(admin.TabularInline):
     model = models.MooringsiteBooking
     extra = 0
 
-@admin.register(models.RefundPricePeriod)
-class RefundPricePeriodAdmin(admin.ModelAdmin):
+@admin.register(models.MooringsiteRateLog)
+class MooringsiteRateLogAdmin(admin.ModelAdmin):
+    list_display = ('id','mooringarea','change_type','booking_period','date_start','date_end','reason','details','created')
+    ordering = ('-id',)
+
+@admin.register(models.ChangeGroup)
+class ChangeGroupAdmin(admin.ModelAdmin):
+    list_display = ('id','name')
+    ordering = ('-id',)
+
+@admin.register(models.ChangePricePeriod)
+class ChangePricePeriodAdmin(admin.ModelAdmin):
+    list_display = ('id','percentage','days')
+    ordering = ('-days',)
+
+@admin.register(models.CancelGroup)
+class CancelGroupAdmin(admin.ModelAdmin):
+    list_display = ('id','name')
+    ordering = ('-id',)
+
+@admin.register(models.CancelPricePeriod)
+class CancelPricePeriodAdmin(admin.ModelAdmin):
     list_display = ('id','percentage','days')
     ordering = ('-days',)
 
@@ -202,3 +265,7 @@ class RegisteredVessels(admin.ModelAdmin):
 class MooringAreaBookingRange(admin.ModelAdmin):
     list_display = ('id', 'range_start', 'range_end', 'campground_id')
     ordering = ('id',)
+
+@admin.register(models.GlobalSettings)
+class GlobalSettings(admin.ModelAdmin):
+    list_display = ('mooring_group', 'key')

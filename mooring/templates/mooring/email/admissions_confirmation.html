@@ -1,7 +1,9 @@
 {%  extends 'mooring/email/base_email.html' %}
 
 {% block content %}
-<p>Print or save this confirmation for presentation on arrival and at any time during your stay.</p>
+<p>Dear {{ booking.customer.first_name}} {{ booking.customer.last_name }},</p>
 
-<a href="{{my_bookings}}">View my Park Stay WA bookings</a>
+<p>Print or save the attached confirmation for presentation on arrival and at any time during your stay.</p>
+
+<a href="{{my_bookings}}">View my bookings</a>
 {% endblock %}

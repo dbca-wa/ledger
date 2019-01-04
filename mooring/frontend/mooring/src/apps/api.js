@@ -169,5 +169,6 @@ module.exports = {
     booking_period_options_edit : function(id){
         return process.env.PARKSTAY_URL + "/api/bookingPeriodOptions/" + id + "/";
     },
+    global_settings: process.env.PARKSTAY_URL + "/api/global_settings"
    
 };

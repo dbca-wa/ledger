@@ -24,7 +24,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class='input-group date' id='close_cg_range_start_time'>
-                            <input  name="closure_start_time" v-model="formdata.range_start_time" type='text' class="form-control" />
+                            <input  name="closure_start_time" v-model="formdata.range_start_time" type='text' value="00:00" class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-time"></span>
                             </span>
@@ -52,7 +52,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class='input-group date' id='close_cg_range_end_time'>
-                            <input  name="closure_end_time" v-model="formdata.range_end_time" type='text' class="form-control" />
+                            <input  name="closure_end_time" v-model="formdata.range_end_time" type='text' value="23:59" class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-time"></span>
                             </span>
@@ -72,8 +72,9 @@
                 </div>
             </div>
             <div class="row">
-                For full day closures set start time as 00:00 and end time as 23:59, with the same date.<br/>
-                For half day closures set both start and end time e.g. 08:00 and 14:00.
+                For full day closures set start time as 00:00 and end time as 23:59.<br/>
+                For half day closures set both start and end time e.g. 08:00 and 14:00.<br/>
+                Half day closure from 01/01/2019 - 05/01/2019 with times 8:00 - 14:00 will leave the mooring closed each of those dates from 8:00 - 14:00, it will be open from 14:00 - 8:00.
             </div>
         </form>
     </div>

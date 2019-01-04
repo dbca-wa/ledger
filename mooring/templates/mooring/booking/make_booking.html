@@ -606,6 +606,7 @@
             override_reasons: [],
             overrideDetail: '',
             isStaff: {{ staff }},
+            nonOnlineFee: 0,
             isFirst: true,
             toc: false,
             booking_id: {{ booking.id }},
@@ -810,7 +811,7 @@
                 vm.admissionFee = 0;
 
                 if (vm.nononline){
-                    vm.total += 15;
+                    vm.total += (vm.nonOnlineFee/100);
                 }
                 
 
@@ -1020,9 +1021,28 @@
 
             if (vm.isStaff){
                 vm.nononline = true;
+                data = {
+                    'key': '0'
+                }
+                $.ajax({
+                    url: "/api/global_settings",
+                    dataType: 'json',
+                    data: data,
+                    async: true,
+                    method: "GET",
+                    success: function(data, stat, xhr){
+                        if (data == "Error more than 1 group"){
+                            console.log("group error")
+                        } else {
+                            console.log(data.value);
+                            var intval = parseInt(data.value);
+                            intval *= 100;
+                            vm.nonOnlineFee = intval;
+                            vm.calculateTotal();
+                        }
+                    }
+                });
             }
-
-
             vm.calculateTotal();
         }
     });

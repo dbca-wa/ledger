@@ -11,6 +11,7 @@ from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.contrib.gis.db import models
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.db import IntegrityError, transaction, connection
 from django.utils import timezone
@@ -108,6 +109,7 @@ class PromoArea(models.Model):
 
 def update_mooring_map_filename(instance, filename):
     return 'mooring/mooring_maps/{}/{}'.format(instance.id,filename)
+
 
 class MooringArea(models.Model):
 
@@ -340,6 +342,7 @@ class MooringArea(models.Model):
                     cr = MooringsiteRate(**data)
                     cr.campsite = c
                     cr.save()
+                    MooringsiteRateLog.objects.create(change_type=0,mooringarea=self,booking_period=cr.booking_period, date_start=cr.date_start, date_end=cr.date_end,reason=cr.reason,details=cr.details)
         except Exception as e:
             raise
 
@@ -353,6 +356,7 @@ class MooringArea(models.Model):
                 for r in rates:
                     if r.campsite in campsites and r.update_level == 0:
                         r.update(_new)
+                        MooringsiteRateLog.objects.create(change_type=1,mooringarea=self,booking_period=_new['booking_period'], date_start=r.date_start, date_end=_new['date_end'],reason=_new['reason'],details=_new['details'])
         except Exception as e:
             raise
 
@@ -365,7 +369,9 @@ class MooringArea(models.Model):
             with transaction.atomic():
                 for r in rates:
                     if r.campsite in campsites and r.update_level == 0:
+                        MooringsiteRateLog.objects.create(change_type=2,mooringarea=self,booking_period=r.booking_period, date_start=r.date_start, date_end=r.date_end,reason=r.reason,details=r.details)
                         r.delete()
+
         except Exception as e:
             raise
 
@@ -447,6 +453,63 @@ class MooringAreaImage(models.Model):
             pass
         super(MooringAreaImage,self).delete(*args,**kwargs)
 
+
+class ChangePricePeriod(models.Model):
+
+    REFUND_CALCULATION_TYPE = (
+        (0, 'Percentage'),
+        (1, 'Fixed Price'),
+    )
+
+    calulation_type = models.SmallIntegerField(choices=REFUND_CALCULATION_TYPE, default=0)
+    percentage = models.FloatField()
+    amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    days = models.IntegerField()
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.calulation_type == 0:
+           return 'Percentage - {}% for {} day/s'.format(str(self.percentage), str(self.days))
+        else:
+           return 'Fixed Price - ${} for {} day/s'.format(str(self.amount), str(self.days))
+
+class ChangeGroup(models.Model):
+    name = models.CharField(max_length=100)
+    change_period = models.ManyToManyField(ChangePricePeriod, related_name='refund_period_options')
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class CancelPricePeriod(models.Model):
+
+    REFUND_CALCULATION_TYPE = (
+        (0, 'Percentage'),
+        (1, 'Fixed Price'),
+    )
+
+    calulation_type = models.SmallIntegerField(choices=REFUND_CALCULATION_TYPE, default=0)
+    percentage = models.FloatField()
+    amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    days = models.IntegerField()
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.calulation_type == 0:
+           return 'Percentage - {}% for {} day/s'.format(str(self.percentage), str(self.days))
+        else:
+           return 'Fixed Price - ${} for {} day/s'.format(str(self.amount), str(self.days))
+
+class CancelGroup(models.Model):
+    name = models.CharField(max_length=100)
+    cancel_period = models.ManyToManyField(CancelPricePeriod, related_name='cancel_period_options')
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
 class BookingPeriodOption(models.Model):
     period_name = models.CharField(max_length=15)
     option_description = models.CharField(max_length=255)
@@ -456,6 +519,8 @@ class BookingPeriodOption(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     finish_time = models.TimeField(null=True, blank=True)
     all_day = models.BooleanField(default=True)
+    change_group = models.ForeignKey('ChangeGroup',null=True,blank=True)
+    cancel_group = models.ForeignKey('CancelGroup',null=True,blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -601,6 +666,24 @@ class MooringAreaBookingRange(BookingRange):
                 raise ValidationError('The start date can\'t be in the past')
         super(MooringAreaBookingRange,self).clean(*args, **kwargs)
 
+class MooringsiteRateLog(models.Model):
+    CHANGE_TYPE = (
+        (0, 'New'),
+        (1, 'Change'),
+        (2, 'Delete')
+    )
+
+    change_type = models.SmallIntegerField(choices=CHANGE_TYPE, default=None, null=True, blank=True)
+    mooringarea= models.ForeignKey('MooringArea', on_delete=models.PROTECT, related_name='marinearea')
+    booking_period = models.ForeignKey(BookingPeriod, on_delete=models.PROTECT, null=True, blank=True)
+    date_start = models.DateField(default=date.today)
+    date_end = models.DateField(null=True, blank=True)
+    reason = models.ForeignKey('PriceReason')
+    details = models.TextField(null=True,blank=True)
+    created = models.DateTimeField(auto_now_add=True, null=True,blank=True)
+
+    def __str__(self):
+        return self.mooringarea
 
 class Mooringsite(models.Model):
     mooringarea = models.ForeignKey('MooringArea', db_index=True, on_delete=models.PROTECT, related_name='campsites')
@@ -990,7 +1073,7 @@ class MooringsiteRate(models.Model):
     reason = models.ForeignKey('PriceReason')
     details = models.TextField(null=True,blank=True)
     update_level = models.SmallIntegerField(choices=UPDATE_LEVEL_CHOICES, default=0)
-
+   
     def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
         return self.rate.adult*num_adult + self.rate.concession*num_concession + \
                 self.rate.child*num_child + self.rate.infant*num_infant
@@ -1015,7 +1098,7 @@ class MooringsiteRate(models.Model):
         today = datetime.now().date()
         if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
             return True
-        return False
+        return True 
 
     # Methods
     # =================================
@@ -1410,10 +1493,6 @@ class OutstandingBookingRecipient(models.Model):
     def __str__(self):
         return self.email
 
-class RefundPricePeriod(models.Model):
-    percentage = models.FloatField()
-    days = models.IntegerField()
-    created = models.DateTimeField(auto_now_add=True)
 
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
@@ -1488,6 +1567,9 @@ class RegisteredVessels(models.Model):
     expiry_au = models.DateField(null=True, blank=True)
     expiry_an = models.DateField(null=True, blank=True)
 
+    class Meta:
+        verbose_name_plural = "Registered Vessels"
+
     @property
     def admissionsPaid(self):
         if self.sticker_l > 0 or self.sticker_au > 0 or self.sticker_an > 0:
@@ -1535,9 +1617,12 @@ class AdmissionsReason(Reason):
 class DiscountReason(Reason):
     pass
 
+
 # VIEWS
 # =====================================
 class ViewPriceHistory(models.Model):
+
+    # Created because id was used as a primary_key to a foriegn model link as such need to create unique row id..
     id = models.IntegerField(primary_key=True)
     date_start = models.DateField()
     date_end = models.DateField()
@@ -1550,12 +1635,14 @@ class ViewPriceHistory(models.Model):
     details = models.TextField()
     reason_id = models.IntegerField()
     infant = models.DecimalField(max_digits=8, decimal_places=2)
+    price_id = models.IntegerField()
 
     class Meta:
         abstract =True
 
     # Properties
     # ====================================
+
     @property
     def deletable(self):
         today = datetime.now().date()
@@ -1566,7 +1653,10 @@ class ViewPriceHistory(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
+        #if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
+        if self.date_end is None:
+             return True
+        elif self.date_end > today:
             return True
         return False
 
@@ -1605,6 +1695,7 @@ class AdmissionsBooking(models.Model):
     noOfInfants = models.IntegerField()
     warningReferenceNo = models.CharField(max_length=200, blank=True)
     totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    created = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         email = ''
@@ -1682,6 +1773,43 @@ class AdmissionsRate(models.Model):
         if (self.period_start > today and not self.period_end) or ( self.period_start > today <= self.period_end):
             return True
         return False
+
+        
+class GlobalSettings(models.Model):
+    keys = (
+        (0, 'Non Online Booking Fee'),
+        (1, 'Max Stay'),
+        (2, 'Max Advance Booking'),
+        (3, 'Max Length Small'),
+        (4, 'Max Length Medium'),
+        (5, 'Max Length Large'),
+        (6, 'Max Draft Small'),
+        (7, 'Max Draft Medium'),
+        (8, 'Max Draft Large'),
+        (9, 'Max Beam Small'),
+        (10, 'Max Beam Medium'),
+        (11, 'Max Beam Large'),
+        (12, 'Max Weight Small'),
+        (13, 'Max Weight Medium'),
+        (14, 'Max Weight Large')
+    )
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
+    key = models.SmallIntegerField(choices=keys, blank=False, null=False)
+    value = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ('mooring_group', 'key',)
+        verbose_name_plural = "Global Settings"
+
+    def save(self, *args, **kwargs):
+        try:
+            int(self.value)
+        except Exception as e:
+            pass
+        self.full_clean()
+        super(GlobalSettings,self).save(*args,**kwargs)
+
+        
 
 # LISTENERS
 # ======================================
