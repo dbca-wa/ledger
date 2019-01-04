@@ -3,9 +3,15 @@
     <!-- <div v-if="application" class="container" id="internalApplication"> -->
     <div v-if="application" id="internalApplication">
         <div class="row">
-            <h3>Application: {{ application.lodgement_number }}</h3>
-            <p>Licence category: {{ application.licence_category }}</p>
-            <!--<p>Activity Types: {{ application.activity_types }}</p>-->
+            <!--<span v-if="application.pdf_licence" style="float:right"> -->
+            <div v-if="pdf_exists" style="float:right">
+                <a :href="application.pdf_licence">Download Licence</a><br>
+                <a :href="application.pdf_licence"> <i class="fa fa-file-pdf-o" style="font-size:36px;color:red"></i> </a>
+            </div>
+            <div style="float:left">
+                <h3>Application: {{ application.lodgement_number }}</h3>
+                <p>Licence category: {{ application.licence_category }}</p>
+            </div>
         </div>
 
         <div class="col-md-9">
@@ -204,7 +210,10 @@ export default {
         },
         wc_version: function (){
             return this.$root.wc_version;
-        }
+        },
+        pdf_exists: function() {
+            return this.application.pdf_licence != null;
+        },
     },
     methods: {
         save: function(e) {
@@ -233,6 +242,7 @@ export default {
               )
             },err=>{
             });
+            //location.reload(true);
         },
 
 
@@ -244,12 +254,14 @@ export default {
             },err=>{
             });
         },
+
     },
     mounted: function() {
         let vm = this;
     },
     updated: function(){
         let vm = this;
+        $('.nav-pills a:first').tab('show'); // doing it this way since the tabs loop has no 'active' tab set
     },
     beforeRouteEnter: function(to, from, next) {
           Vue.http.get(`/api/application/${to.params.application_id}/internal_application.json`).then(res => {

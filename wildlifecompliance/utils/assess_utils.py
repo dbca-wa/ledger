@@ -6,7 +6,7 @@ from django.core.files.base import ContentFile, File
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from collections import OrderedDict
-from wildlifecompliance.components.applications.models import Application, ApplicationType, ApplicationActivityType, ApplicationDocument
+from wildlifecompliance.components.applications.models import Application, ApplicationType, ApplicationActivityType, ApplicationDocument, update_pdf_licence_filename
 from wildlifecompliance.components.licences.models import DefaultActivityType, WildlifeLicence, WildlifeLicenceClass, WildlifeLicenceActivity
 from wildlifecompliance.components.organisations.models import Organisation
 from ledger.accounts.models import OrganisationAddress
@@ -87,7 +87,7 @@ def create_licence(application, activity_name, new_app):
     licence = None
     activity=WildlifeLicenceActivity.objects.get(name=activity_name)
     licence_class = WildlifeLicenceClass.objects.get(short_name=application.licence_category)
-    #import ipdb; ipdb.set_trace()
+    import ipdb; ipdb.set_trace()
     if application.applicant_type == Application.APPLICANT_TYPE_ORGANISATION:
         qs_licence = WildlifeLicence.objects.filter(org_applicant_id=application.applicant_id, licence_class=licence_class)
         if qs_licence.exists():
@@ -162,7 +162,7 @@ def pdflatex(request, application):
     now = timezone.localtime(timezone.now())
     report_date = now
 
-    template = "wildlife_compliance_licence"
+    template = "wildlife_licence"
     response = HttpResponse(content_type='application/pdf')
     #texname = template + ".tex"
     #filename = template + ".pdf"
@@ -170,12 +170,13 @@ def pdflatex(request, application):
     #filename = template + "_" + request.user.username + ".pdf"
     texname = template + ".tex"
     filename = template + ".pdf"
+    #filename = template + "_" + report_date.strftime('%Y-%m-%d') + ".pdf"
     timestamp = now.isoformat().rsplit(
         ".")[0].replace(":", "")
-    if template == "wildlife_compliance_licence":
-        downloadname = "wildlife_compliance_licence_" + report_date.strftime('%Y-%m-%d') + ".pdf"
+    if template == "wildlife_licence":
+        downloadname = "wildlife_licence_" + report_date.strftime('%Y-%m-%d') + ".pdf"
     else:
-        downloadname = "wildlife_compliance_licence_" + template + "_" + report_date.strftime('%Y-%m-%d') + ".pdf"
+        downloadname = "wildlife_licence_" + template + "_" + report_date.strftime('%Y-%m-%d') + ".pdf"
     error_response = HttpResponse(content_type='text/html')
     errortxt = downloadname.replace(".pdf", ".errors.txt.html")
     error_response['Content-Disposition'] = (
@@ -210,8 +211,9 @@ def pdflatex(request, application):
         '{0}; filename="{1}"'.format(
             disposition, downloadname))
 
-    #import ipdb; ipdb.set_trace()
-    directory = os.path.join(settings.MEDIA_ROOT, 'wildlife_compliance_licence' + os.sep + str(application.id) + os.sep)
+    import ipdb; ipdb.set_trace()
+    url = os.path.join('applications' + os.sep + str(application.id) + os.sep + 'wildlife_licence' + os.sep)
+    directory = os.path.join(settings.MEDIA_ROOT + os.sep + 'applications' + os.sep + str(application.id) + os.sep + 'wildlife_licence' + os.sep)
     if not os.path.exists(directory):
         logger.debug("Making a new directory: {}".format(directory))
         os.makedirs(directory)
@@ -245,11 +247,11 @@ def pdflatex(request, application):
     subprocess.call(cmd)
 
 
-    #licence_pdf = ApplicationDocument.objects.create(application=application, _file='licence_pdf', can_delete=False)
-#    licence_pdf = ApplicationDocument.objects.create(application=application can_delete=False)
-    #licence_pdf.save(new_name, File(f))
-#    licence_pdf.save(filename, File( open(directory + filename).read() ))
-    #licence_pdf.save(filename, ContentFile( open(directory + filename).read() ))
+    #import ipdb; ipdb.set_trace()
+    application.pdf_licence.name = url + filename
+    application.pdf_licence._file = url + filename
+    application.save()
+
     logger.debug("Reading PDF output from {}".format(filename))
     #response.write(open(directory + filename).read())
     #logger.debug("Finally: returning PDF response.")

@@ -41,6 +41,9 @@ def update_application_doc_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/documents/{}'.format(
         instance.application.id, filename)
 
+def update_pdf_licence_filename(instance, filename):
+    return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id,filename)
+
 def replace_special_chars(input_str, new_char='_'):
     return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
 
@@ -445,6 +448,7 @@ class Application(RevisionedMixin):
         null=True,
         blank=True)
     #licence_pdf = models.ForeignKey(LicenceDocument, blank=True, null=True, related_name='licence_pdf')
+    pdf_licence = models.FileField(upload_to=update_pdf_licence_filename, blank=True, null=True)
 
     previous_application = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
