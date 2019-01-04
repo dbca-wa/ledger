@@ -21,7 +21,11 @@ from wildlifecompliance.components.organisations.emails import (
                         send_organisation_contact_suspend_email_notification,
                         send_organisation_reinstate_email_notification,
                         send_organisation_contact_decline_email_notification,
-                        send_organisation_request_decline_email_notification
+                        send_organisation_request_decline_email_notification,
+                        send_organisation_request_email_notification,
+                        send_organisation_request_link_email_notification,
+                        send_organisation_request_decline_admin_email_notification,
+                        send_organisation_request_accept_admin_email_notification
                     )
 
 @python_2_unicode_compatible
@@ -347,6 +351,15 @@ class Organisation(models.Model):
     def _generate_pin(self):
         return random_generator()
 
+    def send_organisation_request_link_notification(self, request):
+        # Notify each Admin member of request to be linked to org.
+        contacts = OrganisationContact.objects.filter(organisation_id=self.id,
+                                                      user_role='organisation_admin',
+                                                      user_status='active',
+                                                      is_admin=True)
+        recipients = [c.email for c in contacts]
+        send_organisation_request_link_email_notification(self, request, recipients)
+
     @staticmethod
     def existance(abn):
         exists = True
@@ -665,6 +678,11 @@ class OrganisationRequest(models.Model):
 
         # send email to requester
         send_organisation_request_accept_email_notification(self, org, request)
+        # Notify other Organisation Access Group members of acceptance.
+        group = OrganisationAccessGroup.objects.first()
+        if group and group.filtered_members.exclude(email=request.user.email):
+            recipients = [c.email for c in group.filtered_members.exclude(email=request.user.email)]
+            send_organisation_request_accept_admin_email_notification(self, request, recipients)
 
     def amendment_request(self, request):
         with transaction.atomic():
@@ -731,7 +749,19 @@ class OrganisationRequest(models.Model):
             )
             self.log_user_action(OrganisationRequestUserAction.ACTION_DECLINE_REQUEST.format('{} {}({})'.format(request.user.first_name,request.user.last_name,request.user.email)),request)
             send_organisation_request_decline_email_notification(self,request)
+            # Notify other members of organisation access group of decline.
+            group = OrganisationAccessGroup.objects.first()
+            if group and group.filtered_members.exclude(email=request.user.email):
+                recipients = [c.email for c in group.filtered_members.exclude(email=request.user.email)]
+                send_organisation_request_decline_admin_email_notification(self, request, recipients)
 
+    def send_organisation_request_email_notification(self, request):
+        # user submits a new organisation request
+        # send email to organisation access group
+        group = OrganisationAccessGroup.objects.first()
+        if group and group.filtered_members:
+            org_access_recipients = [m.email for m in group.filtered_members]
+            send_organisation_request_email_notification(self, request, org_access_recipients)
 
     def log_user_action(self, action, request):
         return OrganisationRequestUserAction.log_action(self, action, request.user)
@@ -751,9 +781,14 @@ class OrganisationAccessGroup(models.Model):
         all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
         return all_members
 
+    @property
+    def filtered_members(self):
+        return self.members.all()
+
     class Meta:
         app_label = 'wildlifecompliance'
-        
+        verbose_name_plural = 'Organisation Access Group'
+
 class OrganisationRequestUserAction(UserAction):
     ACTION_LODGE_REQUEST = "Lodge request {}"
     ACTION_ASSIGN_TO = "Assign to {}"

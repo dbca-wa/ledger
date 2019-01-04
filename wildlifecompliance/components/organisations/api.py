@@ -61,6 +61,7 @@ from wildlifecompliance.components.applications.serializers import (
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_address_updated_email_notification,
                         send_organisation_id_upload_email_notification,
+                        send_organisation_request_email_notification,
                     )
 
 
@@ -132,8 +133,11 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = OrganisationPinCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)} 
-            return Response(data);
+            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)}
+            if data['valid']:
+                # Notify each Admin member of request.
+                instance.send_organisation_request_link_notification(request)
+            return Response(data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -791,6 +795,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 instance = serializer.save()
                 instance.log_user_action(OrganisationRequestUserAction.ACTION_LODGE_REQUEST.format(instance.id),request)
+                instance.send_organisation_request_email_notification(request)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
