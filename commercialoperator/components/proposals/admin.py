@@ -120,6 +120,11 @@ class VehicleAdmin(admin.ModelAdmin):
     list_display = ['access_type','capacity', 'rego', 'license', 'rego_expiry']
     ordering = ('access_type',)
 
+@admin.register(models.Vessel)
+class VesselAdmin(admin.ModelAdmin):
+    list_display = ['nominated_vessel','spv_no', 'hire_rego', 'craft_no', 'size', 'proposal']
+    ordering = ('nominated_vessel',)
+
 # @admin.register(ActivityType)
 # class ActivityTypeAdmin(admin.ModelAdmin):
 #     list_display = ['name', 'visible']

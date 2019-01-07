@@ -1304,6 +1304,22 @@ class Vehicle(models.Model):
     def __str__(self):
         return self.rego
 
+@python_2_unicode_compatible
+class Vessel(models.Model):
+    nominated_vessel = models.CharField(max_length=200, blank=True)
+    spv_no = models.CharField(max_length=200, blank=True)
+    hire_rego = models.CharField(max_length=200, blank=True)
+    craft_no = models.CharField(max_length=200, blank=True)
+    size = models.CharField(max_length=200, blank=True)  
+    #rego_expiry= models.DateField(blank=True, null=True)
+    proposal = models.ForeignKey(Proposal, related_name='vessels')
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.nominated_vessel
+
 class ProposalRequest(models.Model):
     proposal = models.ForeignKey(Proposal)
     subject = models.CharField(max_length=200, blank=True)

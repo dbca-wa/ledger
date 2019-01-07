@@ -17,6 +17,7 @@ from commercialoperator.components.proposals.models import (
                                     ProposalPark,
                                     ProposalParkActivity,
                                     Vehicle,
+                                    Vessel
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -624,6 +625,11 @@ class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry', 'proposal')
+
+class VesselSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vessel
+        fields = '__all__'
 
 class SaveVehicleSerializer(serializers.ModelSerializer):
     #access_type= AccessTypeSerializer()

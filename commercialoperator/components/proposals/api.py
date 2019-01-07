@@ -42,6 +42,7 @@ from commercialoperator.components.proposals.models import (
     AmendmentRequest,
     AmendmentReason,
     Vehicle,
+    Vessel,
 
 )
 from commercialoperator.components.proposals.serializers import (
@@ -68,6 +69,7 @@ from commercialoperator.components.proposals.serializers import (
     AmendmentRequestDisplaySerializer,
     SaveVehicleSerializer,
     VehicleSerializer,
+    VesselSerializer,
 )
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
@@ -526,6 +528,25 @@ class ProposalViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
+    def vessels(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.vessels
+            #qs = qs.filter(status = 'requested')
+            serializer = VesselSerializer(qs,many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
@@ -1453,5 +1474,9 @@ class VehicleViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+class VesselViewSet(viewsets.ModelViewSet):
+    queryset = Vessel.objects.all().order_by('id')
+    serializer_class = VesselSerializer
 
 
