@@ -140,11 +140,11 @@ from '@/utils/hooks'
                         e.preventDefault();
                     });
                     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-                        e.target.click();
                         var $anchor = $(this);
                         $('html, body').stop().animate({
                             scrollTop: ($($anchor.attr('href')).offset().top)
                           }, 1000, 'easeInOutExpo');
+                        e.stopPropagation();
                         e.preventDefault();
                     });
                 });
