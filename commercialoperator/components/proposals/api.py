@@ -1443,6 +1443,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
             serializer = SaveVehicleSerializer(instance, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            instance.proposal.log_user_action(ProposalUserAction.ACTION_EDIT_VEHICLE.format(instance.id),request)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -1461,7 +1462,8 @@ class VehicleViewSet(viewsets.ModelViewSet):
             #instance = self.get_object()
             serializer = SaveVehicleSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            instance=serializer.save()
+            instance.proposal.log_user_action(ProposalUserAction.ACTION_CREATE_VEHICLE.format(instance.id),request)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -1479,4 +1481,44 @@ class VesselViewSet(viewsets.ModelViewSet):
     queryset = Vessel.objects.all().order_by('id')
     serializer_class = VesselSerializer
 
+    @detail_route(methods=['post'])
+    def edit_vessel(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = VesselSerializer(instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            instance.proposal.log_user_action(ProposalUserAction.ACTION_EDIT_VESSEL.format(instance.id),request)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def create(self, request, *args, **kwargs):
+        try:
+            #instance = self.get_object()
+            serializer = VesselSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance=serializer.save()
+            instance.proposal.log_user_action(ProposalUserAction.ACTION_CREATE_VESSEL.format(instance.id),request)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 

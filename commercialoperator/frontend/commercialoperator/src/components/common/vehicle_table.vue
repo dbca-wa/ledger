@@ -137,6 +137,7 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             links +=  `<a href='#${full.id}' data-edit-vehicle='${full.id}'>Edit Vehicle</a><br/>`;
+                            links +=  `<a href='#${full.id}' data-discard-vehicle='${full.id}'>Discard</a><br/>`;
                         //     if (!vm.is_external){
                         //         if (full.can_user_view) {
                         //             links +=  `<a href='/internal/compliance/${full.id}'>Process</a><br/>`;
@@ -247,12 +248,43 @@ export default {
             this.$refs.edit_vehicle.fetchVehicle(id);
             this.$refs.edit_vehicle.isModalOpen = true;
         },
+        discardVehicle:function (vehicle_id) {
+            let vm = this;
+            swal({
+                title: "Discard Vehicle",
+                text: "Are you sure you want to discard this vehicle?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: 'Discard Vehicle',
+                confirmButtonColor:'#d9534f'
+            }).then(() => {
+                vm.$http.delete(api_endpoints.discard_vehicle(vehicle_id))
+                .then((response) => {
+                    swal(
+                        'Discarded',
+                        'Your vehicle has been discarded',
+                        'success'
+                    )
+                    vm.$refs.vehicle_datatable.vmDataTable.ajax.reload();
+                }, (error) => {
+                    console.log(error);
+                });
+            },(error) => {
+
+            });
+        },
         addEventListeners: function(){
             let vm = this;
             vm.$refs.vehicle_datatable.vmDataTable.on('click', 'a[data-edit-vehicle]', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('data-edit-vehicle');
                 vm.editVehicle(id);
+            });
+            // External Discard listener
+            vm.$refs.vehicle_datatable.vmDataTable.on('click', 'a[data-discard-vehicle]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-discard-vehicle');
+                vm.discardVehicle(id);
             });
         },
         refreshFromResponse: function(){

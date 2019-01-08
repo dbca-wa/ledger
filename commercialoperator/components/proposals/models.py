@@ -1505,7 +1505,12 @@ class ProposalUserAction(UserAction):
     ACTION_SURRENDER_APPROVAL = "Surrender approval for proposal {}"
     ACTION_RENEW_PROPOSAL = "Create Renewal proposal for proposal {}"
     ACTION_AMEND_PROPOSAL = "Create Amendment proposal for proposal {}"
-
+    #Vehicle
+    ACTION_CREATE_VEHICLE = "Create Vehicle {}"
+    ACTION_EDIT_VEHICLE = "Edit Vehicle {}"
+    #Vessel
+    ACTION_CREATE_VESSEL = "Create Vessel {}"
+    ACTION_EDIT_VESSEL= "Edit Vessel {}"
 
 
     class Meta:

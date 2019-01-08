@@ -58,7 +58,7 @@
                <Profile :isApplication="true"></Profile>
               
                 <Organisation :org_id="proposal.applicant" :isApplication="true"></Organisation> 
-                <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
+                <!-- <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant> -->
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
                 <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand"></ActivitiesLand>

@@ -637,3 +637,4 @@ class SaveVehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry', 'proposal')
+
