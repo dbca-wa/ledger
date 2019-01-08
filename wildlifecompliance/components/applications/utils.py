@@ -7,7 +7,7 @@ from wildlifecompliance.components.applications.models import ApplicationDocumen
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
 import json
 from wildlifecompliance.components.licences.models import WildlifeLicenceActivity, DefaultActivity, WildlifeLicenceActivityType, DefaultActivityType
-from wildlifecompliance.utils.assess_utils import create_app_activity_type_model, create_licence, pdflatex
+from wildlifecompliance.utils.assess_utils import create_app_activity_type_model, create_licence, pdflatex, get_activity_type_sys_answers
 import traceback
 
 
@@ -490,6 +490,7 @@ def save_assess_data(instance,request,viewset):
     with transaction.atomic():
         try:
             #import ipdb; ipdb.set_trace()
+            #instance.licences.all().last().licence_sequence
             new_app = True
             for activity_type in instance.activity_types:
                 code = WildlifeLicenceActivity.objects.get(name=activity_type.activity_name).code.lower()
@@ -513,15 +514,17 @@ def save_assess_data(instance,request,viewset):
                 else:
                     activity_type.processed = False
 
-
-                activity_type.save()
-
-                #import ipdb; ipdb.set_trace()
-                if can_process:
+                import ipdb; ipdb.set_trace()
+                if can_process and not activity_type.processed:
                     # create licences
+                    activity_type.processed = True
+                    if not activity_type.data:
+                        activity_type.data = [add_editable_items(activity_type)]
+
                     create_licence(instance, activity_type.activity_name, new_app)
                     new_app = False
 
+                activity_type.save()
         except:
             raise
 
@@ -530,6 +533,11 @@ def save_assess_data(instance,request,viewset):
         pdflatex(request, instance)
 
     return
+
+
+def add_editable_items(activity_type):
+    return {'editable': get_activity_type_sys_answers(activity_type)} 
+
 
 def get_activity_type_schema(activity_ids):
     schema_activity = []

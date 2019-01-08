@@ -20,6 +20,14 @@
         <Checkbox :name="activity_type.code+'_to_be_issued'" :value="activity_type.to_be_issued" label="To be issued" :id="'id_'+activity_type.code+'_to_be_issued'" />
         <Checkbox :name="activity_type.code+'_processed'" :value="activity_type.processed" label="Processed" :id="'id_'+activity_type.code+'_processed'" />
 
+        <div v-for="editable_element in render_editable_elements()">
+            <div v-html="editable_element">
+                {{ editable_element }}
+            </div>
+        </div>
+
+        // https://medium.freecodecamp.org/an-introduction-to-dynamic-list-rendering-in-vue-js-a70eea3e321
+        <Table v-for="editable_element in render_editable_elements()" :name="editable_element['']"/>
 <!--
         <Radio name="activity_type.code+'_approve'" value="activity_type.approve" label="Approve/Decline" id="'id_'+activity_type.code+'_approve'" :options="activity_type.approve_options" />
         <Radio name="activity_type.code+'_approve'" value="activity_type.approve" label="Approve/Decline" id="'id_'+activity_type.code+'_approve'" :options="activity_type.approve_options" />
@@ -53,10 +61,11 @@
     import DateField from '@/components/forms/date-field.vue'
     import Checkbox from '@/components/forms/checkbox.vue'
     import Radio from '@/components/forms/radio.vue'
+    import Table from '@/components/forms/table.vue'
     export default {
         //props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly", "help_text_url", "help_text_assessor_url"],
         props:["activity_type", "application", "id"],
-        components: {TextField, TextArea, DateField, Checkbox, Radio},
+        components: {TextField, TextArea, DateField, Checkbox, Radio, Table},
         /*
         props:{
             activity_type:{
@@ -70,13 +79,72 @@
         },
         */
         data:function () {
+
+			if ('editable' in vm.activity_type.data[0]) {
+				var data = vm.activity_type.data[0]['editable'];
+				for (var k in data) {
+					if (data[k]['type'] == 'table') {
+						vm.elements = {'table': {
+								name: k,
+								value: data[k]['answer'],
+								label: data[k]['label']
+							}
+						}
+					}
+				}
+			}
+
             return{
                 values:null
             }
         },
         methods:{
+			render_editable_elements: function() {
+				let vm = this;
+                var _elements = [];
+				if ('editable' in vm.activity_type.data[0]) {
+                    var data = vm.activity_type.data[0]['editable'];
+                    for (var k in data) {
+                        if (data[k]['type'] == 'table') {
+							var section_name = k;
+							var value = data[k]['answer'];
+							var label = data[k]['label'];
+                            //_elements.push(
+                            //    //<TextArea readonly={readonly} name={k} value={data[k]['answer']} label={data[k]['label']} />
+                            //    "<Table name='"+ section_name +"' value='"+ value +"' label='"+ label +"' />"
+                            //)
+							vm.element = {
+									type: 'table',
+									name: section_name,
+									value: value,
+									label: label
+							}
+
+
+                        }
+                    }
+                }
+                return _elements;
+			},
+			process: function(e) {
+				let vm = this;
+				vm.form = document.forms.new_application;
+				let formData = new FormData(vm.form);
+				formData.append('action', 'process');
+				vm.$http.post(vm.application_form_url,formData).then(res=>{
+				  swal(
+					'Processed',
+					'Your application has been processed',
+					'success'
+				  )
+				},err=>{
+				});
+			},
         },
         computed: {
+            application_iseditable_url: function() {
+              return (this.application) ? `/api/application/${this.application.id}/is_editable_data.json` : '';
+            },
         },
 
         mounted:function () {

@@ -5,8 +5,8 @@
         <div class="row">
             <!--<span v-if="application.pdf_licence" style="float:right"> -->
             <div v-if="pdf_exists" style="float:right">
-                <a :href="application.pdf_licence">Download Licence</a><br>
-                <a :href="application.pdf_licence"> <i class="fa fa-file-pdf-o" style="font-size:36px;color:red"></i> </a>
+                <a :href="application.pdf_licence" target="_blank">Download Licence</a><br>
+                <a :href="application.pdf_licence" target="_blank"> <i class="fa fa-file-pdf-o" style="font-size:36px;color:red"></i> </a>
             </div>
             <div style="float:left">
                 <h3>Application: {{ application.lodgement_number }}</h3>

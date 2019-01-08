@@ -157,6 +157,52 @@ def all_related_applications(application):
     app_ids = WildlifeLicence.objects.filter(licence_number=application.licences.all().last().licence_number).values_list('current_application_id', flat=True).distinct()
     return Application.objects.filter(id__in=app_ids).order_by('id')
 
+def get_activity_type_sys_questions(activity_name):
+    """
+    Looks up the activity type schema and return all questions (marked isEditable) that need to be added to the Excel WB.
+    Allows us to know the block size for each activity type in the WB (start_col, end_col)
+    """
+    ordered_dict=OrderedDict([])
+
+    schema = WildlifeLicenceActivity.objects.get(name=activity_name).schema
+    #import ipdb; ipdb.set_trace()
+    res = search_multiple_keys(schema, 'isEditable', ['name', 'label', 'type'])
+    #[ordered_dict.update([(i['name'],i['label'])]) for i in res]
+    [ordered_dict.update([(i['name'],{'type': i['type'], 'label':i['label']})]) for i in res]
+
+    return ordered_dict
+
+def get_tab_index(activity_type):
+    #import ipdb; ipdb.set_trace()
+    application = activity_type.application
+    activity_name = activity_type.name # 'Fauna Other - Importing'
+    return application.data[0][activity_name][0].keys()[0].split('_')[1]
+
+def get_activity_type_sys_answers(activity_type):
+    """
+    Looks up the activity type return all answers for question marked isEditable that need to be added to the Excel WB.
+
+    get_activity_type_sys_answers(ApplicationActivityType.objects.get(id=50))
+    """
+    ordered_dict=OrderedDict([])
+    if activity_type:
+        questions = get_activity_type_sys_questions(activity_type.activity_name)
+        for k,v in questions.iteritems():
+            # k - section name
+            # v - question
+
+            # must append tab index to 'section name'
+            k = k + '_' + get_tab_index(activity_type) #, activity_name)
+            s = SearchUtils(activity_type.application)
+            answer = s.search_value(k)
+            v.update({'answer':answer})
+            #import ipdb; ipdb.set_trace()
+            #ordered_dict.update(OrderedDict([(k,answer)]))
+            ordered_dict.update(OrderedDict([(k, v)]))
+
+    return ordered_dict
+
+
 def pdflatex(request, application):
 
     now = timezone.localtime(timezone.now())

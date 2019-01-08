@@ -103,6 +103,19 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
+#    @detail_route(methods=['GET',])
+#    def is_editable_fields(self, request, *args, **kwargs):
+#        try:
+#            instance = self.get_object()    
+#            editable_items = {}
+#            for i in instance.activity_types:
+#                editable_items.update({i.activity_name:get_activity_type_sys_answers(i)})
+#            return Response([editable_items])
+#            #return Response(['a','b'])
+#        except Exception as e:
+#            print(traceback.print_exc())
+#            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def process_document(self, request, *args, **kwargs):
@@ -334,6 +347,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = InternalApplicationSerializer(
             instance, context={'request': request})
+
+#        editable_items = {}
+#        for i in instance.activity_types:
+#            editable_items.update({i.activity_name:get_activity_type_sys_answers(i)})
+#
+#        serializer.data.append({'editable':editable_items})
+
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
