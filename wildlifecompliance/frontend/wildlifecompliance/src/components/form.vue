@@ -117,9 +117,6 @@ from '@/utils/hooks'
                    _tabid = _tabid*1;
                    _settab = '#tabs-section li:nth-child(' + ++_tabid + ') a';
                    $(_settab).click();
-                   $('html, body').stop().animate({
-                       scrollTop: ($($anchor.attr('href')).offset().top)
-                   }, 1000, 'easeInOutExpo');
                    event.preventDefault();
                });
                $(window).scroll(function () {
@@ -135,12 +132,20 @@ from '@/utils/hooks'
                 });
                 $(document).ready(function(){
                     $('.dropdown-submenu a.section-menu').on("click", function(e){
-                        $(this).next('ul').toggle();
+                        if ($(this).next('ul').is(':hidden')){
+                          if ($('a.section-menu').siblings('ul').is(':visible')){
+                            $('a.section-menu').siblings('ul').hide();
+                          }
+                          $(this).next('ul').toggle()
+                        }
                         e.stopPropagation();
                         e.preventDefault();
                     });
                     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
                         var $anchor = $(this);
+                        $('a[class="dropdown-toggle"]').siblings('ul[id="scrollspy-section"]').show();
+                        //$('a[class="section-menu"]').eq(1).children().show()
+                        //console.log($('a[class="section-menu"]').eq(1).children());
                         $('html, body').stop().animate({
                             scrollTop: ($($anchor.attr('href')).offset().top)
                           }, 1000, 'easeInOutExpo');
