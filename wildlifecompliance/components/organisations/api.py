@@ -562,6 +562,14 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     queryset = OrganisationRequest.objects.all()
     serializer_class = OrganisationRequestSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return OrganisationRequest.objects.all()
+        elif is_customer(self.request):
+            return user.organisationrequest_set.all()
+        return OrganisationRequest.objects.none()
+
     @list_route(methods=['GET',])
     def datatable_list(self, request, *args, **kwargs):
         try:
@@ -821,13 +829,14 @@ class OrganisationAccessGroupMembers(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self,request, format=None):
         members = []
-        group = OrganisationAccessGroup.objects.first()
-        if group:
-            for m in group.all_members:
-                members.append({'name': m.get_full_name(),'id': m.id})
-        else:
-            for m in EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True):
-                members.append({'name': m.get_full_name(),'id': m.id})
+        if is_internal(request):
+            group = OrganisationAccessGroup.objects.first()
+            if group:
+                for m in group.all_members:
+                    members.append({'name': m.get_full_name(),'id': m.id})
+            else:
+                for m in EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True):
+                    members.append({'name': m.get_full_name(),'id': m.id})
         return Response(members)
 
 
@@ -835,8 +844,19 @@ class OrganisationContactViewSet(viewsets.ModelViewSet):
     serializer_class = OrganisationContactSerializer
     queryset = OrganisationContact.objects.all()
 
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return OrganisationContact.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.wildlifecompliance_organisations.all()]
+            return OrganisationContact.objects.filter( Q(organisation_id__in = user_orgs) )
+        return OrganisationContact.objects.none()
 
 class MyOrganisationsViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
     serializer_class = MyOrganisationsSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        return user.wildlifecompliance_organisations.all()
