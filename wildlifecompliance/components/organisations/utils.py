@@ -58,7 +58,6 @@ def can_relink(organisation, user):
     try:
         _can_relink = OrganisationContact.objects.filter(organisation_id=organisation.id,
                                                          email=user.email,
-                                                         user_role__in=('organisation_admin', 'consultant'),
                                                          user_status='unlinked').exists()
     except OrganisationContact.DoesNotExist:
         _can_relink = False
