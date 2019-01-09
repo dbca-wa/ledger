@@ -16,6 +16,7 @@ from wildlifecompliance.components.organisations.utils import (
                                 is_consultant,
                                 can_change_role,
                                 can_relink,
+                                can_approve,
                             )
 from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
@@ -110,6 +111,9 @@ class OrganisationCheckExistSerializer(serializers.Serializer):
             org = Organisation.objects.get(id=data['id'])
             if can_relink(org, user):
                 raise serializers.ValidationError('Please contact {} to re-link to Organisation'
+                                                  .format(data['first_five']))
+            if can_approve(org, user):
+                raise serializers.ValidationError('Please contact {} to Approve your request'
                                                   .format(data['first_five']))
         return data
 

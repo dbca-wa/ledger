@@ -54,6 +54,7 @@ def can_admin_org(organisation,user):
 
 def can_relink(organisation, user):
     from wildlifecompliance.components.organisations.models import OrganisationContact
+    ''' Check user contact can be relinked to the Organisation. '''
     _can_relink = False
     try:
         _can_relink = OrganisationContact.objects.filter(organisation_id=organisation.id,
@@ -62,6 +63,19 @@ def can_relink(organisation, user):
     except OrganisationContact.DoesNotExist:
         _can_relink = False
     return _can_relink
+
+
+def can_approve(organisation, user):
+    from wildlifecompliance.components.organisations.models import OrganisationContact
+    ''' Check user contact linkage to the Organisation can be approved. '''
+    _can_approve = False
+    try:
+        _can_approve = OrganisationContact.objects.filter(organisation_id=organisation.id,
+                                                          email=user.email,
+                                                          user_status__in=('declined', 'pending')).exists()
+    except OrganisationContact.DoesNotExist:
+        _can_approve = False
+    return _can_approve
 
 
 def is_consultant(organisation,user):
