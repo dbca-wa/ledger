@@ -97,23 +97,24 @@ from '@/utils/hooks'
                 var _mnu1 = '';
                 var _mnu2 = '';
                 Renderer.sections.map((sec,i) => {
-                   if (parseInt(sec.name.split('_')[1])===_tabid) {
+                   _settab = sec.name.split('_').pop();
+                   if (_settab*1===_tabid) {
                       if (_tabid !== 0) {
                         _mnu1 = _mnu1 + _mnu2 + '</ul></li>';
                         _mnu2 = '';
                       }
                       _tabid++;
-                      _mnu1 = _mnu1 + `<li class='dropdown-submenu'><a tabindex='-1' class='section-menu' href='#section-submenu' data-toggle='collapse' aria-expanded='false'>` + tabs[parseInt(sec.name.split('_')[1])].name + `<span class='caret'></span></a><ul class='dropdown-menu' id='section-submenu' >` +_mnu2;
+                      _mnu1 = _mnu1 + `<li class='dropdown-submenu'><a tabindex='-1' class='section-menu' href='#section-submenu' data-toggle='collapse' aria-expanded='false'>` + tabs[_settab*1].name + `<span class='caret'></span></a><ul class='dropdown-menu' id='section-submenu' >` +_mnu2;
                    };
                    _mnu2 = _mnu2 + `<li><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`;
                 });
                 _mnu1 = _mnu1 + _mnu2 + '</ul></li>';
                 _tabid = 0;
                 $('#scrollspy-section').append(_mnu1);
-
                 $('a.page-scroll').bind('click', function(event) {
                    var $anchor = $(this);
-                   _tabid = parseInt(($anchor.attr('href')).split('_')[1]);
+                   _tabid = ($anchor.attr('href')).split('_').pop();
+                   _tabid = _tabid*1;
                    _settab = '#tabs-section li:nth-child(' + ++_tabid + ') a';
                    $(_settab).click();
                    $('html, body').stop().animate({
@@ -135,6 +136,14 @@ from '@/utils/hooks'
                 $(document).ready(function(){
                     $('.dropdown-submenu a.section-menu').on("click", function(e){
                         $(this).next('ul').toggle();
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+                    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                        var $anchor = $(this);
+                        $('html, body').stop().animate({
+                            scrollTop: ($($anchor.attr('href')).offset().top)
+                          }, 1000, 'easeInOutExpo');
                         e.stopPropagation();
                         e.preventDefault();
                     });
