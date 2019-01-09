@@ -25,6 +25,7 @@ from django.core.cache import cache
 from ledger.accounts.models import EmailUser,OrganisationAddress
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
+from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.organisations.models import  (   
                                     Organisation,
                                     OrganisationContact,
@@ -76,6 +77,14 @@ from wildlifecompliance.components.applications.models import (
 class OrganisationViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
     serializer_class = OrganisationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Organisation.objects.all()
+        elif is_customer(self.request):
+            return user.wildlifecompliance_organisations.all()
+        return Organisation.objects.none()
 
     @detail_route(methods=['GET',])
     def contacts(self, request, *args, **kwargs):
