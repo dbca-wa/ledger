@@ -2,7 +2,6 @@ from django.conf import settings
 from ledger.accounts.models import EmailUser,Address,Document
 # from wildlifecompliance.components.applications.utils import amendment_requests
 from wildlifecompliance.components.applications.models import (
-                                    ApplicationType,
                                     Application,
                                     ApplicationUserAction,
                                     ApplicationLogEntry,
@@ -26,19 +25,6 @@ from wildlifecompliance import helpers, settings
 
 from rest_framework import serializers
 
-class ApplicationTypeSerializer(serializers.ModelSerializer):
-    activities = serializers.SerializerMethodField()
-    class Meta:
-        model = ApplicationType
-        fields = (
-            'id',
-            'schema',
-            'activities'
-        )
-
-
-    def get_activities(self,obj):
-        return obj.activities.names()
 
 class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:

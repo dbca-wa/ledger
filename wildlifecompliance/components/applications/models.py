@@ -45,15 +45,6 @@ def update_application_doc_filename(instance, filename):
 def update_application_comms_log_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/communications/{}/{}'.format(instance.log_entry.application.id,instance.id,filename)
 
-class ApplicationType(models.Model):
-    schema = JSONField()
-    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
-    site = models.OneToOneField(Site, default='1')
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-
 class TaggedApplicationAssessorGroupRegions(TaggedItemBase):
     content_object = models.ForeignKey("ApplicationAssessorGroup")
 

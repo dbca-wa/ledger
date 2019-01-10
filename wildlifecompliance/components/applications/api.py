@@ -36,7 +36,6 @@ from wildlifecompliance.components.applications.utils import save_proponent_data
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.components.applications.models import (
-    ApplicationType,
     Application,
     ApplicationDocument,
     Referral,
@@ -49,7 +48,6 @@ from wildlifecompliance.components.applications.models import (
 )
 from wildlifecompliance.components.applications.serializers import (
     SendReferralSerializer,
-    ApplicationTypeSerializer,
     ApplicationSerializer,
     InternalApplicationSerializer,
     SaveApplicationSerializer,
@@ -74,17 +72,6 @@ from wildlifecompliance.components.applications.serializers import (
     DTAssessmentSerializer
 )
 
-
-class GetApplicationType(views.APIView):
-    renderer_classes = [JSONRenderer, ]
-
-    def get(self, request, format=None):
-        _type = ApplicationType.objects.first()
-        if _type:
-            serializer = ApplicationTypeSerializer(_type)
-            return Response(serializer.data)
-        else:
-            return Response({'error': 'There is currently no application type.'}, status=status.HTTP_404_NOT_FOUND)
 
 class GetEmptyList(views.APIView):
     renderer_classes = [JSONRenderer, ]
