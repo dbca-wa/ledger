@@ -113,7 +113,7 @@ from '@/utils/hooks'
                 $('#scrollspy-section').append(_mnu1);
                 $('a.page-scroll').bind('click', function(event) {
                    var $anchor = $(this);
-                   _tabid = ($anchor.attr('href')).split('_').pop();
+                   var _tabid = ($anchor.attr('href')).split('_').pop();
                    _tabid = _tabid*1;
                    _settab = '#tabs-section li:nth-child(' + ++_tabid + ') a';
                    $(_settab).click();
@@ -132,23 +132,22 @@ from '@/utils/hooks'
                 });
                 $(document).ready(function(){
                     $('.dropdown-submenu a.section-menu').on("click", function(e){
-                        if ($(this).next('ul').is(':hidden')){
-                          if ($('a.section-menu').siblings('ul').is(':visible')){
-                            $('a.section-menu').siblings('ul').hide();
-                          }
-                          $(this).next('ul').toggle()
-                        }
+                        $('a.section-menu').siblings('ul').hide();
+                        $(this).next('ul').show();
                         e.stopPropagation();
                         e.preventDefault();
                     });
                     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
                         var $anchor = $(this);
-                        $('a[class="dropdown-toggle"]').siblings('ul[id="scrollspy-section"]').show();
-                        //$('a[class="section-menu"]').eq(1).children().show()
-                        //console.log($('a[class="section-menu"]').eq(1).children());
-                        $('html, body').stop().animate({
-                            scrollTop: ($($anchor.attr('href')).offset().top)
-                          }, 1000, 'easeInOutExpo');
+                        var _sect_mnu = $('a[class="dropdown-toggle"]').siblings('ul[id="scrollspy-section"]');
+                        var _tabid = $("ul#tabs-section li.active").index();
+                        //$('html, body').stop().animate({
+                        //    scrollTop: ($($anchor.attr('href')).offset().top)
+                        //  }, 1000, 'easeInOutExpo');
+                        $(_sect_mnu).children().children('ul').hide();
+                        $(_sect_mnu).show();
+                        _sect_mnu = "ul#scrollspy-section li:nth-child(" + ++_tabid + ")";
+                        $(_sect_mnu).find('ul[id="section-submenu"]').show();
                         e.stopPropagation();
                         e.preventDefault();
                     });
