@@ -165,10 +165,14 @@ def get_activity_type_sys_questions(activity_name):
     ordered_dict=OrderedDict([])
 
     schema = WildlifeLicenceActivity.objects.get(name=activity_name).schema
-    #import ipdb; ipdb.set_trace()
-    res = search_multiple_keys(schema, 'isEditable', ['name', 'label', 'type'])
+    import ipdb; ipdb.set_trace()
+    res = search_multiple_keys(schema, 'isEditable', ['name', 'label', 'type', 'headers'])
     #[ordered_dict.update([(i['name'],i['label'])]) for i in res]
-    [ordered_dict.update([(i['name'],{'type': i['type'], 'label':i['label']})]) for i in res]
+    for i in res:
+        if 'headers' in i:
+            ordered_dict.update([(i['name'],{'type': i['type'], 'label':i['label'], 'headers':i['headers']})])
+        else:
+            ordered_dict.update([(i['name'],{'type': i['type'], 'label':i['label']})])
 
     return ordered_dict
 

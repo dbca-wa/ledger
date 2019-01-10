@@ -20,14 +20,25 @@
         <Checkbox :name="activity_type.code+'_to_be_issued'" :value="activity_type.to_be_issued" label="To be issued" :id="'id_'+activity_type.code+'_to_be_issued'" />
         <Checkbox :name="activity_type.code+'_processed'" :value="activity_type.processed" label="Processed" :id="'id_'+activity_type.code+'_processed'" />
 
-        <div v-for="editable_element in render_editable_elements()">
-            <div v-html="editable_element">
-                {{ editable_element }}
+        <!-- Add isEditable fields to form and allow values to be overridden (original data is NOT overwritten) -->
+        <div v-for="editable_element in editable_elements">
+            <div v-if="'table' in editable_element">
+                <Table :name="activity_type.code+'_table_'+editable_element.table.name" :value="editable_element.table.value" :label="editable_element.table.label" :headers="editable_element.table.headers"/>
+                <!--{{ editable_element }}-->
+            </div>
+            <div v-else-if="'text' in editable_element">
+                <TextField type="text" :name="activity_type.code+'_text_'+editable_element.text.name" :value="editable_element.text.value" label="editable_element.text.label" />
+            </div>
+            <div v-else-if="'text_area' in editable_element">
+                <TextArea :name="activity_type.code+'_text_area_'+editable_element.text_area.name" :value="editable_element.text_area.value" label="editable_element.text_area.label" />
             </div>
         </div>
 
-        // https://medium.freecodecamp.org/an-introduction-to-dynamic-list-rendering-in-vue-js-a70eea3e321
+        <!-- https://medium.freecodecamp.org/an-introduction-to-dynamic-list-rendering-in-vue-js-a70eea3e321 -->
+<!--
         <Table v-for="editable_element in render_editable_elements()" :name="editable_element['']"/>
+-->
+
 <!--
         <Radio name="activity_type.code+'_approve'" value="activity_type.approve" label="Approve/Decline" id="'id_'+activity_type.code+'_approve'" :options="activity_type.approve_options" />
         <Radio name="activity_type.code+'_approve'" value="activity_type.approve" label="Approve/Decline" id="'id_'+activity_type.code+'_approve'" :options="activity_type.approve_options" />
@@ -79,20 +90,38 @@
         },
         */
         data:function () {
+			let vm = this;
+            vm.editable_elements = [];
 
 			if ('editable' in vm.activity_type.data[0]) {
 				var data = vm.activity_type.data[0]['editable'];
 				for (var k in data) {
 					if (data[k]['type'] == 'table') {
-						vm.elements = {'table': {
+						vm.editable_elements.push({'table': {
 								name: k,
 								value: data[k]['answer'],
-								label: data[k]['label']
+								label: data[k]['label'],
+								headers: data[k]['headers'],
 							}
-						}
+						})
+					} else if (data[k]['type'] == 'text') {
+						vm.editable_elements.push({'text': {
+								name: k,
+								value: data[k]['answer'],
+								label: data[k]['label'],
+							}
+						})
+					} else if (data[k]['type'] == 'text_area') {
+						vm.editable_elements.push({'text_area': {
+								name: k,
+								value: data[k]['answer'],
+								label: data[k]['label'],
+							}
+						})
 					}
 				}
 			}
+            console.log(vm.editable_elements);
 
             return{
                 values:null
@@ -126,6 +155,7 @@
                 }
                 return _elements;
 			},
+            /*
 			process: function(e) {
 				let vm = this;
 				vm.form = document.forms.new_application;
@@ -140,6 +170,7 @@
 				},err=>{
 				});
 			},
+            */
         },
         computed: {
             application_iseditable_url: function() {

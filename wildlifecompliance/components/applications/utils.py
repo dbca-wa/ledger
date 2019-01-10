@@ -487,6 +487,10 @@ def save_assessor_data(instance, request, viewset):
 def save_assess_data(instance,request,viewset):
     can_process = True if request.data.has_key('action') and request.data['action'] == 'process' else False
 
+    def get_kv_pair(key_substring):
+        # check if substring is part of dict key, and return key,value if so
+        return [{key:value} for key, value in request.data.items() if key_substring in key]
+
     with transaction.atomic():
         try:
             #import ipdb; ipdb.set_trace()
@@ -514,6 +518,30 @@ def save_assess_data(instance,request,viewset):
                 else:
                     activity_type.processed = False
 
+                # check if table exists and save possibly updated/overriden data
+                element_types = ['_table_', '_text_area_', '_text_']
+                for element_type in element_types:
+                    for kv_pair in get_kv_pair(code + element_type):
+                        for k,v in kv_pair.iteritems():
+                            name = k.strip(code + element_type)
+                            if 'comment-field' not in name:
+                                import ipdb; ipdb.set_trace()
+                                activity_type.data[0]['editable'][name]['answer'] = request.data[k]
+
+#                for kv_pair in get_kv_pair(code+'_text_area_'):
+#                    for k,v in kv_pair.iteritems():
+#                        name = k.strip(code+'_text_area_')
+#                        if 'comment-field' not in name:
+#                            activity_type.data[0]['editable'][name]['answer'] = request.data[k]
+#
+#                for kv_pair in get_kv_pair(code+'_text_'):
+#                    for k,v in kv_pair.iteritems():
+#                        name = k.strip(code+'_text_')
+#                        if 'comment-field' not in name:
+#                            activity_type.data[0]['editable'][name]['answer'] = request.data[k]
+
+
+
                 import ipdb; ipdb.set_trace()
                 if can_process and not activity_type.processed:
                     # create licences
@@ -524,7 +552,9 @@ def save_assess_data(instance,request,viewset):
                     create_licence(instance, activity_type.activity_name, new_app)
                     new_app = False
 
+                #activity_type.data = [add_editable_items(activity_type)]
                 activity_type.save()
+                #import ipdb; ipdb.set_trace()
         except:
             raise
 
