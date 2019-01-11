@@ -16,8 +16,8 @@ from dateutil.tz.tz import tzoffset
 from pytz import timezone as pytimezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
-from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod)
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
@@ -717,6 +717,51 @@ def admission_lineitems(lines):
     return invoice_lines
 
 
+def calculate_price_booking_cancellation(booking):
+    nowtime =  datetime.today()
+    nowtimec = datetime.strptime(nowtime.strftime('%Y-%m-%d'),'%Y-%m-%d')
+
+    booking = MooringsiteBooking.objects.filter(booking=booking)
+    cancellation_fees = []
+    adjustment_fee = Decimal('0.00')
+    #{'additional_fees': 'true', 'description': 'Booking Change Fee','amount': Decimal('0.00')}
+
+    for ob in booking:
+         changed = True
+         #for bc in booking_changes:
+         #    if bc.campsite == ob.campsite and ob.from_dt == bc.from_dt and ob.to_dt == bc.to_dt and ob.booking_period_option == bc.booking_period_option:
+         #       changed = False
+         from_dt = datetime.strptime(ob.from_dt.strftime('%Y-%m-%d'),'%Y-%m-%d')
+         daystillbooking =  (from_dt-nowtimec).days
+
+         cancel_policy = None
+         cancel_fee_amount = '0.00'
+         change_price_period = CancelPricePeriod.objects.all().order_by('days')
+         for cpp in change_price_period:
+             if daystillbooking >= cpp.days:
+                  cancel_policy =cpp
+             if cancel_policy:
+                if cancel_policy.calulation_type == 0:
+                    # Percentage
+                    cancel_fee_amount = float(ob.amount) * (cancel_policy.percentage / 100)
+                elif cancel_policy.calulation_type == 1:
+                    cancel_fee_amount = cancel_policy.amount
+                    # Fixed Pricing
+                description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
+                  #change_fees['amount'] = str(refund_amount)
+                cancellation_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': cancel_fee_amount})
+                cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount)})
+             else:
+                 print "NO CANCELATION POLICY"
+
+         else:
+             adjustment_fee = ob.amount + adjustment_fee
+    #change_fees.append({'additional_fees': 'true', 'description': 'Mooring Adjustment Credit' ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee)})
+
+    return cancellation_fees
+
+
+
 def calculate_price_booking_change(old_booking, new_booking):
     nowtime =  datetime.today()
     nowtimec = datetime.strptime(nowtime.strftime('%Y-%m-%d'),'%Y-%m-%d')
@@ -744,21 +789,31 @@ def calculate_price_booking_change(old_booking, new_booking):
          refund_policy = None
          if changed is True:
              change_fee_amount = '0.00' 
-             change_price_period = ChangePricePeriod.objects.all().order_by('-days')
+             change_price_period = ChangePricePeriod.objects.all().order_by('days')
+             print change_price_period
              for cpp in change_price_period:
-                  if daystillbooking <= cpp.days:
+                  print cpp.days
+                  print "DA:"
+                  print daystillbooking
+                  if daystillbooking >= cpp.days:
                       refund_policy =cpp
-
-             if refund_policy.calulation_type == 0:
-                # Percentage
-                change_fee_amount = float(ob.amount) * (refund_policy.percentage / 100)
-             elif refund_policy.calulation_type == 1: 
-                change_fee_amount = refund_policy.amount
-                # Fixed Pricing
-             description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
-             #change_fees['amount'] = str(refund_amount)
-             change_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': change_fee_amount})
-             change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount)})
+             print "REFUND POLICY"
+             print refund_policy
+             print daystillbooking
+             if refund_policy:
+                if refund_policy.calulation_type == 0:
+                    # Percentage
+                    change_fee_amount = float(ob.amount) * (refund_policy.percentage / 100)
+                elif refund_policy.calulation_type == 1: 
+                    change_fee_amount = refund_policy.amount
+                    # Fixed Pricing
+                description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
+                  #change_fees['amount'] = str(refund_amount)
+                change_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': change_fee_amount})
+                change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount)})
+             else:
+                 print "NO REFUND POLICY" 
+               
          else:
              #description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
              adjustment_fee = ob.amount + adjustment_fee
@@ -1375,6 +1430,9 @@ def admissionsCheckout(request, admissionsBooking, lines, invoice_text=None, vou
         )
     return responseJson
 
+def get_basket(request):
+    return get_cookie_basket(settings.OSCAR_BASKET_COOKIE_OPEN,request)
+
 
 def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
     basket_params = {
@@ -1384,8 +1442,6 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         'custom_basket': True,
     }
  
-    print "BOOKING TOTAL"
-    print booking.cost_total
     basket, basket_hash = create_basket_session(request, basket_params)
     checkout_params = {
         'system': settings.PS_PAYMENT_SYSTEM_ID,
@@ -1415,6 +1471,12 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         )
     if booking.cost_total < 0:
         response = HttpResponseRedirect('/refund-payment')
+        response.set_cookie(
+            settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
+            max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
+            secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
+        )
+
 
     return response
 
