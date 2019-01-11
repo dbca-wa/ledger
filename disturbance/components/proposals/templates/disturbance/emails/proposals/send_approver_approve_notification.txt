@@ -3,6 +3,24 @@
 {%  block content %}
     The Proposal {{ proposal.lodgement_number }} has been assessed and has been recommended for approval.
 
+    Title: {{proposal.title}}
+    Activity: {{proposal.activity}}
+	Region: {{proposal.region}}
+	{% if proposal.district %}
+		District:{{proposal.district}}
+	{% else %}
+		District: -
+	{% endif %}
+
+	{% if proposal.proposed_issuance_approval %}
+        <p>
+        	<span>Approved: </span>
+        </p>
+        <p>Start date: {{ start_date }}</p>
+        <p>Expiry date: {{ expiry_date }}</p>
+        <p>Details: {{ details }}</p>
+    {% endif %}
+
     <p>
     You can access this Proposal using the following link:
     </p>
