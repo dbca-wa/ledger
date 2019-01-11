@@ -1338,6 +1338,7 @@ class ProposalUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"
     ACTION_CREATE_PROFILE_ = "Create profile {}"
     ACTION_LODGE_APPLICATION = "Lodge proposal {}"
+    ACTION_SAVE_APPLICATION = "Save proposal {}"
     ACTION_ASSIGN_TO_ASSESSOR = "Assign proposal {} to {} as the assessor"
     ACTION_UNASSIGN_ASSESSOR = "Unassign assessor from proposal {}"
     ACTION_ASSIGN_TO_APPROVER = "Assign proposal {} to {} as the approver"
