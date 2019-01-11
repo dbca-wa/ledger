@@ -219,7 +219,7 @@ class Organisation(models.Model):
                         # delete delegate
                         delegate.delete()
                     else:
-                        raise ValidationError('This user is last Organisation Administrator.')
+                        raise ValidationError({'last_admin': ['This user is last Organisation Administrator.', ]})
 
                 else:
                     org_contact.user_status ='unlinked'
@@ -263,7 +263,7 @@ class Organisation(models.Model):
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
             # check user can change role.
             if not can_change_role(self, user):
-                raise ValidationError('This user is the last Organisation Administrator')
+                raise ValidationError({'last_admin': ['This user is the last Organisation Administrator', ]})
             # delete contact person
             try:
                 org_contact = OrganisationContact.objects.get(organisation=self, email=delegate.user.email)
@@ -285,7 +285,7 @@ class Organisation(models.Model):
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
             # Validate for Organisation Admin
             if not can_change_role(self, user):
-                raise ValidationError('This user is the last Organisation Administrator')
+                raise ValidationError({'last_admin': ['This user is the last Organisation Administrator', ]})
             # add consultant
             try:
                 org_contact = OrganisationContact.objects.get(organisation=self, email=delegate.user.email)
@@ -308,7 +308,7 @@ class Organisation(models.Model):
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
             # check user can be suspended.
             if not can_change_role(self, user):
-                raise ValidationError('This user is the last Organisation Administrator')
+                raise ValidationError({'last_admin': ['This user is the last Organisation Administrator', ]})
             # delete contact person
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)

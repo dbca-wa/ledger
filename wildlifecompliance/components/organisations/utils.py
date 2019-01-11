@@ -39,6 +39,22 @@ def can_change_role(organisation, user):
     return _can_change
 
 
+def is_last_admin(organisation, user):
+    from wildlifecompliance.components.organisations.models import OrganisationContact
+
+    _last_admin = False
+    try:
+        _admin_contacts = OrganisationContact.objects.filter(organisation_id=organisation,
+                                                             user_status='active',
+                                                             user_role='organisation_admin')
+        _is_admin = _admin_contacts.filter(email=user.email).exists()
+        if _is_admin and _admin_contacts.count() < 2:
+            _last_admin = True
+    except OrganisationContact.DoesNotExist:
+        _last_admin = False
+    return _last_admin
+
+
 def can_admin_org(organisation,user):
     from wildlifecompliance.components.organisations.models import Organisation, OrganisationAccessGroup,UserDelegation,OrganisationContact
     from ledger.accounts.models import EmailUser

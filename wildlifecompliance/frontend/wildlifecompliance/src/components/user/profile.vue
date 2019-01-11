@@ -1035,9 +1035,15 @@ export default {
                             'success'
                         )
                     }, (error) => {
+                        let error_msg = '<br/>';
+                        for (var key in error.body) {
+                          if (error.body[key].indexOf('last_admin') !== -1) {
+                            error_msg += 'The Organisation will have no Administrator.<br/>';
+                          }
+                        }
                         swal(
                             'Unlink',
-                            'There was an error unlinking you from '+org_name+'.',
+                            'There was an error unlinking you from '+org_name+'.' + error_msg,
                             'error'
                         )
                     });
