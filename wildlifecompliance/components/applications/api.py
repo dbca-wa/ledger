@@ -904,7 +904,8 @@ class ApplicationConditionViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return ApplicationCondition.objects.all()
         elif is_customer(self.request):
-            user_applications = [org.id for org in user.wildlifecompliance_applications.all()]
+            user_orgs = [org.id for org in user.wildlifecompliance_organisations.all()]
+            user_applications = [application.id for application in Application.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(proxy_applicant = user) | Q(submitter = user) )]
             return ApplicationCondition.objects.filter(Q(application_id__in = user_applications))
         return ApplicationCondition.objects.none()
 
@@ -1115,7 +1116,8 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return AmendmentRequest.objects.all()
         elif is_customer(self.request):
-            user_applications = [application.id for application in user.wildlifecompliance_applications.all()]
+            user_orgs = [org.id for org in user.wildlifecompliance_organisations.all()]
+            user_applications = [application.id for application in Application.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(proxy_applicant = user) | Q(submitter = user) )]
             return AmendmentRequest.objects.filter(Q(application_id__in = user_applications))
         return AmendmentRequest.objects.none()
 
