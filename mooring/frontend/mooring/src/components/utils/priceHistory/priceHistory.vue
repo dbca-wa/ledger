@@ -3,8 +3,11 @@
     <parkPriceHistory v-if="addParkPrice" ref="historyModal" @addParkPriceHistory="addParkHistory()" @updateParkPriceHistory="updateParkHistory()" :priceHistory="parkPrice" @cancel="closeHistory()"/>
     <PriceHistoryDetail v-else ref="historyModal" @addPriceHistory="addHistory()" @updatePriceHistory="updateHistory()" :priceHistory="price"></PriceHistoryDetail>
     <div class="col-sm-12">
-        <div class="col-sm-8"/>
-        <div class="col-sm-4">
+        <div class="col-sm-4" v-if="invent">
+            <a :href="'/mooringsiteratelog/'+object_id+'/'"><button class="btn btn-primary pull-left table_btn">View Log</button></a>
+        </div>
+        <div class="col-sm-4" v-if="invent"/>
+        <div class="col-sm-4" v-if="invent">
             <button v-show="showAddBtn" @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Booking Period</button>
         </div>
         <datatable ref="history_dt" :dtHeaders ="dt_headers" :dtOptions="dt_options" id="ph_table"></datatable>
@@ -84,6 +87,7 @@ export default {
         return {
             campground: {},
             campsite:{},
+            invent: false,
             price: {
                 reason:''
             },
@@ -331,6 +335,25 @@ export default {
     mounted: function() {
         let vm = this;
         vm.addTableListeners();
+        setTimeout(function(){
+            $.ajax({
+                url: api_endpoints.profile,
+                method: 'GET',
+                dataType: 'json',
+                success: function(data, stat, xhr){
+                    if(data.is_inventory){
+                        vm.invent = true;
+                    }
+                    if(!vm.invent){
+                        vm.$refs.history_dt.vmDataTable.rows().every(function(){
+                            var data = this.data();
+                            data['editable'] = "";
+                            this.data(data);
+                        });
+                    }
+                }
+            });
+        }, 400);
     }
 }
 </script>

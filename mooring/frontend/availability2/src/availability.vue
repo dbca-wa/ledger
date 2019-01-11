@@ -79,7 +79,7 @@
 	<loader :isLoading.sync="isLoading">&nbsp;</loader>
         <div class="row" v-if="name">
             <div class="columns small-12">
-                <h1>V2 - Book mooring: {{ name }}</h1>
+                <h1>Book mooring: {{ name }}</h1>
             </div>
         </div>
         <div v-if="ongoing_booking" class="row" style='display:none'>
@@ -139,7 +139,7 @@
                         <div class="small-6 columns">
                             <label for="vesselRego" class="text-left">Vessel Rego</label>
                         </div><div class="small-6 columns">
-                            <input type="text" id="vesselRego" name="vessel_size" @blur="searchRego()" v-model="vesselRego"/>
+                            <input type="text" id="vesselRego" name="vessel_rego" @blur="searchRego()" v-model="vesselRego" style="text-transform:uppercase"/>
                         </div>
                     </div>
                     <div class="row">
@@ -438,6 +438,8 @@ function getQueryParam(name, fallback) {
     var results = regex.exec(window.location.href);
     if (!results) return fallback;
     if (!results[2]) return fallback;
+    console.log(name);
+    console.log(results[2]);
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 };
 
@@ -484,7 +486,7 @@ export default {
             vesselDraft: parseFloat(getQueryParam('vessel_draft', 0)),
             vesselBeam: parseFloat(getQueryParam('vessel_beam', 0)),
             vesselWeight: parseFloat(getQueryParam('vessel_weight', 0)),
-            vesselRego: parseFloat(getQueryParam('vessel_rego', 0)),
+            vesselRego: getQueryParam('vessel_rego', null),
             distanceRadius: parseInt(getQueryParam('distance_radius', 100)),
             maxAdults: 30,
             maxChildren: 30,

@@ -785,17 +785,20 @@ export default {
                 //var fields = [...vm.dtHeaders];
                 var fields = [...fields,...vm.dtHeaders];
                 fields.splice(vm.dtHeaders.length-1,1);
-                fields = [...fields,"Adults","Concession","Children","Infants","Regos","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By"]
-                fields.splice(4,0,"Email");
-                fields.splice(5,0,"Phone");
-                fields.splice(9,0,'Amount Due')
-                fields.splice(10,0,'Amount Paid')
-                fields.splice(22,0,'Booking Type')
+                fields = ['Created', 'Confirmation No', 'Person', 'Email', 'Phone', 'Vessel Rego', 'Amount Due', 'Amount Paid',"Status", "Mooring", "Region", "Arrival", "Departure", "Adults","Concession","Children","Infants","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By", 'Booking Type']
+                // fields = [...fields,"Adults","Concession","Children","Infants","Regos","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By"]
+                // fields.splice(4,0,"Email");
+                // fields.splice(5,0,"Phone");
+                // fields.splice(9,0,'Amount Due')
+                // fields.splice(10,0,'Amount Paid')
+                // fields.splice(22,0,'Booking Type')
                 var booking_types = {
                     0: 'Reception booking',
                     1: 'Internet booking',
                     2: 'Black booking',
                     3: 'Temporary reservation',
+                    4: 'Cancelled Booking',
+                    5: 'Changed Booking',
                 };
 
                 //var data = vm.$refs.bookings_table.vmDataTable.ajax.json().results;
@@ -808,40 +811,68 @@ export default {
                                 bk[field] = Moment(booking.created).format("DD/MM/YYYY HH:mm:ss");
                             break;
                             case 1:
-                                bk[field] = booking.campground_name;
+                                // bk[field] = booking.campground_name;
+                                bk[field] = "PS" + booking.id;
                             break;
                             case 2:
-                                bk[field] = booking.campground_region;
-                            break;
-                            case 3:
+                                // bk[field] = booking.campground_region;
                                 bk[field] = booking.firstname +" "+ booking.lastname;
                             break;
-                            case 4:
+                            case 3:
+                                // bk[field] = booking.firstname +" "+ booking.lastname;
                                 bk[field] = booking.email;
                             break;
-                            case 5:
+                            case 4:
+                                // bk[field] = booking.email;
                                 bk[field] = booking.phone;
                             break;
+                            case 5:
+                                // bk[field] = booking.phone;
+                                bk[field] = booking.regos[0].vessel;
+                            break;
                             case 6:
-                                bk[field] = booking.id;
+                                bk[field] = booking.cost_total;
                             break;
                             case 7:
-                                bk[field] = booking.campground_site_type;
+                                // bk[field] = booking.campground_site_type;
+                                bk[field] = booking.amount_paid;
                             break;
                             case 8:
                                 bk[field] = booking.status;
                             break;
                             case 9:
-                                bk[field] = booking.cost_total;
+                                var name_list = []
+                                console.log(booking.mooringsite_bookings)
+                                for (var i = 0; i < booking.mooringsite_bookings.length; i++){
+                                    console.log(booking.mooringsite_bookings[i]);
+                                    console.log(booking.mooringsite_bookings[i][0]);
+                                    console.log(booking.mooringsite_bookings[i][1]);
+                                    console.log(booking.mooringsite_bookings[i][2]);
+                                    console.log(booking.mooringsite_bookings[i][3]);
+                                    name_list.push(booking.mooringsite_bookings[i][0]);
+                                }
+                                bk[field] = name_list;
                             break;
                             case 10:
-                                bk[field] = booking.amount_paid;
+                                var name_list = []
+                                for (var i = 0; i < booking.mooringsite_bookings.length; i++){
+                                    name_list.push(booking.mooringsite_bookings[i][1]);
+                                }
+                                bk[field] = name_list;
                             break;
                             case 11:
-                                bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
+                                var name_list = []
+                                for (var i = 0; i < booking.mooringsite_bookings.length; i++){
+                                    name_list.push(Moment(booking.mooringsite_bookings[i][2]).format('DD/MM/YYYY HH:mm'));
+                                }
+                                bk[field] = name_list;
                             break;
                             case 12:
-                                bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
+                                var name_list = []
+                                for (var i = 0; i < booking.mooringsite_bookings.length; i++){
+                                    name_list.push(Moment(booking.mooringsite_bookings[i][3]).format('DD/MM/YYYY HH:mm'));
+                                }
+                                bk[field] = name_list;
                             break;
                             case 13:
                                 bk[field] = booking.guests.adults;
@@ -856,40 +887,18 @@ export default {
                                 bk[field] =  booking.guests.infants;
                             break;
                             case 17:
-                                bk[field] =  booking.vehicle_payment_status.map(r =>{
-                                    var val =Object.keys(r).map(k =>{
-                                        if (k == 'Fee' || k == 'original_type'){ return 'avoid'; }
-                                        if (k == 'Paid'){
-                                            if (r[k] == 'Yes'){
-                                                return "Status" +" : Entry Fee Paid";
-                                            }
-                                            else if( r[k] == 'No'){
-                                                return "Status" +" : Unpaid";
-                                            }
-                                            else if(r[k] == 'pass_required'){
-                                                return "Status" +" : Park Pass Required"
-                                            }
-                                        }
-                                        else{
-                                            return k +" : "+ r[k]
-                                        }
-                                    });
-                                    return val.filter(i => i != 'avoid');
-                                }).join(" | ");
-                            break;
-                            case 18:
                                 bk[field] = booking.is_canceled;
                             break;
-                            case 19:
+                            case 18:
                                 bk[field] = booking.cancelation_reason;
                             break;
-                            case 20:
+                            case 19:
                                 bk[field] = booking.cancelation_time ? Moment(booking.cancelation_time).format("DD/MM/YYYY HH:mm:ss") : '';
                             break;
-                            case 21:
+                            case 20:
                                 bk[field] = booking.canceled_by;
                             break;
-                            case 22:
+                            case 21:
                                 if (typeof booking_types[booking.booking_type] !== 'undefined') {
                                     bk[field] = booking_types[booking.booking_type];
                                 } else {

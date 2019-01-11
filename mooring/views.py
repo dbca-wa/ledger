@@ -35,7 +35,9 @@ from mooring.models import (MooringArea,
                                 AdmissionsRate,
                                 DiscountReason,
                                 RegisteredVessels,
-                                ChangePricePeriod
+                                ChangePricePeriod,
+                                AdmissionsOracleCode,
+                                MooringsiteRateLog,
                                 )
 from mooring.serialisers import AdmissionsBookingSerializer, AdmissionsLineSerializer
 from mooring import emails
@@ -221,7 +223,7 @@ class MakeBookingsView(TemplateView):
             'vessel_draft':0,
             'vessel_beam':0,
             'vessel_weight':0,
-            'vessel_rego':0,
+            'vessel_rego':"",
         }
 
         lines = []
@@ -278,21 +280,39 @@ class MakeBookingsView(TemplateView):
             #             latest_from = new_lines[i+1]['from'].date()
             #             latest_to = None
             #     i+= 1
-            lines = utils.admissions_lines(booking_mooring)
-            print "LINES CREATED"
+            no_admissions = False
+            if details['vessel_rego']:
+                vessel = RegisteredVessels.objects.filter(rego_no=details['vessel_rego'].upper())
+                if vessel.count() > 0:
+                    vessel = vessel[0]
+                    if vessel:
+                        no_admissions = vessel.admissionsPaid
+            
+            if not no_admissions:
+                lines_pre_check = utils.admissions_lines(booking_mooring)
+                print "LINES CREATED"
 
+                print lines_pre_check
 
-            rate = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)))[0]
-            if rate:
-                pricing['adult'] = rate.adult_cost
-                pricing['child'] = rate.children_cost
-                pricing['infant'] = rate.infant_cost
-                pricing['family'] = rate.family_cost
-                pricing['adult_on'] = rate.adult_overnight_cost
-                pricing['child_on'] = rate.children_overnight_cost
-                pricing['infant_on'] = rate.infant_overnight_cost
-                pricing['family_on'] = rate.family_overnight_cost
+                # rate = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)))[0]
+                for line in lines_pre_check:
+                    rates = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)), Q(mooring_group=line['group']))
+                    rate =  None
+                    if rates:
+                        rate = rates[0]
+                    if rate:
+                        line['adult'] = str(rate.adult_cost)
+                        line['child'] = str(rate.children_cost)
+                        line['infant'] = str(rate.infant_cost)
+                        line['family'] = str(rate.family_cost)
+                        line['adult_on'] = str(rate.adult_overnight_cost)
+                        line['child_on'] = str(rate.children_overnight_cost)
+                        line['infant_on'] = str(rate.infant_overnight_cost)
+                        line['family_on'] = str(rate.family_overnight_cost)
+                        lines.append(line)
+                    
 
+                print lines
         
         staff = request.user.is_staff
         if(staff):
@@ -403,12 +423,14 @@ class MakeBookingsView(TemplateView):
         print admissionsJson
         for line in admissionsJson:
             print line['from']
+            group = line['group']
+            oracle_code_admissions = AdmissionsOracleCode.objects.filter(mooring_group__in=[group,])[0].oracle_code
             admissions.append({
                 'from': line['from'],
                 'to': line['to'],
                 'admissionFee': Decimal(line['admissionFee']),
                 'guests': booking.num_guests,
-                'oracle_code': oracle_code
+                'oracle_code': oracle_code_admissions
                 })
         admissionLines = utils.admission_lineitems(admissions)
         if RegisteredVessels.objects.filter(rego_no=rego).count() > 0:
@@ -449,14 +471,28 @@ class MakeBookingsView(TemplateView):
             booking_line = utils.nononline_booking_lineitems(oracle_code, request)
             for line in booking_line:
                 lines.append(line)
+        from_earliest = None
+        to_latest = None
         if mooring_booking:
             lines_required = False
             for bm in mooring_booking:
                 if bm.campsite.mooringarea.park.entry_fee_required:
                     lines_required = True
+                if from_earliest:
+                    if bm.from_dt < from_earliest:
+                        from_earliest = bm.from_dt
+                else:
+                    from_earliest = bm.from_dt
+                if to_latest:
+                    if bm.to_dt > to_latest:
+                        to_latest = bm.to_dt
+                else:
+                    to_latest = bm.to_dt
             if lines_required:
                 for line in admissionLines:
                     lines.append(line)
+        booking.arrival = from_earliest
+        booking.departure = to_latest
         try:
             pass
 #            lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
@@ -498,11 +534,20 @@ class MakeBookingsView(TemplateView):
         booking.cost_total = total
         booking.save()
 
+
+        timestamp = calendar.timegm(booking.arrival.timetuple())
+        local_dt = datetime.fromtimestamp(timestamp)
+        from_dt = local_dt.replace(microsecond=booking.arrival.microsecond)
+        from_date_converted = from_dt.date()
+        timestamp = calendar.timegm(booking.departure.timetuple())
+        local_dt = datetime.fromtimestamp(timestamp)
+        to_dt = local_dt.replace(microsecond=booking.departure.microsecond)
+        to_date_converted = to_dt.date()
         # generate invoice
         reservation = u"Reservation for {} from {} to {} at {}".format(
                u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
-                booking.arrival.strftime('%d-%m-%Y'),
-                booking.departure.strftime('%d-%m-%Y'),
+                from_date_converted,
+                to_date_converted,
                 booking.mooringarea.name
         )
         
@@ -644,18 +689,31 @@ class BookingSuccessView(TemplateView):
                     msb = MooringsiteBooking.objects.filter(booking=booking).order_by('from_dt')
                     from_date = msb[0].from_dt
                     to_date = msb[msb.count()-1].to_dt
-                    booking.arrival = from_date.date()
-                    booking.departure = to_date.date()
+                    timestamp = calendar.timegm(from_date.timetuple())
+                    local_dt = datetime.fromtimestamp(timestamp)
+                    from_dt = local_dt.replace(microsecond=from_date.microsecond)
+                    from_date_converted = from_dt.date()
+                    timestamp = calendar.timegm(to_date.timetuple())
+                    local_dt = datetime.fromtimestamp(timestamp)
+                    to_dt = local_dt.replace(microsecond=to_date.microsecond)
+                    to_date_converted = to_dt.date()
+                    booking.arrival = from_date_converted
+                    booking.departure = to_date_converted
                     # set booking to be permanent fixture
                     booking.booking_type = 1  # internet booking
                     booking.expiry_time = None
 
                     #Calculate Admissions and create object
                     rego = booking.details['vessel_rego']
-                    admissions_paid = RegisteredVessels.objects.filter(rego_no=rego)[0].admissionsPaid
-
+                    found_vessel = RegisteredVessels.objects.filter(rego_no=rego)
+                    if found_vessel.count() > 0:
+                        admissions_paid = found_vessel[0].admissionsPaid
+                    else:
+                        admissions_paid = False
+                    lines = []
                     if not admissions_paid:
                         lines = utils.admissions_lines(msb)
+                    if lines:
                         adults = int(booking.details['num_adult'])
                         children = int(booking.details['num_children'])
                         infants = int(booking.details['num_infant'])
@@ -711,17 +769,15 @@ class BookingSuccessView(TemplateView):
                             to_d = datetime.strptime(lines[i]['to'], '%d %b %Y')
                             rate = AdmissionsRate.objects.filter(Q(period_start__lte=from_d), (Q(period_end=None) | Q(period_end__gte=to_d)))[0]
                             if from_d != to_d:
-                                thisAdmission += (infants * rate.infant_overnight_cost)
-                                thisAdmission += (adults * rate.adult_overnight_cost)
-                                thisAdmission += (children * rate.children_overnight_cost)
-                                thisAdmission += (family * rate.family_overnight_cost)
-                                ad_line = AdmissionsLine.objects.create(arrivalDate=from_d, overnightStay=True, admissionsBooking=ad_booking, cost=thisAdmission)
+                                overnight = True
                             else:
-                                thisAdmission += (infants * rate.infant_cost)
-                                thisAdmission += (adults * rate.adult_cost)
-                                thisAdmission += (children * rate.children_cost)
-                                thisAdmission += (family * rate.family_cost)
-                                ad_line = AdmissionsLine.objects.create(arrivalDate=from_d, overnightStay=False, admissionsBooking=ad_booking, cost=thisAdmission)
+                                overnight = False
+
+                            thisAdmission += (infants * rate.infant_overnight_cost)
+                            thisAdmission += (adults * rate.adult_overnight_cost)
+                            thisAdmission += (children * rate.children_overnight_cost)
+                            thisAdmission += (family * rate.family_overnight_cost)
+                            ad_line = AdmissionsLine.objects.create(arrivalDate=from_d, overnightStay=overnight, admissionsBooking=ad_booking, cost=thisAdmission)
                             ad_line.save()
                             total += thisAdmission
 
@@ -729,7 +785,9 @@ class BookingSuccessView(TemplateView):
                         ad_booking.save()
                         ad_invoice = AdmissionsBookingInvoice.objects.create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
                         booking.admission_payment = ad_booking
+                    print "about to save"
                     booking.save()
+                    print "saved"
 
                     if not request.user.is_staff:
                         print "USER IS NOT STAFF."
@@ -960,3 +1018,20 @@ class MapView(TemplateView):
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'mooring/profile.html'
+
+
+class MooringsiteRateLogView(LoginRequiredMixin, TemplateView):
+    template_name = 'mooring/site_rate_log.html'
+
+    def get(self, request, *args, **kwargs):
+        mooring_id = kwargs['pk']
+        
+        rates = MooringsiteRateLog.objects.filter(mooringarea=mooring_id).order_by('-date_start')
+        name = MooringArea.objects.get(pk=mooring_id).name
+
+        context = {
+            'rates': rates,
+            'name': name,
+            'mooring_id': mooring_id,
+        }
+        return render(request, self.template_name, context)

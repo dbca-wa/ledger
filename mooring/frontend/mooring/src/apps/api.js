@@ -26,6 +26,7 @@ module.exports = {
     campgrounds:process.env.PARKSTAY_URL + "/api/mooring-areas.json",
     campgrounds_datatable:process.env.PARKSTAY_URL + "/api/mooring-areas/datatable_list.json",
     bulk_close:process.env.PARKSTAY_URL + "/api/mooring-areas/bulk_close.json",
+    bulk_period:process.env.PARKSTAY_URL + "/api/mooring-areas/bulk_period.json",
     campground:function (id) {
         return process.env.PARKSTAY_URL + "/api/mooring-areas/"+id+".json";
     },
@@ -169,6 +170,8 @@ module.exports = {
     booking_period_options_edit : function(id){
         return process.env.PARKSTAY_URL + "/api/bookingPeriodOptions/" + id + "/";
     },
-    global_settings: process.env.PARKSTAY_URL + "/api/global_settings"
-   
+    global_settings: process.env.PARKSTAY_URL + "/api/global_settings",
+    rate_log: function (id){
+        return process.env.PARKSTAY_URL + "/mooringsiteratelog/" + id + "/";
+    }
 };

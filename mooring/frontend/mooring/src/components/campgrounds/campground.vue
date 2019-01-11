@@ -264,7 +264,7 @@
     </div>
     <confirmbox id="deleteRange" :options="deletePrompt"></confirmbox>
     <bulk-close-campsites v-on:bulkCloseCampsites="bulkCloseCampsites" v-if="showBulkCloseCampsites" v-on:close="showBulkCloseCampsites = false" ref="bulkCloseCampsites" v-bind:campsites="campsites"/>
-    <div class="navbar navbar-default" id="footer">
+    <div class="navbar navbar-default" id="footer" v-if="invent">
         <div class="container">
             <div class="navbar navbar-nav navbar-right" style="margin-top:5px;">
                 <a href="#" class="btn btn-primary" @click.prevent="sendData">Update</a>
@@ -384,6 +384,7 @@ export default {
                 address:{},
                 images: []
             },
+            invent: false,
             loadingDetails: false,
             loadingContact: false,
             loadingLimits: false,
@@ -517,7 +518,8 @@ export default {
                 }, {
                     data: 'price'
                 }, {
-                    "mRender": function(data, type, full) {
+                    data: 'editable',
+                    mRender: function(data, type, full) {
                         var id = full.id;
                         if (full.active) {
                             var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
@@ -1116,6 +1118,20 @@ export default {
         });
         helpers.namePopover($,vm.$refs.cg_campsites_dt.vmDataTable);
         vm.fetchCampground();
+        $.ajax({
+            url: api_endpoints.profile,
+            method: 'GET',
+            dataType: 'json',
+            success: function(data, stat, xhr){
+                if(data.is_inventory){
+                    vm.invent = true;
+                }
+                if(!vm.invent){
+                    $('.form-control-input').prop('readonly', true);
+                    $('.form-control-input').prop('disabled', true);
+                }
+            }
+        });
         //Details
         $('#details-collapse').on('shown.bs.collapse', function(){
             $('#collapse_details_span').removeClass("glyphicon glyphicon-menu-down");

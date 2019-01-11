@@ -34,7 +34,7 @@ from ledger.address.models import Country
 from ledger.payments.models import Invoice
 from django.db.models import Count
 from mooring import utils
-from mooring.helpers import can_view_campground
+from mooring.helpers import can_view_campground, is_inventory, is_admin
 from datetime import datetime,timedelta, date
 from decimal import Decimal 
 from mooring.models import (MooringArea,
@@ -136,7 +136,6 @@ from mooring.serialisers import (  MooringsiteBookingSerialiser,
                                     BookingPeriodSerializer,
                                     RegisteredVesselsSerializer,
                                     GlobalSettingsSerializer,
-                                    GlobalSettingsKeySerializer
                                     )
 from mooring.helpers import is_officer, is_customer
 from mooring import reports 
@@ -1004,6 +1003,92 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 print(traceback.print_exc())
                 raise serializers.ValidationError(str(e[0]))
 
+    def set_periods(self, request, period_data, moorings):
+        http_status = status.HTTP_200_OK
+        overlap_moorings = []
+        for mooring in moorings:
+            period_data['mooring'] = mooring
+            moor = MooringArea.objects.get(pk=mooring)
+            try:
+                rate = None
+                serializer = RateDetailSerializer(data=period_data)
+                serializer.is_valid(raise_exception=True)
+                rate_id = serializer.validated_data.get('rate',None)
+                if rate_id:
+                    try:
+                        rate = Rate.objects.get(id=rate_id)
+                    except Rate.DoesNotExist as e :
+                        raise serializers.ValidationError('The selected rate does not exist')
+                else:
+                    rate = Rate.objects.get_or_create(mooring=serializer.validated_data['mooring'])[0]
+
+                if rate:
+                    try:
+                        booking = BookingPeriod.objects.get(pk=serializer.validated_data.get('booking_period_id', None))
+                    except BookingPeriod.DoesNotExist as e:
+                        raise serializers.ValidationError('The selected booking period does not exist')
+                    overlapcheck = self.checkOverrlapDates(moor.id,serializer.validated_data['period_start'], serializer.validated_data['period_end'],None)
+                    if overlapcheck is True:
+                        overlap_moorings.append(moor.name)
+                        continue
+                        # raise serializers.ValidationError('Dates overlap existing periods for: ' + moor.name)
+                    #MooringAreaPriceHistory.objects.filter() 
+                    if booking:
+                        period = booking
+                    else:
+                        period = None
+                    serializer.validated_data['rate']=rate
+                    data = {
+                        'rate': rate,
+                        'date_start': serializer.validated_data['period_start'],
+                        'date_end': serializer.validated_data['period_end'],
+                        'reason': PriceReason.objects.get(pk=serializer.validated_data['reason']),
+                        'details': serializer.validated_data.get('details',None),
+                        'booking_period': period,
+                        'update_level': 0
+                    }
+                    # This line creates the end date of previous price.
+
+                    moor.createMooringsitePriceHistory(data)
+
+                price_history = MooringAreaPriceHistory.objects.filter(id=moor.id)
+                serializer = MooringAreaPriceHistorySerializer(price_history,many=True,context={'request':request})
+                res = serializer.data
+            except Exception as e:
+                raise
+        if overlap_moorings == []:
+            return Response(res, status=http_status)
+        else:
+            errorstr = "Dates overlap existing periods for: "
+            for i, m in enumerate(overlap_moorings):
+                if i != 0:
+                    errorstr += ", "
+                errorstr += m
+            raise ValueError(errorstr)
+
+    @list_route(methods=['post'])
+    def bulk_period(self, request, format='json', pk=None):
+        try:
+            http_status = status.HTTP_200_OK
+            period_data = request.data.copy();
+            moorings = period_data.pop('moorings[]')
+
+            start = period_data['period_start']
+            end = period_data['period_end'] if period_data['period_end'] != "" or period_data['period_end'] != " " else None
+
+            data = {
+                'period_start': start,
+                'booking_period_id': period_data['booking_period'],
+                'reason': period_data['reason'],
+            }
+            if end:
+                data['period_end'] = end
+            data['details'] = period_data['details'] if period_data['details'] else None
+            self.set_periods(request, data, moorings)
+            return Response('All Selected MooringAreas Period Updated')
+        except Exception as e:
+            raise
+
     def checkOverrlapDates(self,mooring_id,date_start,date_end,exclude_id):
 
          start_period_count =None
@@ -1020,7 +1105,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
              start_end_within_period = MooringAreaPriceHistory.objects.filter(id=mooring_id,date_start__gte=date_start,date_end__lte=date_end).count()
 
          if start_period_count > 0 or end_period_count > 0 or start_end_within_period > 0:
-              return True
+            return True
          else:
               return False
 
@@ -2543,8 +2628,10 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                 if Booking.objects.filter(admission_payment=ad).count() > 0:
                     booking = Booking.objects.filter(admission_payment=ad)[0]
                     r.update({'booking': booking.id})
-                    bi = BookingInvoice.objects.get(booking=booking)
-                    inv = bi.invoice_reference
+                    bi = BookingInvoice.objects.filter(booking=booking)
+                    inv = []
+                    for b in bi:
+                        inv.append(b.invoice_reference)
                 else:
                     adi = AdmissionsBookingInvoice.objects.get(admissions_booking=ad)
                     inv = adi.invoice_reference
@@ -2604,7 +2691,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 full outer join accounts_emailuser on mooring_booking.customer_id = accounts_emailuser.id\
                 join mooring_region on mooring_district.region_id = mooring_region.id\
                 left outer join mooring_mooringareagroup_moorings cg on cg.mooringarea_id = mooring_booking.mooringarea_id\
-                full outer join mooring_mooringareagroup_members cm on cm.mooringareagroup_id = cg.mooringareagroup_id'
+                full outer join mooring_mooringareagroup_members cm on cm.mooringareagroup_id = cg.mooringareagroup_id\
+                join mooring_bookingvehiclerego rg on rg.booking_id = mooring_booking.id'
 
             #sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
             #sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
@@ -2652,7 +2740,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 or lower(mooring_booking.details->>\'first_name\') LIKE lower(%(wildSearch)s)\
                 or lower(mooring_booking.details->>\'last_name\') LIKE lower(%(wildSearch)s)\
                 or lower(mooring_booking.legacy_name) LIKE lower(%(wildSearch)s)\
-                or lower(mooring_booking.legacy_name) LIKE lower(%(wildSearch)s)'
+                or lower(mooring_booking.legacy_name) LIKE lower(%(wildSearch)s)\
+                or lower(rg.rego) LIKE lower(%(wildSearch)s)'
                 sqlParams['wildSearch'] = '%{}%'.format(search)
                 if search.isdigit:
                     sqlsearch += ' or CAST (mooring_booking.id as TEXT) like %(upperSearch)s'
@@ -2720,6 +2809,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 msb_list = []
                 for book in msb:
                     msb_list.append([book.campsite.name, book.campsite.mooringarea.park.district.region.name, book.from_dt, book.to_dt])
+                msb_list.sort(key=lambda item: item[2])
                 bk['mooringsite_bookings'] = msb_list
                 if not booking.paid:
                     bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
@@ -3455,7 +3545,8 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
         try:
             date = request.GET.get('date')
             if date:
-                price = AdmissionsRate.objects.filter(Q(period_start__lte=date), Q(period_end=None) | Q(period_end__gte=date))
+                group = MooringAreaGroup.objects.filter(members__in=[request.user,])
+                price = AdmissionsRate.objects.filter(Q(mooring_group__in=group), Q(period_start__lte=date), Q(period_end=None) | Q(period_end__gte=date))
                 res = {
                     'price' : price
                 }
@@ -3469,7 +3560,8 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
     def price_history(self, request, format='json', pk=None):
         http_status = status.HTTP_200_OK
         try:
-            price_history = AdmissionsRate.objects.all().order_by('-period_start')
+            group = MooringAreaGroup.objects.filter(members__in=[request.user,])
+            price_history = AdmissionsRate.objects.filter(mooring_group__in=group).order_by('-period_start')
             serializer = AdmissionsRateSerializer(price_history,many=True)
             res = serializer.data
         except Exception as e:
@@ -3485,11 +3577,17 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
             print (request.data['period_start'])
             http_status = status.HTTP_200_OK
             start = datetime.strptime(request.data['period_start'], '%Y-%m-%d').date() + timedelta(days=-1)
+            group = MooringAreaGroup.objects.filter(members__in=[request.user,])
             request.POST._mutable = True
+            print group.count()
+            if group.count() == 1:
+                request.data['mooring_group'] = group[0].id
+            else:
+                raise ValueError('Must belong to exactly 1 mooring group when adding admissions fees.');
             request.data['period_start'] = start
             request.POST._mutable = False
             print (start)
-            serializer =  AdmissionsRateSerializer(data=request.data)
+            serializer = AdmissionsRateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             res = serializer.data
@@ -3593,7 +3691,10 @@ class GetProfile(views.APIView):
         #     user.residential_address = user.profile_addresses.first() if user.profile_addresses.all() else None
         #     user.save()
         serializer  = UserSerializer(request.user)
-        return Response(serializer.data)
+        data = serializer.data
+        data['is_inventory'] = is_inventory(user)
+        data['is_admin'] = is_admin(user)
+        return Response(data)
 
 
 class UpdateProfilePersonal(views.APIView):
@@ -3706,18 +3807,19 @@ class GlobalSettingsView(views.APIView):
                 if groups.count() == 1:
                     qs = GlobalSettings.objects.filter(mooring_group__in=groups, key=key)
                 else:
-                    if request.user.is_superuser:
-                        qs = GlobalSettings.objects.filter(key=key)
-                        highest_val = 0
-                        highest_i = 0
-                        for i, q in enumerate(qs):
-                            if float(q.value) > highest_val:
-                                highest_val = float(q.value)
-                                highest_i = i
-                        qs = qs[highest_i]
-                    else:
+                    if groups.count() == 0:
                         return Response("Error more than 1 group")
-                serializer = GlobalSettingsSerializer(qs)
+                    qs = GlobalSettings.objects.filter(key=key)
+                    highest_val = 0
+                    highest_i = 0
+                    for i, q in enumerate(qs):
+                        if float(q.value) > highest_val:
+                            highest_val = float(q.value)
+                            highest_i = i
+                    qsid = qs[highest_i].id
+                    qs = GlobalSettings.objects.filter(id=qsid)
+                    
+                serializer = GlobalSettingsSerializer(qs, many=True)
                 return Response(serializer.data)
             else:
                 mooring = request.GET.get('mooring') if request.GET.get('mooring') else None

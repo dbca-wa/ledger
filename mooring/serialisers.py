@@ -805,7 +805,8 @@ class AdmissionsRateSerializer(serializers.ModelSerializer):
             'family_overnight_cost',
             'reason',
             'comment',
-            'editable'
+            'editable',
+            'mooring_group'
             )
 
 class ReportSerializer(serializers.Serializer):
@@ -925,14 +926,6 @@ class OracleSerializer(serializers.Serializer):
 class GlobalSettingsSerializer(serializers.ModelSerializer):
     key = serializers.CharField(source='get_key_display')
 
-    class Meta:
-        model = GlobalSettings
-        fields = (
-            'key',
-            'value'
-        )
-
-class GlobalSettingsKeySerializer(serializers.ModelSerializer):
     class Meta:
         model = GlobalSettings
         fields = (

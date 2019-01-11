@@ -76,6 +76,8 @@ CRON_CLASSES = [
     #'mooring.cron.SendBookingsConfirmationCronJob',
     'mooring.cron.UnpaidBookingsReportCronJob',
     'mooring.cron.OracleIntegrationCronJob',
+    'mooring.cron.CheckMooringsNoBookingPeriod',
+    'mooring.cron.RegisteredVesselsImport',
 ]
 
 # Additional logging for mooring

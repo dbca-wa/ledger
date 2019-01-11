@@ -1,3 +1,4 @@
+
 {% load bootstrap3 %}
 
 {% load static %}
@@ -78,7 +79,7 @@
                                             <span class="caret"></span>
                                         </a>
                                         <ul class="dropdown-menu">
-                                            {% if request.user.is_staff %}
+                                            {% if request.user|is_admin %}
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                 <li><a href="/dashboard/reports">Reports</a></li>
                                                 <li role="separator" class="divider"></li>
@@ -124,6 +125,9 @@
         {% block custom_js %}
         <script src="/static/common/js/jquery.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
         <script src="/static/common/css/bootstrap.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+        <script src="/static/common/js/datatables.js"></script>
+        <script src="/static/common/js/dataTables.bootstrap.min.js"></script>
+        <script src="/static/common/js/date-dd-MMM-yyyy.js"></script>
         {% endblock %}
         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-108679294-1"></script>
         <script>

@@ -15,19 +15,19 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="control-label" >Mooring Name</label>
-                                        <input type="text" name="name" id="name" class="form-control" v-model="campground.name"/>
+                                        <input type="text" name="name" id="name" class="form-control form-control-input" v-model="campground.name"/>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="control-label" >Mooring Oracle Code</label>
-                                        <input type="text" name="oracle_code" id="oracle_code" class="form-control" v-model="campground.oracle_code"/>
+                                        <input type="text" name="oracle_code" id="oracle_code" class="form-control form-control-input" v-model="campground.oracle_code"/>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group ">
                                         <label class="control-label" >Mooring Park</label>
-                                        <select name="park" ref="park" id="park" class="form-control" v-model="campground.park">
+                                        <select name="park" ref="park" id="park" class="form-control form-control-input" v-model="campground.park">
                                             <option v-for="park in parks" :value="park.id">{{ park.name }}</option>
                                         </select>
                                     </div>
@@ -37,7 +37,7 @@
                                 <div class="col-md-0">
                                     <div class="form-group " style='display:none'>
                                         <label class="control-label" >Booking Configuration</label>
-                                        <select id="site_type" name="site_type" class="form-control"  v-model="campground.site_type">
+                                        <select id="site_type" name="site_type" class="form-control form-control-input"  v-model="campground.site_type">
                                             <option value="0" selected >Bookable per site</option>
                                             <option value="1" >Bookable per site type</option>
                                             <option value="2">Bookable per site type (hide site number)</option>
@@ -47,7 +47,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="control-label">Mooring Features</label>
-                                        <select class="form-control" id="features" name="features" ref="features" v-model="campground.features" multiple>
+                                        <select class="form-control form-control-input" id="features" name="features" ref="features" v-model="campground.features" multiple>
                                             <option v-for="f in features" :value="f.id">{{ f.name }}</option>
                                         </select>
                                     </div>
@@ -55,7 +55,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group ">
                                         <label class="control-label" >Mooring Group (Permissions)</label>
-                                        <select class="form-control" ref="group_permissions" v-model="campground.mooring_group" id='mooring_groups' name='mooring_groups' multiple >
+                                        <select class="form-control form-control-input" ref="group_permissions" v-model="campground.mooring_group" id='mooring_groups' name='mooring_groups' multiple >
                                             <option v-for="m in mooring_groups" :value="m.id" >{{m.name}}</option>
                                         </select>
                                     </div>
@@ -65,7 +65,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group ">
                                         <label class="control-label" >Booking Type</label>
-                                        <select id="campground_type" ref="campground_type" name="campground_type" class="form-control"  v-model="campground.mooring_type">
+                                        <select id="campground_type" ref="campground_type" name="campground_type" class="form-control form-control-input"  v-model="campground.mooring_type">
                                             <option value="0">Bookable Online</option>
                                             <option value="1">Not Bookable Online</option>
                                             <option value="2">Public</option>
@@ -76,7 +76,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group ">
                                         <label class="control-label" >Mooring Physical Type</label>
-                                        <select id="campground_type_physical" ref="type_physical" name="campground_type_physical" class="form-control"  v-model="campground.mooring_physical_type">
+                                        <select id="campground_type_physical" ref="type_physical" name="campground_type_physical" class="form-control form-control-input"  v-model="campground.mooring_physical_type">
                                             <option value="0">Mooring</option>
                                             <option value="1">Jetty Pen</option>
                                             <option value="2">Beach Pen</option>
@@ -86,7 +86,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group ">
                                         <label class="control-label" >Mooring Class</label>
-                                        <select id="campground_class" ref="class" name="campground_class" class="form-control"  v-model="campground.mooring_class">
+                                        <select id="campground_class" ref="class" name="campground_class" class="form-control form-control-input"  v-model="campground.mooring_class">
                                             <option value="small">Small</option>
                                             <option value="medium">Medium</option>
                                             <option value="large">Large</option>

@@ -73,6 +73,14 @@ class MooringAreaAdmin(admin.GeoModelAdmin):
 class MooringAreaGroupAdmin(admin.ModelAdmin):
     filter_horizontal = ('members','moorings')
 
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(MooringAreaGroupAdmin, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(id__in=group)
+
 @admin.register(models.Mooringsite)
 class MooringsiteAdmin(admin.GeoModelAdmin):
     list_display = ('name','mooringarea',)
@@ -142,7 +150,7 @@ class MooringsiteBookingAdmin(admin.ModelAdmin):
 class MooringsiteRateAdmin(admin.ModelAdmin):
     list_display = ('campsite','rate','allow_public_holidays','booking_period')
     list_filter = ('campsite','rate','allow_public_holidays','booking_period')
-    search_fields = ('campground__name',)
+    search_fields = ('campsite__name',)
 
 @admin.register(models.Contact)
 class ContactAdmin(admin.ModelAdmin):
@@ -198,7 +206,15 @@ class OutstandingBookingRecipient(admin.ModelAdmin):
 
 @admin.register(models.AdmissionsOracleCode)
 class AdmissionsOracleCode(admin.ModelAdmin):
-    pass
+    list_display = ('oracle_code', 'mooring_group')
+
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(AdmissionsOracleCode, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
 
 @admin.register(models.AdmissionsRate)
 class AdmissionsRate(admin.ModelAdmin):
@@ -268,4 +284,12 @@ class MooringAreaBookingRange(admin.ModelAdmin):
 
 @admin.register(models.GlobalSettings)
 class GlobalSettings(admin.ModelAdmin):
-    list_display = ('mooring_group', 'key')
+    list_display = ('key', 'value', 'mooring_group')
+
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(GlobalSettings, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)

@@ -71,11 +71,6 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                For full day closures set start time as 00:00 and end time as 23:59.<br/>
-                For half day closures set both start and end time e.g. 08:00 and 14:00.<br/>
-                Half day closure from 01/01/2019 - 05/01/2019 with times 8:00 - 14:00 will leave the mooring closed each of those dates from 8:00 - 14:00, it will be open from 14:00 - 8:00.
-            </div>
         </form>
     </div>
 
@@ -85,7 +80,7 @@
 <script>
 import bootstrapModal from '../utils/bootstrap-modal.vue'
 import {bus} from '../utils/eventBus.js'
-import { $, datetimepicker,api_endpoints, validate, helpers } from '../../hooks'
+import { $, datetimepicker,api_endpoints, Moment, validate, helpers } from '../../hooks'
 import alert from '../utils/alert.vue'
 import reason from '../utils/reasons.vue'
 module.exports = {
@@ -237,27 +232,30 @@ module.exports = {
         });
         vm.closeStartTimePicker.datetimepicker({
             format: 'HH:mm'
-        })
+        });
         vm.closeEndPicker.datetimepicker({
             format: 'DD/MM/YYYY',
             useCurrent: false
         });
         vm.closeEndTimePicker.datetimepicker({
-            format: 'HH:mm'
-        })
+            format: 'HH:mm',
+        });
         vm.closeStartPicker.on('dp.change', function(e){
             vm.formdata.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
             vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
         });
         vm.closeStartTimePicker.on('dp.change', function(e){
             vm.formdata.range_start_time = vm.closeStartTimePicker.data('DateTimePicker').date().format('HH:mm');
-        })
+        });
         vm.closeEndPicker.on('dp.change', function(e){
             vm.formdata.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
         vm.closeEndTimePicker.on('dp.change', function(e){
             vm.formdata.range_end_time = vm.closeEndTimePicker.data('DateTimePicker').date().format('HH:mm');
-        })
+        });
+        vm.formdata.range_start_time = '00:00';
+        vm.formdata.range_end_time = '23:59';
+        
         vm.form = $('#closeCGForm');
         vm.addFormValidations();
         bus.$once('closeReasons',setReasons => {

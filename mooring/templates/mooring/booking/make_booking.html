@@ -100,7 +100,7 @@
                                     </div>
                                     <div class="col-md-2">
                                         {% verbatim %}
-                                            <small v-cloak>{{ vehicles[0][1].toUpperCase() }}</small>
+                                            <small v-cloak>{{ rego.toUpperCase() }}</small>
                                         {% endverbatim %}
                                     </div>
                                     <div class="col-md-2">
@@ -352,20 +352,25 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row" v-for="(vehicle, index) in vehicles">
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <select v-on:change="calculateTotal" v-bind:name="'form-'+Number(index).toString()+'-vehicle_type'" class="form-control" v-model="vehicle[0]" style="display:none;">
+                                <label class="text-right">Vessel Registration:</label>
+                                <input class="form-control" type="text" v-model="rego" required v-on:change="searchRego()" style="text-transform:uppercase" readonly/>
+                            </div>
+                            <div class="form-group" v-for="(vehicle, index) in vehicles" style="display:none;">
+                                <select v-on:change="calculateTotal" v-bind:name="'form-'+Number(index).toString()+'-vehicle_type'" class="form-control" v-model="vehicle[0]" >
                                     <option value="0">Vessel</option>
                                 </select>
-                                <label for="'form-'+Number(index).toString()+'-vehicle_rego'" class="text-right">Vessel</label><label>&nbspRegistration:</label>
-                                <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" v-model="vehicle[1]" required v-on:change="searchRego()" style="text-transform:uppercase" readonly/>
+                                <label for="'form-'+Number(index).toString()+'-vehicle_rego'" class="text-right" >Vessel</label><label>&nbspRegistration:</label>
+                                <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" v-model="vehicle[1]" v-on:change="searchRego()" style="text-transform:uppercase;" readonly/>
                             </div>
                         </div>
+                    </div>
                         <!-- <div class="col-md-4">
                             <div class="checkbox" v-if="pricing.vehicle"><label><input v-bind:name="'form-'+Number(index).toString()+'-entry_fee'" type="checkbox" v-model="vehicle[2]" v-on:change="updateVehicles"/> Entry fee</label></div>
                         </div> -->
-                    </div>
+                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -444,7 +449,7 @@
                         <div v-else>
                             <div class="row">
                                 <div class="col-md-12">
-                                    No admission fees required for {% verbatim %} {{ vehicles[0][1].toUpperCase() }} {% endverbatim %}
+                                    No admission fees required for {% verbatim %} {{ rego.toUpperCase() }} {% endverbatim %}
                                 </div>
                             </div>
                         </div>
@@ -533,7 +538,7 @@
                             <div class="row"> 
                                 <div class="col-md-8 col-md-offset-5">
                                     <div class="checkbox">
-                                        <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
+                                        <label><input type="checkbox" id="toc_check" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
                                     </div>
                                     <button :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
                                 </div>
@@ -555,6 +560,8 @@
 <script src="/static/common/js/vue.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <link href="/static/common/css/select2.min2.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
 <script src="/static/common/js/select2.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script src="/static/common/js/sweetalert2.js"></script>
+<link rel="stylesheet" href="/static/common/css/sweetalert2.css"/>
 <script type="text/javascript">
     var book = new Vue({
         el: '#addBooking',
@@ -563,16 +570,6 @@
             expiry: moment('{{ expiry|escapejs }}'),
             timer: {{ timer }},
             pricing: {
-                mooring: {{ pricing.mooring }},
-                adult: {{ pricing.adult }},
-                adult_on: {{ pricing.adult_on }},
-                concession: {{ pricing.concession }},
-                child: {{ pricing.child }},
-                child_on: {{ pricing.child_on }},
-                infant: {{ pricing.infant }},
-                infant_on: {{ pricing.infant_on }},
-                family: {{ pricing.family }},
-                family_on: {{ pricing.family_on }},
                 vehicle: {{ pricing.vehicle }},
                 vehicleConc: {{ pricing.vehicle_conc }},
                 motorcycle: {{ pricing.motorcycle }}
@@ -597,7 +594,7 @@
             draft: {{ details.vessel_draft }},
             beam: {{ details.vessel_beam }},
             weight: {{ details.vessel_weight }},
-            rego: {{ details.vessel_rego }},
+            rego: '{{ details.vessel_rego }}',
             admissionFee: 0,
             nononline: false,
             override: false,
@@ -694,7 +691,7 @@
                 var diff = vm.vehicles.length - vm.vehicleCount
                 if (diff < 0) {
                     for (var i=0; i<-diff; i++) {
-                        vm.vehicles.push([0, '', true]);
+                        vm.vehicles.push([0, vm.rego, true]);
                     }
                 } else if (diff > 0) {
                     for (var i=0; i<diff; i++) {
@@ -710,7 +707,7 @@
                 if (rego){
                     var reg = rego;
                 } else {
-                    var reg = vm.vehicles[0][1]
+                    var reg = vm.rego
                 }
                 var data = {
                     'rego': reg
@@ -737,9 +734,6 @@
                                     vm.payingAdmissions = true;
                                 }
                                 vm.calculateTotal();
-                                if (document.cookie.split('vessel_rego=').length==2 && (!this.vesselRego || this.vesselRego == "")){
-                                    document.cookie = "vessel_rego=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                                }
                             }
                         }
                     });
@@ -863,15 +857,15 @@
                     for (var i = 0; i < vm.linesAdmissions.length; i++){
                         var thisAdmission = 0;
                         if (vm.linesAdmissions[i].from != vm.linesAdmissions[i].to){
-                            thisAdmission += (vm.numInfants * vm.pricing.infant_on);
-                            thisAdmission += (adults * vm.pricing.adult_on);
-                            thisAdmission += (children * vm.pricing.child_on);
-                            thisAdmission += (family * vm.pricing.family_on);
+                            thisAdmission += (vm.numInfants * parseFloat(vm.linesAdmissions[i].infant_on));
+                            thisAdmission += (adults * parseFloat(vm.linesAdmissions[i].adult_on));
+                            thisAdmission += (children * parseFloat(vm.linesAdmissions[i].child_on));
+                            thisAdmission += (family * parseFloat(vm.linesAdmissions[i].family_on));
                         } else {
-                            thisAdmission += (vm.numInfants * vm.pricing.infant);
-                            thisAdmission += (adults * vm.pricing.adult);
-                            thisAdmission += (children * vm.pricing.child);
-                            thisAdmission += (family * vm.pricing.family);
+                            thisAdmission += (vm.numInfants * parseFloat(vm.linesAdmissions[i].infant));
+                            thisAdmission += (adults * parseFloat(vm.linesAdmissions[i].adult));
+                            thisAdmission += (children * parseFloat(vm.linesAdmissions[i].child));
+                            thisAdmission += (family * parseFloat(vm.linesAdmissions[i].family));
                         }
                         vm.linesAdmissions[i].admissionFee = parseFloat(thisAdmission).toFixed(2);
                         vm.admissionFee += parseInt(thisAdmission);
@@ -939,7 +933,19 @@
                 if (isValid) {
                     form.submit();
                 }
-            }
+            },
+            swalMessage: function(value){
+                Swal({
+                title: value.title,
+                text: value.text,
+                type: value.type,
+                width: '30%',
+                showCancelButton: false,
+                confirmButtonText: 'OK',
+                showLoaderOnConfirm: true,
+                allowOutsideClick: false
+                });
+            },
         },
         mounted: function () {
             var vm = this;
@@ -994,7 +1000,7 @@
                             var length = storedData.vehicles.length;
                             vm.vehicles = [];
                             $.each(storedData.vehicles, function(i,v) {
-                                vm.vehicles.push(v);
+                                vm.vehicles.push([i, vm.rego, true]);
                             });
                             vm.vehicleCount = length;
                         }
@@ -1008,10 +1014,10 @@
             }
             //Set the rego if entered.
             vm.isFirst = true;
-            if (vm.rego !== 0){
+            if (vm.rego !== ""){
                 console.log(vm.rego);
-                vm.vehicles = [[0, vm.rego.toString(), true]];
-                console.log(vm.vehicles);
+                vm.vehicles = [[0, vm.rego, true]];
+                console.log(vm.vehicles)
                 vm.searchRego(vm.rego);
             }
             
@@ -1032,10 +1038,18 @@
                     method: "GET",
                     success: function(data, stat, xhr){
                         if (data == "Error more than 1 group"){
-                            console.log("group error")
+                            console.log("group error");
+                            var error = {
+                                title : "Invalid Group",
+                                text : "Please alert admin, you are part of no mooring groups. Unable to perform bookings.",
+                                type : "error",
+                            }
+                            vm.swalMessage(error);
+                            $('#toc_check').prop('disabled', "disabled");
+                            vm.toc = false;
                         } else {
-                            console.log(data.value);
-                            var intval = parseInt(data.value);
+                            console.log(data[0].value);
+                            var intval = parseInt(data[0].value);
                             intval *= 100;
                             vm.nonOnlineFee = intval;
                             vm.calculateTotal();
@@ -1047,5 +1061,10 @@
         }
     });
 </script>
+<style>
+.swal2-popup {
+    font-size: 20px !important;
+}
+</style>
 {% endif %}
 {% endblock %}

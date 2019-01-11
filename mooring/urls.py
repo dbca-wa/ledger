@@ -103,6 +103,7 @@ urlpatterns = [
     url(r'^admissions/$', views.AdmissionFeesView.as_view(), name='admissions'),
     url(r'^admissions-cost/$', views.AdmissionsCostView.as_view(), name='admissions_cost'),
     url(r'mooring/payments/invoice-pdf/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='mooring-invoice-pdf'),
+    url(r'^mooringsiteratelog/(?P<pk>[0-9]+)/', views.MooringsiteRateLogView.as_view(), name='mooringsiteratelog'),
 
 ##    url(r'^static/(?P<path>.*)$', 'django.conf.urls.static'),
 #    {'document_root': settings.STATIC_ROOT},

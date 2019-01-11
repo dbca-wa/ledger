@@ -101,8 +101,32 @@ class MarinePark(models.Model):
 
 
 class PromoArea(models.Model):
+
+
+    ZOOM_LEVEL = (
+        (0, 'default'),
+        (1, '1'),
+        (2, '2'),
+        (3, '3'),
+        (4, '4'),
+        (5, '4'),
+        (6, '6'),
+        (7, '7'),
+        (8, '8'),
+        (9, '9'),
+        (10, '10'),
+        (11, '11'),
+        (12, '12'),
+        (13, '13'),
+        (14, '14'),
+        (15, '15'),
+        (16, '16'),
+
+    )
+
     name = models.CharField(max_length=255, unique=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
+    zoom_level = models.IntegerField(choices=ZOOM_LEVEL,default=-1)
 
     def __str__(self):
         return self.name
@@ -477,6 +501,7 @@ class ChangeGroup(models.Model):
     name = models.CharField(max_length=100)
     change_period = models.ManyToManyField(ChangePricePeriod, related_name='refund_period_options')
     created = models.DateTimeField(auto_now_add=True)
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
 
     def __str__(self):
         return self.name
@@ -505,6 +530,7 @@ class CancelGroup(models.Model):
     name = models.CharField(max_length=100)
     cancel_period = models.ManyToManyField(CancelPricePeriod, related_name='cancel_period_options')
     created = models.DateTimeField(auto_now_add=True)
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
 
     def __str__(self):
         return self.name
@@ -522,6 +548,7 @@ class BookingPeriodOption(models.Model):
     change_group = models.ForeignKey('ChangeGroup',null=True,blank=True)
     cancel_group = models.ForeignKey('CancelGroup',null=True,blank=True)
     created = models.DateTimeField(auto_now_add=True)
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
 
     def __str__(self):
         return self.period_name
@@ -1720,6 +1747,8 @@ class AdmissionsLine(models.Model):
 
 class AdmissionsOracleCode(models.Model):
     oracle_code = models.CharField(max_length=50, null=True,blank=True)
+    mooring_group = models.OneToOneField('MooringAreaGroup', blank=False, null=False, on_delete=models.PROTECT)
+
 
 class AdmissionsBookingInvoice(models.Model):
     admissions_booking = models.ForeignKey(AdmissionsBooking, related_name='invoices')
@@ -1754,6 +1783,7 @@ class AdmissionsRate(models.Model):
     family_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
     comment = models.CharField(max_length=250, blank=True, null=True)
     reason = models.ForeignKey('AdmissionsReason')
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
 
     def __str__(self):
         return '{} - {} ({})'.format(self.period_start, self.period_end, self.comment)
@@ -2223,7 +2253,7 @@ class AdmissionsRateListener(object):
             original_instance = AdmissionsRate.objects.filter(pk=instance.pk)
             if original_instance.exists():
                 setattr(instance, "_original_instance", original_instance.first())
-            price_before = AdmissionsRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+            price_before = AdmissionsRate.objects.filter(mooring_group=instance.mooring_group, period_start__lt=instance.period_start).order_by("-period_start")
             if price_before:
                 if price_before[0].pk == instance.pk:
                     price_before = price_before[1]
@@ -2235,13 +2265,13 @@ class AdmissionsRateListener(object):
             delattr(instance, "_original_instance")
         else:
             try:
-                price_before = AdmissionsRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
+                price_before = AdmissionsRate.objects.filter(mooring_group=instance.mooring_group, period_start__lt=instance.period_start).order_by("-period_start")
                 if price_before:
                     price_before = price_before[0]
                     price_before.period_end = instance.period_start 
                     price_before.save()
                     instance.period_start = instance.period_start + timedelta(days=1)
-                price_after = AdmissionsRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
+                price_after = AdmissionsRate.objects.filter(mooring_group=instance.mooring_group, period_start__gt=instance.period_start).order_by("period_start")
                 if price_after:
                     price_after = price_after[0]
                     instance.period_end = price_after.period_start - timedelta(days=1)
@@ -2251,8 +2281,8 @@ class AdmissionsRateListener(object):
     @staticmethod
     @receiver(post_delete, sender=AdmissionsRate)
     def _post_delete(sender, instance, **kwargs):
-        price_before = AdmissionsRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
-        price_after = AdmissionsRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
+        price_before = AdmissionsRate.objects.filter(mooring_group=instance.mooring_group, period_start__lt=instance.period_start).order_by("-period_start")
+        price_after = AdmissionsRate.objects.filter(mooring_group=instance.mooring_group, period_start__gt=instance.period_start).order_by("period_start")
         if price_after:
             price_after = price_after[0]
             if price_before:

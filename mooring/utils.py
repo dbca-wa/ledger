@@ -723,8 +723,8 @@ def nononline_booking_lineitems(oracle_code, request):
         if request.user.is_superuser:
             value = 15
         else:
-            group = request.user.groups.all()[0]
-            value = GlobalSettings.objects.get(group=group, key=0).value
+            group = MooringAreaGroup.objects.filter(members__in=[request.user])
+            value = GlobalSettings.objects.get(mooring_group=group, key=0).value
         invoice_line.append({'ledger_description': 'Non Online Booking Fee', 'quantity': 1, 'price_incl_tax': Decimal(value), 'oracle_code': oracle_code})
     return invoice_line
 
@@ -1630,7 +1630,8 @@ def admissions_lines(booking_mooring):
             timestamp = calendar.timegm(to_dt.timetuple())
             local_dt = datetime.fromtimestamp(timestamp)
             to_dt = local_dt.replace(microsecond=to_dt.microsecond)
-            lines.append({'from': from_dt, 'to': to_dt})
+            group = MooringAreaGroup.objects.filter(moorings__in=[bm.campsite.mooringarea,])[0].id
+            lines.append({'from': from_dt, 'to': to_dt, 'group':group})
     # Sort the list by date from.
     new_lines = sorted(lines, key=lambda line: line['from'])
     i = 0
@@ -1651,7 +1652,7 @@ def admissions_lines(booking_mooring):
             latest_to = new_lines[i]['to'].date()
         
         if latest_to:
-            lines.append({'from':datetime.strftime(latest_from, '%d %b %Y'), 'to': datetime.strftime(latest_to, '%d %b %Y'), 'admissionFee': 0})
+            lines.append({'from':datetime.strftime(latest_from, '%d %b %Y'), 'to': datetime.strftime(latest_to, '%d %b %Y'), 'admissionFee': 0, 'group': new_lines[i]['group']})
             if i < len(new_lines)-1:
                 latest_from = new_lines[i+1]['from'].date()
                 latest_to = None

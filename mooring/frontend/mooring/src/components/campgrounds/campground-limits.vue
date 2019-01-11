@@ -17,19 +17,19 @@
                                         <div class="form-group">
                                             <div class="col-md-4">
                                                 <label class="control-label" >Maximum Vessel Size (Meters)</label>
-                                                <input type="number" name="vessel_size_limit" id="vessel_size_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_size_limit" @blur="validateSize()"required/>
+                                                <input type="number" name="vessel_size_limit" id="vessel_size_limit" style="margin-top:10px;" class="form-control form-control-input" v-model="campground.vessel_size_limit" @blur="validateSize()"required/>
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="control-label" >Maximum Vessel Draft (Meters)</label>
-                                                <input type="number" name="vessel_draft_limit" id="vessel_draft_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_draft_limit" @blur="validateDraft()" required/>
+                                                <input type="number" name="vessel_draft_limit" id="vessel_draft_limit" style="margin-top:10px;" class="form-control form-control-input" v-model="campground.vessel_draft_limit" @blur="validateDraft()" required/>
                                             </div>
                                             <div class="col-md-4" v-if="jettyPen">
                                                 <label class="control-label" >Maximum Vessel Beam (Meters)</label>
-                                                <input type="number" name="vessel_beam_limit" id="vessel_beam_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_beam_limit" @blur="validateBeamWeight()" required/>
+                                                <input type="number" name="vessel_beam_limit" id="vessel_beam_limit" style="margin-top:10px;" class="form-control form-control-input" v-model="campground.vessel_beam_limit" @blur="validateBeamWeight()" required/>
                                             </div>
                                             <div class="col-md-4" v-else>
                                                 <label class="control-label" >Maximum Vessel Weight (Tons)</label>
-                                                <input type="number" name="vessel_weight_limit" id="vessel_weight_limit" style="margin-top:10px;" class="form-control" v-model="campground.vessel_weight_limit" @blur="validateBeamWeight()" required/>
+                                                <input type="number" name="vessel_weight_limit" id="vessel_weight_limit" style="margin-top:10px;" class="form-control form-control-input" v-model="campground.vessel_weight_limit" @blur="validateBeamWeight()" required/>
                                             </div>
                                         </div>
                                     </div>

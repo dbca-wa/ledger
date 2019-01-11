@@ -6,6 +6,7 @@ from mooring import pdf
 from mooring.models import MooringsiteBooking, AdmissionsBooking, AdmissionsLine
 from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.models import Invoice
+from mooring import settings 
 
 from ledger.emails.emails import EmailBase
 
@@ -202,4 +203,24 @@ def send_booking_lapse(booking):
         'settings': settings,
     }
     email_obj.send([email], from_address=default_from_email, context=context)
+
+def send_booking_period_email(moorings, group, days):
+    email_obj = TemplateEmailBase()
+    email_obj.subject = "Moorings with Booking Period Gaps"
+    email_obj.html_template = 'mooring/email/bpemail.html'
+    email_obj.txt_template = 'mooring/email/bpemail.txt'
+
+    members = group.members.all()
+    emails = []
+    if not settings.PRODUCTION_EMAIL:
+        emails.append(settings.NON_PROD_EMAIL)
+    else: 
+        for mem in members:
+            emails.append(mem.email)
+
+    context = {
+        'moorings': moorings,
+        'days': days
+    }
+    email_obj.send(emails, from_address=default_from_email, context=context)
 
