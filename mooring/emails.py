@@ -3,9 +3,10 @@ from io import BytesIO
 from django.conf import settings
 
 from mooring import pdf
-from mooring.models import MooringsiteBooking
+from mooring.models import MooringsiteBooking, AdmissionsBooking, AdmissionsLine
 from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.models import Invoice
+from mooring import settings 
 
 from ledger.emails.emails import EmailBase
 
@@ -22,15 +23,17 @@ class TemplateEmailBase(EmailBase):
 
 def send_admissions_booking_invoice(admissionsBooking):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Admission fee payment invoice for {}'.format(admissionsBooking.arrivalDate)
+    admissionsLine = AdmissionsLine.objects.get(admissionsBooking=admissionsBooking)
+    email_obj.subject = 'Admission fee payment invoice for {}'.format(admissionsLine.arrivalDate)
     email_obj.html_template = 'mooring/email/admissions_invoice.html'
     email_obj.txt_template = 'mooring/email/admissions_invoice.txt'
-
     email = admissionsBooking.customer.email
+
     context = {
-        'booking': admissionsBooking
+        'booking': admissionsBooking,
+        'arrivalDate': admissionsLine.arrivalDate
     }
-    filename = 'invoice-{}({}).pdf'.format(admissionsBooking.arrivalDate, admissionsBooking.customer.get_full_name())
+    filename = 'invoice-{}({}).pdf'.format(admissionsLine.arrivalDate, admissionsBooking.customer.get_full_name())
     references = [b.invoice_reference for b in admissionsBooking.invoices.all()]
     invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
     invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
@@ -61,7 +64,8 @@ def send_booking_invoice(booking):
 
 def send_admissions_booking_confirmation(admissionsBooking, request):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Admission Fee Payment Confirmation {} on {}'.format(admissionsBooking.confirmation_number,admissionsBooking.arrivalDate)
+    admissionsLine = AdmissionsLine.objects.get(admissionsBooking=admissionsBooking)
+    email_obj.subject = 'Admission Fee Payment Confirmation {} on {}'.format(admissionsBooking.confirmation_number,admissionsLine.arrivalDate)
     email_obj.html_template = 'mooring/email/admissions_confirmation.html'
     email_obj.txt_template = 'mooring/email/admissions_confirmation.txt'
     email = admissionsBooking.customer.email
@@ -118,6 +122,22 @@ def send_booking_confirmation(booking,request):
     
     
     additional_info = booking.mooringarea.additional_info if booking.mooringarea.additional_info else ''
+
+    msbs = MooringsiteBooking.objects.filter(booking=booking)
+    contact_list = []
+    moorings = []
+    for m in msbs:
+        if m.campsite.mooringarea not in moorings:
+            moorings.append(m.campsite.mooringarea)
+            contact = m.campsite.mooringarea.contact
+            if not any(c['email'] == contact.email for c in contact_list) or not any(c['phone'] == contact.phone_number for c in contact_list):
+                line = {'moorings': m.campsite.mooringarea.name, 'email': contact.email, 'phone': contact.phone_number}
+                contact_list.append(line)
+            else:
+                index = next((index for (index, d) in enumerate(contact_list) if d['email'] == contact.email), None)
+                contact_list[index]['moorings'] += ', ' + m.campsite.mooringarea.name
+
+
     
     context = {
         'booking': booking,
@@ -126,7 +146,8 @@ def send_booking_confirmation(booking,request):
         'my_bookings': my_bookings_url,
         'availability': booking_availability,
         'unpaid_vehicle': unpaid_vehicle,
-        'additional_info': additional_info
+        'additional_info': additional_info,
+        'contact_list': contact_list,
     }
 
     att = BytesIO()
@@ -136,8 +157,15 @@ def send_booking_confirmation(booking,request):
     pdf.create_confirmation(att, booking, mooring_booking)
     att.seek(0)
 
-
-    email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
+    if booking.admission_payment:
+        att2 = BytesIO()
+        admissionsBooking = AdmissionsBooking.objects.get(id=booking.admission_payment.id)
+        pdf.create_admissions_confirmation(att2, admissionsBooking)
+        att2.seek(0)
+        filename = 'confirmation-AD{}.pdf'.format(admissionsBooking.id)
+        email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf'), (filename, att2.read(), 'application/pdf')])
+    else:
+        email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
     booking.confirmation_sent = True
     booking.save()
 
@@ -175,4 +203,24 @@ def send_booking_lapse(booking):
         'settings': settings,
     }
     email_obj.send([email], from_address=default_from_email, context=context)
+
+def send_booking_period_email(moorings, group, days):
+    email_obj = TemplateEmailBase()
+    email_obj.subject = "Moorings with Booking Period Gaps"
+    email_obj.html_template = 'mooring/email/bpemail.html'
+    email_obj.txt_template = 'mooring/email/bpemail.txt'
+
+    members = group.members.all()
+    emails = []
+    if not settings.PRODUCTION_EMAIL:
+        emails.append(settings.NON_PROD_EMAIL)
+    else: 
+        for mem in members:
+            emails.append(mem.email)
+
+    context = {
+        'moorings': moorings,
+        'days': days
+    }
+    email_obj.send(emails, from_address=default_from_email, context=context)
 

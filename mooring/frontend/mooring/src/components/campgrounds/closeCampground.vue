@@ -24,7 +24,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class='input-group date' id='close_cg_range_start_time'>
-                            <input  name="closure_start_time" v-model="formdata.range_start_time" type='text' class="form-control" />
+                            <input  name="closure_start_time" v-model="formdata.range_start_time" type='text' value="00:00" class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-time"></span>
                             </span>
@@ -52,7 +52,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class='input-group date' id='close_cg_range_end_time'>
-                            <input  name="closure_end_time" v-model="formdata.range_end_time" type='text' class="form-control" />
+                            <input  name="closure_end_time" v-model="formdata.range_end_time" type='text' value="23:59" class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-time"></span>
                             </span>
@@ -71,10 +71,6 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                For full day closures set start time as 00:00 and end time as 23:59, with the same date.<br/>
-                For half day closures set both start and end time e.g. 08:00 and 14:00.
-            </div>
         </form>
     </div>
 
@@ -84,7 +80,7 @@
 <script>
 import bootstrapModal from '../utils/bootstrap-modal.vue'
 import {bus} from '../utils/eventBus.js'
-import { $, datetimepicker,api_endpoints, validate, helpers } from '../../hooks'
+import { $, datetimepicker,api_endpoints, Moment, validate, helpers } from '../../hooks'
 import alert from '../utils/alert.vue'
 import reason from '../utils/reasons.vue'
 module.exports = {
@@ -236,27 +232,30 @@ module.exports = {
         });
         vm.closeStartTimePicker.datetimepicker({
             format: 'HH:mm'
-        })
+        });
         vm.closeEndPicker.datetimepicker({
             format: 'DD/MM/YYYY',
             useCurrent: false
         });
         vm.closeEndTimePicker.datetimepicker({
-            format: 'HH:mm'
-        })
+            format: 'HH:mm',
+        });
         vm.closeStartPicker.on('dp.change', function(e){
             vm.formdata.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
             vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
         });
         vm.closeStartTimePicker.on('dp.change', function(e){
             vm.formdata.range_start_time = vm.closeStartTimePicker.data('DateTimePicker').date().format('HH:mm');
-        })
+        });
         vm.closeEndPicker.on('dp.change', function(e){
             vm.formdata.range_end = vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
         });
         vm.closeEndTimePicker.on('dp.change', function(e){
             vm.formdata.range_end_time = vm.closeEndTimePicker.data('DateTimePicker').date().format('HH:mm');
-        })
+        });
+        vm.formdata.range_start_time = '00:00';
+        vm.formdata.range_end_time = '23:59';
+        
         vm.form = $('#closeCGForm');
         vm.addFormValidations();
         bus.$once('closeReasons',setReasons => {

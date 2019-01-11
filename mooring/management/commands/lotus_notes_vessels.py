@@ -8,10 +8,17 @@ from datetime import timedelta
 class Command(BaseCommand):
     help = 'Take extract from lotus notes and merge from 7 vessels per line into 1 single record in RegisteredVessels model.'
 
+    def add_arguments(self, parser):
+        parser.add_argument('path', type=string)
+
     def handle(self, *args, **options):
         # Get all the new vessels information from JSON file.
-        regos = json.load(open('dump_regos.json', 'r'))
-        view = json.load(open('dump_view.json', 'r'))
+        if options['path']:
+            regos = json.loads(open(options['path'] + 'dump_regos.json', 'r'))
+            view = json.load(open(options['path'] + 'dump_view.json', 'r'))
+        else:
+            regos = json.load(open('dump_regos.json', 'r'))
+            view = json.load(open('dump_view.json', 'r'))
 
         rego_list_to_add = []
         rego_list_to_keep = []

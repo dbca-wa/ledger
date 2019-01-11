@@ -61,8 +61,9 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group pull-right">
-                                        <a style="margin-top: 20px;" class="btn btn-primary" @click="addCampground()">Add Mooring</a>
-                                        <a style="margin-top: 20px;" class="btn btn-primary" @click="showBulkClose = true">Close Moorings</a>
+                                        <a style="margin-top: 20px;" v-if="invent" class="btn btn-primary" @click="addCampground()">Add Mooring</a>
+                                        <a style="margin-top: 20px;" v-if="invent" class="btn btn-primary" @click="showBulkClose = true">Close Moorings</a>
+                                        <a style="margin-top: 20px;" v-if="invent" class="btn btn-primary" @click="showBulkBookingPeriod = true">Set Periods</a>
                                     </div>
                                 </div>
                             </form>
@@ -74,6 +75,7 @@
         </div>
     </div>
     <bulk-close :show="showBulkClose" ref="bulkClose"/>
+    <bulk-booking :show="showBulkBookingPeriod" ref="bulkBooking"/>
 </div>
 </template>
 
@@ -82,10 +84,12 @@ import {
     $,
     api_endpoints
 } from '../../hooks'
+import alert from '../utils/alert.vue'
 import datatable from '../utils/datatable.vue'
 import pkCgClose from './closeCampground.vue'
 import pkCgOpen from './openCampground.vue'
 import bulkClose from '../utils/closureHistory/bulk-close.vue'
+import bulkBooking from '../utils/priceHistory/bulkPriceHistory.vue'
 import {bus} from '../utils/eventBus.js'
 import { mapGetters } from 'vuex'
 module.exports = {
@@ -104,12 +108,22 @@ module.exports = {
             isOpenOpenCG: false,
             isOpenCloseCG: false,
             showBulkClose:false,
+            showBulkBookingPeriod: false,
+            invent: false,
             dtoptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
-
+                fnInitComplete: function(oSettings, json){
+                    if(!vm.invent){
+                        vm.$refs.dtGrounds.vmDataTable.rows().every(function(){
+                            var rowdata = this.data();
+                            rowdata['noinvent'] = true;
+                            this.data(rowdata);
+                        });
+                    }
+                },
                 columnDefs: [{
                     responsivePriority: 1,
                     targets: 0
@@ -149,18 +163,23 @@ module.exports = {
                 },{
                     "data": "park"
                 }, {
-                    "mRender": function(data, type, full) {
+                    data: 'editable',
+                    mRender: function(data, type, full) {
                         var id = full.id;
 //                        var addBooking = "<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>";
                         var addBooking = "";
                         // var availability_admin = "<br/><a target='_blank' href='/availability_admin/?site_id=__ID__' >Availability</a>";
-                        var availability_admin = "<br/><a target='_blank' href='/availability2/?site_id=__ID__&vessel_size=0' >Availability</a>";
+                        var availability_admin = "<a target='_blank' href='/availability2/?site_id=__ID__&vessel_size=0' >Availability</a>";
                         var column = "";
-
-                        if (full.active) {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a>";
+                        if(full.noinvent){
+                            column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >View</a><br/>";
                         } else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit </a><br/><a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a>";
+                            column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit</a><br/>";
+                            if (full.active) {
+                                column += "<a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a><br/>";
+                            } else {
+                                column += "<a href='#' class='statusCG' data-status='open' data-campground=\"__ID__\" data-current_closure=\"__Current_Closure__\">Open</a><br/>";
+                            }
                         }
 
                         column += full.mooring_type == '0' ? addBooking : "";
@@ -175,10 +194,12 @@ module.exports = {
         }
     },
     components: {
+        alert,
         pkCgClose,
         pkCgOpen,
         datatable,
         "bulk-close":bulkClose,
+        "bulk-booking": bulkBooking
     },
     computed:{
        ...mapGetters([
@@ -191,6 +212,10 @@ module.exports = {
         showBulkClose:function () {
             this.$refs.bulkClose.isModalOpen = this.showBulkClose;
             this.$refs.bulkClose.initSelectTwo();
+        },
+        showBulkBookingPeriod: function() {
+            this.$refs.bulkBooking.isModalOpen = this.showBulkBookingPeriod;
+            this.$refs.bulkBooking.initSelectTwo();
         },
         selected_region: function() {
             let vm = this;
@@ -280,44 +305,61 @@ module.exports = {
             if (vm.districts.length == 0) {
                 vm.$store.dispatch("fetchDistricts");
             }
+        },
+        addTableListeners: function(){
+            let vm = this;
+            vm.$refs.dtGrounds.vmDataTable.on('click', '.detailRoute', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-campground');
+                vm.openDetail(id);
+            });
+            vm.$refs.dtGrounds.vmDataTable.on('click', '.statusCG', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-campground');
+                var status = $(this).attr('data-status');
+                var current_closure = $(this).attr('data-current_closure') ? $(this).attr('data-current_closure') : '';
+                var data = {
+                    'status': status,
+                    'id': id,
+                    'closure': current_closure
+                }
+                bus.$emit('openclose', data);
+                if (status === 'open'){
+                    vm.showOpenOpenCG();
+                }else if (status === 'close'){
+                    vm.showOpenCloseCG();
+                }
+            });
+            vm.$refs.dtGrounds.vmDataTable.on('click', '.addBooking', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-campground');
+                vm.$router.push({
+                    name: 'add-booking',
+                    params: {
+                        "cg": id
+                    }
+                });
+            });
+            bus.$on('refreshCGTable', function(){
+                vm.$refs.dtGrounds.vmDataTable.ajax.reload();
+            });
         }
     },
     mounted: function() {
         var vm = this;
-        vm.$refs.dtGrounds.vmDataTable.on('click', '.detailRoute', function(e) {
-            e.preventDefault();
-            var id = $(this).attr('data-campground');
-            vm.openDetail(id);
-        });
-        vm.$refs.dtGrounds.vmDataTable.on('click', '.statusCG', function(e) {
-            e.preventDefault();
-            var id = $(this).attr('data-campground');
-            var status = $(this).attr('data-status');
-            var current_closure = $(this).attr('data-current_closure') ? $(this).attr('data-current_closure') : '';
-            var data = {
-                'status': status,
-                'id': id,
-                'closure': current_closure
-            }
-            bus.$emit('openclose', data);
-            if (status === 'open'){
-                vm.showOpenOpenCG();
-            }else if (status === 'close'){
-                vm.showOpenCloseCG();
-            }
-        });
-        vm.$refs.dtGrounds.vmDataTable.on('click', '.addBooking', function(e) {
-            e.preventDefault();
-            var id = $(this).attr('data-campground');
-            vm.$router.push({
-                name: 'add-booking',
-                params: {
-                    "cg": id
+        vm.addTableListeners();
+        $.ajax({
+            url: api_endpoints.profile,
+            method: 'GET',
+            dataType: 'json',
+            success: function(data, stat, xhr){
+                if(data.is_inventory){
+                    vm.invent = true;
                 }
-            });
-        });     
-         bus.$on('refreshCGTable', function(){
-            vm.$refs.dtGrounds.vmDataTable.ajax.reload();
+                if(!vm.invent){
+                    
+                }
+            }
         });
         vm.fetchRegions();
         vm.fetchParks();

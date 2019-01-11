@@ -17,7 +17,7 @@
                                         <div class="form-group">
                                             <div class="col-md-6">
                                                 <label class="control-label">Customer Contact</label>
-                                                <select class="form-control" ref="contact" id="contact" name="contact" v-model="campground.contact">
+                                                <select class="form-control form-control-input" ref="contact" id="contact" name="contact" v-model="campground.contact">
                                                     <option value="undefined">Select Contact</option>
                                                     <option v-for="c in contacts" :value="c.id">{{ c.name }}</option>
                                                 </select>

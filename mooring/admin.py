@@ -1,6 +1,49 @@
 from django.contrib import messages
 from django.contrib.gis import admin
+from django.contrib.admin import AdminSite
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group
+
+from django.db.models import Q
+
+from ledger.accounts import admin as ledger_admin
+from ledger.accounts.models import EmailUser
+from copy import deepcopy
+
 from mooring import models
+
+class MooringAdminSite(AdminSite):
+    site_header = 'Moorings Administration'
+    site_title = 'Moorings Bookings'
+
+mooring_admin_site = MooringAdminSite(name='mooringadmin')
+admin.site.unregister(EmailUser)
+@admin.register(EmailUser)
+class EmailUserAdmin(ledger_admin.EmailUserAdmin):
+    """
+    Override the EmailUserAdmin from ledger.accounts.admin to remove is_superuser checkbox field on Admin page
+    """
+    def get_fieldsets(self, request, obj=None):
+        """ Remove the is_superuser checkbox from the Admin page, is user is Mooring Admin or RIA Admin and NOT superuser."""
+        fieldsets = super(UserAdmin, self).get_fieldsets(request, obj)
+        if not obj:
+            return fieldsets
+        
+        if request.user.is_superuser:
+            return fieldsets
+
+        group = Group.objects.filter(name='Mooring Admin')
+        print group
+        if group and (group[0] in request.user.groups.all()):
+            print "group confirmed"
+            fieldsets = deepcopy(fieldsets)
+            for fieldset in fieldsets:
+                if 'is_superuser' in fieldset[1]['fields']:
+                    if type(fieldset[1]['fields']) == tuple:
+                        fieldset[1]['fields'] = list(fieldset[1]['fields'])
+                    fieldset[1]['fields'].remove('is_superuser')
+                    break
+        return fieldsets
 
 @admin.register(models.MooringsiteClass)
 class MooringsiteClassAdmin(admin.ModelAdmin):
@@ -29,6 +72,14 @@ class MooringAreaAdmin(admin.GeoModelAdmin):
 @admin.register(models.MooringAreaGroup)
 class MooringAreaGroupAdmin(admin.ModelAdmin):
     filter_horizontal = ('members','moorings')
+
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(MooringAreaGroupAdmin, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(id__in=group)
 
 @admin.register(models.Mooringsite)
 class MooringsiteAdmin(admin.GeoModelAdmin):
@@ -99,7 +150,7 @@ class MooringsiteBookingAdmin(admin.ModelAdmin):
 class MooringsiteRateAdmin(admin.ModelAdmin):
     list_display = ('campsite','rate','allow_public_holidays','booking_period')
     list_filter = ('campsite','rate','allow_public_holidays','booking_period')
-    search_fields = ('campground__name',)
+    search_fields = ('campsite__name',)
 
 @admin.register(models.Contact)
 class ContactAdmin(admin.ModelAdmin):
@@ -155,7 +206,15 @@ class OutstandingBookingRecipient(admin.ModelAdmin):
 
 @admin.register(models.AdmissionsOracleCode)
 class AdmissionsOracleCode(admin.ModelAdmin):
-    pass
+    list_display = ('oracle_code', 'mooring_group')
+
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(AdmissionsOracleCode, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
 
 @admin.register(models.AdmissionsRate)
 class AdmissionsRate(admin.ModelAdmin):
@@ -222,3 +281,15 @@ class RegisteredVessels(admin.ModelAdmin):
 class MooringAreaBookingRange(admin.ModelAdmin):
     list_display = ('id', 'range_start', 'range_end', 'campground_id')
     ordering = ('id',)
+
+@admin.register(models.GlobalSettings)
+class GlobalSettings(admin.ModelAdmin):
+    list_display = ('key', 'value', 'mooring_group')
+
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(GlobalSettings, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)

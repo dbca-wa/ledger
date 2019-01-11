@@ -2,8 +2,8 @@
 <div class="row">
     <Close ref="closeModal" @closeRange="addClosure()" @updateRange="updateClosure()" :title="getTitle" :statusHistory="closure"></Close>
     <div class="col-sm-12">
-        <div class="col-sm-8"/>
-        <div class="col-sm-4">
+        <div class="col-sm-8" v-if="invent"/>
+        <div class="col-sm-4" v-if="invent">
             <button @click="showClose()" class="btn btn-primary pull-right table_btn">Add Closure Period</button>
         </div>
         <datatable ref="closure_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
@@ -61,6 +61,7 @@ export default {
         return {
             campground: {},
             campsite:{},
+            invent: false,
             closure: {
                 id:'',
                 status: 1,
@@ -224,12 +225,13 @@ export default {
         },
         addTableListeners: function() {
             let vm = this;
-            vm.$refs.closure_dt.vmDataTable.on('click','.editRange', function(e) {
+            var table = vm.$refs.closure_dt.vmDataTable;
+            table.on('click','.editRange', function(e) {
                 e.preventDefault();
                 var id = $(this).data('range');
                 vm.editClosure(id);
             });
-            vm.$refs.closure_dt.vmDataTable.on('click','.deleteRange', function(e) {
+            table.on('click','.deleteRange', function(e) {
                 e.preventDefault();
                 var id = $(this).data('range');
                 vm.deleteClosure = id;
@@ -240,6 +242,26 @@ export default {
     mounted: function() {
         let vm = this;
         vm.addTableListeners();
+        setTimeout(function(){
+            $.ajax({
+                url: api_endpoints.profile,
+                method: 'GET',
+                dataType: 'json',
+                success: function(data, stat, xhr){
+                    if(data.is_inventory){
+                        vm.invent = true;
+                    }
+                    if(!vm.invent){
+                        vm.$refs.closure_dt.vmDataTable.rows().every(function(){
+                            var data = this.data();
+                            data['editable'] = "";
+                            this.data(data);
+                        });
+                    }
+                }
+            });
+        }, 400);
+        
     }
 }
 </script>

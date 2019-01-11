@@ -3,8 +3,10 @@
         <modal okText="Close Moorings" @ok="closeCampgrounds()" :force="true">
             <h4 slot="title">Bulk Close Moorings</h4>
             <div class="body">
-                <alert :show="false" type="danger">{{errorString}}</alert>
                 <form name="closeForm" class="form-horizontal">
+                    <div class="row" v-if="showErrorClose">
+                        <div class="danger-message">&nbsp;{{errorStringClose}}</div>
+                    </div>
                     <div class="row">
                         <div class="form-group">
                             <div class="col-md-2">
@@ -36,7 +38,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="input-group date" :id="close_cg_range_start_time">
-                                    <input name="closure_start_time" v-model="range_start_time" type="text" class="form-control" />
+                                    <input name="closure_start_time" v-model="range_start_time" type="text" value="00:00" class="form-control" />
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-time"></span>
                                     </span>
@@ -63,7 +65,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="input-group date" :id="close_cg_range_end_time">
-                                    <input name="closure_end_time" v-model="range_end_time" type="text" class="form-control" />
+                                    <input name="closure_end_time" v-model="range_end_time" type="text" value="23:59" class="form-control" />
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-time"></span>
                                     </span>
@@ -81,10 +83,6 @@
                                 <textarea name="closure_details" v-model="details" class="form-control" id="close_cg_details"></textarea>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        For full day closures set start time as 00:00 and end time as 23:59.<br/>
-                        For half day closures set both start and end time e.g. 08:00 and 14:00.
                     </div>
                 </form>
             </div>
@@ -120,10 +118,15 @@ export default {
             close_cg_range_start:'close_cg_range_start'+vm._uid,
             close_cg_range_start_time: 'close_cg_range_start_time'+vm.id,
             selected_campgrounds:[],
+            errorStringClose: null,
             form: null
         }
     },
     computed:{
+        showErrorClose: function() {
+            var vm = this;
+            return vm.errorStringClose != null;
+        },
         requireDetails:function () {
             let vm = this;
             var check = this.reason
@@ -151,7 +154,9 @@ export default {
             this.range_end = "";
             this.range_end_time = "";
             this.campgrounds = "";
+            this.selected_campgrounds = "";
             this.reason = "";
+            this.errorStringClose = null;
 			this.closeStartPicker.data('DateTimePicker').date(new Date());
             this.closeStartTimePicker.data('DateTimePicker').clear();
 			this.closeEndPicker.data('DateTimePicker').clear();
@@ -165,7 +170,7 @@ export default {
                 minDate: new Date()
             });
             vm.closeStartTimePicker = $('#'+vm.close_cg_range_start_time).datetimepicker({
-                format: 'HH:mm'
+                format: 'HH:mm',
             });
             vm.closeEndPicker.datetimepicker({
                 format: 'DD/MM/YYYY',
@@ -188,6 +193,9 @@ export default {
             vm.closeEndTimePicker.on('dp.change', function(e){
                 vm.range_end_time = vm.closeEndTimePicker.data('DateTimePicker').date().format('HH:mm');
             });
+            vm.range_start_time = '00:00';
+            vm.range_end_time = '23:59';
+
             vm.addFormValidations();
             vm.fetchCampgrounds();
             vm.initSelectTwo();
@@ -248,12 +256,17 @@ export default {
                        vm.close();
                     },
                     error:function (resp){
-                        vm.$store.dispatch("updateAlert",{
-        					visible:true,
-        					type:"danger",
-        					message: helpers.apiError(resp)
-                        });
-                        vm.close();
+                        console.log(resp);
+                        if(resp.responseJSON[0].includes("is already closed")){
+                            vm.errorStringClose = resp.responseJSON[0];
+                        } else {
+                            vm.$store.dispatch("updateAlert",{
+                                visible:true,
+                                type:"danger",
+                                message: helpers.apiError(resp)
+                            });
+                            vm.close();
+                        }
                     }
                 });
             }
@@ -323,5 +336,16 @@ export default {
 <style lang="css">
 .body{
     padding:0 20px;
+}
+.danger-message{
+    z-index: 999999;
+    background-color: #F2DEDE;
+    color: #A94442;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #A94442;
+    border-radius: 5px;
+    padding: 8px;
+    margin-bottom: 10px;
 }
 </style>

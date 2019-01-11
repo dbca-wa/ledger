@@ -309,7 +309,7 @@
 
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
                                  
-                                <a v-if="f.mooring_type == 0 && vesselSize > 0 && vesselDraft > 0" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam">Book now</a>
+                                <a v-if="f.mooring_type == 0 && vesselSize > 0 && vesselDraft > 0 && vesselRego != '' && vesselRego !== ' '" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam">Book now</a>
                                 <a v-else-if="f.mooring_type == 0" class="button" v-on:click="BookNow()">Book now</a>
                                 <a v-else /> 
                             </div>
@@ -1616,6 +1616,7 @@ export default {
       BookNow: function() { 
         var vessel_size = $('#vesselSize').val();
         var vessel_draft = $('#vesselDraft').val();
+        var vessel_rego = $('#vesselRego').val();
         if (!(vessel_draft > 0)){
             swal({
             title: 'Missing Vessel Draft',
@@ -1638,8 +1639,16 @@ export default {
             allowOutsideClick: false
             })
         }
-        if (document.cookie.split('vessel_rego=').length==2 && (!this.vesselRego || this.vesselRego == "")){
-            document.cookie = "vessel_rego=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        if (!vessel_rego || vessel_rego == "" || vessel_rego == " "){
+            swal({
+                title: 'Missing Vessel Registration',
+                text: "Please enter a vessel registration.",
+                type: 'warning',
+                showCancelButton: false,
+                confirmButtonText: 'OK',
+                showLoaderOnConfirm: true,
+                allowOutsideClick: false,
+            })
         }
       },
       loadMap: function() {

@@ -69,6 +69,7 @@ api_patterns = [
     url(r'^api/booking/create$', api.add_booking,name='add_booking'),
     url(r'^api/booking/delete$', api.delete_booking,name='del_booking'),
     url(r'^api/current_booking$', api.current_booking,name='current_booking'),
+    url(r'^api/global_settings$', api.GlobalSettingsView.as_view(), name='global_setting'),
     url(r'^api/',include(router.urls))
 ]
 
@@ -104,6 +105,7 @@ urlpatterns = [
     url(r'^admissions/$', views.AdmissionFeesView.as_view(), name='admissions'),
     url(r'^admissions-cost/$', views.AdmissionsCostView.as_view(), name='admissions_cost'),
     url(r'mooring/payments/invoice-pdf/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='mooring-invoice-pdf'),
+    url(r'^mooringsiteratelog/(?P<pk>[0-9]+)/', views.MooringsiteRateLogView.as_view(), name='mooringsiteratelog'),
 
 ##    url(r'^static/(?P<path>.*)$', 'django.conf.urls.static'),
 #    {'document_root': settings.STATIC_ROOT},

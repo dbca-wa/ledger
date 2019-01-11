@@ -22,13 +22,13 @@
                                             <div class="col-lg-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Longitude</label>
-                                                    <input type='text' name='longitude' id='longitude' class="form-control" v-on:change="setCoordinates()"> 
+                                                    <input type='text' name='longitude' id='longitude' class="form-control form-control-input" v-on:change="setCoordinates()"> 
                                                 </div>
                                             </div>
                                             <div class="col-lg-6">
                                                 <div calss="form-group">
                                                     <label class="control-label">Latitude</label>
-                                                    <input type='text' name='latitude' id='latitude' class="form-control" v-on:change="setCoordinates()">
+                                                    <input type='text' name='latitude' id='latitude' class="form-control form-control-input" v-on:change="setCoordinates()">
                                                 </div>
                                             </div>
                                         </div>

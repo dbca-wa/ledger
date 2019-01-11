@@ -264,7 +264,7 @@
     </div>
     <confirmbox id="deleteRange" :options="deletePrompt"></confirmbox>
     <bulk-close-campsites v-on:bulkCloseCampsites="bulkCloseCampsites" v-if="showBulkCloseCampsites" v-on:close="showBulkCloseCampsites = false" ref="bulkCloseCampsites" v-bind:campsites="campsites"/>
-    <div class="navbar navbar-default" id="footer">
+    <div class="navbar navbar-default" id="footer" v-if="invent">
         <div class="container">
             <div class="navbar navbar-nav navbar-right" style="margin-top:5px;">
                 <a href="#" class="btn btn-primary" @click.prevent="sendData">Update</a>
@@ -384,6 +384,7 @@ export default {
                 address:{},
                 images: []
             },
+            invent: false,
             loadingDetails: false,
             loadingContact: false,
             loadingLimits: false,
@@ -397,6 +398,8 @@ export default {
             isOpenCloseCS: false,
             showBulkCloseCampsites: false,
             deleteRange: null,
+            limits: null,
+            class_val: null,
             ph_options: {
                 responsive: true,
                 processing: true,
@@ -515,7 +518,8 @@ export default {
                 }, {
                     data: 'price'
                 }, {
-                    "mRender": function(data, type, full) {
+                    data: 'editable',
+                    mRender: function(data, type, full) {
                         var id = full.id;
                         if (full.active) {
                             var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
@@ -807,6 +811,26 @@ export default {
                 $('#vessel_size_limit').focus();
                 vm.swalMessage(error);
             }
+            if (isValid){
+                if (vm.campground.mooring_class == "small"){
+                    vm.class_val = 0;
+                } else if (vm.campground.mooring_class == "medium"){
+                    vm.class_val = 1;
+                } else if (vm.campground.mooring_class == "large"){
+                    vm.class_val = 2;
+                }
+                if (parseInt(vm.campground.vessel_size_limit) > vm.limits[vm.class_val].value){
+                    isValid = false;
+                    var error = {
+                        title : "Invalid Size",
+                        text : "Maximum size limited by Mooring Class. Please select a size limit of " + vm.limits[vm.class_val].value + " or less.",
+                        type : "warning",
+                    }
+                    $('#vessel_size_limit').focus();
+                    vm.swalMessage(error);
+                }
+            }
+            
             return isValid;
         },
         validateDraft: function(){
@@ -821,6 +845,18 @@ export default {
                 }
                 $('#vessel_draft_limit').focus();
                 vm.swalMessage(error);
+            }
+            if (isValid){
+                if (parseInt(vm.campground.vessel_draft_limit) > vm.limits[vm.class_val + 3].value){
+                    isValid = false;
+                    var error = {
+                        title : "Invalid Draft",
+                        text : "Maximum draft limited by Mooring Class. Please select a draft limit of " + vm.limits[vm.class_val + 3].value + " or less.",
+                        type : "warning",
+                    }
+                    $('#vessel_draft_limit').focus();
+                    vm.swalMessage(error);
+                }
             }
             return isValid;
         },
@@ -838,6 +874,18 @@ export default {
                     $('#vessel_beam_limit').focus();
                     vm.swalMessage(error);
                 }
+                if (isValid){
+                    if (parseInt(vm.campground.vessel_beam_limit) > vm.limits[vm.class_val + 6].value){
+                        isValid = false;
+                        var error = {
+                            title : "Invalid Beam",
+                            text : "Maximum beam limited by Mooring Class. Please select a beam limit of " + vm.limits[vm.class_val + 6].value + " or less.",
+                            type : "warning",
+                        }
+                        $('#vessel_beam_limit').focus();
+                        vm.swalMessage(error);
+                    }
+                }
             } else {
                 if(!parseInt(vm.campground.vessel_weight_limit) > 0){
                     isValid = false;
@@ -848,6 +896,18 @@ export default {
                     }
                     $('#vessel_weight_limit').focus();
                     vm.swalMessage(error);
+                }
+                if (isValid){
+                    if (parseInt(vm.campground.vessel_weight_limit) > vm.limits[vm.class_val + 9].value){
+                        isValid = false;
+                        var error = {
+                            title : "Invalid Weight",
+                            text : "Maximum weight limited by Mooring Class. Please select a weight limit of " + vm.limits[vm.class_val + 9].value + " or less.",
+                            type : "warning",
+                        }
+                        $('#vessel_weight_limit').focus();
+                        vm.swalMessage(error);
+                    }
                 }
             }
             return isValid;
@@ -907,6 +967,18 @@ export default {
         validateForm: function(){
             let vm = this;
             var isValid = true;
+            if (!vm.limits){
+                $.ajax({
+                    url: api_endpoints.global_settings + "?mooring=" + vm.campground.id,
+                    dataType: 'json',
+                    method: 'GET',
+                    async: false,
+                    success: function(data, stat, xhr){
+                        console.log(data)
+                        vm.limits = data;
+                    },
+                });
+            }
             isValid = vm.validateContact();
             if (isValid){
                 isValid = vm.validateSize();
@@ -1046,6 +1118,20 @@ export default {
         });
         helpers.namePopover($,vm.$refs.cg_campsites_dt.vmDataTable);
         vm.fetchCampground();
+        $.ajax({
+            url: api_endpoints.profile,
+            method: 'GET',
+            dataType: 'json',
+            success: function(data, stat, xhr){
+                if(data.is_inventory){
+                    vm.invent = true;
+                }
+                if(!vm.invent){
+                    $('.form-control-input').prop('readonly', true);
+                    $('.form-control-input').prop('disabled', true);
+                }
+            }
+        });
         //Details
         $('#details-collapse').on('shown.bs.collapse', function(){
             $('#collapse_details_span').removeClass("glyphicon glyphicon-menu-down");

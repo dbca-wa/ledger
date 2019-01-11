@@ -38,7 +38,8 @@ from mooring.models import (MooringAreaPriceHistory,
                                 AdmissionsRate,
                                 BookingPeriodOption,
                                 BookingPeriod,
-                                RegisteredVessels
+                                RegisteredVessels,
+                                GlobalSettings
                            )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -804,7 +805,8 @@ class AdmissionsRateSerializer(serializers.ModelSerializer):
             'family_overnight_cost',
             'reason',
             'comment',
-            'editable'
+            'editable',
+            'mooring_group'
             )
 
 class ReportSerializer(serializers.Serializer):
@@ -921,3 +923,12 @@ class OracleSerializer(serializers.Serializer):
     date = serializers.DateField(input_formats=['%d/%m/%Y','%Y-%m-%d'])
     override = serializers.BooleanField(default=False)
 
+class GlobalSettingsSerializer(serializers.ModelSerializer):
+    key = serializers.CharField(source='get_key_display')
+
+    class Meta:
+        model = GlobalSettings
+        fields = (
+            'key',
+            'value'
+        )

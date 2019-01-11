@@ -15,7 +15,7 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label class="control-label" >Description</label>
-                                        <div id="editor" name="description" class="form-control"></div>
+                                        <div id="editor" name="description" class="form-control form-control-input"></div>
                                     </div>
                                 </div>
                             </div>
@@ -23,7 +23,7 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label class="control-label" >Additional confirmation information</label>
-                                        <textarea id="additional_info" class="form-control" v-model="campground.additional_info"/>
+                                        <textarea id="additional_info" class="form-control form-control-input" v-model="campground.additional_info"/>
                                     </div>
                                 </div>
                             </div>
@@ -199,6 +199,20 @@ export default {
 			vm.validateEditor($('#editor'));
         });
         vm.form = $('#additionalForm');
+
+        $.ajax({
+            url: api_endpoints.profile,
+            method: 'GET',
+            dataType: 'json',
+            success: function(data, stat, xhr){
+                if(data.is_inventory){
+                    vm.invent = true;
+                }
+                if(!vm.invent){
+                    vm.editor.enable(false);
+                }
+            }
+        });
 
         $('.form-control').blur(function(){
             if (vm.validateForm()){

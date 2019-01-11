@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, date
 import traceback
 from decimal import *
 import json
+import calendar
 import geojson
 import requests
 from django.conf import settings
@@ -16,8 +17,8 @@ from dateutil.tz.tz import tzoffset
 from pytz import timezone as pytimezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
-from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod)
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
@@ -490,7 +491,21 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
 
     # strike out days after the max_advance_booking
     for site in campsites_qs:
-        stop = today + timedelta(days=site.mooringarea.max_advance_booking)
+        try:
+            group = MooringAreaGroup.objects.get(moorings__in=[site.mooringarea])
+        except:
+            group = None
+        if group:
+            max_advance = int(GlobalSettings.objects.get(key=2, mooring_group__in=[group,]).value)
+        else:
+            qs = GlobalSettings.objects.filter(key=2)
+            highest_val = 0
+            for q in qs:
+                if int(q.value) > highest_val:
+                    highest_val = int(q.value)
+            max_advance = highest_val       
+
+        stop = today + timedelta(days=max_advance)
         stop_mark = min(max(stop, start_date), end_date)
         #if start_date > stop:
         for i in range((end_date-stop_mark).days):
@@ -702,10 +717,15 @@ def override_lineitems(override_price, override_reason, total_price, oracle_code
             invoice_line.append({"ledger_description": '{} - {}'.format(override_reason.text, override_reason_info), "quantity": 1, 'price_incl_tax': discount, 'oracle_code': oracle_code})
     return invoice_line
 
-def nononline_booking_lineitems(oracle_code):
+def nononline_booking_lineitems(oracle_code, request):
     invoice_line = []
     if oracle_code:
-        invoice_line.append({'ledger_description': 'Non Online Booking Fee', 'quantity': 1, 'price_incl_tax': Decimal(15), 'oracle_code': oracle_code})
+        if request.user.is_superuser:
+            value = 15
+        else:
+            group = MooringAreaGroup.objects.filter(members__in=[request.user])
+            value = GlobalSettings.objects.get(mooring_group=group, key=0).value
+        invoice_line.append({'ledger_description': 'Non Online Booking Fee', 'quantity': 1, 'price_incl_tax': Decimal(value), 'oracle_code': oracle_code})
     return invoice_line
 
 def admission_lineitems(lines):
@@ -1662,3 +1682,48 @@ def daterange(start_date, end_date):
 def oracle_integration(date,override):
     system = '0516'
     oracle_codes = oracle_parser(date,system,'Mooring Booking',override=override)
+
+def admissions_lines(booking_mooring):
+    lines = []
+    for bm in booking_mooring:
+        # Convert the from and to dates of this booking to just plain dates in local time.
+        # Append them to a list.
+        if bm.campsite.mooringarea.park.entry_fee_required:
+            from_dt = bm.from_dt
+            timestamp = calendar.timegm(from_dt.timetuple())
+            local_dt = datetime.fromtimestamp(timestamp)
+            from_dt = local_dt.replace(microsecond=from_dt.microsecond)
+            to_dt = bm.to_dt
+            timestamp = calendar.timegm(to_dt.timetuple())
+            local_dt = datetime.fromtimestamp(timestamp)
+            to_dt = local_dt.replace(microsecond=to_dt.microsecond)
+            group = MooringAreaGroup.objects.filter(moorings__in=[bm.campsite.mooringarea,])[0].id
+            lines.append({'from': from_dt, 'to': to_dt, 'group':group})
+    # Sort the list by date from.
+    new_lines = sorted(lines, key=lambda line: line['from'])
+    i = 0
+    lines = []
+    latest_from = None
+    latest_to = None
+    # Loop through the list, if first instance, then this line's from date is the first admission fee.
+    # Then compare this TO value to the next FROM value. If they are not the same or overlapping dates
+    # add this date to the list, using the latest from and this TO value.
+    while i < len(new_lines):
+        if i == 0:
+            latest_from = new_lines[i]['from'].date()
+        if i < len(new_lines)-1:
+            if new_lines[i]['to'].date() < new_lines[i+1]['from'].date():
+                latest_to = new_lines[i]['to'].date()
+        else:
+            # if new_lines[i]['from'].date() > new_lines[i-1]['to'].date():
+            latest_to = new_lines[i]['to'].date()
+        
+        if latest_to:
+            lines.append({'from':datetime.strftime(latest_from, '%d %b %Y'), 'to': datetime.strftime(latest_to, '%d %b %Y'), 'admissionFee': 0, 'group': new_lines[i]['group']})
+            if i < len(new_lines)-1:
+                latest_from = new_lines[i+1]['from'].date()
+                latest_to = None
+        i+= 1
+    
+    return lines
+    
