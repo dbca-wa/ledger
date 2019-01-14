@@ -342,6 +342,7 @@ export default {
             if(!formInvalid){
                 //we can continue and send off to basket.
                 var vesselReg = this.vesselReg;
+                var location = $('#location').val();
                 var submitData = {
                     arrival: arrival,
                     overnightStay: overnightStay,
@@ -353,7 +354,8 @@ export default {
                     warningRefNo: warningRefNo,
                     givenName: givenName,
                     lastName: lastName,
-                    email: email
+                    email: email,
+                    location: location,
                 }
                 $.ajax({
                     url: vm.mooringUrl + "/api/create_admissions_booking",

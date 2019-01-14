@@ -293,3 +293,8 @@ class GlobalSettings(admin.ModelAdmin):
             return qs
         group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
         return qs.filter(mooring_group__in=group)
+
+@admin.register(models.AdmissionsLocation)
+class AdmissionsLocation(admin.ModelAdmin):
+    list_display = ('text', 'mooring_group')
+    

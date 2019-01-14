@@ -1740,11 +1740,20 @@ class AdmissionsBooking(models.Model):
     def total_admissions(self):
         return self.noOfAdults + self.noOfConcessions + self.noOfChildren + self.noOfInfants
 
+class AdmissionsLocation(models.Model):
+    key = models.CharField(max_length=5, blank=False, null=False, unique=True)
+    text = models.CharField(max_length=255, blank=False, null=False)
+    mooring_group = models.ForeignKey(MooringAreaGroup, blank=False, null=False)
+
+    def __str__(self):
+        return self.text
+
 class AdmissionsLine(models.Model):
     arrivalDate = models.DateField()
     overnightStay = models.BooleanField(default=False)
     admissionsBooking = models.ForeignKey(AdmissionsBooking, on_delete=models.PROTECT, blank=False, null=False)
     cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    location = models.ForeignKey(AdmissionsLocation, blank=True)
     
 
 class AdmissionsOracleCode(models.Model):

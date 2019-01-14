@@ -21,6 +21,9 @@ def is_inventory(user):
 def is_admin(user):
     return user.is_authenticated() and belongs_to(user, "Mooring Admin")
 
+def is_payment_officer(user):
+    return user.is_authenticated() and belongs_to(user, "Payments Officers")
+
 def is_customer(user):
     """
     Test if the user is a customer
