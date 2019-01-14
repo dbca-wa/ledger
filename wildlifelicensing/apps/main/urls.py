@@ -7,7 +7,7 @@ from wildlifelicensing.apps.main.views import ListProfilesView, CreateProfilesVi
 
 urlpatterns = [
     url(r'contact-us/$', TemplateView.as_view(template_name="wl/contact_us.html"), name='contact_us'),
-    url(r'further-information/$', RedirectView.as_view(url='https://www.dpaw.wa.gov.au/plants-and-animals/licences-and-permits'),
+    url(r'further-information/$', RedirectView.as_view(url='https://www.dpaw.wa.gov.au/plants-and-animals/licences-and-authorities'),
         name='further_information'),
 
     url('^account/$', EditAccountView.as_view(), name='edit_account'),
