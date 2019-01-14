@@ -13,5 +13,5 @@ class Command(BaseCommand):
 
         for group in groups:
             for i in range(15):
-                if not GlobalSettings.objects.get(mooring_group=group, key=i):
+                if GlobalSettings.objects.filter(mooring_group=group, key=i).count() == 0:
                     new = GlobalSettings.objects.create(mooring_group=group, key=i, value=25)
