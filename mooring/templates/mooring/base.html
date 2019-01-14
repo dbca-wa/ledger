@@ -79,7 +79,7 @@
                                             <span class="caret"></span>
                                         </a>
                                         <ul class="dropdown-menu">
-                                            {% if request.user|is_admin %}
+                                            {% if request.user|is_admin or request.user.is_superuser %}
                                                 <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                 <li><a href="/dashboard/reports">Reports</a></li>
                                                 <li role="separator" class="divider"></li>

@@ -2634,7 +2634,7 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                         inv.append(b.invoice_reference)
                 else:
                     adi = AdmissionsBookingInvoice.objects.get(admissions_booking=ad)
-                    inv = adi.invoice_reference
+                    inv = [adi.invoice_reference,]
                 r.update({'invoice_ref': inv})
                 if(r['customer']):
                     name = ad.customer.first_name + " " + ad.customer.last_name
