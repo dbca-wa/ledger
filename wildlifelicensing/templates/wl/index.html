@@ -23,23 +23,17 @@
                 <h2>
                     Welcome to Wildlife Licensing
                 </h2>
-                <p>The Department of Parks and Wildlife issues licences under the Wildlife Conservation Act 1950, the Wildlife Conservation Regulations 1970 and the Wildlife Conservation (Reptiles and Amphibians) Regulations 2002 to manage certain interactions with flora and fauna..</p>
+                <p>The Department of Biodiversity, Conservation and Attractions issues licences under the Biodiversity Conservation Act 2016 and the Biodiversity Conservation Regulations 2018 to manage certain interactions with flora and fauna.</p>
                 <p>This web portal currently enables you to apply for, renew, and manage returns for the following licence types online.</p>
-                <p>Wildlife Conservation Regulations 1970:</p>
                 <ul>
-                    <li>Regulation 17 - <strong>Licence to take fauna for scientific purposes</strong></li>
-                    <li>Regulation 15 - <strong>Licence to take fauna for educational or public purposes</strong> (Excludes marine mammal interaction licences)</li>
-                    <li>Regulation 13 - <strong>Licence to deal in avian fauna</strong></li>
-                    <li>Regulation 5 - <strong>Licence to take protected fauna causing damage to proper</strong></li>
-                    <li>Regulation 4 - <strong>Licence to take dangerous fauna</strong></li>
+                    <li><strong>Fauna taking (scientific or other purposes) licence</strong> (formerly 'Regulation 17 - Licence to take fauna for scientific purposes')</li>
+                    <li><strong>Fauna taking (relocation) licence</strong> (formerly 'Regulation 15 - Licence to take fauna for educational or public purposes')</strong></li>
+                    <li><strong>Fauna taking (dangerous fauna) licence</strong> (formerly 'Regulation 4 - Licence to take dangerous fauna')</li>
+                    <li><strong>Fauna causing damage licence</strong> (formerly 'Regulation 5 - Licence to take protected fauna causing damage to property')</li>
                 </ul>
-                <p>Wildlife Conservation (Reptiles and Amphibians) Regulations 2002:</p>
-                <ul>
-                    <li>Regulation 17(1) - <strong>Reptile Removalist's Licence</strong></li>
-                </ul>
-                <p>Additional licence types will be added to this online system over time.</p>
+                <p>A new wildlife licensing system will replace this system, allowing for all licence types to be applied for online.</p>
                 <p>Simply register an account, set up a profile, select the licence type you wish to apply for and get started.</p>
-                <p>For further information about the Wildlife Licensing System, contact <a href="mailto:wildlifelicensing@dpaw.wa.gov.au">wildlifelicensing@dpaw.wa.gov.au</a>.
+                <p>For further information, contact <a href="mailto:wildlifelicensing@dpaw.wa.gov.au">wildlifelicensing@dpaw.wa.gov.au</a>.
             </div>
             <div class="col-md-4">
                 {% if not request.user.is_authenticated %}
@@ -48,7 +42,7 @@
                             Access Wildlife Licensing
                         </h3>
                         {% bootstrap_messages %}
-                        <p><strong>If you already have a Parks and Wildlife customer account under another email address, please sign in with that account and add any additional email addresses as new profiles.</strong></p>
+                        <p><strong>If you already have a Biodiversity, Conservation and Attractions customer account under another email address, please sign in with that account and add any additional email addresses as new profiles.</strong></p>
                         <form method="post" action="{% url "social:complete" backend="email" %}">
                             {% csrf_token %}
                             {% bootstrap_form form %}
@@ -62,7 +56,7 @@
                             Wildlife Licensing Password-less Logins
                         </h4>
                         <p>
-                            At the Department of Parks and Wildlife, we employ a password-less authentication system, meaning you never need to remember
+                            At the Department of Biodiversity, Conservation and Attractions, we employ a password-less authentication system, meaning you never need to remember
                             a password. When you need to login to a site, such as Wildlife Licensing, simply enter your email and an 
                             authentication link will be sent to your registered email address. From there, simply follow the link to complete the login process.
                         </p>
