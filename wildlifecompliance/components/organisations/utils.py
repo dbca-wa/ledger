@@ -22,26 +22,9 @@ def can_manage_org(organisation,user):
     return False
 
 
-def can_change_role(organisation, user):
-    from wildlifecompliance.components.organisations.models import OrganisationContact
-    ''' Check user contact can change their role specifically from admin to non admin. At least one
-        Administrator must exists on an Organisation. '''
-    _can_change = True
-    try:
-        _admin_contacts = OrganisationContact.objects.filter(organisation_id=organisation,
-                                                             user_status='active',
-                                                             user_role='organisation_admin')
-        _is_admin = _admin_contacts.filter(email=user.email).exists()
-        if _is_admin and _admin_contacts.count() < 2:
-            _can_change = False
-    except OrganisationContact.DoesNotExist:
-        _can_change = False
-    return _can_change
-
-
 def is_last_admin(organisation, user):
     from wildlifecompliance.components.organisations.models import OrganisationContact
-
+    ''' A check for whether the user contact is the only administrator for the Organisation. '''
     _last_admin = False
     try:
         _admin_contacts = OrganisationContact.objects.filter(organisation_id=organisation,

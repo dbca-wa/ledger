@@ -1037,7 +1037,7 @@ export default {
                     }, (error) => {
                         let error_msg = '<br/>';
                         for (var key in error.body) {
-                          if (error.body[key].indexOf('last_admin') !== -1) {
+                          if (error.body[key].indexOf('last_admin')>-1) {
                             error_msg += 'The Organisation will have no Administrator.<br/>';
                           }
                         }

@@ -14,7 +14,6 @@ from wildlifecompliance.components.organisations.utils import (
                                 can_manage_org,
                                 can_admin_org,
                                 is_consultant,
-                                can_change_role,
                                 can_relink,
                                 can_approve,
                             )
@@ -121,7 +120,6 @@ class OrganisationCheckExistSerializer(serializers.Serializer):
 class MyOrganisationsSerializer(serializers.ModelSerializer):
     is_admin = serializers.SerializerMethodField(read_only=True)
     is_consultant = serializers.SerializerMethodField(read_only=True)
-    can_change_role = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Organisation
@@ -130,8 +128,7 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
             'name',
             'abn',
             'is_admin',
-            'is_consultant',
-            'can_change_role'
+            'is_consultant'
         )
 
     def get_is_consultant(self, obj):
@@ -143,11 +140,6 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         # Check if the request user is among the first five delegates in the organisation
         return can_admin_org(obj, user)
-
-    def get_can_change_role(self, obj):
-        user = self.context['request'].user
-        # Check if the request user can change their role within the organisation.
-        return can_change_role(obj, user)
 
 
 class DetailsSerializer(serializers.ModelSerializer):
