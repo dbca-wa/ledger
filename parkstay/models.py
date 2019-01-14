@@ -1091,22 +1091,27 @@ class Booking(models.Model):
         for i in invoices:
             if not i.voided:
                 amount += i.payment_amount
-
+                       
         if amount == 0:
-            return 'unpaid'
+            if self.override_reason and self.override_price == 0:
+                return 'paid'
+            else: 
+                return 'unpaid' 
             
         if self.override_price:
             if self.override_price < amount:
                 return 'over_paid'
             elif self.override_price > amount:
                 return 'partially_paid'
-            else:return "paid"
+            else:
+                return "paid"
         else:
             if self.cost_total < amount:
                 return 'over_paid'
             elif self.cost_total > amount:
                 return 'partially_paid'
-            else:return "paid"
+            else:
+                return "paid"
              
     def __check_refund_status(self):
         invoices = []
@@ -1220,7 +1225,18 @@ class Booking(models.Model):
                 elif remainder_amount == 0:
                     paid = True
                 elif total_paid == 0:
-                    pass
+                    # pass
+                    if self.override_reason and self.override_price == 0:
+                        paid = True
+                    else: 
+                        paid = False 
+                    
+                if self.override_price:
+                    if self.override_price <= total_paid:
+                        paid = True
+                    else:
+                        paid = False 
+
                 else:
                     required_total = D('0.0')
                     for k,v in price_dict.items():

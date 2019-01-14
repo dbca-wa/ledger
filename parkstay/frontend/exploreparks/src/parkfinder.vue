@@ -824,9 +824,9 @@ export default {
 
         this.arrivalEl = $('#dateArrival');
         this.departureEl = $('#dateDeparture');
-
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
+            endDate: moment(this.arrivalEl).add(180, 'days').toDate(),
             onRender: function (date) {
                 // disallow start dates before today
                 return date.valueOf() < now.valueOf() ? 'disabled': '';
@@ -944,7 +944,7 @@ export default {
             source: new ol.source.WMTS({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
-                layer: 'public:dpaw_lands_and_waters',
+                layer: 'public:dbca_legislated_lands_and_waters',
                 matrixSet: this.matrixSet,
                 projection: this.projection,
                 tileGrid: tileGrid

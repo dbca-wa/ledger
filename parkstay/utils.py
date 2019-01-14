@@ -114,7 +114,7 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
                     if not all([v[0] == 'open' for k, v in dates.items()]):
                         raise ValidationError('Campsite(s) unavailable for specified time period.')
             else:
-                if not all([v[0] in ['open','tooearly','closed'] for k, v in dates.items()]):
+                if not all([v[0] in ['open','tooearly','closed','closed & booked'] for k, v in dates.items()]):
                     raise ValidationError('Campsite(s) unavailable for specified time period.')
                 
         if not override_checks:
@@ -268,9 +268,16 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                     results[closure.campsite.pk][start+timedelta(days=i)][0] = 'closed'
                     results[closure.campsite.pk][start+timedelta(days=i)][1] = str(reason)
            
-    # strike out existing bookings
-    for b in bookings_qs:
-        results[b.campsite.pk][b.date][0] = 'closed' if b.booking_type == 2 else 'booked'
+    # strike out black bookings
+    for b in bookings_qs.filter(booking_type=2):
+        results[b.campsite.pk][b.date][0] = 'closed'
+
+    # add booking status for real bookings
+    for b in bookings_qs.exclude(booking_type=2):
+        if results[b.campsite.pk][b.date][0] == 'closed':
+            results[b.campsite.pk][b.date][0] = 'closed & booked'
+        else:     
+            results[b.campsite.pk][b.date][0] = 'booked'
 
     # strike out days before today
     today = date.today()
@@ -382,9 +389,15 @@ def get_available_campsitetypes(campground_id,start_date,end_date,_list=True):
                 availability = get_campsite_availability(sites_qs, start_date, end_date)
                 sites = {}
                 for site_id, dates in availability.items():
-                    if any([v[0] == 'booked' for k, v in dates.items()]):
+                    some_booked = any([v[0] == 'booked' for k, v in dates.items()]) 
+                    some_closed = any([v[0] == 'closed' for k, v in dates.items()])
+                    some_closed_and_booked = any([v[0] == 'closed & booked' for k, v in dates.items()])
+                    
+                    if some_closed_and_booked or (some_booked and some_closed):
+                        sites[site_id] = 'closed & booked'
+                    elif some_booked:
                         sites[site_id] = 'booked'
-                    elif any([v[0] == 'closed' for k, v in dates.items()]):
+                    elif some_closed:
                         sites[site_id] = 'closed'
                     else:
                         sites[site_id] = 'open' 
@@ -406,16 +419,21 @@ def get_available_campsites_list(campsite_qs,request, start_date, end_date):
     from parkstay.serialisers import CampsiteSerialiser
     campsites = get_campsite_availability(campsite_qs, start_date, end_date)
     available = []
-    for camp in campsites:
-        avail_list = [item for sublist in campsites[camp].values() for item in sublist]
-        av = 'open'
-        if 'closed' in avail_list:
-            av = 'closed'
-            if 'booked' in avail_list:
-                av = 'booked'
-        elif 'booked' in avail_list:
+
+    for site_id, dates in campsites.items():
+        some_booked = any([v[0] == 'booked' for k, v in dates.items()]) 
+        some_closed = any([v[0] == 'closed' for k, v in dates.items()])
+        some_closed_and_booked = any([v[0] == 'closed & booked' for k, v in dates.items()])
+        
+        if some_closed_and_booked or (some_booked and some_closed):
+            av = 'closed & booked'
+        elif some_booked:
             av = 'booked'
-        available.append(CampsiteSerialiser(Campsite.objects.get(id = camp),context={'request':request, 'status': av}).data)
+        elif some_closed:
+            av = 'closed'
+        else:
+            av = 'open'
+        available.append(CampsiteSerialiser(Campsite.objects.get(id = site_id),context={'request':request, 'status': av}).data)
         available.sort(key=lambda x: x['name'])
     return available
 
@@ -427,14 +445,21 @@ def get_available_campsites_list_booking(campsite_qs,request, start_date, end_da
     from parkstay.serialisers import CampsiteSerialiser
     campsites = get_campsite_availability(campsite_qs, start_date, end_date)
     available = []
-    for camp in campsites:
-        avail_list = [item for sublist in campsites[camp].values() for item in sublist]
-        av = 'open'
-        if 'closed' in avail_list:
-            av = 'closed'
-        elif 'booked' in avail_list:
+
+    for site_id, dates in campsites.items():
+        some_booked = any([v[0] == 'booked' for k, v in dates.items()]) 
+        some_closed = any([v[0] == 'closed' for k, v in dates.items()])
+        some_closed_and_booked = any([v[0] == 'closed & booked' for k, v in dates.items()])
+        
+        if some_closed_and_booked or (some_booked and some_closed):
+            av = 'closed & booked'
+        elif some_booked:
             av = 'booked'
-        available.append(CampsiteSerialiser(Campsite.objects.filter(id = camp),many=True,context={'request':request, 'status': av}).data[0])
+        elif some_closed:
+            av = 'closed'
+        else:
+            av = 'open'
+        available.append(CampsiteSerialiser(Campsite.objects.filter(id = site_id),many=True,context={'request':request, 'status': av}).data[0])
     return available
 
 def get_campsite_current_rate(request,campsite_id,start_date,end_date):

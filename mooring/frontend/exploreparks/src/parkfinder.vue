@@ -9,13 +9,13 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-3 columns">
                         <label>Arrival <input id="dateArrival" autocomplete="off" name="arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns">
+                    <div class="small-12 medium-12 large-3 columns">
                         <label>Departure <input id="dateDeparture" autocomplete="off" name="departure" type="text" placeholder="dd/mm/yyyy" v-on:change="updateDates"/></label>
                     </div>
-                    <div class="small-12 medium-12 large-4 columns" style='display:none'>
+                    <div class="small-12 medium-12 large-3 columns" style='display:none'>
                         <label>
                             Guests <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
                         </label>
@@ -62,9 +62,13 @@
 
                        </div>
                        </div>
-                     <div class="small-12 medium-12 large-4 columns">
-                        <label>Vessel Size (meters) <input id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
+                     <div class="small-12 medium-12 large-3 columns">
+                        <label>Vessel Size (meters) <input id="vesselSize" name="vessel_size" type="number"  placeholder="35" /></label>
                       </div>
+                     <div class="small-12 medium-12 large-3 columns">
+                        <label>Vessel Draft (meters) <input id="vesselDraft" name="vessel_draft" type="number" placeholder="35" /></label>
+                      </div>
+
                     <div class="small-12 medium-12 large-12 columns">
                         <label><input type="checkbox" v-model="bookableOnly"/> Show bookable moorings only</label>
                     </div>
@@ -148,7 +152,7 @@
         <template v-if="extentFeatures.length > 0">
             <paginate name="filterResults" class="resultList" :list="extentFeatures" :per="9">
                 <div class="row">
-                    <div class="small-12 medium-4 large-4 columns" v-for="f in paginated('filterResults')" v-if="f.vessel_size_limit >= vesselSize">
+                    <div class="small-12 medium-4 large-4 columns" v-for="f in paginated('filterResults')" v-if="f.vessel_size_limit >= vesselSize && f.vessel_draft_limit >= vesselDraft">
                         <div class="row">
                             <div class="small-12 columns">
                                 <span class="searchTitle">{{ f.name }}</span>
@@ -545,6 +549,7 @@ export default {
             anchorGroups: {},
             anchorPinsActive: [],
             vesselSize: 0,
+            vesselDraft: 0,
             groupPinLevelChange: true,
             anchorPinLevelChange: true,
             mooring_map_data: null,
@@ -608,7 +613,8 @@ export default {
                     'num_infants': this.numInfants,
                     'num_mooring' : this.numMooring,
                     'gear_type': this.gearType,
-                    'vessel_size' : this.vesselSize
+                    'vessel_size' : this.vesselSize,
+                    'vessel_draft' : this.vesselDraft,
                 };
                 if (this.arrivalDate && this.departureDate) {
                     params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
@@ -943,14 +949,15 @@ export default {
                              for (var b in response[x][m]) {
 				   if (b == 'geometry') {
                                       var vessel_size = $("#vesselSize").val();
+                                      var vessel_draft = $("#vesselDraft").val();
                                       var show_marker = true;
                                       if (response[x][m]['properties']['vessel_size_limit'].length == 0) { 
 						response[x][m]['properties']['vessel_size_limit'] = 0;
 				      }
                                      
-                                      if (parseInt(vessel_size) > 0) {
+                                      if (parseInt(vessel_size) > 0 || parseInt(vessel_draft) > 0) {
                                           show_marker = false;
-                                          if (parseInt(response[x][m]['properties']['vessel_size_limit']) >= parseInt(vessel_size)) {
+                                          if (parseInt(response[x][m]['properties']['vessel_size_limit']) >= parseInt(vessel_size) && parseInt(response[x][m]['properties']['vessel_draft_limit']) >= parseInt(vessel_draft)) {
                                                show_marker = true;
                                           }
                                       }
@@ -1044,10 +1051,13 @@ export default {
        var response = this.mooring_map_data;
        vm.anchorGroups = {};
        var vessel_size = $('#vesselSize').val();
+       var vessel_draft = $('#vesselDraft').val();
+
             var mooring = response['features'];
             for (var m in mooring) {
                  var mooring_vessel_size = response['features'][m]['properties']['vessel_size_limit'];
-                 if (mooring_vessel_size >= vessel_size) { 
+                 var mooring_vessel_draft = response['features'][m]['properties']['vessel_draft_limit'];
+                 if (mooring_vessel_size >= vessel_size && mooring_vessel_draft >= vessel_draft) { 
                  if (vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] == null) { 
                       vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] = {};
                       vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = 1;
@@ -1219,11 +1229,13 @@ export default {
       },
       BookNow: function() { 
        var vessel_size = $('#vesselSize').val();
-       if (vessel_size > 0 ) {
+       var veseel_draft = $('#vesselDraft').val();
+
+       if (vessel_size > 0 && veseel_draft > 0) {
        } else {
                 swal({
-                  title: 'Missing Vessel Size',
-                  text: "Please enter vessel size:",
+                  title: 'Missing Vessel Draft or Size',
+                  text: "Please enter vessel draft or size:",
                   type: 'warning',
                   showCancelButton: false,
                   confirmButtonText: 'OK',
@@ -1859,6 +1871,15 @@ export default {
 	       vm.buildmarkers();
 	});
 
+        $('#vesselDraft').blur(function() {
+               // vm.olmap.zoomOut();
+               // vm.olmap.zoomIn();
+               vm.vesselDraft = this.value;
+               vm.removePinAnchors();
+               vm.removePinGroups();
+               vm.buildmarkers();
+        });
+
         $('#dateArrival').change(function() {
                vm.groundsSource.loadSource();
                //vm.removePinAnchors();
@@ -1879,7 +1900,9 @@ export default {
          //      vm.buildmarkers();
         //});
 
-    
+        $('#vesselSize').val('0');
+        $('#vesselDraft').val('0');
+ 
  
         // loop to change the pointer when mousing over a vector layer
         this.olmap.on('pointermove', function(ev) {
@@ -1947,7 +1970,8 @@ export default {
                    $("#vessel_size_popup").html(properties.props.vessel_size_limit);
 		   //  $("#max_stay_period").html(properties.props.max_advance_booking);
                    var vessel_size = $('#vesselSize').val();
-                   if (vessel_size > 0 ) {
+                   var vessel_draft = $('#vesselDraft').val();
+                   if (vessel_size > 0 && vessel_draft > 0) {
                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
                        $("#mapPopupBook").attr('target','_blank');
                    } else {
@@ -1976,7 +2000,9 @@ export default {
                         $('#mapPopupBook').show();
                         $("#mapPopupImage").hide();
                         var vessel_size = $('#vesselSize').val();
-                        if (vessel_size > 0 ) {
+                        var vessel_draft = $('#vesselDraft').val();
+
+                        if (vessel_size > 0 && vessel_draft > 0) {
                                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+properties.marker_id+'&'+vm.bookingParam);
                         } else {
 				 $("#mapPopupBook").attr('href','javascript:void;');

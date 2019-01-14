@@ -69,12 +69,14 @@ class ProfileBaseForm(forms.ModelForm):
         # always create a email identity for profile email
         self.cleaned_data["auth_identity"] = True
 
+    '''
     def clean_auth_identity(self):
         if not self.cleaned_data.get("auth_identity", False):
             if self.instance.user and self.instance.user.email == self.cleaned_data["email"]:
                 # the profile's email is the same as the user account email, it must be an email identity;
                 return True
         return self.cleaned_data.get("auth_identity")
+    '''
 
     def save(self, commit=True):
         setattr(self.instance, "auth_identity", self.cleaned_data.get("auth_identity", False))
