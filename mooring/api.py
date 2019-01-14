@@ -34,7 +34,7 @@ from ledger.address.models import Country
 from ledger.payments.models import Invoice
 from django.db.models import Count
 from mooring import utils
-from mooring.helpers import can_view_campground, is_inventory, is_admin
+from mooring.helpers import can_view_campground, is_inventory, is_admin, is_payment_officer
 from datetime import datetime,timedelta, date
 from decimal import Decimal 
 from mooring.models import (MooringArea,
@@ -69,6 +69,7 @@ from mooring.models import (MooringArea,
                                 MooringAreaGroup,
                                 AdmissionsBooking,
                                 AdmissionsLine,
+                                AdmissionsLocation,
                                 AdmissionsRate,
                                 AdmissionsBookingInvoice,
                                 BookingInvoice,
@@ -2125,9 +2126,12 @@ def create_admissions_booking(request, *args, **kwargs):
         warningReferenceNo = serializer.validated_data['warningReferenceNo'],
         booking_type = 3
     )
+    location_text = request.POST.get('location')
+    location = AdmissionsLocation.objects.filter(key=location_text)[0]
     data2 = {
         'arrivalDate' : request.POST.get('arrival'),
-        'admissionsBooking' : admissionsBooking.pk
+        'admissionsBooking' : admissionsBooking.pk,
+        'location' : location.pk
     }
     
     if(request.POST.get('overnightStay') == 'yes'):
@@ -2143,7 +2147,8 @@ def create_admissions_booking(request, *args, **kwargs):
     admissionsLine = AdmissionsLine.objects.create(
         arrivalDate = serializer2.validated_data['arrivalDate'],
         overnightStay = serializer2.validated_data['overnightStay'],
-        admissionsBooking = admissionsBooking
+        admissionsBooking = admissionsBooking,
+        location=serializer2.validated_data['location']
     )
 
     #Lookup price and set lines.
@@ -2592,6 +2597,37 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
         http_status = status.HTTP_200_OK
         try:
             data = AdmissionsBooking.objects.filter(booking_type__in=(0, 1)).order_by('-pk')
+            groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+            # If groups then we need to filter data by groups.
+            if groups.count() > 0:
+                filtered_ids = []
+                for rec in data:
+                    bookings = Booking.objects.filter(admission_payment=rec)
+                    if bookings.count() > 0:
+                        booking = bookings[0]
+                        msbs = MooringsiteBooking.objects.filter(booking=booking)
+                        in_group = False
+                        moorings = []
+                        for group in groups:
+                            for mooring in group.moorings.all():
+                                moorings.append(mooring)
+                        for msb in msbs:
+                            if msb.campsite.mooringarea in moorings:
+                                in_group = True
+                                break
+                        if in_group:
+                            filtered_ids.append(rec.id)
+                    else:
+                        ad_line = AdmissionsLine.objects.filter(admissionsBooking=rec).first()
+                        if ad_line.location.mooring_group in groups:
+                            filtered_ids.append(rec.id)
+
+                data = AdmissionsBooking.objects.filter(pk__in=filtered_ids).order_by('-pk')
+            else:
+                return Response("Error no group")
+                        
+
+            
             recordsTotal = len(data)
             search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
             start = request.GET.get('start') if request.GET.get('start') else 0
@@ -3694,6 +3730,7 @@ class GetProfile(views.APIView):
         data = serializer.data
         data['is_inventory'] = is_inventory(user)
         data['is_admin'] = is_admin(user)
+        data['is_payment_officer'] = is_payment_officer(user)
         return Response(data)
 
 

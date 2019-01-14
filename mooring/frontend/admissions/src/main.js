@@ -21,7 +21,7 @@ require('custom-event-polyfill');
 console.log(costs);
 const routes = [
     {
-        path: '/admissions/',
+        path: '/admissions/:loc/',
         component: admissions, 
 //        name: 'admissions'
     },

@@ -31,6 +31,7 @@ from mooring.models import (MooringArea,
                                 MarinaEntryRate,
                                 AdmissionsBooking,
                                 AdmissionsLine,
+                                AdmissionsLocation,
                                 AdmissionsBookingInvoice,
                                 AdmissionsRate,
                                 DiscountReason,
@@ -855,6 +856,7 @@ class BookingSuccessView(TemplateView):
                     booking.expiry_time = None
 
                     #Calculate Admissions and create object
+                    rego = booking.details['vessel_rego']
                     found_vessel = RegisteredVessels.objects.filter(rego_no=rego.upper())
                     if found_vessel.count() > 0:
                         admissions_paid = found_vessel[0].admissionsPaid
@@ -917,17 +919,23 @@ class BookingSuccessView(TemplateView):
                             thisAdmission = 0
                             from_d = datetime.strptime(lines[i]['from'], '%d %b %Y')
                             to_d = datetime.strptime(lines[i]['to'], '%d %b %Y')
-                            rate = AdmissionsRate.objects.filter(Q(period_start__lte=from_d), (Q(period_end=None) | Q(period_end__gte=to_d)))[0]
+                            rate = AdmissionsRate.objects.filter(Q(mooring_group=lines[i]['group']), Q(period_start__lte=from_d), (Q(period_end=None) | Q(period_end__gte=to_d)))[0]
                             if from_d != to_d:
                                 overnight = True
+                                thisAdmission += (infants * rate.infant_overnight_cost)
+                                thisAdmission += (adults * rate.adult_overnight_cost)
+                                thisAdmission += (children * rate.children_overnight_cost)
+                                thisAdmission += (family * rate.family_overnight_cost)
                             else:
                                 overnight = False
+                                thisAdmission += (infants * rate.infant_cost)
+                                thisAdmission += (adults * rate.adult_cost)
+                                thisAdmission += (children * rate.children_cost)
+                                thisAdmission += (family * rate.family_cost)
 
-                            thisAdmission += (infants * rate.infant_overnight_cost)
-                            thisAdmission += (adults * rate.adult_overnight_cost)
-                            thisAdmission += (children * rate.children_overnight_cost)
-                            thisAdmission += (family * rate.family_overnight_cost)
-                            ad_line = AdmissionsLine.objects.create(arrivalDate=from_d, overnightStay=overnight, admissionsBooking=ad_booking, cost=thisAdmission)
+                            
+                            location = AdmissionsLocation.objects.filter(mooring_group=lines[i]['group'])[0]
+                            ad_line = AdmissionsLine.objects.create(arrivalDate=from_d, overnightStay=overnight, admissionsBooking=ad_booking, cost=thisAdmission, location=location)
                             ad_line.save()
                             total += thisAdmission
 
@@ -1129,6 +1137,12 @@ class ChangeBookingView(LoginRequiredMixin, TemplateView):
 
 class AdmissionFeesView(TemplateView):
     template_name = 'mooring/admissions/admissions_form.html'
+
+    def get(self, *args, **kwargs):
+        context = {
+            'loc': self.kwargs['loc']
+        }
+        return render(self.request, self.template_name, context)
 
 class AdmissionsCostView(TemplateView):
     template_name = 'mooring/admissions/admissions_cost.html'

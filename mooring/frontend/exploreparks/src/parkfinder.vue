@@ -238,7 +238,7 @@
             </div>
 <!-- here -->
             <div class="small-12 medium-9 large-6 columns">
-                <div class="alert alert-warning" style='text-align: center' role="alert"> <strong style='font-size: 16px;' ></span><A HREF='/admissions/'>Click here for paying admission fees</A></strong><br><span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> (Only if you do not book a mooring) <span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> </div>
+                <div class="alert alert-warning" style='text-align: center' role="alert"> <strong style='font-size: 16px;' ></span><A HREF='/admissions/ria'>Click here for paying admission fees</A></strong><br><span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> (Only if you do not book a mooring) <span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> </div>
                 <div id="map"></div>
                 <div id="mapPopup" class="mapPopup" v-cloak>
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>

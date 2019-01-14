@@ -186,11 +186,21 @@ export default {
         return {
             exportingCSV: false,
             exportingCSV2: false,
+            payment_officer: false,
             dtOptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                fnInitComplete: function(oSettings, json){
+                    if(vm.payment_officer){
+                        vm.$refs.bookings_table.vmDataTable.rows().every(function(){
+                            var rowdata = this.data();
+                            rowdata['payment_visible'] = true;
+                            this.data(rowdata);
+                        });
+                    }
+                },
                 serverSide:true,
                 processing:true,
                 searchDelay: 800,
@@ -362,9 +372,11 @@ export default {
                                 var location_port = window.location.port ? ':'+window.location.port : '';
                                 var location_url = `${window.location.protocol}//${window.location.hostname}${location_port}`;
                                 invoice_string += full.payment_callback_url ? '&callback_url='+location_url+full.payment_callback_url : '';
-                                var payment = (full.paid || full.status == 'Canceled') ? "View" : "Record";
-                                var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
-                                column += record_payment;
+                                if(full.payment_visible){
+                                   var payment = (full.paid || full.status == 'Canceled') ? "View" : "Record";
+                                    var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
+                                    column += record_payment; 
+                                }                                
                             }
                             if (full.editable){
                                 if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
@@ -393,6 +405,15 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                fnInitComplete: function(oSettings, json){
+                    if(vm.payment_officer){
+                        vm.$refs.bookings_table.vmDataTable.rows().every(function(){
+                            var rowdata = this.data();
+                            rowdata['payment_visible'] = true;
+                            this.data(rowdata);
+                        });
+                    }
+                },
                 serverSide:true,
                 processing:true,
                 searchDelay: 800,
@@ -478,6 +499,7 @@ export default {
                         mRender: function(data, type, full) {
                             var search = "";
                             var invoices = "";
+                            var column = ""
                             $.each(full.invoice_ref,(i,v) =>{
                                 if (i != 0){
                                     search += "&";
@@ -486,8 +508,10 @@ export default {
                                 invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
                             var invoice = "/ledger/payments/invoice/payment?" + search;
-                            var invoice_link= (full.invoice_ref)?"<a href='"+invoice+"' target='_blank' class='text-primary'>View Payment</a><br/>":"";
-                            var column = invoice_link;
+                            if(full.payment_visible){
+                                var invoice_link= (full.invoice_ref)?"<a href='"+invoice+"' target='_blank' class='text-primary'>View Payment</a><br/>":"";
+                                column += invoice_link;
+                            }
                             column += invoices;
                             return column;
                         },
@@ -1060,6 +1084,16 @@ export default {
     },
     mounted:function () {
         let vm = this;
+        $.ajax({
+            url: api_endpoints.profile,
+            method: 'GET',
+            dataType: 'json',
+            success: function(data, stat, xhr){
+                if(data.is_payment_officer){
+                    vm.payment_officer = true;
+                }
+            }
+        });
         vm.dateFromPicker = $('#booking-date-from').datetimepicker(vm.datepickerOptions);
         vm.dateToPicker = $('#booking-date-to').datetimepicker(vm.datepickerOptions);
         vm.dateFromPicker2 = $('#admission-date-from').datetimepicker(vm.datepickerOptions);
