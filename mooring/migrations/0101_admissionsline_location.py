@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='admissionsline',
             name='location',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='mooring.AdmissionsLocation'),
+            field=models.ForeignKey(blank=True, null=True, default=None, on_delete=django.db.models.deletion.CASCADE, to='mooring.AdmissionsLocation'),
             preserve_default=False,
         ),
     ]

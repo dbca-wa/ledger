@@ -1753,7 +1753,7 @@ class AdmissionsLine(models.Model):
     overnightStay = models.BooleanField(default=False)
     admissionsBooking = models.ForeignKey(AdmissionsBooking, on_delete=models.PROTECT, blank=False, null=False)
     cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
-    location = models.ForeignKey(AdmissionsLocation, blank=True)
+    location = models.ForeignKey(AdmissionsLocation, blank=True, null=True)
     
 
 class AdmissionsOracleCode(models.Model):
