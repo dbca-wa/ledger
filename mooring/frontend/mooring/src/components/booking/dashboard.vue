@@ -476,10 +476,18 @@ export default {
                     },
                     {
                         mRender: function(data, type, full) {
-                            var invoice = "/ledger/payments/invoice/payment?invoice="+full.invoice_ref;
+                            var search = "";
+                            var invoices = "";
+                            $.each(full.invoice_ref,(i,v) =>{
+                                if (i != 0){
+                                    search += "&";
+                                }
+                                search += "invoice=" + v
+                                invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
+                            });
+                            var invoice = "/ledger/payments/invoice/payment?" + search;
                             var invoice_link= (full.invoice_ref)?"<a href='"+invoice+"' target='_blank' class='text-primary'>View Payment</a><br/>":"";
                             var column = invoice_link;
-                            var invoices = "<a href='/ledger/payments/invoice-pdf/"+full.invoice_ref+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+full.invoice_ref+"</a><br/>"; 
                             column += invoices;
                             return column;
                         },

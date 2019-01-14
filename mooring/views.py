@@ -858,8 +858,7 @@ class BookingSuccessView(TemplateView):
                     booking.expiry_time = None
 
                     #Calculate Admissions and create object
-                    rego = booking.details['vessel_rego']
-                    found_vessel = RegisteredVessels.objects.filter(rego_no=rego)
+                    found_vessel = RegisteredVessels.objects.filter(rego_no=rego.upper())
                     if found_vessel.count() > 0:
                         admissions_paid = found_vessel[0].admissionsPaid
                     else:
