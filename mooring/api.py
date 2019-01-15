@@ -2619,13 +2619,13 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                             filtered_ids.append(rec.id)
                     else:
                         ad_line = AdmissionsLine.objects.filter(admissionsBooking=rec).first()
-                        if ad_line.location.mooring_group in groups:
-                            filtered_ids.append(rec.id)
+                        if ad_line:
+                            if ad_line.location.mooring_group in groups:
+                                filtered_ids.append(rec.id)
 
                 data = AdmissionsBooking.objects.filter(pk__in=filtered_ids).order_by('-pk')
             else:
                 return Response("Error no group")
-                        
 
             
             recordsTotal = len(data)
