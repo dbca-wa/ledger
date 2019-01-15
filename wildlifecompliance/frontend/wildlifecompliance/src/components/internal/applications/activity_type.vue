@@ -18,20 +18,20 @@
         <DateField :name="activity_type.code+'_expiry_date'" :value="activity_type.expiry_date" label="Expiry Date" :id="'id_'+activity_type.code+'_expiry_date'" />
 
         <Checkbox :name="activity_type.code+'_to_be_issued'" :value="activity_type.to_be_issued" label="To be issued" :id="'id_'+activity_type.code+'_to_be_issued'" />
-        <Checkbox :name="activity_type.code+'_processed'" :value="activity_type.processed" label="Processed" :id="'id_'+activity_type.code+'_processed'" />
+        <!--<Checkbox :name="activity_type.code+'_processed'" :value="activity_type.processed" label="Processed" :id="'id_'+activity_type.code+'_processed'" />-->
 
         <!-- Add isEditable fields to form and allow values to be overridden (original data is NOT overwritten) -->
         <div v-for="editable_element in editable_elements">
             <div v-if="'table' in editable_element">
                 <Table :name="activity_type.code+'_table_'+editable_element.table.name" :value="editable_element.table.value" :label="editable_element.table.label" :headers="editable_element.table.headers"/>
-                <!--{{ editable_element }}-->
             </div>
             <div v-else-if="'text' in editable_element">
-                <TextField type="text" :name="activity_type.code+'_text_'+editable_element.text.name" :value="editable_element.text.value" label="editable_element.text.label" />
+                <TextField type="text" :name="activity_type.code+'_text_'+editable_element.text.name" :value="editable_element.text.value" :label="editable_element.text.label" />
             </div>
             <div v-else-if="'text_area' in editable_element">
-                <TextArea :name="activity_type.code+'_text_area_'+editable_element.text_area.name" :value="editable_element.text_area.value" label="editable_element.text_area.label" />
+                <TextArea :name="activity_type.code+'_text_area_'+editable_element.text_area.name" :value="editable_element.text_area.value" :label="editable_element.text_area.label" />
             </div>
+            <!--{{ editable_element }}-->
         </div>
 
         <!-- https://medium.freecodecamp.org/an-introduction-to-dynamic-list-rendering-in-vue-js-a70eea3e321 -->
@@ -90,37 +90,37 @@
         },
         */
         data:function () {
-			let vm = this;
+            let vm = this;
             vm.editable_elements = [];
 
-			if ('editable' in vm.activity_type.data[0]) {
-				var data = vm.activity_type.data[0]['editable'];
-				for (var k in data) {
-					if (data[k]['type'] == 'table') {
-						vm.editable_elements.push({'table': {
-								name: k,
-								value: data[k]['answer'],
-								label: data[k]['label'],
-								headers: data[k]['headers'],
-							}
-						})
-					} else if (data[k]['type'] == 'text') {
-						vm.editable_elements.push({'text': {
-								name: k,
-								value: data[k]['answer'],
-								label: data[k]['label'],
-							}
-						})
-					} else if (data[k]['type'] == 'text_area') {
-						vm.editable_elements.push({'text_area': {
-								name: k,
-								value: data[k]['answer'],
-								label: data[k]['label'],
-							}
-						})
-					}
-				}
-			}
+            if ('editable' in vm.activity_type.data[0]) {
+                var data = vm.activity_type.data[0]['editable'];
+                for (var k in data) {
+                    if (data[k]['type'] == 'table') {
+                        vm.editable_elements.push({'table': {
+                                name: k,
+                                value: data[k]['answer'],
+                                label: data[k]['label'],
+                                headers: data[k]['headers'],
+                            }
+                        })
+                    } else if (data[k]['type'] == 'text') {
+                        vm.editable_elements.push({'text': {
+                                name: k,
+                                value: data[k]['answer'],
+                                label: data[k]['label'],
+                            }
+                        })
+                    } else if (data[k]['type'] == 'text_area') {
+                        vm.editable_elements.push({'text_area': {
+                                name: k,
+                                value: data[k]['answer'],
+                                label: data[k]['label'],
+                            }
+                        })
+                    }
+                }
+            }
             console.log(vm.editable_elements);
 
             return{
@@ -128,48 +128,48 @@
             }
         },
         methods:{
-			render_editable_elements: function() {
-				let vm = this;
+            render_editable_elements: function() {
+                let vm = this;
                 var _elements = [];
-				if ('editable' in vm.activity_type.data[0]) {
+                if ('editable' in vm.activity_type.data[0]) {
                     var data = vm.activity_type.data[0]['editable'];
                     for (var k in data) {
                         if (data[k]['type'] == 'table') {
-							var section_name = k;
-							var value = data[k]['answer'];
-							var label = data[k]['label'];
+                            var section_name = k;
+                            var value = data[k]['answer'];
+                            var label = data[k]['label'];
                             //_elements.push(
                             //    //<TextArea readonly={readonly} name={k} value={data[k]['answer']} label={data[k]['label']} />
                             //    "<Table name='"+ section_name +"' value='"+ value +"' label='"+ label +"' />"
                             //)
-							vm.element = {
-									type: 'table',
-									name: section_name,
-									value: value,
-									label: label
-							}
+                            vm.element = {
+                                    type: 'table',
+                                    name: section_name,
+                                    value: value,
+                                    label: label
+                            }
 
 
                         }
                     }
                 }
                 return _elements;
-			},
+            },
             /*
-			process: function(e) {
-				let vm = this;
-				vm.form = document.forms.new_application;
-				let formData = new FormData(vm.form);
-				formData.append('action', 'process');
-				vm.$http.post(vm.application_form_url,formData).then(res=>{
-				  swal(
-					'Processed',
-					'Your application has been processed',
-					'success'
-				  )
-				},err=>{
-				});
-			},
+            process: function(e) {
+                let vm = this;
+                vm.form = document.forms.new_application;
+                let formData = new FormData(vm.form);
+                formData.append('action', 'process');
+                vm.$http.post(vm.application_form_url,formData).then(res=>{
+                  swal(
+                    'Processed',
+                    'Your application has been processed',
+                    'success'
+                  )
+                },err=>{
+                });
+            },
             */
         },
         computed: {

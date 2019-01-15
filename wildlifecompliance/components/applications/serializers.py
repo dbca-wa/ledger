@@ -199,6 +199,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
     activity_types = serializers.SerializerMethodField()
+    processed = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -246,6 +247,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'licence_category',
             'pdf_licence',
             'activity_types',
+            'processed'
         )
         read_only_fields = ('documents',)
 
@@ -301,6 +303,10 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_can_be_processed(self, obj):
         return obj.processing_status == 'under_review'
+
+    def get_processed(self,obj):
+        """ check if any purposes have been processed (i.e. licence issued)"""
+        return True in obj.activity_types.values_list('processed', flat=True)
 
     def get_can_current_user_edit(self, obj):
         result = False
@@ -527,6 +533,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
     activity_types = serializers.SerializerMethodField()
+    processed = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -573,7 +580,8 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'can_be_processed',
             'licence_category',
             'pdf_licence',
-            'activity_types'
+            'activity_types',
+            'processed'
         )
         read_only_fields = ('documents', 'conditions')
 
@@ -634,6 +642,12 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                         "start_date": item.start_date,
                         "expiry_date": item.expiry_date})
         return licence_data
+
+    def get_processed(self, obj):
+        """ check if any purposes have been processed """
+        return True in obj.activity_types.values_list('processed', flat=True)
+
+        return obj.assessor_data
 
 
 class ApplicationUserActionSerializer(serializers.ModelSerializer):

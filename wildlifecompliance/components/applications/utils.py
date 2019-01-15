@@ -523,10 +523,11 @@ def save_assess_data(instance,request,viewset):
                 for element_type in element_types:
                     for kv_pair in get_kv_pair(code + element_type):
                         for k,v in kv_pair.iteritems():
-                            name = k.strip(code + element_type)
-                            if 'comment-field' not in name:
-                                import ipdb; ipdb.set_trace()
-                                activity_type.data[0]['editable'][name]['answer'] = request.data[k]
+                            if not (element_type == '_text_' and 'text_area' in k): # hack to allow strip() to work below
+                                name = k.strip(code + element_type)
+                                if 'comment-field' not in name:
+                                    import ipdb; ipdb.set_trace()
+                                    activity_type.data[0]['editable'][name]['answer'] = request.data[k]
 
 #                for kv_pair in get_kv_pair(code+'_text_area_'):
 #                    for k,v in kv_pair.iteritems():
@@ -543,7 +544,7 @@ def save_assess_data(instance,request,viewset):
 
 
                 import ipdb; ipdb.set_trace()
-                if can_process and not activity_type.processed:
+                if can_process and activity_type.to_be_issued and not activity_type.processed:
                     # create licences
                     activity_type.processed = True
                     if not activity_type.data:
@@ -566,7 +567,7 @@ def save_assess_data(instance,request,viewset):
 
 
 def add_editable_items(activity_type):
-    return {'editable': get_activity_type_sys_answers(activity_type)} 
+    return {'editable': get_activity_type_sys_answers(activity_type)}
 
 
 def get_activity_type_schema(activity_ids):
