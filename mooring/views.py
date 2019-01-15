@@ -575,9 +575,10 @@ class MakeBookingsView(TemplateView):
 
         admissionsJson = json.loads(request.POST.get('admissionsLines')) if request.POST.get('admissionsLines') else []
         admissions = []
-   
+
+        admissionsTotal = 0
+        print admissionsJson
         for line in admissionsJson:
-            print line['from']
             group = line['group']
             codes = AdmissionsOracleCode.objects.filter(mooring_group__in=[group,])
             if codes.count() > 0:
@@ -589,6 +590,7 @@ class MakeBookingsView(TemplateView):
                     'guests': booking.num_guests,
                     'oracle_code': oracle_code_admissions
                     })
+                admissionsTotal += Decimal(line['admissionFee'])
         admissionLines = utils.admission_lineitems(admissions)
         if RegisteredVessels.objects.filter(rego_no=rego).count() > 0:
             vessel = RegisteredVessels.objects.get(rego_no=rego)
@@ -685,10 +687,24 @@ class MakeBookingsView(TemplateView):
         
         # FIXME: get feedback on whether to overwrite personal info if the EmailUser
         # already exists
+
+
+        adBooking = AdmissionsBooking.objects.create(customer=customer, booking_type=3, vesselRegNo=rego, noOfAdults=booking.details['num_adult'],
+            noOfConcessions=0, noOfChildren=booking.details['num_child'], noOfInfants=booking.details['num_infants'], totalCost=admissionsTotal, created=datetime.now())
+        
+        for line in admissionsJson:
+            loc = AdmissionsLocation.objects.filter(mooring_group=line['group'])[0]
+            if line['from'] == line['to']:
+                overnight = False
+            else:
+                overnight = True
+            from_date = datetime.strptime(line['from'], '%d %b %Y').strftime('%Y-%m-%d')
+            AdmissionsLine.objects.create(arrivalDate=from_date, admissionsBooking=adBooking, overnightStay=overnight, cost=line['admissionFee'], location=loc)
  
         # finalise the booking object
         booking.customer = customer
         booking.cost_total = total
+        booking.admission_payment = adBooking
         booking.save()
 
 
@@ -860,100 +876,108 @@ class BookingSuccessView(TemplateView):
                     booking.expiry_time = None
 
                     #Calculate Admissions and create object
-                    rego = booking.details['vessel_rego']
-                    found_vessel = RegisteredVessels.objects.filter(rego_no=rego.upper())
-                    if found_vessel.count() > 0:
-                        admissions_paid = found_vessel[0].admissionsPaid
-                    else:
-                        admissions_paid = False
-                    lines = []
-                    if not admissions_paid:
-                        lines_pre_check = utils.admissions_lines(msb)
-                        for line in lines:
-                            rates = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)), Q(mooring_group=line['group']))
-                            rate =  None
-                            if rates:
-                                rate = rates[0]
-                            if rate:
-                                lines.append(line)
-                    if lines:
-                        adults = int(booking.details['num_adult'])
-                        children = int(booking.details['num_children'])
-                        infants = int(booking.details['num_infant'])
-                        data = {
-                            'customer' : booking.customer,
-                            'booking_type' : 1,
-                            'vesselRegNo' : rego,
-                            'noOfAdults' : adults,
-                            'noOfChildren' : children,
-                            'noOfInfants': infants
-                        }
-                        ad_booking = AdmissionsBooking.objects.create(customer=booking.customer, booking_type=1, vesselRegNo=rego,
-                                noOfAdults=adults, noOfConcessions=0, noOfChildren=children, noOfInfants=infants, totalCost=0.00)
+                    # rego = booking.details['vessel_rego']
+                    # found_vessel = RegisteredVessels.objects.filter(rego_no=rego.upper())
+                    # if found_vessel.count() > 0:
+                    #     admissions_paid = found_vessel[0].admissionsPaid
+                    # else:
+                    #     admissions_paid = False
+                    # lines = []
+                    # if not admissions_paid:
+                    #     lines_pre_check = utils.admissions_lines(msb)
+                    #     for line in lines:
+                    #         rates = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)), Q(mooring_group=line['group']))
+                    #         rate =  None
+                    #         if rates:
+                    #             rate = rates[0]
+                    #         if rate:
+                    #             lines.append(line)
+                    # if lines:
+                    #     adults = int(booking.details['num_adult'])
+                    #     children = int(booking.details['num_children'])
+                    #     infants = int(booking.details['num_infant'])
+                    #     data = {
+                    #         'customer' : booking.customer,
+                    #         'booking_type' : 1,
+                    #         'vesselRegNo' : rego,
+                    #         'noOfAdults' : adults,
+                    #         'noOfChildren' : children,
+                    #         'noOfInfants': infants
+                    #     }
+                    #     ad_booking = AdmissionsBooking.objects.create(customer=booking.customer, booking_type=1, vesselRegNo=rego,
+                    #             noOfAdults=adults, noOfConcessions=0, noOfChildren=children, noOfInfants=infants, totalCost=0.00)
 
-                        family = 0
-                        if adults > 1 and children > 1:
-                            if adults == children:
-                                if adults % 2 == 0:
-                                    family = adults/2
-                                    adults = 0
-                                    children = 0
-                                else:
-                                    adults -= 1;
-                                    family = adults/2;
-                                    adults = 1;
-                                    children = 1;
+                    #     family = 0
+                    #     if adults > 1 and children > 1:
+                    #         if adults == children:
+                    #             if adults % 2 == 0:
+                    #                 family = adults/2
+                    #                 adults = 0
+                    #                 children = 0
+                    #             else:
+                    #                 adults -= 1;
+                    #                 family = adults/2;
+                    #                 adults = 1;
+                    #                 children = 1;
 
-                            elif adults > children:
-                                if children % 2 == 0:
-                                    family = children/2
-                                    adults -= children
-                                    children = 0
-                                else:
-                                    children -= 1
-                                    family = children/2
-                                    adults -= children
-                                    children = 1
+                    #         elif adults > children:
+                    #             if children % 2 == 0:
+                    #                 family = children/2
+                    #                 adults -= children
+                    #                 children = 0
+                    #             else:
+                    #                 children -= 1
+                    #                 family = children/2
+                    #                 adults -= children
+                    #                 children = 1
                                 
-                            else:
-                                if adults % 2 == 0:
-                                    family = adults/2
-                                    children -= adults
-                                    adults = 0
-                                else:
-                                    adults -= 1
-                                    family = adults/2
-                                    children -= adults
-                                    adults = 1
-                        total = 0
-                        for i in range(0, len(lines)):
-                            thisAdmission = 0
-                            from_d = datetime.strptime(lines[i]['from'], '%d %b %Y')
-                            to_d = datetime.strptime(lines[i]['to'], '%d %b %Y')
-                            rate = AdmissionsRate.objects.filter(Q(mooring_group=lines[i]['group']), Q(period_start__lte=from_d), (Q(period_end=None) | Q(period_end__gte=to_d)))[0]
-                            if from_d != to_d:
-                                overnight = True
-                                thisAdmission += (infants * rate.infant_overnight_cost)
-                                thisAdmission += (adults * rate.adult_overnight_cost)
-                                thisAdmission += (children * rate.children_overnight_cost)
-                                thisAdmission += (family * rate.family_overnight_cost)
-                            else:
-                                overnight = False
-                                thisAdmission += (infants * rate.infant_cost)
-                                thisAdmission += (adults * rate.adult_cost)
-                                thisAdmission += (children * rate.children_cost)
-                                thisAdmission += (family * rate.family_cost)
+                    #         else:
+                    #             if adults % 2 == 0:
+                    #                 family = adults/2
+                    #                 children -= adults
+                    #                 adults = 0
+                    #             else:
+                    #                 adults -= 1
+                    #                 family = adults/2
+                    #                 children -= adults
+                    #                 adults = 1
+                    #     total = 0
+                    #     for i in range(0, len(lines)):
+                    #         thisAdmission = 0
+                    #         from_d = datetime.strptime(lines[i]['from'], '%d %b %Y')
+                    #         to_d = datetime.strptime(lines[i]['to'], '%d %b %Y')
+                    #         rate = AdmissionsRate.objects.filter(Q(mooring_group=lines[i]['group']), Q(period_start__lte=from_d), (Q(period_end=None) | Q(period_end__gte=to_d)))[0]
+                    #         if from_d != to_d:
+                    #             overnight = True
+                    #             thisAdmission += (infants * rate.infant_overnight_cost)
+                    #             thisAdmission += (adults * rate.adult_overnight_cost)
+                    #             thisAdmission += (children * rate.children_overnight_cost)
+                    #             thisAdmission += (family * rate.family_overnight_cost)
+                    #         else:
+                    #             overnight = False
+                    #             thisAdmission += (infants * rate.infant_cost)
+                    #             thisAdmission += (adults * rate.adult_cost)
+                    #             thisAdmission += (children * rate.children_cost)
+                    #             thisAdmission += (family * rate.family_cost)
 
                             
-                            location = AdmissionsLocation.objects.filter(mooring_group=lines[i]['group'])[0]
-                            ad_line = AdmissionsLine.objects.create(arrivalDate=from_d, overnightStay=overnight, admissionsBooking=ad_booking, cost=thisAdmission, location=location)
-                            ad_line.save()
-                            total += thisAdmission
+                    #         location = AdmissionsLocation.objects.filter(mooring_group=lines[i]['group'])[0]
+                    #         ad_line = AdmissionsLine.objects.create(arrivalDate=from_d, overnightStay=overnight, admissionsBooking=ad_booking, cost=thisAdmission, location=location)
+                    #         ad_line.save()
+                    #         total += thisAdmission
 
-                        ad_booking.totalCost = total
-                        ad_booking.save()
-                        ad_invoice = AdmissionsBookingInvoice.objects.create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
-                        booking.admission_payment = ad_booking
+
+
+                        # ad_booking.totalCost = total
+                        # ad_booking.save()
+                    ad_booking = AdmissionsBooking.objects.get(pk=booking.admission_payment.pk)
+                    print "Ad booking found", ad_booking
+                    ad_booking.booking_type=1
+                    print "Status set"
+                    ad_booking.save()
+                    print "Saved"
+                    ad_invoice = AdmissionsBookingInvoice.objects.create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
+                        # booking.admission_payment = ad_booking
                     print "about to save"
                     booking.save()
                     print "saved"

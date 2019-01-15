@@ -238,7 +238,7 @@
             </div>
 <!-- here -->
             <div class="small-12 medium-9 large-6 columns">
-                <div class="alert alert-warning" style='text-align: center' role="alert"> <strong style='font-size: 16px;' ></span><A HREF='/admissions/ria'>Click here for paying admission fees</A></strong><br><span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> (Only if you do not book a mooring) <span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> </div>
+                <div class="alert alert-warning" style='text-align: center' role="alert" v-if="admissions_key" id="admissions_link"> <strong style='font-size: 16px;' ></span><a :href='"/admissions/" + admissions_key + "/"'>Click here for paying admission fees</a></strong><br><span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> (Only if you do not book a mooring) <span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> </div>
                 <div id="map"></div>
                 <div id="mapPopup" class="mapPopup" v-cloak>
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
@@ -713,6 +713,8 @@ export default {
             expiry: null,
             booking_expired_notification: false,
             ongoing_booking: false,
+            admissions_key: null,
+
         }
     },
     computed: {
@@ -1953,6 +1955,17 @@ export default {
         $(document).foundation();
         console.log('Loading map...');
         // enable arrival/departure date pickers
+        $.ajax({
+            url: "/api/admissions_key",
+            dataType:'json',
+            data:{ 'url' : window.location.href,},
+            success: function(data, type, xhr){
+                if (!data.includes("Error")){
+                    console.log("No error");
+                    vm.admissions_key = data;
+                }
+            }
+        })
         var nowTemp = new Date();
         var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 

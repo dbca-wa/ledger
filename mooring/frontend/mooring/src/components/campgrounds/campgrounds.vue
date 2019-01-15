@@ -345,9 +345,8 @@ module.exports = {
             });
         }
     },
-    mounted: function() {
-        var vm = this;
-        vm.addTableListeners();
+    created: function(){
+        let vm = this;
         $.ajax({
             url: api_endpoints.profile,
             method: 'GET',
@@ -361,6 +360,10 @@ module.exports = {
                 }
             }
         });
+    },
+    mounted: function() {
+        var vm = this;
+        vm.addTableListeners();
         vm.fetchRegions();
         vm.fetchParks();
         vm.fetchDistricts();

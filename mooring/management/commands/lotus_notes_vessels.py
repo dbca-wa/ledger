@@ -9,13 +9,15 @@ class Command(BaseCommand):
     help = 'Take extract from lotus notes and merge from 7 vessels per line into 1 single record in RegisteredVessels model.'
 
     def add_arguments(self, parser):
-        parser.add_argument('path', type=string)
+        parser.add_argument('path')
 
     def handle(self, *args, **options):
         # Get all the new vessels information from JSON file.
         if options['path']:
-            regos = json.loads(open(options['path'] + 'dump_regos.json', 'r'))
-            view = json.load(open(options['path'] + 'dump_view.json', 'r'))
+            regos_path = options['path'] + 'dump_regos.json'
+            view_path = options['path'] + 'dump_view.json'
+            regos = json.load(open(regos_path, 'r'))
+            view = json.load(open(view_path, 'r'))
         else:
             regos = json.load(open('dump_regos.json', 'r'))
             view = json.load(open('dump_view.json', 'r'))

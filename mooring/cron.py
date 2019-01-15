@@ -102,5 +102,5 @@ class RegisteredVesselsImport(CronJobBase):
     code='mooring.registered_vessels'
 
     def do(self):
-        path = ''
+        path = '/mnt/lotusnotes_dump/'
         management.call_command('lotus_notes_vessels', path)

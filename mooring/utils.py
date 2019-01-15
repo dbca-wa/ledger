@@ -18,7 +18,7 @@ from pytz import timezone as pytimezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup)
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup, AdmissionsLocation)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
@@ -972,17 +972,17 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
         rate = get_admissions_entry_rate(request,adLine.arrivalDate.strftime('%Y-%m-%d'))
         daily_rate = {'date' : adLine.arrivalDate.strftime('%d/%m/%Y'), 'rate' : rate}
         daily_rates.append(daily_rate)
+        oracle_codes = AdmissionsOracleCode.objects.filter(mooring_group__in=[adLine.location.mooring_group,])
+        if not oracle_codes.count() > 0:
+            if request.user.is_staff:
+                raise Exception('Admissions Oracle Code missing, please set up in administration tool.')
+            else:
+                raise Exception('Please alert {} of the following error message:\nAdmissions Oracle Code missing.').format(adLine['group'])
 
     print daily_rates
 
     if not daily_rates or daily_rates == []:
         raise Exception('There was an error while trying to get the daily rates.')
-
-    if AdmissionsOracleCode.objects.count() == 0:
-        if request.user.is_staff:
-            raise Exception('Admissions Oracle Code missing, please set up in administration tool.')
-        else:
-            raise Exception('Please alert RIA of the following error message:\nAdmissions Oracle Code missing.')
 
     family = 0
     adults = admissionsBooking.noOfAdults
@@ -1042,7 +1042,10 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
                         overnightStay = "Day Visit Only"
                     daily_rate = next(item for item in daily_rates if item['date'] == adLine.arrivalDate.strftime('%d/%m/%Y'))['rate']
                     price = daily_rate.get(costfield)
-                    invoice_lines.append({'ledger_description':'Admission fee on {} ({}) {}'.format(adLine.arrivalDate, group, overnightStay),"quantity":amount,"price_incl_tax":price, "oracle_code":AdmissionsOracleCode.objects.all().first().oracle_code})
+                    oracle_codes = AdmissionsOracleCode.objects.filter(mooring_group=adLine.location.mooring_group)
+                    if oracle_codes.count() > 0:
+                        oracle_code = oracle_codes[0].oracle_code
+                    invoice_lines.append({'ledger_description':'Admission fee on {} ({}) {}'.format(adLine.arrivalDate, group, overnightStay),"quantity":amount,"price_incl_tax":price, "oracle_code":oracle_code})
                 
             else:
                 daily_rate = daily_rates[adLine.arrivalDate.strftime('%d/%m/%Y')]

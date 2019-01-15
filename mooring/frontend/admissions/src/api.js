@@ -25,4 +25,5 @@ module.exports = {
     priceReasons:function () {
         return global.parkstayUrl + "/api/admissionsReasons.json";
     },
+    profile: process.env.PARKSTAY_URL + "/api/profile",
 };
