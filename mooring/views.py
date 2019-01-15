@@ -230,7 +230,7 @@ class CancelBookingView(TemplateView):
         booking_total = Decimal('0.00')
         basket_total = Decimal('0.00')
         booking = None
-
+        invoice = None
         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
              booking = Booking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
@@ -244,10 +244,22 @@ class CancelBookingView(TemplateView):
          
         info = {'amount': Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total))), 'details' : 'Refund via system'}
 #         info = {'amount': float('10.00'), 'details' : 'Refund via system'}
-        bpoint = BpointTransaction.objects.get(id=bpoint_id)
-        refund = bpoint.refund(info,request.user)
-        invoice = Invoice.objects.get(reference=bpoint.crn1)
-        update_payments(invoice.reference)
+        try: 
+            bpoint = BpointTransaction.objects.get(id=bpoint_id)
+            refund = bpoint.refund(info,request.user)
+            invoice = Invoice.objects.get(reference=bpoint.crn1)
+            update_payments(invoice.reference)
+        except: 
+            emails.send_refund_failure_email(booking)
+            booking_invoice = BookingInvoice.objects.filter(booking=booking).order_by('id')
+            for bi in booking_invoice:
+                invoice = Invoice.objects.get(reference=bi.invoice_reference)
+                print invoice
+        print "INVOICE POST"
+        print invoice
+
+
+            
         invoice.voided = True
         invoice.save()
         booking.booking_type = 4
