@@ -438,23 +438,22 @@ class MakeBookingsView(TemplateView):
 
                 # rate = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)))[0]
                 for line in lines_pre_check:
-                    rates = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)), Q(mooring_group=line['group']))
-                    rate =  None
-                    if rates:
-                        rate = rates[0]
-                    if rate:
-                        line['adult'] = str(rate.adult_cost)
-                        line['child'] = str(rate.children_cost)
-                        line['infant'] = str(rate.infant_cost)
-                        line['family'] = str(rate.family_cost)
-                        line['adult_on'] = str(rate.adult_overnight_cost)
-                        line['child_on'] = str(rate.children_overnight_cost)
-                        line['infant_on'] = str(rate.infant_overnight_cost)
-                        line['family_on'] = str(rate.family_overnight_cost)
-                        lines.append(line)
-                    
-
-                print lines
+                    if AdmissionsOracleCode.objects.filter(mooring_group__in=[line['group'],]).count() > 0:
+                        if AdmissionsLocation.objects.filter(mooring_group__in=[line['group'],]).count() > 0:
+                            rates = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)), Q(mooring_group=line['group']))
+                            rate =  None
+                            if rates:
+                                rate = rates[0]
+                            if rate:
+                                line['adult'] = str(rate.adult_cost)
+                                line['child'] = str(rate.children_cost)
+                                line['infant'] = str(rate.infant_cost)
+                                line['family'] = str(rate.family_cost)
+                                line['adult_on'] = str(rate.adult_overnight_cost)
+                                line['child_on'] = str(rate.children_overnight_cost)
+                                line['infant_on'] = str(rate.infant_overnight_cost)
+                                line['family_on'] = str(rate.family_overnight_cost)
+                                lines.append(line)
         
         staff = request.user.is_staff
         if(staff):
@@ -580,14 +579,16 @@ class MakeBookingsView(TemplateView):
         for line in admissionsJson:
             print line['from']
             group = line['group']
-            oracle_code_admissions = AdmissionsOracleCode.objects.filter(mooring_group__in=[group,])[0].oracle_code
-            admissions.append({
-                'from': line['from'],
-                'to': line['to'],
-                'admissionFee': Decimal(line['admissionFee']),
-                'guests': booking.num_guests,
-                'oracle_code': oracle_code_admissions
-                })
+            codes = AdmissionsOracleCode.objects.filter(mooring_group__in=[group,])
+            if codes.count() > 0:
+                oracle_code_admissions = codes[0].oracle_code
+                admissions.append({
+                    'from': line['from'],
+                    'to': line['to'],
+                    'admissionFee': Decimal(line['admissionFee']),
+                    'guests': booking.num_guests,
+                    'oracle_code': oracle_code_admissions
+                    })
         admissionLines = utils.admission_lineitems(admissions)
         if RegisteredVessels.objects.filter(rego_no=rego).count() > 0:
             vessel = RegisteredVessels.objects.get(rego_no=rego)
