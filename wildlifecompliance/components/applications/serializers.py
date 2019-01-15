@@ -168,6 +168,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     activity_type_names = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
     activity_types = serializers.SerializerMethodField()
+    processed = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -213,7 +214,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 'can_current_user_edit',
                 'licence_category',
                 'pdf_licence',
-                'activity_types'
+                'activity_types',
+                'processed'
                 )
         read_only_fields=('documents',)
 
@@ -276,6 +278,10 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_can_be_processed(self, obj):
         return obj.processing_status == 'under_review'
+
+    def get_processed(self,obj):
+        """ check if any purposes have been processed (i.e. licence issued)"""
+        return True in obj.activity_types.values_list('processed', flat=True)
 
     def get_can_current_user_edit(self, obj):
         result = False
@@ -474,6 +480,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     allowed_assessors = EmailUserSerializer(many=True)
     licences = serializers.SerializerMethodField(read_only=True)
     activity_types = serializers.SerializerMethodField()
+    processed = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -519,7 +526,8 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                 'permit',
                 'licence_category',
                 'pdf_licence',
-                'activity_types'
+                'activity_types',
+                'processed'
                 )
         read_only_fields=('documents','conditions')
 
@@ -573,6 +581,12 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                 # amendment_request_data.append({"licence_activity_type":str(item.licence_activity_type),"id":item.licence_activity_type.id})
                 licence_data.append({"licence_activity_type":str(item.licence_activity_type),"licence_activity_type_id":item.licence_activity_type_id,"start_date":item.start_date,"expiry_date":item.expiry_date})
         return licence_data
+
+    def get_processed(self,obj):
+        """ check if any purposes have been processed """
+        return True in obj.activity_types.values_list('processed', flat=True)
+
+        return obj.assessor_data
 
 class ReferralApplicationSerializer(InternalApplicationSerializer):
     def get_assessor_mode(self,obj):

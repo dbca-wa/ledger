@@ -31,8 +31,9 @@
                         <ActivityType :application="application" :activity_type="activity_type" :id="'id_'+activity_type.activity_name_str"></ActivityType>
                       </div>
                     </div>
-                    <button class="btn btn-primary" @click.prevent="save()">Save Changes</button>
-                    <button class="btn btn-primary" @click.prevent="process()">Process</button>
+
+                    <button class="btn btn-primary btn-save" @click.prevent="save()" :title="saveTitle" :disabled="pdf_exists">Save Changes</button>
+                    <button class="btn btn-primary btn-save" @click.prevent="process()" :title="processTitle" :disabled="pdf_exists">Process</button>
 
                 </form>
             </div>
@@ -174,6 +175,8 @@ export default {
             logs_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/action_log'),
             panelClickersInitialised: false,
             sendingReferral: false,
+            title: null,
+
         }
     },
     components: {
@@ -214,6 +217,13 @@ export default {
         pdf_exists: function() {
             return this.application.pdf_licence != null;
         },
+        saveTitle: function() {
+            return this.pdf_exists ? 'The application has already been processed': 'Save and continue'
+        },
+        processTitle: function() {
+            return this.pdf_exists ? 'The application has already been processed': 'Create Licences and PDF'
+        },
+
     },
     methods: {
         save: function(e) {
