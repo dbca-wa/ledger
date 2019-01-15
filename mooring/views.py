@@ -864,7 +864,14 @@ class BookingSuccessView(TemplateView):
                         admissions_paid = False
                     lines = []
                     if not admissions_paid:
-                        lines = utils.admissions_lines(msb)
+                        lines_pre_check = utils.admissions_lines(msb)
+                        for line in lines:
+                            rates = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)), Q(mooring_group=line['group']))
+                            rate =  None
+                            if rates:
+                                rate = rates[0]
+                            if rate:
+                                lines.append(line)
                     if lines:
                         adults = int(booking.details['num_adult'])
                         children = int(booking.details['num_children'])
