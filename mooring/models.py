@@ -1832,7 +1832,8 @@ class GlobalSettings(models.Model):
         (11, 'Max Beam Large'),
         (12, 'Max Weight Small'),
         (13, 'Max Weight Medium'),
-        (14, 'Max Weight Large')
+        (14, 'Max Weight Large'),
+        (15, 'URL')
     )
     mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
     key = models.SmallIntegerField(choices=keys, blank=False, null=False)
