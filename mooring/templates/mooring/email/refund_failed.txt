@@ -1,0 +1,7 @@
+{%  extends 'mooring/email/base_email.txt' %}
+
+{% block content %}
+A refund on booking {{booking.old_booking}}  with invoice number has failed and require intervention.  
+
+View my moorings bookings {{my_bookings}}
+{% endblock %}

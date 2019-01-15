@@ -298,6 +298,8 @@ class RefundPaymentView(TemplateView):
         return render(request, self.template_name, {'basket': basket})
 
     def post(self, request, *args, **kwargs):
+         bpoint = None
+         invoice = None
          basket = utils.get_basket(request)
          booking,bpoint_id = self.get_booking_info(request, *args, **kwargs)
          basket_total = Decimal('0.00')
@@ -307,17 +309,26 @@ class RefundPaymentView(TemplateView):
 
          b_total =  Decimal('{:.2f}'.format(float(basket_total - basket_total - basket_total)))
          info = {'amount': Decimal('{:.2f}'.format(float(basket_total - basket_total - basket_total))), 'details' : 'Refund via system'}
-         
-         bpoint = BpointTransaction.objects.get(id=bpoint_id)      
-
-         refund = bpoint.refund(info,request.user)
-         invoice = Invoice.objects.get(reference=bpoint.crn1)
-         update_payments(invoice.reference)
+         try:  
+            bpoint = BpointTransaction.objects.get(id=bpoint_id)      
+            refund = bpoint.refund(info,request.user)
+            invoice = Invoice.objects.get(reference=bpoint.crn1)
+            update_payments(invoice.reference)
+         except:
+            emails.send_refund_failure_email(booking)
+            booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
+            for bi in booking_invoice:
+                invoice = Invoice.objects.get(reference=bi.invoice_reference)
+                print invoice
+         print "INVOICE POST"
+         print invoice
+                
          order_response = place_order_submission(request)
          new_order = Order.objects.get(basket=basket)
-         new_invoice = Invoice.objects.get(order_number=new_order.number) 
-         CashTransaction.objects.create(invoice=new_invoice,amount=b_total, type='move_out',source='cash',movement_reference=invoice.reference)
-         CashTransaction.objects.create(invoice=invoice,amount=b_total, type='move_in',source='cash',movement_reference=new_invoice.reference)
+         new_invoice = Invoice.objects.get(order_number=new_order.number)
+         if invoice:  
+            CashTransaction.objects.create(invoice=new_invoice,amount=b_total, type='move_out',source='cash',movement_reference=invoice.reference)
+            CashTransaction.objects.create(invoice=invoice,amount=b_total, type='move_in',source='cash',movement_reference=new_invoice.reference)
 
          return HttpResponseRedirect('/success/')
 

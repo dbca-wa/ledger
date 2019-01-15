@@ -224,3 +224,18 @@ def send_booking_period_email(moorings, group, days):
     }
     email_obj.send(emails, from_address=default_from_email, context=context)
 
+def send_refund_failure_email(booking):
+    email_obj = TemplateEmailBase()
+    email_obj.subject = 'Failt to refund for {}, requires manual intervention.'.format(booking)
+    email_obj.html_template = 'mooring/email/refund_failed.html'
+    email_obj.txt_template = 'mooring/email/refund_failed.txt'
+
+#    email = booking.customer.email
+    email = 'jason.moore@dbca.wa.gov.au'
+    context = {
+        'booking': booking,
+    }
+    email_obj.send([email], from_address=default_from_email, context=context)
+
+
+
