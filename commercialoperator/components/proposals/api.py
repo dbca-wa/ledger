@@ -934,10 +934,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             schema=request.data.get('schema')
+            parks=[]
             import json
             sc=json.loads(schema)
-            parks=sc['parks']
-            save_proponent_data(instance,request,self,parks)
+            #import ipdb; ipdb.set_trace()
+            parks=list(sc['parks'])
+            trails=list(sc['trails'])
+            save_proponent_data(instance,request,self,parks, trails)
             # if parks:
             #     instance.save_parks(request,parks)
             return redirect(reverse('external'))

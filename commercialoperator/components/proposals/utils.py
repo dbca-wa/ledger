@@ -3,7 +3,7 @@ from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from commercialoperator.components.proposals.models import ProposalDocument
-from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer
+from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer
 import traceback
 import os
 
@@ -290,7 +290,7 @@ class SpecialFieldsSearch(object):
         return item_data
 
 
-def save_proponent_data(instance,request,viewset,parks):
+def save_proponent_data(instance,request,viewset,parks,trails):
     with transaction.atomic():
         try:
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
@@ -318,7 +318,6 @@ def save_proponent_data(instance,request,viewset,parks):
                 try:
                     current_parks=instance.parks.all()
                     if current_parks:
-                        print current_parks
                         for p in current_parks:
                             p.delete()
                     for item in parks:
@@ -328,6 +327,25 @@ def save_proponent_data(instance,request,viewset,parks):
                             'proposal': instance.id
                             }
                             serializer=SaveProposalParkSerializer(data=data_park)
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except:
+                            raise                        
+                except:
+                    raise
+            if trails:
+                try:
+                    current_trails=instance.trails.all()
+                    if current_trails:
+                        for t in current_trails:
+                            t.delete()
+                    for item in trails:
+                        try:
+                            data_trail={
+                            'trail': item,
+                            'proposal': instance.id
+                            }
+                            serializer=SaveProposalTrailSerializer(data=data_trail)
                             serializer.is_valid(raise_exception=True)
                             serializer.save()
                         except:

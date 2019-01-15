@@ -17,12 +17,13 @@ from commercialoperator.components.proposals.models import (
                                     ProposalPark,
                                     ProposalParkActivity,
                                     Vehicle,
-                                    Vessel
+                                    Vessel,
+                                    ProposalTrail
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
                             )
-from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer, ParkSerializer, ActivitySerializer, AccessTypeSerializer
+from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer, ParkSerializer, ActivitySerializer, AccessTypeSerializer, TrailSerializer
 from rest_framework import serializers
 
 class ProposalTypeSerializer(serializers.ModelSerializer):
@@ -79,6 +80,19 @@ class SaveProposalParkSerializer(serializers.ModelSerializer):
         model = ProposalPark
         fields = '__all__'
 
+class ProposalTrailSerializer(serializers.ModelSerializer):
+    trail=TrailSerializer()
+    #land_activities=ProposalParkActivitySerializer(many=True)
+    class Meta:
+        model = ProposalTrail
+        fields = '__all__'
+
+class SaveProposalTrailSerializer(serializers.ModelSerializer):
+    #park=ParkSerializer()
+    class Meta:
+        model = ProposalTrail
+        fields = '__all__'
+
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
@@ -89,6 +103,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     activities_land = ProposalActivitiesLandSerializer(required=False)
     activities_marine = ProposalActivitiesMarineSerializer(required=False)
     parks=ProposalParkSerializer(many=True)
+    trails=ProposalTrailSerializer(many=True)
 
     get_history = serializers.ReadOnlyField()
 
@@ -142,7 +157,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'applicant_details',
                 'activities_land',
                 'activities_marine',
-                'parks'
+                'parks',
+                'trails'
                 )
         read_only_fields=('documents',)
 

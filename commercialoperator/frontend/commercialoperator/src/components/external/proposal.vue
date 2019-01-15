@@ -119,7 +119,8 @@ export default {
     save: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
-      console.log(formData);
+      //console.log(formData);
+      console.log(vm.proposal.trails);
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{
           swal(
             'Saved',

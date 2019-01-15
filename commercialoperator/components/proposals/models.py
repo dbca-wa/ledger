@@ -18,7 +18,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -1281,6 +1281,8 @@ class ProposalPark(models.Model):
         return activities
 
 
+
+
 class ProposalParkActivity(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='activities')
     activity = models.ForeignKey(Activity, blank=True, null=True)
@@ -1288,6 +1290,15 @@ class ProposalParkActivity(models.Model):
     class Meta:
         app_label = 'commercialoperator' 
         unique_together = ('proposal_park', 'activity')
+
+class ProposalTrail(models.Model):
+    trail = models.ForeignKey(Trail, blank=True, null=True, related_name='proposals')
+    proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='trails')
+
+    class Meta:
+        app_label = 'commercialoperator'
+        unique_together = ('trail', 'proposal')
+
 
 @python_2_unicode_compatible
 class Vehicle(models.Model):
