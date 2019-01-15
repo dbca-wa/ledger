@@ -11,7 +11,7 @@ from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.conf import settings
@@ -72,6 +72,7 @@ from mooring.models import (MooringArea,
                                 AdmissionsLocation,
                                 AdmissionsRate,
                                 AdmissionsBookingInvoice,
+                                AdmissionsOracleCode,
                                 BookingInvoice,
                                 BookingPeriodOption,
                                 BookingPeriod,
@@ -3600,6 +3601,9 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
             price_history = AdmissionsRate.objects.filter(mooring_group__in=group).order_by('-period_start')
             serializer = AdmissionsRateSerializer(price_history,many=True)
             res = serializer.data
+            for row in res:
+                row_group = MooringAreaGroup.objects.get(pk=row['mooring_group'])
+                row['mooring_group'] = row_group.name
         except Exception as e:
             res ={
                 "Error": str(e)
@@ -3728,10 +3732,15 @@ class GetProfile(views.APIView):
         #     user.save()
         serializer  = UserSerializer(request.user)
         data = serializer.data
+        groups = MooringAreaGroup.objects.filter(members__in=[user,])
+        groups_text = []
+        for group in groups:
+            groups_text.append(group.name)
         data['is_inventory'] = is_inventory(user)
         data['is_admin'] = is_admin(user)
         data['is_payment_officer'] = is_payment_officer(user)
-        return Response(data)
+        data['groups'] = groups_text
+        return JsonResponse(data)
 
 
 class UpdateProfilePersonal(views.APIView):
@@ -3868,6 +3877,38 @@ class GlobalSettingsView(views.APIView):
                     return Response("Error more than 1 group")
                 serializer = GlobalSettingsSerializer(qs, many=True)
                 return Response(serializer.data)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise
+
+class AdmissionsKeyFromURLView(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    
+    def get(self, request):
+        try:
+            url = request.GET.get('url') if request.GET.get('url') else None
+            if not url:
+                return Response("Error, no url passed")
+            else:
+                url_split = url.split('/')
+                url = url_split[2]
+                global_set_url = GlobalSettings.objects.filter(key=15, value=url)
+                if global_set_url.count() > 0:
+                    mooring_group = global_set_url[0].mooring_group
+                    locs = AdmissionsLocation.objects.filter(mooring_group=mooring_group)
+                    if locs.count() > 0:
+                        loc = locs[0]
+                        today = datetime.now().date()
+                        rates = AdmissionsRate.objects.filter(Q(period_start__lte=today), (Q(period_end=None) | Q(period_end__gte=today)), mooring_group=mooring_group)
+                        oracle_codes = AdmissionsOracleCode.objects.filter(mooring_group=mooring_group)
+                        key = loc.key
+                        if key and rates.count() > 0 and oracle_codes.count() > 0:
+                            return Response(key)
+                    else:
+                        return Response("Error, no location found")
+                else:
+                    return Response("Error, no global setting found")
         except Exception as e:
             print(traceback.print_exc())
             raise

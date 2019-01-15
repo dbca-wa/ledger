@@ -8,7 +8,7 @@
             </div>
             <div class="panel-body">
                 <div class="col-lg-12">
-                    <price-history  :addParkPrice="true" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" level='park' ></price-history>
+                    <price-history ref="price_history" :addParkPrice="true" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" level='park' ></price-history>
                 </div>
             </div>
         </div>
@@ -57,10 +57,20 @@ export default {
             id:'',
             errors: false,
             errorString: '',
+            multi_group: false,
             loading: [],
             priceHistoryDt:{
                 responsive: true,
                 processing: true,
+                fnInitComplete: function(oSettings, json){
+                    if(vm.multi_group){
+                        vm.$refs.price_history.$refs.history_dt.vmDataTable.rows().every(function(){
+                            var rowdata = this.data();
+                            rowdata['multi_group'] = true;
+                            this.data(rowdata);
+                        });
+                    }
+                },
                 ordering:true,
                 deferRender: true,
                 ajax: {
@@ -68,7 +78,14 @@ export default {
                     dataSrc: ''
                 },
                 columns: [{
-                    data:'id'
+                    mRender: function(data, type, full){
+                        var row = full.id;
+                        if (full.multi_group){
+                            console.log("Adding to row");
+                            row += ": " + full.mooring_group;
+                        }
+                        return row;
+                    }
                     
                 },  {
                     
@@ -200,8 +217,20 @@ export default {
             helpers.goBack(this);
         },
     },
-    mounted: function() {
+    created: function() {
         var vm = this;
+        $.ajax({
+            url: api_endpoints.profile,
+            method: 'GET',
+            dataType: 'json',
+            success: function(data, stat, xhr){
+                if(data.groups){
+                    if (data.groups.length > 1){
+                        vm.multi_group = true;
+                    }
+                }
+            }
+        });
     }
 };
 </script>

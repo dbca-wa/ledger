@@ -407,7 +407,7 @@ export default {
                 responsive: true,
                 fnInitComplete: function(oSettings, json){
                     if(vm.payment_officer){
-                        vm.$refs.bookings_table.vmDataTable.rows().every(function(){
+                        vm.$refs.admissions_bookings_table.vmDataTable.rows().every(function(){
                             var rowdata = this.data();
                             rowdata['payment_visible'] = true;
                             this.data(rowdata);
@@ -1082,7 +1082,7 @@ export default {
             });
         },
     },
-    mounted:function () {
+    created: function(){
         let vm = this;
         $.ajax({
             url: api_endpoints.profile,
@@ -1094,6 +1094,9 @@ export default {
                 }
             }
         });
+    },
+    mounted:function () {
+        let vm = this;
         vm.dateFromPicker = $('#booking-date-from').datetimepicker(vm.datepickerOptions);
         vm.dateToPicker = $('#booking-date-to').datetimepicker(vm.datepickerOptions);
         vm.dateFromPicker2 = $('#admission-date-from').datetimepicker(vm.datepickerOptions);
