@@ -489,7 +489,7 @@ class ChangePricePeriod(models.Model):
     percentage = models.FloatField()
     amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     days = models.IntegerField()
-    #oracle_code = models.CharField(max_length=50,null=True,blank=True)
+    oracle_code = models.CharField(max_length=50,null=True,blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -519,7 +519,7 @@ class CancelPricePeriod(models.Model):
     percentage = models.FloatField()
     amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     days = models.IntegerField()
-    #oracle_code = models.CharField(max_length=50,null=True,blank=True)
+    oracle_code = models.CharField(max_length=50,null=True,blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -1753,7 +1753,7 @@ class AdmissionsLine(models.Model):
     overnightStay = models.BooleanField(default=False)
     admissionsBooking = models.ForeignKey(AdmissionsBooking, on_delete=models.PROTECT, blank=False, null=False)
     cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
-    location = models.ForeignKey(AdmissionsLocation, blank=True)
+    location = models.ForeignKey(AdmissionsLocation, blank=True, null=True)
     
 
 class AdmissionsOracleCode(models.Model):

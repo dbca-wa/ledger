@@ -381,7 +381,7 @@ export default {
                             if (full.editable){
                                 if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
                                 var change_booking = "<a href='/view-booking/"+full.id+"' class='text-primary' > Change</a><br/>";
-                                var cancel_booking = "<a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>";
+                                var cancel_booking = "<a href='/cancel-booking/"+full.id+"' class='text-primary' idata-cancel='"+booking+"' > Cancel</a><br/>";
                                 column += cancel_booking;
                                 column += change_booking;
 				}

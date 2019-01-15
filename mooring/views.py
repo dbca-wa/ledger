@@ -250,6 +250,9 @@ class CancelBookingView(TemplateView):
         update_payments(invoice.reference)
         invoice.voided = True
         invoice.save()
+        booking.booking_type = 4
+        booking.save()
+
         return HttpResponseRedirect('/success/')
 
 

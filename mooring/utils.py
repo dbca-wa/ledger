@@ -17,7 +17,7 @@ from dateutil.tz.tz import tzoffset
 from pytz import timezone as pytimezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
-from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
 from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
@@ -758,6 +758,9 @@ def calculate_price_booking_cancellation(booking):
          cancel_fee_amount = '0.00'
          change_price_period = CancelPricePeriod.objects.all().order_by('days')
          for cpp in change_price_period:
+             if daystillbooking < 0:
+                  daystillbooking = 0
+
              if daystillbooking >= cpp.days:
                   cancel_policy =cpp
              if cancel_policy:
@@ -814,6 +817,8 @@ def calculate_price_booking_change(old_booking, new_booking):
              for cpp in change_price_period:
                   print cpp.days
                   print "DA:"
+                  if daystillbooking < 0:
+                       daystillbooking = 0
                   print daystillbooking
                   if daystillbooking >= cpp.days:
                       refund_policy =cpp
