@@ -59,7 +59,6 @@
               </div>
             </div>
 
-            <div>{{selected}}</div>
             <div>{{selected_activities}}</div>
             <div>{{selected_parks_activities}}</div>
             
@@ -191,21 +190,15 @@ export default {
 
             vm.$http.get(api_endpoints.regions).then((response) => {
             vm.api_regions = response.body;
-            //console.log(vm.api_regions);
-
-            // for (var i = 0; i < vm.api_regions.length; i++) {
-            //         this.regions.push( {text: vm.api_regions[i].name, value: vm.api_regions[i].id, districts: vm.api_regions[i].districts} );
-            //     }
             },(error) => {
             console.log(error);
             })
           },
           fetchTrails: function(){
             let vm = this;
-
             vm.$http.get('/api/trails.json').then((response) => {
             vm.trails = response.body;
-            console.log(vm.trails);
+            //console.log(vm.trails);
 
             // for (var i = 0; i < vm.api_regions.length; i++) {
             //         this.regions.push( {text: vm.api_regions[i].name, value: vm.api_regions[i].id, districts: vm.api_regions[i].districts} );
@@ -234,18 +227,15 @@ export default {
             vm.fetchTrails();
             for (var i = 0; i < vm.proposal.parks.length; i++) {
               this.selected.push(vm.proposal.parks[i].park.id);
+              //still testing below code, part of functionality to fetch and store park and park actitivies
               for (var j = 0; j < vm.proposal.parks[i].land_activities.length; j++) {
                 this.selected_activities.push(vm.proposal.parks[i].land_activities[j].activity.id);
                }
 
             }
-
-            // vm.$http.get(api_endpoints.regions).then((response) => {
-            // vm.api_regions = response.body;
-            // console.log(vm.api_regions);
-            // },(error) => {
-            // console.log(error);
-            // })  
+            for (var i = 0; i < vm.proposal.trails.length; i++) {
+              this.selected_trails.push(vm.proposal.trails[i].trail.id);
+            }  
         }
     }
 </script>

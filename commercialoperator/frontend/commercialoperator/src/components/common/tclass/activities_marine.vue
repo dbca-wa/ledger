@@ -10,13 +10,33 @@
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
-                    <div class="borderDecoration">
-                        <form class="form-horizontal col-sm-12" name="marine_form" method="post">
-                        <label class="control-label">You have selected vessel access for one or more parks. Provide details of each vessel you plan to use.</label>
-                        </form>
-                    <div class="borderDecoration">
-                        <VesselTable :url="vessels_url" :proposal="proposal"></VesselTable>
-                    </div>
+                    <div class="">
+                        
+                        <div class="form-horizontal col-sm-12 borderDecoration">
+                            <label class="control-label">Select required activities</label>
+                            <div class="" v-for="category in marine_activities">
+                                <div class="form-check">
+                                    <input :onclick="isClickable" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                                    {{ category.name }}
+                                </div>
+                                <div class="col-sm-12" v-for="activity in category.activities">
+                                    <div class="form-check ">
+                                        <input :onclick="isClickable"  :value="activity.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                                        {{ activity.name }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row"></div>
+                        <div class="row"></div>
+                        <div class="row"></div>
+                        <div class="form-horizontal col-sm-12 borderDecoration">
+                            <label class="control-label">You have selected vessel access for one or more parks. Provide details of each vessel you plan to use.</label>
+                            <VesselTable :url="vessels_url" :proposal="proposal"></VesselTable>
+                        </div>
+                        <div class="form-horizontal col-sm-12">
+                            
+                        </div>
                     </div>
                 </div>
             </div>
@@ -25,6 +45,7 @@
 </template>
 
 <script>
+import Vue from 'vue' 
 import VesselTable from '@/components/common/vessel_table.vue' 
 import {
   api_endpoints,
@@ -44,12 +65,22 @@ from '@/utils/hooks'
             return{
                 values:null,
                 vessels_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/vessels'),
+                marine_activities: [],
             }
         },
         components: {
           VesselTable,
         },
         methods:{
+        },
+        mounted: function(){
+            let vm = this;
+            Vue.http.get('/api/marine_activities.json').then((res) => {
+                      vm.marine_activities=res.body;                 
+            },
+            err => { 
+                   console.log(err);
+            });
         }
     }
 </script>
@@ -57,7 +88,7 @@ from '@/utils/hooks'
 <style lang="css" scoped>
 .borderDecoration {
     border: 1px solid;
-    border-radius: 5px;
+    border-radius: 15px;
     padding: 5px;
     margin-top: 5px;
 }
