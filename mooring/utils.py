@@ -756,7 +756,7 @@ def calculate_price_booking_cancellation(booking):
 
          cancel_policy = None
          cancel_fee_amount = '0.00'
-         change_price_period = CancelPricePeriod.objects.all().order_by('days')
+         change_price_period = CancelPricePeriod.objects.filter(id=ob.booking_period_option.cancel_group_id).order_by('days')
          for cpp in change_price_period:
              if daystillbooking < 0:
                   daystillbooking = 0
@@ -808,11 +808,13 @@ def calculate_price_booking_change(old_booking, new_booking):
 
 #         print "CHANGED STATUS"
 #         print changed
-
+         print "BOOKING PERIOD"
+         print (ob.booking_period_option)
+         print (ob.booking_period_option.change_group)
          refund_policy = None
          if changed is True:
              change_fee_amount = '0.00' 
-             change_price_period = ChangePricePeriod.objects.all().order_by('days')
+             change_price_period = ChangePricePeriod.objects.filter(id=ob.booking_period_option.change_group_id).order_by('days')
              print change_price_period
              for cpp in change_price_period:
                   print cpp.days
@@ -834,15 +836,17 @@ def calculate_price_booking_change(old_booking, new_booking):
                     # Fixed Pricing
                 description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
                   #change_fees['amount'] = str(refund_amount)
-                change_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': change_fee_amount})
-                change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount)})
+                change_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': change_fee_amount, 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
+                change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
              else:
                  print "NO REFUND POLICY" 
                
          else:
              #description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
+             adjustment_fee = Decimal('0.00')
              adjustment_fee = ob.amount + adjustment_fee
-    change_fees.append({'additional_fees': 'true', 'description': 'Mooring Adjustment Credit' ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee)})   
+             description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
+             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee), 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})   
 
     return change_fees
 
@@ -869,7 +873,7 @@ def price_or_lineitems_extras(request,booking,change_fees,invoice_lines=[]):
     total_price = Decimal(0)
     booking_mooring = MooringsiteBooking.objects.filter(booking=booking)
     for cf in change_fees:
-       invoice_lines.append({'ledger_description':cf['description'],"quantity":1,"price_incl_tax":cf['amount'],"oracle_code":'0000'})
+       invoice_lines.append({'ledger_description':cf['description'],"quantity":1,"price_incl_tax":cf['amount'],"oracle_code":cf['oracle_code']})
     return invoice_lines 
 
 def old_price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):

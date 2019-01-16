@@ -63,10 +63,24 @@ Booking information below and refund or fees to pay in order to cancel booking. 
 		<form method="post" action="{% url 'public_cancel_booking' booking.id %}" id="place_order_form">
 		{% csrf_token %}
 		<BR><BR>
-		<input type='submit' class="btn btn-info btn-lg" target="_blank" value='Proceed with Cancellation'></input>
+		<button id='cancel-booking' type='button' class="btn btn-info btn-lg" target="_blank" >Proceed with Cancellation</button>
+                </div>
+
 		</form>	
 	</div>
 
     </div>
+<script>
+window.onload=function() {
+$( "#cancel-booking" ).click(function() {
+  console.log('button clicked');
+  $( "#cancel-booking" ).html("Submitting....");
+  $( "#cancel-booking" ).attr("disabled", "disabled");
+  $( "#place_order_form" ).submit();
+});
+};
+
+</script>
+
 {% endblock %}
 
