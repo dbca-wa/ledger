@@ -35,7 +35,7 @@ class OrganisationCheckSerializer(serializers.Serializer):
         requests = OrganisationRequest.objects.filter(abn=data['abn'], role='employee')\
             .exclude(status__in=('declined', 'approved'))
         if requests.exists():
-            raise serializers.ValidationError('A request already submitted - Pending Approval.')
+            raise serializers.ValidationError('A request has been submitted and is Pending Approval.')
         return data
 
 class OrganisationPinCheckSerializer(serializers.Serializer):
@@ -109,10 +109,10 @@ class OrganisationCheckExistSerializer(serializers.Serializer):
             user = EmailUser.objects.get(id=data['user'])
             org = Organisation.objects.get(id=data['id'])
             if can_relink(org, user):
-                raise serializers.ValidationError('Please contact {} to re-link to Organisation'
+                raise serializers.ValidationError('Please contact {} to re-link to Organisation.'
                                                   .format(data['first_five']))
             if can_approve(org, user):
-                raise serializers.ValidationError('Please contact {} to Approve your request'
+                raise serializers.ValidationError('Please contact {} to Approve your request.'
                                                   .format(data['first_five']))
         return data
 
