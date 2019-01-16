@@ -329,6 +329,7 @@ class Proposal(RevisionedMixin):
     application_type = models.ForeignKey(ApplicationType)
     approval_level = models.CharField('Activity matrix approval level', max_length=255,null=True,blank=True)
     approval_level_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='approval_level_document')
+    approval_level_comment = models.TextField(blank=True)
     approval_comment = models.TextField(blank=True)
 
     class Meta:
@@ -727,6 +728,19 @@ class Proposal(RevisionedMixin):
                 self.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
                 # Create a log entry for the organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
+                return self
+            except:
+                raise
+
+    def save_approval_level_comment(self, request):
+        with transaction.atomic():
+            try:
+                approval_level_comment = request.data['approval_level_comment']
+                self.approval_level_comment=approval_level_comment
+                self.save()
+                self.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_COMMENT.format(self.id),request)
+                # Create a log entry for the organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_COMMENT.format(self.id),request)
                 return self
             except:
                 raise
@@ -1338,6 +1352,7 @@ class ProposalUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"
     ACTION_CREATE_PROFILE_ = "Create profile {}"
     ACTION_LODGE_APPLICATION = "Lodge proposal {}"
+    ACTION_SAVE_APPLICATION = "Save proposal {}"
     ACTION_ASSIGN_TO_ASSESSOR = "Assign proposal {} to {} as the assessor"
     ACTION_UNASSIGN_ASSESSOR = "Unassign assessor from proposal {}"
     ACTION_ASSIGN_TO_APPROVER = "Assign proposal {} to {} as the approver"
@@ -1360,6 +1375,7 @@ class ProposalUserAction(UserAction):
     ACTION_EXPIRED_APPROVAL_ = "Expire Approval for proposal {}"
     ACTION_DISCARD_PROPOSAL = "Discard proposal {}"
     ACTION_APPROVAL_LEVEL_DOCUMENT = "Assign Approval level document {}"
+    ACTION_APPROVAL_LEVEL_COMMENT = "Save Approval level comment {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"

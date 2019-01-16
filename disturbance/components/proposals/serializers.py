@@ -340,6 +340,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'activity',
                 'approval_level',
                 'approval_level_document',
+                'approval_level_comment',
                 'region',
                 'district',
                 'tenure',
