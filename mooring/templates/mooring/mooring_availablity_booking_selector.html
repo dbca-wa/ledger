@@ -14,8 +14,9 @@
     </div></div></noscript>
     <div id="availability"></div>
     <script type="text/javascript">
-{% if ground_id %}    var parkstayGroundId = '{{ ground_id|escapejs }}';
-{% endif %}
+    {% if ground_id %}    
+        var parkstayGroundId = '{{ ground_id|escapejs }}';
+    {% endif %}
     </script>
     <script src="{% static 'availability2/js/manifest.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
     <script src="{% static 'availability2/js/vendor.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
