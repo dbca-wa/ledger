@@ -7,6 +7,7 @@ from mooring.models import MooringsiteBooking, AdmissionsBooking, AdmissionsLine
 from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.models import Invoice
 from mooring import settings 
+from mooring.helpers import is_inventory
 
 from ledger.emails.emails import EmailBase
 
@@ -212,10 +213,8 @@ def send_booking_period_email(moorings, group, days):
 
     members = group.members.all()
     emails = []
-    if not settings.PRODUCTION_EMAIL:
-        emails.append(settings.NON_PROD_EMAIL)
-    else: 
-        for mem in members:
+    for mem in members:
+        if is_inventory(mem):
             emails.append(mem.email)
 
     context = {
