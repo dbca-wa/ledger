@@ -61,6 +61,7 @@ import {
 from '@/utils/hooks'
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
     props:{
         proposal_id: null,
@@ -72,6 +73,8 @@ export default {
         assessor_readonly: Boolean,
         help_text:String,
         help_text_assessor:String,
+        help_text_url:String,
+        help_text_assessor_url:String,
         assessorMode:{
             default:function(){
                 return false;
@@ -99,7 +102,7 @@ export default {
         readonly:Boolean,
         docsUrl: String,
     },
-    components: {Comment, HelpText},
+    components: {Comment, HelpText, HelpTextUrl},
     data:function(){
         return {
             repeat:1,
