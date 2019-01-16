@@ -1,9 +1,20 @@
 {%  extends 'disturbance/emails/base_email.html' %}
 
 {%  block content %}
-	The Proposal {{ proposal.lodgement_number }} has been assessed and has been recommended for approval.
+	The Proposal {{ proposal.lodgement_number }} has been assessed and has been recommended for approval. 
+    
+    
+    <p>
+    Title: {{proposal.title}}<br>
+    Activity: {{proposal.activity}}<br>
+    Region: {{proposal.region}}<br>
+    {% if proposal.district %}
+        District:{{proposal.district}}
+    {% else %}
+        District: -
+    {% endif %}
+    </p>
 
-    {% comment %}
     {% if proposal.proposed_issuance_approval %}
         <p>
         	<span>Approved: </span>
@@ -12,7 +23,6 @@
         <p>Expiry date: {{ expiry_date }}</p>
         <p>Details: {{ details }}</p>
     {% endif %}
-    {% endcomment %}
 
     <p>
     You can access this Proposal using the following link:

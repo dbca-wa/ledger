@@ -2,7 +2,7 @@ import re
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
-from disturbance.components.proposals.models import ProposalDocument
+from disturbance.components.proposals.models import ProposalDocument, ProposalUserAction
 from disturbance.components.proposals.serializers import SaveProposalSerializer
 import traceback
 import os
@@ -311,6 +311,8 @@ def save_proponent_data(instance,request,viewset):
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
+            instance.log_user_action(ProposalUserAction.ACTION_SAVE_APPLICATION.format(instance.id),request)
+
             # Save Documents
 #            for f in request.FILES:
 #                try:
