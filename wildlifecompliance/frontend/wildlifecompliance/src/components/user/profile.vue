@@ -746,7 +746,11 @@ export default {
                 this.newOrg.detailsChecked = false;
                 let error_msg = '<br/>';
                 for (var key in error.body) {
-                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                    if (key==='non_field_errors'){
+                        error_msg += error.body[key] + '<br/>';
+                    } else {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
                 }
                 swal({
                     title: 'Checking Organisation',
@@ -864,11 +868,14 @@ export default {
                         }
                     });
                 }, (error) => {
-                    console.log(error);
                     vm.registeringOrg = false;
                     let error_msg = '<br/>';
                     for (var key in error.body) {
-                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                        if (key==='non_field_errors'){
+                            error_msg += error.body[key] + '<br/>';
+                        } else {
+                            error_msg += key + ': ' + error.body[key] + '<br/>';
+                        }
                     }
                     swal(
                         'Error submitting organisation request',
@@ -926,11 +933,14 @@ export default {
                         }
                     });
                 }, (error) => {
-                    console.log(error);
                     vm.registeringOrg = false;
                     let error_msg = '<br/>';
                     for (var key in error.body) {
-                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                        if (key==='non_field_errors'){
+                            error_msg += error.body[key] + '<br/>';
+                        } else {
+                            error_msg += key + ': ' + error.body[key] + '<br/>';
+                        }
                     }
                     swal(
                         'Error submitting organisation request',
@@ -1035,9 +1045,15 @@ export default {
                             'success'
                         )
                     }, (error) => {
+                        let error_msg = '<br/>';
+                        for (var key in error.body) {
+                          if (error.body[key].indexOf('last_admin')>-1) {
+                            error_msg += 'The Organisation will have no Administrator.<br/>';
+                          }
+                        }
                         swal(
                             'Unlink',
-                            'There was an error unlinking you from '+org_name+'.',
+                            'There was an error unlinking you from '+org_name+'.' + error_msg,
                             'error'
                         )
                     });
