@@ -1754,6 +1754,16 @@ class AdmissionsBooking(models.Model):
                 future = True
                 break
         return future
+
+    @property
+    def part_booking(self):
+        res = Booking.objects.filter(admission_payment=self).count()
+        if res == 0:
+            return False
+        else:
+            return True
+
+
 class AdmissionsLocation(models.Model):
     key = models.CharField(max_length=5, blank=False, null=False, unique=True)
     text = models.CharField(max_length=255, blank=False, null=False)
