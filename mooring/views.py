@@ -419,6 +419,8 @@ class MakeBookingsView(TemplateView):
         if booking:
             if booking.old_booking:
                 booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
+                if booking.old_booking.admission_payment:
+                    booking_change_fees = utils.calculate_price_admissions_chage(booking.old_booking.admission_payment, booking_change_fees)
                 booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_change_fees)
             # Sort the list by date from.
             # new_lines = sorted(lines, key=lambda line: line['from'])
@@ -648,6 +650,8 @@ class MakeBookingsView(TemplateView):
         lines = utils.price_or_lineitems(request, booking, booking.campsite_id_list)
         if booking.old_booking is not None:
            booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
+           if booking.old_booking.admission_payment:
+               booking_change_fees = utils.calculate_price_admissions_chage(booking.old_booking.admission_payment, booking_change_fees)
            lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
         if booking.details['non_online_booking']:
             booking_line = utils.nononline_booking_lineitems(oracle_code, request)
@@ -874,6 +878,9 @@ class BookingSuccessView(TemplateView):
                         logger.info("old logger 2")
                         booking_items = MooringsiteBooking.objects.filter(booking=old_booking)
                         logger.info("old logger 3")
+                        # Find admissions booking for old booking
+                        old_booking.admission_payment.booking_type = 3
+                        old_booking.admission_payment.save()
                         for bi in booking_items:
                             logger.info("old logger 4")
                             bi.booking_type = 4
@@ -1061,6 +1068,8 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         for ad in ad_pasts:
             to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
             ad_past.append(to_add)
+        
+        print " ++++++++++++++++++++" , ad_past
 
         bk_currents = bookings.filter(departure__gte=today).order_by('arrival')
         bk_current = []

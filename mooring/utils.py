@@ -861,6 +861,13 @@ def calculate_price_booking_change(old_booking, new_booking):
 
     return change_fees
 
+def calculate_price_admissions_chage(adBooking, change_fees):
+    print "====================="
+    print adBooking
+    total = adBooking.totalCost
+    change_fees.append({'additional_fees': 'true', 'description': 'Admission Fee Adjustment Credit' ,'amount': str(total - total - total)})
+    return change_fees
+
 def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
     total_price = Decimal(0)
     booking_mooring = MooringsiteBooking.objects.filter(booking=booking)

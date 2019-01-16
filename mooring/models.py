@@ -1315,6 +1315,10 @@ class Booking(models.Model):
     def has_history(self):
         return self.history.count() > 0
 
+    @property
+    def in_future(self):
+        return self.departure > date.today()
+
     # Methods
     # =================================
     def clean(self,*args,**kwargs):
@@ -1713,7 +1717,8 @@ class AdmissionsBooking(models.Model):
         (0, 'Reception booking'),
         (1, 'Internet booking'),
         (2, 'Black booking'),
-        (3, 'In-complete booking')
+        (3, 'In-complete booking'),
+        (4, 'Cancelled booking')
     )
     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
@@ -1740,6 +1745,15 @@ class AdmissionsBooking(models.Model):
     def total_admissions(self):
         return self.noOfAdults + self.noOfConcessions + self.noOfChildren + self.noOfInfants
 
+    @property
+    def in_future(self):
+        lines = AdmissionsLine.objects.filter(admissionsBooking=self)
+        future = False
+        for line in lines:
+            if line.arrivalDate > date.today():
+                future = True
+                break
+        return future
 class AdmissionsLocation(models.Model):
     key = models.CharField(max_length=5, blank=False, null=False, unique=True)
     text = models.CharField(max_length=255, blank=False, null=False)
