@@ -859,4 +859,8 @@ class MyOrganisationsViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return user.wildlifecompliance_organisations.all()
+        if is_internal(self.request):
+            return Organisation.objects.all()
+        elif is_customer(self.request):
+            return user.wildlifecompliance_organisations.all()
+        return Organisation.objects.none()
