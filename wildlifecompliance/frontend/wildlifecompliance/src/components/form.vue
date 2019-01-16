@@ -94,6 +94,7 @@ from '@/utils/hooks'
             if (this.withSectionsSelector){
                 var _tabid = 0;
                 var _settab = '';
+                var _setspy = '';
                 var _mnu1 = '';
                 var _mnu2 = '';
                 Renderer.sections.map((sec,i) => {
@@ -104,22 +105,24 @@ from '@/utils/hooks'
                         _mnu2 = '';
                       }
                       _tabid++;
-                      _mnu1 = _mnu1 + `<li class='dropdown-submenu'><a tabindex='-1' class='section-menu' href='#section-submenu' data-toggle='collapse' aria-expanded='false'>` + tabs[_settab*1].name + `<span class='caret'></span></a><ul class='dropdown-menu' id='section-submenu' >` +_mnu2;
+                      _mnu1 = _mnu1 + `<li class='dropdown-submenu'><a tabindex='-1' class='section-menu' href='#section-submenu' data-toggle='collapse' aria-expanded='false'>` + tabs[_settab*1].name + `<span class='caret'></span></a><ul class='dropdown-menu dropdown-menu-right' id='section-submenu' >` +_mnu2;
                    };
                    _mnu2 = _mnu2 + `<li><a class='page-scroll section' href='#${sec.name}'>${sec.label}</a></li>`;
                 });
                 _mnu1 = _mnu1 + _mnu2 + '</ul></li>';
-                _tabid = 0;
                 $('#scrollspy-section').append(_mnu1);
                 $('a.page-scroll').bind('click', function(event) {
                    var $anchor = $(this);
-                   _tabid = ($anchor.attr('href')).split('_').pop();
+                   var _tabid = ($anchor.attr('href')).split('_').pop();
                    _tabid = _tabid*1;
                    _settab = '#tabs-section li:nth-child(' + ++_tabid + ') a';
+                   _setspy = ($anchor.attr('href')).split('#')[1];
+                   _setspy = _setspy=='' ? '#site-title' : '#' + _setspy;
                    $(_settab).click();
                    $('html, body').stop().animate({
-                       scrollTop: ($($anchor.attr('href')).offset().top)
+                       scrollTop: ($(_setspy).offset().top)
                    }, 1000, 'easeInOutExpo');
+                   $('a[class="dropdown-toggle"]').siblings('ul[id="scrollspy-section"]').show();
                    event.preventDefault();
                });
                $(window).scroll(function () {
@@ -135,15 +138,24 @@ from '@/utils/hooks'
                 });
                 $(document).ready(function(){
                     $('.dropdown-submenu a.section-menu').on("click", function(e){
-                        $(this).next('ul').toggle();
+                        $('a.section-menu').siblings('ul').hide();
+                        $(this).next('ul').show();
                         e.stopPropagation();
                         e.preventDefault();
                     });
                     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
                         var $anchor = $(this);
+                        var _sect_mnu = $('a[class="dropdown-toggle"]').siblings('ul[id="scrollspy-section"]');
+                        var _tabid = $("ul#tabs-section li.active").index();
+                        _setspy = _setspy=='' ? '#site-title' : _setspy;
                         $('html, body').stop().animate({
-                            scrollTop: ($($anchor.attr('href')).offset().top)
-                          }, 1000, 'easeInOutExpo');
+                            scrollTop: ($(_setspy).offset().top)
+                        }, 1000, 'easeInOutExpo');
+                        _setspy = '';
+                        $(_sect_mnu).children().children('ul').hide();
+                        $(_sect_mnu).show();
+                        _sect_mnu = "ul#scrollspy-section li:nth-child(" + ++_tabid + ")";
+                        $(_sect_mnu).find('ul[id="section-submenu"]').show();
                         e.stopPropagation();
                         e.preventDefault();
                     });

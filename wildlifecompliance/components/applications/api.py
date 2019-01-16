@@ -13,6 +13,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from wildlifecompliance import settings
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
@@ -35,8 +36,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.components.applications.utils import save_proponent_data,save_assessor_data,get_activity_type_schema
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
+from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.applications.models import (
-    ApplicationType,
     Application,
     ApplicationDocument,
     Referral,
@@ -49,7 +50,6 @@ from wildlifecompliance.components.applications.models import (
 )
 from wildlifecompliance.components.applications.serializers import (
     SendReferralSerializer,
-    ApplicationTypeSerializer,
     ApplicationSerializer,
     InternalApplicationSerializer,
     SaveApplicationSerializer,
@@ -75,17 +75,6 @@ from wildlifecompliance.components.applications.serializers import (
 )
 
 
-class GetApplicationType(views.APIView):
-    renderer_classes = [JSONRenderer, ]
-
-    def get(self, request, format=None):
-        _type = ApplicationType.objects.first()
-        if _type:
-            serializer = ApplicationTypeSerializer(_type)
-            return Response(serializer.data)
-        else:
-            return Response({'error': 'There is currently no application type.'}, status=status.HTTP_404_NOT_FOUND)
-
 class GetEmptyList(views.APIView):
     renderer_classes = [JSONRenderer, ]
 
@@ -95,6 +84,15 @@ class GetEmptyList(views.APIView):
 class ApplicationViewSet(viewsets.ModelViewSet):
     queryset = Application.objects.all()
     serializer_class = ApplicationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Application.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.wildlifecompliance_organisations.all()]
+            return Application.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(proxy_applicant = user) | Q(submitter = user) )
+        return Application.objects.none()
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -901,6 +899,16 @@ class ApplicationConditionViewSet(viewsets.ModelViewSet):
     queryset = ApplicationCondition.objects.all()
     serializer_class = ApplicationConditionSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return ApplicationCondition.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.wildlifecompliance_organisations.all()]
+            user_applications = [application.id for application in Application.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(proxy_applicant = user) | Q(submitter = user) )]
+            return ApplicationCondition.objects.filter(Q(application_id__in = user_applications))
+        return ApplicationCondition.objects.none()
+
     def create(self, request, *args, **kwargs):
         try:
             serializer = self.get_serializer(data=request.data)
@@ -960,6 +968,13 @@ class ApplicationStandardConditionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ApplicationStandardCondition.objects.all()
     serializer_class = ApplicationStandardConditionSerializer
 
+    def get_queryset(self):
+        if is_internal(self.request):
+            return ApplicationStandardCondition.objects.all()
+        elif is_customer(self.request):
+            return ApplicationStandardCondition.objects.none()
+        return ApplicationStandardCondition.objects.none()
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         search = request.GET.get('search')
@@ -971,6 +986,13 @@ class ApplicationStandardConditionViewSet(viewsets.ReadOnlyModelViewSet):
 class AssessmentViewSet(viewsets.ModelViewSet):
     queryset = Assessment.objects.all()
     serializer_class = AssessmentSerializer
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return Assessment.objects.all()
+        elif is_customer(self.request):
+            return Assessment.objects.none()
+        return Assessment.objects.none()
 
     @list_route(methods=['GET',])
     def user_list(self, request, *args, **kwargs):
@@ -1065,6 +1087,13 @@ class AssessorGroupViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationGroupTypeSerializer
     renderer_classes = [JSONRenderer,]
 
+    def get_queryset(self):
+        if is_internal(self.request):
+            return ApplicationGroupType.objects.filter(type='assessor')
+        elif is_customer(self.request):
+            return ApplicationGroupType.objects.none()
+        return ApplicationGroupType.objects.none()
+
     @list_route(methods=['POST',])
     def user_list(self, request, *args, **kwargs):
         app_id = request.data.get('application_id')
@@ -1081,6 +1110,16 @@ class AssessorGroupViewSet(viewsets.ModelViewSet):
 class AmendmentRequestViewSet(viewsets.ModelViewSet):
     queryset = AmendmentRequest.objects.all()
     serializer_class = AmendmentRequestSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return AmendmentRequest.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.wildlifecompliance_organisations.all()]
+            user_applications = [application.id for application in Application.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(proxy_applicant = user) | Q(submitter = user) )]
+            return AmendmentRequest.objects.filter(Q(application_id__in = user_applications))
+        return AmendmentRequest.objects.none()
 
     def create(self, request, *args, **kwargs):
         try:
