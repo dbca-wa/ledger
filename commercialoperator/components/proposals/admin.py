@@ -2,7 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from commercialoperator.components.proposals import models
 from commercialoperator.components.proposals import forms
-from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType
+from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, Park, Trail, ActivityType, ActivityCategory, Activity, AccessType
 #from commercialoperator.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
@@ -105,4 +105,42 @@ class ApplicationTypeAdmin(admin.ModelAdmin):
     list_display = ['name', 'order', 'visible']
     ordering = ('order',)
 
+@admin.register(Park)
+class ParkAdmin(admin.ModelAdmin):
+    list_display = ['name', 'district']
+    ordering = ('name',)
 
+@admin.register(Trail)
+class TrailAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code']
+    ordering = ('name',)
+
+@admin.register(models.Vehicle)
+class VehicleAdmin(admin.ModelAdmin):
+    list_display = ['access_type','capacity', 'rego', 'license', 'rego_expiry']
+    ordering = ('access_type',)
+
+@admin.register(models.Vessel)
+class VesselAdmin(admin.ModelAdmin):
+    list_display = ['nominated_vessel','spv_no', 'hire_rego', 'craft_no', 'size', 'proposal']
+    ordering = ('nominated_vessel',)
+
+# @admin.register(ActivityType)
+# class ActivityTypeAdmin(admin.ModelAdmin):
+#     list_display = ['name', 'visible']
+#     ordering = ('name',)
+
+@admin.register(ActivityCategory)
+class ActivityCategory(admin.ModelAdmin):
+    list_display = ['name', 'visible', 'activity_type']
+    ordering = ('name',)
+
+@admin.register(Activity)
+class Activity(admin.ModelAdmin):
+    list_display = ['name', 'visible', 'activity_category']
+    ordering = ('name',)
+
+@admin.register(AccessType)
+class VehicleAdmin(admin.ModelAdmin):
+    list_display = ['id','name', 'visible']
+    ordering = ('id',)

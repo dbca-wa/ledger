@@ -14,11 +14,16 @@ from commercialoperator.components.proposals.models import (
                                     ProposalApplicantDetails,
                                     ProposalActivitiesLand,
                                     ProposalActivitiesMarine,
+                                    ProposalPark,
+                                    ProposalParkActivity,
+                                    Vehicle,
+                                    Vessel,
+                                    ProposalTrail
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
                             )
-from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer
+from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer, ParkSerializer, ActivitySerializer, AccessTypeSerializer, TrailSerializer
 from rest_framework import serializers
 
 class ProposalTypeSerializer(serializers.ModelSerializer):
@@ -55,6 +60,39 @@ class ProposalActivitiesMarineSerializer(serializers.ModelSerializer):
         model = ProposalActivitiesMarine
         fields = ('id','activities_marine')
 
+class ProposalParkActivitySerializer(serializers.ModelSerializer):
+    activity=ActivitySerializer()
+    class Meta:
+        model = ProposalParkActivity
+        fields = '__all__'
+
+class ProposalParkSerializer(serializers.ModelSerializer):
+    park=ParkSerializer()
+    land_activities=ProposalParkActivitySerializer(many=True)
+    class Meta:
+        model = ProposalPark
+        fields = '__all__'
+
+
+class SaveProposalParkSerializer(serializers.ModelSerializer):
+    #park=ParkSerializer()
+    class Meta:
+        model = ProposalPark
+        fields = '__all__'
+
+class ProposalTrailSerializer(serializers.ModelSerializer):
+    trail=TrailSerializer()
+    #land_activities=ProposalParkActivitySerializer(many=True)
+    class Meta:
+        model = ProposalTrail
+        fields = '__all__'
+
+class SaveProposalTrailSerializer(serializers.ModelSerializer):
+    #park=ParkSerializer()
+    class Meta:
+        model = ProposalTrail
+        fields = '__all__'
+
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
@@ -64,6 +102,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     applicant_details = ProposalApplicantDetailsSerializer(required=False)
     activities_land = ProposalActivitiesLandSerializer(required=False)
     activities_marine = ProposalActivitiesMarineSerializer(required=False)
+    parks=ProposalParkSerializer(many=True)
+    trails=ProposalTrailSerializer(many=True)
 
     get_history = serializers.ReadOnlyField()
 
@@ -117,6 +157,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'applicant_details',
                 'activities_land',
                 'activities_marine',
+                'parks',
+                'trails'
                 )
         read_only_fields=('documents',)
 
@@ -592,3 +634,23 @@ class SearchKeywordSerializer(serializers.Serializer):
 class SearchReferenceSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     type = serializers.CharField()
+
+class VehicleSerializer(serializers.ModelSerializer):
+    access_type= AccessTypeSerializer()
+    rego_expiry=serializers.DateField(format="%d/%m/%Y")
+    class Meta:
+        model = Vehicle
+        fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry', 'proposal')
+
+class VesselSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vessel
+        fields = '__all__'
+
+class SaveVehicleSerializer(serializers.ModelSerializer):
+    #access_type= AccessTypeSerializer()
+    rego_expiry = serializers.DateField(input_formats=['%d/%m/%Y'], allow_null=True)
+    class Meta:
+        model = Vehicle
+        fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry', 'proposal')
+

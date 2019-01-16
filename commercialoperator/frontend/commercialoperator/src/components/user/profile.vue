@@ -54,6 +54,42 @@
                 </div>
             </div>
         </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Identification <small>Upload your photo ID</small>
+                        <a class="panelClicker" :href="'#'+idBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="idBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse" :id="idBody">
+                      <form class="form-horizontal" name="id_form" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-3 control-label">Identification</label>
+                            <div class="col-sm-6">
+                                <img v-if="profile.identification" width="100%" name="identification" v-bind:src="profile.identification.file" />
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <div class="col-sm-12">
+                                <!-- output order in reverse due to pull-right at runtime -->
+                                <button v-if="!uploadingID" class="pull-right btn btn-primary" @click.prevent="uploadID()">Upload</button>
+                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Uploading</button>
+                                <span class="pull-right" style="margin-left:10px;margin-top:10px;margin-right:10px">{{uploadedIDFileName}}</span>
+                                <span class="btn btn-primary btn-file pull-right">
+                                    Select ID to Upload<input type="file" ref="uploadedID" @change="readFileID()"/>
+                                </span>
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
@@ -154,7 +190,7 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div v-if="!isApplication" class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
@@ -321,6 +357,12 @@ import $ from 'jquery'
 import { api_endpoints, helpers } from '@/utils/hooks'
 export default {
     name: 'Profile',
+    props:{
+      isApplication:{
+                type: Boolean,
+                default: false
+            },
+    },
     data () {
         let vm = this;
         return {
@@ -328,6 +370,7 @@ export default {
             pBody: 'pBody'+vm._uid,
             cBody: 'cBody'+vm._uid,
             oBody: 'oBody'+vm._uid,
+            idBody: 'idBody'+vm._uid,
             profile: {
               first_name: '',
                 last_name: '',
@@ -346,6 +389,7 @@ export default {
             addingCompany: false,
             managesOrg: 'No',
             uploadedFile: null,
+            uploadedID: null,
             updatingPersonal: false,
             updatingAddress: false,
             updatingContact: false,
@@ -358,6 +402,7 @@ export default {
             showAddressError: false,
             errorListContact:[],
             showContactError: false,
+            role : null,
         }
     },
     watch: {
@@ -391,6 +436,9 @@ export default {
         uploadedFileName: function() {
             return this.uploadedFile != null ? this.uploadedFile.name: '';
         },
+        uploadedIDFileName: function() {
+            return this.uploadedID != null ? this.uploadedID.name: '';
+        },
         isFileUploaded: function() {
             return this.uploadedFile != null ? true: false;
         },
@@ -419,6 +467,20 @@ export default {
             }
             vm.uploadedFile = _file;
         },
+        readFileID: function() {
+            let vm = this;
+            let _file = null;
+            var input = $(vm.$refs.uploadedID)[0];
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.readAsDataURL(input.files[0]);
+                reader.onload = function(e) {
+                    _file = e.target.result;
+                };
+                _file = input.files[0];
+            }
+            vm.uploadedID = _file;
+        },
         addCompany: function (){
             this.newOrg.push = {
                 'name': '',
@@ -434,6 +496,7 @@ export default {
         },
         updatePersonal: function() {
             let vm = this;
+            //console.log(vm.profile);
             vm.missing_fields = [];
             var required_fields=[];
             vm.errorListPersonal=[];
@@ -471,6 +534,49 @@ export default {
           }
         },
         
+        uploadID: function() {
+            let vm = this;
+            console.log('uploading id');
+            vm.uploadingID = true;
+            let data = new FormData();
+            data.append('identification', vm.uploadedID);
+            console.log(data);
+            if (vm.uploadedID == null){
+                vm.uploadingID = false;
+                swal({
+                        title: 'Upload ID',
+                        html: 'Please select a file to upload.',
+                        type: 'error'
+                });
+            } else {
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/upload_id')),data,{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.uploadingID = false;
+                    vm.uploadedID = null;
+                    swal({
+                        title: 'Upload ID',
+                        html: 'Your ID has been successfully uploaded.',
+                        type: 'success',
+                    }).then(() => {
+                        window.location.reload(true);
+                    });
+                }, (error) => {
+                    console.log(error);
+                    vm.uploadingID = false;
+                    let error_msg = '<br/>';
+                    for (var key in error.body) {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                    swal({
+                        title: 'Upload ID',
+                        html: 'There was an error uploading your ID.<br/>' + error_msg,
+                        type: 'error'
+                    });
+                });
+            }
+        },
+        
         updateContact: function() {
             let vm = this;
             vm.missing_fields = [];
@@ -500,7 +606,7 @@ export default {
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_contact')),JSON.stringify(vm.profile),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
+                //console.log(response);
                 vm.updatingContact = false;
                 vm.profile = response.body;
                 if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
@@ -713,7 +819,18 @@ export default {
                 });
             },(error) => {
             }); 
-        }
+        },
+        fetchProfile: function(){
+          let vm=this;
+          Vue.http.get(api_endpoints.profile).then((response) => {
+                    vm.profile = response.body
+                    if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                    if ( vm.profile.commercialoperator_organisations && vm.profile.commercialoperator_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+        },(error) => {
+            console.log(error);
+        })
+
+        },
     },
     beforeRouteEnter: function(to,from,next){
         Vue.http.get(api_endpoints.profile).then((response) => {
@@ -731,9 +848,11 @@ export default {
             console.log(error);
         })
     },
+
     mounted: function(){
         this.fetchCountries();
         this.fetchOrgRequestList();
+        this.fetchProfile(); //beforeRouteEnter doesn't work when loading this component in Application.vue so adding an extra method to get profile details.
         this.personal_form = document.forms.personal_form;
         $('.panelClicker[data-toggle="collapse"]').on('click', function () {
             var chev = $(this).children()[0];

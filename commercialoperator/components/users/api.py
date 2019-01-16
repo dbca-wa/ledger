@@ -22,7 +22,7 @@ from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,Address, Profile, EmailIdentity, EmailUserAction
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
 from commercialoperator.components.organisations.models import  (   
@@ -114,6 +114,27 @@ class UserViewSet(viewsets.ModelViewSet):
             instance.save()
             serializer = UserSerializer(instance)
             return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def upload_id(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.upload_identification(request)
+            with transaction.atomic():
+                instance.save()
+                instance.log_user_action(EmailUserAction.ACTION_ID_UPDATE.format(
+                '{} {} ({})'.format(instance.first_name, instance.last_name, instance.email)), request)
+            serializer = UserSerializer(instance, partial=True)
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

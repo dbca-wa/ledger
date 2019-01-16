@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix
+from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, Activity, ActivityCategory
 from ledger.accounts.models import EmailUser
+#from commercialoperator.components.proposals.serializers import ProposalTypeSerializer 
 
 class CommunicationLogEntrySerializer(serializers.ModelSerializer):
     customer = serializers.PrimaryKeyRelatedField(queryset=EmailUser.objects.all(),required=False)
@@ -26,18 +27,32 @@ class CommunicationLogEntrySerializer(serializers.ModelSerializer):
     def get_documents(self,obj):
         return [[d.name,d._file.url] for d in obj.documents.all()]
 
+class ParkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Park
+        fields = '__all__'
+
+class TrailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Trail
+        fields = '__all__'
+        
 
 class DistrictSerializer(serializers.ModelSerializer):
+    parks = ParkSerializer(many=True)
     class Meta:
         model = District
-        fields = ('id', 'name', 'code')
+        fields = ('id', 'name', 'code', 'parks')
+
 
 
 class RegionSerializer(serializers.ModelSerializer):
     districts = DistrictSerializer(many=True)
     class Meta:
         model = Region
-        fields = ('id', 'name', 'forest_region', 'districts')
+        fields = ('id', 'name','forest_region', 'districts')
+
+
 
 class ActivityMatrixSerializer(serializers.ModelSerializer):
     class Meta:
@@ -68,3 +83,32 @@ class ApplicationTypeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'tenure_app_types')
 
 
+class AccessTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessType
+        fields = ('id', 'name', 'visible')
+
+# class VehicleSerializer(serializers.ModelSerializer):
+#     access_type= AccessTypeSerializer()
+#     rego_expiry=serializers.DateField(format="%d/%m/%Y")
+#     class Meta:
+#         model = Vehicle
+#         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
+
+# class SaveVehicleSerializer(serializers.ModelSerializer):
+#     #access_type= AccessTypeSerializer()
+#     rego_expiry = serializers.DateField(input_formats=['%d/%m/%Y'], allow_null=True)
+#     class Meta:
+#         model = Vehicle
+#         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
+
+class ActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Activity
+        fields = ('id','name')
+
+class ActivityCategorySerializer(serializers.ModelSerializer):
+    activities = ActivitySerializer(many=True)
+    class Meta:
+        model = ActivityCategory
+        fields = ('id', 'name','activities')

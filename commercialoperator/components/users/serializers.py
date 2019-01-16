@@ -1,10 +1,16 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Document
 from commercialoperator.components.organisations.models import (   
                                     Organisation,
                                 )
 from rest_framework import serializers
 
+
+class DocumentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Document
+        fields = ('id','description','file','name','uploaded_date')
 
 class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,6 +42,7 @@ class UserSerializer(serializers.ModelSerializer):
     address_details = serializers.SerializerMethodField()
     contact_details = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
+    identification = DocumentSerializer()
 
     class Meta:
         model = EmailUser
@@ -44,6 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name',
             'first_name',
             'email',
+            'identification',
             'residential_address',
             'phone_number',
             'mobile_number',

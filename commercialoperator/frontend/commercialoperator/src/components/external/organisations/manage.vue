@@ -1,5 +1,5 @@
 <template>
-    <div class="container" v-if="org" id="userInfo">
+    <div class="container"  id="userInfo">
         <div class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
@@ -88,7 +88,7 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div v-if="!isApplication" class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
@@ -109,7 +109,7 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div v-if="!isApplication" class="row">
             <div class="col-sm-12">
 
                 <div class="panel panel-default">
@@ -185,6 +185,16 @@ import api from '../api'
 import AddContact from '@common-utils/add_contact.vue'
 export default {
     name: 'Organisation',
+    props:{
+      org_id:{
+                type: Number,
+                default: null
+            },
+      isApplication:{
+                type: Boolean,
+                default: false
+            },
+    },
     data () {
         let vm = this;
         return {
@@ -366,6 +376,7 @@ export default {
                 responsive: true,
                 ajax: {
                     "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/contacts'),
+                    //"url": helpers.add_endpoint_json(api_endpoints.organisations,vm.org_id+'/contacts'),
                     "dataSrc": ''
                 },
                 columns: [
@@ -398,6 +409,8 @@ export default {
                 responsive: true,
                 ajax: {
                     "url": helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/contacts_exclude'),
+                    //"url": helpers.add_endpoint_json(api_endpoints.organisations,vm.org.id+'/contacts_exclude'),
+
                     "dataSrc": ''
                 },
                 columns: [
@@ -447,6 +460,7 @@ export default {
         AddContact
     },
     computed: {
+        
     },
     beforeRouteEnter: function(to, from, next){
         let initialisers = [
@@ -461,6 +475,7 @@ export default {
                 vm.myorgperms = data[2];
                 vm.org.address = vm.org.address != null ? vm.org.address : {};
                 vm.org.pins = vm.org.pins != null ? vm.org.pins : {};
+               
             });
         });
     },
@@ -475,6 +490,7 @@ export default {
                 vm.myorgperms = data[1];
                 vm.org.address = vm.org.address != null ? vm.org.address : {};
                 vm.org.pins = vm.org.pins != null ? vm.org.pins : {};
+             
             });
         });
     },
@@ -971,6 +987,22 @@ export default {
     },
     mounted: function(){
         this.personal_form = document.forms.personal_form;
+
+        let vm=this;
+        let initialisers = [
+            utils.fetchCountries(),
+            utils.fetchOrganisation(vm.org_id),
+            utils.fetchOrganisationPermissions(vm.org_id)
+        ]
+        Promise.all(initialisers).then(data => {
+                vm.countries = data[0];
+                vm.org = data[1];
+                vm.myorgperms = data[2];
+                vm.org.address = vm.org.address != null ? vm.org.address : {};
+                vm.org.pins = vm.org.pins != null ? vm.org.pins : {};
+            
+        });
+
     },
     updated: function(){
         let vm = this;
@@ -984,6 +1016,7 @@ export default {
             this.eventListeners();
         });
     }
+  
 }
 </script>
 

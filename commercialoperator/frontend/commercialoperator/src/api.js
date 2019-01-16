@@ -22,7 +22,11 @@ module.exports = {
     regions:"/api/regions.json",
     activity_matrix:"/api/activity_matrix.json",
     application_types:"/api/application_types.json",
-
+    vehicles:"/api/vehicles.json",
+    access_types:"/api/access_types.json",
+    parks:"/api/parks.json",
+    vehicles:"/api/vehicles.json",
+    vessels:"/api/vessels.json",
 
     // used in internal and external dashboards
     proposals_paginated_external:   "/api/proposal_paginated/proposals_external/?format=datatables",
@@ -43,6 +47,12 @@ module.exports = {
 
     discard_proposal:function (id) {
       return `/api/proposal/${id}.json`;
+    },
+    discard_vessel:function (id) {
+      return `/api/vessels/${id}.json`;
+    },
+    discard_vehicle:function (id) {
+      return `/api/vehicles/${id}.json`;
     },
     site_url: site_url,
     //dep_name: 'Department of Biodiversity, Conservation and Attractions',

@@ -53,8 +53,12 @@
 
             </ul>
             <div class="tab-content" id="pills-tabContent">
-              <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab"> 
-                <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
+              <!-- <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">  -->
+                <div class="tab-pane fade" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab"> 
+               <Profile :isApplication="true"></Profile>
+              
+                <Organisation :org_id="proposal.applicant" :isApplication="true"></Organisation> 
+                <!-- <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant> -->
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
                 <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand"></ActivitiesLand>
@@ -80,6 +84,8 @@
 </template>
 
 <script>
+    import Profile from '@/components/user/profile.vue'
+    import Organisation from '@/components/external/organisations/manage.vue'
     import Applicant from '@/components/common/tclass/applicant.vue'
     import ActivitiesLand from '@/components/common/tclass/activities_land.vue'
     import ActivitiesMarine from '@/components/common/tclass/activities_marine.vue'
@@ -114,7 +120,9 @@
             OtherDetails,
             OnlineTraining,
             Payment,
-            Confirmation
+            Confirmation,
+            Profile,
+            Organisation,
         },
         methods:{
         },
@@ -143,6 +151,7 @@
 
     .nav-item {
         background-color: rgb(200,200,200,0.8) !important;
+        margin-bottom: 2px;
     }
 
     .nav-item>li>a {

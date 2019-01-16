@@ -8,6 +8,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from django.contrib.postgres.fields.jsonb import JSONField
+#from commercialoperator.components.proposals.models import Proposal
 
 @python_2_unicode_compatible
 class Region(models.Model):
@@ -20,6 +21,11 @@ class Region(models.Model):
 
     def __str__(self):
         return self.name
+
+    # @property
+    # def districts(self):
+    #     return District.objects.filter(region=self)
+
 
 
 @python_2_unicode_compatible
@@ -36,6 +42,117 @@ class District(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def parks(self):
+        return Parks.objects.filter(district=self)
+
+
+
+@python_2_unicode_compatible
+class AccessType(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
+
+# @python_2_unicode_compatible
+# class Vehicle(models.Model):
+#     capacity = models.CharField(max_length=200, blank=True)
+#     rego = models.CharField(max_length=200, blank=True)
+#     license = models.CharField(max_length=200, blank=True)
+#     access_type= models.ForeignKey(AccessType,null=True, related_name='vehicles')
+#     rego_expiry= models.DateField(blank=True, null=True)
+
+#     class Meta:
+#         app_label = 'commercialoperator'
+
+#     def __str__(self):
+#         return self.rego
+
+@python_2_unicode_compatible
+class Park(models.Model):
+    district = models.ForeignKey(District, related_name='parks')
+    name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=10, blank=True)
+    #proposal = models.ForeignKey(Proposal, related_name='parks')
+    
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+        #unique_together = ('id', 'proposal',)
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
+class Trail(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=10, blank=True)
+    
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+        #unique_together = ('id', 'proposal',)
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
+class ActivityType(models.Model):
+    ACTIVITY_TYPE_CHOICES = (
+        ('land', 'Land'),
+        ('marine', 'Marine'),
+        ('Film', 'Film'),
+    )
+    type_name = models.CharField('Activity Type', max_length=40, choices=ACTIVITY_TYPE_CHOICES,
+                                        default=ACTIVITY_TYPE_CHOICES[0][0])
+    visible = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['type_name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.type_name
+
+@python_2_unicode_compatible
+class ActivityCategory(models.Model):
+    ACTIVITY_TYPE_CHOICES = (
+        ('land', 'Land'),
+        ('marine', 'Marine'),
+        ('Film', 'Film'),
+    )
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
+    activity_type = models.CharField('Activity Type', max_length=40, choices=ACTIVITY_TYPE_CHOICES,
+                                        default=ACTIVITY_TYPE_CHOICES[0][0])
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
+class Activity(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
+    activity_category = models.ForeignKey(ActivityCategory, related_name='activities')
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
 
 @python_2_unicode_compatible
 class ApplicationType(models.Model):

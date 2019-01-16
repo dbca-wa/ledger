@@ -38,7 +38,13 @@ router.register(r'regions', main_api.RegionViewSet)
 router.register(r'activity_matrix', main_api.ActivityMatrixViewSet)
 #router.register(r'tenure', main_api.TenureViewSet)
 router.register(r'application_types', main_api.ApplicationTypeViewSet)
-
+router.register(r'access_types', main_api.AccessTypeViewSet)
+router.register(r'vessels', proposal_api.VesselViewSet)
+router.register(r'parks', main_api.ParkViewSet)
+router.register(r'trails', main_api.TrailViewSet)
+router.register(r'vehicles', proposal_api.VehicleViewSet)
+router.register(r'land_activities', main_api.LandActivitiesViewSet)
+router.register(r'marine_activities', main_api.MarineActivitiesViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),

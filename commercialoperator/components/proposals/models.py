@@ -18,13 +18,14 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
 from commercialoperator.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
 import copy
 import subprocess
+from django.db.models import Q
 
 import logging
 logger = logging.getLogger(__name__)
@@ -213,6 +214,7 @@ class ProposalActivitiesMarine(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+
 
 
 class Proposal(RevisionedMixin):
@@ -664,6 +666,26 @@ class Proposal(RevisionedMixin):
         self.activities_land = ProposalActivitiesLand.objects.create(activities_land=request.data['activities_land'])
         self.activities_marine = ProposalActivitiesMarine.objects.create(activities_marine=request.data['activities_marine'])
         #self.save()
+
+    def save_parks(self,request,parks):
+        with transaction.atomic():
+            if parks:
+                try:
+                    current_parks=self.parks.all()
+                    if current_parks:
+                        print current_parks
+                        for p in current_parks:
+                            p.delete()
+                    for item in parks:
+                        try:
+                            park=Park.objects.get(id=item)
+                            ProposalPark.objects.create(proposal=self, park=park)
+                        except:
+                            raise                        
+                except:
+                    raise
+
+
 
     def update(self,request,viewset):
         from commercialoperator.components.proposals.utils import save_proponent_data
@@ -1243,6 +1265,72 @@ class ProposalLogEntry(CommunicationsLogEntry):
             self.reference = self.proposal.reference
         super(ProposalLogEntry, self).save(**kwargs)
 
+class ProposalPark(models.Model):
+    park = models.ForeignKey(Park, blank=True, null=True, related_name='proposals')
+    proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='parks')
+
+    class Meta:
+        app_label = 'commercialoperator'
+        unique_together = ('park', 'proposal')
+
+    @property
+    def land_activities(self):
+        qs=self.activities.all()
+        categories=ActivityCategory.objects.filter(activity_type='land')
+        activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
+        return activities
+
+
+
+
+class ProposalParkActivity(models.Model):
+    proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='activities')
+    activity = models.ForeignKey(Activity, blank=True, null=True)
+
+    class Meta:
+        app_label = 'commercialoperator' 
+        unique_together = ('proposal_park', 'activity')
+
+class ProposalTrail(models.Model):
+    trail = models.ForeignKey(Trail, blank=True, null=True, related_name='proposals')
+    proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='trails')
+
+    class Meta:
+        app_label = 'commercialoperator'
+        unique_together = ('trail', 'proposal')
+
+
+@python_2_unicode_compatible
+class Vehicle(models.Model):
+    capacity = models.CharField(max_length=200, blank=True)
+    rego = models.CharField(max_length=200, blank=True)
+    license = models.CharField(max_length=200, blank=True)
+    access_type= models.ForeignKey(AccessType,null=True, related_name='vehicles')
+    rego_expiry= models.DateField(blank=True, null=True)
+    proposal = models.ForeignKey(Proposal, related_name='vehicles')
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.rego
+
+@python_2_unicode_compatible
+class Vessel(models.Model):
+    nominated_vessel = models.CharField(max_length=200, blank=True)
+    spv_no = models.CharField(max_length=200, blank=True)
+    hire_rego = models.CharField(max_length=200, blank=True)
+    craft_no = models.CharField(max_length=200, blank=True)
+    size = models.CharField(max_length=200, blank=True)  
+    #rego_expiry= models.DateField(blank=True, null=True)
+    proposal = models.ForeignKey(Proposal, related_name='vessels')
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.nominated_vessel
+
 class ProposalRequest(models.Model):
     proposal = models.ForeignKey(Proposal)
     subject = models.CharField(max_length=200, blank=True)
@@ -1428,7 +1516,12 @@ class ProposalUserAction(UserAction):
     ACTION_SURRENDER_APPROVAL = "Surrender approval for proposal {}"
     ACTION_RENEW_PROPOSAL = "Create Renewal proposal for proposal {}"
     ACTION_AMEND_PROPOSAL = "Create Amendment proposal for proposal {}"
-
+    #Vehicle
+    ACTION_CREATE_VEHICLE = "Create Vehicle {}"
+    ACTION_EDIT_VEHICLE = "Edit Vehicle {}"
+    #Vessel
+    ACTION_CREATE_VESSEL = "Create Vessel {}"
+    ACTION_EDIT_VESSEL= "Edit Vessel {}"
 
 
     class Meta:
