@@ -199,7 +199,7 @@ class MooringAreaMapMarinaSerializer(serializers.HyperlinkedModelSerializer):
     district = MooringAreaMapDistrictSerializer(read_only=True)
     class Meta:
         model = MarinePark 
-        fields = ('id','name', 'entry_fee_required', 'district')
+        fields = ('id','name', 'entry_fee_required', 'district','distance_radius')
 
 class MooringAreaMapFilterSerializer(serializers.HyperlinkedModelSerializer):
 

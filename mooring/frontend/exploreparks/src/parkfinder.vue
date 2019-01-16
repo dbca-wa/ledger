@@ -2449,7 +2449,8 @@ export default {
                     var vessel_size = $('#vesselSize').val();
                     var vessel_draft = $('#vesselDraft').val();
                     if (vessel_size > 0 && vessel_draft > 0) {
-                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                        var distance_radius = properties.props.park.distance_radius;
+                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&distance_radius='+distance_radius+'&'+vm.bookingParam);
                         // $("#mapPopupBook").attr('target','_blank');
                     } else {
 		                $("#mapPopupBook").attr('href','javascript:void(0);');
@@ -2486,7 +2487,8 @@ export default {
                         $("#mapPopupImage").hide();
                         var vessel_size = $('#vesselSize').val();
                         if (vessel_size > 0 ) {
-                               $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&'+vm.bookingParam);
+                               var distance_radius = properties.props.park.distance_radius;
+                               $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&distance_radius='+distance_radius+'&'+vm.bookingParam);
                         } else {
 				 $("#mapPopupBook").attr('href','javascript:void;');
 			}
