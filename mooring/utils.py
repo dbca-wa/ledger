@@ -18,7 +18,7 @@ from pytz import timezone as pytimezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup, AdmissionsLocation)
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup, AdmissionsLocation, ChangeGroup)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
@@ -756,7 +756,10 @@ def calculate_price_booking_cancellation(booking):
 
          cancel_policy = None
          cancel_fee_amount = '0.00'
-         change_price_period = CancelPricePeriod.objects.filter(id=ob.booking_period_option.cancel_group_id).order_by('days')
+         #change_price_period = CancelPricePeriod.objects.filter(id=ob.booking_period_option.cancel_group_id).order_by('days')
+         change_group =  CancelGroup.objects.get(id=ob.booking_period_option.change_group_id)
+         change_price_period = cancel_group.cancel_period.all().order_by('days')
+
          for cpp in change_price_period:
              if daystillbooking < 0:
                   daystillbooking = 0
@@ -813,15 +816,22 @@ def calculate_price_booking_change(old_booking, new_booking):
          print (ob.booking_period_option.change_group)
          refund_policy = None
          if changed is True:
+             print " --START--- "
+             print ob.campsite.mooringarea.name
              change_fee_amount = '0.00' 
-             change_price_period = ChangePricePeriod.objects.filter(id=ob.booking_period_option.change_group_id).order_by('days')
+ #            change_price_period = ChangePricePeriod.objects.filter(id=ob.booking_period_option.change_group_id).order_by('-days')
+             change_group =  ChangeGroup.objects.get(id=ob.booking_period_option.change_group_id)
+             change_price_period = change_group.change_period.all().order_by('days')
              print change_price_period
              for cpp in change_price_period:
+                  print cpp.id
+                  print cpp.percentage
                   print cpp.days
                   print "DA:"
                   if daystillbooking < 0:
                        daystillbooking = 0
                   print daystillbooking
+#                  if cpp.days >= daystillbooking:
                   if daystillbooking >= cpp.days:
                       refund_policy =cpp
              print "REFUND POLICY"
@@ -840,6 +850,7 @@ def calculate_price_booking_change(old_booking, new_booking):
                 change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
              else:
                  print "NO REFUND POLICY" 
+             print "--END --"
                
          else:
              #description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))

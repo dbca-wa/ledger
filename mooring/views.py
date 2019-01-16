@@ -1135,12 +1135,12 @@ class ChangeBookingView(LoginRequiredMixin, TemplateView):
                          amount=bi.amount,
                          booking_period_option=bi.booking_period_option
                        )
-
+                  campsite_id= bi.campsite_id
              request.session['ps_booking'] = booking_temp.id
              #request.session['ps_booking_old'] =  booking.id
              request.session.modified = True
 
-             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adults='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants']) )
+             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?site_id='+str(campsite_id)+'&arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adults='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants']) )
  
 #        ad_currents = admissions.filter(arrivalDate__gte=today).order_by('arrivalDate')
 #        ad_current = []
