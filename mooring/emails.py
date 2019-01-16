@@ -225,7 +225,7 @@ def send_booking_period_email(moorings, group, days):
 
 def send_refund_failure_email(booking):
     email_obj = TemplateEmailBase()
-    email_obj.subject = 'Failt to refund for {}, requires manual intervention.'.format(booking)
+    email_obj.subject = 'Failed to refund for {}, requires manual intervention.'.format(booking)
     email_obj.html_template = 'mooring/email/refund_failed.html'
     email_obj.txt_template = 'mooring/email/refund_failed.txt'
 
