@@ -192,7 +192,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
-                fnInitComplete: function(oSettings, json){
+                fnDrawCallback: function(oSettings, json){
                     if(vm.payment_officer){
                         vm.$refs.bookings_table.vmDataTable.rows().every(function(){
                             var rowdata = this.data();
@@ -405,7 +405,7 @@ export default {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
-                fnInitComplete: function(oSettings, json){
+                fnDrawCallback: function(oSettings, json){
                     if(vm.payment_officer){
                         vm.$refs.admissions_bookings_table.vmDataTable.rows().every(function(){
                             var rowdata = this.data();

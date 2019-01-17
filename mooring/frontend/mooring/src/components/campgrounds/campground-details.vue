@@ -223,6 +223,7 @@ export default {
                 $(vm.$refs.campground_type).val(vm.campground.mooring_type).trigger('change');
                 $(vm.$refs.type_physical).val(vm.campground.mooring_physical_type).trigger('change');
                 $(vm.$refs.class).val(vm.campground.mooring_class).trigger('change');
+                $(vm.$refs.park).val(vm.campground.park).trigger('change');
             },
             deep: true,
 
