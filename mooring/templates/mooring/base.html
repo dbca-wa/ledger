@@ -25,7 +25,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
     <body>
-        <header class="topmast">
+        <header class="{% if TEMPLATE_GROUP == 'rottnest' %}topmast-rottnest{% else %}topmast{% endif %}">
             {% block header %}
                 {% include 'mooring/header.html' %}
             {% endblock %}
