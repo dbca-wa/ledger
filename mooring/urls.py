@@ -99,6 +99,7 @@ urlpatterns = [
     url(r'^view-booking/(?P<pk>[0-9]+)/', views.ViewBookingView.as_view(), name='public_view_booking'),
     url(r'^change-booking/(?P<pk>[0-9]+)/', views.ChangeBookingView.as_view(), name='public_change_booking'),
     url(r'^cancel-booking/(?P<pk>[0-9]+)/', views.CancelBookingView.as_view(), name='public_cancel_booking'),
+    url(r'^cancel-admissions-booking/(?P<pk>[0-9]+)/', views.CancelAdmissionsBookingView.as_view(), name='public_cancel_admissions_booking'),
     url(r'^success/', views.BookingSuccessView.as_view(), name='public_booking_success'),
     url(r'^success_admissions/', views.AdmissionsBookingSuccessView.as_view(), name='public_admissions_success'),
     url(r'^createdbasket/', views.AdmissionsBasketCreated.as_view(), name='created_basket'),

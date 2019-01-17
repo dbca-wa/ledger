@@ -8,34 +8,34 @@
         </div>
         <div class="col-sm-9">
             <div class="row">
-                <div class="col-sm-5">
+                <div class="col-sm-4">
                     <b>Admission date:</b>
                 </div>
-                <div class="col-sm-7">
+                <div class="col-sm-8">
                         {{ arrival }}
                 </div>
             </div>
             <div class="row">
-                <div class="col-sm-5">
+                <div class="col-sm-4">
                     <b>Admission fee confirmation number:</b>
                 </div>
-                <div class="col-sm-7">
+                <div class="col-sm-8">
                     AD{{ admissionsBooking.id }}
                 </div>
             </div>
             <div class="row">
-                <div class="col-sm-5">
+                <div class="col-sm-4">
                     <b>Date paid:</b>
                 </div>
-                <div class="col-sm-7">
+                <div class="col-sm-8">
                     {{ admissionsBooking.created }}
                 </div>
             </div>
             <div class="row">
-                <div class="col-sm-5">
+                <div class="col-sm-4">
                     <b>Overnight Stay: </b>
                 </div>
-                <div class="col-sm-7">
+                <div class="col-sm-8">
                     {% if overnight %}
                         {% if "See Booking PS" in overnight %}
                             {{ overnight }}
@@ -49,30 +49,30 @@
             </div>
             {% if admissionsBooking.noOfAdults > 0 %}
             <div class="row">
-                <div class="col-sm-5">
+                <div class="col-sm-4">
                     <b>Adults:</b>
                 </div>
-                <div class="col-sm-7">
+                <div class="col-sm-8">
                     {{ admissionsBooking.noOfAdults}}
                 </div>
             </div>
             {% endif %}
             {% if admissionsBooking.noOfChildren > 0 %}
             <div class="row">
-                <div class="col-sm-5">
+                <div class="col-sm-4">
                     <b>Children:</b>
                 </div>
-                <div class="col-sm-7">
+                <div class="col-sm-8">
                     {{ admissionsBooking.noOfChildren }}
                 </div>
             </div>
             {% endif %}
             {% if admissionsBooking.noOfInfants > 0 %}
             <div class="row">
-                <div class="col-sm-5">
+                <div class="col-sm-4">
                     <b>Infants:</b>
                 </div>
-                <div class="col-sm-7">
+                <div class="col-sm-8">
                     {{ admissionsBooking.noOfInfants }}
                 </div>
             </div>
@@ -81,7 +81,10 @@
                 {% if request.user == admissionsBooking.customer or request.user.is_staff or request.session.ad_last_booking == admissionsBooking.id%}
                     <a href="{% url 'get_admissions_confirmation' admissionsBooking.id %}" class="btn btn-info btn-lg" >Confirmation</a>
                     {% if request.user.is_authenticated %}
-                        <a href="{% url 'mooring-invoice-pdf' admissionsInvoice %}" class="btn btn-info btn-lg" >Invoice</a></p>
+                        <a href="{% url 'mooring-invoice-pdf' admissionsInvoice %}" class="btn btn-info btn-lg" >Invoice</a>
+                        {% if admissionsBooking.in_future and not admissionsBooking.part_booking %}
+                            <a href="{% url 'public_cancel_admissions_booking' admissionsBooking.id %}" class="btn btn-info btn-lg">Cancel Payment</a>
+                        {% endif %}
                     {% else %}
                         <a href="{% url 'home' %}" class="btn btn-info btn-lg">Log in</a><p>You must be logged in to see your invoice online.</p>
                     {% endif %}

@@ -1143,8 +1143,6 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         for ad in ad_pasts:
             to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
             ad_past.append(to_add)
-        
-        print " ++++++++++++++++++++" , ad_past
 
         bk_currents = bookings.filter(departure__gte=today).order_by('arrival')
         bk_current = []

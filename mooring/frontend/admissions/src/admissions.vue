@@ -584,29 +584,46 @@ export default {
             callback();
         },
         getPrices: function(callback){
-            var date = this.arrivalDate;
+            console.log(this.arrivalDate);
+            var date = moment(this.arrivalDate).format('YYYY-MM-DD');
+            console.log(date);
+            var location = $('#location').val();
+            var data = {
+                'date': date,
+                'location': location,
+            }
             $.ajax({
-                url: api_endpoints.park_price_history(),
+                url: process.env.PARKSTAY_URL + "/api/admissions/get_price_by_location.json/",
                 method: 'GET',
+                data: data,
                 dataType: 'json',
                 success: (function(data){
-                    for(var i = 0; i < data.length; i++){
-                        var checkDate = Date.parse(date);
-                        var checkingDate = Date.parse(data[i].period_start);
-                        if(data[i].period_end == null){
-                            if(checkingDate <= checkDate){
-                                var temp = new Date();
-                                this.currentCostDateEnd = (temp.getDate + 1000);
-                                this.setPrices(data[i], callback);
-                            }
-                        } else {
-                            var checkingDate2 = Date.parse(data[i].period_end);
-                            if(checkingDate <= checkDate && checkingDate2 >= checkDate){
-                                this.currentCostDateEnd = data[i].period_end;
-                                this.setPrices(data[i], callback);
-                            }
-                        }
-                    }    
+                    console.log(data.price);
+                    if(data.price.period_end == 'null'){
+                        var temp = new Date();
+                        this.currentCostDateEnd = (temp.getDate + 1000);
+                    } else {
+                        this.currentCostDateEnd = data.price.period_end;
+                    }
+                    this.setPrices(data.price, callback);
+
+                    // for(var i = 0; i < data.length; i++){
+                    //     var checkDate = Date.parse(date);
+                    //     var checkingDate = Date.parse(data[i].period_start);
+                    //     if(data[i].period_end == null){
+                    //         if(checkingDate <= checkDate){
+                    //             var temp = new Date();
+                    //             this.currentCostDateEnd = (temp.getDate + 1000);
+                    //             this.setPrices(data[i], callback);
+                    //         }
+                    //     } else {
+                    //         var checkingDate2 = Date.parse(data[i].period_end);
+                    //         if(checkingDate <= checkDate && checkingDate2 >= checkDate){
+                    //             this.currentCostDateEnd = data[i].period_end;
+                    //             this.setPrices(data[i], callback);
+                    //         }
+                    //     }
+                    // }
                     return false;                
                 }).bind(this)
             }); 
