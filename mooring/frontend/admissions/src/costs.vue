@@ -62,7 +62,7 @@ export default {
             priceHistoryDt:{
                 responsive: true,
                 processing: true,
-                fnInitComplete: function(oSettings, json){
+                fnDrawCallback: function(oSettings, json){
                     if(vm.multi_group){
                         vm.$refs.price_history.$refs.history_dt.vmDataTable.rows().every(function(){
                             var rowdata = this.data();

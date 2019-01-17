@@ -1101,7 +1101,7 @@ class BookingSuccessView(TemplateView):
         except Exception as e:
             print e
             if 'ps_booking_internal' in request.COOKIES:
-                return redirect('home')
+                return redirect('dash-bookings')
             elif ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
                 booking = Booking.objects.get(id=request.session['ps_last_booking'])
                 book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
