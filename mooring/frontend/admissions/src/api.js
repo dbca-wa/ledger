@@ -4,6 +4,9 @@ module.exports = {
     park_price_history:function (id) {
        return global.parkstayUrl + "/api/admissions/price_history.json";
     },
+    park_get_price: function(){
+        return global.parkstayUrl + "/api/admissions/get_price_by_location.json";
+    },
     park_add_price:function () {
        return  global.parkstayUrl + "/api/admissions/add_price.json";
     },

@@ -3,11 +3,11 @@ from io import BytesIO
 from django.conf import settings
 
 from mooring import pdf
-from mooring.models import MooringsiteBooking, AdmissionsBooking, AdmissionsLine
+from mooring.models import MooringsiteBooking, AdmissionsBooking, AdmissionsLine, AdmissionsLocation
 from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.models import Invoice
 from mooring import settings 
-from mooring.helpers import is_inventory
+from mooring.helpers import is_inventory, is_admin
 
 from ledger.emails.emails import EmailBase
 
@@ -213,9 +213,12 @@ def send_booking_period_email(moorings, group, days):
 
     members = group.members.all()
     emails = []
-    for mem in members:
-        if is_inventory(mem):
-            emails.append(mem.email)
+    if not settings.PRODUCTION_EMAIL:
+        emails.append(settings.NON_PROD_EMAIL)
+    else:
+        for mem in members:
+            if is_inventory(mem):
+                emails.append(mem.email)
 
     context = {
         'moorings': moorings,
@@ -235,6 +238,30 @@ def send_refund_failure_email(booking):
         'booking': booking,
     }
     email_obj.send([email], from_address=default_from_email, context=context)
+
+def send_registered_vessels_email(content):
+    email_obj = TemplateEmailBase()
+    email_obj.subject = 'Lotus notes extract run.'
+    email_obj.html_template = 'mooring/email/reg_ves.html'
+    email_obj.txt_template = 'mooring/email/reg_ves.txt'
+
+    if not settings.PRODUCTION_EMAIL:
+        emails.append(settings.NON_PROD_EMAIL)
+    else:
+        loc = AdmissionsLocation.objects.filter(key='ria')
+        if loc.count() > 0:
+            group = loc[0].mooring_group
+            if group:
+                emails = []
+                for mem in group.members.all():
+                    if is_admin(mem):
+                        emails.append(mem.email)
+
+    context = {
+        'content': content
+    }
+    email_obj.send(emails, from_address=default_from_email, context=context)
+
 
 
 

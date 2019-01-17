@@ -373,7 +373,7 @@ export default {
                                 var location_url = `${window.location.protocol}//${window.location.hostname}${location_port}`;
                                 invoice_string += full.payment_callback_url ? '&callback_url='+location_url+full.payment_callback_url : '';
                                 if(full.payment_visible){
-                                   var payment = (full.paid || full.status == 'Canceled') ? "View" : "Record";
+                                   var payment = (full.paid || full.status == 'Cancelled') ? "View" : "Record";
                                     var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
                                     column += record_payment; 
                                 }                                
@@ -511,6 +511,13 @@ export default {
                             if(full.payment_visible){
                                 var invoice_link= (full.invoice_ref)?"<a href='"+invoice+"' target='_blank' class='text-primary'>View Payment</a><br/>":"";
                                 column += invoice_link;
+                            }
+                            console.log(full.part_booking);
+                            if (full.in_future && !full.part_booking){
+                                if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
+                                    var cancel_booking = "<a href='/cancel-admissions-booking/"+full.id+"' class='text-primary'> Cancel</a><br/>";
+                                    column += cancel_booking;
+				                }
                             }
                             column += invoices;
                             return column;

@@ -861,11 +861,19 @@ def calculate_price_booking_change(old_booking, new_booking):
 
     return change_fees
 
-def calculate_price_admissions_chage(adBooking, change_fees):
-    print "====================="
-    print adBooking
-    total = adBooking.totalCost
-    change_fees.append({'additional_fees': 'true', 'description': 'Admission Fee Adjustment Credit' ,'amount': str(total - total - total)})
+def calculate_price_admissions_changecancel(adBooking, change_fees):
+    ad_lines = AdmissionsLine.objects.filter(admissionsBooking=adBooking)
+    for line in ad_lines:
+        if line.arrivalDate > date.today():
+            description = "Admission ({}) for {} guest(s)".format(datetime.strftime(line.arrivalDate, '%d/%m/%Y'), adBooking.total_admissions)
+            oracle_code = AdmissionsOracleCode.objects.filter(mooring_group=line.location.mooring_group)[0]
+            if not change_fees == []:
+                change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code)})
+            else:
+                change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code)})
+        else:
+            # 0 line
+            pass
     return change_fees
 
 def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
@@ -972,11 +980,12 @@ def old_price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=
     else:
         return total_price
 
-def get_admissions_entry_rate(request,start_date):
+def get_admissions_entry_rate(request,start_date, location):
     res = []
     if start_date:
         start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
-        price_history = AdmissionsRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
+        group = location.mooring_group
+        price_history = AdmissionsRate.objects.filter(mooring_group__in=[group,], period_start__lte = start_date).order_by('-period_start')
         if price_history:
             serializer = AdmissionsRateSerializer(price_history,many=True,context={'request':request})
             res = serializer.data[0]
@@ -991,7 +1000,7 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
     # Create line items for customers
     admissionsLines = AdmissionsLine.objects.filter(admissionsBooking=admissionsBooking)
     for adLine in admissionsLines:
-        rate = get_admissions_entry_rate(request,adLine.arrivalDate.strftime('%Y-%m-%d'))
+        rate = get_admissions_entry_rate(request,adLine.arrivalDate.strftime('%Y-%m-%d'), adLine.location)
         daily_rate = {'date' : adLine.arrivalDate.strftime('%d/%m/%Y'), 'rate' : rate}
         daily_rates.append(daily_rate)
         oracle_codes = AdmissionsOracleCode.objects.filter(mooring_group__in=[adLine.location.mooring_group,])

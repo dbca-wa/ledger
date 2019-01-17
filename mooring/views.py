@@ -268,6 +268,86 @@ class CancelBookingView(TemplateView):
         return HttpResponseRedirect('/success/')
 
 
+class CancelAdmissionsBookingView(TemplateView):
+    template_name = 'mooring/admissions/cancel_booking.html'
+
+    def get_booking_info(self, request, *args, **kwargs):
+        booking_id = kwargs['pk']
+        booking = AdmissionsBooking.objects.get(pk=booking_id)
+        bpoint_id = None
+        booking_invoice = AdmissionsBookingInvoice.objects.filter(admissions_booking=booking)
+        for bi in booking_invoice:
+            inv = Invoice.objects.filter(reference=bi.invoice_reference)
+            print inv
+            for i in inv:
+                for b in i.bpoint_transactions:
+                   if b.action == 'payment':
+                      print b.refundable_amount
+                      print b.last_digits
+                      print b.type
+                      print b.action
+                      bpoint_id = b.id
+
+        return bpoint_id
+
+    def get(self, request, *args, **kwargs):
+        booking_id = kwargs['pk']
+        booking = None
+        booking_total = Decimal('0.00')
+        if request.user.is_staff or request.user.is_superuser or AdmissionsBooking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+             booking = AdmissionsBooking.objects.get(pk=booking_id)
+             if booking.booking_type == 4:
+                  print "ADMISSIONS BOOKING HAS BEEN CANCELLED"
+                  return HttpResponseRedirect(reverse('home'))
+
+        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking, [])
+        booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
+        basket = {}
+        return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
+
+    def post(self, request, *args, **kwargs):
+        booking_id = kwargs['pk']
+        booking_total = Decimal('0.00')
+        basket_total = Decimal('0.00')
+        booking = None
+        invoice = None
+        if request.user.is_staff or request.user.is_superuser or AdmissionsBooking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+             booking = AdmissionsBooking.objects.get(pk=booking_id)
+             if booking.booking_type == 4:
+                  print "ADMISSIONS BOOKING HAS BEEN CANCELLED"
+                  return HttpResponseRedirect(reverse('home'))
+        
+        bpoint_id = self.get_booking_info(self, request, *args, **kwargs)
+        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking, [])
+        booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
+#        booking_total =  Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
+         
+        info = {'amount': Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total))), 'details' : 'Refund via system'}
+#         info = {'amount': float('10.00'), 'details' : 'Refund via system'}
+        try: 
+            bpoint = BpointTransaction.objects.get(id=bpoint_id)
+            refund = bpoint.refund(info,request.user)
+            invoice = Invoice.objects.get(reference=bpoint.crn1)
+            update_payments(invoice.reference)
+        except: 
+            emails.send_refund_failure_email(booking)
+            booking_invoice = AdmissionsBookingInvoice.objects.filter(admissions_booking=booking).order_by('id')
+            for bi in booking_invoice:
+                invoice = Invoice.objects.get(reference=bi.invoice_reference)
+                print invoice
+        print "INVOICE POST"
+        print invoice
+
+
+            
+        invoice.voided = True
+        invoice.save()
+        booking.booking_type = 4
+        booking.save()
+
+        return HttpResponseRedirect('/success/')
+
+
 
 class RefundPaymentView(TemplateView):
     template_name = 'mooring/booking/refund_booking.html'
@@ -420,7 +500,7 @@ class MakeBookingsView(TemplateView):
             if booking.old_booking:
                 booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
                 if booking.old_booking.admission_payment:
-                    booking_change_fees = utils.calculate_price_admissions_chage(booking.old_booking.admission_payment, booking_change_fees)
+                    booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
                 booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_change_fees)
             # Sort the list by date from.
             # new_lines = sorted(lines, key=lambda line: line['from'])
@@ -651,7 +731,7 @@ class MakeBookingsView(TemplateView):
         if booking.old_booking is not None:
            booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
            if booking.old_booking.admission_payment:
-               booking_change_fees = utils.calculate_price_admissions_chage(booking.old_booking.admission_payment, booking_change_fees)
+               booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
            lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
         if booking.details['non_online_booking']:
             booking_line = utils.nononline_booking_lineitems(oracle_code, request)
@@ -830,7 +910,7 @@ class AdmissionsBookingSuccessView(TemplateView):
                 return redirect('home')
 
         if request.user.is_staff:
-            return redirect('home')
+            return redirect('dash-bookings')
         context = {
             'admissionsBooking': booking,
             'arrival' : arrival,
@@ -879,7 +959,7 @@ class BookingSuccessView(TemplateView):
                         booking_items = MooringsiteBooking.objects.filter(booking=old_booking)
                         logger.info("old logger 3")
                         # Find admissions booking for old booking
-                        old_booking.admission_payment.booking_type = 3
+                        old_booking.admission_payment.booking_type = 4
                         old_booking.admission_payment.save()
                         for bi in booking_items:
                             logger.info("old logger 4")
@@ -1001,16 +1081,11 @@ class BookingSuccessView(TemplateView):
                         # ad_booking.totalCost = total
                         # ad_booking.save()
                     ad_booking = AdmissionsBooking.objects.get(pk=booking.admission_payment.pk)
-                    print "Ad booking found", ad_booking
                     ad_booking.booking_type=1
-                    print "Status set"
                     ad_booking.save()
-                    print "Saved"
                     ad_invoice = AdmissionsBookingInvoice.objects.create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
                         # booking.admission_payment = ad_booking
-                    print "about to save"
                     booking.save()
-                    print "saved"
 
                     if not request.user.is_staff:
                         print "USER IS NOT STAFF."
@@ -1034,7 +1109,7 @@ class BookingSuccessView(TemplateView):
                 return redirect('home')
 
         if request.user.is_staff:
-            return redirect('home')
+            return redirect('dash-bookings')
         context = {
             'booking': booking,
             'book_inv': book_inv
@@ -1068,8 +1143,6 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         for ad in ad_pasts:
             to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
             ad_past.append(to_add)
-        
-        print " ++++++++++++++++++++" , ad_past
 
         bk_currents = bookings.filter(departure__gte=today).order_by('arrival')
         bk_current = []
@@ -1148,8 +1221,7 @@ class ChangeBookingView(LoginRequiredMixin, TemplateView):
              request.session['ps_booking'] = booking_temp.id
              #request.session['ps_booking_old'] =  booking.id
              request.session.modified = True
-
-             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?site_id='+str(campsite_id)+'&arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adults='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants']) )
+             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?site_id='+str(campsite_id)+'&arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adult='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants']) )
  
 #        ad_currents = admissions.filter(arrivalDate__gte=today).order_by('arrivalDate')
 #        ad_current = []

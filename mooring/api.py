@@ -566,8 +566,8 @@ def search_suggest(request, *args, **kwargs):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'MooringArea', 'id': x[0], 'name': x[1]+' - '+x[3]+' - '+x[4]}))
     for x in MarinePark.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry','zoom_level','district__region__name'):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Marina', 'id': x[0], 'name': x[1]+' - '+x[4], 'zoom_level': x[3]}))
-    for x in PromoArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry'):
-        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1]}))
+    for x in PromoArea.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry', 'zoom_level'):
+        entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'PromoArea', 'id': x[0], 'name': x[1], 'zoom_level': x[3]}))
     for x in Region.objects.filter(wkb_geometry__isnull=False).values_list('id', 'name', 'wkb_geometry','zoom_level'):
         entries.append(geojson.Point((x[2].x, x[2].y), properties={'type': 'Region', 'id': x[0], 'name': x[1], 'zoom_level': x[3]}))
     return HttpResponse(geojson.dumps(geojson.FeatureCollection(entries)), content_type='application/json')
@@ -748,7 +748,9 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         #print request.GET.get("formatted", False)
         formatted = bool(request.GET.get("formatted", False))
-        instance.mooring_group =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],moorings__in=[instance.id,])
+        groups =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],moorings__in=[instance.id,])
+        if groups.count() > 0:
+            instance.mooring_group = groups[0].id
         if Mooringsite.objects.filter(mooringarea__id=instance.id).exists():
            pass
         else:
@@ -808,8 +810,9 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 mg = MooringAreaGroup.objects.all()
                 for i in mg:
                     # i.campgrounds.clear()
-                    if i.id in mooring_group:
+                    if i.id == int(mooring_group[0]):
                         m_all = i.moorings.all()
+                        print m_all
                         if instance.id in m_all:
                             pass
                         else:
@@ -855,7 +858,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 mg = MooringAreaGroup.objects.all()
                 for i in mg:
                     # i.campgrounds.clear()
-                    if i.pk in mooring_group: 
+                    if i.pk == mooring_group: 
                         m_all = i.moorings.all()
                         if instance.id in m_all:
                             pass
@@ -914,7 +917,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 if current_images:
                     current_images.delete()
             self.perform_update(serializer)
-            instance.mooring_group = MooringAreaGroup.objects.filter(moorings__in=[instance.id])
+            instance.mooring_group = MooringAreaGroup.objects.filter(moorings__in=[instance.id])[0].id
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -2435,7 +2438,12 @@ class RegionViewSet(viewsets.ModelViewSet):
 
 class MooringGroup(viewsets.ModelViewSet):
     queryset = MooringAreaGroup.objects.all()
-    serializer_class = MooringAreaGroupSerializer 
+    serializer_class = MooringAreaGroupSerializer
+
+    def list(self, request, *args, **kwargs):
+        groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        serializer = self.get_serializer(groups, many=True)
+        return Response(serializer.data)
 
 class MooringsiteClassViewSet(viewsets.ModelViewSet):
     queryset = MooringsiteClass.objects.all()
@@ -2672,7 +2680,7 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                 else:
                     adi = AdmissionsBookingInvoice.objects.get(admissions_booking=ad)
                     inv = [adi.invoice_reference,]
-                r.update({'invoice_ref': inv})
+                r.update({'invoice_ref': inv, 'in_future': ad.in_future, 'part_booking': ad.part_booking})
                 if(r['customer']):
                     name = ad.customer.first_name + " " + ad.customer.last_name
                     email = ad.customer.email
@@ -3576,22 +3584,57 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
     serializer_class = AdmissionsRateSerializer;
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
-    @detail_route(methods=['get'])
-    def get_price(self, request, format='json'):
+    @detail_route(methods=['GET'])
+    def get_price(self, request, format='json', pk=None):
         http_status = status.HTTP_200_OK
         try:
+            print request.data
             date = request.GET.get('date')
             if date:
-                group = MooringAreaGroup.objects.filter(members__in=[request.user,])
-                price = AdmissionsRate.objects.filter(Q(mooring_group__in=group), Q(period_start__lte=date), Q(period_end=None) | Q(period_end__gte=date))
-                res = {
-                    'price' : price
-                }
+                if request.user.is_staff:
+                    group = MooringAreaGroup.objects.filter(members__in=[request.user,])
+                else:
+                    key = request.GET.get('location') if request.GET.get('location') else None
+                    group = AdmissionsLocation.objects.filter(key=key)[0].mooring_group
+                if group:
+                    price = AdmissionsRate.objects.filter(Q(mooring_group__in=group), Q(period_start__lte=date), Q(period_end=None) | Q(period_end__gte=date))
+                    res = {
+                        'price' : price
+                    }
         except Exception as e:
             res = {
                 'Error': str(e)
             }
         return Response(res, status=http_status)
+
+    @list_route(methods=['get'])
+    def get_price_by_location(self, request, format='json', pk=None):
+        http_status = status.HTTP_200_OK
+        res = ""
+        try:
+            date = request.GET.get('date')
+            key = request.GET.get('location') if request.GET.get('location') else None
+            if date:
+                if request.user.is_staff:
+                    groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+                    if groups.count() > 1:
+                        group = AdmissionsLocation.objects.filter(key=key)[0].mooring_group
+                    else:
+                        group = groups[0]
+                else:
+                    group = AdmissionsLocation.objects.filter(key=key)[0].mooring_group
+                if group:
+                    price = AdmissionsRate.objects.filter(Q(mooring_group__in=[group]), Q(period_start__lte=date), Q(period_end=None) | Q(period_end__gte=date))[0]
+                    serializer = AdmissionsRateSerializer(price)
+                    res = {
+                        'price' : serializer.data
+                    }
+        except Exception as e:
+            res = {
+                'Error': str(e)
+            }
+        return Response(res, status=http_status)
+
 
     @list_route(methods=['get'])
     def price_history(self, request, format='json', pk=None):
@@ -3872,7 +3915,7 @@ class GlobalSettingsView(views.APIView):
                 if mooring:
                     groups = MooringAreaGroup.objects.filter(moorings__in=[mooring,])
                 if groups.count() == 1:
-                    qs = GlobalSettings.objects.filter(mooring_group__in=groups, key__gte=3).order_by('key')
+                    qs = GlobalSettings.objects.filter(mooring_group__in=groups, key__gte=3, key__lte=14).order_by('key')
                 else:
                     return Response("Error more than 1 group")
                 serializer = GlobalSettingsSerializer(qs, many=True)

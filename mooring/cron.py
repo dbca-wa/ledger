@@ -50,7 +50,7 @@ class SendBookingsConfirmationCronJob(CronJobBase):
             raise
 
 class CheckMooringsNoBookingPeriod(CronJobBase):
-    RUN_AT_TIMES = ['08:00']
+    RUN_AT_TIMES = ['07:00']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code= 'mooring.booking_period_check'
@@ -59,12 +59,10 @@ class CheckMooringsNoBookingPeriod(CronJobBase):
         for group in MooringAreaGroup.objects.all():
             moorings_no_booking = []
             moorings_with_bookings = []
-            print "::::::::::::::::::::::::"
             moorings = group.moorings.all()
             days = int(GlobalSettings.objects.get(mooring_group=group, key=2).value) + 11
             date_to = date.today() + timedelta(days=days)
             for mooring in moorings:
-                print mooring
                 rates = MooringsiteRate.objects.filter(campsite__mooringarea=mooring)
                 future_rates = rates.filter(date_start__gte=date.today(), date_end__lte=date_to).order_by('date_start')
                 last_rate = rates.filter(Q(date_end__gte=date_to) | Q(date_end=None)).order_by('date_end').first()
@@ -92,8 +90,8 @@ class CheckMooringsNoBookingPeriod(CronJobBase):
                         moorings_no_booking.append(mooring)
                 else:
                     moorings_no_booking.append(mooring)
-
-            send_booking_period_email(moorings_no_booking, group, days-1)
+            if len(moorings_no_booking) > 0:
+                send_booking_period_email(moorings_no_booking, group, days-1)
 
 class RegisteredVesselsImport(CronJobBase):
     RUN_AT_TIMES = ['03:30']

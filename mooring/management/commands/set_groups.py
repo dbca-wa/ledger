@@ -14,7 +14,9 @@ class Command(BaseCommand):
             Group.objects.create(name="Mooring Admin")
         if not Group.objects.filter(name="Mooring Inventory").count() > 0:
             Group.objects.create(name="Mooring Inventory")
-        if not MooringAreaGroup.objects.filter(name="Rottnest Island").count() > 0:
-            MooringAreaGroup.objects.create(name="Rottnest Island")
-        if not MooringAreaGroup.objects.filter(name="PVS").count() > 0:
-            MooringAreaGroup.objects.create(name="PVS")
+        if not Group.objects.filter(name="Payments Officers").count() > 0:
+            Group.objects.create(name="Payments Officers")
+        if not MooringAreaGroup.objects.filter(name="Rottnest Island Authority").count() > 0:
+            MooringAreaGroup.objects.create(name="Rottnest Island Authority")
+        if not MooringAreaGroup.objects.filter(name="Parks and Wildlife").count() > 0:
+            MooringAreaGroup.objects.create(name="Parks and Wildlife")
