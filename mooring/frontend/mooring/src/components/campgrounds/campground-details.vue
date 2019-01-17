@@ -55,7 +55,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group ">
                                         <label class="control-label" >Mooring Group (Permissions)</label>
-                                        <select class="form-control form-control-input" ref="group_permissions" v-model="campground.mooring_group" id='mooring_groups' name='mooring_groups' multiple >
+                                        <select class="form-control form-control-input" ref="group_permissions" v-model="campground.mooring_group" id='mooring_groups' name='mooring_groups' >
                                             <option v-for="m in mooring_groups" :value="m.id" >{{m.name}}</option>
                                         </select>
                                     </div>
@@ -374,30 +374,27 @@ export default {
         }).
         on("select2:select", function (e){
             var selected = $(e.currentTarget);
-            var mooringgroups = [];
-            console.log(selected.val());
-            var select_array = selected.val();
-            console.log(select_array);
-            for (var i = 0; i < select_array.length; i++){
-                var val = select_array[i];
-                console.log(val);
-                var intval = parseInt(select_array[i]);
-                console.log(intval);
-                mooringgroups.push(intval);
-            }
-            console.log(mooringgroups);
-            vm.campground.mooring_group = mooringgroups;
+            // var mooringgroups = [];
+            // var select_array = selected.val();
+            // for (var i = 0; i < select_array.length; i++){
+            //     var val = select_array[i];
+            //     var intval = parseInt(select_array[i]);
+            //     mooringgroups.push(intval);
+            // }
+            // vm.campground.mooring_group = mooringgroups;
+            vm.campground.mooring_group = [selected.val(),];
         }).
         on("select2:unselect", function (e){
             var selected = $(e.currentTarget);
-            var mooringgroups = [];
-            var select_array = selected.val();
-            for (var i = 0; i < select_array.length; i++){
-                var val = select_array[i];
-                var intval = parseInt(select_array[i]);
-                mooringgroups.push(intval);
-            }
-            vm.campground.mooring_group = mooringgroups;
+            // var mooringgroups = [];
+            // var select_array = selected.val();
+            // for (var i = 0; i < select_array.length; i++){
+            //     var val = select_array[i];
+            //     var intval = parseInt(select_array[i]);
+            //     mooringgroups.push(intval);
+            // }
+            // vm.campground.mooring_group = mooringgroups;
+            vm.campground.mooring_group = [selected.val(),];
         });
         //Physical Type
         $(vm.$refs.type_physical).select2({

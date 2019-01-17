@@ -748,7 +748,9 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         #print request.GET.get("formatted", False)
         formatted = bool(request.GET.get("formatted", False))
-        instance.mooring_group =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],moorings__in=[instance.id,])
+        groups =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],moorings__in=[instance.id,])
+        if groups.count() > 0:
+            instance.mooring_group = groups[0].id
         if Mooringsite.objects.filter(mooringarea__id=instance.id).exists():
            pass
         else:
@@ -808,8 +810,9 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 mg = MooringAreaGroup.objects.all()
                 for i in mg:
                     # i.campgrounds.clear()
-                    if i.id in mooring_group:
+                    if i.id == int(mooring_group[0]):
                         m_all = i.moorings.all()
+                        print m_all
                         if instance.id in m_all:
                             pass
                         else:
@@ -855,7 +858,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 mg = MooringAreaGroup.objects.all()
                 for i in mg:
                     # i.campgrounds.clear()
-                    if i.pk in mooring_group: 
+                    if i.pk == mooring_group: 
                         m_all = i.moorings.all()
                         if instance.id in m_all:
                             pass
@@ -914,7 +917,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 if current_images:
                     current_images.delete()
             self.perform_update(serializer)
-            instance.mooring_group = MooringAreaGroup.objects.filter(moorings__in=[instance.id])
+            instance.mooring_group = MooringAreaGroup.objects.filter(moorings__in=[instance.id])[0].id
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -2435,7 +2438,12 @@ class RegionViewSet(viewsets.ModelViewSet):
 
 class MooringGroup(viewsets.ModelViewSet):
     queryset = MooringAreaGroup.objects.all()
-    serializer_class = MooringAreaGroupSerializer 
+    serializer_class = MooringAreaGroupSerializer
+
+    def list(self, request, *args, **kwargs):
+        groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        serializer = self.get_serializer(groups, many=True)
+        return Response(serializer.data)
 
 class MooringsiteClassViewSet(viewsets.ModelViewSet):
     queryset = MooringsiteClass.objects.all()
@@ -3907,7 +3915,7 @@ class GlobalSettingsView(views.APIView):
                 if mooring:
                     groups = MooringAreaGroup.objects.filter(moorings__in=[mooring,])
                 if groups.count() == 1:
-                    qs = GlobalSettings.objects.filter(mooring_group__in=groups, key__gte=3).order_by('key')
+                    qs = GlobalSettings.objects.filter(mooring_group__in=groups, key__gte=3, key__lte=14).order_by('key')
                 else:
                     return Response("Error more than 1 group")
                 serializer = GlobalSettingsSerializer(qs, many=True)

@@ -50,7 +50,7 @@ class SendBookingsConfirmationCronJob(CronJobBase):
             raise
 
 class CheckMooringsNoBookingPeriod(CronJobBase):
-    RUN_AT_TIMES = ['08:30']
+    RUN_AT_TIMES = ['07:00']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code= 'mooring.booking_period_check'

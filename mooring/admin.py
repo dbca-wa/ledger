@@ -292,7 +292,7 @@ class GlobalSettings(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
-        return qs.filter(mooring_group__in=group)
+        return qs.filter(mooring_group__in=group, key__lte=14)
 
 @admin.register(models.AdmissionsLocation)
 class AdmissionsLocation(admin.ModelAdmin):

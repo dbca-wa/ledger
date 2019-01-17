@@ -10,5 +10,5 @@ class Command(BaseCommand):
     help = 'Set auth groups.'
 
     def handle(self, *args, **options):
-        management.call_command('set_global_settings')
         management.call_command('set_groups')
+        management.call_command('set_global_settings')

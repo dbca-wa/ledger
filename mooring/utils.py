@@ -980,11 +980,12 @@ def old_price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=
     else:
         return total_price
 
-def get_admissions_entry_rate(request,start_date):
+def get_admissions_entry_rate(request,start_date, location):
     res = []
     if start_date:
         start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
-        price_history = AdmissionsRate.objects.filter(period_start__lte = start_date).order_by('-period_start')
+        group = location.mooring_group
+        price_history = AdmissionsRate.objects.filter(mooring_group__in=[group,], period_start__lte = start_date).order_by('-period_start')
         if price_history:
             serializer = AdmissionsRateSerializer(price_history,many=True,context={'request':request})
             res = serializer.data[0]
@@ -999,7 +1000,7 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
     # Create line items for customers
     admissionsLines = AdmissionsLine.objects.filter(admissionsBooking=admissionsBooking)
     for adLine in admissionsLines:
-        rate = get_admissions_entry_rate(request,adLine.arrivalDate.strftime('%Y-%m-%d'))
+        rate = get_admissions_entry_rate(request,adLine.arrivalDate.strftime('%Y-%m-%d'), adLine.location)
         daily_rate = {'date' : adLine.arrivalDate.strftime('%d/%m/%Y'), 'rate' : rate}
         daily_rates.append(daily_rate)
         oracle_codes = AdmissionsOracleCode.objects.filter(mooring_group__in=[adLine.location.mooring_group,])
