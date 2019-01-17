@@ -1,5 +1,5 @@
 <template id="pkCgClose">
-<bootstrapModal title="(Temporarily) close campground" :large=true @ok="addClosure()">
+<bootstrapModal title="(Temporarily) close" :large=true @ok="addClosure()">
 
     <div class="modal-body">
         <form id="closeCGForm" class="form-horizontal">
