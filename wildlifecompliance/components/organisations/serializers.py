@@ -32,6 +32,7 @@ class OrganisationCheckSerializer(serializers.Serializer):
     name = serializers.CharField()
 
     def validate(self, data):
+        # Check no admin request pending approval.
         requests = OrganisationRequest.objects.filter(abn=data['abn'], role='employee')\
             .exclude(status__in=('declined', 'approved'))
         if requests.exists():
@@ -114,6 +115,10 @@ class OrganisationCheckExistSerializer(serializers.Serializer):
             if can_approve(org, user):
                 raise serializers.ValidationError('Please contact {} to Approve your request.'
                                                   .format(data['first_five']))
+            # Check no consultant request is pending approval.
+            if OrganisationRequest.objects.filter(abn=org.abn, requester=user, role='consultant')\
+                    .exclude(status__in=('declined', 'approved')).exists():
+                raise serializers.ValidationError('A request has been submitted and is Pending Approval.')
         return data
 
 
