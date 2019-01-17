@@ -1,16 +1,13 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-    A request has been made to be linked to:
+    A user has requested to be linked to the following organisation:
 
     Organisation : {{ request.name }}
 
-    ABN : {{ request.abn}}
+    ABN : {{ request.abn }}
 
-    <p>
-    You can access this Organisation Link Request using the following link:
-    </p>
-    <a href="{{url}}">Manage Organisation</a>
+    You can manage this request using the following link: {{url}}
 
 
 {%  endblock %}

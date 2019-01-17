@@ -1,15 +1,15 @@
 {%  extends 'wildlifecompliance/emails/base_email.html' %}
 
 {%  block content %}
-    <p>A new organisation request has been submitted:</p>
+    <p>A new organisation request access has been submitted:</p>
     <p><strong>Organisation : {{ request.name }}</strong></p>
     <p><strong>ABN : {{ request.abn }}</strong></p>
     <br>
 
     <p>
-    You can access this Organisation Request using the following link:
+    You can access this request using the following link:
     </p>
-    <a href="{{url}}">Access Organisation Request</a>
+    <a href="{{url}}">Organisation Access Request</a>
     <br>
 
 {%  endblock %}

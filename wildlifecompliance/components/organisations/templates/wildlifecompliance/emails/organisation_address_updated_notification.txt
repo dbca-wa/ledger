@@ -1,7 +1,7 @@
-{%  extends 'wildlifecompliance/emails/base_email.html' %}
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-    The address for an Organisation you are linked to has been updated by {{address_updated_by.get_full_name}} ({{address_updated_by.email}}).
+    The address for an organisation you are linked to has been updated by {{address_updated_by.get_full_name}} ({{address_updated_by.email}}).
 
     Organisation : {{ organisation.name }}
 

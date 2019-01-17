@@ -1,13 +1,13 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-    The following organisation access request has been declined :
+    The following organisation access request has been declined:
 
     Access Request No : {{ request.id }}
 
     Organisation : {{ request.name }}
 
-    ABN : {{ request.abn}}
+    ABN : {{ request.abn }}
 
 
 {%  endblock %}

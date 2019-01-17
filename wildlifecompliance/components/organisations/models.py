@@ -294,7 +294,7 @@ class Organisation(models.Model):
             # log linking
             self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_ADMIN.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
-            send_organisation_contact_adminuser_email_notification(user, request.user, self, request)
+            send_organisation_contact_consultant_email_notification(user, request.user, self, request)
 
 
     def suspend_user(self,user,request):

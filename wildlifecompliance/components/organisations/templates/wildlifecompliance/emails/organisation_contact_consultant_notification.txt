@@ -1,7 +1,7 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-        You have been made an admin to the following organisation:
+        You have been made a consultant to the following organisation:
 
         Organisation : {{ organisation.name }}
 

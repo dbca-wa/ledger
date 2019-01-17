@@ -7,7 +7,7 @@
 
     Organisation : {{ request.name }}
 
-    ABN : {{ request.abn}}
+    ABN : {{ request.abn }}
 
 
 {%  endblock %}
