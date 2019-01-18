@@ -377,52 +377,63 @@ class RefundPaymentView(TemplateView):
         return booking,bpoint_id
 
     def get(self, request, *args, **kwargs):
-    
-        basket = utils.get_basket(request)
-        #basket_total = [sum(Decimal(b.line_price_incl_tax)) for b in basket.all_lines()] 
-        basket_total = Decimal('0.00')
-        for b in basket.all_lines():
-             print b.line_price_incl_tax 
-             basket_total = basket_total + b.line_price_incl_tax
-        booking,bpoint_id = self.get_booking_info(request, *args, **kwargs)
 
-#        return self.render_page(request, booking, form)
-        return render(request, self.template_name, {'basket': basket})
+        booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+    
+            basket = utils.get_basket(request)
+            #basket_total = [sum(Decimal(b.line_price_incl_tax)) for b in basket.all_lines()] 
+            basket_total = Decimal('0.00')
+            for b in basket.all_lines():
+               print b.line_price_incl_tax 
+               basket_total = basket_total + b.line_price_incl_tax
+            booking,bpoint_id = self.get_booking_info(request, *args, **kwargs)
+
+            #    return self.render_page(request, booking, form)
+            return render(request, self.template_name, {'basket': basket})
+        else:
+            return HttpResponseRedirect(reverse('home'))
 
     def post(self, request, *args, **kwargs):
-         bpoint = None
-         invoice = None
-         basket = utils.get_basket(request)
-         booking,bpoint_id = self.get_booking_info(request, *args, **kwargs)
-         basket_total = Decimal('0.00')
-         for b in basket.all_lines():
-             print b.line_price_incl_tax
-             basket_total = basket_total + b.line_price_incl_tax
 
-         b_total =  Decimal('{:.2f}'.format(float(basket_total - basket_total - basket_total)))
-         info = {'amount': Decimal('{:.2f}'.format(float(basket_total - basket_total - basket_total))), 'details' : 'Refund via system'}
-         try:  
-            bpoint = BpointTransaction.objects.get(id=bpoint_id)      
-            refund = bpoint.refund(info,request.user)
-            invoice = Invoice.objects.get(reference=bpoint.crn1)
-            update_payments(invoice.reference)
-         except:
-            emails.send_refund_failure_email(booking)
-            booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
-            for bi in booking_invoice:
-                invoice = Invoice.objects.get(reference=bi.invoice_reference)
-                print invoice
-         print "INVOICE POST"
-         print invoice
+         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+
+             bpoint = None
+             invoice = None
+             basket = utils.get_basket(request)
+             booking,bpoint_id = self.get_booking_info(request, *args, **kwargs)
+             basket_total = Decimal('0.00')
+             for b in basket.all_lines():
+                 print b.line_price_incl_tax
+                 basket_total = basket_total + b.line_price_incl_tax
+
+             b_total =  Decimal('{:.2f}'.format(float(basket_total - basket_total - basket_total)))
+             info = {'amount': Decimal('{:.2f}'.format(float(basket_total - basket_total - basket_total))), 'details' : 'Refund via system'}
+             try:  
+                bpoint = BpointTransaction.objects.get(id=bpoint_id)      
+                refund = bpoint.refund(info,request.user)
+                invoice = Invoice.objects.get(reference=bpoint.crn1)
+                update_payments(invoice.reference)
+             except:
+                emails.send_refund_failure_email(booking)
+                booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
+                for bi in booking_invoice:
+                    invoice = Invoice.objects.get(reference=bi.invoice_reference)
+                    print invoice
+             print "INVOICE POST"
+             print invoice
                 
-         order_response = place_order_submission(request)
-         new_order = Order.objects.get(basket=basket)
-         new_invoice = Invoice.objects.get(order_number=new_order.number)
-         if invoice:  
-            CashTransaction.objects.create(invoice=new_invoice,amount=b_total, type='move_out',source='cash',movement_reference=invoice.reference)
-            CashTransaction.objects.create(invoice=invoice,amount=b_total, type='move_in',source='cash',movement_reference=new_invoice.reference)
+             order_response = place_order_submission(request)
+             new_order = Order.objects.get(basket=basket)
+             new_invoice = Invoice.objects.get(order_number=new_order.number)
+             if invoice:  
+                CashTransaction.objects.create(invoice=new_invoice,amount=b_total, type='move_out',source='cash',movement_reference=invoice.reference)
+                CashTransaction.objects.create(invoice=invoice,amount=b_total, type='move_in',source='cash',movement_reference=new_invoice.reference)
 
-         return HttpResponseRedirect('/success/')
+             return HttpResponseRedirect('/success/')
+         else:
+             return HttpResponseRedirect(reverse('home'))
 
 class MakeBookingsView(TemplateView):
     template_name = 'mooring/booking/make_booking.html'
@@ -1223,7 +1234,7 @@ class ChangeBookingView(LoginRequiredMixin, TemplateView):
              request.session['ps_booking'] = booking_temp.id
              #request.session['ps_booking_old'] =  booking.id
              request.session.modified = True
-             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?site_id='+str(campsite_id)+'&arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adult='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants']) )
+             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?site_id='+str(booking.mooringarea_id)+'&arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adult='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants']) )
  
 #        ad_currents = admissions.filter(arrivalDate__gte=today).order_by('arrivalDate')
 #        ad_current = []

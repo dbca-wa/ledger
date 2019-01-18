@@ -25,7 +25,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
     <body>
-        <header class="topmast">
+        <header class="{% if TEMPLATE_GROUP == 'rottnest' %}topmast-rottnest{% else %}topmast{% endif %}">
             {% block header %}
                 {% include 'mooring/header.html' %}
             {% endblock %}
@@ -42,7 +42,7 @@
                                 <span class="icon-bar"></span>
                                 <span class="icon-bar"></span>
                             </button>
-                            {% if request.user.is_staff %}<a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Moorings</div></a>{% else %}<a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">My Bookings</div></a>{% endif %}
+                            {% if request.user.is_staff %}<a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline">{% if TEMPLATE_GROUP == 'rottnest' %}{% else %}<img src="{% static 'wl/img/dpaw_small.png' %}">{% endif %}Moorings</div></a>{% else %}<a class="navbar-brand" href="{% url 'home' %}"><div style="inline">{% if TEMPLATE_GROUP == 'rottnest' %}{% else %}<img src="{% static 'wl/img/dpaw_small.png' %}">{% endif %}My Bookings</div></a>{% endif %}
                         </div>
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
