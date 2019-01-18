@@ -3,10 +3,12 @@
 {%  block content %}
     A new organisation access request has been submitted:
 
-    Organisation : {{ request.name }}
+    Organisation: {{ request.name }}
 
-    ABN : {{ request.abn }}
+    ABN: {{ request.abn }}
 
-    You can access this request using the following link: {{url}}
+    Link: {{url}}
+
+    Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
 
 {%  endblock %}

@@ -3,11 +3,11 @@
 {%  block content %}
     The address for an organisation you are linked to has been updated by {{address_updated_by.get_full_name}} ({{address_updated_by.email}}).
 
-    Organisation : {{ organisation.name }}
+    Organisation: {{ organisation.name }}
 
-    ABN : {{ organisation.abn }}
+    ABN: {{ organisation.abn }}
 
-    Address : {{ organisation.postal_address.line1 }}, {{ organisation.postal_address.locality }},
+    Address: {{ organisation.postal_address.line1 }}, {{ organisation.postal_address.locality }},
         {{ organisation.postal_address.state }}, {{ organisation.postal_address.postcode}},
         {{ organisation.postal_address.country}}
     

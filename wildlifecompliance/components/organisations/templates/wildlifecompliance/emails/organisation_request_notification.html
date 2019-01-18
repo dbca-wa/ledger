@@ -2,14 +2,9 @@
 
 {%  block content %}
     <p>A new organisation request access has been submitted:</p>
-    <p><strong>Organisation : {{ request.name }}</strong></p>
-    <p><strong>ABN : {{ request.abn }}</strong></p>
-    <br>
-
-    <p>
-    You can access this request using the following link:
-    </p>
-    <a href="{{url}}">Organisation Access Request</a>
-    <br>
+    <p><strong>Organisation: {{ request.name }}</strong></p>
+    <p><strong>ABN: {{ request.abn }}</strong></p>
+    <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
+    <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
 
 {%  endblock %}

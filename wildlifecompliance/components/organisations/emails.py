@@ -11,87 +11,87 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
 class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
-    subject = 'Your organisation request has been accepted.'
+    subject = 'Your organisation request has been accepted'
     html_template = 'wildlifecompliance/emails/organisation_request_accept_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_accept_notification.txt'
 
 class OrganisationRequestAcceptAdminNotificationEmail(TemplateEmailBase):
-    subject = 'An organisation request has been accepted by administration.'
+    subject = 'An organisation request has been accepted by administration'
     html_template = 'wildlifecompliance/emails/organisation_request_accept_admin_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_accept_admin_notification.txt'
 
 class OrganisationRequestNotificationEmail(TemplateEmailBase):
-    subject = 'An organisation request has been submitted for approval.'
+    subject = 'An organisation request has been submitted for approval'
     html_template = 'wildlifecompliance/emails/organisation_request_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_notification.txt'
 
 class OrganisationRequestLinkNotificationEmail(TemplateEmailBase):
-    subject = 'An organisation request to be linked has been sent for approval.'
+    subject = 'An organisation request to be linked has been sent for approval'
     html_template = 'wildlifecompliance/emails/organisation_request_link_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_link_notification.txt'
 
 class OrganisationRequestAmendmentRequestNotificationEmail(TemplateEmailBase):
-    subject = 'Your organisation has requested an amendment to your request.'
+    subject = 'Your organisation has requested an amendment to your request'
     html_template = 'wildlifecompliance/emails/organisation_amendment_requested_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_amendment_requested_notification.txt'
 
 class OrganisationRequestDeclineNotificationEmail(TemplateEmailBase):
-    subject = 'Your organisation request has been declined.'
+    subject = 'Your organisation request has been declined'
     html_template = 'wildlifecompliance/emails/organisation_request_decline_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_decline_notification.txt'
 
 class OrganisationRequestDeclineAdminNotificationEmail(TemplateEmailBase):
-    subject = 'An organisation request has been declined by an administrator.'
+    subject = 'An organisation request has been declined by an administrator'
     html_template = 'wildlifecompliance/emails/organisation_request_decline_admin_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_request_decline_admin_notification.txt'
 
 class OrganisationLinkNotificationEmail(TemplateEmailBase):
-    subject = 'You have been linked to an organisation.'
+    subject = 'You have been linked to an organisation'
     html_template = 'wildlifecompliance/emails/organisation_link_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_link_notification.txt'
 
 class OrganisationUnlinkNotificationEmail(TemplateEmailBase):
-    subject = 'You have been unlinked from an organisation.'
+    subject = 'You have been unlinked from an organisation'
     html_template = 'wildlifecompliance/emails/organisation_unlink_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_unlink_notification.txt'
 
 class OrganisationContactAdminUserNotificationEmail(TemplateEmailBase):
-    subject = 'You have been linked to an organisation as an administrator.'
+    subject = 'You have been linked to an organisation as an administrator'
     html_template = 'wildlifecompliance/emails/organisation_contact_admin_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_contact_admin_notification.txt'
 
 class OrganisationContactConsultantNotificationEmail(TemplateEmailBase):
-    subject = 'You have been linked to an organisation as a consultant.'
+    subject = 'You have been linked to an organisation as a consultant'
     html_template = 'wildlifecompliance/emails/organisation_contact_consultant_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_contact_consultant_notification.txt'
 
 class OrganisationContactUserNotificationEmail(TemplateEmailBase):
-    subject = 'You have been linked to an organisation as a user.'
+    subject = 'You have been linked to an organisation as a user'
     html_template = 'wildlifecompliance/emails/organisation_contact_user_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_contact_user_notification.txt'
 
 class OrganisationContactSuspendNotificationEmail(TemplateEmailBase):
-    subject = 'You have been suspended from an organisation.'
+    subject = 'You have been suspended from an organisation'
     html_template = 'wildlifecompliance/emails/organisation_contact_suspend_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_contact_suspend_notification.txt'
 
 class OrganisationContactReinstateNotificationEmail(TemplateEmailBase):
-    subject = 'You have been reinstated with an organisation.'
+    subject = 'You have been reinstated with an organisation'
     html_template = 'wildlifecompliance/emails/organisation_contact_reinstate_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_contact_reinstate_notification.txt'
 
 class OrganisationContactDeclineNotificationEmail(TemplateEmailBase):
-    subject = 'Your organisation link request has been declined.'
+    subject = 'Your organisation link request has been declined'
     html_template = 'wildlifecompliance/emails/organisation_contact_decline_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_contact_decline_notification.txt'
 
 class OrganisationAddressUpdatedNotificationEmail(TemplateEmailBase):
-    subject = 'An organisation''s address has been updated.'
+    subject = 'An organisation''s address has been updated'
     html_template = 'wildlifecompliance/emails/organisation_address_updated_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_address_updated_notification.txt'
 
 class OrganisationIdUploadNotificationEmail(TemplateEmailBase):
-    subject = 'An organisation''s identification has been uploaded.'
+    subject = 'An organisation''s identification has been uploaded'
     html_template = 'wildlifecompliance/emails/organisation_id_upload_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_id_upload_notification.txt'
 

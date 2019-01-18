@@ -3,7 +3,7 @@
 {%  block content %}
         Your request to be linked with the following organisation has been declined:
 
-        Organisation : {{ organisation.name }}
+        Organisation: {{ organisation.name }}
 
-        ABN : {{ organisation.abn }}
+        ABN: {{ organisation.abn }}
 {%  endblock %}

@@ -3,10 +3,10 @@
 {%  block content %}
     A new letter has been requested for your access request to the following organisation. Please review the reason below and upload a new letter for your access request.
 
-    Organisation : {{ request.name }}
+    Organisation: {{ request.name }}
 
-    ABN : {{ request.abn }}
+    ABN: {{ request.abn }}
 
-    Reason : {{ reason }}
+    Reason: {{ reason }}
 
 {%  endblock %}

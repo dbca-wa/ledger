@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
 class ReferralSendNotificationEmail(TemplateEmailBase):
-    subject = 'A referral for a application has been sent to you'
+    subject = 'An application has been sent to you for assessment'
     html_template = 'wildlifecompliance/emails/applications/send_referral_notification.html'
     txt_template = 'wildlifecompliance/emails/applications/send_referral_notification.txt'
 
@@ -33,7 +33,7 @@ class ApplicationSubmitNotificationEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/send_application_submit_notification.txt'
 
 class AmendmentSubmitNotificationEmail(TemplateEmailBase):
-    subject = 'A amendment has been submitted'
+    subject = 'An amendment has been submitted'
     html_template = 'wildlifecompliance/emails/send_amendment_submit_notification.html'
     txt_template = 'wildlifecompliance/emails/send_amendment_submit_notification.txt'
 
@@ -53,12 +53,12 @@ class ApplicationDeclineNotificationEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/send_application_decline_notification.txt'
 
 class ApplicationAssessmentRequestedEmail(TemplateEmailBase):
-    subject = 'Wildlife licensing assessment required'
+    subject = 'An application has been sent to you for assessment'
     html_template = 'wildlifecompliance/emails/send_application_assessment_request_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_assessment_request_notification.txt'
 
 class ApplicationAssessmentReminderEmail(TemplateEmailBase):
-    subject = 'Wildlife licensing assessment reminder'
+    subject = 'An application is currently awaiting your assessment'
     html_template = 'wildlifecompliance/emails/send_application_assessment_remind_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_assessment_remind_notification.txt'
 

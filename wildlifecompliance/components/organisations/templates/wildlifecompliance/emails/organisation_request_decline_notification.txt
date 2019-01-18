@@ -3,9 +3,9 @@
 {%  block content %}
     Your request to be linked with the following organisation has been declined:
 
-    Organisation : {{ request.name }}
+    Organisation: {{ request.name }}
 
-    ABN : {{ request.abn }}
+    ABN: {{ request.abn }}
 
 
 {%  endblock %}
