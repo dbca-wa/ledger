@@ -356,6 +356,11 @@ class AdmissionsOracleCode(admin.ModelAdmin):
         group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
         return qs.filter(mooring_group__in=group)
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(AdmissionsOracleCode, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 @admin.register(models.AdmissionsRate)
 class AdmissionsRate(admin.ModelAdmin):
     list_display = ('period_start', 'period_end')
