@@ -37,7 +37,7 @@ class EmailUserManager(BaseUserManager):
         """
         if not email:
             raise ValueError('Email must be set')
-        email = self.normalize_email(email)
+        email = self.normalize_email(email).lower()
         if (EmailUser.objects.filter(email__iexact=email) or
             Profile.objects.filter(email__iexact=email) or
             EmailIdentity.objects.filter(email__iexact=email)):
