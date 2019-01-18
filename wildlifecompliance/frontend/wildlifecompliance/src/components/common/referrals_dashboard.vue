@@ -308,9 +308,7 @@ export default {
                     let found = false;
                     let filtered_regions = vm.filterApplicationRegion;
                     if (filtered_regions.length == 0){ return true; } 
-
                     let regions = original.region != '' && original.region != null ? original.region.split(','): [];
-
                     $.each(regions,(i,r) => {
                         if (filtered_regions.indexOf(r) != -1){
                             found = true;
@@ -318,7 +316,6 @@ export default {
                         }
                     });
                     if  (found) { return true; }
-
                     return false;
                 }
             );
@@ -340,7 +337,6 @@ export default {
                     let from = vm.filterApplicationLodgedFrom;
                     let to = vm.filterApplicationLodgedTo;
                     let val = original.lodgement_date;
-
                     if ( from == '' && to == ''){
                         return true;
                     }

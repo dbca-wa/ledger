@@ -24,7 +24,6 @@ from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
 from wildlifecompliance.components.applications.email import (
-    send_referral_email_notification,
     send_application_submitter_email_notification,
     send_application_submit_email_notification,
     send_application_amendment_notification,
@@ -128,7 +127,7 @@ class ApplicationAssessorGroup(models.Model):
 
     @property
     def current_applications(self):
-        assessable_states = ['with_assessor','with_referral','with_assessor_conditions']
+        assessable_states = ['with_assessor','with_assessor_conditions']
         return Application.objects.filter(processing_status__in=assessable_states)
 
 class TaggedApplicationApproverGroupRegions(TaggedItemBase):
@@ -219,7 +218,6 @@ class Application(RevisionedMixin):
     PROCESSING_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
                                  ('with_officer', 'With Officer'),
                                  ('with_assessor', 'With Assessor'),
-                                 ('with_referral', 'With Referral'),
                                  ('with_assessor_conditions', 'With Assessor (Conditions)'),
                                  ('with_approver', 'With Approver'),
                                  ('renewal', 'Renewal'),
@@ -427,9 +425,9 @@ class Application(RevisionedMixin):
                 latest_invoice = Invoice.objects.get(reference=self.invoices.latest('id').invoice_reference)
                 return latest_invoice.payment_status
 
-    @property
-    def latest_referrals(self):
-        return self.referrals.all()[:2]
+    # @property
+    # def latest_referrals(self):
+    #     return self.referrals.all()[:2]
 
     @property
     def regions_list(self):
@@ -500,7 +498,7 @@ class Application(RevisionedMixin):
         return missing_fields
 
     def can_assess(self,user):
-        if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_conditions':
+        if self.processing_status == 'with_assessor'  or self.processing_status == 'with_assessor_conditions':
             return self.__assessor_group() in user.applicationassessorgroup_set.all()
         elif self.processing_status == 'with_approver':
             return self.__approver_group() in user.applicationapprovergroup_set.all()
@@ -664,49 +662,49 @@ class Application(RevisionedMixin):
     #         self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
 
 
-    def send_referral(self,request,referral_email):
-        with transaction.atomic():
-            try:
-                if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral':
-                    self.processing_status = 'with_referral'
-                    self.save()
-                    referral = None
+    # def send_referral(self,request,referral_email):
+    #     with transaction.atomic():
+    #         try:
+    #             if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral':
+    #                 self.processing_status = 'with_referral'
+    #                 self.save()
+    #                 referral = None
 
-                    # Check if the user is in ledger
-                    try:
-                        user = EmailUser.objects.get(email__icontains=referral_email)
-                    except EmailUser.DoesNotExist:
-                        # Validate if it is a deparment user
-                        department_user = get_department_user(referral_email)
-                        if not department_user:
-                            raise ValidationError('The user you want to send the referral to is not a member of the department')
-                        # Check if the user is in ledger or create
+    #                 # Check if the user is in ledger
+    #                 try:
+    #                     user = EmailUser.objects.get(email__icontains=referral_email)
+    #                 except EmailUser.DoesNotExist:
+    #                     # Validate if it is a deparment user
+    #                     department_user = get_department_user(referral_email)
+    #                     if not department_user:
+    #                         raise ValidationError('The user you want to send the referral to is not a member of the department')
+    #                     # Check if the user is in ledger or create
 
-                        user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
-                        if created:
-                            user.first_name = department_user['given_name']
-                            user.last_name = department_user['surname']
-                            user.save()
-                    try:
-                        Referral.objects.get(referral=user,application=self)
-                        raise ValidationError('A referral has already been sent to this user')
-                    except Referral.DoesNotExist:
-                        # Create Referral
-                        referral = Referral.objects.create(
-                            application = self,
-                            referral=user,
-                            sent_by=request.user
-                        )
-                    # Create a log entry for the application
-                    self.log_user_action(ApplicationUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
-                    # Create a log entry for the organisation
-                    self.applicant.log_user_action(ApplicationUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
-                    # send email
-                    send_referral_email_notification(referral,request)
-                else:
-                    raise exceptions.ApplicationReferralCannotBeSent()
-            except:
-                raise
+    #                     user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
+    #                     if created:
+    #                         user.first_name = department_user['given_name']
+    #                         user.last_name = department_user['surname']
+    #                         user.save()
+    #                 try:
+    #                     Referral.objects.get(referral=user,application=self)
+    #                     raise ValidationError('A referral has already been sent to this user')
+    #                 except Referral.DoesNotExist:
+    #                     # Create Referral
+    #                     referral = Referral.objects.create(
+    #                         application = self,
+    #                         referral=user,
+    #                         sent_by=request.user
+    #                     )
+    #                 # Create a log entry for the application
+    #                 self.log_user_action(ApplicationUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+    #                 # Create a log entry for the organisation
+    #                 self.applicant.log_user_action(ApplicationUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+    #                 # send email
+    #                 send_referral_email_notification(referral,request)
+    #             else:
+    #                 raise exceptions.ApplicationReferralCannotBeSent()
+    #         except:
+    #             raise
 
     def assign_officer(self,request,officer):
         with transaction.atomic():
@@ -1412,12 +1410,7 @@ class ApplicationUserAction(UserAction):
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
     ACTION_PROPOSED_LICENCE = "Application {} has been proposed for licence"
     ACTION_PROPOSED_DECLINE = "Application {} has been proposed for decline"
-    # Referrals
-    ACTION_SEND_REFERRAL_TO = "Send referral {} for application {} to {}"
-    ACTION_RESEND_REFERRAL_TO = "Resend referral {} for application {} to {}"
-    ACTION_REMIND_REFERRAL = "Send reminder for referral {} for application {} to {}"
-    RECALL_REFERRAL = "Referral {} for application {} has been recalled"
-    CONCLUDE_REFERRAL = "Referral {} for application {} has been concluded by {}"
+    
 
 
     class Meta:
