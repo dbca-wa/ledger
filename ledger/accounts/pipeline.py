@@ -64,8 +64,8 @@ def user_by_email(backend, details, *args, **kwargs):
     request_data = backend.strategy.request_data()
     if request_data.get('verification_code') and details.get('email'):
         try:
-            user = EmailIdentity.objects.get(email__iexact=details['email']).user
-        except EmailIdentity.DoesNotExist:
+            user = EmailIdentity.objects.filter(email__iexact=details['email'])[0].user
+        except IndexError:
             user = None
         return {'user': user}
 

@@ -1162,4 +1162,4 @@ def daterange(start_date, end_date):
 
 def oracle_integration(date,override):
     system = '0516'
-    oracle_codes = oracle_parser(date,system,'Marinastay',override=override)
+    oracle_codes = oracle_parser(date,system,'Mooring Booking',override=override)
