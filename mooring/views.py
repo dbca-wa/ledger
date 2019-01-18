@@ -90,7 +90,7 @@ class MooringAvailability2Selector(TemplateView):
         context = {}
         ratis_id = request.GET.get('mooring_site_id', None)
         if ratis_id:
-            cg = Mooringsite.objects.filter(ratis_id=ratis_id)
+            cg = MooringArea.objects.filter(ratis_id=ratis_id)
             if cg.exists():
                 context['ground_id'] = cg.first().id
         return render(request, self.template_name, context)
@@ -1233,7 +1233,7 @@ class ChangeBookingView(LoginRequiredMixin, TemplateView):
              request.session['ps_booking'] = booking_temp.id
              #request.session['ps_booking_old'] =  booking.id
              request.session.modified = True
-             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?site_id='+str(campsite_id)+'&arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adult='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants']) )
+             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?site_id='+str(booking.mooringarea_id)+'&arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adult='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants']) )
  
 #        ad_currents = admissions.filter(arrivalDate__gte=today).order_by('arrivalDate')
 #        ad_current = []
