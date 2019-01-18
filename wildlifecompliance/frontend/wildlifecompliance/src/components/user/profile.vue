@@ -843,6 +843,8 @@ export default {
             data.append('abn', vm.newOrg.abn);
             data.append('identification', vm.uploadedFile);
             data.append('role',vm.role);
+            vm.newOrg.name = vm.newOrg.name == null ? '' : vm.newOrg.name
+            vm.newOrg.abn = vm.newOrg.abn == null ? '' : vm.newOrg.abn
             if (vm.newOrg.name == '' || vm.newOrg.abn == '' || vm.uploadedFile == null){
                 vm.registeringOrg = false;
                 swal(
@@ -908,6 +910,8 @@ export default {
             data.append('abn', vm.newOrg.abn);
             data.append('identification', vm.uploadedFile);
             data.append('role',vm.role);
+            vm.newOrg.name = vm.newOrg.name == null ? '' : vm.newOrg.name
+            vm.newOrg.abn = vm.newOrg.abn == null ? '' : vm.newOrg.abn
             if (vm.newOrg.name == '' || vm.newOrg.abn == '' || vm.uploadedFile == null){
                 vm.registeringOrg = false;
                 swal(
