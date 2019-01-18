@@ -735,6 +735,7 @@ class MakeBookingsView(TemplateView):
                booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
            lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
         if booking.details['non_online_booking']:
+            print oracle_code
             booking_line = utils.nononline_booking_lineitems(oracle_code, request)
             for line in booking_line:
                 lines.append(line)
