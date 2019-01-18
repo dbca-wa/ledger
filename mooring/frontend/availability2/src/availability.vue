@@ -70,10 +70,13 @@
                         </div>
                 </div>
                 <div class="columns small-4 medium-3 large-2">
-                         
-                        <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a>
-                        <button  title="Please add items into your trolley." v-show="current_booking.length == 0 " style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" disabled >Add items to Proceed to Check Out</button>
-                </div>
+                        <div v-if="vesselRego.length < 1 || vesselRego == ' ' || vesselSize < 1 || vesselBeam < 1 || vesselDraft < 1 || vesselWeight < 1">
+                            <button title="Please enter vessel details" style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" @click="validateVessel()">Proceed to Check Out</button>
+                        </div>
+                        <div v-else>
+                            <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a>
+                            <button  title="Please add items into your trolley." v-show="current_booking.length == 0 " style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" disabled >Add items to Proceed to Check Out</button>                </div>
+                        </div>
         </div>
         </div>
 	<loader :isLoading.sync="isLoading">&nbsp;</loader>
@@ -146,28 +149,28 @@
                         <div class="small-6 columns">
                             <label for="vesselSize" class="text-left">Vessel Size (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselSize" ref="vesselSize" name="vessel_size" @change="checkDetails()" @blur="checkDetails()" v-model="vesselSize" step="1"/>
+                            <input type="number" id="vesselSize" ref="vesselSize" name="vessel_size" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselSize" step="1"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselDraft" class="text-left">Vessel Draft (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselDraft" ref="vesselDraft" name="vessel_draft" @change="checkDetails()" @blur="checkDetails()" v-model="vesselDraft" step="1"/>
+                            <input type="number" id="vesselDraft" ref="vesselDraft" name="vessel_draft" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselDraft" step="1"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselBeam" class="text-left">Vessel Beams (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselBeam" ref="vesselBeam" name="vessel_beam" @change="checkDetails()" @blur="checkDetails()" v-model="vesselBeam" step="1"/>
+                            <input type="number" id="vesselBeam" ref="vesselBeam" name="vessel_beam" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselBeam" step="1"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselWeight" class="text-left">Vessel Weight (Tons)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselWeight" ref="vesselWeight" name="vessel_weight" @change="checkDetails()" @blur="checkDetails()" v-model="vesselWeight" step="1"/>
+                            <input type="number" id="vesselWeight" ref="vesselWeight" name="vessel_weight" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselWeight" step="1"/>
                         </div>
                     </div>
                 </div>
@@ -182,7 +185,7 @@
                         <div class="small-6 columns">
                             <label for="num_adults" class="text-right">Adults (ages 12+)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="numAdults" name="num_adults" @change="update()" v-model="numAdults" min="0" max="16"/>
+                            <input type="number" id="numAdults" name="num_adults" @change="checkGuests()" v-model="numAdults" min="0" max="16"/>
                         </div>
                     </div>
                     <div class="row" style="display:none;">
@@ -196,21 +199,21 @@
 - Companion Card
 - Department of Veterans' Affairs">Concessions</span></label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="numConcessions" name="num_concessions" @change="update()" v-model="numConcessions" min="0" max="16"/>
+                            <input type="number" id="numConcessions" name="num_concessions" @change="checkGuests()" v-model="numConcessions" min="0" max="16"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="num_children" class="text-right">Children (ages 4-12)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="numChildren" name="num_children" @change="update()" v-model="numChildren" min="0" max="16"/>
+                            <input type="number" id="numChildren" name="num_children" @change="checkGuests()" v-model="numChildren" min="0" max="16"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="num_infants" class="text-right">Infants (ages 0-4)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="numInfants" name="num_infants" @change="update()" v-model="numInfants" min="0" max="16"/>
+                            <input type="number" id="numInfants" name="num_infants" @change="checkGuests()" v-model="numInfants" min="0" max="16"/>
                         </div>
                     </div>
                 </div>
@@ -481,12 +484,12 @@ export default {
             numAdults: parseInt(getQueryParam('num_adult', 2)),
             numChildren: parseInt(getQueryParam('num_children', 0)),
             numConcessions: parseInt(getQueryParam('num_concession', 0)),
-            numInfants: parseInt(getQueryParam('num_infants', 0)),
+            numInfants: parseInt(getQueryParam('num_infant', 0)),
             vesselSize: parseFloat(getQueryParam('vessel_size', 0)),
             vesselDraft: parseFloat(getQueryParam('vessel_draft', 0)),
             vesselBeam: parseFloat(getQueryParam('vessel_beam', 0)),
             vesselWeight: parseFloat(getQueryParam('vessel_weight', 0)),
-            vesselRego: getQueryParam('vessel_rego', null),
+            vesselRego: getQueryParam('vessel_rego', ''),
             distanceRadius: parseInt(getQueryParam('distance_radius', 100)),
             maxAdults: 30,
             maxChildren: 30,
@@ -651,7 +654,7 @@ export default {
         addBooking: function (site_id, mooring_id,bp_id,date) {
               var vm = this;
               vm.isLoading =true;
-//            $('#spinnerLoader').show();
+           $('#spinnerLoader').show();
               var booking_start = $('#date-arrival').val();
               var booking_finish = $('#date-departure').val();
 
@@ -662,11 +665,6 @@ export default {
                   date: date,
                   booking_start: booking_start,
                   booking_finish: booking_finish,
-                  vessel_size: vm.vesselSize,
-                  vessel_draft: vm.vesselDraft,
-                  vessel_beam: vm.vesselBeam,
-                  vessel_weight: vm.vesselWeight,
-                  vessel_rego: vm.vesselRego,
                   num_adult: vm.numAdults,
                   num_children : vm.numChildren,
                   num_infant: vm.numInfants
@@ -681,12 +679,12 @@ export default {
                   success: function(data, stat, xhr) {
                       vm.update();
                       vm.isLoading =false;
-  //                    $('#spinnerLoader').hide();
+                     $('#spinnerLoader').hide();
                   },
                   error: function(xhr, stat, err) {
                        vm.update();
                        vm.isLoading =false;
-    //                   $('#spinnerLoader').hide();
+                      $('#spinnerLoader').hide();
                   }
               });
         },
@@ -775,16 +773,10 @@ export default {
             var not_null = true
             if (reg == null || reg == "" || reg == " "){
                 not_null = false;
-                console.log("rego empty");
-                this.$nextTick(() => {
-                    vm.$refs.vesselRego.focus();
-                });
-                return;
             }
             var data = {
                 'rego': reg
             }
-            console.log(not_null);
             if(reg && not_null){
                 $.ajax({
                     url: "/api/registeredVessels/",
@@ -805,219 +797,300 @@ export default {
                 vm.update();
             }
         },
-        checkDetails: function(){
+        checkDetails: function(from_update){
             let vm = this;
-            if (vm.vesselSize == null || vm.vesselSize == "" || vm.vesselSize == " "){
+            if (vm.vesselSize == null || vm.vesselSize.length == 0){
                 console.log("size empty");
-                vm.$nextTick(() => vm.$refs.vesselSize.focus());
-                return;
-            } else if (vm.vesselDraft == null || vm.vesselDraft == "" || vm.vesselDraft == " "){
-                console.log("draft empty");
-                vm.$nextTick(() => vm.$refs.vesselDraft.focus());
-                return;
-            } else if (vm.vesselBeam == null || vm.vesselBeam == "" || vm.vesselBeam == " "){
-                console.log("beam empty");
-                vm.$nextTick(() => vm.$refs.vesselBeam.focus());
-                return;
-            } else if (vm.vesselWeight == null || vm.vesselWeight == "" || vm.vesselWeight == " "){
-                console.log("weigth empty");
-                vm.$nextTick(() => vm.$refs.vesselWeight.focus());
-                return;
+                vm.vesselSize = 0;
             }
-            vm.update();
+            if (vm.vesselDraft == null || vm.vesselDraft.length == 0){
+                console.log("draft empty");
+                vm.vesselDraft = 0;
+            }
+            if (vm.vesselBeam == null || vm.vesselBeam.length == 0){
+                console.log("beam empty");
+                vm.vesselBeam = 0;
+            } 
+            if (vm.vesselWeight == null || vm.vesselWeight.length == 0){
+                console.log("weigth empty");
+                vm.vesselWeight = 0;
+            }
+            if (from_update){
+                return true;
+            } else {
+                vm.update();
+            }
+        },
+        checkGuests: function(){
+            let vm = this;
+            if (vm.numAdults < 0 || vm.numChildren < 0 || vm.numInfants < 0){
+                swal({
+                    title: 'Invalid Guest Amount',
+                    text: "Number of guests cannot be a negative value.",
+                    type: 'warning',
+                    showCancelButton: false,
+                    confirmButtonText: 'OK',
+                    showLoaderOnConfirm: true,
+                    allowOutsideClick: false
+                });
+            } else {
+                vm.update();
+            }
+        },
+        validateVessel: function(){
+            let vm = this;
+            if (vm.vesselRego.length < 1 || vm.vesselRego == ' '){
+                swal({
+                  title: 'Invalid Vessel Registration',
+                  text: "Please enter a valid vessel registration",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'OK',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                });
+            }
+            if (vm.vesselSize < 1){
+                swal({
+                  title: 'Invalid Vessel Size',
+                  text: "Please enter a valid vessel size",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'OK',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                });
+            }
+            if (vm.vesselDraft < 1){
+                swal({
+                  title: 'Invalid Vessel Draft',
+                  text: "Please enter a valid vessel draft",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'OK',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                });
+            }
+            if (vm.vesselBeam < 1){
+                swal({
+                  title: 'Invalid Vessel Beam',
+                  text: "Please enter a valid vessel beam",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'OK',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                });
+            }
+            if (vm.vesselWeight < 1){
+                swal({
+                  title: 'Invalid Vessel Weight',
+                  text: "Please enter a valid vessel weight",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'OK',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                });
+            }
+
         },
         update: function() {
             var vm = this;
-            $('#spinnerLoader').show();
-            debounce(function() {
-                var params = {
-                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                        departure: moment(vm.departureDate).format('YYYY/MM/DD'),
-                        num_adult: vm.numAdults,
-                        num_child: vm.numChildren,
-                        num_concession: vm.numConcessions,
-                        num_infant: vm.numInfants,
-                        vessel_size: vm.vesselSize,
-                        vessel_draft: vm.vesselDraft,
-                        vessel_beam: vm.vesselBeam,
-                        vessel_weight: vm.vesselWeight,
-                        vessel_rego: vm.vesselRego,
-                        distance_radius: vm.distanceRadius
-                    };
+            var ready = vm.checkDetails(true);
+            if (ready){
+                $('#spinnerLoader').show();
+                debounce(function() {
+                    var params = {
+                            arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
+                            departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                            num_adult: vm.numAdults,
+                            num_child: vm.numChildren,
+                            num_concession: vm.numConcessions,
+                            num_infant: vm.numInfants,
+                            vessel_size: vm.vesselSize,
+                            vessel_draft: vm.vesselDraft,
+                            vessel_beam: vm.vesselBeam,
+                            vessel_weight: vm.vesselWeight,
+                            vessel_rego: vm.vesselRego,
+                            distance_radius: vm.distanceRadius
+                        };
+                    if (parseInt(vm.parkstayGroundRatisId) > 0) {
+                        var url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param(params);
+                    } else if (vm.useAdminApi) {
+                        var url = vm.parkstayUrl + '/api/availability_admin/'+ vm.parkstayGroundId +'/?'+$.param(params);
+                    } else {
+                        vm.updateURL();
+                        var url = vm.parkstayUrl + '/api/availability2/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
+                    }
 
-                if (parseInt(vm.parkstayGroundRatisId) > 0) {
-                    var url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param(params);
-                } else if (vm.useAdminApi) {
-                    var url = vm.parkstayUrl + '/api/availability_admin/'+ vm.parkstayGroundId +'/?'+$.param(params);
-                } else {
-                    vm.updateURL();
-                    var url = vm.parkstayUrl + '/api/availability2/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
-                }
+                    // var options = [null, "", " "]
+                    var search = true;
+                    // if(options.indexOf(vm.vesselRego) >= 0 || options.indexOf(vm.vesselSize) >= 0 || options.indexOf(vm.vesselDraft) >= 0 || options.indexOf(vm.vesselBeam) >= 0 || options.indexOf(vm.vesselWeight) >= 0){
+                    //     search = false;
+                    // }
+                    if (search){
+                        $.ajax({
+                            url: url,
+                            dataType: 'json',
+                            async: false,
+                            success: function(data, stat, xhr) {
+                                vm.name = data.name;
+                                vm.days = data.days;
+                                vm.classes = data.classes;
+                                vm.long_description = data.long_description;
+                                vm.map = data.map;
+                                vm.ongoing_booking = data.ongoing_booking;
+                                vm.ongoing_booking_id = data.ongoing_booking_id;
+                                vm.mooring_vessel_size = data.vessel_size;
+                                vm.max_advance_booking = data.max_advance_booking;
+                                vm.max_advance_booking_days = data.max_advance_booking_days;
+                                vm.current_booking = data.current_booking;
+                                vm.total_booking = data.total_booking;
+                                vm.timer = data.timer;
+                                vm.expiry = data.expiry;
+                
+                                if (data.error_type != null) {
+                                    vm.status = 'online';
+                                    return;
+                                }
 
-                var options = [null, "", " "]
-                var search = true;
-                if(options.indexOf(vm.vesselRego) >= 0 || options.indexOf(vm.vesselSize) >= 0 || options.indexOf(vm.vesselDraft) >= 0 || options.indexOf(vm.vesselBeam) >= 0 || options.indexOf(vm.vesselWeight) >= 0){
-                    search = false;
-                }
-                if (search){
-                    $.ajax({
-                        url: url,
-                        dataType: 'json',
-                        async: false,
-                        success: function(data, stat, xhr) {
-                            vm.name = data.name;
-                            vm.days = data.days;
-                            vm.classes = data.classes;
-                            vm.long_description = data.long_description;
-                            vm.map = data.map;
-                            vm.ongoing_booking = data.ongoing_booking;
-                            vm.ongoing_booking_id = data.ongoing_booking_id;
-                            vm.mooring_vessel_size = data.vessel_size;
-                            vm.max_advance_booking = data.max_advance_booking;
-                            vm.max_advance_booking_days = data.max_advance_booking_days;
-                            vm.current_booking = data.current_booking;
-                            vm.total_booking = data.total_booking;
-                            vm.timer = data.timer;
-                            vm.expiry = data.expiry;
-            
-                            if (data.error_type != null) {
-                                vm.status = 'online';
+                                if (data.sites == null) { 
                                 return;
-                            }
-
-                            if (data.sites == null) { 
-                            return;
-                            }
-
-                            if (data.sites.length == 0) {
-                                vm.status = 'empty';
-                                return;
-                            }
-
-                            vm.gearTotals.tent = 0
-                            vm.gearTotals.campervan = 0
-                            vm.gearTotals.caravan = 0
-                            data.sites.forEach(function(el) {
-                                el.showBreakdown = false;
-                                vm.gearTotals.tent += el.gearType.tent ? 1 : 0;
-                                vm.gearTotals.campervan += el.gearType.campervan ? 1 : 0;
-                                vm.gearTotals.caravan += el.gearType.caravan ? 1 : 0;
-                            });
-                            if (!vm.gearTotals[vm.gearType]) {
-                                if (vm.gearTotals.tent) {
-                                    vm.gearType = 'tent';
-                                } else if (vm.gearTotals.campervan) {
-                                    vm.gearType = 'campervan';
-                                } else if (vm.gearTotals.caravan) {
-                                    vm.gearType = 'caravan';
-                                } else {
-                                    // no campsites at all!
-                                    vm.gearType = 'tent';
                                 }
-                            }
 
-                            // Booking Whole Row Index
-                            var index;
-                            var avail_index;
-                            var filtered_sites = [];
-                            vm.sites = data.sites;
-                        
-                            for (index = 0; index < vm.sites.length; ++index) {
-                                vm.mooring_book_row[index] = true;
-                                vm.mooring_book_row_price[index] = '0.00';
-                                if (vm.sites[index].vessel_size_limit > 0){
-                                    if (vm.sites[index].vessel_size_limit < vm.vesselSize){
-                                        if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
-                                        filtered_sites.push(vm.sites[index].id); 
-                                        }
-                                    }
-                                } 
-                                if (vm.sites[index].vessel_draft_limit > 0){
-                                    if (vm.sites[index].vessel_draft_limit < vm.vesselDraft){
-                                        if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
-                                        filtered_sites.push(vm.sites[index].id); 
-                                        }
+                                if (data.sites.length == 0) {
+                                    vm.status = 'empty';
+                                    return;
+                                }
+
+                                vm.gearTotals.tent = 0
+                                vm.gearTotals.campervan = 0
+                                vm.gearTotals.caravan = 0
+                                data.sites.forEach(function(el) {
+                                    el.showBreakdown = false;
+                                    vm.gearTotals.tent += el.gearType.tent ? 1 : 0;
+                                    vm.gearTotals.campervan += el.gearType.campervan ? 1 : 0;
+                                    vm.gearTotals.caravan += el.gearType.caravan ? 1 : 0;
+                                });
+                                if (!vm.gearTotals[vm.gearType]) {
+                                    if (vm.gearTotals.tent) {
+                                        vm.gearType = 'tent';
+                                    } else if (vm.gearTotals.campervan) {
+                                        vm.gearType = 'campervan';
+                                    } else if (vm.gearTotals.caravan) {
+                                        vm.gearType = 'caravan';
+                                    } else {
+                                        // no campsites at all!
+                                        vm.gearType = 'tent';
                                     }
                                 }
-                                if (vm.sites[index].vessel_beam_limit > 0){
-                                    if (vm.sites[index].vessel_beam_limit < vm.vesselBeam){
-                                        if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
-                                        filtered_sites.push(vm.sites[index].id); 
-                                        }
-                                    }
-                                }
-                                if (vm.sites[index].vessel_weight_limit > 0){
-                                    if (vm.sites[index].vessel_weight_limit < vm.vesselWeight){
-                                        if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
-                                        filtered_sites.push(vm.sites[index].id); 
-                                        }
-                                    }
-                                }
-                                for (avail_index = 0; avail_index < vm.sites[index].availability.length; ++avail_index) {
-                                    var booking_period = vm.sites[index].availability[avail_index][1].booking_period;  
-                                    if (booking_period.length > 0) { 
-                                        if (vm.sites[index].mooring_class == 'small') {
-                                            var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].small_price);
-                                            vm.mooring_book_row_price[index] = total.toFixed(2);
-                                        } else if (vm.sites[index].mooring_class == 'medium') {
-                                            var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].medium_price);
-                                            vm.mooring_book_row_price[index] = total.toFixed(2);
-                                        } else if (vm.sites[index].mooring_class == 'large') {
-                                            var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].large_price);
-                                            vm.mooring_book_row_price[index] = total.toFixed(2);
-                                        }
-                                        if (booking_period.length > 1) {
-                                                vm.mooring_book_row[index] = false;
-                                        } else {      
-                                            if (booking_period[0].status == 'closed') {
-                                                vm.mooring_book_row[index] = false;	
+
+                                // Booking Whole Row Index
+                                var index;
+                                var avail_index;
+                                var filtered_sites = [];
+                                vm.sites = data.sites;
+                            
+                                for (index = 0; index < vm.sites.length; ++index) {
+                                    vm.mooring_book_row[index] = true;
+                                    vm.mooring_book_row_price[index] = '0.00';
+                                    if (vm.sites[index].vessel_size_limit > 0){
+                                        if (vm.sites[index].vessel_size_limit < vm.vesselSize){
+                                            if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
+                                            filtered_sites.push(vm.sites[index].id); 
                                             }
                                         }
-                                    } else {
-                                        vm.mooring_book_row[index] = false;
+                                    } 
+                                    if (vm.sites[index].vessel_draft_limit > 0){
+                                        if (vm.sites[index].vessel_draft_limit < vm.vesselDraft){
+                                            if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
+                                            filtered_sites.push(vm.sites[index].id); 
+                                            }
+                                        }
+                                    }
+                                    if (vm.sites[index].vessel_beam_limit > 0){
+                                        if (vm.sites[index].vessel_beam_limit < vm.vesselBeam){
+                                            if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
+                                            filtered_sites.push(vm.sites[index].id); 
+                                            }
+                                        }
+                                    }
+                                    if (vm.sites[index].vessel_weight_limit > 0){
+                                        if (vm.sites[index].vessel_weight_limit < vm.vesselWeight){
+                                            if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
+                                            filtered_sites.push(vm.sites[index].id); 
+                                            }
+                                        }
+                                    }
+                                    for (avail_index = 0; avail_index < vm.sites[index].availability.length; ++avail_index) {
+                                        var booking_period = vm.sites[index].availability[avail_index][1].booking_period;  
+                                        if (booking_period.length > 0) { 
+                                            if (vm.sites[index].mooring_class == 'small') {
+                                                var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].small_price);
+                                                vm.mooring_book_row_price[index] = total.toFixed(2);
+                                            } else if (vm.sites[index].mooring_class == 'medium') {
+                                                var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].medium_price);
+                                                vm.mooring_book_row_price[index] = total.toFixed(2);
+                                            } else if (vm.sites[index].mooring_class == 'large') {
+                                                var total = parseFloat(vm.mooring_book_row_price[index]) + parseFloat(booking_period[0].large_price);
+                                                vm.mooring_book_row_price[index] = total.toFixed(2);
+                                            }
+                                            if (booking_period.length > 1) {
+                                                    vm.mooring_book_row[index] = false;
+                                            } else {      
+                                                if (booking_period[0].status == 'closed') {
+                                                    vm.mooring_book_row[index] = false;	
+                                                }
+                                            }
+                                        } else {
+                                            vm.mooring_book_row[index] = false;
+                                        }
                                     }
                                 }
-                            }
-                            var i;
-                            for (i = 0; i < filtered_sites.length; i++){
-                                var index;
-                                for (index = 0; index < vm.sites.length; index++){
-                                    if (vm.sites[index].id == filtered_sites[i]){
-                                        console.log("removed one");
-                                        vm.sites.splice(index, 1); 
+                                var i;
+                                for (i = 0; i < filtered_sites.length; i++){
+                                    var index;
+                                    for (index = 0; index < vm.sites.length; index++){
+                                        if (vm.sites[index].id == filtered_sites[i]){
+                                            console.log("removed one");
+                                            vm.sites.splice(index, 1); 
+                                        }
                                     }
                                 }
-                            }
 
-                            console.log("done");
+                                console.log("done");
 
-                            // End of booking whole row index
-                            vm.status = 'online';
-                            if (parseInt(vm.parkstayGroundRatisId) > 0){
-                                vm.parkstayGroundId = data.id;
-                                vm.updateURL();
+                                // End of booking whole row index
+                                vm.status = 'online';
+                                if (parseInt(vm.parkstayGroundRatisId) > 0){
+                                    vm.parkstayGroundId = data.id;
+                                    vm.updateURL();
+                                }
+                                $('#spinnerLoader').hide();
+                            },
+                            error: function(xhr, stat, err) {
+                                vm.showSecondErrorLine = true;
+                                var max_error = 'Maximum number of people exceeded for the selected campsite';
+                                var min_error = 'Number of people is less than the minimum allowed for the selected campsite';
+                                if (xhr.responseJSON.hasOwnProperty('closed')){
+                                    vm.status = 'closed';
+                                }
+                                else if (xhr.responseJSON.hasOwnProperty('error') && (xhr.responseJSON.error == max_error || xhr.responseJSON.error == min_error)){
+                                    vm.status = 'offline';
+                                    vm.showSecondErrorLine = false;
+                                }
+                                else{
+                                    vm.status = 'offline';
+                                }
+                                $('#spinnerLoader').hide();
                             }
-                            $('#spinnerLoader').hide();
-                        },
-                        error: function(xhr, stat, err) {
-                            vm.showSecondErrorLine = true;
-                            var max_error = 'Maximum number of people exceeded for the selected campsite';
-                            var min_error = 'Number of people is less than the minimum allowed for the selected campsite';
-                            if (xhr.responseJSON.hasOwnProperty('closed')){
-                                vm.status = 'closed';
-                            }
-                            else if (xhr.responseJSON.hasOwnProperty('error') && (xhr.responseJSON.error == max_error || xhr.responseJSON.error == min_error)){
-                                vm.status = 'offline';
-                                vm.showSecondErrorLine = false;
-                            }
-                            else{
-                                vm.status = 'offline';
-                            }
-                            $('#spinnerLoader').hide();
-                        }
-                    });
-                }
-            }, 500)();
+                        });
+                    }
+                }, 500)();
+            }
+            
         }
     },
     mounted: function () {
