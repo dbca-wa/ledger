@@ -20,7 +20,6 @@ from ledger.urls import urlpatterns as ledger_patterns
 router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
 router.register(r'application',application_api.ApplicationViewSet)
-router.register(r'referrals',application_api.ReferralViewSet)
 router.register(r'assessment',application_api.AssessmentViewSet)
 router.register(r'amendment',application_api.AmendmentRequestViewSet)
 router.register(r'assessor_group',application_api.AssessorGroupViewSet)
@@ -55,7 +54,6 @@ urlpatterns = [
     url(r'', include(api_patterns)),
     url(r'^$', views.WildlifeComplianceRoutingView.as_view(), name='wc_home'),
     url(r'^internal/', views.InternalView.as_view(), name='internal'),
-    url(r'^internal/application/(?P<application_pk>\d+)/referral/(?P<referral_pk>\d+)/$', views.ReferralView.as_view(), name='internal-referral-detail'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^external/application/(?P<application_pk>\d+)/$', views.ExternalApplicationView.as_view(), name='external-application-detail'),
     url(r'^external/return/(?P<return_pk>\d+)/$', views.ExternalReturnView.as_view(), name='external-return-detail'),

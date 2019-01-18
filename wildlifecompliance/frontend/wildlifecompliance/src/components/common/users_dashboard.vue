@@ -30,7 +30,7 @@ export default {
             type: String,
             required: true,
             validator:function(val) {
-                let options = ['internal','referral'];
+                let options = ['internal'];
                 return options.indexOf(val) != -1 ? true: false;
             }
         },
@@ -112,9 +112,7 @@ export default {
         is_external: function(){
             return this.level == 'external';
         },
-        is_referral: function(){
-            return this.level == 'referral';
-        }
+        
     },
     methods: {
         applyOnBehalfOf:function (user_id) {

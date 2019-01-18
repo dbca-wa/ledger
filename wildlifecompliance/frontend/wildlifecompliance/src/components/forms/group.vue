@@ -1,5 +1,5 @@
 <template lang="html">
-    <div class="top-buffer bottom-buffer">
+    <div ref="container" class="top-buffer bottom-buffer">
         <div class="panel panel-default">
             <div class="panel-body">
                 <label :id="id" class="inline">{{label}}</label>
@@ -23,8 +23,14 @@
                         <slot></slot>
                     </div>
                 </div>
+                
             </div>
         </div>
+        <a v-if=isRepeatable class="btn btn-primary" @click.prevent="addAnotherGroup">Add Another</a>
+        <template v-f="addGroup">
+            <AddGroup  :renderer="renderer" :value="value"></AddGroup>
+        </template>
+
     </div>
 </template>
 
@@ -33,10 +39,11 @@ import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 export default {
     name:"group",
-    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode"],
+    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode","isRepeatable", "renderer", "value"],
     data:function () {
         return{
-            isExpanded:true
+            isExpanded:true,
+            addGroup:false
         }
     },
     components: {HelpText, HelpTextUrl},
@@ -46,7 +53,16 @@ export default {
         },
         minimize:function(e) {
             this.isExpanded = false;
-        }
+        },
+        addAnotherGroup:function() {
+             let vm = this;
+             vm.addGroup=true
+             console.log("inside addanothergroup")
+             console.log(vm.addGroup)
+             console.log(vm.name)
+             console.log(vm.id)
+     
+         }
     },
     mounted:function () {
         var vm =this;

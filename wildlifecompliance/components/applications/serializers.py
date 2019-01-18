@@ -6,7 +6,6 @@ from wildlifecompliance.components.applications.models import (
                                     Application,
                                     ApplicationUserAction,
                                     ApplicationLogEntry,
-                                    Referral,
                                     ApplicationCondition,
                                     ApplicationStandardCondition,
                                     ApplicationDeclinedDetails,
@@ -392,13 +391,6 @@ class ApplicantSerializer(serializers.ModelSerializer):
                 )
 
 
-class ApplicationReferralSerializer(serializers.ModelSerializer):
-    referral = serializers.CharField(source='referral.get_full_name')
-    processing_status = serializers.CharField(source='get_processing_status_display')
-    class Meta:
-        model = Referral
-        fields = '__all__'
-
 class ApplicationDeclinedDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApplicationDeclinedDetails
@@ -420,7 +412,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     assessor_mode = serializers.SerializerMethodField()
     current_assessor = serializers.SerializerMethodField()
     assessor_data = serializers.SerializerMethodField()
-    latest_referrals = ApplicationReferralSerializer(many=True)
+    # latest_referrals = ApplicationReferralSerializer(many=True)
     allowed_assessors = EmailUserSerializer(many=True)
     licences = serializers.SerializerMethodField(read_only=True)
 
@@ -459,7 +451,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                 'current_assessor',
                 'assessor_data',
                 'comment_data',
-                'latest_referrals',
                 'licences',
                 'allowed_assessors',
                 'proposed_issuance_licence',
@@ -516,27 +507,27 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                 licence_data.append({"licence_activity_type":str(item.licence_activity_type),"licence_activity_type_id":item.licence_activity_type_id,"start_date":item.start_date,"expiry_date":item.expiry_date})
         return licence_data
 
-class ReferralApplicationSerializer(InternalApplicationSerializer):
-    def get_assessor_mode(self,obj):
-        # TODO check if the application has been accepted or declined
-        request = self.context['request']
-        user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
-        referral = Referral.objects.get(application=obj,referral=user)
-        return {
-            'assessor_mode': True,
-            'assessor_can_assess': referral.can_assess_referral(user),
-            'assessor_level': 'referral'
-        }
+# class ReferralApplicationSerializer(InternalApplicationSerializer):
+#     def get_assessor_mode(self,obj):
+#         # TODO check if the application has been accepted or declined
+#         request = self.context['request']
+#         user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
+#         referral = Referral.objects.get(application=obj,referral=user)
+#         return {
+#             'assessor_mode': True,
+#             'assessor_can_assess': referral.can_assess_referral(user),
+#             'assessor_level': 'referral'
+#         }
 
-class ReferralSerializer(serializers.ModelSerializer):
-    processing_status = serializers.CharField(source='get_processing_status_display')
-    class Meta:
-        model = Referral
-        fields = '__all__'
+# class ReferralSerializer(serializers.ModelSerializer):
+#     processing_status = serializers.CharField(source='get_processing_status_display')
+#     class Meta:
+#         model = Referral
+#         fields = '__all__'
 
-    def __init__(self,*args,**kwargs):
-        super(ReferralSerializer, self).__init__(*args, **kwargs)
-        self.fields['application'] = ReferralApplicationSerializer(context={'request':self.context['request']})
+#     def __init__(self,*args,**kwargs):
+#         super(ReferralSerializer, self).__init__(*args, **kwargs)
+#         self.fields['application'] = ReferralApplicationSerializer(context={'request':self.context['request']})
 
 class ApplicationUserActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
@@ -556,35 +547,35 @@ class ApplicationLogEntrySerializer(CommunicationLogEntrySerializer):
     def get_documents(self,obj):
         return [[d.name,d._file.url] for d in obj.documents.all()]
 
-class SendReferralSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+# class SendReferralSerializer(serializers.Serializer):
+#     email = serializers.EmailField()
 
-class DTReferralSerializer(serializers.ModelSerializer):
-    processing_status = serializers.CharField(source='application.get_processing_status_display')
-    referral_status = serializers.CharField(source='get_processing_status_display')
-    application_lodgement_date = serializers.CharField(source='application.lodgement_date')
-    submitter = serializers.SerializerMethodField()
-    referral = EmailUserSerializer()
-    class Meta:
-        model = Referral
-        fields = (
-            'id',
-            'region',
-            'activity',
-            'title',
-            'applicant',
-            'submitter',
-            'processing_status',
-            'referral_status',
-            'lodged_on',
-            'application',
-            'can_be_processed',
-            'referral',
-            'application_lodgement_date'
-        )
+# class DTReferralSerializer(serializers.ModelSerializer):
+#     processing_status = serializers.CharField(source='application.get_processing_status_display')
+#     referral_status = serializers.CharField(source='get_processing_status_display')
+#     application_lodgement_date = serializers.CharField(source='application.lodgement_date')
+#     submitter = serializers.SerializerMethodField()
+#     referral = EmailUserSerializer()
+#     class Meta:
+#         model = Referral
+#         fields = (
+#             'id',
+#             'region',
+#             'activity',
+#             'title',
+#             'applicant',
+#             'submitter',
+#             'processing_status',
+#             'referral_status',
+#             'lodged_on',
+#             'application',
+#             'can_be_processed',
+#             'referral',
+#             'application_lodgement_date'
+#         )
 
-    def get_submitter(self,obj):
-        return EmailUserSerializer(obj.application.submitter).data
+#     def get_submitter(self,obj):
+#         return EmailUserSerializer(obj.application.submitter).data
 
 class ApplicationConditionSerializer(serializers.ModelSerializer):
     due_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False,allow_null=True)

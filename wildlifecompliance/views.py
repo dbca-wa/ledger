@@ -50,10 +50,6 @@ class ExternalView(LoginRequiredMixin, TemplateView):
         context['wc_version'] = settings.WC_VERSION
         return context
 
-class ReferralView(ReferralOwnerMixin, DetailView):
-    model = Referral
-    template_name = 'wildlifecompliance/dash/index.html'
-
 class ApplicationView(ReferralOwnerMixin,DetailView):
     model=Application
     template_name='wildlifecompliance/dash/index.html'

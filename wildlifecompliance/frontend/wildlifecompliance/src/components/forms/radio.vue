@@ -29,6 +29,8 @@ export default {
         }
     },
     mounted:function () {
+        console.log("From Radio vue")
+        console.log(this.handleChange)
         if (this.value == this.savedValue) {
             var input = this.$refs.radioB;
             var e = document.createEvent('HTMLEvents');

@@ -30,6 +30,7 @@ module.exports = {
         var assessorLevel = '';
         var readonly = false;
         var _elements = [];
+        var addGroupFlag=false;
 
         if (assessorStatus != null){
             assessorMode = assessorStatus['assessor_mode'];
@@ -165,7 +166,8 @@ module.exports = {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
                 _elements.push(
-					<Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true}>
+					<Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={c.isRepeatable} renderer={this} value={value}>
+
                         {c.children.map(c=>{
                             return (
                                 <div>
@@ -173,8 +175,14 @@ module.exports = {
                                 </div>
                             )
                         })}
+                        
                     </Group>
                 )
+                if(c.isRepeatable){
+                     _elements.push(
+                         <a class="btn btn-primary" onClick={this.handleAddButton}>Add Another 2</a>
+                     )
+                 }
                 break;
             case 'section':
                 var value = null;
@@ -269,15 +277,29 @@ module.exports = {
         return _elements;
     },
     handleRadioChange(e){
+        console.log("inside handle radio change")
         var conditions = $(e.target).data('conditions');
         if (conditions && conditions !== undefined) {
             var cons = Object.keys(conditions);
             var btns = $('input[name='+e.target.name+']');
+            console.log(e.target.name)
+            console.log(cons)
+            console.log(btns)
             $.each(btns,function (i,input) {
                 $("#cons_"+e.target.name+'_'+input.value).addClass('hidden');
             });
             $("#cons_"+e.target.name+'_'+e.target.value).removeClass('hidden');
         }
+    },
+    handleAddButton(e){
+    	// console.log(Array.prototype(_elements))
+    	// console.log(e.target)
+    	console.log(this)
+    	// addGroupFlag= true;
+    
+  		// console.log(this.addGroupFlag)
+    	// console.log($(e.target).data())
+    	console.log(e)
     },
     handleCheckBoxChange(e){
         var conditions = $(e.target).data('conditions');
@@ -313,6 +335,7 @@ module.exports = {
     },
     sections:[],
     tabs_list:[],
+    
     getTabslist(){
         return this.tabs_list;
     },
