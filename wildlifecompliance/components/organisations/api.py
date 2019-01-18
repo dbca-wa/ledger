@@ -437,6 +437,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             data = Organisation.existance(serializer.validated_data['abn'])
             # Check request user cannot be relinked to org.
             data.update([('user', request.user.id)])
+            data.update([('abn', request.data['abn'])])
             serializer = OrganisationCheckExistSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             return Response(serializer.data)
@@ -790,6 +791,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
                 # Check if consultant can be relinked to org.
                 data = Organisation.existance(request.data['abn'])
                 data.update([('user', request.user.id)])
+                data.update([('abn', request.data['abn'])])
                 existing_org = OrganisationCheckExistSerializer(data=data)
                 existing_org.is_valid(raise_exception=True)
             with transaction.atomic():
