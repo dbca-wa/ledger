@@ -157,9 +157,29 @@ class DistrictViewSet(viewsets.ModelViewSet):
     queryset = District.objects.all()
     serializer_class = DistrictSerializer
 
+    def list(self, request, *args, **kwargs):
+        groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        qs = self.get_queryset()
+        mooring_groups = []
+        for group in groups:
+            mooring_groups.append(group.id)
+        queryset = qs.filter(mooring_group__in=mooring_groups)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 class ContactViewSet(viewsets.ModelViewSet):
     queryset = Contact.objects.all()
     serializer_class = ContactSerializer
+
+    def list(self, request, *args, **kwargs):
+        groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        qs = self.get_queryset()
+        mooring_groups = []
+        for group in groups:
+            mooring_groups.append(group.id)
+        queryset = qs.filter(mooring_group__in=mooring_groups)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class MooringsiteViewSet(viewsets.ModelViewSet):
     queryset = Mooringsite.objects.all()
@@ -2374,7 +2394,12 @@ class MarinaViewSet(viewsets.ModelViewSet):
         data = cache.get('parks')
         data = None
         if data is None:
-            queryset = self.get_queryset()
+            groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+            qs = self.get_queryset()
+            mooring_groups = []
+            for group in groups:
+                mooring_groups.append(group.id)
+            queryset = qs.filter(mooring_group__in =mooring_groups)
             serializer = self.get_serializer(queryset, many=True)
             data = serializer.data
             cache.set('parks',data,3600)
@@ -3428,25 +3453,85 @@ class ClosureReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ClosureReason.objects.all()
     serializer_class = ClosureReasonSerializer
 
+    def list(self, request, *args, **kwargs):
+        groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        qs = self.get_queryset()
+        mooring_groups = []
+        for group in groups:
+            mooring_groups.append(group.id)
+        queryset = qs.filter(mooring_group__in=mooring_groups)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 class OpenReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = OpenReason.objects.all()
     serializer_class = OpenReasonSerializer
+
+    def list(self, request, *args, **kwargs):
+        groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        qs = self.get_queryset()
+        mooring_groups = []
+        for group in groups:
+            mooring_groups.append(group.id)
+        queryset = qs.filter(mooring_group__in=mooring_groups)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class PriceReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PriceReason.objects.all()
     serializer_class = PriceReasonSerializer
 
+    def list(self, request, *args, **kwargs):
+        groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        qs = self.get_queryset()
+        mooring_groups = []
+        for group in groups:
+            mooring_groups.append(group.id)
+        queryset = qs.filter(mooring_group__in=mooring_groups)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 class AdmissionsReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AdmissionsReason.objects.all()
     serializer_class = AdmissionsReasonSerializer
+
+    def list(self, request, *args, **kwargs):
+        groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        qs = self.get_queryset()
+        mooring_groups = []
+        for group in groups:
+            mooring_groups.append(group.id)
+        queryset = qs.filter(mooring_group__in=mooring_groups)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class MaximumStayReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MaximumStayReason.objects.all()
     serializer_class = MaximumStayReasonSerializer
 
+    def list(self, request, *args, **kwargs):
+        groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        qs = self.get_queryset()
+        mooring_groups = []
+        for group in groups:
+            mooring_groups.append(group.id)
+        queryset = qs.filter(mooring_group__in=mooring_groups)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 class DiscountReasonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DiscountReason.objects.all()
     serializer_class = DiscountReasonSerializer
+
+    def list(self, request, *args, **kwargs):
+        groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        qs = self.get_queryset()
+        mooring_groups = []
+        for group in groups:
+            mooring_groups.append(group.id)
+        queryset = qs.filter(mooring_group__in=mooring_groups)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Country.objects.order_by('-display_order', 'printable_name')
@@ -3901,6 +3986,8 @@ class GlobalSettingsView(views.APIView):
                 else:
                     if groups.count() == 0:
                         return Response("Error more than 1 group")
+                    if groups.count() > 1 and key == 0:
+                        return Response("Error more than 1 group")
                     qs = GlobalSettings.objects.filter(key=key)
                     highest_val = 0
                     highest_i = 0
@@ -3939,7 +4026,7 @@ class AdmissionsKeyFromURLView(views.APIView):
             else:
                 url_split = url.split('/')
                 url = url_split[2]
-                global_set_url = GlobalSettings.objects.filter(key=15, value=url)
+                global_set_url = GlobalSettings.objects.filter(key__in=[15,16], value=url)
                 if global_set_url.count() > 0:
                     mooring_group = global_set_url[0].mooring_group
                     locs = AdmissionsLocation.objects.filter(mooring_group=mooring_group)

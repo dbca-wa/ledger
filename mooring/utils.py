@@ -721,7 +721,8 @@ def nononline_booking_lineitems(oracle_code, request):
     if oracle_code:
         group = MooringAreaGroup.objects.filter(members__in=[request.user])
         value = GlobalSettings.objects.get(mooring_group=group, key=0).value
-        invoice_line.append({'ledger_description': 'Non Online Booking Fee', 'quantity': 1, 'price_incl_tax': Decimal(value), 'oracle_code': oracle_code})
+        if Decimal(value) > 0:
+            invoice_line.append({'ledger_description': 'Non Online Booking Fee', 'quantity': 1, 'price_incl_tax': Decimal(value), 'oracle_code': oracle_code})
     return invoice_line
 
 def admission_lineitems(lines):

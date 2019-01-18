@@ -507,14 +507,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             {% if request.user.is_staff %}
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <label>Non-Online Booking:</label>
-                                </div>
-                                <div class="col-md-2">
-                                    <input type="checkbox" id="nononline" name="nononline" v-model="nononline" @change="calculateTotal()" checked/>
-                                </div>
-                            </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label>Non-Online Booking:</label>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <input type="checkbox" id="nononline" name="nononline" v-model="nononline" @change="calculateTotal()" checked/>
+                                        </div>
+                                    </div>
                             <div class="row">
                                 <div class="col-md-4">
                                     <label>Override Price:</label>
@@ -1041,7 +1041,6 @@
             });
 
             if (vm.isStaff){
-                vm.nononline = true;
                 data = {
                     'key': '0'
                 }
@@ -1056,7 +1055,7 @@
                             console.log("group error");
                             var error = {
                                 title : "Invalid Group",
-                                text : "Please alert admin, you are part of no mooring groups. Unable to perform bookings.",
+                                text : "Please alert admin, you are part of no or too many mooring groups. Unable to perform bookings.",
                                 type : "error",
                             }
                             vm.swalMessage(error);
@@ -1067,6 +1066,9 @@
                             var intval = parseInt(data[0].value);
                             intval *= 100;
                             vm.nonOnlineFee = intval;
+                            if (intval > 0){
+                                vm.nononline = true;
+                            }
                             vm.calculateTotal();
                         }
                     }

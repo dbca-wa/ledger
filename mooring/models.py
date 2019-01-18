@@ -1896,7 +1896,9 @@ class GlobalSettings(models.Model):
         (12, 'Max Weight Small'),
         (13, 'Max Weight Medium'),
         (14, 'Max Weight Large'),
-        (15, 'URL')
+        (15, 'URL - Internal'),
+        (16, 'URL - External'),
+        (17, 'Non Online Booking Oracle Code')
     )
     mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
     key = models.SmallIntegerField(choices=keys, blank=False, null=False)

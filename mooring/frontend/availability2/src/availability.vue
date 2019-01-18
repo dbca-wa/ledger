@@ -71,7 +71,7 @@
                 </div>
                 <div class="columns small-4 medium-3 large-2">
                         <div v-if="vesselRego.length < 1 || vesselRego == ' ' || vesselSize < 1 || vesselBeam < 1 || vesselDraft < 1 || vesselWeight < 1">
-                            <button title="Please enter vessel details" style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" @click="validateVessel()">Proceed to Check Out</button>
+                            <button title="Please enter vessel details" style="border-radius: 4px; border: 1px solid #2e6da4" class="button small-12 medium-12 large-12" @click="validateVessel()">Proceed to Check Out</button>
                         </div>
                         <div v-else>
                             <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a>
@@ -490,6 +490,7 @@ export default {
             vesselBeam: parseFloat(getQueryParam('vessel_beam', 0)),
             vesselWeight: parseFloat(getQueryParam('vessel_weight', 0)),
             vesselRego: getQueryParam('vessel_rego', ''),
+            searchedRego: getQueryParam('vessel_rego', ''),
             distanceRadius: parseInt(getQueryParam('distance_radius', 100)),
             maxAdults: 30,
             maxChildren: 30,
@@ -777,13 +778,14 @@ export default {
             var data = {
                 'rego': reg
             }
-            if(reg && not_null){
+            if(reg && not_null && vm.searchedRego != reg){
                 $.ajax({
                     url: "/api/registeredVessels/",
                     dataType: 'json',
                     data: data,
                     method: 'GET',
                     success: function(data, stat, xhr) {
+                        vm.searchedRego = reg;
                         if(data[0]){
                             vm.vesselSize = Math.ceil(data[0].vessel_size);
                             vm.vesselWeight = Math.ceil(data[0].vessel_weight);

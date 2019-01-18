@@ -309,7 +309,7 @@
 
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
                                  
-                                <a v-if="f.mooring_type == 0 && vesselSize > 0 && vesselDraft > 0 && vesselRego != '' && vesselRego !== ' '" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam">Book now</a>
+                                <a v-if="f.mooring_type == 0 && vesselSize > 0 && vesselDraft > 0 && vesselBeam > 0 && vesselWeight > 0 && vesselRego != '' && vesselRego !== ' '" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam">Book now</a>
                                 <a v-else-if="f.mooring_type == 0" class="button" v-on:click="BookNow()">Book now</a>
                                 <a v-else /> 
                             </div>
@@ -1618,6 +1618,8 @@ export default {
       BookNow: function() { 
         var vessel_size = $('#vesselSize').val();
         var vessel_draft = $('#vesselDraft').val();
+        var vessel_beam = $('#vesselBeam').val();
+        var vessel_weight = $('#vesselWeight').val();
         var vessel_rego = $('#vesselRego').val();
         if (!(vessel_draft > 0)){
             swal({
@@ -1641,6 +1643,29 @@ export default {
             allowOutsideClick: false
             })
         }
+        if (!(vessel_beam > 0)){
+            swal({
+            title: 'Missing Vessel Beam',
+            text: "Please enter vessel beam:",
+            type: 'warning',
+            showCancelButton: false,
+            confirmButtonText: 'OK',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: false
+            })
+        }
+        if (!(vessel_weight > 0)){
+            swal({
+            title: 'Missing Vessel Weight',
+            text: "Please enter vessel weight:",
+            type: 'warning',
+            showCancelButton: false,
+            confirmButtonText: 'OK',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: false
+            })
+        }
+        
         if (!vessel_rego || vessel_rego == "" || vessel_rego == " "){
             swal({
                 title: 'Missing Vessel Registration',

@@ -38,6 +38,8 @@ from mooring.models import (MooringArea,
                                 RegisteredVessels,
                                 ChangePricePeriod,
                                 AdmissionsOracleCode,
+                                MooringAreaGroup,
+                                GlobalSettings,
                                 MooringsiteRateLog,
                                 )
 from mooring.serialisers import AdmissionsBookingSerializer, AdmissionsLineSerializer
@@ -745,11 +747,20 @@ class MakeBookingsView(TemplateView):
            if booking.old_booking.admission_payment:
                booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
            lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
+        print "=========================================="
+        print booking.details
         if booking.details['non_online_booking']:
-            print oracle_code
-            booking_line = utils.nononline_booking_lineitems(oracle_code, request)
-            for line in booking_line:
-                lines.append(line)
+            print "Inside non_online booking"
+            groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+            print groups
+            if groups.count() == 1:
+                oracle_code_non_online = GlobalSettings.objects.filter(key=17, mooring_group=groups[0])[0].value
+                print oracle_code_non_online
+                if oracle_code_non_online:
+                    booking_line = utils.nononline_booking_lineitems(oracle_code_non_online, request)
+                    print booking_line
+                    for line in booking_line:
+                        lines.append(line)
         from_earliest = None
         to_latest = None
         if mooring_booking:
