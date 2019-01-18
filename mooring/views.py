@@ -90,7 +90,7 @@ class MooringAvailability2Selector(TemplateView):
         context = {}
         ratis_id = request.GET.get('mooring_site_id', None)
         if ratis_id:
-            cg = MooringArea.objects.filter(ratis_id=ratis_id)
+            cg = Mooringsite.objects.filter(ratis_id=ratis_id)
             if cg.exists():
                 context['ground_id'] = cg.first().id
         return render(request, self.template_name, context)
