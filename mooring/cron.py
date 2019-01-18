@@ -10,7 +10,7 @@ from mooring.emails import send_booking_confirmation, send_booking_period_email
 from mooring.utils import oracle_integration
 
 class UnpaidBookingsReportCronJob(CronJobBase):
-    RUN_AT_TIMES = ['01:05']
+    RUN_AT_TIMES = ['03:30']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code = 'mooring.unpaid_bookings_report'
@@ -19,7 +19,7 @@ class UnpaidBookingsReportCronJob(CronJobBase):
         outstanding_bookings() 
 
 class OracleIntegrationCronJob(CronJobBase):
-    RUN_AT_TIMES = ['01:05']
+    RUN_AT_TIMES = ['03:30']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code = 'mooring.oracle_integration'
@@ -50,7 +50,7 @@ class SendBookingsConfirmationCronJob(CronJobBase):
             raise
 
 class CheckMooringsNoBookingPeriod(CronJobBase):
-    RUN_AT_TIMES = ['07:00']
+    RUN_AT_TIMES = ['03:30']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code= 'mooring.booking_period_check'
