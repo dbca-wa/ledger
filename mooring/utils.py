@@ -757,30 +757,30 @@ def calculate_price_booking_cancellation(booking):
          cancel_fee_amount = '0.00'
          #change_price_period = CancelPricePeriod.objects.filter(id=ob.booking_period_option.cancel_group_id).order_by('days')
          cancel_group =  CancelGroup.objects.get(id=ob.booking_period_option.cancel_group_id)
-         change_price_period = cancel_group.cancel_period.all().order_by('days')
+         cancel_price_period = cancel_group.cancel_period.all().order_by('days')
 
-         for cpp in change_price_period:
+         for cpp in cancel_price_period:
              if daystillbooking < 0:
                   daystillbooking = 0
-
              if daystillbooking >= cpp.days:
                   cancel_policy =cpp
-             if cancel_policy:
-                if cancel_policy.calulation_type == 0:
-                    # Percentage
-                    cancel_fee_amount = float(ob.amount) * (cancel_policy.percentage / 100)
-                elif cancel_policy.calulation_type == 1:
-                    cancel_fee_amount = cancel_policy.amount
-                    # Fixed Pricing
-                description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
-                  #change_fees['amount'] = str(refund_amount)
-                cancellation_fees.append({'additional_fees': 'true', 'description': 'Cancel Fee - '+description,'amount': cancel_fee_amount})
-                cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount)})
-             else:
-                 print "NO CANCELATION POLICY"
 
+         if cancel_policy:
+             if cancel_policy.calulation_type == 0:
+                 # Percentage
+                 cancel_fee_amount = float(ob.amount) * (cancel_policy.percentage / 100)
+             elif cancel_policy.calulation_type == 1:
+                 cancel_fee_amount = cancel_policy.amount
+                 # Fixed Pricing
+             description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
+                  #change_fees['amount'] = str(refund_amount)
+             cancellation_fees.append({'additional_fees': 'true', 'description': 'Cancel Fee - '+description,'amount': cancel_fee_amount})
+             cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount)})
          else:
-             adjustment_fee = ob.amount + adjustment_fee
+             print "NO CANCELATION POLICY"
+
+         #else:
+         #    adjustment_fee = ob.amount + adjustment_fee
     #change_fees.append({'additional_fees': 'true', 'description': 'Mooring Adjustment Credit' ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee)})
 
     return cancellation_fees
