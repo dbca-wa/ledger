@@ -818,7 +818,7 @@ export default {
                 var params = {
                     'num_adult': this.numAdults,
                     'num_children': this.numChildren,
-                    'num_infants': this.numInfants,
+                    'num_infant': this.numInfants,
                     'num_mooring' : this.numMooring,
                     'gear_type': this.gearType,
                     'pen_type': this.penType,
@@ -1829,7 +1829,7 @@ export default {
                 params.num_adult = vm.numAdults;
                 params.num_concessions = vm.numConcessions;
                 params.num_children = vm.numChildren;
-                params.num_infants = vm.numInfants;
+                params.num_infant = vm.numInfants;
                 params.num_mooring = vm.numMooring;
                 params.gear_type = vm.gearType;
                 params.pen_type = vm.penType;
@@ -2159,7 +2159,7 @@ export default {
                 params.num_adult = vm.numAdults;
                 params.num_concessions = vm.numConcessions;
                 params.num_children = vm.numChildren;
-                params.num_infants = vm.numInfants;
+                params.num_infant = vm.numInfants;
                 params.num_mooring = vm.numMooring;
                 params.gear_type = vm.gearType;
                 params.pen_type = vm.penType;

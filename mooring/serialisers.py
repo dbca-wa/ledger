@@ -69,7 +69,7 @@ class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     vessel_draft = serializers.IntegerField(default=0)
     vessel_beam = serializers.IntegerField(default=0)
     vessel_weight = serializers.IntegerField(default=0)
-    vessel_rego = serializers.CharField(default=None)
+    vessel_rego = serializers.CharField(default=None, allow_null=True, allow_blank=True)
     #distance_radius = serializers.IntegerField(default=0)
 
 class MooringsiteBookingSerializer(serializers.Serializer):

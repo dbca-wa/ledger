@@ -165,9 +165,9 @@ def abort_booking_view(request, *args, **kwargs):
             c_id = booking.mooringarea.id
         
         if change:
-            num_adults = booking.details['num_adults']
+            num_adults = booking.details['num_adult']
             num_children = booking.details['num_children']
-            num_infants = booking.details['num_infants']
+            num_infants = booking.details['num_infant']
             vessel_size = booking.details['vessel_size']
             vessel_draft = booking.details['vessel_draft']
             vessel_beam = booking.details['vessel_beam']
@@ -176,7 +176,7 @@ def abort_booking_view(request, *args, **kwargs):
             # Redirect to the availability screen
             #return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
             #mooring_availaiblity2_selector
-            return redirect(reverse('mooring_availaiblity2_selector') + '?site_id={}&num_adult={}&num_children={}&num_infants={}&vessel_size={}&vessel_draft={}&vessel_beam={}&vessel_weight={}&vessel_rego={}'.format(c_id, num_adults, num_children, num_infants, vessel_size, vessel_draft, vessel_beam, vessel_weight, vessel_rego))
+            return redirect(reverse('mooring_availaiblity2_selector') + '?site_id={}&num_adult={}&num_children={}&num_infant={}&vessel_size={}&vessel_draft={}&vessel_beam={}&vessel_weight={}&vessel_rego={}'.format(c_id, num_adults, num_children, num_infants, vessel_size, vessel_draft, vessel_beam, vessel_weight, vessel_rego))
         else:
             # only ever delete a booking object if it's marked as temporary
             if booking.booking_type == 3:
@@ -568,6 +568,7 @@ class MakeBookingsView(TemplateView):
 
         #lines.append(booking_change_fees)
         print booking_change_fees
+        print details
         print { 'form': form,
             'vehicles': vehicles,
             'booking': booking,

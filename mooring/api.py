@@ -1723,7 +1723,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         }
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-
         start_date = serializer.validated_data['arrival']
         end_date = serializer.validated_data['departure']
         num_adult = serializer.validated_data['num_adult']
@@ -1736,11 +1735,15 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         vessel_beam = serializer.validated_data['vessel_beam']
         vessel_weight = serializer.validated_data['vessel_weight']
         vessel_rego = serializer.validated_data['vessel_rego']
- #       distance_radius = serializer.validated_data['distance_radius']
+         #       distance_radius = serializer.validated_data['distance_radius']
 
         if ongoing_booking:
             if not ongoing_booking.details:
                 ongoing_booking.details={}
+            ongoing_booking.details['num_adult'] = num_adult
+            ongoing_booking.details['num_child'] = num_child
+            ongoing_booking.details['num_infant'] = num_infant
+            ongoing_booking.details['num_concession'] = num_concession
             ongoing_booking.details['vessel_size'] = vessel_size
             ongoing_booking.details['vessel_draft'] = vessel_draft
             ongoing_booking.details['vessel_beam'] = vessel_beam

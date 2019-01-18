@@ -48,9 +48,16 @@ class Contact(models.Model):
     description = models.TextField(null=True,blank=True)
     opening_hours = models.TextField(null=True)
     other_services = models.TextField(null=True)
+    mooring_group = models.ForeignKey('mooring.MooringAreaGroup', blank=True, null=True)
 
     def __str__(self):
         return "{}: {}".format(self.name, self.phone_number)
+
+    def save(self, *args, **kwargs):
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            super(Contact,self).save(*args,**kwargs)
 
 
 class MarinePark(models.Model):
@@ -84,6 +91,7 @@ class MarinePark(models.Model):
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     zoom_level = models.IntegerField(choices=ZOOM_LEVEL,default=-1)  
     distance_radius = models.IntegerField(default=25)
+    mooring_group = models.ForeignKey('mooring.MooringAreaGroup', blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
@@ -93,9 +101,12 @@ class MarinePark(models.Model):
             raise ValidationError('A park entry oracle code is required if entry fee is required.')
 
     def save(self,*args,**kwargs):
-        cache.delete('parks')
-        self.full_clean()
-        super(MarinePark,self).save(*args,**kwargs)
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            cache.delete('parks')
+            self.full_clean()
+            super(MarinePark,self).save(*args,**kwargs)
 
     class Meta:
         unique_together = (('name',),)
@@ -128,9 +139,16 @@ class PromoArea(models.Model):
     name = models.CharField(max_length=255, unique=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     zoom_level = models.IntegerField(choices=ZOOM_LEVEL,default=-1)
+    mooring_group = models.ForeignKey('mooring.MooringAreaGroup', blank=True, null=True)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            super(PromoArea,self).save(*args,**kwargs)
 
 def update_mooring_map_filename(instance, filename):
     return 'mooring/mooring_maps/{}/{}'.format(instance.id,filename)
@@ -661,7 +679,7 @@ class StayHistory(models.Model):
         if self.min_days < 1:
             raise ValidationError('The minimum days should be greater than 0.')
         if self.max_days > 28:
-            raise ValidationError('The maximum days should not be grater than 28.')
+            raise ValidationError('The maximum days should not be greater than 28.')
 
 class MooringAreaBookingRange(BookingRange):
     campground = models.ForeignKey('MooringArea', on_delete=models.CASCADE,related_name='booking_ranges')
@@ -936,19 +954,32 @@ class Region(models.Model):
     ratis_id = models.IntegerField(default=-1)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     zoom_level = models.IntegerField(choices=ZOOM_LEVEL,default=-1)
+    mooring_group = models.ForeignKey(MooringAreaGroup, blank=True, null=True)
 
     def __str__(self):
         return self.name
-
+        
+    def save(self, *args, **kwargs):
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            super(Region,self).save(*args,**kwargs)
 
 class District(models.Model):
     name = models.CharField(max_length=255, unique=True)
     abbreviation = models.CharField(max_length=16, null=True, unique=True)
     region = models.ForeignKey('Region', on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
+    mooring_group = models.ForeignKey(MooringAreaGroup, blank=True, null=True)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            super(District,self).save(*args,**kwargs)
 
 
 class MooringsiteClass(models.Model):
@@ -1618,10 +1649,17 @@ class Reason(models.Model):
     text = models.TextField()
     detailRequired = models.BooleanField(default=False)
     editable = models.BooleanField(default=True,editable=False)
+    mooring_group = models.ForeignKey(MooringAreaGroup, blank=True, null=True)
 
     class Meta:
         ordering = ('id',)
         abstract = True
+
+    def save(self, *args, **kwargs):
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            super(Reason,self).save(*args,**kwargs)
 
     # Properties
     # ==============================
@@ -1870,7 +1908,8 @@ class GlobalSettings(models.Model):
 
     def save(self, *args, **kwargs):
         try:
-            int(self.value)
+            if self.key < 15:
+                int(self.value)
         except Exception as e:
             pass
         self.full_clean()
