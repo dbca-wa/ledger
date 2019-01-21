@@ -269,7 +269,7 @@
                               </div>
                           </div>
 
-                          <div v-if="managesOrg=='Consultant'">
+                          <div v-if="managesOrg=='Consultant' && addingCompany">
                               <h3>New Organisation (as consultant)</h3>
                               <div class="form-group">
                                   <label for="" class="col-sm-2 control-label" >Organisation</label>
@@ -310,7 +310,7 @@
 
 
 
-                          <div style="margin-top:15px;" v-if="addingCompany">
+                          <div style="margin-top:15px;" v-if="managesOrg=='Yes' && addingCompany">
                               <h3>New Organisation</h3>
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
@@ -455,6 +455,8 @@ export default {
                 this.resetNewOrg();
                 this.uploadedFile = null;
                 this.addingCompany = false;
+            } else if (this.managesOrg == 'Consultant' && this.newOrg) {
+                this.addCompany();
             } else {
                 this.addCompany()
                 this.addingCompany=false
