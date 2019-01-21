@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 import json
-from datetime import datetime
+from datetime import datetime, date
 
 def replace_special_chars(input_str, new_char='_'):
     return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
@@ -87,7 +87,7 @@ def create_licence(application, activity_name, new_app):
     licence = None
     activity=WildlifeLicenceActivity.objects.get(name=activity_name)
     licence_class = WildlifeLicenceClass.objects.get(short_name=application.licence_category)
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     if application.applicant_type == Application.APPLICANT_TYPE_ORGANISATION:
         qs_licence = WildlifeLicence.objects.filter(org_applicant_id=application.applicant_id, licence_class=licence_class)
         if qs_licence.exists():
@@ -151,7 +151,7 @@ def create_licence(application, activity_name, new_app):
 
 def all_related_licences(application):
     licence_number = application.licences.all().last().licence_number
-    return WildlifeLicence.objects.filter(licence_number=licence_number).order_by('id')
+    return WildlifeLicence.objects.filter(licence_number=licence_number, expiry_date_gte=date.today).order_by('id')
 
 def all_related_applications(application):
     app_ids = WildlifeLicence.objects.filter(licence_number=application.licences.all().last().licence_number).values_list('current_application_id', flat=True).distinct()
@@ -165,7 +165,7 @@ def get_activity_type_sys_questions(activity_name):
     ordered_dict=OrderedDict([])
 
     schema = WildlifeLicenceActivity.objects.get(name=activity_name).schema
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     res = search_multiple_keys(schema, 'isEditable', ['name', 'label', 'type', 'headers'])
     #[ordered_dict.update([(i['name'],i['label'])]) for i in res]
     for i in res:
@@ -261,7 +261,7 @@ def pdflatex(request, application):
         '{0}; filename="{1}"'.format(
             disposition, downloadname))
 
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     url = os.path.join('applications' + os.sep + str(application.id) + os.sep + 'wildlife_licence' + os.sep)
     directory = os.path.join(settings.MEDIA_ROOT + os.sep + 'applications' + os.sep + str(application.id) + os.sep + 'wildlife_licence' + os.sep)
     if not os.path.exists(directory):

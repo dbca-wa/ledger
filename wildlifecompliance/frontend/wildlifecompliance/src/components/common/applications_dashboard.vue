@@ -154,7 +154,11 @@ export default {
                     mRender:function (data,type,full) {
                         let links = '';
                         if (!vm.is_external){
-                            links += `<a href='/internal/application/${full.id}'>View</a><br/>`;
+                            links += `<a href='/external/application/${full.id}'>View</a><br/>`; //changed this to external, since external will be readonly view
+
+                            if (full.processing_status!='Draft') {
+                                links +=  `<a href='/internal/application/${full.id}'>Assess</a><br/>`;
+                            }
                         }
                         if (full.can_current_user_edit) {
                             links +=  `<a href='/external/application/${full.id}'>Edit</a><br/>`;

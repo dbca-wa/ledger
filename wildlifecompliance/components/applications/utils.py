@@ -304,7 +304,7 @@ def save_proponent_data(instance,request,viewset):
             viewset.perform_update(serializer)
 
             # set the isEditable fields
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             for activity_type in instance.activity_types:
                 if not activity_type.data or (activity_type.data and 'editable' not in activity_type.data[0]):
                     activity_type.data = [{'editable': get_activity_type_sys_answers(activity_type)}]
@@ -357,6 +357,10 @@ def save_assessor_data(instance,request,viewset):
             raise
 
 def save_assess_data(instance,request,viewset):
+
+    if instance.processing_status == Application.PROCESSING_STATUS_DRAFT:
+        return
+
     can_process = True if request.data.has_key('action') and request.data['action'] == 'process' else False
 
     def get_kv_pair(key_substring):
@@ -398,7 +402,7 @@ def save_assess_data(instance,request,viewset):
                             if not (element_type == '_text_' and 'text_area' in k): # hack to allow strip() to work below
                                 name = k.strip(code + element_type)
                                 if 'comment-field' not in name:
-                                    import ipdb; ipdb.set_trace()
+                                    #import ipdb; ipdb.set_trace()
                                     activity_type.data[0]['editable'][name]['answer'] = request.data[k]
 
 #                for kv_pair in get_kv_pair(code+'_text_area_'):
@@ -413,7 +417,7 @@ def save_assess_data(instance,request,viewset):
 #                        if 'comment-field' not in name:
 #                            activity_type.data[0]['editable'][name]['answer'] = request.data[k]
 
-                import ipdb; ipdb.set_trace()
+                #import ipdb; ipdb.set_trace()
                 if can_process and activity_type.to_be_issued and not activity_type.processed:
                     # create licences
                     activity_type.processed = True
@@ -426,6 +430,17 @@ def save_assess_data(instance,request,viewset):
                 #activity_type.data = [add_editable_items(activity_type)]
                 activity_type.save()
                 #import ipdb; ipdb.set_trace()
+
+            if instance.licences.count() == instance.activity_types.count():
+                instance.customer_status = 'accepted'
+                instance.processing_status = 'approved'
+            elif instance.licences.count() == 0:
+                instance.customer_status = 'declined'
+                instance.processing_status = 'declined'
+            else:
+                instance.customer_status = 'partially_accepted'
+                instance.processing_status = 'partially_approved'
+
         except:
             raise
 
