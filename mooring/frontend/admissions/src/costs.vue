@@ -8,7 +8,7 @@
             </div>
             <div class="panel-body">
                 <div class="col-lg-12">
-                    <price-history ref="price_history" :addParkPrice="true" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" level='park' ></price-history>
+                    <price-history ref="price_history" :addParkPrice="true" :dt_options="priceHistoryDt" :dt_headers="priceHistoryDtHeaders" :object_id="34" level='park' :showAddBtn="showAddBtn"></price-history>
                 </div>
             </div>
         </div>
@@ -197,6 +197,14 @@ export default {
           'parks',
           'campsite_classes'
         ]),
+        showAddBtn: function(){
+            let vm = this;
+            if (vm.multi_group){
+                return false;
+            } else {
+                return true;
+            }
+        }
     },
     watch: {
         

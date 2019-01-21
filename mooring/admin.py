@@ -61,6 +61,26 @@ class MarinaAdmin(admin.GeoModelAdmin):
     openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
     exclude = ('ratis_id',)
 
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(MarinaAdmin, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(MarinaAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(MarinaAdmin, self).save_model(request, obj, form, change)
+
 @admin.register(models.MooringArea)
 class MooringAreaAdmin(admin.GeoModelAdmin):
     list_display = ('name','park','promo_area','mooring_type','max_advance_booking')
@@ -157,6 +177,26 @@ class ContactAdmin(admin.ModelAdmin):
     list_display = ('name','phone_number')
     search_fields = ('name','phone_number')
 
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(ContactAdmin, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(ContactAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(ContactAdmin, self).save_model(request, obj, form, change)
+
 class ReasonAdmin(admin.ModelAdmin):
     list_display = ('code','text','editable')
     search_fields = ('code','text')
@@ -184,21 +224,121 @@ class ReasonAdmin(admin.ModelAdmin):
 class MaximumStayReason(ReasonAdmin):
     pass
 
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(MaximumStayReason, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(MaximumStayReason, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(MaximumStayReason, self).save_model(request, obj, form, change)
+
 @admin.register(models.PriceReason)
 class PriceReason(ReasonAdmin):
     pass
+
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(PriceReason, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(PriceReason, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(PriceReason, self).save_model(request, obj, form, change)
 
 @admin.register(models.ClosureReason)
 class ClosureReason(ReasonAdmin):
     pass
 
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(ClosureReason, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(ClosureReason, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(ClosureReason, self).save_model(request, obj, form, change)
+
 @admin.register(models.OpenReason)
 class OpenReason(ReasonAdmin):
     pass
 
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(OpenReason, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(OpenReason, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(OpenReason, self).save_model(request, obj, form, change)
+
 @admin.register(models.DiscountReason)
 class DiscountReason(ReasonAdmin):
     pass
+
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(DiscountReason, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(DiscountReason, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(DiscountReason, self).save_model(request, obj, form, change)
 
 @admin.register(models.OutstandingBookingRecipient)
 class OutstandingBookingRecipient(admin.ModelAdmin):
@@ -216,6 +356,11 @@ class AdmissionsOracleCode(admin.ModelAdmin):
         group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
         return qs.filter(mooring_group__in=group)
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(AdmissionsOracleCode, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 @admin.register(models.AdmissionsRate)
 class AdmissionsRate(admin.ModelAdmin):
     list_display = ('period_start', 'period_end')
@@ -223,6 +368,26 @@ class AdmissionsRate(admin.ModelAdmin):
 @admin.register(models.AdmissionsReason)
 class AdmissionsReason(admin.ModelAdmin):
     list_display = ('id', 'text')
+
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(AdmissionsReason, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(AdmissionsReason, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(AdmissionsReason, self).save_model(request, obj, form, change)
 
 class AdmissionLineInline(admin.TabularInline):
     model = models.AdmissionsLine
@@ -253,12 +418,55 @@ class Region(admin.GeoModelAdmin):
     openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
     exclude = ('ratis_id',)
 
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(Region, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(Region, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(Region, self).save_model(request, obj, form, change)
+
 @admin.register(models.District)
 class District(admin.ModelAdmin):
     list_display = ('name',)
     ordering = ('name',)
     exclude = ('ratis_id',)
     search_fields = ('name',)
+
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(District, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(District, self).formfield_for_foreignkey(db_field, request, **kwargs)
+    
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(District, self).save_model(request, obj, form, change)
+
+
+
 admin.site.register(models.Rate)
 #admin.site.register(models.Region)
 #admin.site.register(models.District)
@@ -269,6 +477,26 @@ class PromoArea(admin.GeoModelAdmin):
     ordering = ('name',)
     openlayers_url = 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js'
     search_fields = ('name',)
+    
+    def get_queryset(self, request):
+        """ Filter based on the mooring group of the user. """
+        qs = super(PromoArea, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return qs.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(PromoArea, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        
+    def save_model(self, request, obj, form, change):
+        if obj.mooring_group == None:
+            groups = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+            if groups.count() == 1:
+                obj.mooring_group = groups[0]
+        super(PromoArea, self).save_model(request, obj, form, change)
 
 
 @admin.register(models.RegisteredVessels)
@@ -292,7 +520,14 @@ class GlobalSettings(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         group = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
-        return qs.filter(mooring_group__in=group, key__lte=14)
+        blacklist = qs.filter(key__in=[15, 16])
+        whitelist = qs.exclude(id__in=blacklist)
+        return whitelist.filter(mooring_group__in=group)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'mooring_group':
+            kwargs['queryset'] = models.MooringAreaGroup.objects.filter(members__in=[request.user,])
+        return super(GlobalSettings, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(models.AdmissionsLocation)
 class AdmissionsLocation(admin.ModelAdmin):
