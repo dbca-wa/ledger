@@ -36,7 +36,7 @@
 
                     <div class="tab-content" id="pills-tabContent">
                       <div class="tab-pane fade" v-for="activity_type in application.activity_types" :id="'pills-'+activity_type.activity_name_str" role="tabpanel" :aria-labelledby="'pills-tab-'+activity_type.activity_name_str">
-                        <ActivityType :application="application" :activity_type="activity_type" :id="'id_'+activity_type.activity_name_str"></ActivityType>
+                        <ActivityType :readonly="pdf_exists" :application="application" :activity_type="activity_type" :id="'id_'+activity_type.activity_name_str"></ActivityType>
                       </div>
                     </div>
 
@@ -264,13 +264,13 @@ export default {
             });
 
             if (!vm.errors.length) {
+                // there are no errors
                 return true;
             } else {
                 return false;
             }
 
         },
-
         process: function(e) {
             let vm = this;
             vm.form = document.forms.new_application;

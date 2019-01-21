@@ -426,11 +426,17 @@ def save_proponent_data(instance, request, viewset):
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
                 'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
             }
-            #import ipdb; ipdb.set_trace()
             serializer = SaveApplicationSerializer(
                 instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
+
+            # set the isEditable fields
+            import ipdb; ipdb.set_trace()
+            for activity_type in instance.activity_types:
+                if not activity_type.data or (activity_type.data and 'editable' not in activity_type.data[0]):
+                    activity_type.data = [{'editable': get_activity_type_sys_answers(activity_type)}]
+                    activity_type.save()
 
             # Save Documents
 #            for f in request.FILES:
@@ -540,8 +546,6 @@ def save_assess_data(instance,request,viewset):
 #                        name = k.strip(code+'_text_')
 #                        if 'comment-field' not in name:
 #                            activity_type.data[0]['editable'][name]['answer'] = request.data[k]
-
-
 
                 import ipdb; ipdb.set_trace()
                 if can_process and activity_type.to_be_issued and not activity_type.processed:
