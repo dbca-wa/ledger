@@ -1,12 +1,12 @@
 <template>
 <div class="container" id="internalDash">
     <ApplicationDashTable level="internal" :url="applications_url"/>
-    <ReferralDashTable v-if="wc_version != 1.0" />
+    <AssessmentDashTable v-if="wc_version != 1.0" />
 </div>
 </template>
 <script>
 import ApplicationDashTable from '@common-utils/applications_dashboard.vue'
-import ReferralDashTable from '@common-utils/referrals_dashboard.vue'
+import AssessmentDashTable from '@common-utils/assessments_dashboard.vue'
 import {
   api_endpoints,
   helpers
@@ -24,7 +24,7 @@ export default {
     watch: {},
     components: {
         ApplicationDashTable,
-        ReferralDashTable
+        AssessmentDashTable
     },
     computed: {
         wc_version: function (){
