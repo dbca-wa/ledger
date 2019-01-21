@@ -1,5 +1,13 @@
 <template lang="html">
   <div class="container" >
+
+    <p v-if="errors.length">
+      <b>Please correct the following error(s):</b>
+      <ul>
+        <li v-for="error in errors" style='color: red'>{{ error }}</li>
+      </ul>
+    </p>
+
     <!-- <div v-if="application" class="container" id="internalApplication"> -->
     <div v-if="application" id="internalApplication">
         <div class="row">
@@ -176,6 +184,7 @@ export default {
             panelClickersInitialised: false,
             sendingReferral: false,
             title: null,
+            errors: [],
 
         }
     },
@@ -239,10 +248,36 @@ export default {
             },err=>{
             });
         },
+        validate: function(formData) {
+            let vm = this;
+            vm.errors = [];
+
+            formData.forEach((value,key) => {
+                if (key.indexOf('comment-field') == -1) { // exclude comment fields in validation
+                    if (key.indexOf('issue_date') !== -1 || key.indexOf('start_date') !== -1 || key.indexOf('expiry_date') !== -1) {
+                        if (value == '') {
+                            vm.errors.push('Required field: ' + key);
+                            console.log(key+" "+value)
+                        }
+                    }
+                }
+            });
+
+            if (!vm.errors.length) {
+                return true;
+            } else {
+                return false;
+            }
+
+        },
+
         process: function(e) {
             let vm = this;
             vm.form = document.forms.new_application;
             let formData = new FormData(vm.form);
+            if (! vm.validate(formData)) {
+                return
+            };
             formData.append('action', 'process');
             vm.$http.post(vm.application_form_url,formData).then(res=>{
               swal(
