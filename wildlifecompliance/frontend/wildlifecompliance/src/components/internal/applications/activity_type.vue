@@ -7,29 +7,29 @@
       <div>
         <input type="text" :name="activity_type.code+'_code'" :value="activity_type.code" style="display:none;"><br>
 
-        <TextField type="text" :name="activity_type.code+'_purpose'" :value="activity_type.purpose" label="Purpose" />
-        <TextField type="text" :name="activity_type.code+'_additional_info'" :value="activity_type.additional_info" label="Additional information" />
-        <Checkbox :name="activity_type.code+'_standard_advanced'" :value="activity_type.advanced" label="Standard/Advanced" :id="'id_'+activity_type.code+'_standard_advanced'" />
+        <TextField :readonly="readonly" type="text" :name="activity_type.code+'_purpose'" :value="activity_type.purpose" label="Purpose" />
+        <TextField :readonly="readonly" type="text" :name="activity_type.code+'_additional_info'" :value="activity_type.additional_info" label="Additional information" />
+        <Checkbox :readonly="readonly" :name="activity_type.code+'_standard_advanced'" :value="activity_type.advanced" label="Standard/Advanced" :id="'id_'+activity_type.code+'_standard_advanced'" />
 
-        <TextArea :name="activity_type.code+'_conditions'" :value="activity_type.conditions" label="Conditions" :id="'id_'+activity_type.code+'_conditions'" />
+        <TextArea :readonly="readonly" :name="activity_type.code+'_conditions'" :value="activity_type.conditions" label="Conditions" :id="'id_'+activity_type.code+'_conditions'" />
 
-        <DateField :name="activity_type.code+'_issue_date'" :value="activity_type.issue_date" label="Issue Date" :id="'id_'+activity_type.code+'_issue_date'" />
-        <DateField :name="activity_type.code+'_start_date'" :value="activity_type.start_date" label="Start Date" :id="'id_'+activity_type.code+'_start_date'" />
-        <DateField :name="activity_type.code+'_expiry_date'" :value="activity_type.expiry_date" label="Expiry Date" :id="'id_'+activity_type.code+'_expiry_date'" />
+        <DateField :readonly="readonly" :name="activity_type.code+'_issue_date'" :value="activity_type.issue_date" label="Issue Date" :id="'id_'+activity_type.code+'_issue_date'" />
+        <DateField :readonly="readonly" :name="activity_type.code+'_start_date'" :value="activity_type.start_date" label="Start Date" :id="'id_'+activity_type.code+'_start_date'" />
+        <DateField :readonly="readonly" :name="activity_type.code+'_expiry_date'" :value="activity_type.expiry_date" label="Expiry Date" :id="'id_'+activity_type.code+'_expiry_date'" />
 
-        <Checkbox :name="activity_type.code+'_to_be_issued'" :value="activity_type.to_be_issued" label="To be issued" :id="'id_'+activity_type.code+'_to_be_issued'" />
+        <Checkbox :readonly="readonly" :name="activity_type.code+'_to_be_issued'" :value="activity_type.to_be_issued" label="To be issued" :id="'id_'+activity_type.code+'_to_be_issued'" />
         <!--<Checkbox :name="activity_type.code+'_processed'" :value="activity_type.processed" label="Processed" :id="'id_'+activity_type.code+'_processed'" />-->
 
         <!-- Add isEditable fields to form and allow values to be overridden (original data is NOT overwritten) -->
         <div v-for="editable_element in editable_elements">
             <div v-if="'table' in editable_element">
-                <Table :name="activity_type.code+'_table_'+editable_element.table.name" :value="editable_element.table.value" :label="editable_element.table.label" :headers="editable_element.table.headers"/>
+                <Table :readonly="readonly" :name="activity_type.code+'_table_'+editable_element.table.name" :value="editable_element.table.value" :label="editable_element.table.label" :headers="editable_element.table.headers"/>
             </div>
             <div v-else-if="'text' in editable_element">
-                <TextField type="text" :name="activity_type.code+'_text_'+editable_element.text.name" :value="editable_element.text.value" :label="editable_element.text.label" />
+                <TextField :readonly="readonly" type="text" :name="activity_type.code+'_text_'+editable_element.text.name" :value="editable_element.text.value" :label="editable_element.text.label" />
             </div>
             <div v-else-if="'text_area' in editable_element">
-                <TextArea :name="activity_type.code+'_text_area_'+editable_element.text_area.name" :value="editable_element.text_area.value" :label="editable_element.text_area.label" />
+                <TextArea :readonly="readonly" :name="activity_type.code+'_text_area_'+editable_element.text_area.name" :value="editable_element.text_area.value" :label="editable_element.text_area.label" />
             </div>
             <!--{{ editable_element }}-->
         </div>
@@ -75,7 +75,7 @@
     import Table from '@/components/forms/table.vue'
     export default {
         //props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly", "help_text_url", "help_text_assessor_url"],
-        props:["activity_type", "application", "id"],
+        props:["readonly", "activity_type", "application", "id"],
         components: {TextField, TextArea, DateField, Checkbox, Radio, Table},
         /*
         props:{
@@ -93,7 +93,7 @@
             let vm = this;
             vm.editable_elements = [];
 
-            if ('editable' in vm.activity_type.data[0]) {
+            if (vm.activity_type.data !== null && 'editable' in vm.activity_type.data[0]) {
                 var data = vm.activity_type.data[0]['editable'];
                 for (var k in data) {
                     if (data[k]['type'] == 'table') {

@@ -256,6 +256,7 @@ class Application(RevisionedMixin):
                                  ('ready_for_conditions', 'Ready for Conditions'),
                                  ('ready_to_issue', 'Ready to Issue'),
                                  ('approved', 'Approved'),
+                                 ('partially_approved', 'Partially Approved'),
                                  ('declined', 'Declined'),
                                  ('discarded', 'Discarded'),
                                  ('under_review', 'Under Review'),
