@@ -1523,8 +1523,10 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'max_advance_booking': ground.max_advance_booking 
         }
 
+        print "GGG"
         # group results by campsite class
         if ground.site_type in (1, 2):
+            print "GROUND SITE TYPE"
             # from our campsite queryset, generate a distinct list of campsite classes
 #            classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name', 'tent', 'campervan', 'caravan')]
             classes = [x for x in sites_qs.distinct('mooringsite_class__name').order_by('mooringsite_class__name').values_list('pk', 'mooringsite_class', 'mooringsite_class__name', 'tent', 'campervan', 'caravan')]
@@ -1657,7 +1659,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     result['classes'][v[1].pk] = v[1].name
             # update results based on availability map
             for s in sites_qs:
-                # if there's not a free run of slots
+               # if there's not a free run of slots
                 if (not all([v[0] == 'open' for k, v in availability[s.pk].items()])) or show_all:
                     # update the days that are non-open
                     for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() if v[0] != 'open']:
@@ -1988,6 +1990,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             #for s in sites_map:
             #     print s
             bookings_map = {}
+            print "AVAIL"
+            print availability
             # make an entry under sites for each site
             for k, v in sites_map.items():
                 #for c, d in availability[v[0]].items():
@@ -1996,7 +2000,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                 #    if d[0] == 'open':
                 #       pass
                 distance_from_selection = round(self.distance(ground.wkb_geometry,k.mooringarea.wkb_geometry),2)
-
+                print "DATE ROTATE"
                 availability_map = []
                 date_rotate = start_date
                 for i in range(length):
@@ -2006,12 +2010,13 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                      if date_rotate in availability[v[0]]:
                          avbp_map = availability[v[0]][date_rotate][1]
                          avbp_map2 = availability[v[0]][date_rotate][2]
-                         
+                     print date_rotate
+                     print v[2][date_rotate]    
                      #[start_date+timedelta(days=i)]
                      for bp in v[2][date_rotate]['booking_period']:
                          bp['status'] = 'open'
                          bp['date'] = str(date_rotate)
-                         
+                          
                          if avbp_map:
                             if bp['id'] in avbp_map:
                                bp['status'] = avbp_map[bp['id']]

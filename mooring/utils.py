@@ -376,8 +376,14 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
             booking_period = {}
             selection_period = {}
             bp_result = []
+            print 'OPEN MOORING'
+            print i
+            print mooring_rate
+            print date_rotate_forward
             if mooring_rate:
                 bp_result =  mooring_rate.booking_period.booking_period.all()
+                print "BP"
+                print bp_result
                 for bp in bp_result:
                     booking_period[bp.pk] = 'open'
                     selection_period[bp.pk] = 0
@@ -532,6 +538,8 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
         stop_mark = min(max(stop, start_date), end_date)
         for i in range((end_date-stop_mark).days):
             results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
+    print "RESULTS"
+    print results
     return results
 
 
@@ -542,9 +550,10 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         Q(campsite__in=campsites_qs),
         Q(date_start__lt=end_date) & (Q(date_end__gte=start_date)|Q(date_end__isnull=True))
     ).prefetch_related('rate')
-
+    print "RATES QS"
+    print rates_qs
     # prefill all slots
-    duration = (end_date-start_date).days
+    duration = (end_date-start_date).days+1
     results = {
         site.pk: {
             start_date+timedelta(days=i): {
@@ -565,11 +574,15 @@ def get_visit_rates(campsites_qs, start_date, end_date):
             early_rates[rate.campsite.pk] = rate
         elif early_rates[rate.campsite.pk].date_start > rate.date_start:
             early_rates[rate.campsite.pk] = rate
-
+        
         # for the period of the visit overlapped by the rate, set the amounts
         start = max(start_date, rate.date_start)
         end = min(end_date, rate.date_end) if rate.date_end else end_date
-        for i in range((end-start).days):
+        print "RATE DATES"
+        print start
+        print end
+        print range((end-start).days)
+        for i in range((end-start).days+1):
             if  rate.booking_period is None:
                  continue
             booking_period = rate.booking_period.booking_period.all()
@@ -579,8 +592,11 @@ def get_visit_rates(campsites_qs, start_date, end_date):
             results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = str(rate.rate.concession)
             results[rate.campsite.pk][start+timedelta(days=i)]['child'] = str(rate.rate.child)
             results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = str(rate.rate.infant)
+            print "RATE 2 - "+str(rate.campsite.pk)
+            print start+timedelta(days=i)
+            print booking_period
             for b in booking_period:
-                booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'created' : b.created  }
+                booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'created' : b.created }
 #                booking_period_row = {} 
 #                booking_period_row['id'] = b.id
 #                booking_period_row['period_name'] = b.period_name
