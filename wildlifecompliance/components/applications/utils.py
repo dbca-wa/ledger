@@ -492,7 +492,7 @@ def save_assessor_data(instance, request, viewset):
 
 def save_assess_data(instance,request,viewset):
 
-    if instance.processing_status == Application.PROCESSING_STATUS_DRAFT:
+    if instance.processing_status == instance.PROCESSING_STATUS_DRAFT:
         return
 
     can_process = True if request.data.has_key('action') and request.data['action'] == 'process' else False
