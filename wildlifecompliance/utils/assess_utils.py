@@ -151,7 +151,7 @@ def create_licence(application, activity_name, new_app):
 
 def all_related_licences(application):
     licence_number = application.licences.all().last().licence_number
-    return WildlifeLicence.objects.filter(licence_number=licence_number, expiry_date_gte=date.today).order_by('id')
+    return WildlifeLicence.objects.filter(licence_number=licence_number, expiry_date__gte=date.today()).order_by('id')
 
 def all_related_applications(application):
     app_ids = WildlifeLicence.objects.filter(licence_number=application.licences.all().last().licence_number).values_list('current_application_id', flat=True).distinct()
