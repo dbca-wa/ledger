@@ -1,15 +1,14 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-    A new organisation request has been submitted:
+    A new organisation access request has been submitted:
 
-    Organisation : {{ request.name }}
+    Organisation: {{ request.name }}
 
-    ABN : {{ request.abn}}
+    ABN: {{ request.abn }}
 
-    <p>
-    You can access this Organisation Request using the following link:
-    </p>
-    <a href="{{url}}">Access Organisation Request</a>
+    Link: {{url}}
+
+    Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
 
 {%  endblock %}

@@ -1,7 +1,7 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-        Your link to the following organisation has been reinstated:
+        You have been made a consultant to the following organisation:
 
         Organisation: {{ organisation.name }}
 
@@ -9,6 +9,6 @@
 
         You were linked to this organisation by {{ linked_by.get_full_name }} ({{linked_by.email}}).
     
-        You can now make applications on behalf of this organisation.
+        You can now make applications on behalf of and manage this organisation.
 
 {%  endblock %}

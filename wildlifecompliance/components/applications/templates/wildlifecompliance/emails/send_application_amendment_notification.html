@@ -12,9 +12,7 @@
     {% if amendment_details %}
         <p><span> Amendment details: <br> {{ amendment_details }}</span></p>
     {% endif %}
-    <p>
-    You can access this Application using the following link:
-    </p>
-     <a href="{{url}}">Access Application</a>
 
+    <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
+    <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
 {%  endblock %}

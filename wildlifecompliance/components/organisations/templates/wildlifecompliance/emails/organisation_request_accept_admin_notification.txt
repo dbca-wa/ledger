@@ -3,11 +3,11 @@
 {%  block content %}
     The following organisation access request has been approved:
 
-    Access Request No : {{ request.id }}
+    Access Request No: {{ request.id }}
 
-    Organisation : {{ request.name }}
+    Organisation: {{ request.name }}
 
-    ABN : {{ request.abn}}
+    ABN: {{ request.abn }}
 
 
 {%  endblock %}

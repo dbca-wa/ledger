@@ -40,7 +40,6 @@ from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.applications.models import (
     Application,
     ApplicationDocument,
-    Referral,
     ApplicationCondition,
     ApplicationStandardCondition,
     Assessment,
@@ -49,7 +48,6 @@ from wildlifecompliance.components.applications.models import (
     ApplicationUserAction
 )
 from wildlifecompliance.components.applications.serializers import (
-    SendReferralSerializer,
     ApplicationSerializer,
     InternalApplicationSerializer,
     SaveApplicationSerializer,
@@ -58,9 +56,6 @@ from wildlifecompliance.components.applications.serializers import (
     DTExternalApplicationSerializer,
     ApplicationUserActionSerializer,
     ApplicationLogEntrySerializer,
-    DTReferralSerializer,
-    ReferralSerializer,
-    ReferralApplicationSerializer,
     ApplicationConditionSerializer,
     ApplicationStandardConditionSerializer,
     ProposedLicenceSerializer,
@@ -633,27 +628,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'])
-    def assesor_send_referral(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = SendReferralSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance.send_referral(request,serializer.validated_data['email'])
-            serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e,'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
     def draft(self, request, *args, **kwargs):
         try:
@@ -777,120 +751,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise
         except ValidationError as e:
             raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-
-class ReferralViewSet(viewsets.ModelViewSet):
-    queryset = Referral.objects.all()
-    serializer_class = ReferralSerializer
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, context={'request':request})
-        return Response(serializer.data)
-
-    @list_route(methods=['GET',])
-    def user_list(self, request, *args, **kwargs):
-        qs = self.get_queryset().filter(referral=request.user)
-        serializer = DTReferralSerializer(qs, many=True)
-        return Response(serializer.data)
-
-    @list_route(methods=['GET',])
-    def datatable_list(self, request, *args, **kwargs):
-        application = request.GET.get('application',None)
-        qs = self.get_queryset().all()
-        if application:
-            qs = qs.filter(application_id=int(application))
-        serializer = DTReferralSerializer(qs, many=True)
-        return Response(serializer.data)
-
-    @detail_route(methods=['GET',])
-    def complete(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            instance.complete(request)
-            serializer = self.get_serializer(instance, context={'request':request})
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['GET',])
-    def remind(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            instance.remind(request)
-            serializer = InternalApplicationSerializer(instance.application,context={'request':request})
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['GET',])
-    def recall(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            instance.recall(request)
-            serializer = InternalApplicationSerializer(instance.application,context={'request':request})
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['GET',])
-    def resend(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            instance.resend(request)
-            serializer = InternalApplicationSerializer(instance.application,context={'request':request})
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['post'])
-    def send_referral(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = SendReferralSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance.send_referral(request,serializer.validated_data['email'])
-            serializer = self.get_serializer(instance, context={'request':request})
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e,'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                print e
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
