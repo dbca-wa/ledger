@@ -250,17 +250,20 @@ export default {
         },
         validate: function(formData) {
             let vm = this;
+            var tmp_formData = formData;
             vm.errors = [];
 
             formData.forEach((value,key) => {
                 if (key.indexOf('comment-field') == -1) { // exclude comment fields in validation
                     if (key.indexOf('issue_date') !== -1 || key.indexOf('start_date') !== -1 || key.indexOf('expiry_date') !== -1) {
-                        if (value == '') {
+                        var code = key.split('_')[0]
+                        if (value == '' && tmp_formData.get(code+'_to_be_issued')!=null) {
                             vm.errors.push('Required field: ' + key);
-                            console.log(key+" "+value)
+                            //console.log(key+" "+value)
                         }
                     }
                 }
+                //console.log(key+" - "+value)
             });
 
             if (!vm.errors.length) {

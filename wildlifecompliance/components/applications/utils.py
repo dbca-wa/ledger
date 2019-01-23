@@ -579,7 +579,7 @@ def save_assess_data(instance,request,viewset):
             raise
 
     #import ipdb; ipdb.set_trace()
-    if can_process:
+    if can_process and instance.processing_status != 'declined':
         pdflatex(request, instance)
 
     return
