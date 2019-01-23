@@ -1,7 +1,7 @@
 <template lang="html">
     <div class="top-buffer bottom-buffer">
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div v-if="isRepeatable" v-for="n in repeat" class="panel panel-default">
+            <div class="repeat-group panel-body" :data-que="n">
                 <label :id="id" class="inline">{{label}}</label>
                     <!--<i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>-->
                 <template v-if="help_text">
@@ -25,7 +25,20 @@
                 </div>
             </div>
         </div>
+        <button v-on:click="handleChange">Add Another</button>
     </div>
+
+
+<!--
+    <div>
+            <div v-if="isRepeatable" v-for="n in repeat">
+                <div class="repeat-group" :data-que="n">
+                            <slot></slot>
+                </div>
+            </div>
+            <button v-on:click="handleChange">Add Another</button>
+    </div>
+-->
 </template>
 
 <script>
@@ -36,6 +49,8 @@ export default {
     props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode"],
     data:function () {
         return{
+            repeat:2,
+            isRepeatable:true,
             isExpanded:true
         }
     },
@@ -46,7 +61,58 @@ export default {
         },
         minimize:function(e) {
             this.isExpanded = false;
-        }
+        },
+        handleChange:function (e) {
+            let vm = this;
+
+            //vm.show_spinner = true;
+            if (vm.isRepeatable) {
+
+                let  el = $(e.target).attr('data-que');
+                //let avail = $('input[name='+e.target.name+']');
+                let avail = $('.repeat-group');
+                avail = [...avail.map(id => {
+                    return $(avail[id]).attr('data-que');
+                })];
+                //avail.pop();
+                if (vm.repeat == 1) {
+                    vm.repeat+=1;
+                }else {
+                    if (avail.indexOf(el) < 0 ){
+                        vm.repeat+=1;
+                    }
+                }
+                //$('#mydiv1').clone().appendTo('#mydiv2');
+                //$('#mydiv1').clone().appendTo('div[data-que='+vm.repeat+']');
+                //$('div[data-que='+vm.repeat+']').clone().appendTo('div[data-que=1]');
+                //$('div[data-que=1]').clone().appendTo('div[data-que='+vm.repeat+']');
+                //$('div[data-que=1]').html($('div[data-que='+vm.repeat+']').html());
+            //    $('div[data-que='+vm.repeat+']').html($('div[data-que=1]').html());
+                //jQuery('.div1').html(jQuery("#div2").html());
+                //$(e.target).css({ 'display': 'none'});
+
+                var id = vm.repeat - 1;
+                $('div[data-que='+id+']').html($('div[data-que=1]').html());
+            }
+            //vm.show_spinner = false;
+        },
+        add_another:function (e) {
+            var id = vm.repeat - 1;
+            //$('div[data-que='+vm.repeat-1+']').html($('div[data-que=1]').html());
+            $('div[data-que='+id+']').html($('div[data-que=1]').html());
+        },
+        add_empty_div:function (e) {
+            // add empty div placeholder for 'add another' button
+            let vm = this;
+            if (vm.isRepeatable) {
+                let avail = $('.repeat-group');
+                avail = [...avail.map(id => {
+                    return $(avail[id]).attr('data-que');
+                })];
+                vm.repeat+=1;
+            }
+        },
+
     },
     mounted:function () {
         var vm =this;
