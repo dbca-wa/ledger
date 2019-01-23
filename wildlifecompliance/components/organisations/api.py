@@ -519,33 +519,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
                 instance.save()
                 instance.log_user_action(OrganisationAction.ACTION_ID_UPDATE.format(
                 '{} ({})'.format(instance.name, instance.abn)), request)
-
-            _applications = Application.objects.filter(org_applicant=instance.organisation.id)
-            # Notify internal users new ID uploaded.
-            if _applications:
-                emails = set()
-                for _application in _applications:
-                    # Officer assigned to the application
-                    if _application.assigned_officer_id:
-                        emails.add(EmailUser.objects.get(id=_application.assigned_officer_id).email)
-                    # Officer belonging to a group assigned to the application
-                    if ApplicationRequest.objects.filter(application_id=_application.id).exists():
-                        _requests = ApplicationRequest.objects.filter(application_id=_application.id)
-                        for _request in _requests:
-                            if Assessment.objects.filter(id=_request.id).exists():
-                                _group = Assessment.objects.filter(id=_request.id).first()
-                                if _group.assessor_group_id:
-                                    _group_type = ApplicationGroupType.objects\
-                                                .filter(id=_group.assessor_group_id).first()
-                                    _group_emails = _group_type.members.values_list('email', flat=True)
-                                    for _email in _group_emails:
-                                        emails.add(EmailUser.objects.get(email=_email).email)
-                contact = OrganisationContact.objects.get(organisation=instance).email
-                contact_email = EmailUser.objects.filter(email=request.user).first()
-                if EmailUser.objects.filter(email=contact).first():
-                    contact_email = EmailUser.objects.filter(email=contact).first()
-                send_organisation_id_upload_email_notification(emails, instance, contact_email, request)
-
+            Organisation.send_organisation_id_upload_email_notification(instance, request)
             serializer = OrganisationSerializer(instance, partial=True)
             return Response(serializer.data)
         except serializers.ValidationError:

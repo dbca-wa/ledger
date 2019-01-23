@@ -10,7 +10,7 @@ from django.contrib.postgres.fields.jsonb import JSONField
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from wildlifecompliance.components.main.models import UserAction,CommunicationsLogEntry
-from wildlifecompliance.components.organisations.utils import random_generator, is_last_admin
+from wildlifecompliance.components.organisations.utils import random_generator, is_last_admin, get_officer_email_list
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
                         send_organisation_request_amendment_requested_email_notification,
@@ -25,7 +25,8 @@ from wildlifecompliance.components.organisations.emails import (
                         send_organisation_request_email_notification,
                         send_organisation_request_link_email_notification,
                         send_organisation_request_decline_admin_email_notification,
-                        send_organisation_request_accept_admin_email_notification
+                        send_organisation_request_accept_admin_email_notification,
+                        send_organisation_id_upload_email_notification
                     )
 
 @python_2_unicode_compatible
@@ -356,6 +357,13 @@ class Organisation(models.Model):
                                                       is_admin=True)
         recipients = [c.email for c in contacts]
         send_organisation_request_link_email_notification(self, request, recipients)
+
+    def send_organisation_id_upload_email_notification(self, request):
+        # Notify reviewing internal officers of update to the organisation ID.
+        officer_list = get_officer_email_list(self)
+        contact_email = EmailUser.objects.filter(email=request.user).first()
+        if officer_list:
+            send_organisation_id_upload_email_notification(officer_list, self, contact_email, request)
 
     @staticmethod
     def existance(abn):

@@ -1,7 +1,7 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-    Identification for the following organisation you are linked to has been uploaded.
+    Identification details for the following organisation you are assigned to has been uploaded.
 
     Organisation: {{ organisation.name }}
 

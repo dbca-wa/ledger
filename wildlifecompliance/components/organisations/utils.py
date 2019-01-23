@@ -90,6 +90,21 @@ def is_consultant(organisation,user):
     return False
 
 
+def get_officer_email_list(organisation):
+    from wildlifecompliance.components.applications.models import Application
+    # Gets a list of internal staff emails assigned to an Application for an Organisation.
+    emails = set()
+    applications = Application.objects.filter(org_applicant=organisation.id)\
+        .exclude(customer_status__in=('accepted', 'declined'))
+    for application in applications:
+        # Officer assigned to the application
+        if application.is_assigned:
+            emails.add(application.assigned_officer.email)
+        # Officer belonging to a group assigned to the application
+        for assessor in application.allowed_assessors:
+            emails.add(assessor.email)
+    return emails
+
 
 def random_generator(size=12, chars=string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
