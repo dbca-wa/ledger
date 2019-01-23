@@ -101,9 +101,9 @@ export default {
         let vm = this;
         let internal_application_headers = [];
         if (wc_version == "1.0") {
-            internal_application_headers = ["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Lodged on","Action"];
+            internal_application_headers = ["Number","Licence Category","Activity","Submitter","Applicant","Status","Lodged on","Action"];
         } else {
-            internal_application_headers = ["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
+            internal_application_headers = ["Number","Licence Category","Activity","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
         }
         let internal_columns = [];
         if (wc_version == "1.0") {
@@ -115,12 +115,11 @@ export default {
                     }
                 },
                 {data: "class_name"},
-                {data: "activity_type_names"},
                 {
-                    // replace with purposes
+                    data: "activity_purpose_string",
                     mRender:function (data,type,full) {
-                        let purposes = '';
-                        return purposes;
+                        let output = data.replace(/(?:\r\n|\r|\n)/g, '<br>');
+                        return output;
                     }
                 },
                 {
@@ -173,12 +172,11 @@ export default {
                     }
                 },
                 {data: "class_name"},
-                {data: "activity_type_names"},
                 {
-                    // replace with purposes
+                    data: "activity_purpose_string",
                     mRender:function (data,type,full) {
-                        let purposes = '';
-                        return purposes;
+                        let output = data.replace(/(?:\r\n|\r|\n)/g, '<br>');
+                        return output;
                     }
                 },
                 {
@@ -241,12 +239,11 @@ export default {
                     }
                 },
                 {data: "class_name"},
-                {data: "activity_type_names"},
                 {
-                    // replace with purposes
+                    data: "activity_purpose_string",
                     mRender:function (data,type,full) {
-                        let purposes = '';
-                        return purposes;
+                        let output = data.replace(/(?:\r\n|\r|\n)/g, '<br>');
+                        return output;
                     }
                 },
                 {
@@ -300,12 +297,11 @@ export default {
                     }
                 },
                 {data: "class_name"},
-                {data: "activity_type_names"},
                 {
-                    // replace with purposes
+                    data: "activity_purpose_string",
                     mRender:function (data,type,full) {
-                        let purposes = '';
-                        return purposes;
+                        let output = data.replace(/(?:\r\n|\r|\n)/g, '<br>');
+                        return output;
                     }
                 },
                 {
@@ -375,7 +371,7 @@ export default {
             application_licence_types : [],
             application_submitters: [],
             application_status: [],
-            application_ex_headers:["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Lodged on","Action"],
+            application_ex_headers:["Number","Licence Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
                 autoWidth: false,
                 language: {

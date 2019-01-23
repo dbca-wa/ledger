@@ -109,6 +109,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     licence_fee = serializers.DecimalField(max_digits=8, decimal_places=2, coerce_to_string=False)
     class_name = serializers.SerializerMethodField(read_only=True)
     activity_type_names = serializers.SerializerMethodField(read_only=True)
+    activity_purpose_string = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
 
@@ -155,6 +156,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'licence_fee',
             'class_name',
             'activity_type_names',
+            'activity_purpose_string',
             'can_current_user_edit'
         )
         if settings.WC_VERSION != "1.0":
@@ -194,6 +196,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             if item == "name":
                 return obj.licence_type_data["name"]
         return obj.licence_type_data["id"]
+
+    def get_activity_purpose_string(self, obj):
+        return obj.licence_type_name.split(' - ')[1].replace('), ',')\n')
 
     def get_activity_type_names(self, obj):
         activity_type=[]
@@ -298,6 +303,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'lodgement_date',
             'class_name',
             'activity_type_names',
+            'activity_purpose_string',
             'can_user_view',
             'can_current_user_edit'
         )
