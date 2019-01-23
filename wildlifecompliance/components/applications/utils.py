@@ -424,7 +424,7 @@ def save_assess_data(instance,request,viewset):
                     if not activity_type.data:
                         activity_type.data = [add_editable_items(activity_type)]
 
-                    create_licence(instance, activity_type.activity_name, new_app)
+                    create_licence(instance, activity_type, new_app)
                     new_app = False
 
                 #activity_type.data = [add_editable_items(activity_type)]

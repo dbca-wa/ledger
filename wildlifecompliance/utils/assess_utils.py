@@ -80,12 +80,12 @@ def create_app_activity_type_model(licence_category, app_ids=[], exclude_app_ids
 
     return obj_list
 
-def create_licence(application, activity_name, new_app):
+def create_licence(application, activity_type, new_app):
     """ activity_name='Importing Fauna (Non-Commercial)'
         licence_category ='Flora Other Purpose'
     """
     licence = None
-    activity=WildlifeLicenceActivity.objects.get(name=activity_name)
+    activity=WildlifeLicenceActivity.objects.get(name=activity_type.activity_name)
     licence_class = WildlifeLicenceClass.objects.get(short_name=application.licence_category)
     #import ipdb; ipdb.set_trace()
     if application.applicant_type == Application.APPLICANT_TYPE_ORGANISATION:
@@ -102,11 +102,14 @@ def create_licence(application, activity_name, new_app):
                 org_applicant_id=application.applicant_id,
                 submitter=application.submitter,
                 licence_type=activity,
-                licence_class=licence_class
+                licence_class=licence_class,
+		        expiry_date=activity_type.expiry_date,
+		        issue_date=activity_type.issue_date,
+		        start_date=activity_type.start_date
             )
         else:
             licence = WildlifeLicence.objects.create(current_application=application,org_applicant_id=application.applicant_id,submitter=application.submitter,
-                          licence_type=activity,licence_class=licence_class)
+                          licence_type=activity,licence_class=licence_class, expiry_date=activity_type.expiry_date, issue_date=activity_type.issue_date, start_date=activity_type.start_date)
 
     elif application.applicant_type == Application.APPLICANT_TYPE_PROXY:
         qs_licence = WildlifeLicence.objects.filter(proxy_applicant_id=application.applicant_id, licence_class=licence_class)
@@ -122,11 +125,14 @@ def create_licence(application, activity_name, new_app):
                 proxy_applicant_id=application.applicant_id,
                 submitter=application.submitter,
                 licence_type=activity,
-                licence_class=licence_class
+                licence_class=licence_class,
+		        expiry_date=activity_type.expiry_date,
+		        issue_date=activity_type.issue_date,
+		        start_date=activity_type.start_date
             )
         else:
             licence = WildlifeLicence.objects.create(current_application=application, proxy_applicant_id=applicant_id, submitter=application.submitter,
-                          licence_type=activity, licence_class=licence_class)
+                          licence_type=activity, licence_class=licence_class, expiry_date=activity_type.expiry_date, issue_date=activity_type.issue_date, start_date=activity_type.start_date)
 
     #elif application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER:
     else: # assume applicant is the submitter
@@ -142,10 +148,14 @@ def create_licence(application, activity_name, new_app):
                 current_application=application,
                 submitter_id=application.applicant_id,
                 licence_type=activity,
-                 licence_class=licence_class
+                licence_class=licence_class,
+		        expiry_date=activity_type.expiry_date,
+		        issue_date=activity_type.issue_date,
+		        start_date=activity_type.start_date
             )
         else:
-            licence = WildlifeLicence.objects.create(current_application=application, submitter_id=application.applicant_id, licence_type=activity, licence_class=licence_class)
+            licence = WildlifeLicence.objects.create(current_application=application, submitter_id=application.applicant_id, licence_type=activity, licence_class=licence_class,
+						  expiry_date=activity_type.expiry_date, issue_date=activity_type.issue_date, start_date=activity_type.start_date)
 
     return licence
 

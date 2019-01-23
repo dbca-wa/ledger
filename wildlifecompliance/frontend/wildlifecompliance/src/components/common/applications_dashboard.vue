@@ -153,9 +153,9 @@ export default {
                     // Actions
                     mRender:function (data,type,full) {
                         let links = '';
-                        if (!vm.is_external){
-                            links += `<a href='/external/application/${full.id}'>View</a><br/>`; //changed this to external, since external will be readonly view
 
+                        links += `<a href='/external/application/${full.id}'>View</a><br/>`; //changed this to external, since external will be readonly view
+                        if (!vm.is_external){
                             if (full.processing_status!='Draft') {
                                 links +=  `<a href='/internal/application/${full.id}'>Assess</a><br/>`;
                             }
@@ -279,16 +279,11 @@ export default {
                     // Actions
                     mRender:function (data,type,full) {
                         let links = '';
-                        if (!vm.is_external){
-                            links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
-                        }
-                        else{
+                        links += `<a href='/external/application/${full.id}'>View</a><br/>`; //changed this to external, since external will be readonly view
+                        if (vm.is_external){
                             if (full.can_current_user_edit) {
                                 links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
                                 links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                            }
-                            else if (full.can_user_view) {
-                                links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
                             }
                         }
                         return links;
