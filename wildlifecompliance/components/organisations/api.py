@@ -50,7 +50,7 @@ from wildlifecompliance.components.organisations.serializers import (
                                         OrganisationActionSerializer,
                                         OrganisationRequestCommsSerializer,
                                         OrganisationCommsSerializer,
-                                        OrganisationUnlinkUserSerializer,
+                                        OrgUserCheckSerializer,
                                         OrgUserAcceptSerializer,
                                         MyOrganisationsSerializer,
                                         OrganisationCheckExistSerializer,
@@ -61,8 +61,6 @@ from wildlifecompliance.components.applications.serializers import (
 
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_address_updated_email_notification,
-                        send_organisation_id_upload_email_notification,
-                        send_organisation_request_email_notification,
                     )
 
 
@@ -229,7 +227,8 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def unlink_user(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = OrgUserAcceptSerializer(data=request.data)
+            request.data.update([('org_id', instance.id)])
+            serializer = OrgUserCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
                 email = serializer.validated_data['email']
@@ -276,7 +275,8 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def make_user(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = OrgUserAcceptSerializer(data=request.data)
+            request.data.update([('org_id', instance.id)])
+            serializer = OrgUserCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
                 email = serializer.validated_data['email']
@@ -298,7 +298,8 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def make_consultant(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = OrgUserAcceptSerializer(data=request.data)
+            request.data.update([('org_id', instance.id)])
+            serializer = OrgUserCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
                 email = serializer.validated_data['email']
@@ -321,7 +322,8 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def suspend_user(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = OrgUserAcceptSerializer(data=request.data)
+            request.data.update([('org_id', instance.id)])
+            serializer = OrgUserCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
                 email = serializer.validated_data['email']

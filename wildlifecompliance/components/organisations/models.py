@@ -10,7 +10,7 @@ from django.contrib.postgres.fields.jsonb import JSONField
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from wildlifecompliance.components.main.models import UserAction,CommunicationsLogEntry
-from wildlifecompliance.components.organisations.utils import random_generator, is_last_admin, get_officer_email_list
+from wildlifecompliance.components.organisations.utils import random_generator, get_officer_email_list
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
                         send_organisation_request_amendment_requested_email_notification,
@@ -26,7 +26,8 @@ from wildlifecompliance.components.organisations.emails import (
                         send_organisation_request_link_email_notification,
                         send_organisation_request_decline_admin_email_notification,
                         send_organisation_request_accept_admin_email_notification,
-                        send_organisation_id_upload_email_notification
+                        send_organisation_id_upload_email_notification,
+                        send_organisation_contact_consultant_email_notification,
                     )
 
 @python_2_unicode_compatible
@@ -214,8 +215,6 @@ class Organisation(models.Model):
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
                 if org_contact.user_role == 'organisation_admin':
-                    if is_last_admin(self, user):
-                        raise ValidationError({'last_admin': 'This user is last Organisation Administrator.'})
                     org_contact.user_status = 'unlinked'
                     org_contact.save()
                     # delete delegate
@@ -259,9 +258,6 @@ class Organisation(models.Model):
                 delegate = UserDelegation.objects.get(organisation=self, user=user)
             except UserDelegation.DoesNotExist:
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
-            # check user can change role.
-            if is_last_admin(self, user):
-                raise ValidationError({'last_admin': 'This user is the last Organisation Administrator'})
             # delete contact person
             try:
                 org_contact = OrganisationContact.objects.get(organisation=self, email=delegate.user.email)
@@ -281,9 +277,6 @@ class Organisation(models.Model):
                 delegate = UserDelegation.objects.get(organisation=self, user=user)
             except UserDelegation.DoesNotExist:
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
-            # Validate for Organisation Admin
-            if is_last_admin(self, user):
-                raise ValidationError({'last_admin': 'This user is the last Organisation Administrator'})
             # add consultant
             try:
                 org_contact = OrganisationContact.objects.get(organisation=self, email=delegate.user.email)
@@ -304,9 +297,6 @@ class Organisation(models.Model):
                 delegate = UserDelegation.objects.get(organisation=self,user=user)
             except UserDelegation.DoesNotExist:
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
-            # check user can be suspended.
-            if is_last_admin(self, user):
-                raise ValidationError({'last_admin': 'This user is the last Organisation Administrator'})
             # delete contact person
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
