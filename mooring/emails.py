@@ -245,21 +245,31 @@ def send_registered_vessels_email(content):
     email_obj.html_template = 'mooring/email/reg_ves.html'
     email_obj.txt_template = 'mooring/email/reg_ves.txt'
 
-    if not settings.PRODUCTION_EMAIL:
-        emails.append(settings.NON_PROD_EMAIL)
-    else:
-        loc = AdmissionsLocation.objects.filter(key='ria')
-        if loc.count() > 0:
-            group = loc[0].mooring_group
-            if group:
-                emails = []
-                for mem in group.members.all():
-                    if is_admin(mem):
-                        emails.append(mem.email)
+#    if not settings.PRODUCTION_EMAIL:
+#        emails.append(settings.NON_PROD_EMAIL)
+#    else:
+    admin_emails = settings.NOTIFICATION_EMAIL
+    ae = admin_emails.split(',')
+    for i in ae:
+        emails.append(i)
+
+
+    loc = AdmissionsLocation.objects.filter(key='ria')
+    if loc.count() > 0:
+        group = loc[0].mooring_group
+        if group:
+            emails = []
+            for mem in group.members.all():
+                if is_admin(mem):
+                    emails.append(mem.email)
+
+
+     
 
     context = {
         'content': content
     }
+    
     email_obj.send(emails, from_address=default_from_email, context=context)
 
 
