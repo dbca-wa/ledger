@@ -156,13 +156,10 @@ export default {
                             links +=  `<a href='/internal/application/${full.id}'>Assess</a><br/>`;
                         }
                     }
-                    else{
+                    if (vm.is_external){
                         if (full.can_current_user_edit) {
                             links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
                             links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                        }
-                        else if (full.can_user_view) {
-                            links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
                         }
                     }
                     return links;

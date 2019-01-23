@@ -17,7 +17,7 @@
                 <a :href="application.pdf_licence" target="_blank"> <i class="fa fa-file-pdf-o" style="font-size:36px;color:red"></i> </a>
             </div>
             <div style="float:left">
-                <h3>Application: {{ application.lodgement_number }}</h3>
+                <h3>Application: {{ application.lodgement_number }} ({{ application.processing_status }})</h3>
                 <p>Licence category: {{ application.licence_category }}</p>
             </div>
         </div>
@@ -36,12 +36,12 @@
 
                     <div class="tab-content" id="pills-tabContent">
                       <div class="tab-pane fade" v-for="activity_type in application.activity_types" :id="'pills-'+activity_type.activity_name_str" role="tabpanel" :aria-labelledby="'pills-tab-'+activity_type.activity_name_str">
-                        <ActivityType :readonly="pdf_exists" :application="application" :activity_type="activity_type" :id="'id_'+activity_type.activity_name_str"></ActivityType>
+                        <ActivityType :readonly="is_readonly" :application="application" :activity_type="activity_type" :id="'id_'+activity_type.activity_name_str"></ActivityType>
                       </div>
                     </div>
 
-                    <button class="btn btn-primary btn-save" @click.prevent="save()" :title="saveTitle" :disabled="pdf_exists">Save Changes</button>
-                    <button class="btn btn-primary btn-save" @click.prevent="process()" :title="processTitle" :disabled="pdf_exists">Process</button>
+                    <button class="btn btn-primary btn-save" @click.prevent="save()" :title="saveTitle" :disabled="is_readonly">Save Changes</button>
+                    <button class="btn btn-primary btn-save" @click.prevent="process()" :title="processTitle" :disabled="is_readonly">Process</button>
 
                 </form>
             </div>
@@ -231,6 +231,9 @@ export default {
         },
         processTitle: function() {
             return this.pdf_exists ? 'The application has already been processed': 'Create Licences and PDF'
+        },
+        is_readonly: function() {
+            return this.pdf_exists || this.application.processing_status == 'Draft';
         },
 
     },

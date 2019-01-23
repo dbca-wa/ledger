@@ -278,7 +278,7 @@ class Application(RevisionedMixin):
                                ('under_review', 'Under Review'),
                                ('amendment_required', 'Amendment Required'),
                                ('accepted', 'Accepted'),
-                               ('partially_accepted', 'Partially Accepted'),
+                               ('partially_approved', 'Partially Approved'),
                                ('declined', 'Declined'),
                                )
 
@@ -296,7 +296,8 @@ class Application(RevisionedMixin):
         'id_required',
         'returns_required',
         'approved',
-        'declined']
+        'declined',
+        'partially_approved']
 
     PROCESSING_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
                                  ('with_officer', 'With Officer'),
