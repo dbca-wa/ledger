@@ -248,6 +248,7 @@ def send_registered_vessels_email(content):
 #    if not settings.PRODUCTION_EMAIL:
 #        emails.append(settings.NON_PROD_EMAIL)
 #    else:
+    emails = []
     admin_emails = settings.NOTIFICATION_EMAIL
     ae = admin_emails.split(',')
     for i in ae:
@@ -258,7 +259,6 @@ def send_registered_vessels_email(content):
     if loc.count() > 0:
         group = loc[0].mooring_group
         if group:
-            emails = []
             for mem in group.members.all():
                 if is_admin(mem):
                     emails.append(mem.email)
