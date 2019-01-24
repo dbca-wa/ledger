@@ -36,7 +36,7 @@
         </thead>
         <tbody>
         {% for change_group in change_groups %}
-             <tr><td>{{ change_group.id }}</td><td>{{ change_group.name }}</td><td><a href='{% url 'dash-booking-policy-change-view' change_group.id %}'>View</a>  <a href='{% url 'dash-booking-policy-change-edit' change_group.id %}'>Edit</a></td></tr>
+             <tr><td>{{ change_group.id }}</td><td>{{ change_group.name }}</td><td><a href='{% url 'dash-booking-policy-change-view' change_group.id %}'>View Policy</a>  <a href='{% url 'dash-booking-policy-change-edit' change_group.id %}'>Edit Group</a></td></tr>
         {% endfor %}
         </tbody>
         </table>
@@ -58,7 +58,7 @@
 	</thead>
         <tbody>
         {% for cancel_group in cancel_groups %}
-             <tr><td>{{ cancel_group.id }}</td><td>{{ cancel_group.name }}</td><td><a href='{% url 'dash-booking-policy-cancel-view' cancel_group.id %}'>View</a> <a href='{% url 'dash-booking-policy-cancel-edit' cancel_group.id %}'>Edit</a></td></tr>
+             <tr><td>{{ cancel_group.id }}</td><td>{{ cancel_group.name }}</td><td><a href='{% url 'dash-booking-policy-cancel-view' cancel_group.id %}'>View Policy</a> <a href='{% url 'dash-booking-policy-cancel-edit' cancel_group.id %}'>Edit Group</a></td></tr>
         {% endfor %}
 	</tbody>
         </table>
