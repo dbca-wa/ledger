@@ -23,6 +23,7 @@
             </title>
 
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <input type='hidden' id='template_group' name='template_group' value='{{ TEMPLATE_GROUP }}'>
     </head>
     <body>
         <header class="{% if TEMPLATE_GROUP == 'rottnest' %}topmast-rottnest{% else %}topmast{% endif %}">
@@ -85,6 +86,8 @@
                                                 <li role="separator" class="divider"></li>
                                                 <li><a href="{% url 'admissions_cost' %}">Manage Admission Fees</a></li>
                                                 <li><a href="{% url 'dash-bookingperiod' %}">Manage Booking Periods</a></li>
+                                                <li><a href="{% url 'dash-bookingpolicy' %}">Manage Booking Policy</a></li>
+
                                                 <li role="separator" class="divider"></li>
                                             {% endif %}
                                             <li><a href="{% url 'account' %}">Manage Account</a></li>

@@ -1979,18 +1979,22 @@ export default {
 
         $(document).foundation();
         console.log('Loading map...');
+        var template_group = $('#template_group').val();
+        if (template_group == 'rottnest') { 
+		vm.admissions_key = 'ria';
+	}
         // enable arrival/departure date pickers
-        $.ajax({
-            url: "/api/admissions_key",
-            dataType:'json',
-            data:{ 'url' : window.location.href,},
-            success: function(data, type, xhr){
-                if (!data.includes("Error")){
-                    console.log("No error");
-                    vm.admissions_key = data;
-                }
-            }
-        })
+        // $.ajax({
+        //    url: "/api/admissions_key",
+        //    dataType:'json',
+        //    data:{ 'url' : window.location.href,},
+        //    success: function(data, type, xhr){
+        //        if (!data.includes("Error")){
+        //            console.log("No error");
+        //            vm.admissions_key = data;
+        //        }
+        //    }
+        //})
         var nowTemp = new Date();
         var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
@@ -2473,7 +2477,9 @@ export default {
                     }
                     var vessel_size = $('#vesselSize').val();
                     var vessel_draft = $('#vesselDraft').val();
-                    if (vessel_size > 0 && vessel_draft > 0) {
+                    var vessel_rego = $('#vesselRego').val();
+
+                    if (vessel_size > 0 && vessel_draft > 0 && vessel_rego.length > 1) {
                         var distance_radius = properties.props.park.distance_radius;
                         $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&distance_radius='+distance_radius+'&'+vm.bookingParam);
                         // $("#mapPopupBook").attr('target','_blank');
@@ -2511,7 +2517,9 @@ export default {
                         $('#mapPopupBook').show();
                         $("#mapPopupImage").hide();
                         var vessel_size = $('#vesselSize').val();
-                        if (vessel_size > 0 ) {
+                        var vessel_rego = $('#vesselRego').val();
+                        var vessel_draft = $('#vesselDraft').val();
+                        if (vessel_size > 0 && vessel_draft > 0 && vessel_rego.length > 1) { 
                                var distance_radius = properties.props.park.distance_radius;
                                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&distance_radius='+distance_radius+'&'+vm.bookingParam);
                         } else {

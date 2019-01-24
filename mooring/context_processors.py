@@ -23,3 +23,11 @@ def mooring_url(request):
         'SYSTEM_NAME' : settings.SYSTEM_NAME
         }
 
+
+def template_context(request):
+    """Pass extra context variables to every template.
+    """
+    context = mooring_url(request)
+
+    return context
+

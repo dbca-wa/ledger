@@ -14,7 +14,8 @@ INSTALLED_APPS += [
     'mooring',
     'taggit',
     'rest_framework',
-    'rest_framework_gis'
+    'rest_framework_gis',
+    'crispy_forms',
 ]
 
 MIDDLEWARE_CLASSES += [

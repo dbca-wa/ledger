@@ -505,7 +505,7 @@ class ChangePricePeriod(models.Model):
     )
 
     calulation_type = models.SmallIntegerField(choices=REFUND_CALCULATION_TYPE, default=0)
-    percentage = models.FloatField()
+    percentage = models.FloatField(blank=True,null=True)
     amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     days = models.IntegerField()
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
@@ -535,7 +535,7 @@ class CancelPricePeriod(models.Model):
     )
 
     calulation_type = models.SmallIntegerField(choices=REFUND_CALCULATION_TYPE, default=0)
-    percentage = models.FloatField()
+    percentage = models.FloatField(blank=True,null=True)
     amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     days = models.IntegerField()
     oracle_code = models.CharField(max_length=50,null=True,blank=True)

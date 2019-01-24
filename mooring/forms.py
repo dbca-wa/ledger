@@ -1,5 +1,14 @@
 from django import forms
 from ledger.address.models import Country
+from mooring import models
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit, HTML, Fieldset, MultiField, Div
+from django.forms import Form, ModelForm, ChoiceField, FileField, CharField, Textarea, ClearableFileInput, HiddenInput, Field, RadioSelect, ModelChoiceField, Select
+
+class BaseFormHelper(FormHelper):
+    form_class = 'form-horizontal'
+    label_class = 'col-xs-12 col-sm-4 col-md-3 col-lg-2'
+    field_class = 'col-xs-12 col-sm-8 col-md-6 col-lg-4'
 
 
 class LoginForm(forms.Form):
@@ -10,6 +19,138 @@ VEHICLE_TYPES = (
 #    ('1', 'Vehicle (concession)'),
 #    ('2', 'Motorcycle')
 )
+
+class CancelGroupForm(forms.ModelForm):
+    mooring_group = ChoiceField(choices=[],)
+
+    class Meta:
+        model = models.CancelGroup
+        fields = ['name','cancel_period','mooring_group']
+
+    def __init__(self, *args, **kwargs):
+        # User must be passed in as a kwarg.
+        super(CancelGroupForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+        self.fields['mooring_group'].choices = []
+        if 'mooring_group_choices' in self.initial:
+            self.fields['mooring_group'].choices = self.initial['mooring_group_choices'] 
+
+        self.helper.form_id = 'id_cancel_group_form'
+        #self.helper.attrs = {'novalidate': ''}
+        #self.helper.add_input(Submit('Continue', 'Continue', css_class='btn-lg'))
+
+
+class ChangeGroupForm(forms.ModelForm):
+
+    class Meta:
+        model = models.ChangeGroup 
+        fields = ['name','change_period','mooring_group']
+
+    def __init__(self, *args, **kwargs):
+        # User must be passed in as a kwarg.
+        super(ChangeGroupForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+        self.fields['mooring_group'].choices = []
+        if 'mooring_group_choices' in self.initial:
+            self.fields['mooring_group'].choices = self.initial['mooring_group_choices']
+        self.helper.form_id = 'id_change_group_form'
+        #self.helper.attrs = {'novalidate': ''}
+        #self.helper.add_input(Submit('Continue', 'Continue', css_class='btn-lg'))
+
+class UpdateChangeGroupForm(forms.ModelForm):
+    #mooring_group = ChoiceField(choices=[],)
+    class Meta:
+        model = models.ChangeGroup
+        fields = ['name','mooring_group']
+
+    def __init__(self, *args, **kwargs):
+        # User must be passed in as a kwarg.
+        super(UpdateChangeGroupForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+        self.fields['mooring_group'].choices = []
+        if 'mooring_group_choices'  in self.initial:
+            self.fields['mooring_group'].choices = self.initial['mooring_group_choices']
+        for f in self.fields:
+           self.fields[f].widget.attrs.update({'class': 'form-control'})
+
+        self.helper.form_id = 'id_change_group_form'
+        if self.initial['action'] == 'edit':
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+        else:
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+
+
+class UpdateCancelGroupForm(forms.ModelForm):
+
+    class Meta:
+        model = models.CancelGroup
+        fields = ['name','mooring_group']
+
+    def __init__(self, *args, **kwargs):
+        # User must be passed in as a kwarg.
+        super(UpdateCancelGroupForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+        self.fields['mooring_group'].choices = self.initial['mooring_group_choices']
+#        self.fields['name'].class = 'form-control'
+        for f in self.fields:
+           self.fields[f].widget.attrs.update({'class': 'form-control'})
+
+        self.helper.form_id = 'id_change_group_form'
+        if self.initial['action'] == 'edit':
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+        else:
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+
+
+class UpdateChangeOptionForm(forms.ModelForm):
+
+    class Meta:
+        model = models.ChangePricePeriod
+        fields = ['calulation_type','percentage','amount','days']
+
+    def __init__(self, *args, **kwargs):
+        # User must be passed in as a kwarg.
+        super(UpdateChangeOptionForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+#        self.fields['name'].class = 'form-control'
+        for f in self.fields:
+           self.fields[f].widget.attrs.update({'class': 'form-control'})
+
+        self.fields['percentage'].required = False
+        self.fields['amount'].required = False
+        self.helper.form_id = 'id_change_group_form'
+        if self.initial['action'] == 'edit':
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+        else:
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+
+
+class UpdateCancelOptionForm(forms.ModelForm):
+
+    class Meta:
+        model = models.CancelPricePeriod
+        fields = ['calulation_type','percentage','amount','days']
+
+    def __init__(self, *args, **kwargs):
+        # User must be passed in as a kwarg.
+        super(UpdateCancelOptionForm, self).__init__(*args, **kwargs)
+        print self.initial
+
+        self.helper = BaseFormHelper()
+#        self.fields['name'].class = 'form-control'
+        for f in self.fields:
+           self.fields[f].widget.attrs.update({'class': 'form-control'})
+
+        self.fields['percentage'].required = False
+        self.fields['amount'].required = False
+
+        self.helper.form_id = 'id_cancel_group_form'
+        if self.initial['action'] == 'edit': 
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+        else:
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+   
+
 
 class VehicleInfoForm(forms.Form):
     vehicle_rego = forms.CharField(label="Vessel Registration", widget=forms.TextInput(attrs={'required':True}))

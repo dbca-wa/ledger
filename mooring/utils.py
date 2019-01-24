@@ -1549,7 +1549,14 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
         )
 
-
+    # Zero booking costs
+    if booking.cost_total < 1 and booking.cost_total > -1:
+        response = HttpResponseRedirect('/no-payment')
+        response.set_cookie(
+            settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
+            max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
+            secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
+        )
     return response
 
 def iiicheckout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
@@ -1778,4 +1785,46 @@ def admissions_lines(booking_mooring):
         i+= 1
     
     return lines
-    
+   
+def mooring_group_access_level_change(pk,request):
+     mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+     if request.user.is_superuser is not True:
+          return False
+     else:
+          if ChangeGroup.objects.filter(pk=pk,mooring_group__in=mooring_groups).count() > 0:
+              return True
+
+     return False
+
+def mooring_group_access_level_cancel(pk,request):
+     mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+     if request.user.is_superuser is not True:
+          return False
+     else:
+          if CancelGroup.objects.filter(pk=pk,mooring_group__in=mooring_groups).count() > 0:
+              return True
+
+     return False
+
+def mooring_group_access_level_change_options(cg,pk,request):
+     mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+     if request.user.is_superuser is not True:
+          return False
+     else:
+          cpp = ChangePricePeriod.objects.get(id=pk)
+          if ChangeGroup.objects.filter(id=cg,change_period__in=[cpp],mooring_group__in=mooring_groups).count() > 0:
+              return True
+
+     return False
+
+def mooring_group_access_level_cancel_options(cg,pk,request):
+     mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+     if request.user.is_superuser is not True:
+          return False
+     else:
+          cpp = CancelPricePeriod.objects.get(id=pk)
+          if CancelGroup.objects.filter(id=cg,cancel_period__in=[cpp],mooring_group__in=mooring_groups).count() > 0:
+              return True
+
+     return False
+ 

@@ -7,12 +7,15 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.core.serializers.json import DjangoJSONEncoder
 from django.views.generic.base import View, TemplateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django import forms
+from django.contrib import messages
+from mooring import forms as app_forms
 from mooring.forms import LoginForm, MakeBookingsForm, AnonymousMakeBookingsForm, VehicleInfoFormset
 from mooring.models import (MooringArea,
                                 MooringsiteBooking,
@@ -41,6 +44,10 @@ from mooring.models import (MooringArea,
                                 MooringAreaGroup,
                                 GlobalSettings,
                                 MooringsiteRateLog,
+                                ChangeGroup,
+                                CancelGroup,
+                                ChangePricePeriod,
+                                CancelPricePeriod
                                 )
 from mooring.serialisers import AdmissionsBookingSerializer, AdmissionsLineSerializer
 from mooring import emails
@@ -62,8 +69,7 @@ from mooring.helpers import is_officer
 from mooring import utils
 from ledger.payments.mixins import InvoiceOwnerMixin
 from mooring.invoice_pdf import create_invoice_pdf_bytes
-from mooring.context_processors import mooring_url
-
+from mooring.context_processors import mooring_url, template_context
 
 logger = logging.getLogger('booking_checkout')
 
@@ -436,6 +442,70 @@ class RefundPaymentView(TemplateView):
              return HttpResponseRedirect('/success/')
          else:
              return HttpResponseRedirect(reverse('home'))
+
+
+class ZeroBookingView(TemplateView):
+    template_name = 'mooring/booking/no_booking_payment.html'
+
+    def get_booking_info(self, request, *args, **kwargs):
+
+        booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        form_context = {
+        }
+        form = MakeBookingsForm(form_context)
+
+        #booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking)
+        return booking
+
+    def get(self, request, *args, **kwargs):
+        print "ZERO BOOKING"
+        booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+
+            basket = utils.get_basket(request)
+            #basket_total = [sum(Decimal(b.line_price_incl_tax)) for b in basket.all_lines()]
+            basket_total = Decimal('0.00')
+            for b in basket.all_lines():
+               print b.line_price_incl_tax
+               basket_total = basket_total + b.line_price_incl_tax
+            booking = self.get_booking_info(request, *args, **kwargs)
+
+            #    return self.render_page(request, booking, form)
+            return render(request, self.template_name, {'basket': basket})
+        else:
+            return HttpResponseRedirect(reverse('home'))
+
+    def post(self, request, *args, **kwargs):
+
+         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+
+             bpoint = None
+             invoice = None
+             basket = utils.get_basket(request)
+             booking = self.get_booking_info(request, *args, **kwargs)
+             basket_total = Decimal('0.00')
+             for b in basket.all_lines():
+                 print b.line_price_incl_tax
+                 basket_total = basket_total + b.line_price_incl_tax
+
+             b_total =  Decimal('{:.2f}'.format(float(basket_total - basket_total - basket_total)))
+             info = {'amount': Decimal('{:.2f}'.format(float(basket_total - basket_total - basket_total))), 'details' : 'Refund via system'}
+             booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
+             for bi in booking_invoice:
+                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
+                 print invoice
+             print "INVOICE POST"
+             print invoice
+
+             order_response = place_order_submission(request)
+             new_order = Order.objects.get(basket=basket)
+             new_invoice = Invoice.objects.get(order_number=new_order.number)
+
+             return HttpResponseRedirect('/success/')
+         else:
+             return HttpResponseRedirect(reverse('home'))
+
 
 class MakeBookingsView(TemplateView):
     template_name = 'mooring/booking/make_booking.html'
@@ -872,6 +942,435 @@ class MakeBookingsView(TemplateView):
         #    basket_cookie = response.history[0].cookies[settings.OSCAR_BASKET_COOKIE_OPEN]
         #    result.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_cookie)
         return result
+
+class BookingPolicyView(TemplateView):
+    template_name = 'mooring/dash/booking_policy.html'
+
+    def get(self, request, *args, **kwargs):
+        context_processor = template_context(self.request)
+        return super(BookingPolicyView, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyView, self).get_context_data(**kwargs)
+        request = self.request
+        mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+        if request.user.is_superuser:
+            context['change_groups'] = ChangeGroup.objects.all()
+            context['cancel_groups'] = CancelGroup.objects.all()
+        else:
+            context['change_groups'] = ChangeGroup.objects.filter(mooring_group__in=mooring_groups)
+            context['cancel_groups'] = CancelGroup.objects.filter(mooring_group__in=mooring_groups)
+        return context
+
+class BookingPolicyChangeView(UpdateView):
+    template_name = 'mooring/dash/view_change_policy.html'
+    model = ChangeGroup
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        if utils.mooring_group_access_level_change(pk,request) == True:
+            context_processor = template_context(self.request)
+            app = self.get_object()
+            return super(BookingPolicyChangeView, self).get(request, *args, **kwargs)
+        else:
+             messages.error(self.request, 'Forbidden from viewing this page.')
+             return HttpResponseRedirect("/forbidden")
+
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyChangeView, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        return context
+
+    def get_form_class(self):
+        return app_forms.ChangeGroupForm
+
+class BookingPolicyCancelView(UpdateView):
+    template_name = 'mooring/dash/view_cancel_policy.html'
+    model = CancelGroup
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        if utils.mooring_group_access_level_cancel(pk,request) == True:
+           context_processor = template_context(self.request)
+           app = self.get_object()
+           return super(BookingPolicyCancelView, self).get(request, *args, **kwargs)
+        else:
+           messages.error(self.request, 'Forbidden from viewing this page.')
+           return HttpResponseRedirect("/forbidden")
+
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyCancelView, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        return context
+
+    def get_form_class(self):
+        return app_forms.CancelGroupForm
+
+class BookingPolicyAddCancelGroup(CreateView):
+    template_name = 'mooring/dash/add_cancel_policy_group.html'
+    model = CancelGroup
+
+    def get(self, request, *args, **kwargs):
+        context_processor = template_context(self.request)
+        return super(BookingPolicyAddCancelGroup, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyAddCancelGroup, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        return context
+
+    def get_initial(self):
+        initial = super(BookingPolicyAddCancelGroup, self).get_initial()
+        request = self.request
+        initial['action'] = 'new'
+        initial['mooring_group_choices'] = []
+        mg = []
+        if request.user.is_superuser:
+            mg = MooringAreaGroup.objects.all()
+        else:
+            mg = MooringAreaGroup.objects.filter(members__in=[request.user,])
+
+        for i in mg:
+            initial['mooring_group_choices'].append((i.pk,i.name))
+            #initial['mooring_group_choices'].append(i)
+        return initial
+
+    def get_form_class(self):
+        return app_forms.UpdateCancelGroupForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(BookingPolicyAddCancelGroup, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.object = form.save()
+        forms_data = form.cleaned_data
+        return HttpResponseRedirect(reverse('dash-booking-policy-cancel-view', args=(self.object.pk,)))
+
+
+class BookingPolicyEditCancelGroup(UpdateView):
+    template_name = 'mooring/dash/add_cancel_policy_group.html'
+    model = CancelGroup
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        if utils.mooring_group_access_level_cancel(pk,request) == True:
+            context_processor = template_context(self.request)
+            return super(BookingPolicyEditCancelGroup, self).get(request, *args, **kwargs)
+
+
+        else:
+             messages.error(self.request, 'Forbidden from viewing this page.')
+             return HttpResponseRedirect("/forbidden")
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyEditCancelGroup, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        return context
+
+    def get_initial(self):
+        initial = super(BookingPolicyEditCancelGroup, self).get_initial()
+        request = self.request
+        initial['action'] = 'edit'
+        initial['mooring_group_choices'] = []
+        mg = []
+        if request.user.is_superuser is not True:
+            mg = MooringAreaGroup.objects.all()
+        else:
+            mg = MooringAreaGroup.objects.filter(members__in=[request.user,])
+
+        for i in mg:
+            initial['mooring_group_choices'].append((i.id,i.name))
+
+        return initial
+
+    def get_form_class(self):
+        return app_forms.UpdateCancelGroupForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(BookingPolicyEditCancelGroup, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.object = form.save()
+        forms_data = form.cleaned_data
+        return HttpResponseRedirect(reverse('dash-bookingpolicy'))
+
+
+class BookingPolicyAddChangeGroup(CreateView):
+    template_name = 'mooring/dash/add_change_policy_group.html'
+    model = ChangeGroup
+
+    def get(self, request, *args, **kwargs):
+        context_processor = template_context(self.request)
+        return super(BookingPolicyAddChangeGroup, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyAddChangeGroup, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        return context
+
+    def get_initial(self):
+        initial = super(BookingPolicyAddChangeGroup, self).get_initial()
+        request = self.request
+        initial['action'] = 'new'
+        initial['mooring_group_choices'] = []
+        mg = []
+        if request.user.is_superuser:
+            mg = MooringAreaGroup.objects.all()
+        else:
+           mg = MooringAreaGroup.objects.filter(members__in=[request.user,])
+
+        for i in mg:
+            initial['mooring_group_choices'].append((i.id,i.name))
+        return initial
+
+    def get_form_class(self):
+        return app_forms.UpdateChangeGroupForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(BookingPolicyAddChangeGroup, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.object = form.save()
+        forms_data = form.cleaned_data
+        return HttpResponseRedirect(reverse('dash-booking-policy-change-view', args=(self.object.pk,)))
+
+class BookingPolicyEditChangeGroup(UpdateView):
+    template_name = 'mooring/dash/add_change_policy_group.html'
+    model = ChangeGroup
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        if utils.mooring_group_access_level_change(pk,request) == True:
+            context_processor = template_context(self.request)
+            return super(BookingPolicyEditChangeGroup, self).get(request, *args, **kwargs)
+        else:
+            messages.error(self.request, 'Forbidden from viewing this page.')
+            return HttpResponseRedirect("/forbidden")
+
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyEditChangeGroup, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        return context
+
+    def get_initial(self):
+        initial = super(BookingPolicyEditChangeGroup, self).get_initial()
+        initial['action'] = 'edit'
+        request = self.request
+        initial['mooring_group_choices'] = []
+        mg = []
+        if request.user.is_superuser:
+            mg = MooringAreaGroup.objects.all()
+        else:
+            mg = MooringAreaGroup.objects.filter(members__in=[request.user,])
+
+        for i in mg:
+            initial['mooring_group_choices'].append((i.id,i.name))
+        return initial
+
+    def get_form_class(self):
+        return app_forms.UpdateChangeGroupForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(BookingPolicyEditChangeGroup, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.object = form.save()
+        forms_data = form.cleaned_data
+        return HttpResponseRedirect(reverse('dash-bookingpolicy'))
+
+class BookingPolicyAddChangeOption(CreateView):
+    template_name = 'mooring/dash/add_change_policy_group.html'
+    model = ChangeGroup
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        if utils.mooring_group_access_level_change(pk,request) == True:
+            context_processor = template_context(self.request)
+            return super(BookingPolicyAddChangeOption, self).get(request, *args, **kwargs)
+        else:
+            messages.error(self.request, 'Forbidden from viewing this page.')
+            return HttpResponseRedirect("/forbidden")
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyAddChangeOption, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        return context
+
+    def get_initial(self):
+        initial = super(BookingPolicyAddChangeOption, self).get_initial()
+        initial['action'] = 'new'
+        request = self.request
+        initial['mooring_group_choices'] = []
+        mg = []
+        if request.user.is_superuser:
+            mg = MooringAreaGroup.objects.all()
+        else:
+           mg = MooringAreaGroup.objects.filter(members__in=[request.user,])
+
+        for i in mg:
+            initial['mooring_group_choices'].append((i.id,i.name))
+
+        return initial
+
+    def get_form_class(self):
+        return app_forms.UpdateChangeOptionForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(BookingPolicyAddChangeOption, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        forms_data = form.cleaned_data
+        pk = self.kwargs['pk']
+        cg = ChangeGroup.objects.get(pk=pk)
+#        cpp = ChangePricePeriod.objects.create(days=forms_data['days'],calulation_type=forms_data['calulation_type'], amount=forms_data['amount'], percentage=forms_data['percentage'])
+        self.object.save()
+        cg.change_period.add(self.object)
+        cg.save()
+        return HttpResponseRedirect(reverse('dash-booking-policy-change-view', args=(pk,)))
+
+class BookingPolicyAddCancelOption(CreateView):
+    template_name = 'mooring/dash/add_cancel_policy_group.html'
+    model = CancelGroup
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        if utils.mooring_group_access_level_cancel(pk,request) == True:
+            context_processor = template_context(self.request)
+            return super(BookingPolicyAddCancelOption, self).get(request, *args, **kwargs)
+
+        else:
+            messages.error(self.request, 'Forbidden from viewing this page.')
+            return HttpResponseRedirect("/forbidden")
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyAddCancelOption, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        #context['cancel_group_id'] = self.kwargs['pk']
+        return context
+
+    def get_initial(self):
+        initial = super(BookingPolicyAddCancelOption, self).get_initial()
+        request = self.request
+        initial['action'] = 'new' 
+        return initial
+
+    def get_form_class(self):
+        return app_forms.UpdateCancelOptionForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(BookingPolicyAddCancelOption, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        forms_data = form.cleaned_data
+        pk = self.kwargs['pk']
+        cg = CancelGroup.objects.get(pk=pk)
+#        cpp = ChangePricePeriod.objects.create(days=forms_data['days'],calulation_type=forms_data['calulation_type'], amount=forms_data['amount'], percentage=forms_data['percentage'])
+        self.object.save()
+        cg.cancel_period.add(self.object)
+        cg.save()
+        return HttpResponseRedirect(reverse('dash-booking-policy-cancel-view', args=(pk,)))
+
+class BookingPolicyEditChangeOption(UpdateView):
+    template_name = 'mooring/dash/edit_change_policy_group.html'
+    model = ChangePricePeriod 
+
+    def get(self, request, *args, **kwargs):
+        pk = self.kwargs['pk']
+        cg = self.kwargs['cg']
+
+        if utils.mooring_group_access_level_change_options(cg,pk,request) == True:
+            context_processor = template_context(self.request)
+            return super(BookingPolicyEditChangeOption, self).get(request, *args, **kwargs)
+        else:
+             messages.error(self.request, 'Forbidden from viewing this page.')
+             return HttpResponseRedirect("/forbidden")
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyEditChangeOption, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        context['change_group_id'] = self.kwargs['cg']
+        return context
+
+    def get_initial(self):
+        initial = super(BookingPolicyEditChangeOption, self).get_initial()
+        initial['action'] = 'edit'
+        return initial
+
+    def get_form_class(self):
+        return app_forms.UpdateChangeOptionForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(BookingPolicyEditChangeOption, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        forms_data = form.cleaned_data
+        pk = self.kwargs['pk']
+        cg = self.kwargs['cg']
+        self.object.save()
+        return HttpResponseRedirect(reverse('dash-booking-policy-change-view', args=(cg,)))
+
+class BookingPolicyEditCancelOption(UpdateView):
+    template_name = 'mooring/dash/edit_cancel_policy_group.html'
+    model = CancelPricePeriod
+
+    def get(self, request, *args, **kwargs):
+
+        pk = self.kwargs['pk']
+        cg = self.kwargs['cg']
+
+        if utils.mooring_group_access_level_cancel_options(cg,pk,request) == True:
+             context_processor = template_context(self.request)
+             return super(BookingPolicyEditCancelOption, self).get(request, *args, **kwargs)
+        else:
+             messages.error(self.request, 'Forbidden from viewing this page.')
+             return HttpResponseRedirect("/forbidden")
+
+    def get_context_data(self, **kwargs):
+        context = super(BookingPolicyEditCancelOption, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        context['cancel_group_id'] = self.kwargs['cg']
+        return context
+
+    def get_initial(self):
+        initial = super(BookingPolicyEditCancelOption, self).get_initial()
+        initial['action'] = 'edit'
+        return initial
+
+    def get_form_class(self):
+        return app_forms.UpdateCancelOptionForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(BookingPolicyEditCancelOption, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        forms_data = form.cleaned_data
+        pk = self.kwargs['pk']
+        cg = self.kwargs['cg']
+        self.object.save()
+        return HttpResponseRedirect(reverse('dash-booking-policy-cancel-view', args=(cg,)))
 
 class AdmissionsBasketCreated(TemplateView):
     template_name = 'mooring/admissions/admissions_success.html'
