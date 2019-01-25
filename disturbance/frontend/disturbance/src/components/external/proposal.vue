@@ -226,13 +226,12 @@ export default {
             }
 
             if (this.type == 'checkbox') {
-                //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
-                var id = 'id_' + this.classList['value']
-                if ($("[class="+this.classList['value']+"]:checked").length == 0) {
-                    var text = $('#'+id).text()
+                var id = 'id_' + this.className
+                if ($("[class="+this.className+"]:checked").length == 0) {
+                    try { var text = $('#'+id).text() } catch(error) { var text = $('#'+id).textContent } // Internet Explorer hack
                     console.log('checkbox not checked: ' + this.type + ' ' + text)
                     vm.missing_fields.push({id: id, label: text});
-                }
+                }   
             }
 
             if (this.type == 'select-one') {
