@@ -167,15 +167,24 @@ module.exports = {
                 break;
             case 'group':
                 var value = null;
+                var isRepeatable = c.hasOwnProperty("isRepeatable");
                 if(data !== null && data !== undefined) {
                   value = ( data[c.name] )? data[c.name][0] : null ;
                 }
+                var postfix = 0;
                 _elements.push(
-                    <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true}>
-                        {c.children.map(c=>{
+                    <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={isRepeatable}>
+                        {c.children.map(d=>{
+                            /*
+                            if ( isRepeatable ) {
+                                c.name = c.name + "_" + postfix.toString();
+                                postfix++;
+                            }
+                            */
+
                             return (
                                 <div>
-                                    {this.renderChildren(h,c,value)}
+                                    {this.renderChildren(h,d,value)}
                                 </div>
                             )
                         })}

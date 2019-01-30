@@ -1,9 +1,9 @@
 <template lang="html">
+<!--
     <div class="top-buffer bottom-buffer">
         <div v-if="isRepeatable" v-for="n in repeat" class="panel panel-default">
             <div class="repeat-group panel-body" :data-que="n">
                 <label :id="id" class="inline">{{label}}</label>
-                    <!--<i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" :title="help_text"> &nbsp; </i>-->
                 <template v-if="help_text">
                     <HelpText :help_text="help_text" /> 
                 </template>
@@ -27,6 +27,7 @@
         </div>
         <button v-on:click="handleChange">Add Another</button>
     </div>
+-->
 
 
 <!--
@@ -39,6 +40,16 @@
             <button v-on:click="handleChange">Add Another</button>
     </div>
 -->
+
+    <div>
+        <div v-if="isRepeatable" v-for="n in repeat" class="panel panel-default">
+            <div class="repeat-group panel-body" :data-que="n">
+                <slot></slot>
+            </div>
+        </div>
+        <button v-on:click.stop.prevent="add_another2">Add Another</button>
+    </div>
+
 </template>
 
 <script>
@@ -101,6 +112,33 @@ export default {
             //$('div[data-que='+vm.repeat-1+']').html($('div[data-que=1]').html());
             $('div[data-que='+id+']').html($('div[data-que=1]').html());
         },
+
+        add_another2:function (e) {
+            let vm = this;
+
+            if (vm.isRepeatable) {
+
+                let  el = $(e.target).attr('data-que');
+                let avail = $('.repeat-group');
+                avail = [...avail.map(id => {
+                    return $(avail[id]).attr('data-que');
+                })];
+                if (vm.repeat == 1) {
+                    vm.repeat+=1;
+                }else {
+                    if (avail.indexOf(el) < 0 ){
+                        vm.repeat+=1;
+                    }
+                }
+
+                var id = vm.repeat - 1;
+                $('div[data-que='+id+']').html($('div[data-que=1]').html());
+
+                //$("div").attr("id", function(i){return "child"+i;})
+                $('div[data-que='+id+']').attr("name", function(i){return "child"+i;})
+            }
+        },
+
         add_empty_div:function (e) {
             // add empty div placeholder for 'add another' button
             let vm = this;
