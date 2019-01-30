@@ -137,18 +137,19 @@ export default {
                         mRender:function (data,type,full) {
                             let vm=this;
                             let links = '';
-                            links +=  `<a href='/external/return/${full.id}'>View</a><br/>`;
+
+                            links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
+                            links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
                             // if (!vm.is_external){
+
                             //     links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
                             // }
                             // else{
-                            //     if (full.can_user_edit) {
                             //         links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
-                            //         links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                            //     }
-                            //     else if (full.can_user_view) {
-                            //         links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
-                            //     }
+                                    
+                            //     // else if (full.can_user_view) {
+                            //     //     links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
+                            //     // }
                             // }
                             return links;
                         }
@@ -346,6 +347,8 @@ export default {
         this.$nextTick(() => {
             vm.addEventListeners();
             vm.initialiseSearch();
+            // console.log(vm.is_external)
+
         });
     }
 }

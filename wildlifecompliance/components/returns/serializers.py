@@ -8,9 +8,15 @@ from wildlifecompliance.components.returns.models import (
 )
 from rest_framework import serializers
 
+class EmailUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUser
+        fields = ('id','email','first_name','last_name','title','organisation')
+
 class ReturnSerializer(serializers.ModelSerializer):
     # activity = serializers.CharField(source='application.activity')
     processing_status = serializers.CharField(source='get_processing_status_display')
+    submitter = EmailUserSerializer()
 
     class Meta:
         model = Return 
@@ -19,7 +25,10 @@ class ReturnSerializer(serializers.ModelSerializer):
             'application',
             'due_date',
             'processing_status',
+            'submitter',
             'assigned_to',
+            'lodgement_date',
+            'nil_return',
             'licence',
             'resources',
             'table'
@@ -40,7 +49,6 @@ class ReturnActionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ReturnCommsSerializer(serializers.ModelSerializer):
-    documents = serializers.SerializerMethodField()
     class Meta:
         model = ReturnLogEntry
         fields = '__all__'
