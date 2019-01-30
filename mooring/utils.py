@@ -18,7 +18,7 @@ from pytz import timezone as pytimezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup, AdmissionsLocation, ChangeGroup, CancelGroup)
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup, AdmissionsLocation, ChangeGroup, CancelGroup, BookingPeriod, BookingPeriodOption)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 
@@ -1785,7 +1785,8 @@ def admissions_lines(booking_mooring):
         i+= 1
     
     return lines
-   
+
+# Access Level check for Group   
 def mooring_group_access_level_change(pk,request):
      mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
      if request.user.is_superuser is not True:
@@ -1828,3 +1829,32 @@ def mooring_group_access_level_cancel_options(cg,pk,request):
 
      return False
  
+def mooring_group_access_level_booking_period(pk,request):
+     mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+     if request.user.is_superuser is not True:
+          return False
+     else:
+          if BookingPeriod.objects.filter(pk=pk,mooring_group__in=mooring_groups).count() > 0:
+              return True
+     return False
+
+def mooring_group_access_level_booking_period_option(pk,bp_group_id,request):
+     mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+     if request.user.is_superuser is not True:
+          return False
+     else:
+          bpo = BookingPeriodOption.objects.get(id=pk)
+          if BookingPeriod.objects.filter(pk=bp_group_id,booking_period__in=[bpo],mooring_group__in=mooring_groups).count() > 0:
+              return True
+     return False
+
+
+def check_mooring_admin_access(request): 
+    if request.user.is_superuser is not True:
+        return False
+    else:
+      if request.user.groups.filter(name__in=['Mooring Admin']).exists():
+          return True
+    return False
+
+

@@ -12,21 +12,21 @@
                         <div class="col-lg-12">
                             <div class="row">
                                 <div class="col-md-2">
-                                    <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="newOption()">Add New Option</button>
+                                    <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="newOption()" style='display: none'>Add New Option</button>
                                 </div>
                                 <div class="col-md-8"/>
                                 <div class="col-md-2">
-                                    <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="newPeriod()">Add New Period</button>
+                                    <a class="btn btn-primary" style="width:100%;" iiiclick.prevent="newPeriod()" href="/dashboard/bookingperiods/create" >Add New Group</a>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-2">
-                                    <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="editOption()">Edit Option</button>
+                                    <button type="button" class="btn btn-primary" style="width:100%;" @click.prevent="editOption()"  style='display: none'>Edit Option</button>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-2">
-                                    <button type="button" class="btn btn-danger" style="width:100%;" @click.prevent="deleteOption()">Delete Option</button>
+                                    <button type="button" class="btn btn-danger" style="width:100%;" @click.prevent="deleteOption()"  style='display: none'>Delete Option</button>
                                 </div>
                             </div>
                             <div class="row">
@@ -273,8 +273,9 @@ export default {
                     data: 'id',
                     mRender: function(data, type, full){
                         if(data){
-                            var column = "<a href='#' class='editPeriod' data-rate=\"__RATE__\" >" + full.id + "</a>";
-                            column = column.replace(/__RATE__/g, full.id);
+//                            var column = "<a href='#' class='editPeriod' data-rate=\"__RATE__\" >" + full.id + "</a>";
+                            var column = "" + full.id + "";
+//                            column = column.replace(/__RATE__/g, full.id);
                             return column;
                         } else {
                             return '';
@@ -299,7 +300,9 @@ export default {
                 }, {
                     mRender: function(data, type, full) {
                         var id = full.id;
-                        var column = "<td ><a href='#' class='editPeriod' data-rate=\"__RATE__\" >Edit</a><br/>"
+//                        var column = "<td ><a href='#' class='editPeriod' data-rate=\"__RATE__\" >Edit</a><br/>"
+                        var column = "<td ><a href='/dashboard/bookingperiods/"+id+"/edit' >Edit</a><br/>";
+                        column += "<a href='/dashboard/bookingperiods/"+id+"/view' >View Periods</a><br/>";
                         column += "<a href='#' class='deletePeriod' data-rate=\"__RATE__\" >Delete</a></td>";
                         column = column.replace(/__RATE__/g, id);
                         return column;

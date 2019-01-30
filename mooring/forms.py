@@ -40,6 +40,46 @@ class CancelGroupForm(forms.ModelForm):
         #self.helper.add_input(Submit('Continue', 'Continue', css_class='btn-lg'))
 
 
+class DeleteBookingPeriodOptionForm(forms.ModelForm):
+    class Meta:
+        model = models.BookingPeriodOption
+        fields = []
+
+    def __init__(self, *args, **kwargs):
+        # User must be passed in as a kwarg.
+        super(DeleteBookingPeriodOptionForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+        self.helper.form_id = 'id_delet_form'
+        self.helper.add_input(Submit('Delete', 'Delete', css_class='btn-lg'))
+
+
+class BookingPeriodOptionForm(forms.ModelForm):
+    #mooring_group = ChoiceField(choices=[],)
+    class Meta:
+        model = models.BookingPeriodOption
+        fields = ['period_name','option_description','small_price','medium_price','large_price','start_time','finish_time','change_group','cancel_group']
+
+    def __init__(self, *args, **kwargs):
+        # User must be passed in as a kwarg.
+        super(BookingPeriodOptionForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+        self.fields['change_group'].choices = []
+        self.fields['cancel_group'].choices = []
+        if 'change_group_choices'  in self.initial:
+            self.fields['change_group'].choices = self.initial['change_group_choices']
+        if 'cancel_group_choices'  in self.initial:
+            self.fields['cancel_group'].choices = self.initial['cancel_group_choices']
+
+
+        for f in self.fields:
+           self.fields[f].widget.attrs.update({'class': 'form-control'})
+
+        self.helper.form_id = 'id_change_group_form'
+        if self.initial['action'] == 'edit':
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+        else:
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+
 class ChangeGroupForm(forms.ModelForm):
 
     class Meta:
@@ -56,6 +96,29 @@ class ChangeGroupForm(forms.ModelForm):
         self.helper.form_id = 'id_change_group_form'
         #self.helper.attrs = {'novalidate': ''}
         #self.helper.add_input(Submit('Continue', 'Continue', css_class='btn-lg'))
+
+class BookingPeriodForm(forms.ModelForm):
+    #mooring_group = ChoiceField(choices=[],)
+    class Meta:
+        model = models.BookingPeriod
+        fields = ['name','mooring_group']
+
+    def __init__(self, *args, **kwargs):
+        # User must be passed in as a kwarg.
+        super(BookingPeriodForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+        self.fields['mooring_group'].choices = []
+        if 'mooring_group_choices'  in self.initial:
+            self.fields['mooring_group'].choices = self.initial['mooring_group_choices']
+        for f in self.fields:
+           self.fields[f].widget.attrs.update({'class': 'form-control'})
+
+        self.helper.form_id = 'id_change_group_form'
+        if self.initial['action'] == 'edit':
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+        else:
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+
 
 class UpdateChangeGroupForm(forms.ModelForm):
     #mooring_group = ChoiceField(choices=[],)

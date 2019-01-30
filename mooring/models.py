@@ -569,7 +569,7 @@ class BookingPeriodOption(models.Model):
     change_group = models.ForeignKey('ChangeGroup',null=True,blank=True)
     cancel_group = models.ForeignKey('CancelGroup',null=True,blank=True)
     created = models.DateTimeField(auto_now_add=True)
-    mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
+    #mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
 
     def __str__(self):
         return self.period_name
@@ -577,6 +577,7 @@ class BookingPeriodOption(models.Model):
 class BookingPeriod(models.Model):
     name = models.CharField(max_length=100)
     booking_period = models.ManyToManyField(BookingPeriodOption, related_name='booking_period_options')
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

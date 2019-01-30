@@ -33,9 +33,7 @@ class EmailUserAdmin(ledger_admin.EmailUserAdmin):
             return fieldsets
 
         group = Group.objects.filter(name='Mooring Admin')
-        print group
         if group and (group[0] in request.user.groups.all()):
-            print "group confirmed"
             fieldsets = deepcopy(fieldsets)
             for fieldset in fieldsets:
                 if 'is_superuser' in fieldset[1]['fields']:
