@@ -1831,11 +1831,14 @@ def mooring_group_access_level_cancel_options(cg,pk,request):
  
 def mooring_group_access_level_booking_period(pk,request):
      mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+     print "MOORING GROUPS - mooring_group_access_level_booking_period"
+     print mooring_groups
      if request.user.is_superuser is not True:
           return False
      else:
           if BookingPeriod.objects.filter(pk=pk,mooring_group__in=mooring_groups).count() > 0:
               return True
+    
      return False
 
 def mooring_group_access_level_booking_period_option(pk,bp_group_id,request):
