@@ -243,6 +243,7 @@ class CancelBookingView(TemplateView):
         basket_total = Decimal('0.00')
         booking = None
         invoice = None
+        booking_admission = None
         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
              booking = Booking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
@@ -251,7 +252,9 @@ class CancelBookingView(TemplateView):
         
         bpoint_id = self.get_booking_info(self, request, *args, **kwargs)
         booking_cancellation_fees = utils.calculate_price_booking_cancellation(booking)
-        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
+        if booking.admission_payment:
+            booking_admission = AdmissionsBooking.objects.get(pk=booking.admission_payment_id)
+            booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
         booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
 #        booking_total =  Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
          
@@ -277,6 +280,8 @@ class CancelBookingView(TemplateView):
         invoice.save()
         booking.booking_type = 4
         booking.save()
+        booking_admission.booking_type = 4
+        booking_admission.save()
 
         return HttpResponseRedirect('/success/')
 
