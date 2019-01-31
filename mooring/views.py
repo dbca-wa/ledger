@@ -1530,7 +1530,7 @@ class BookingPeriodView(UpdateView):
 
     def get(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
-        if utils.mooring_group_access_level_change(pk,request) == True:
+        if utils.mooring_group_access_level_booking_period(pk,request) == True:
             context_processor = template_context(self.request)
             app = self.get_object()
             return super(BookingPeriodView, self).get(request, *args, **kwargs)
