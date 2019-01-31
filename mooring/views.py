@@ -1193,7 +1193,7 @@ class BookingPolicyEditChangeGroup(UpdateView):
         return HttpResponseRedirect(reverse('dash-bookingpolicy'))
 
 class BookingPolicyAddChangeOption(CreateView):
-    template_name = 'mooring/dash/add_change_policy_group.html'
+    template_name = 'mooring/dash/add_change_policy_option.html'
     model = ChangeGroup
 
     def get(self, request, *args, **kwargs):
@@ -1208,6 +1208,7 @@ class BookingPolicyAddChangeOption(CreateView):
     def get_context_data(self, **kwargs):
         context = super(BookingPolicyAddChangeOption, self).get_context_data(**kwargs)
         context['query_string'] = ''
+        context['change_group_id'] = self.kwargs['pk']
         return context
 
     def get_initial(self):
@@ -1246,7 +1247,7 @@ class BookingPolicyAddChangeOption(CreateView):
         return HttpResponseRedirect(reverse('dash-booking-policy-change-view', args=(pk,)))
 
 class BookingPolicyAddCancelOption(CreateView):
-    template_name = 'mooring/dash/add_cancel_policy_group.html'
+    template_name = 'mooring/dash/add_cancel_policy_option.html'
     model = CancelGroup
 
     def get(self, request, *args, **kwargs):
@@ -1262,7 +1263,7 @@ class BookingPolicyAddCancelOption(CreateView):
     def get_context_data(self, **kwargs):
         context = super(BookingPolicyAddCancelOption, self).get_context_data(**kwargs)
         context['query_string'] = ''
-        #context['cancel_group_id'] = self.kwargs['pk']
+        context['cancel_group_id'] = self.kwargs['pk']
         return context
 
     def get_initial(self):
@@ -1291,7 +1292,7 @@ class BookingPolicyAddCancelOption(CreateView):
         return HttpResponseRedirect(reverse('dash-booking-policy-cancel-view', args=(pk,)))
 
 class BookingPolicyEditChangeOption(UpdateView):
-    template_name = 'mooring/dash/edit_change_policy_group.html'
+    template_name = 'mooring/dash/add_change_policy_option.html'
     model = ChangePricePeriod 
 
     def get(self, request, *args, **kwargs):
@@ -1333,7 +1334,7 @@ class BookingPolicyEditChangeOption(UpdateView):
         return HttpResponseRedirect(reverse('dash-booking-policy-change-view', args=(cg,)))
 
 class BookingPolicyEditCancelOption(UpdateView):
-    template_name = 'mooring/dash/edit_cancel_policy_group.html'
+    template_name = 'mooring/dash/add_cancel_policy_option.html'
     model = CancelPricePeriod
 
     def get(self, request, *args, **kwargs):
