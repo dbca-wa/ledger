@@ -232,6 +232,7 @@ class CancelBookingView(TemplateView):
                   return HttpResponseRedirect(reverse('home'))
 
         booking_cancellation_fees = utils.calculate_price_booking_cancellation(booking)
+        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
         booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
         basket = {}
         return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
@@ -250,6 +251,7 @@ class CancelBookingView(TemplateView):
         
         bpoint_id = self.get_booking_info(self, request, *args, **kwargs)
         booking_cancellation_fees = utils.calculate_price_booking_cancellation(booking)
+        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
         booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
 #        booking_total =  Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
          
