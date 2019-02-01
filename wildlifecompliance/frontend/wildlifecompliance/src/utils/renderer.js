@@ -173,7 +173,7 @@ module.exports = {
                 }
                 var postfix = 0;
                 _elements.push(
-                    <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={isRepeatable}>
+                    <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={c.isRepeatable}>
                         {c.children.map(d=>{
                             /*
                             if ( isRepeatable ) {

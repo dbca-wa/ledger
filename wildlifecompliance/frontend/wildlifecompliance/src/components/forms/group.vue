@@ -3,6 +3,7 @@
     <div class="top-buffer bottom-buffer">
         <div v-if="isRepeatable" v-for="n in repeat" class="panel panel-default">
             <div class="repeat-group panel-body" :data-que="n">
+                <p>N: {{n}}i</p>
                 <label :id="id" class="inline">{{label}}</label>
                 <template v-if="help_text">
                     <HelpText :help_text="help_text" /> 
@@ -42,12 +43,14 @@
 -->
 
     <div>
-        <div v-if="isRepeatable" v-for="n in repeat" class="panel panel-default">
+        <!--<div v-if="isRepeatable" v-for="n in repeat" class="panel panel-default">-->
+        <div v-for="n in repeat" class="panel panel-default">
             <div class="repeat-group panel-body" :data-que="n">
+                <p>N: {{name}} {{n}} {{isRepeatable}}</p>
                 <slot></slot>
             </div>
         </div>
-        <button v-on:click.stop.prevent="add_another2">Add Another</button>
+        <button v-if="isRepeatable" v-on:click.stop.prevent="add_another2">Add Another</button>
     </div>
 
 </template>
@@ -57,11 +60,12 @@ import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 export default {
     name:"group",
-    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable","isPreviewMode"],
+    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable", "isPreviewMode", "isRepeatable"],
+    //props:["label", "name", "id", "help_text", "help_text_url", "isRemovable", "isPreviewMode"],
     data:function () {
         return{
-            repeat:2,
-            isRepeatable:true,
+            repeat:1,
+            //isRepeatable:true,
             isExpanded:true
         }
     },
@@ -132,7 +136,8 @@ export default {
                 }
 
                 var id = vm.repeat - 1;
-                $('div[data-que='+id+']').html($('div[data-que=1]').html());
+                //$('div[data-que='+id+']').html($('div[data-que=1]').html());
+                $('div[data-que=1]').clone().appendTo('div[data-que='+vm.repeat+']');
 
                 //$("div").attr("id", function(i){return "child"+i;})
                 $('div[data-que='+id+']').attr("name", function(i){return "child"+i;})
