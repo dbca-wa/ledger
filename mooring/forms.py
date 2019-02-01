@@ -97,6 +97,21 @@ class ChangeGroupForm(forms.ModelForm):
         #self.helper.attrs = {'novalidate': ''}
         #self.helper.add_input(Submit('Continue', 'Continue', css_class='btn-lg'))
 
+class FailedRefundCompletedForm(forms.ModelForm):
+
+    class Meta:
+        model = models.RefundFailed
+        fields = []
+
+    def __init__(self, *args, **kwargs):
+        # User must be passed in as a kwarg.
+        super(FailedRefundCompletedForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+        self.helper.form_id = 'id_refund_failed_form'
+        #self.helper.attrs = {'novalidate': ''}
+        self.helper.add_input(Submit('Complete', 'Complete', css_class='btn-lg'))
+        self.helper.add_input(Submit('cancel', 'Cancel', css_class='btn-lg'))
+
 class BookingPeriodForm(forms.ModelForm):
     #mooring_group = ChoiceField(choices=[],)
     class Meta:

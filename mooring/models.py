@@ -1918,7 +1918,21 @@ class GlobalSettings(models.Model):
         self.full_clean()
         super(GlobalSettings,self).save(*args,**kwargs)
 
-        
+
+class RefundFailed(models.Model):
+    STATUS = (
+        (0, 'Pending'),
+        (1, 'Refund Completed'),
+    )
+
+
+    booking = models.ForeignKey(Booking, related_name = "booking_refund")
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+    refund_amount = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)            
+    status = models.SmallIntegerField(choices=STATUS, default=0)
+    created = models.DateTimeField(default=timezone.now)
+    completed_date = models.DateTimeField(null=True, blank=True)
+    completed_by = models.ForeignKey(EmailUser, blank=True, null=True) 
 
 # LISTENERS
 # ======================================
@@ -2372,3 +2386,5 @@ class AdmissionsRateListener(object):
             price_before = price_before[0]
             price_before.period_end = None
             price_before.save()
+
+

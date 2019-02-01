@@ -49,7 +49,8 @@ from mooring.models import (MooringArea,
                                 ChangePricePeriod,
                                 CancelPricePeriod,
                                 BookingPeriod,
-                                BookingPeriodOption
+                                BookingPeriodOption,
+                                RefundFailed
                                 )
 
 from mooring.serialisers import AdmissionsBookingSerializer, AdmissionsLineSerializer
@@ -68,7 +69,7 @@ from django_ical.views import ICalFeed
 from datetime import datetime, timedelta, date
 from decimal import *
 
-from mooring.helpers import is_officer
+from mooring.helpers import is_officer, is_payment_officer
 from mooring import utils
 from ledger.payments.mixins import InvoiceOwnerMixin
 from mooring.invoice_pdf import create_invoice_pdf_bytes
@@ -270,12 +271,7 @@ class CancelBookingView(TemplateView):
             booking_invoice = BookingInvoice.objects.filter(booking=booking).order_by('id')
             for bi in booking_invoice:
                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
-                print invoice
-        print "INVOICE POST"
-        print invoice
-
-
-            
+            RefundFailed.objects.create(booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0) 
         invoice.voided = True
         invoice.save()
         booking.booking_type = 4
@@ -438,9 +434,7 @@ class RefundPaymentView(TemplateView):
                 booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
                 for bi in booking_invoice:
                     invoice = Invoice.objects.get(reference=bi.invoice_reference)
-                    print invoice
-             print "INVOICE POST"
-             print invoice
+                RefundFailed.objects.create(booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0)
                 
              order_response = place_order_submission(request)
              new_order = Order.objects.get(basket=basket)
@@ -1390,6 +1384,69 @@ class ForbiddenView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         return super(ForbiddenView, self).get(request, *args, **kwargs)
+
+
+
+class RefundFailedView(ListView):
+    template_name = 'mooring/dash/view_failed_refunds.html'
+    model = RefundFailed
+
+    def get(self, request, *args, **kwargs):
+#        pk = self.kwargs['pk']
+        if is_payment_officer(request.user) == True:
+            #context_processor = template_context(self.request)
+#           app = self.get_object()
+            return super(RefundFailedView, self).get(request, *args, **kwargs)
+        else:
+#             messages.error(self.request, 'Forbidden from viewing this page.')
+             return HttpResponseRedirect("/forbidden")
+
+    def get_context_data(self, **kwargs):
+        context = super(RefundFailedView, self).get_context_data(**kwargs)
+        request = self.request
+        if is_payment_officer(request.user) == True:
+           context['failedrefunds'] = RefundFailed.objects.filter(status=0)
+        return context
+
+    def get_initial(self):
+        initial = super(RefundFailedView, self).get_initial()
+        initial['action'] = 'list'
+        return initial
+
+
+class RefundFailedCompleted(UpdateView):
+    template_name = 'mooring/dash/complete_failed_refund.html'
+    model = RefundFailed 
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        pk = self.kwargs['pk']
+        if is_payment_officer(request.user) == True and self.object.status == 0:
+            return super(RefundFailedCompleted, self).get(request, *args, **kwargs)
+        else:
+             return HttpResponseRedirect("/forbidden")
+
+    def get_context_data(self, **kwargs):
+        context = super(RefundFailedCompleted, self).get_context_data(**kwargs)
+        context['query_string'] = ''
+        return context
+
+    def get_form_class(self):
+        return app_forms.FailedRefundCompletedForm
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):
+            return HttpResponseRedirect(reverse('dash-failedrefunds'))
+        return super(RefundFailedCompleted, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        forms_data = form.cleaned_data
+        self.object.completed_date = datetime.now() 
+        self.object.completed_by = self.request.user
+        self.object.status = 1
+        self.object.save() 
+        return HttpResponseRedirect(reverse('dash-failedrefunds'))
 
 
 ### Booking Period Views ###

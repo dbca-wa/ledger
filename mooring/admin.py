@@ -530,4 +530,11 @@ class GlobalSettings(admin.ModelAdmin):
 @admin.register(models.AdmissionsLocation)
 class AdmissionsLocation(admin.ModelAdmin):
     list_display = ('text', 'mooring_group')
-    
+   
+@admin.register(models.RefundFailed)
+class RefundFailed(admin.ModelAdmin):
+    list_display = ('booking', 'invoice_reference','refund_amount','status','created','completed_date','completed_by')
+    search_fields = ('booking','invoice_reference','refund_amount')
+    list_filter = ('status','completed_by')
+    ordering = ('id',)
+
