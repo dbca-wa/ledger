@@ -45,8 +45,13 @@
     <div>
         <!--<div v-if="isRepeatable" v-for="n in repeat" class="panel panel-default">-->
         <div v-for="n in repeat" class="panel panel-default">
-            <div class="repeat-group panel-body" :data-que="n">
-                <p>N: {{name}} {{n}} {{isRepeatable}}</p>
+            <div v-if="isRepeatable">
+                <div class="repeat-group panel-body" :data-que="n">
+                    <p>N: {{name}} {{n}} {{isRepeatable}}</p>
+                    <slot></slot>
+                </div>
+            </div>
+            <div v-else>
                 <slot></slot>
             </div>
         </div>
