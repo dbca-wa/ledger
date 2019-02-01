@@ -258,7 +258,7 @@ class CancelBookingView(TemplateView):
             booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
         booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
 #        booking_total =  Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
-         
+        b_total = Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
         info = {'amount': Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total))), 'details' : 'Refund via system'}
 #         info = {'amount': float('10.00'), 'details' : 'Refund via system'}
         try: 
