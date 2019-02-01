@@ -1522,7 +1522,7 @@ class BookingPeriodEditChangeGroup(UpdateView):
     def form_valid(self, form):
         self.object = form.save()
         forms_data = form.cleaned_data
-        return HttpResponseRedirect(reverse('dash-bookingpolicy'))
+        return HttpResponseRedirect(reverse('dash-bookingperiod'))
 
 class BookingPeriodView(UpdateView):
     template_name = 'mooring/dash/view_booking_periods.html'
@@ -1634,7 +1634,7 @@ class BookingPeriodEditOption(UpdateView):
 
     def get_initial(self):
         initial = super(BookingPeriodEditOption, self).get_initial()
-        initial['action'] = 'new'
+        initial['action'] = 'edit'
         request = self.request
 
         initial['change_group_choices'] = []

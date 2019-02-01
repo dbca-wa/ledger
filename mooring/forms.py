@@ -50,7 +50,7 @@ class DeleteBookingPeriodOptionForm(forms.ModelForm):
         super(DeleteBookingPeriodOptionForm, self).__init__(*args, **kwargs)
         self.helper = BaseFormHelper()
         self.helper.form_id = 'id_delet_form'
-        self.helper.add_input(Submit('Delete', 'Delete', css_class='btn-lg'))
+        self.helper.add_input(Submit('Delete', 'Delete', css_class='btn-lg', style='margin-top: 15px;' ))
 
 
 class BookingPeriodOptionForm(forms.ModelForm):
@@ -76,9 +76,9 @@ class BookingPeriodOptionForm(forms.ModelForm):
 
         self.helper.form_id = 'id_change_group_form'
         if self.initial['action'] == 'edit':
-           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg', style='margin-top: 15px;' ))
         else:
-           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg', style='margin-top: 15px;' ))
 
 class ChangeGroupForm(forms.ModelForm):
 
@@ -115,9 +115,9 @@ class BookingPeriodForm(forms.ModelForm):
 
         self.helper.form_id = 'id_change_group_form'
         if self.initial['action'] == 'edit':
-           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg', style='margin-top: 15px;' ))
         else:
-           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg', style='margin-top: 15px;'))
 
 
 class UpdateChangeGroupForm(forms.ModelForm):
@@ -138,9 +138,9 @@ class UpdateChangeGroupForm(forms.ModelForm):
 
         self.helper.form_id = 'id_change_group_form'
         if self.initial['action'] == 'edit':
-           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg', style='margin-top: 15px;' ))
         else:
-           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg', style='margin-top: 15px;' ))
 
 
 class UpdateCancelGroupForm(forms.ModelForm):
@@ -160,9 +160,9 @@ class UpdateCancelGroupForm(forms.ModelForm):
 
         self.helper.form_id = 'id_change_group_form'
         if self.initial['action'] == 'edit':
-           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg', style='margin-top: 15px;' ))
         else:
-           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg', style='margin-top: 15px;'))
 
 
 class UpdateChangeOptionForm(forms.ModelForm):
@@ -183,9 +183,9 @@ class UpdateChangeOptionForm(forms.ModelForm):
         self.fields['amount'].required = False
         self.helper.form_id = 'id_change_group_form'
         if self.initial['action'] == 'edit':
-           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg', style='margin-top: 15px;' ))
         else:
-           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg', style='margin-top: 15px;' ))
 
 
 class UpdateCancelOptionForm(forms.ModelForm):
@@ -209,9 +209,9 @@ class UpdateCancelOptionForm(forms.ModelForm):
 
         self.helper.form_id = 'id_cancel_group_form'
         if self.initial['action'] == 'edit': 
-           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg'))
+           self.helper.add_input(Submit('Update', 'Update', css_class='btn-lg', style='margin-top: 15px;' ))
         else:
-           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg'))
+           self.helper.add_input(Submit('Create', 'Create', css_class='btn-lg', style='margin-top: 15px;' ))
    
 
 

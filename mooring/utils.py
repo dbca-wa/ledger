@@ -1789,8 +1789,8 @@ def admissions_lines(booking_mooring):
 # Access Level check for Group   
 def mooring_group_access_level_change(pk,request):
      mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
-     if request.user.is_superuser is not True:
-          return False
+     if request.user.is_superuser is True:
+          return True
      else:
           if ChangeGroup.objects.filter(pk=pk,mooring_group__in=mooring_groups).count() > 0:
               return True
@@ -1799,8 +1799,8 @@ def mooring_group_access_level_change(pk,request):
 
 def mooring_group_access_level_cancel(pk,request):
      mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
-     if request.user.is_superuser is not True:
-          return False
+     if request.user.is_superuser is True:
+          return True
      else:
           if CancelGroup.objects.filter(pk=pk,mooring_group__in=mooring_groups).count() > 0:
               return True
@@ -1809,8 +1809,8 @@ def mooring_group_access_level_cancel(pk,request):
 
 def mooring_group_access_level_change_options(cg,pk,request):
      mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
-     if request.user.is_superuser is not True:
-          return False
+     if request.user.is_superuser is True:
+          return True
      else:
           cpp = ChangePricePeriod.objects.get(id=pk)
           if ChangeGroup.objects.filter(id=cg,change_period__in=[cpp],mooring_group__in=mooring_groups).count() > 0:
@@ -1820,8 +1820,8 @@ def mooring_group_access_level_change_options(cg,pk,request):
 
 def mooring_group_access_level_cancel_options(cg,pk,request):
      mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
-     if request.user.is_superuser is not True:
-          return False
+     if request.user.is_superuser is True:
+          return True
      else:
           cpp = CancelPricePeriod.objects.get(id=pk)
           if CancelGroup.objects.filter(id=cg,cancel_period__in=[cpp],mooring_group__in=mooring_groups).count() > 0:
@@ -1833,8 +1833,8 @@ def mooring_group_access_level_booking_period(pk,request):
      mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
      print "MOORING GROUPS - mooring_group_access_level_booking_period"
      print mooring_groups
-     if request.user.is_superuser is not True:
-          return False
+     if request.user.is_superuser is True:
+          return True
      else:
           if BookingPeriod.objects.filter(pk=pk,mooring_group__in=mooring_groups).count() > 0:
               return True
@@ -1843,8 +1843,8 @@ def mooring_group_access_level_booking_period(pk,request):
 
 def mooring_group_access_level_booking_period_option(pk,bp_group_id,request):
      mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
-     if request.user.is_superuser is not True:
-          return False
+     if request.user.is_superuser is True:
+          return True
      else:
           bpo = BookingPeriodOption.objects.get(id=pk)
           if BookingPeriod.objects.filter(pk=bp_group_id,booking_period__in=[bpo],mooring_group__in=mooring_groups).count() > 0:
@@ -1853,8 +1853,8 @@ def mooring_group_access_level_booking_period_option(pk,bp_group_id,request):
 
 
 def check_mooring_admin_access(request): 
-    if request.user.is_superuser is not True:
-        return False
+    if request.user.is_superuser is True:
+        return True
     else:
       if request.user.groups.filter(name__in=['Mooring Admin']).exists():
           return True
