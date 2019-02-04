@@ -1,6 +1,12 @@
-{%  extends 'mooring/email/base_email.html' %}
 
-{% block content %}
-<p>A refund on booking {{booking.old_booking.id}} with new booking {{booking.id}} has failed and require intervention.</p>
+<p>Hello,</p>
+{% if booking.old_booking.id %}
+	<p>A refund on booking {{booking.old_booking.id}} with new booking {{booking.id}} has failed and require intervention.</p>
+{% else %}
+	<p>A refund on booking {{booking.id}} has failed and requires intervention.</p>
+{% endif %}
 
-{% endblock %}
+<p>Please check the failed refund dashboard within the department internal portal for more information.</p>
+
+{% include "mooring/email/signature.html" %}
+

@@ -268,10 +268,12 @@ class CancelBookingView(TemplateView):
             update_payments(invoice.reference)
         except: 
             emails.send_refund_failure_email(booking)
+            emails.send_refund_failure_email_customer(booking)
             booking_invoice = BookingInvoice.objects.filter(booking=booking).order_by('id')
             for bi in booking_invoice:
                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
-            RefundFailed.objects.create(booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0) 
+            RefundFailed.objects.create(booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0)
+ 
         invoice.voided = True
         invoice.save()
         booking.booking_type = 4
@@ -345,6 +347,7 @@ class CancelAdmissionsBookingView(TemplateView):
             update_payments(invoice.reference)
         except: 
             emails.send_refund_failure_email(booking)
+            emails.send_refund_failure_email_customer(booking)
             booking_invoice = AdmissionsBookingInvoice.objects.filter(admissions_booking=booking).order_by('id')
             for bi in booking_invoice:
                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
@@ -431,6 +434,7 @@ class RefundPaymentView(TemplateView):
                 update_payments(invoice.reference)
              except:
                 emails.send_refund_failure_email(booking)
+                emails.send_refund_failure_email_customer(booking)
                 booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
                 for bi in booking_invoice:
                     invoice = Invoice.objects.get(reference=bi.invoice_reference)

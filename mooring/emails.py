@@ -8,8 +8,11 @@ from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.models import Invoice
 from mooring import settings 
 from mooring.helpers import is_inventory, is_admin
-
+from django.core.mail import EmailMessage
 from ledger.emails.emails import EmailBase
+from django.template.loader import render_to_string, get_template
+from confy import env
+from django.template import Context
 
 default_from_email = settings.DEFAULT_FROM_EMAIL
 default_campground_email = settings.CAMPGROUNDS_EMAIL
@@ -20,6 +23,59 @@ class TemplateEmailBase(EmailBase):
     html_template = 'mooring/email/base_email.html'
     # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
     txt_template = 'mooring/email/base_email.txt'
+
+def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,attachment1=None):
+
+    email_delivery = env('EMAIL_DELIVERY', 'off')
+    override_email = env('OVERRIDE_EMAIL', None)
+    context['default_url'] = env('DEFAULT_HOST', '')
+    context['default_url_internal'] = env('DEFAULT_URL_INTERNAL', '')
+
+    if email_delivery != 'on':
+        print ("EMAIL DELIVERY IS OFF NO EMAIL SENT -- email.py ")
+        return False
+
+    if template is None:
+        raise ValidationError('Invalid Template')
+    if to is None:
+        raise ValidationError('Invalid Email')
+    if subject is None:
+        raise ValidationError('Invalid Subject')
+
+    if from_email is None:
+        if settings.DEFAULT_FROM_EMAIL:
+            from_email = settings.DEFAULT_FROM_EMAIL
+        else:
+            from_email = 'jason.moore@dpaw.wa.gov.au'
+
+    context['version'] = settings.VERSION_NO
+    # Custom Email Body Template
+    context['body'] = get_template(template).render(Context(context))
+    # Main Email Template Style ( body template is populated in the center
+    main_template = get_template('mooring/email/base_email2.html').render(Context(context))
+
+    if override_email is not None:
+        to = override_email.split(",")
+        if cc:
+            cc = override_email.split(",")
+        if bcc:
+            bcc = override_email.split(",")
+
+    if len(to) > 1:
+       for to_email in to:
+          msg = EmailMessage(subject, main_template, to=[to_email],cc=cc, from_email=from_email)
+          msg.content_subtype = 'html'
+          if attachment1:
+              msg.attach_file(attachment1)
+          msg.send()
+    else:
+          msg = EmailMessage(subject, main_template, to=to,cc=cc, from_email=from_email)
+          msg.content_subtype = 'html'
+          if attachment1:
+              msg.attach_file(attachment1)
+          msg.send()
+    return True
+
 
 
 def send_admissions_booking_invoice(admissionsBooking):
@@ -226,18 +282,62 @@ def send_booking_period_email(moorings, group, days):
     }
     email_obj.send(emails, from_address=default_from_email, context=context)
 
+
 def send_refund_failure_email(booking):
-    email_obj = TemplateEmailBase()
+
+    subject = 'Failed to refund for {}, requires manual intervention.'.format(booking)
+    template = 'mooring/email/refund_failed.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking}
+    if not settings.PRODUCTION_EMAIL:
+       to = settings.NON_PROD_EMAIL
+       sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,attachment1=None)
+    else:
+       for u in user_list:
+          to = u.email
+          sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,attachment1=None)
+
+def send_refund_failure_email_customer(booking):
+
+    subject = 'Your refund for booking has failed {}.'.format(booking.id)
+    template = 'mooring/email/refund_failed_customer.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking}
+    to = booking.customer.email
+    sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,attachment1=None)
+
+def send_refund_failure_email_old(booking):
+    email_obj = TemplateEmailBase2()
     email_obj.subject = 'Failed to refund for {}, requires manual intervention.'.format(booking)
     email_obj.html_template = 'mooring/email/refund_failed.html'
     email_obj.txt_template = 'mooring/email/refund_failed.txt'
 
-#    email = booking.customer.email
+    # email = booking.customer.email
     email = 'jason.moore@dbca.wa.gov.au'
     context = {
         'booking': booking,
     }
-    email_obj.send([email], from_address=default_from_email, context=context)
+
+    pa = Group.objects.get(name='Payments Officers')
+    ma = Group.objects.get(name="Mooring Admin")
+    user_list = EmailUser.objects.filter(groups__in=[pa,ma]).distinct()
+
+    ### REMOVE ###
+    for u in user_list:
+       email = u.email
+       email_obj.send([email], from_address=default_from_email, context=context)
+    ### REM<O ####
+    if not settings.PRODUCTION_EMAIL:
+       email = settings.NON_PROD_EMAIL
+       email_obj.send([email], from_address=default_from_email, context=context)
+    else:
+       for u in user_list:
+          email = u.email
+          email_obj.send([email], from_address=default_from_email, context=context)
 
 def send_registered_vessels_email(content):
     email_obj = TemplateEmailBase()

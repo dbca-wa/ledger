@@ -47,7 +47,7 @@
                 <td>{{ row.booking.id }}</td>
                 <td>{{ row.invoice_reference }}</td>
                 <td>${{ row.refund_amount }}</td>
-                <td>{{ row.status }}</td>
+                <td>{{ row.get_status_display }}</td>
                 <td>{{ row.created }}</td>
                 <td>
                    <a href='/ledger/payments/invoice/payment?invoice={{ row.invoice_reference }}'>View Invoice Payment</a><BR>
