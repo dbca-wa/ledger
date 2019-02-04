@@ -42,6 +42,7 @@
     </div>
 -->
 
+<!--
     <div>
         <!--<div v-if="isRepeatable" v-for="n in repeat" class="panel panel-default">-->
         <div v-for="n in repeat" class="panel panel-default">
@@ -57,7 +58,21 @@
         </div>
         <button v-if="isRepeatable" v-on:click.stop.prevent="add_another2">Add Another</button>
     </div>
+-->
 
+    <div>
+        <div class="col-sm-12">
+            <slot></slot>
+        </div>
+
+        <div v-for="n in repeat" class="panel panel-default">
+            <p>N: {{name}} {{n}} {{isRepeatable}}</p>
+            <div class="repeat-group panel-body" :data-que="n">
+            </div>
+        </div>
+
+
+    </div>
 </template>
 
 <script>
@@ -69,7 +84,7 @@ export default {
     //props:["label", "name", "id", "help_text", "help_text_url", "isRemovable", "isPreviewMode"],
     data:function () {
         return{
-            repeat:1,
+            repeat:0,
             //isRepeatable:true,
             isExpanded:true
         }
@@ -132,6 +147,7 @@ export default {
                 avail = [...avail.map(id => {
                     return $(avail[id]).attr('data-que');
                 })];
+                /*
                 if (vm.repeat == 1) {
                     vm.repeat+=1;
                 }else {
@@ -139,6 +155,8 @@ export default {
                         vm.repeat+=1;
                     }
                 }
+                */
+                vm.repeat+=1;
 
                 var id = vm.repeat - 1;
                 //$('div[data-que='+id+']').html($('div[data-que=1]').html());
