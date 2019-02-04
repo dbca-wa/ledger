@@ -175,10 +175,12 @@ module.exports = {
                 _elements.push(
                     <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={c.isRepeatable}>
                         {c.children.map(d=>{
+
                             /*
                             if ( isRepeatable ) {
-                                c.name = c.name + "_" + postfix.toString();
+                                d.name = d.name + "_" + postfix.toString();
                                 postfix++;
+                                console.log('isRepeatable: ' + d.name)
                             }
                             */
 
