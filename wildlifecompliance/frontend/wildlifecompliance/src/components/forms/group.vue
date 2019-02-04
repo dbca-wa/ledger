@@ -61,7 +61,7 @@
 -->
 
     <div>
-        <div class="col-sm-12">
+        <div id="id_slot" class="col-sm-12">
             <slot></slot>
         </div>
 
@@ -86,7 +86,8 @@ export default {
         return{
             repeat:0,
             //isRepeatable:true,
-            isExpanded:true
+            isExpanded:true,
+            cloned: $('#id_slot').clone().appendTo('div[data-que='+vm.repeat+']');
         }
     },
     components: {HelpText, HelpTextUrl},
@@ -147,15 +148,6 @@ export default {
                 avail = [...avail.map(id => {
                     return $(avail[id]).attr('data-que');
                 })];
-                /*
-                if (vm.repeat == 1) {
-                    vm.repeat+=1;
-                }else {
-                    if (avail.indexOf(el) < 0 ){
-                        vm.repeat+=1;
-                    }
-                }
-                */
                 vm.repeat+=1;
 
                 var id = vm.repeat - 1;
