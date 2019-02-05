@@ -4,15 +4,19 @@ from django.conf import settings
 
 from mooring import pdf
 from mooring.models import MooringsiteBooking, AdmissionsBooking, AdmissionsLine, AdmissionsLocation
-from ledger.payments.pdf import create_invoice_pdf_bytes
+#from ledger.payments.pdf import create_invoice_pdf_bytes
+from mooring.invoice_pdf import create_invoice_pdf_bytes
 from ledger.payments.models import Invoice
 from mooring import settings 
 from mooring.helpers import is_inventory, is_admin
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
+
 from ledger.emails.emails import EmailBase
 from django.template.loader import render_to_string, get_template
 from confy import env
 from django.template import Context
+from ledger.accounts.models import Document
+
 
 default_from_email = settings.DEFAULT_FROM_EMAIL
 default_campground_email = settings.CAMPGROUNDS_EMAIL
@@ -24,7 +28,7 @@ class TemplateEmailBase(EmailBase):
     # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
     txt_template = 'mooring/email/base_email.txt'
 
-def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,attachment1=None):
+def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,attachments=None):
 
     email_delivery = env('EMAIL_DELIVERY', 'off')
     override_email = env('OVERRIDE_EMAIL', None)
@@ -52,7 +56,27 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,attachment1=None
     # Custom Email Body Template
     context['body'] = get_template(template).render(Context(context))
     # Main Email Template Style ( body template is populated in the center
-    main_template = get_template('mooring/email/base_email2.html').render(Context(context))
+    if template_group == 'rottnest':
+        main_template = get_template('mooring/email/base_email-rottnest.html').render(Context(context))
+    else:
+        main_template = get_template('mooring/email/base_email2.html').render(Context(context))
+   
+    reply_to=None
+
+    if attachments is None:
+        attachments = []
+
+    # Convert Documents to (filename, content, mime) attachment
+    _attachments = []
+    for attachment in attachments:
+        if isinstance(attachment, Document):
+             filename = str(attachment)
+             content = attachment.file.read()
+             mime = mimetypes.guess_type(attachment.filename)[0]
+             _attachments.append((filename, content, mime))
+        else:
+             _attachments.append(attachment)
+
 
     if override_email is not None:
         to = override_email.split(",")
@@ -63,22 +87,30 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,attachment1=None
 
     if len(to) > 1:
        for to_email in to:
-          msg = EmailMessage(subject, main_template, to=[to_email],cc=cc, from_email=from_email)
-          msg.content_subtype = 'html'
-          if attachment1:
-              msg.attach_file(attachment1)
-          msg.send()
+           msg = EmailMultiAlternatives(subject, "Please open with a compatible html email client.", from_email=from_email, to=to_email, attachments=_attachments, cc=cc, bcc=bcc, reply_to=reply_to)
+           msg.attach_alternative(main_template, 'text/html')
+
+          #msg = EmailMessage(subject, main_template, to=[to_email],cc=cc, from_email=from_email)
+          #msg.content_subtype = 'html'
+          #if attachment1:
+          #    for a in attachment1:
+          #        msg.attach(a)
+           msg.send()
     else:
-          msg = EmailMessage(subject, main_template, to=to,cc=cc, from_email=from_email)
-          msg.content_subtype = 'html'
-          if attachment1:
-              msg.attach_file(attachment1)
+          msg = EmailMultiAlternatives(subject, "Please open with a compatible html email client.", from_email=from_email, to=to, attachments=_attachments, cc=cc, bcc=bcc, reply_to=reply_to)
+          msg.attach_alternative(main_template, 'text/html')
+
+          #msg = EmailMessage(subject, main_template, to=to,cc=cc, from_email=from_email)
+          #msg.content_subtype = 'html'
+          #if attachment1:
+          #    for a in attachment1:
+          #        msg.attach(a)
           msg.send()
     return True
 
 
 
-def send_admissions_booking_invoice(admissionsBooking):
+def send_admissions_booking_invoice(admissionsBooking, context_processor):
     email_obj = TemplateEmailBase()
     admissionsLine = AdmissionsLine.objects.get(admissionsBooking=admissionsBooking)
     email_obj.subject = 'Admission fee payment invoice for {}'.format(admissionsLine.arrivalDate)
@@ -93,12 +125,31 @@ def send_admissions_booking_invoice(admissionsBooking):
     filename = 'invoice-{}({}).pdf'.format(admissionsLine.arrivalDate, admissionsBooking.customer.get_full_name())
     references = [b.invoice_reference for b in admissionsBooking.invoices.all()]
     invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
-    invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
+#    invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
+    invoice_pdf = create_invoice_pdf_bytes(filename,invoice, request, context_processor)
     rottnest_email = default_rottnest_email
     email_obj.send([email], from_address=rottnest_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
 
 
-def send_booking_invoice(booking):
+def send_booking_invoice(booking,request, context_processor):
+
+    subject = 'Your booking invoice'
+    template = 'mooring/email/booking_invoice.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking}
+    to = booking.customer.email
+
+    filename = 'invoice-{}({}-{}).pdf'.format(booking.mooringarea.name,booking.arrival,booking.departure)
+    references = [b.invoice_reference for b in booking.invoices.all()]
+    invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
+    invoice_pdf = create_invoice_pdf_bytes(filename,invoice, request, context_processor)
+    template_group = context_processor['TEMPLATE_GROUP']
+    sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=[(filename, invoice_pdf, 'application/pdf')])
+
+
+def send_booking_invoice_old(booking, request, context_processor):
     email_obj = TemplateEmailBase()
     email_obj.subject = 'Your booking invoice for {}'.format(booking.mooringarea.name)
     email_obj.html_template = 'mooring/email/invoice.html'
@@ -113,7 +164,7 @@ def send_booking_invoice(booking):
     references = [b.invoice_reference for b in booking.invoices.all()]
     invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
         
-    invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
+    invoice_pdf = create_invoice_pdf_bytes(filename,invoice, request, context_processor)
 
 #    campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
     campground_email = default_from_email 
@@ -283,7 +334,7 @@ def send_booking_period_email(moorings, group, days):
     email_obj.send(emails, from_address=default_from_email, context=context)
 
 
-def send_refund_failure_email(booking):
+def send_refund_failure_email(booking, context_processor):
 
     subject = 'Failed to refund for {}, requires manual intervention.'.format(booking)
     template = 'mooring/email/refund_failed.html'
@@ -291,15 +342,16 @@ def send_refund_failure_email(booking):
     bcc = None
     from_email = None
     context= {'booking': booking}
+    template_group = context_processor['TEMPLATE_GROUP']
     if not settings.PRODUCTION_EMAIL:
        to = settings.NON_PROD_EMAIL
-       sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,attachment1=None)
+       sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
     else:
        for u in user_list:
           to = u.email
-          sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,attachment1=None)
+          sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
 
-def send_refund_failure_email_customer(booking):
+def send_refund_failure_email_customer(booking, context_processor):
 
     subject = 'Your refund for booking has failed {}.'.format(booking.id)
     template = 'mooring/email/refund_failed_customer.html'
@@ -308,7 +360,20 @@ def send_refund_failure_email_customer(booking):
     from_email = None
     context= {'booking': booking}
     to = booking.customer.email
-    sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,attachment1=None)
+    template_group = context_processor['TEMPLATE_GROUP']
+    sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+
+def send_booking_cancellation_email_customer(booking, context_processor):
+
+    subject = 'Your booking with ref {} has been cancelled.'.format(booking.id)
+    template = 'mooring/email/booking_cancelled_customer.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking}
+    to = booking.customer.email
+    template_group = context_processor['TEMPLATE_GROUP']
+    sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
 
 def send_refund_failure_email_old(booking):
     email_obj = TemplateEmailBase2()

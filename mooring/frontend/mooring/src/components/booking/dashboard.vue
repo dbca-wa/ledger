@@ -389,7 +389,7 @@ export default {
 
                             full.has_history ? column += "<a href='/view-booking/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
                             $.each(full.active_invoices,(i,v) =>{
-                                invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
+                                invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
                             column += invoices;
                             column += "</td>";
@@ -505,7 +505,7 @@ export default {
                                     search += "&";
                                 }
                                 search += "invoice=" + v
-                                invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
+                                invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
                             var invoice = "/ledger/payments/invoice/payment?" + search;
                             if(full.payment_visible){

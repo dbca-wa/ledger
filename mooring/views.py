@@ -239,6 +239,7 @@ class CancelBookingView(TemplateView):
         return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
 
     def post(self, request, *args, **kwargs):
+        context_processor = template_context(request)
         booking_id = kwargs['pk']
         booking_total = Decimal('0.00')
         basket_total = Decimal('0.00')
@@ -267,8 +268,9 @@ class CancelBookingView(TemplateView):
             invoice = Invoice.objects.get(reference=bpoint.crn1)
             update_payments(invoice.reference)
         except: 
-            emails.send_refund_failure_email(booking)
-            emails.send_refund_failure_email_customer(booking)
+            emails.send_refund_failure_email(booking, context_processor)
+            emails.send_refund_failure_email_customer(booking, context_processor)
+         
             booking_invoice = BookingInvoice.objects.filter(booking=booking).order_by('id')
             for bi in booking_invoice:
                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
@@ -278,9 +280,10 @@ class CancelBookingView(TemplateView):
         invoice.save()
         booking.booking_type = 4
         booking.save()
+        emails.send_booking_cancellation_email_customer(booking, context_processor)
         booking_admission.booking_type = 4
         booking_admission.save()
-
+        
         return HttpResponseRedirect('/success/')
 
 
@@ -322,6 +325,7 @@ class CancelAdmissionsBookingView(TemplateView):
         return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
 
     def post(self, request, *args, **kwargs):
+        context_processor = template_context(request)
         booking_id = kwargs['pk']
         booking_total = Decimal('0.00')
         basket_total = Decimal('0.00')
@@ -346,8 +350,8 @@ class CancelAdmissionsBookingView(TemplateView):
             invoice = Invoice.objects.get(reference=bpoint.crn1)
             update_payments(invoice.reference)
         except: 
-            emails.send_refund_failure_email(booking)
-            emails.send_refund_failure_email_customer(booking)
+            emails.send_refund_failure_email(booking, context_processor)
+            emails.send_refund_failure_email_customer(booking, context_processor)
             booking_invoice = AdmissionsBookingInvoice.objects.filter(admissions_booking=booking).order_by('id')
             for bi in booking_invoice:
                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
@@ -412,7 +416,7 @@ class RefundPaymentView(TemplateView):
             return HttpResponseRedirect(reverse('home'))
 
     def post(self, request, *args, **kwargs):
-
+         context_processor = template_context(request)
          booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
          if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
 
@@ -433,8 +437,8 @@ class RefundPaymentView(TemplateView):
                 invoice = Invoice.objects.get(reference=bpoint.crn1)
                 update_payments(invoice.reference)
              except:
-                emails.send_refund_failure_email(booking)
-                emails.send_refund_failure_email_customer(booking)
+                emails.send_refund_failure_email(booking, context_processor)
+                emails.send_refund_failure_email_customer(booking, context_processor)
                 booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
                 for bi in booking_invoice:
                     invoice = Invoice.objects.get(reference=bi.invoice_reference)
@@ -1881,6 +1885,7 @@ class BookingSuccessView(TemplateView):
     def get(self, request, *args, **kwargs):
         print " BOOKING SUCCESS " 
         try:
+            context_processor = template_context(self.request)
             booking = utils.get_session_booking(request.session)
             invoice_ref = request.GET.get('invoice')
             if booking.booking_type == 3:
@@ -1921,7 +1926,6 @@ class BookingSuccessView(TemplateView):
                             logger.info("old logger 4")
                             bi.booking_type = 4
                             bi.save()
- 
 
                           
                     msb = MooringsiteBooking.objects.filter(booking=booking).order_by('from_dt')
@@ -2049,7 +2053,8 @@ class BookingSuccessView(TemplateView):
                     utils.delete_session_booking(request.session)
                     
                     # send out the invoice before the confirmation is sent
-                    emails.send_booking_invoice(booking)
+                    
+                    emails.send_booking_invoice(booking,request,context_processor)
                     # for fully paid bookings, fire off confirmation email
                     if booking.paid:
                         emails.send_booking_confirmation(booking,request)
@@ -2064,12 +2069,14 @@ class BookingSuccessView(TemplateView):
             else:
                 return redirect('home')
 
-        if request.user.is_staff:
-            return redirect('dash-bookings')
+        #if request.user.is_staff:
+        #    return redirect('dash-bookings')
         context = {
             'booking': booking,
             'book_inv': book_inv
         }
+        print "SELF TEMPLATE"
+        print (self.template_name)
         return render(request, self.template_name, context)
 
 
