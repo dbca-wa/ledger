@@ -173,7 +173,7 @@ module.exports = {
                 }
                 var postfix = 0;
                 _elements.push(
-                    <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={c.isRepeatable}>
+                    <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={c.isRepeatable} repeatable_children={c.children} renderer={this}>
                         {c.children.map(d=>{
 
                             /*
@@ -304,7 +304,9 @@ module.exports = {
             $.each(btns,function (i,input) {
                 $("#cons_"+e.target.name+'_'+input.value).addClass('hidden');
             });
-            $("#cons_"+e.target.name+'_'+e.target.value).removeClass('hidden');
+            if(e.target.checked){
+                $("#cons_"+e.target.name+'_'+e.target.value).removeClass('hidden');
+            }
         }
 
     },
