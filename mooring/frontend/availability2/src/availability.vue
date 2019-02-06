@@ -253,15 +253,13 @@
                     </tr>
                 </thead>
                 <tbody><template v-for="(site, index) in sites" >
-                    <tr>
+                    <tr v-show="mooring_book_row_display[index] == 'show'" >
                         <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i><br>
 				<i>Distance: {{ site.distance_from_selection }}km</i>
-
-
                         </td>
                         <td class="book">
                             <template v-if="site.price">
-                                <button v-if="mooring_book_row[index] == true" @click="addBookingRow(index)" class="button"><small>Book now</small><br/> ${{ mooring_book_row_price[index] }}</button>
+                                <button v-if="mooring_book_row[index] == true" :disabled="mooring_book_row_disabled[index] == true" @click="addBookingRow(index)" class="button"><small>Book now</small><br/> ${{ mooring_book_row_price[index] }}</button>
                                 <button style='display:none' v-else disabled class="button has-tip" data-tooltip aria-haspopup="true" title="Please complete your current ongoing booking using the button at the top of the page."><small>Book now</small><br/>{{ site.price }}</button>
                             </template>
                             <template v-else>
@@ -519,7 +517,9 @@ export default {
             expiry: null,
             booking_expired_notification: false,
             mooring_book_row: [],
-            mooring_book_row_price: []
+            mooring_book_row_price: [],
+            mooring_book_row_disabled: [],
+            mooring_book_row_display: []
         };
     },
     computed: {
@@ -655,7 +655,8 @@ export default {
         addBooking: function (site_id, mooring_id,bp_id,date) {
               var vm = this;
               vm.isLoading =true;
-           $('#spinnerLoader').show();
+              $('#spinnerLoader').show();
+
               var booking_start = $('#date-arrival').val();
               var booking_finish = $('#date-departure').val();
 
@@ -994,10 +995,17 @@ export default {
                                 var avail_index;
                                 var filtered_sites = [];
                                 vm.sites = data.sites;
-                            
+                                vm.mooring_book_row = [];
+                                vm.mooring_book_row_disabled = [];
+                                vm.mooring_book_row_price = [];
+                                vm.mooring_book_row_display = [];
+
                                 for (index = 0; index < vm.sites.length; ++index) {
                                     vm.mooring_book_row[index] = true;
+                                    vm.mooring_book_row_disabled[index] = false;
                                     vm.mooring_book_row_price[index] = '0.00';
+                                    vm.mooring_book_row_display[index] = 'show';
+
                                     if (vm.sites[index].vessel_size_limit > 0){
                                         if (vm.sites[index].vessel_size_limit < vm.vesselSize){
                                             if (!filtered_sites.indexOf(vm.sites[index].id) >= 0){
@@ -1042,8 +1050,9 @@ export default {
                                             if (booking_period.length > 1) {
                                                     vm.mooring_book_row[index] = false;
                                             } else {      
-                                                if (booking_period[0].status == 'closed') {
-                                                    vm.mooring_book_row[index] = false;	
+                                                if (booking_period[0].status == 'closed' || booking_period[0].status == 'selected') {
+                                                    // vm.mooring_book_row[index] = 'disabled';
+                                                    vm.mooring_book_row_disabled[index] = true;	
                                                 }
                                             }
                                         } else {
@@ -1057,7 +1066,8 @@ export default {
                                     for (index = 0; index < vm.sites.length; index++){
                                         if (vm.sites[index].id == filtered_sites[i]){
                                             console.log("removed one");
-                                            vm.sites.splice(index, 1); 
+                                            vm.mooring_book_row_display[index] = 'hide';
+                                        //    vm.sites.splice(index, 1); 
                                         }
                                     }
                                 }
