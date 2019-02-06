@@ -44,10 +44,9 @@
 
 <!--
     <div>
-        <!--<div v-if="isRepeatable" v-for="n in repeat" class="panel panel-default">-->
         <div v-for="n in repeat" class="panel panel-default">
             <div v-if="isRepeatable">
-                <div class="repeat-group panel-body" :data-que="n">
+                <div class="repeat-group panel-body" :data-que="n" ref="list">
                     <p>N: {{name}} {{n}} {{isRepeatable}}</p>
                     <slot></slot>
                 </div>
@@ -60,6 +59,7 @@
     </div>
 -->
 
+<!--
     <div>
         <div id="id_slot" class="col-sm-12">
             <slot></slot>
@@ -71,11 +71,52 @@
             </div>
         </div>
 
+        <div id="id_slot2" ref="list" class="col-sm-12"></div>
 
+        <button v-if="isRepeatable" v-on:click.stop.prevent="add_another3">Add Another</button>
     </div>
+-->
+
+    <div>
+        <div v-for="n in repeat" class="panel panel-default">
+            <div v-if="isRepeatable" ref="list">
+                <div class="repeat-group panel-body" :data-que="n">
+                    <p>N: {{name}} {{n}} {{isRepeatable}}</p>
+                    <slot></slot>
+                </div>
+                <div class="repeat-group panel-body" :data-que="2">
+                    <p>N: {{name}} {{2}} {{isRepeatable}}</p>
+                    <slot></slot>
+                </div>
+            </div>
+            <div v-else>
+                <slot></slot>
+            </div>
+        </div>
+        <button v-if="isRepeatable" v-on:click.stop.prevent="add_another4">Add Another</button>
+    </div>
+
 </template>
 
 <script>
+import Vue from 'vue'
+
+Vue.mixin({
+    methods: {
+        compile: function(content, refs){
+            var tmp = Vue.extend({
+                template: content
+                //mytest: content
+            }); 
+            new tmp().$mount(this.$refs[refs]);
+        },
+
+        calert: function(){
+            alert('Çalışıyor');
+        },
+    }
+})
+
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 export default {
@@ -84,10 +125,11 @@ export default {
     //props:["label", "name", "id", "help_text", "help_text_url", "isRemovable", "isPreviewMode"],
     data:function () {
         return{
-            repeat:0,
+            repeat:1,
             //isRepeatable:true,
             isExpanded:true,
-            cloned: $('#id_slot').clone().appendTo('div[data-que='+vm.repeat+']');
+            //cloned: $('#id_slot').clone().appendTo('div[data-que='+vm.repeat+']');
+            cloned: $('#id_slot').clone(),
         }
     },
     components: {HelpText, HelpTextUrl},
@@ -152,12 +194,55 @@ export default {
 
                 var id = vm.repeat - 1;
                 //$('div[data-que='+id+']').html($('div[data-que=1]').html());
-                $('div[data-que=1]').clone().appendTo('div[data-que='+vm.repeat+']');
+                //$('div[data-que=1]').clone().appendTo('div[data-que='+vm.repeat+']');
 
                 //$("div").attr("id", function(i){return "child"+i;})
-                $('div[data-que='+id+']').attr("name", function(i){return "child"+i;})
+                //$('div[data-que='+id+']').attr("name", function(i){return "child"+i;})
+``
+                $('div[data-que=1]').clone().appendTo('div[data-que='+vm.repeat+']');
             }
         },
+
+        add_another3:function (e) {
+            let vm = this;
+
+            //var element = $('#id_slot').append(vm.cloned);
+            //var element = $('#id_slot2').append($('#id_slot').clone());
+            var element = $('#id_slot').clone();
+            //this.$compile(element.get(0));
+            this.compile(element, 'list');
+        },
+
+        add_another4:function (e) {
+            let vm = this;
+
+            if (vm.isRepeatable) {
+
+                let  el = $(e.target).attr('data-que');
+                let avail = $('.repeat-group');
+                avail = [...avail.map(id => {
+                    return $(avail[id]).attr('data-que');
+                })];
+                vm.repeat+=1;
+
+                var id = vm.repeat - 1;
+                $('div[data-que=1]').clone().appendTo('div[data-que=2]');
+
+                var element = $('div[data-que=2]');
+                //var element = $('#id_slot').clone();
+                this.compile(element, 'list');
+            }
+        },
+
+
+/*
+        compile: function(content, refs){ 
+            var tmp = Vue.extend({
+                template: content
+            }); 
+            new tmp().$mount(this.$refs[refs]);
+        },
+*/
 
         add_empty_div:function (e) {
             // add empty div placeholder for 'add another' button
