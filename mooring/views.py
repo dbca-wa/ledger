@@ -239,6 +239,15 @@ class CancelBookingView(TemplateView):
         return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
 
     def post(self, request, *args, **kwargs):
+
+        if request.session:
+           if 'ps_booking' in request.session:
+               booking_session = utils.get_session_booking(request.session)
+               if booking_session.booking_type == 3:
+                  booking_session.delete()
+               utils.delete_session_booking(request.session)
+
+
         context_processor = template_context(request)
         booking_id = kwargs['pk']
         booking_total = Decimal('0.00')
