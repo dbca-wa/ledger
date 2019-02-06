@@ -50,7 +50,7 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
         if settings.DEFAULT_FROM_EMAIL:
             from_email = settings.DEFAULT_FROM_EMAIL
         else:
-            from_email = 'jason.moore@dpaw.wa.gov.au'
+            from_email = 'no-reply@dbca.wa.gov.au'
 
     context['version'] = settings.VERSION_NO
     # Custom Email Body Template
@@ -192,16 +192,21 @@ def send_admissions_booking_confirmation(admissionsBooking, request):
     filename = 'confirmation-AD{}({}).pdf'.format(admissionsBooking.id, admissionsBooking.customer.get_full_name())
     email_obj.send([email], from_address=rottnest_email, context=context, cc=cc, bcc=bcc, attachments=[(filename, att.read(), 'application/pdf')])
 
-def send_booking_confirmation(booking,request):
+def send_booking_confirmation(booking,request,context_processor):
     email_obj = TemplateEmailBase()
     email_obj.subject = 'Your booking {} at {} is confirmed'.format(booking.confirmation_number,booking.mooringarea.name)
     email_obj.html_template = 'mooring/email/confirmation.html'
     email_obj.txt_template = 'mooring/email/confirmation.txt'
+    from_email = None
 
     email = booking.customer.email
 
+    template = 'mooring/email/booking_confirmation.html'
+
     cc = None
     bcc = [default_campground_email]
+
+    template_group = context_processor['TEMPLATE_GROUP']
 
     #campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
     campground_email = default_from_email
@@ -262,18 +267,21 @@ def send_booking_confirmation(booking,request):
     mooring_booking = []
     if MooringsiteBooking.objects.filter(booking=booking).count() > 0:
         mooring_booking = MooringsiteBooking.objects.filter(booking=booking)
-    pdf.create_confirmation(att, booking, mooring_booking)
-    att.seek(0)
-
+    pdf.create_confirmation(att, booking, mooring_booking,context_processor)
+    att.seek(0) 
+    subject = "Your mooring booking confirmation"
     if booking.admission_payment:
+        subject = "Your mooring booking and admissions confirmation"
         att2 = BytesIO()
         admissionsBooking = AdmissionsBooking.objects.get(id=booking.admission_payment.id)
         pdf.create_admissions_confirmation(att2, admissionsBooking)
         att2.seek(0)
         filename = 'confirmation-AD{}.pdf'.format(admissionsBooking.id)
-        email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf'), (filename, att2.read(), 'application/pdf')])
+        sendHtmlEmail([email],subject,context,template,cc,bcc,from_email,template_group,attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf'), (filename, att2.read(), 'application/pdf')])
+        #email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf'), (filename, att2.read(), 'application/pdf')])
     else:
-        email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
+        #email_obj.send([email], from_address=campground_email, context=context, cc=cc, bcc=bcc, attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
+        sendHtmlEmail([email],subject,context,template,cc,bcc,from_email,template_group,attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
     booking.confirmation_sent = True
     booking.save()
 

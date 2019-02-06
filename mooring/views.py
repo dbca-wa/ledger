@@ -2057,7 +2057,7 @@ class BookingSuccessView(TemplateView):
                     emails.send_booking_invoice(booking,request,context_processor)
                     # for fully paid bookings, fire off confirmation email
                     if booking.paid:
-                        emails.send_booking_confirmation(booking,request)
+                        emails.send_booking_confirmation(booking,request, context_processor)
 
         except Exception as e:
             print e

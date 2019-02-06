@@ -37,6 +37,7 @@ from mooring import utils
 from mooring.helpers import can_view_campground, is_inventory, is_admin, is_payment_officer
 from datetime import datetime,timedelta, date
 from decimal import Decimal 
+from mooring.context_processors import mooring_url, template_context
 from mooring.models import (MooringArea,
                                 District,
                                 Contact,
@@ -2357,6 +2358,9 @@ def get_admissions_confirmation(request, *args, **kwargs):
 
 @require_http_methods(['GET'])
 def get_confirmation(request, *args, **kwargs):
+
+    # Get branding configuration
+    context_processor = template_context(request)
     # fetch booking for ID
     booking_id = kwargs.get('booking_id', None)
     if (booking_id is None):
@@ -2383,7 +2387,7 @@ def get_confirmation(request, *args, **kwargs):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'filename="confirmation-PS{}.pdf"'.format(booking_id)
 
-    response.write(pdf.create_confirmation(response, booking, mooring_bookings))
+    response.write(pdf.create_confirmation(response, booking, mooring_bookings, context_processor))
     return response
 
 

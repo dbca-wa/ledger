@@ -55,6 +55,7 @@ LETTER_HEADER_MARGIN = 30
 LETTER_PAGE_MARGIN = 60
 LETTER_IMAGE_WIDTH = LICENCE_HEADER_IMAGE_WIDTH/3.0
 LETTER_IMAGE_HEIGHT = LICENCE_HEADER_IMAGE_HEIGHT/3.0
+
 LETTER_HEADER_RIGHT_LABEL_OFFSET = 400
 LETTER_HEADER_RIGHT_INFO_OFFSET = 450
 LETTER_HEADER_SMALL_BUFFER = 5
@@ -108,7 +109,21 @@ def _create_letter_header_footer(canvas, doc):
     #canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
 
 
-def create_confirmation(confirmation_buffer, booking, mooring_bookings):
+def create_confirmation(confirmation_buffer, booking, mooring_bookings, mooring_var):
+    global DPAW_HEADER_LOGO 
+    global LETTER_IMAGE_WIDTH
+    global LETTER_IMAGE_HEIGHT
+    if  mooring_var["TEMPLATE_GROUP"] == 'rottnest':
+        DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring', 'img','logo-rottnest-island-sm.png')
+        LETTER_IMAGE_WIDTH = LICENCE_HEADER_IMAGE_WIDTH/2.9
+        LETTER_IMAGE_HEIGHT = LICENCE_HEADER_IMAGE_HEIGHT/1.4
+
+    else:
+        DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring','img','mooring_header.png')
+        LETTER_IMAGE_WIDTH = LICENCE_HEADER_IMAGE_WIDTH/3.0
+        LETTER_IMAGE_HEIGHT = LICENCE_HEADER_IMAGE_HEIGHT/3.0
+
+ 
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
     every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_letter_header_footer)
