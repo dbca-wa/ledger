@@ -589,7 +589,6 @@ class MakeBookingsView(TemplateView):
             #         lines.append({'from': from_dt, 'to': to_dt})
 
 
-        print "OLD BOOKING"
         booking_change_fees = {}
         if booking:
             if booking.old_booking:
@@ -632,9 +631,6 @@ class MakeBookingsView(TemplateView):
             
             if not no_admissions:
                 lines_pre_check = utils.admissions_lines(booking_mooring)
-                print "LINES CREATED"
-
-                print lines_pre_check
 
                 # rate = AdmissionsRate.objects.filter(Q(period_start__lte=booking.arrival), (Q(period_end=None) | Q(period_end__gte=booking.arrival)))[0]
                 for line in lines_pre_check:
@@ -662,24 +658,6 @@ class MakeBookingsView(TemplateView):
             staff = "false"
 
         #lines.append(booking_change_fees)
-        print booking_change_fees
-        print details
-        print { 'form': form,
-            'vehicles': vehicles,
-            'booking': booking,
-            'booking_mooring': booking_mooring,
-            'booking_total' : booking_total,
-            'campsite': campsite,
-            'expiry': expiry,
-            'timer': timer,
-            'details': details,
-            'pricing': pricing,
-            'show_errors': show_errors,
-            'lines': lines,
-            'staff': staff,
-            'booking_change_fees': booking_change_fees
-
-        }
         return render(request, self.template_name, {
             'form': form, 
             'vehicles': vehicles,
@@ -709,14 +687,53 @@ class MakeBookingsView(TemplateView):
             'num_infant': booking.details.get('num_infant', 0) if booking else 0
         }
 
-        if request.user.is_anonymous() or request.user.is_staff:
-            form = AnonymousMakeBookingsForm(form_context)
-        else:
-            form_context['first_name'] = request.user.first_name
-            form_context['last_name'] = request.user.last_name
-            form_context['phone'] = request.user.phone_number
+        if booking.old_booking is not None:
+            form_context['first_name'] = booking.old_booking.details['first_name']
+            form_context['last_name'] = booking.old_booking.details['last_name']
+            form_context['phone'] = booking.old_booking.details['phone']
+            form_context['postcode'] = booking.old_booking.details['postcode']
+            form_context['country'] = booking.old_booking.details['country']
+            form_context['email'] = booking.old_booking.customer.email
+            form_context['confirm_email'] = booking.old_booking.customer.email
+#            form_context['email'] = 'jason@austwa.com'
             form = MakeBookingsForm(form_context)
+            #form.fields['email'].disabled = True
+            form.fields['email'].widget.attrs['disabled'] = True
+            form.fields['confirm_email'].widget.attrs['disabled'] = True
+            form.fields['first_name'].widget.attrs['disabled'] = True
+            form.fields['last_name'].widget.attrs['disabled'] = True
+            form.fields['phone'].widget.attrs['disabled'] = True
+            form.fields['postcode'].widget.attrs['disabled'] = True
+            form.fields['country'].widget.attrs['disabled'] = True
 
+#            form.fields['email'].widget.attrs['required'] = False
+#            form.fields['confirm_email'].widget.attrs['required'] = False
+#            form.fields['first_name'].widget.attrs['required'] = False
+#            form.fields['last_name'].widget.attrs['disabled'] = False 
+#            form.fields['phone'].widget.attrs['disabled'] = False
+#            form.fields['postcode'].widget.attrs['disabled'] = False
+#            form.fields['country'].widget.attrs['disabled'] = False
+
+#            form.fields['email'].required = False
+#            form.fields['confirm_email'].required = False
+#            form.fields['first_name'].required = False
+#            form.fields['last_name'].required = False
+#            form.fields['phone'].required = False
+#            form.fields['postcode'].required = False
+#            form.fields['country'].required = False
+
+            
+        else:  
+
+            if request.user.is_anonymous() or request.user.is_staff:
+                form = AnonymousMakeBookingsForm(form_context)
+            else:
+                form_context['first_name'] = request.user.first_name
+                form_context['last_name'] = request.user.last_name
+                form_context['phone'] = request.user.phone_number
+                form = MakeBookingsForm(form_context)
+        print 'FORM VARS'
+        print vars(form)
         vehicles = VehicleInfoFormset()
         return self.render_page(request, booking, form, vehicles)
 
@@ -731,6 +748,24 @@ class MakeBookingsView(TemplateView):
             form = AnonymousMakeBookingsForm(request.POST)
         else:
             form = MakeBookingsForm(request.POST)
+
+        if booking.old_booking is not None:
+            form.fields['email'].required = False
+            form.fields['confirm_email'].required = False
+            form.fields['first_name'].required = False
+            form.fields['last_name'].required = False
+            form.fields['phone'].required = False
+            form.fields['postcode'].required = False
+            form.fields['country'].required = False
+
+            form.fields['email'].widget.attrs['required'] = False
+            form.fields['confirm_email'].widget.attrs['required'] = False
+            form.fields['first_name'].widget.attrs['required'] = False
+            form.fields['last_name'].widget.attrs['disabled'] = False
+            form.fields['phone'].widget.attrs['disabled'] = False
+            form.fields['postcode'].widget.attrs['disabled'] = False
+            form.fields['country'].widget.attrs['disabled'] = False
+
         vehicles = VehicleInfoFormset(request.POST)   
         
         # re-render the page if there's no booking in the session
@@ -743,19 +778,22 @@ class MakeBookingsView(TemplateView):
         # update the booking object with information from the form
         if not booking.details:
             booking.details = {}
-        booking.details['first_name'] = form.cleaned_data.get('first_name')
-        booking.details['last_name'] = form.cleaned_data.get('last_name')
-        booking.details['phone'] = form.cleaned_data.get('phone')
-        booking.details['country'] = form.cleaned_data.get('country').iso_3166_1_a2
-        booking.details['postcode'] = form.cleaned_data.get('postcode')
-        # booking.details['num_adult'] = form.cleaned_data.get('num_adult')
-        booking.details['num_concession'] = form.cleaned_data.get('num_concession')
-        # booking.details['num_child'] = form.cleaned_data.get('num_child')
-        # booking.details['num_infant'] = form.cleaned_data.get('num_infant')
-        booking.details['num_adult'] = int(request.POST.get('num_adults')) if request.POST.get('num_adults') else 0
-        booking.details['num_child'] = int(request.POST.get('num_children')) if request.POST.get('num_children') else 0
-        booking.details['num_infant'] = int(request.POST.get('num_infants')) if request.POST.get('num_infants') else 0
-        booking.details['non_online_booking'] = True if request.POST.get('nononline') else False
+   
+        if booking.old_booking is None:
+            booking.details['first_name'] = form.cleaned_data.get('first_name')
+            booking.details['last_name'] = form.cleaned_data.get('last_name')
+            booking.details['phone'] = form.cleaned_data.get('phone')
+            booking.details['country'] = form.cleaned_data.get('country').iso_3166_1_a2
+            booking.details['postcode'] = form.cleaned_data.get('postcode')
+            # booking.details['num_adult'] = form.cleaned_data.get('num_adult')
+            booking.details['num_concession'] = form.cleaned_data.get('num_concession')
+            # booking.details['num_child'] = form.cleaned_data.get('num_child')
+            # booking.details['num_infant'] = form.cleaned_data.get('num_infant')
+            booking.details['num_adult'] = int(request.POST.get('num_adults')) if request.POST.get('num_adults') else 0
+            booking.details['num_child'] = int(request.POST.get('num_children')) if request.POST.get('num_children') else 0
+            booking.details['num_infant'] = int(request.POST.get('num_infants')) if request.POST.get('num_infants') else 0
+            booking.details['non_online_booking'] = True if request.POST.get('nononline') else False
+
         overidden = True if request.POST.get('override') else False
 
         if overidden:
@@ -884,20 +922,25 @@ class MakeBookingsView(TemplateView):
 
         # get the customer object
         if request.user.is_anonymous() or request.user.is_staff:
-            try:
-                customer = EmailUser.objects.get(email=form.cleaned_data.get('email'))
-            except EmailUser.DoesNotExist:
-                customer = EmailUser.objects.create(
+            if booking.old_booking is None:     
+                try:
+                   customer = EmailUser.objects.get(email=form.cleaned_data.get('email'))
+                except EmailUser.DoesNotExist:
+                   customer = EmailUser.objects.create(
                         email=form.cleaned_data.get('email'), 
                         first_name=form.cleaned_data.get('first_name'),
                         last_name=form.cleaned_data.get('last_name'),
                         phone_number=form.cleaned_data.get('phone'),
                         mobile_number=form.cleaned_data.get('phone')
-                )
-                Address.objects.create(line1='address', user=customer, postcode=form.cleaned_data.get('postcode'), country=form.cleaned_data.get('country').iso_3166_1_a2)
+                   )
+                   Address.objects.create(line1='address', user=customer, postcode=form.cleaned_data.get('postcode'), country=form.cleaned_data.get('country').iso_3166_1_a2)
         else:
             customer = request.user
         
+        if booking.old_booking is not None:
+            customer = booking.old_booking.customer 
+
+ 
         # FIXME: get feedback on whether to overwrite personal info if the EmailUser
         # already exists
 
@@ -915,7 +958,8 @@ class MakeBookingsView(TemplateView):
             AdmissionsLine.objects.create(arrivalDate=from_date, admissionsBooking=adBooking, overnightStay=overnight, cost=line['admissionFee'], location=loc)
  
         # finalise the booking object
-        booking.customer = customer
+        if booking.customer is None:
+            booking.customer = customer
         booking.cost_total = total
         booking.admission_payment = adBooking
         booking.save()
@@ -2164,7 +2208,10 @@ class ChangeBookingView(LoginRequiredMixin, TemplateView):
                                                    booking_type=3,
                                                    expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
                                                    details=booking.details,
-                                                   arrival=booking.arrival,departure=booking.departure, old_booking=booking)
+                                                   arrival=booking.arrival,
+                                                   departure=booking.departure, 
+                                                   old_booking=booking, 
+                                                   customer=booking.customer)
        
 	     #request.session['ps_booking'] = booking_temp.id
              #request.session.modified = True

@@ -250,11 +250,12 @@ class MakeBookingsForm(forms.Form):
     phone = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
     postcode = forms.CharField(max_length=4, label="Post Code",widget=forms.TextInput(attrs={'required':True}))
     country = forms.ModelChoiceField(queryset=Country.objects.all(), to_field_name="iso_3166_1_a2")
-
+    email = forms.EmailField(label="Email", widget=forms.TextInput(attrs={'required':True}))
+    confirm_email = forms.EmailField(label ="Confirm Email", widget=forms.TextInput(attrs={'required':True}))
 
     def __init__(self, *args, **kwargs):
         super(MakeBookingsForm, self).__init__(*args, **kwargs)
-        self.fields['first_name'].widget.attrs['required'] = True
+        self.fields['first_name'].widget.attrs['required'] = True 
 
     def clean(self):
         super(MakeBookingsForm, self).clean()
