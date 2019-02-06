@@ -20,7 +20,7 @@
                                  <div v-for="item in current_booking" class="row small-12 medium-12 large-12">
                                          <div class="columns small-12 medium-9 large-9">{{ item.item }}</div>
                                          <div class="columns small-12 medium-2 large-2">${{ item.amount }}</div>
-                                         <div class="columns small-12 medium-1 large-1"><a style='color: red; opacity: 1;' type="button" class="close" @click="deleteBooking(item.id)">x</a></div>
+                                         <div class="columns small-12 medium-1 large-1"><a v-show="item.past_booking == false" style='color: red; opacity: 1;' type="button" class="close" @click="deleteBooking(item.id)">x</a></div>
                                  </div>
                               </div>
                         </div>
