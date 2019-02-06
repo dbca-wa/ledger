@@ -80,13 +80,10 @@
     <div>
         <div v-for="n in repeat" class="panel panel-default">
             <div v-if="isRepeatable" ref="list">
-                <div class="repeat-group panel-body" :data-que="n">
+                <div class="repeat-group panel-body" :data-que="n" :data-children="repeatable_options">
                     <p>N: {{name}} {{n}} {{isRepeatable}}</p>
                     <slot></slot>
-                </div>
-                <div class="repeat-group panel-body" :data-que="2">
-                    <p>N: {{name}} {{2}} {{isRepeatable}}</p>
-                    <slot></slot>
+                    <RepeatGroup :data_children="repeatable_children" :renderer="renderer" />
                 </div>
             </div>
             <div v-else>
@@ -119,9 +116,10 @@ Vue.mixin({
 
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
+import RepeatGroup from './repeat_group.vue'
 export default {
     name:"group",
-    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable", "isPreviewMode", "isRepeatable"],
+    props:["label", "name", "id", "help_text", "help_text_url", "isRemovable", "isPreviewMode", "isRepeatable", "repeatable_children", "renderer"],
     //props:["label", "name", "id", "help_text", "help_text_url", "isRemovable", "isPreviewMode"],
     data:function () {
         return{
@@ -132,7 +130,12 @@ export default {
             cloned: $('#id_slot').clone(),
         }
     },
-    components: {HelpText, HelpTextUrl},
+    computed: {
+        repeatable_options: function() {
+          return this.isRepeatable ? JSON.stringify(this.repeatable_children): "";
+        }
+    },
+    components: {HelpText, HelpTextUrl, RepeatGroup},
     methods:{
         expand:function(e) {
             this.isExpanded = true;
@@ -225,12 +228,10 @@ export default {
                 })];
                 vm.repeat+=1;
 
-                var id = vm.repeat - 1;
-                $('div[data-que=1]').clone().appendTo('div[data-que=2]');
-
-                var element = $('div[data-que=2]');
-                //var element = $('#id_slot').clone();
-                this.compile(element, 'list');
+                //var id = vm.repeat - 1;
+                //$('div[data-que=1]').clone().appendTo('div[data-que=2]');
+                //var element = $('div[data-que=2]');
+                //this.compile(element, 'list');
             }
         },
 
