@@ -605,8 +605,11 @@ def delete_booking(request, *args, **kwargs):
         if booking_id:
             booking = Booking.objects.get(id=booking_id)
             ms_booking = MooringsiteBooking.objects.get(id=booking_item,booking=booking)
-            ms_booking.delete()
-
+            if ms_booking.from_dt.date() > datetime.now().date(): 
+                ms_booking.delete()
+            else:
+                response_data['result'] = 'error'
+                response_data['message'] = 'Unable to delete booking'
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 @csrf_exempt
@@ -2042,6 +2045,10 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                             if bp['id'] in avbp_map:
                                bp['status'] = avbp_map[bp['id']]
                                bp['booking_row_id'] = avbp_map2[bp['id']]
+                               bp['past_booking'] = False
+                               if date_rotate <= datetime.now().date():
+                                  bp['past_booking'] = True
+ 
                          bp_new.append(bp)
                          # Close everything thats in the past 
                          # if datetime.strptime(str(date_rotate), '%Y-%m-%d') <= datetime.now():
@@ -4077,6 +4084,9 @@ def get_current_booking(ongoing_booking):
            #print ms.from_dt.astimezone(pytimezone('Australia/Perth'))
          row['item'] = ms.campsite.name + ' from '+ms.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')
          row['amount'] = str(ms.amount)
+         row['past_booking'] = False
+         if ms.from_dt.date() <= datetime.now().date(): 
+              row['past_booking'] = True
 #           row['item'] = ms.campsite.name
          total_price = str(Decimal(total_price) +Decimal(ms.amount))
          current_booking.append(row)

@@ -64,7 +64,7 @@
                                  <div v-for="item in current_booking" class="row small-12 medium-12 large-12">
                                          <div class="columns small-12 medium-9 large-9">{{ item.item }}</div>
                                          <div class="columns small-12 medium-2 large-2">${{ item.amount }}</div>
-                                         <div class="columns small-12 medium-1 large-1"><a style='color: red; opacity: 1;' type="button" class="close" @click="deleteBooking(item.id)">x</a></div>
+                                         <div class="columns small-12 medium-1 large-1"><a v-show="item.past_booking == false" style='color: red; opacity: 1;' type="button" class="close" @click="deleteBooking(item.id, item.past_booking)">x</a></div>
                                  </div>
 			      </div>
                         </div>
@@ -276,8 +276,8 @@
                                         </button>
                                         </div>
 					<div v-else-if="bp.status == 'selected'" >
-                                             <div style="position: relative; text-align: right; margin-right: 25px;"><a type="button" class="close" style="color: red; opacity: 1; position: absolute; padding-left: 5px;" @click="deleteBooking(bp.booking_row_id)" >x</a></div>
-                                        <button class="button" style='width: 160px; margin-bottom: 2px; background-color: #8bc8f1;' @click="deleteBooking(bp.booking_row_id)" > 
+                                             <div style="position: relative; text-align: right; margin-right: 25px;"><a v-show="bp.past_booking == false" type="button" class="close" style="color: red; opacity: 1; position: absolute; padding-left: 5px;" @click="deleteBooking(bp.booking_row_id, bp.past_booking)" >x</a></div>
+                                        <button class="button" style='width: 160px; margin-bottom: 2px; background-color: #8bc8f1;' @click="deleteBooking(bp.booking_row_id, bp.past_booking)" > 
                                             <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }} </span></small>
                                         </button>
 					</div>
@@ -618,7 +618,21 @@ export default {
 		});
 
 	},
-        deleteBooking: function(booking_item_id) {
+        deleteBooking: function(booking_item_id, past_booking) {
+             if (past_booking == true) { 
+                swal({
+                  title: 'Error',
+                  text: "Unable to delete past booking",
+                  type: 'warning',
+                  showCancelButton: false,
+                  confirmButtonText: 'OK',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                })
+                return;
+	     }
+
+
               var vm = this;
               var submitData = {
                   booking_item: booking_item_id,
@@ -630,9 +644,34 @@ export default {
                   method: 'POST',
                   data: submitData,
                   success: function(data, stat, xhr) {
+                     if (data.result == 'error') { 
+                         swal({
+                            title: 'Error',
+                            text: data.message,
+                            type: 'warning',
+                            showCancelButton: false,
+                            confirmButtonText: 'OK',
+                            showLoaderOnConfirm: true,
+                            allowOutsideClick: false
+                         })
+                     }
+
+
                       vm.update();
                   },
-                  error: function(xhr, stat, err) {
+                  error: function(data, stat, err) {
+                     swal({
+	                  title: 'Error',
+        	          text: 'Uknown Error',
+                	  type: 'warning',
+	                  showCancelButton: false,
+        	          confirmButtonText: 'OK',
+	                  showLoaderOnConfirm: true,
+	                  allowOutsideClick: false
+        	        })
+
+
+
                        vm.update();
                   }
               });
@@ -1093,7 +1132,17 @@ export default {
                                     vm.status = 'offline';
                                     vm.showSecondErrorLine = false;
                                 }
-                                else{
+                                else {
+		                      swal({
+                		          title: 'Error',
+		                          text: 'Uknown Error',
+                		          type: 'warning',
+                		          showCancelButton: false,
+		                          confirmButtonText: 'OK',
+	        	                  showLoaderOnConfirm: true,
+	       	        	           allowOutsideClick: false
+        	                	})
+
                                     vm.status = 'offline';
                                 }
                                 $('#spinnerLoader').hide();
