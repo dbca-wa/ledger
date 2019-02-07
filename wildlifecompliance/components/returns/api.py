@@ -30,6 +30,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
+from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.returns.utils import _is_post_data_valid,_get_table_rows_from_post,_create_return_data_from_post_data
 from wildlifecompliance.components.returns.models import (
    Return,
@@ -127,7 +128,12 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
 
+        if 'upload' in request.POST:
+            form = request.FILES['spreadsheet']
+        print(form)
 
     @detail_route(methods=['GET',])
     def comms_log(self, request, *args, **kwargs):
