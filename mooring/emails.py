@@ -127,7 +127,8 @@ def send_admissions_booking_invoice(admissionsBooking, context_processor):
     invoice = Invoice.objects.filter(reference__in=references).order_by('-created')[0]
 #    invoice_pdf = create_invoice_pdf_bytes(filename,invoice)
     invoice_pdf = create_invoice_pdf_bytes(filename,invoice, request, context_processor)
-    rottnest_email = default_rottnest_email
+#    rottnest_email = default_rottnest_email
+    rottnest_email = default_from_email
     email_obj.send([email], from_address=rottnest_email, context=context, attachments=[(filename, invoice_pdf, 'application/pdf')])
 
 
@@ -179,7 +180,8 @@ def send_admissions_booking_confirmation(admissionsBooking, request):
     email = admissionsBooking.customer.email
     cc = None
     bcc = [default_rottnest_email]
-    rottnest_email = default_rottnest_email
+#    rottnest_email = default_rottnest_email
+    rottnest_email = default_from_email
     my_bookings_url = request.build_absolute_uri('/mybookings/')
 
     context = {
