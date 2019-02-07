@@ -111,6 +111,7 @@ urlpatterns = [
     url(r'^dashboard/bookingperiods/(?P<pk>[0-9]+)/view', views.BookingPeriodView.as_view(), name='dash-bookingperiod-group-view'),
     url(r'^dashboard/bookingperiods', views.BookingPeriodGroupView.as_view(), name='dash-bookingperiod'),
     url(r'^dashboard/failed-refunds/(?P<pk>[0-9]+)/complete', views.RefundFailedCompleted.as_view(), name='dash-complete_failed_refund'),
+    url(r'^dashboard/failed-refunds-completed', views.RefundFailedCompletedView.as_view(), name='dash-failed_refunds_completed'),
     url(r'^dashboard/failed-refunds', views.RefundFailedView.as_view(), name='dash-failedrefunds'),
     url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
     #url(r'^dashboard/bookingperiods2', views.DashboardView.as_view(), name='dash-bookingperiod2'),

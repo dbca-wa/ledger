@@ -227,6 +227,9 @@ class MooringArea(models.Model):
     def __str__(self):
         return self.name
 
+    def __unicode__(self):
+        return unicode(self.name)
+
     def save(self,*args,**kwargs):
         cache.delete('marina')
         cache.delete('marina_dt')
@@ -574,6 +577,9 @@ class BookingPeriodOption(models.Model):
     def __str__(self):
         return self.period_name
 
+    def __unicode__(self):
+        return unicode(self.period_name) or u''
+
 class BookingPeriod(models.Model):
     name = models.CharField(max_length=100)
     booking_period = models.ManyToManyField(BookingPeriodOption, related_name='booking_period_options')
@@ -582,6 +588,9 @@ class BookingPeriod(models.Model):
 
     def __str__(self):
         return self.name
+
+    def __unicode__(self):
+        return unicode(self.name) or u''
 
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (

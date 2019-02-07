@@ -1474,6 +1474,31 @@ class RefundFailedView(ListView):
         initial['action'] = 'list'
         return initial
 
+class RefundFailedCompletedView(ListView):
+    template_name = 'mooring/dash/view_failed_refunds_completed.html'
+    model = RefundFailed
+
+    def get(self, request, *args, **kwargs):
+#        pk = self.kwargs['pk']
+        if is_payment_officer(request.user) == True:
+            #context_processor = template_context(self.request)
+#           app = self.get_object()
+            return super(RefundFailedCompletedView, self).get(request, *args, **kwargs)
+        else:
+#             messages.error(self.request, 'Forbidden from viewing this page.')
+             return HttpResponseRedirect("/forbidden")
+
+    def get_context_data(self, **kwargs):
+        context = super(RefundFailedCompletedView, self).get_context_data(**kwargs)
+        request = self.request
+        if is_payment_officer(request.user) == True:
+           context['failedrefunds'] = RefundFailed.objects.filter(status=1)
+        return context
+
+    def get_initial(self):
+        initial = super(RefundFailedCompletedView, self).get_initial()
+        initial['action'] = 'list'
+        return initial
 
 class RefundFailedCompleted(UpdateView):
     template_name = 'mooring/dash/complete_failed_refund.html'
@@ -1767,8 +1792,6 @@ class BookingPeriodEditOption(UpdateView):
             initial['change_group_choices'].append((i.id,i.name))
         for i in cancel_group:
             initial['cancel_group_choices'].append((i.id,i.name))
-
-
         return initial
 
     def get_form_class(self):
@@ -1804,24 +1827,23 @@ class BookingPeriodDeleteGroup(DeleteView):
     def get_context_data(self, **kwargs):
         context = super(BookingPeriodDeleteGroup, self).get_context_data(**kwargs)
         return context
+
     def get_absolute_url(self):
         return reverse('dash-bookingperiod')
 
     def get_success_url(self):
         return reverse('dash-bookingperiod')
 
-
     def post(self, request, *args, **kwargs):
         if request.POST.get('cancel'):
             return HttpResponseRedirect(self.get_absolute_url())
-        return super(BookingPeriodDeleteGroup, self).post(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        self.object = form.save()
-        forms_data = form.cleaned_data
         pk = self.kwargs['pk']
-        return HttpResponseRedirect(reverse('dash-bookingperiod'))
-
+        try:
+           self.delete(request, *args, **kwargs)
+        except Exception as e:
+           messages.error(self.request, 'There was and error trying to delete booking group ')
+           return HttpResponseRedirect(reverse('dash-bookingperiod-group-delete', args=(pk,)))
+        return super(BookingPeriodDeleteGroup, self).post(request, *args, **kwargs)
 
 class BookingPeriodDeleteOption(DeleteView):
     template_name = 'mooring/dash/delete_period_option.html'
@@ -1850,6 +1872,14 @@ class BookingPeriodDeleteOption(DeleteView):
     def post(self, request, *args, **kwargs):
         if request.POST.get('cancel'):
             return HttpResponseRedirect(self.get_absolute_url())
+        try:
+           self.delete(request, *args, **kwargs)
+        except Exception as e:
+           pk = self.kwargs['pk']
+           bp_group_id = self.kwargs['bp_group_id']
+           messages.error(self.request, 'There was and error trying to delete booking option.')
+           return HttpResponseRedirect(reverse('dash-booking-period-option-delete', args=(bp_group_id,pk,)))
+
         return super(BookingPeriodDeleteOption, self).post(request, *args, **kwargs)
 
     def form_valid(self, form):
