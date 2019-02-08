@@ -1465,13 +1465,41 @@ class RefundFailedView(ListView):
     def get_context_data(self, **kwargs):
         context = super(RefundFailedView, self).get_context_data(**kwargs)
         request = self.request
+        context['status'] = 0
+        context['keyword'] = ''
+
+        if 'status' in self.request.GET:
+            context['status'] = self.request.GET['status']
+        if 'keyword' in self.request.GET:
+            context['keyword'] = self.request.GET['keyword']
+
         if is_payment_officer(request.user) == True:
-           context['failedrefunds'] = RefundFailed.objects.filter(status=0)
+            if 'status' in self.request.GET:
+                context['status'] = self.request.GET['status']
+            if 'keyword' in self.request.GET:
+                context['keyword'] = self.request.GET['keyword']
+            if context['status'] == 'ALL':
+                query = Q()
+            else:
+                query = Q(status=context['status'])
+            if context['keyword'].isdigit():
+                print "YES DIGIT"
+                print context['keyword'] 
+                query &= Q(Q(invoice_reference__icontains=context['keyword']) | Q(booking_id=int(context['keyword'])))
+            else:
+                query &= Q(Q(invoice_reference__icontains=context['keyword']))
+            
+
+            context['failedrefunds'] = RefundFailed.objects.filter(query)
         return context
 
     def get_initial(self):
         initial = super(RefundFailedView, self).get_initial()
         initial['action'] = 'list'
+#        initial['status'] = 0
+#        if 'status' in self.request.GET:
+#            initial['status'] = self.request.GET['status']
+
         return initial
 
 class RefundFailedCompletedView(ListView):
@@ -1492,12 +1520,20 @@ class RefundFailedCompletedView(ListView):
         context = super(RefundFailedCompletedView, self).get_context_data(**kwargs)
         request = self.request
         if is_payment_officer(request.user) == True:
+           context['status'] = 0
+           if 'status' in self.request.GET:
+              context['status'] = self.request.GET['status']
+
            context['failedrefunds'] = RefundFailed.objects.filter(status=1)
         return context
 
     def get_initial(self):
         initial = super(RefundFailedCompletedView, self).get_initial()
         initial['action'] = 'list'
+        initial['status'] = 0 
+        if 'status' in self.request.GET: 
+            initial['status'] = self.request.GET['status']
+
         return initial
 
 class RefundFailedCompleted(UpdateView):

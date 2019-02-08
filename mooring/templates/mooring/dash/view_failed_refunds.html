@@ -34,40 +34,51 @@
         <div class="panel-body">
 
 <div class="col-lg-12">
+           <form onsubmit="searchRefunds(); return false;" method='GET'>
           <div class="row">
-          <div class="col-lg-3">
-          </div>
           <div class="col-lg-6">
           </div>
           <div class="col-lg-3">
-            <span class="pull-right"><a href="{% url "dash-failed_refunds_completed" %}" type="button" class="btn btn-primary" style="">Completed Refunds</a></span>
+            <label for="">Keyword</label>
+            <input value='{{ keyword }}'  id='keyword' class="form-control" type='text' placeholder='Enter Keyword'>
+          </div>
+          <div class="col-lg-3">
+            <span style='display: none' class="pull-right"><a href="{% url "dash-failed_refunds_completed" %}" type="button" class="btn btn-primary" style="">Completed Refunds</a></span>
+		<div class="form-group">
+			<label for="">Status</label> 
+			<select id="status" class="form-control">
+                                <option value="ALL">All</option>
+				<option value="0">Pending</option> 
+				<option value="1">Completed Refunds</option>
+			</select>
+		</div>
+                <span class="pull-right"><button onclick="searchRefunds();" type="button" class="btn btn-primary" style="">Filter</a></button>
           </div>
 	  
           </div>
         </div>
-
+        </form>
         <div class="col-lg-12">
 		&nbsp;
 	</div>	
         <table width="100%" id='table-policy' class='hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline'>
         <thead>
-        <tr><th>ID</th><th>Booking ID</th><th>Invoice Ref#</th><th>Refund Amount</th><th>Created</th><th>Actions</th></tr>
+        <tr><th>ID</th><th>Booking ID</th><th>Invoice Ref#</th><th>Refund Amount</th><th>Status</th><th>Created</th><th>Actions</th></tr>
         </thead>
         <tbody>
         {% for row in failedrefunds %}
             <tr>
                 <td>{{ row.id }}</td>
-                <td>{{ row.booking.id }}</td>
+                <td>PS{{ row.booking.id }}</td>
                 <td>{{ row.invoice_reference }}</td>
                 <td>${{ row.refund_amount }}</td>
+                <td>{{ row.get_status_display }}</td>
                 <td>{{ row.created }}</td>
                 <td>
                    <a href='/ledger/payments/invoice/payment?invoice={{ row.invoice_reference }}'>View Invoice Payment</a><BR>
                    <a href='{% url 'dash-complete_failed_refund' row.id %}'>Mark Completed</a><BR>
-
                 </td>
             </tr>
-
 	{% endfor %}
         </tbody>
         </table>
@@ -83,8 +94,18 @@ function loadTable() {
      ]
     });
 }
+
+function searchRefunds() { 
+var status = $('#status').val();
+var keyword= $('#keyword').val();
+
+window.location="{% url 'dash-failedrefunds' %}/?status="+status+'&keyword='+keyword;
+}
 window.onload= function() {
+$('#status').val('{{ status }}');
     loadTable();
 }
+
+
 </script>
 {% endblock %}
