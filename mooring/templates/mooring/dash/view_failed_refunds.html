@@ -63,16 +63,18 @@
 	</div>	
         <table width="100%" id='table-policy' class='hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline'>
         <thead>
-        <tr><th>ID</th><th>Booking ID</th><th>Invoice Ref#</th><th>Refund Amount</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+        <tr><th>ID</th><th>Booking ID</th><th>Refund Amount</th><th>Status</th><th>Completed</th><th>Completed By</th><th>Created</th><th>Actions</th></tr>
         </thead>
         <tbody>
         {% for row in failedrefunds %}
             <tr>
                 <td>{{ row.id }}</td>
                 <td>PS{{ row.booking.id }}</td>
-                <td>{{ row.invoice_reference }}</td>
                 <td>${{ row.refund_amount }}</td>
                 <td>{{ row.get_status_display }}</td>
+                <td>{{ row.completed_date }}</td>
+                <td>{{ row.completed_by }}</td>
+
                 <td>{{ row.created }}</td>
                 <td>
                    <a href='{% url 'view_booking_history' row.booking.id %}'>View History</a><BR>
