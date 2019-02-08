@@ -1799,6 +1799,10 @@ class BookingPeriodEditOption(UpdateView):
         pk = self.kwargs['pk']
         bp_group_id = self.kwargs['bp_group_id']
         if utils.mooring_group_access_level_booking_period_option(pk,bp_group_id,request) == True:
+            if MooringsiteBooking.objects.filter(booking_period_option_id=pk).count() > 0:
+                messages.error(self.request, 'This booking period cannot be changed as it already associated with an existing booking.')
+                return HttpResponseRedirect(reverse('dash-bookingperiod-group-view', args=(bp_group_id,)))
+
             return super(BookingPeriodEditOption, self).get(request, *args, **kwargs)
         else:
             messages.error(self.request, 'Forbidden from viewing this page.')
@@ -1876,10 +1880,12 @@ class BookingPeriodDeleteGroup(DeleteView):
         pk = self.kwargs['pk']
         try:
            self.delete(request, *args, **kwargs)
+           messages.success(self.request, 'Booking Group Successfully Removed')
         except Exception as e:
            messages.error(self.request, 'There was and error trying to delete booking group ')
            return HttpResponseRedirect(reverse('dash-bookingperiod-group-delete', args=(pk,)))
-        return super(BookingPeriodDeleteGroup, self).post(request, *args, **kwargs)
+        return HttpResponseRedirect(self.get_success_url())
+#        return super(BookingPeriodDeleteGroup, self).post(request, *args, **kwargs)
 
 class BookingPeriodDeleteOption(DeleteView):
     template_name = 'mooring/dash/delete_period_option.html'
@@ -1908,21 +1914,27 @@ class BookingPeriodDeleteOption(DeleteView):
     def post(self, request, *args, **kwargs):
         if request.POST.get('cancel'):
             return HttpResponseRedirect(self.get_absolute_url())
-        try:
-           self.delete(request, *args, **kwargs)
-        except Exception as e:
-           pk = self.kwargs['pk']
-           bp_group_id = self.kwargs['bp_group_id']
-           messages.error(self.request, 'There was and error trying to delete booking option.')
+        pk = self.kwargs['pk']
+        bp_group_id = self.kwargs['bp_group_id']
+
+        if MooringsiteBooking.objects.filter(booking_period_option_id=pk).count() > 0:
+           messages.error(self.request, 'This booking period cannot be deleted as it already associated with an existing booking.')
            return HttpResponseRedirect(reverse('dash-booking-period-option-delete', args=(bp_group_id,pk,)))
 
-        return super(BookingPeriodDeleteOption, self).post(request, *args, **kwargs)
+        try:
+           self.delete(request, *args, **kwargs)
+           messages.success(self.request, 'Booking Period Option Successfully Removed')
+        except Exception as e:
+           messages.error(self.request, 'There was and error trying to delete booking option.')
+        return HttpResponseRedirect(self.get_absolute_url())
+        #return HttpResponseRedirect(reverse('dash-booking-period-option-delete', args=(bp_group_id,pk,)))
+        #return super(BookingPeriodDeleteOption, self).post(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        self.object = form.save()
-        forms_data = form.cleaned_data
-        bp_group_id = self.kwargs['bp_group_id']
-        return HttpResponseRedirect(reverse('dash-bookingperiod-group-view', args=(bp_group_id,)))
+#    def form_valid(self, form):
+#        self.object = form.save()
+#        forms_data = form.cleaned_data
+#        bp_group_id = self.kwargs['bp_group_id']
+#        return HttpResponseRedirect(reverse('dash-bookingperiod-group-view', args=(bp_group_id,)))
 
 
 
