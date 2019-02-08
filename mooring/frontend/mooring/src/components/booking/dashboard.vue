@@ -391,6 +391,7 @@ export default {
                             $.each(full.active_invoices,(i,v) =>{
                                 invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
+                            invoices += " <a class='text-primary' href='/booking-history/"+full.id+"'>View History</a>";
                             column += invoices;
                             column += "</td>";
                             return column.replace('__Status__', status);
@@ -519,6 +520,7 @@ export default {
                                     column += cancel_booking;
 				                }
                             }
+                            // invoices += " <a href='/booking-history/{{ full.id }}'>View History</a>";
                             column += invoices;
                             return column;
                         },

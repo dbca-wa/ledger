@@ -75,7 +75,7 @@
                 <td>{{ row.get_status_display }}</td>
                 <td>{{ row.created }}</td>
                 <td>
-                   <a href='/ledger/payments/invoice/payment?invoice={{ row.invoice_reference }}'>View Invoice Payment</a><BR>
+                   <a href='{% url 'view_booking_history' row.booking.id %}'>View History</a><BR>
                    <a href='{% url 'dash-complete_failed_refund' row.id %}'>Mark Completed</a><BR>
                 </td>
             </tr>

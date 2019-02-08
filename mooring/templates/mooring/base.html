@@ -12,6 +12,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
             {% bootstrap_css %}
                 <link type="text/css" href="{% static 'mooring/css/base.css' %}?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+                <link href="/static/common/css/font-awesome.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
             {% block extra_css %}
             {% endblock %}
             {% block extra_js %}

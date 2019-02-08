@@ -1,0 +1,70 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+{% block extra_css %}
+    {{ block.super }}
+    <!--link href="/static/common/css/font-awesome.css" rel="stylesheet"/-->
+    <style>
+        .bold {
+            font-weight: bold;
+        }
+        .table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th{
+            border:none;
+        }
+    </style>
+
+    <div>
+
+
+    </div>
+
+
+
+
+{% endblock %}
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+
+        <div class="col-sm-12">
+            <h2>Booking History</h2>
+	</div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+        <table cellspacing="0" width="100%" id="bookings-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+		<tr>
+		  <th>Confirmation#</th>
+                  <th>Linked Admission</th>
+		  <th>Total</th>
+                  <th>Booking Date</th>
+                  <th>Invoices#</th>
+                  <th>Ledger Payment</th>
+		</tr>
+	</thead>
+        <tbody> 
+ 
+                 {% for bh in booking_history %}
+                  <tr>
+                      <td><A title='New Booking' HREF='/api/get_confirmation/{{ bh.booking.id }}'>PS{{ bh.booking.id }}</A> {% if bh.booking.old_booking %}<i style="color:red;" class="fa fa-arrow-right"></i> <A title='OLD Booking' HREF='/api/get_confirmation/{{ bh.booking.old_booking.id }}'>PS{{ bh.booking.old_booking.id }}{% endif %}</A></td>
+                      <td>{% if bh.booking.admission_payment %}<A HREF='/api/get_admissions_confirmation/{{ bh.booking.admission_payment.id }}'>AD{{ bh.booking.admission_payment.id }}{% endif %}</A></td>
+                      <td style='color: {% if bh.booking.cost_total > 0 %}red{% elif  bh.booking.cost_total < 0 %}green{% endif %}'  >${{ bh.booking.cost_total }}</td>
+                      <td>{{ bh.booking.created }}</td>
+                      <td>{% for bi in bh.invoices %}
+                            <A href='/mooring/payments/invoice-pdf/{{ bi.invoice_reference }}'><i style="color:red;" class="fa fa-file-pdf-o"></i>&nbsp;{{ bi.invoice_reference }}</A><BR>
+ 
+                      {% endfor %}
+		      </td>
+                      <td>{% for bi in bh.invoices %}
+                            <A href='/ledger/payments/invoice/payment?invoice={{ bi.invoice_reference }}'>View {{ bi.invoice_reference }}</A><BR>
+
+                      {% endfor %}
+                      </td>
+                  </tr> 
+		 {% endfor %}
+        </tbody>
+        </table>
+        </div>
+    </div>
+{% endblock %}
+
