@@ -64,12 +64,15 @@
                                 </div>
                                  <div class="row">
                                     <div class="col-sm-12">
-                                         <button style="width:80%;" class="btn btn-primary" @click.prevent="acceptCompliance()">Accept</button><br/>
+                                         <button style="width:80%;" class="btn btn-primary top-buffer-s" >Accept</button><br/>
                                     </div>
+                                </div>
+                                 <div class="row">
+                                    <div class="col-sm-12"/>
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-12">
-                                         <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
+                                         <button style="width:80%;" class="btn btn-primary top-buffer-s" >Request Amendment</button>
                                     </div>
                                 </div>
                             </div>
@@ -115,6 +118,12 @@
                     </div>
                 </div>
             </div>
+            <div class="col-sm-12">
+                <span class="btn btn-primary btn-file pull-left">
+                    Upload File <input type="file" ref="spreadsheet" @change="uploadFile()"/>
+                </span>
+                <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
+            </div>
             <div class="row">
             <table class="return-table table table-striped table-bordered dataTable">
                 <thead>
@@ -145,6 +154,7 @@
                 <div class="navbar-inner">
                     <div class="container">
                         <p class="pull-right" style="margin-top:5px;">
+                             <button v-if="isWithCurator" class="btn btn-primary" >Discard Return</button>
                              <button v-if="isWithCurator" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
                         </p>
                     </div>
@@ -175,28 +185,48 @@ export default {
         returns: {},
         DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
         members: [],
+        spreadsheet: null,
         // Filters
         logs_url: helpers.add_endpoint_json(api_endpoints.returns,vm.$route.params.return_id+'/action_log'),
         comms_url: helpers.add_endpoint_json(api_endpoints.returns,vm.$route.params.return_id+'/comms_log'),
         comms_add_url: helpers.add_endpoint_json(api_endpoints.returns,vm.$route.params.return_id+'/add_comms_log'),
+
     }
   },
   methods: {
     save: function(e) {
       console.log('ENTERED Save')
       let vm = this;
-      let formData = new FormData(vm.form);
-      //vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),formData,{
-      //                emulateJSON:true,
-      //       }).then((res)=>{
-      //          swal(
-      //            'Saved',
-      //            'Return details have been updated',
-      //           'success'
-      //          )
-      //      },err=>{
-      //          console.log(err)
-      //      });
+      let data = new FormData()
+      data.append('spreadsheet', vm.spreadsheet)
+      vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/upload_details'),data,{
+                      emulateJSON:true,
+            }).then((res)=>{
+               swal(
+                  'Saved',
+                  'Return details have been updated',
+                 'success'
+                )
+            },err=>{
+                console.log(err)
+            });
+      },
+      uploadFile: function() {
+         console.log('uploadFile')
+         let vm = this;
+         let _file = null;
+         var input = $(vm.$refs.spreadsheet)[0];
+         console.log(input)
+         if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.readAsDataURL(input.files[0]);
+            reader.onload = function(e) {
+               _file = e.target.result;
+            };
+            _file = input.files[0];
+         }
+         vm.spreadsheet = _file;
+         console.log(vm.spreadsheet)
       },
   },
   computed: {
@@ -207,6 +237,9 @@ export default {
     hasAssessorMode: function() {
         console.log('hasAssessorMode Function')
         return true;
+    },
+    uploadedFileName: function() {
+        return this.spreadsheet != null ? this.spreadsheet.name: '';
     },
   },
   beforeRouteEnter: function(to, from, next){

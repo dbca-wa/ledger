@@ -31,6 +31,7 @@ from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.helpers import is_customer, is_internal
+from wildlifecompliance.utils import excel
 from wildlifecompliance.components.returns.utils import _is_post_data_valid,_get_table_rows_from_post,_create_return_data_from_post_data
 from wildlifecompliance.components.returns.models import (
    Return,
@@ -128,12 +129,36 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    def post(self, request, *args, **kwargs):
-        context = self.get_context_data()
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def upload_details(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            if request.method == 'POST':
+                data = request.FILES['spreadsheet']
 
-        if 'upload' in request.POST:
-            form = request.FILES['spreadsheet']
-        print(form)
+                # todo: serializer to clean and validate data
+                workbook = excel.load_workbook_content(data)
+                returns_tables = self.request.data.get('table_name')
+                sheet = excel.get_sheet_titles(workbook)
+                data = excel.get_sheet(workbook, sheet)
+                for table in returns_tables:
+                    worksheet = excel.get_sheet(workbook, table.get('title')) \
+                                or excel.get_sheet(workbook, table.get('name'))
+                    if worksheet is not None:
+                        table_data = excel.TableData(worksheet)
+                        if not _is_post_data_valid(instance, table_data.encode('utf-8'), request.POST):
+                            messages.error(request, "Your return contains some errors. See below.")
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET',])
     def comms_log(self, request, *args, **kwargs):
