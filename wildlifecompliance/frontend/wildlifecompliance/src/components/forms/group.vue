@@ -77,6 +77,7 @@
     </div>
 -->
 
+<!--
     <div>
         <div v-for="n in repeat" class="panel panel-default">
             <div v-if="isRepeatable" ref="list">
@@ -87,6 +88,71 @@
                 </div>
             </div>
             <div v-else>
+                <slot></slot>
+            </div>
+        </div>
+        <button v-if="isRepeatable" v-on:click.stop.prevent="add_another4">Add Another</button>
+    </div>
+-->
+
+<!--
+    <div>
+        <div v-if="isRepeatable">
+            <div v-for="n in repeat" class="panel panel-default">
+                <div class="repeat-group panel-body" :data-que="n" :data-children="repeatable_options">
+                    <p>N: {{name}} {{n}} {{isRepeatable}}</p>
+                    <slot></slot>
+                    <RepeatGroup :data_children="repeatable_options" :renderer="renderer" />
+                </div>
+            </div>
+        <div v-else>
+            <slot></slot>
+        </div>
+        <button v-if="isRepeatable" v-on:click.stop.prevent="add_another4">Add Another</button>
+    </div>
+
+    <div>
+        <div v-if="isRepeatable" v-for="n in repeat" class="panel panel-default">
+            <div class="repeat-group panel-body" :data-que="n" :data-children="repeatable_options">
+                <p>N: {{name}} {{n}} {{isRepeatable}}</p>
+                <slot></slot>
+                <RepeatGroup :data_children="repeatable_children" :renderer="renderer" />
+            </div>
+        <div v-else>
+            <slot></slot>
+        </div>
+        <button v-if="isRepeatable" v-on:click.stop.prevent="add_another4">Add Another</button>
+    </div>
+    <div>
+        <div v-if="isRepeatable">
+            <div v-for="n in repeat" class="panel panel-default">
+                <div class="repeat-group panel-body" :data-que="n" :data-children="repeatable_options">
+                    <p>N: {{name}} {{n}} {{isRepeatable}}</p>
+                    <slot></slot>
+                    <RepeatGroup :data_children="repeatable_children" :renderer="renderer" />
+                </div>
+            </div>
+        <div v-else>
+            <div class="panel panel-default">
+                <div class="repeat-group panel-body" :data-que="n" :data-children="repeatable_options">
+                    <slot></slot>
+                </div>
+            </div>
+        </div>
+        <button v-if="isRepeatable" v-on:click.stop.prevent="add_another4">Add Another</button>
+    </div>
+-->
+
+    <div>
+        <div v-for="n in repeat" class="panel panel-default">
+            <div v-if="isRepeatable">
+                <div class="repeat-group panel-body" :data-que="n" :data-children="repeatable_options">
+                    <p>N: {{name}} {{n}} {{isRepeatable}}</p>
+                    <RepeatGroup :data_children="repeatable_children" :renderer="renderer" />
+                </div>
+            </div>
+            <div v-else>
+                <p>v-else block</p>
                 <slot></slot>
             </div>
         </div>
@@ -131,9 +197,13 @@ export default {
         }
     },
     computed: {
+        //repeatable_options: function() {
+        //  return this.isRepeatable ? JSON.stringify(this.repeatable_children): "";
+        //},
         repeatable_options: function() {
-          return this.isRepeatable ? JSON.stringify(this.repeatable_children): "";
+	  	    return JSON.stringify( this.replace_item(this.repeatable_children, 'name', this.repeat) );
         }
+
     },
     components: {HelpText, HelpTextUrl, RepeatGroup},
     methods:{
@@ -216,6 +286,26 @@ export default {
             this.compile(element, 'list');
         },
 
+		replace_item:function(obj, key, append_string) {
+            /* Recursively append 'append_string' to value each time key is encountered */
+		    if (obj.hasOwnProperty(key)) {
+			    obj[key] = obj[key] + '_rep' + append_string;
+		    }
+		  
+		    for (let _key in obj){
+				if (typeof obj[_key] === 'object') {
+				    console.log(_key, obj[_key]);
+				    this.replace_item(obj[_key], key, append_string)
+			    }
+		    } return false;
+		},
+
+        _repeatable_options: function() {
+            //return this.isRepeatable ? JSON.stringify(this.repeatable_children): "";
+		    //var repeat_data = vm.repeatable_children;
+	  	    return JSON.stringify( vm.replace_item(vm.repeatable_children, 'name', vm.repeat) );
+        },
+
         add_another4:function (e) {
             let vm = this;
 
@@ -227,6 +317,10 @@ export default {
                     return $(avail[id]).attr('data-que');
                 })];
                 vm.repeat+=1;
+
+				//JSON.stringify(this.repeatable_children)
+				//var repeat_data = vm.repeatable_children;
+				//vm.repeatable_options = JSON.stringify( vm.replace_item(repeat_data, 'name', vm.repeat) );
 
                 //var id = vm.repeat - 1;
                 //$('div[data-que=1]').clone().appendTo('div[data-que=2]');

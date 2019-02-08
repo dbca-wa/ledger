@@ -10,6 +10,7 @@
             try {
                 //var conditions = vm.conditions;
                 var value = null;
+                //var data_children = JSON.parse( vm.data_children );
                 var data_children = vm.data_children;
                 if (data_children) {
                     var values = Object.keys(data_children);
