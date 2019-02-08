@@ -2272,9 +2272,8 @@ class ViewBookingHistory(LoginRequiredMixin, TemplateView):
         booking = None
 
         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
-#             booking = Booking.objects.get(customer=request.user, booking_type__in=(0, 1), is_canceled=False, pk=booking_id)
+#            booking = Booking.objects.get(customer=request.user, booking_type__in=(0, 1), is_canceled=False, pk=booking_id)
              booking = Booking.objects.get(pk=booking_id)
-             print "NEWEST BOOKING"
              newest_booking = self.get_newest_booking(booking_id)
              booking_history = self.get_history(newest_booking, booking_array=[])
              #print vars(booking_history['bookings'])
@@ -2288,7 +2287,7 @@ class ViewBookingHistory(LoginRequiredMixin, TemplateView):
 
     def get_newest_booking(self, booking_id):
         latest_id = booking_id
-        if Booking.objects.filter(old_booking=booking_id).count() > 0:
+        if Booking.objects.filter(old_booking=booking_id).exclude(booking_type=3).count() > 0:
             booking = Booking.objects.filter(old_booking=booking_id)[0]   
             latest_id = self.get_newest_booking(booking.id)
         return latest_id

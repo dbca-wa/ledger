@@ -45,6 +45,7 @@
         <tbody> 
  
                  {% for bh in booking_history %}
+                  {% if bh.booking.booking_type != 3 %}
                   <tr>
                       <td><A title='New Booking' HREF='/api/get_confirmation/{{ bh.booking.id }}'>PS{{ bh.booking.id }}</A> {% if bh.booking.old_booking %}<i style="color:red;" class="fa fa-arrow-right"></i> <A title='OLD Booking' HREF='/api/get_confirmation/{{ bh.booking.old_booking.id }}'>PS{{ bh.booking.old_booking.id }}{% endif %}</A></td>
                       <td>{% if bh.booking.admission_payment %}<A HREF='/api/get_admissions_confirmation/{{ bh.booking.admission_payment.id }}'>AD{{ bh.booking.admission_payment.id }}{% endif %}</A></td>
@@ -61,6 +62,7 @@
                       {% endfor %}
                       </td>
                   </tr> 
+                  {% endif %}
 		 {% endfor %}
         </tbody>
         </table>
