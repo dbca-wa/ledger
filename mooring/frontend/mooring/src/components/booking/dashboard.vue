@@ -343,7 +343,7 @@ export default {
                         }
                     },
                     {
-                        data:"status",
+                        data:"invoice_status",
                         orderable:false,
                         searchable:false,
                         mRender: function(data,type,full){
@@ -372,10 +372,12 @@ export default {
                                 var location_port = window.location.port ? ':'+window.location.port : '';
                                 var location_url = `${window.location.protocol}//${window.location.hostname}${location_port}`;
                                 invoice_string += full.payment_callback_url ? '&callback_url='+location_url+full.payment_callback_url : '';
-                                if(full.payment_visible){
-                                   var payment = (full.paid || full.status == 'Cancelled') ? "View" : "Record";
-                                    var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
-                                    column += record_payment; 
+//                                if (full.invoice_status == 'unpaid') { 
+                               if(full.payment_visible){
+                                     var payment = (full.invoice_status == 'paid') ? "View" : "Record";
+                                
+                                     var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
+                                     column += record_payment; 
                                 }                                
                             }
                             if (full.editable){
