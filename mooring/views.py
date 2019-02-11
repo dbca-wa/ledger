@@ -2182,9 +2182,9 @@ class BookingSuccessView(TemplateView):
                         # booking.admission_payment = ad_booking
                     booking.save()
 
-                    if not request.user.is_staff:
-                        print "USER IS NOT STAFF."
-                        request.session['ps_last_booking'] = booking.id
+                    #if not request.user.is_staff:
+                    #    print "USER IS NOT STAFF."
+                    request.session['ps_last_booking'] = booking.id
                     utils.delete_session_booking(request.session)
                     
                     # send out the invoice before the confirmation is sent
@@ -2196,10 +2196,13 @@ class BookingSuccessView(TemplateView):
 
         except Exception as e:
             print e
-            if 'ps_booking_internal' in request.COOKIES:
-                return redirect('dash-bookings')
-            elif ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
+#            if 'ps_booking_internal' in request.COOKIES:
+#                print "INTERNAL REDIRECT"
+#                return redirect('dash-bookings')
+            if ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
                 booking = Booking.objects.get(id=request.session['ps_last_booking'])
+                print "BOOKING SYUCC"
+                print booking.id
                 book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
             else:
                 return redirect('home')
