@@ -479,10 +479,8 @@ class ZeroBookingView(TemplateView):
         return booking
 
     def get(self, request, *args, **kwargs):
-        print "ZERO BOOKING"
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-        if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
-
+        if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(pk=booking.id).count() == 1:
             basket = utils.get_basket(request)
             #basket_total = [sum(Decimal(b.line_price_incl_tax)) for b in basket.all_lines()]
             basket_total = Decimal('0.00')
@@ -490,7 +488,6 @@ class ZeroBookingView(TemplateView):
                print b.line_price_incl_tax
                basket_total = basket_total + b.line_price_incl_tax
             booking = self.get_booking_info(request, *args, **kwargs)
-
             #    return self.render_page(request, booking, form)
             return render(request, self.template_name, {'basket': basket})
         else:
@@ -499,7 +496,7 @@ class ZeroBookingView(TemplateView):
     def post(self, request, *args, **kwargs):
 
          booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(pk=booking_id).count() == 1:
 
              bpoint = None
              invoice = None
