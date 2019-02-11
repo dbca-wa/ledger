@@ -148,7 +148,7 @@ class CancelPricePeriodAdmin(admin.ModelAdmin):
 
 @admin.register(models.Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('id','arrival','departure','booking_type','mooringarea','legacy_id','legacy_name','cost_total')
+    list_display = ('id','arrival','departure','booking_type','mooringarea','legacy_id','legacy_name','status','cost_total')
     ordering = ('-id',)
     search_fileds = ('arrival','departure')
     list_filter = ('id','arrival','departure','mooringarea')

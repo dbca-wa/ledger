@@ -1343,6 +1343,9 @@ class Booking(models.Model):
             else:
                 return status
         return 'Paid'
+    @property
+    def invoice_status(self):
+        return self.__check_invoice_payment_status()
 
     @property
     def confirmation_number(self):
@@ -1393,6 +1396,27 @@ class Booking(models.Model):
         elif self.legacy_id:
             amount =  D(self.cost_total)
         return amount
+
+    def __check_invoice_payment_status(self):
+        invoices = []
+        payment_amount = D('0.0')
+        invoice_amount = D('0.0')
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
+            except Invoice.DoesNotExist:
+                pass
+        for i in invoices:
+            if not i.voided:
+                payment_amount += i.payment_amount
+                invoice_amount += i.amount
+
+        if invoice_amount == payment_amount:
+            return 'paid'
+        if payment_amount > invoice_amount:
+            return 'over_paid'
+        return "unpaid"
 
     def __check_payment_status(self):
         invoices = []

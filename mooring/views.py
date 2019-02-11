@@ -2187,22 +2187,19 @@ class BookingSuccessView(TemplateView):
                     request.session['ps_last_booking'] = booking.id
                     utils.delete_session_booking(request.session)
                     
-                    # send out the invoice before the confirmation is sent
-                    
-                    emails.send_booking_invoice(booking,request,context_processor)
+                    # send out the invoice before the confirmation is sent if total is greater than zero
+                    if booking.cost_total > 0: 
+                        emails.send_booking_invoice(booking,request,context_processor)
                     # for fully paid bookings, fire off confirmation email
-                    if booking.paid:
+                    if booking.invoice_status == 'paid':
                         emails.send_booking_confirmation(booking,request, context_processor)
 
         except Exception as e:
-            print e
 #            if 'ps_booking_internal' in request.COOKIES:
 #                print "INTERNAL REDIRECT"
 #                return redirect('dash-bookings')
             if ('ps_last_booking' in request.session) and Booking.objects.filter(id=request.session['ps_last_booking']).exists():
                 booking = Booking.objects.get(id=request.session['ps_last_booking'])
-                print "BOOKING SYUCC"
-                print booking.id
                 book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
             else:
                 return redirect('home')
@@ -2213,8 +2210,6 @@ class BookingSuccessView(TemplateView):
             'booking': booking,
             'book_inv': book_inv
         }
-        print "SELF TEMPLATE"
-        print (self.template_name)
         return render(request, self.template_name, context)
 
 
