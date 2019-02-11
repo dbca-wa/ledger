@@ -409,7 +409,7 @@ class RefundPaymentView(TemplateView):
     def get(self, request, *args, **kwargs):
 
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-        if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(pk=booking_id).count() == 1:
+        if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
     
             basket = utils.get_basket(request)
             #basket_total = [sum(Decimal(b.line_price_incl_tax)) for b in basket.all_lines()] 
@@ -427,7 +427,7 @@ class RefundPaymentView(TemplateView):
     def post(self, request, *args, **kwargs):
          context_processor = template_context(request)
          booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(pk=booking_id).count() == 1:
+         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
 
              bpoint = None
              invoice = None
@@ -496,7 +496,7 @@ class ZeroBookingView(TemplateView):
     def post(self, request, *args, **kwargs):
 
          booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(pk=booking_id).count() == 1:
+         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(pk=booking.id).count() == 1:
 
              bpoint = None
              invoice = None
