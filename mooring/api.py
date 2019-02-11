@@ -2880,6 +2880,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['has_history'] = booking.has_history
                 bk['cost_total'] = booking.cost_total
                 bk['amount_paid'] = booking.amount_paid
+                bk['invoice_status'] = booking.invoice_status
                 bk['vehicle_payment_status'] = booking.vehicle_payment_status
                 bk['refund_status'] = booking.refund_status
                 bk['is_canceled'] = 'Yes' if booking.is_canceled else 'No'
