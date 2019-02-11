@@ -755,6 +755,13 @@ class MakeBookingsView(TemplateView):
         else:
             form = MakeBookingsForm(request.POST)
 
+        if request.user.is_authenticated:
+            form.fields['email'].required = False
+            form.fields['confirm_email'].required = False
+            form.fields['email'].widget.attrs['required'] = False
+            form.fields['confirm_email'].widget.attrs['required'] = False
+ 
+
         if booking.old_booking is not None:
             form.fields['email'].required = False
             form.fields['confirm_email'].required = False
