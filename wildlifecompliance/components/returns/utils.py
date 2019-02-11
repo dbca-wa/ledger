@@ -1,5 +1,6 @@
 from wildlifecompliance.components.returns.models import Return,ReturnTable,ReturnRow
 from wildlifecompliance.components.returns.utils_schema import Schema
+from wildlifecompliance.utils import excel
 import ast
 
 
@@ -71,3 +72,80 @@ def _create_return_data_from_post_data(ret, tables_info, post_data):
         return_table.returnrow_set.all().delete()
         return_rows = [ReturnRow(return_table=return_table, data=row) for row in rows]
         ReturnRow.objects.bulk_create(return_rows)
+
+
+class SpreadSheet(object):
+    """
+    An utility object for Excel manipulation.
+    """
+    def __init__(self, _return, _filename):
+        self.ret = _return
+        self.filename = _filename
+        self.errors = []
+
+    def factory(self):
+        """
+        Simple Factory Method for spreadsheet types.
+        :return: Specialised SpreadSheet.
+        """
+        if self.filename:
+            return Regulation15Sheet(self.ret, self.filename)
+
+    def get_table_rows(self):
+        """
+        Gets the row of data.
+        :return: list format {'col_header':[row1_val,, row2_val,...],...}
+        """
+        rows_list = []
+        wb = excel.load_workbook(self.filename)
+        sheet_name = excel.get_sheet_titles(wb)[0]
+        ws = wb[sheet_name]
+        table_data = excel.TableData(ws, 1, 1)
+        row_list = table_data._parse_rows()
+        num_rows = row_list.__len__()
+        for row_num in range(num_rows):
+            row_data = {}
+            for key, value in table_data.by_columns():
+                row_data[key] = value[row_num] if value[row_num] is not None else ''
+            rows_list.append(row_data)
+
+        return rows_list
+
+    def is_valid(self):
+        """
+        Validates against schema.
+        :return: Boolean
+        """
+        pass
+
+    def get_error(self):
+        """
+        List of errors.
+        :return:
+        """
+
+        return self.errors
+
+
+class Regulation15Sheet(SpreadSheet):
+    """
+    Specialised utility object for Regulation 15 Spreadsheet.
+    """
+    REGULATION_15 = 'regulation-15'
+
+    def __init__(self, _ret, _filename):
+        super(Regulation15Sheet, self).__init__(_ret, _filename)
+        self.schema = Schema(self.ret.return_type.get_schema_by_name(self.REGULATION_15))
+
+    def is_valid(self):
+        """
+        Validates against schema.
+        :return: boolean
+        """
+        table_rows = self.get_table_rows()
+        if len(table_rows) == 0:
+            return False
+        for row in table_rows:
+            self.errors.append(self.schema.get_error_fields(row))
+
+        return self.errors.__len__() == 0

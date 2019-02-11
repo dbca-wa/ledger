@@ -33,6 +33,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.utils import excel
 from wildlifecompliance.components.returns.utils import _is_post_data_valid,_get_table_rows_from_post,_create_return_data_from_post_data
+from wildlifecompliance.components.returns.utils import SpreadSheet
 from wildlifecompliance.components.returns.models import (
    Return,
    ReturnUserAction,
@@ -130,25 +131,13 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
-    @renderer_classes((JSONRenderer,))
     def upload_details(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             if request.method == 'POST':
-                data = request.FILES['spreadsheet']
-
-                # todo: serializer to clean and validate data
-                workbook = excel.load_workbook_content(data)
-                returns_tables = self.request.data.get('table_name')
-                sheet = excel.get_sheet_titles(workbook)
-                data = excel.get_sheet(workbook, sheet)
-                for table in returns_tables:
-                    worksheet = excel.get_sheet(workbook, table.get('title')) \
-                                or excel.get_sheet(workbook, table.get('name'))
-                    if worksheet is not None:
-                        table_data = excel.TableData(worksheet)
-                        if not _is_post_data_valid(instance, table_data.encode('utf-8'), request.POST):
-                            messages.error(request, "Your return contains some errors. See below.")
+                spreadsheet = SpreadSheet(instance, request.FILES['spreadsheet']).factory()
+                if not spreadsheet.is_valid():
+                    return Response({'error': 'Enter data in correct format.'}, status=status.HTTP_404_NOT_FOUND)
 
         except serializers.ValidationError:
             print(traceback.print_exc())
