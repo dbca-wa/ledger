@@ -47,7 +47,7 @@ class DefaultActivitySerializer(serializers.ModelSerializer):
             'base_application_fee',
             'base_licence_fee',
             'short_name'
-        ) 
+        )
 
 
 class DefaultActivityTypeSerializer(serializers.ModelSerializer):
@@ -75,6 +75,48 @@ class WildlifeLicenceClassSerializer(serializers.ModelSerializer):
             'class_status',
             'activity_type'
             
+        )
+    def get_class_status(self,obj):
+        return obj.get_licence_class_status_display()
+
+class UserActivitySerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+    class Meta:
+        model = WildlifeLicenceActivity
+        fields = (
+            'id',
+            'name',
+            'base_application_fee',
+            'base_licence_fee',
+            'short_name'
+        )
+
+
+class UserActivityTypeSerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+    activity = UserActivitySerializer(many=True,read_only=True)
+    class Meta:
+        model = WildlifeLicenceActivityType
+        fields = (
+            'id',
+            'name',
+            'activity',
+            'short_name',
+            'not_for_organisation'
+        )
+
+class UserWildlifeLicenceClassSerializer(serializers.ModelSerializer):
+    class_status = serializers.SerializerMethodField()
+    activity_type = UserActivityTypeSerializer(many=True,read_only=True)
+    class Meta:
+        model = WildlifeLicenceClass
+        fields = (
+            'id',
+            'name',
+            'short_name',
+            'class_status',
+            'activity_type'
+
         )
     def get_class_status(self,obj):
         return obj.get_licence_class_status_display()
