@@ -137,6 +137,15 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             instance.accept(request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
     def upload_details(self, request, *args, **kwargs):
@@ -146,7 +155,6 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
                 spreadsheet = SpreadSheet(instance, request.FILES['spreadsheet']).factory()
                 if not spreadsheet.is_valid():
                     return Response({'error': 'Enter data in correct format.'}, status=status.HTTP_404_NOT_FOUND)
-
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

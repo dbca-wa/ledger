@@ -27,7 +27,7 @@ export default {
     watch: {},
     components: {
         ApplicationDashTable,
-        AssessmentDashTable
+        AssessmentDashTable,
         ReturnDashTable
     },
     computed: {
