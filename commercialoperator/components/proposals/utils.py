@@ -290,7 +290,7 @@ class SpecialFieldsSearch(object):
         return item_data
 
 
-def save_proponent_data(instance,request,viewset,parks,trails):
+def save_proponent_data(instance,request,viewset,parks=None,trails=None):
     with transaction.atomic():
         try:
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
