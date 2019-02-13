@@ -88,7 +88,7 @@ class SpreadSheet(object):
         Simple Factory Method for spreadsheet types.
         :return: Specialised SpreadSheet.
         """
-        if self.filename:
+        if self.filename.name == 'regulation15.xlsx':
             return Regulation15Sheet(self.ret, self.filename)
 
     def get_table_rows(self):
