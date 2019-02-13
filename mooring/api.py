@@ -2046,8 +2046,12 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                                bp['status'] = avbp_map[bp['id']]
                                bp['booking_row_id'] = avbp_map2[bp['id']]
                                bp['past_booking'] = False
-                               if date_rotate <= datetime.now().date():
+                               #if date_rotate <= datetime.now().date():
+                               #   bp['past_booking'] = True
+                               bp_dt = datetime.strptime(str(bp['date'])+' '+str(bp['start_time']), '%Y-%m-%d %H:%M:%S')
+                               if bp_dt <= datetime.now():
                                   bp['past_booking'] = True
+
  
                          bp_new.append(bp)
                          # Close everything thats in the past 
@@ -4086,8 +4090,17 @@ def get_current_booking(ongoing_booking):
          row['item'] = ms.campsite.name + ' from '+ms.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')
          row['amount'] = str(ms.amount)
          row['past_booking'] = False
-         if ms.from_dt.date() <= datetime.now().date(): 
-              row['past_booking'] = True
+#         if ms.from_dt.date() <= datetime.now().date():
+         print "KILLED DT"
+         ms_from_ft = datetime.strptime(ms.from_dt.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
+         #+timedelta(hours=8)
+#         print datetime.utcnow()+timedelta(hours=8)
+         nowtime = datetime.strptime(str(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')
+         #+timedelta(hours=8)
+         print nowtime
+         print ms_from_ft
+         if ms_from_ft  <= nowtime:
+              row['past_booking'] = True 
 #           row['item'] = ms.campsite.name
          total_price = str(Decimal(total_price) +Decimal(ms.amount))
          current_booking.append(row)
