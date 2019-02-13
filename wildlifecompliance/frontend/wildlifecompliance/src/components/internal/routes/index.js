@@ -8,6 +8,8 @@ import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
+import Returns from '../returns/access.vue'
+
 export default
 {
     path: '/internal',
@@ -37,6 +39,11 @@ export default
             path: 'search',
             component: Search,
             name:"internal-search"
+        },
+        {
+            path: 'return/:return_id',
+            component: Returns,
+            name:'access_return'
         },
         {
             path: 'users',

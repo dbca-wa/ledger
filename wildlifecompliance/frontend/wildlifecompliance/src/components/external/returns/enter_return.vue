@@ -104,8 +104,7 @@
                     <input type='hidden' name="table_name" :value="returns.table[0].name" />
                     <button type="submit" class="btn btn-primary pull-right" name="lodge">Save and Exit</button>
                     <input type="button" @click.prevent="save" class="btn btn-primary" name="save_continue"/>Save and Continue
-                    <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Submit
-                    </button>
+                    <button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Submit</button>
                     
                 </template>
             </div>
@@ -167,9 +166,9 @@ export default {
                     },(error)=>{
                         console.log(error);
                         swal(
-                             'Sent',
+                             'error',
                              'Enter data in correct format',
-                             'success'
+                             'error'
                         );
                     });
     },

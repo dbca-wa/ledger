@@ -18,6 +18,22 @@ class ReturnExternalSubmitSendNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/send_external_submit_email_notification.html'
     txt_template = 'wildlifecompliance/emails/send_external_submit_email_notification.txt'
 
+class ReturnAcceptNotificationEmail(TemplateEmailBase):
+    subject = 'Your Return with conditions has been accepted.'
+    html_template = 'wildlifecompliance/emails/send_external_return_accept_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_external_return_accept_notification.txt'
+
+def send_return_accept_email_notification(return_obj,request):
+    email = ReturnAcceptNotificationEmail()
+
+    context = {
+        'Return': return_obj
+    }    
+    msg = email.send(return_obj.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_return_email(msg, return_obj, sender=sender)
+    # _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
+
 def send_external_submit_email_notification(request, return_obj):
     email = ReturnExternalSubmitSendNotificationEmail()
     #Below code adds url
@@ -38,6 +54,8 @@ def send_external_submit_email_notification(request, return_obj):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_return_email(msg, return_obj, sender=sender)
     # _log_org_email(msg, return_obj.proposal.applicant, return_obj.submitter, sender=sender)
+
+
 
 
 def _log_return_email(email_message, return_obj, sender=None):
