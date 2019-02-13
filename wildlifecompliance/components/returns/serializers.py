@@ -22,7 +22,9 @@ class ReturnSerializer(serializers.ModelSerializer):
             'assigned_to',
             'licence',
             'resources',
-            'table'
+            'table',
+            'condition',
+            'text'
         )
 
 class ReturnTypeSerializer(serializers.ModelSerializer):

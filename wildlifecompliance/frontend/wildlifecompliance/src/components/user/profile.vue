@@ -1053,9 +1053,7 @@ export default {
                     }, (error) => {
                         let error_msg = '<br/>';
                         for (var key in error.body) {
-                          if (error.body[key].indexOf('last_admin')>-1) {
-                            error_msg += 'The Organisation will have no Administrator.<br/>';
-                          }
+                            if (key == 'non_field_errors') { error_msg += error.body[key] + '<br/>'; }
                         }
                         swal(
                             'Unlink',
