@@ -1,5 +1,6 @@
 import Section from '../components/forms/section.vue'
 import Group from '../components/forms/group.vue'
+import Group2 from '../components/forms/group2.vue'
 import Radio from '../components/forms/radio.vue'
 import Conditions from '../components/forms/conditions.vue'
 import SelectConditions from '../components/forms/select-conditions.vue'
@@ -175,15 +176,6 @@ module.exports = {
                 _elements.push(
                     <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={c.isRepeatable} repeatable_children={c.children} renderer={this}>
                         {c.children.map(d=>{
-
-                            /*
-                            if ( isRepeatable ) {
-                                d.name = d.name + "_" + postfix.toString();
-                                postfix++;
-                                console.log('isRepeatable: ' + d.name)
-                            }
-                            */
-
                             return (
                                 <div>
                                     {this.renderChildren(h,d,value)}
@@ -193,6 +185,28 @@ module.exports = {
                     </Group>
                 )
                 break;
+            case 'group2':
+                // still experimental
+                var value = null;
+                var isRepeatable = c.hasOwnProperty("isRepeatable");
+                if(data !== null && data !== undefined) {
+                  value = ( data[c.name] )? data[c.name][0] : null ;
+                }
+                var postfix = 0;
+                _elements.push(
+                    <Group2 label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={c.isRepeatable} repeatable_children={c.children} renderer={this}>
+                        {c.children.map(d=>{
+                            return (
+                                <div>
+                                    {this.renderChildren(h,d,value)}
+                                </div>
+                            )
+                        })}
+                    </Group2>
+                )
+                break;
+
+
             case 'section':
                 var value = null;
                 if(data !== null && data !== undefined) {
