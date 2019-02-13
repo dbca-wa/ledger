@@ -1,9 +1,7 @@
-
 <script>
     export default {
         props:["data_children","renderer","name","data","readonly"],
         mounted(){
-
         },
         render(h) {
             let vm =this;
@@ -32,7 +30,6 @@
                             </div>
                         )
                         */
-
                         return (
                             <div>
                                 {data_children[0].children.map(c=>{
@@ -44,13 +41,11 @@
                                 })}
                             </div>
                         )
-
                     }
                 }
             } catch (e) {
                 console.log(e);
             }
         }
-
     }
 </script>
