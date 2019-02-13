@@ -16,6 +16,7 @@ from wildlifecompliance.components.organisations.utils import (
                                 is_consultant,
                                 can_relink,
                                 can_approve,
+                                is_last_admin,
                             )
 from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
@@ -252,7 +253,9 @@ class OrganisationUnlinkUserSerializer(serializers.Serializer):
         return obj
 
 class OrgUserAcceptSerializer(serializers.Serializer):
-
+    """
+    A validation class to check action for the addition of privileges for an Organisation user.
+    """
     first_name = serializers.CharField()
     last_name =serializers.CharField()
     email= serializers.EmailField()
@@ -260,9 +263,24 @@ class OrgUserAcceptSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     def validate(self, data):
-        '''
-        Check for either mobile number or phone number
-        '''
+        # Check for either mobile number or phone number.
         if not (data['mobile_number'] or data['phone_number']):
             raise serializers.ValidationError("User must have an associated phone number or mobile number.")
+
+
+class OrgUserCheckSerializer(OrgUserAcceptSerializer):
+    """
+    A validation class to check action for the removal of privileges for an Organisation user.
+    """
+    org_id = serializers.IntegerField()
+
+    def validate(self, data):
+        # Check for either mobile number or phone number.
+        if not (data['mobile_number'] or data['phone_number']):
+            raise serializers.ValidationError("User must have an associated phone number or mobile number.")
+        # Check user is not the only Admin.
+        user = EmailUser.objects.filter(email=data['email']).first()
+        org = Organisation.objects.get(id=data['org_id'])
+        if is_last_admin(org, user):
+            raise serializers.ValidationError("The Organisation will have no Administrator.")
         return data

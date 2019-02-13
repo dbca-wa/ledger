@@ -31,7 +31,9 @@ class ReturnSerializer(serializers.ModelSerializer):
             'nil_return',
             'licence',
             'resources',
-            'table'
+            'table',
+            'condition',
+            'text'
         )
 
 class ReturnTypeSerializer(serializers.ModelSerializer):

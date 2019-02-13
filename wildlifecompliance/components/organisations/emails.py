@@ -96,14 +96,14 @@ class OrganisationIdUploadNotificationEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/organisation_id_upload_notification.txt'
 
 
-def send_organisation_id_upload_email_notification(emails, organisation, org_contact, request):
+def send_organisation_id_upload_email_notification(contacts, organisation, org_contact, request):
     email = OrganisationIdUploadNotificationEmail()
 
     context = {
         'organisation': organisation
     }
 
-    msg = email.send(emails, context=context)
+    msg = email.send(contacts, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, org_contact, sender=sender)
 
