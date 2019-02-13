@@ -66,7 +66,7 @@
                           <div v-for="(item,index) in returns.table">
                             <td v-if="item.headers" v-for="header in item.headers">
                               <div v-for ="item1 in item.data">
-                                <input v-for="(title,key) in item1" v-if="key == header.title" class="form-control returns" :name="`${item1.name}::${header.title}`" :data-species="`${header.species}`" v-model="title.value">
+                                <input v-for="(title,key) in item1" v-if="key == header.title" class="form-control returns" :name="`${item.name}::${header.title}`" :data-species="`${header.species}`" v-model="title.value">
                               </div>
                             </td>
                           </div>

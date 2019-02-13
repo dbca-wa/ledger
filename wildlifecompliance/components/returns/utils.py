@@ -82,6 +82,7 @@ class SpreadSheet(object):
         self.ret = _return
         self.filename = _filename
         self.errors = []
+        self.rows_list = []
 
     def factory(self):
         """
@@ -96,7 +97,6 @@ class SpreadSheet(object):
         Gets the row of data.
         :return: list format {'col_header':[row1_val,, row2_val,...],...}
         """
-        rows_list = []
         wb = excel.load_workbook(self.filename)
         sheet_name = excel.get_sheet_titles(wb)[0]
         ws = wb[sheet_name]
@@ -107,16 +107,23 @@ class SpreadSheet(object):
             row_data = {}
             for key, value in table_data.by_columns():
                 row_data[key] = value[row_num] if value[row_num] is not None else ''
-            rows_list.append(row_data)
+            self.rows_list.append(row_data)
 
-        return rows_list
+        return self.rows_list
+
+    def create_return_data(self):
+        """
+        Method to persist Return record.
+        :return: Boolean
+        """
+        return False
 
     def is_valid(self):
         """
         Validates against schema.
         :return: Boolean
         """
-        pass
+        return False
 
     def get_error(self):
         """
@@ -140,7 +147,7 @@ class Regulation15Sheet(SpreadSheet):
     def is_valid(self):
         """
         Validates against schema.
-        :return: boolean
+        :return: Boolean
         """
         table_rows = self.get_table_rows()
         if len(table_rows) == 0:
@@ -149,3 +156,17 @@ class Regulation15Sheet(SpreadSheet):
             self.errors.append(self.schema.get_error_fields(row))
 
         return self.errors.__len__() == 0
+
+    def create_return_data(self):
+        """
+        Method to persist Return record.
+        :return:
+        """
+        if self.rows_list:
+            return_table = ReturnTable.objects.get_or_create(name=self.REGULATION_15, ret=self.ret)[0]
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [ReturnRow(return_table=return_table, data=row) for row in self.rows_list]
+            ReturnRow.objects.bulk_create(return_rows)
+
+        return True
