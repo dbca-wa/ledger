@@ -125,7 +125,14 @@ export default
 
 //    data: function() {
 //        return {
-    
+
+			computed: {
+				is_v1: function (){
+					//return wc_version == 1.0? true: false;
+					return true;
+				}
+			},
+   
             is_v1: true,
 			path: '/internal',
 			component:
@@ -232,6 +239,7 @@ export default
 										component: Application,
 									}
                                     */
+									//component: is_v1? Application_v1: Application,
 									component: true? Application_v1: Application,
 									name:"internal-application"
 								},
