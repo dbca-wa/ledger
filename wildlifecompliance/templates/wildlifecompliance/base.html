@@ -3,6 +3,8 @@
 {% load static %}
 
 {% load users %}
+{% load tagutils %}
+{% get_instance_type as instance_type %}
 {% is_internal as is_internal_login %}
 {% is_officer as is_officer_login %}
 {% is_wildlifecompliance_admin as is_wildlifecompliance_admin_login %}
@@ -36,7 +38,7 @@
     <body>
         <header class="topmast">
             {% block header %}
-                {% include 'wildlifecompliance/header.html' %}
+                {% include 'wildlifecompliance/header.html' with instance_type=instance_type %}
             {% endblock %}
         </header>
         {% block menu %}
