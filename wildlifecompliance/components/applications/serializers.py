@@ -268,6 +268,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'lodgement_date',
             'class_name',
             'activity_type_names',
+            'activity_purpose_string',
             'can_user_view',
             'can_current_user_edit'
         )
