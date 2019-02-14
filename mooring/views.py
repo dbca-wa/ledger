@@ -571,7 +571,6 @@ class MakeBookingsView(TemplateView):
             'vessel_weight':0,
             'vessel_rego':"",
             'admission_fees': False,
-           
         }
 
         lines = []
@@ -689,6 +688,21 @@ class MakeBookingsView(TemplateView):
     def get(self, request, *args, **kwargs):
         # TODO: find campsites related to campground
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+
+        if booking is None:
+           messages.error(self.request, 'Sorry your booking has expired')
+           return HttpResponseRedirect(reverse('map'))
+
+
+        nowtime = datetime.strptime(str(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')
+        expiry_time = datetime.strptime(str(booking.expiry_time.strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')
+           
+        if nowtime > expiry_time: 
+           messages.error(self.request, 'Sorry your booking has expired')   
+           return HttpResponseRedirect(reverse('map'))
+
+         
+ 
         form_context = {
             'num_adult': booking.details.get('num_adult', 0) if booking else 0,
             'num_concession': booking.details.get('num_concession', 0) if booking else 0,
@@ -738,11 +752,16 @@ class MakeBookingsView(TemplateView):
             else:
                 form_context['first_name'] = request.user.first_name
                 form_context['last_name'] = request.user.last_name
-                form_context['phone'] = request.user.phone_number
+                if len(request.user.mobile_number) > 1:
+                    form_context['phone'] = request.user.mobile_number
+                else:
+                    form_context['phone'] = request.user.phone_number
+                if  Address.objects.filter(user=request.user).count() > 0:
+                    address = Address.objects.get(user=request.user)
+                    form_context['postcode'] = address.postcode
+                    form_context['country'] = address.country
                 form = MakeBookingsForm(form_context)
 
-        print 'FORM VARS'
-        print vars(form)
         vehicles = VehicleInfoFormset()
         return self.render_page(request, booking, form, vehicles)
 
@@ -750,6 +769,16 @@ class MakeBookingsView(TemplateView):
     def post(self, request, *args, **kwargs):
         
         booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
+        if booking is None:
+           messages.error(self.request, 'Sorry your booking has expired')
+           return HttpResponseRedirect(reverse('map'))
+
+        nowtime = datetime.strptime(str(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')
+        expiry_time = datetime.strptime(str(booking.expiry_time.strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')
+        if nowtime > expiry_time:
+           messages.error(self.request, 'Sorry your booking has expired')
+           return HttpResponseRedirect(reverse('map'))
+
         mooring_booking = ""
         if booking:
             mooring_booking = MooringsiteBooking.objects.filter(booking=booking)

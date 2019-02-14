@@ -2828,12 +2828,19 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sql = sql + ' and ' + sqlDeparture
                 sqlParams['departure'] = departure
             # Search for cancelled bookings
-            sql += ' and mooring_booking.is_canceled = %(canceled)s'
-            sqlCount += ' and mooring_booking.is_canceled = %(canceled)s'
+            if canceled == 't':
+                sql += ' and mooring_booking.booking_type = 4 '
+                sqlCount += ' and mooring_booking.booking_type = 4 '
+            else:
+                sql += ' and (mooring_booking.booking_type != 3 and mooring_booking.booking_type != 4 )'
+                sqlCount += ' and (mooring_booking.booking_type != 3 and mooring_booking.booking_type != 4) '
+
+      #         sql += ' and mooring_booking.is_canceled = %(canceled)s'
+#               sqlCount += ' and mooring_booking.is_canceled = %(canceled)s'
             sqlParams['canceled'] = canceled
             # Remove temporary bookings
-            sql += ' and mooring_booking.booking_type <> 3'
-            sqlCount += ' and mooring_booking.booking_type <> 3'
+#            sql += ' and mooring_booking.booking_type <> 3'
+#            sqlCount += ' and mooring_booking.booking_type <> 3'
             if search:
                 sqlsearch = ' lower(mooring_mooringarea.name) LIKE lower(%(wildSearch)s)\
                 or lower(mooring_region.name) LIKE lower(%(wildSearch)s)\
@@ -2858,7 +2865,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['start'] = start
 
             sql += ';'
-            #print(sql)
+            print "SQL"
+            print(sql)
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from mooring_booking ")
