@@ -697,14 +697,20 @@ def add_booking(request, *args, **kwargs):
     from_dt_utc = from_dt_utc.replace(tzinfo=timezone.utc).isoformat()
     to_dt_utc =  to_dt_utc.replace(tzinfo=timezone.utc).isoformat()
     #to_dt__lte=to_dt_utc
-    validate_temp_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc,booking__expiry_time__gte=datetime.today(), booking_type__in=[3]).count()
-    validate_existing_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc).exclude(booking_type__in=[3,4]).count()
-
+    #validate_temp_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc,booking__expiry_time__gte=datetime.today(), booking_type__in=[3]).count()
+    #validate_existing_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc).exclude(booking_type__in=[3,4]).count()
+    existing_booking_check = utils.check_mooring_available_by_time(mooringsite.id,from_dt_utc,to_dt_utc)
+    print "existing_booking_check"
+    print existing_booking_check
+    if existing_booking_check is True:
+        response_data['result'] = 'error'
+        response_data['message'] = 'Sorry booking has already been taken by another booking.' 
 
     
-    if validate_temp_booking > 0 or validate_existing_booking > 0:
-        response_data['result'] = 'error'
-        response_data['message'] = 'Error '+str(validate_temp_booking)+' '+str(validate_existing_booking)
+#    if validate_temp_booking > 0 or validate_existing_booking > 0:
+#        response_data['result'] = 'error'
+#        response_data['message'] = 'Error '+str(validate_temp_booking)+' '+str(validate_existing_booking)
+          
     #validate_booking = MooringsiteBooking.objects.filter(campsite=mooringsite)
     #for v in validate_booking:
     #    print (v.campsite.id)
@@ -2308,6 +2314,7 @@ def create_booking(request, *args, **kwargs):
             'status': 'error',
             'msg': 'Must specify campsite_class and campground.'
         }), status=400, content_type='application/json')
+
 
     # try to create a temporary booking
     try:

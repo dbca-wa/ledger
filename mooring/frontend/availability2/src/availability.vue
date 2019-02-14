@@ -618,6 +618,18 @@ export default {
 		});
 
 	},
+        createBookingError: function(message) {
+                swal({
+                  title: 'Error',
+                  text: message,
+                  type: 'error',
+                  showCancelButton: false,
+                  confirmButtonText: 'OK',
+                  showLoaderOnConfirm: true,
+                  allowOutsideClick: false
+                })
+                return;
+        },
         deleteBooking: function(booking_item_id, past_booking) {
              if (past_booking == true) { 
                 swal({
@@ -718,9 +730,12 @@ export default {
                   async: false,
                   data: submitData, 
                   success: function(data, stat, xhr) {
-                      vm.update();
-                      vm.isLoading =false;
+                     vm.update();
+                     vm.isLoading =false;
                      $('#spinnerLoader').hide();
+                     if (data.result == 'error') { 
+                          vm.createBookingError(data.message); 
+                     }
                   },
                   error: function(xhr, stat, err) {
                        vm.update();

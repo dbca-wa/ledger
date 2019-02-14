@@ -124,7 +124,7 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
             max_people = sum([cs.max_people for cs in campsite_qs])
 
             if total_people > max_people:
-                raise ValidationError('Maximum number of people exceeded for the selected campsite(s)')
+                raise ValidationError('Maximum number of people exceeded')
             # Prevent booking if less than min people 
             #if total_people < min_people:
             #    raise ValidationError('Number of people is less than the minimum allowed for the selected campsite(s)')
@@ -240,6 +240,35 @@ def check_mooring_availablity_old(mooring_id, start_date, end_date):
        return "full"
     else:
        return "free"
+
+def check_mooring_available_by_time(campsite_id, start_date_time, end_date_time):
+
+     # Confirmed Bookings
+     start_time_count = MooringsiteBooking.objects.filter(
+          Q(campsite_id=campsite_id) &
+          ( Q(from_dt__lte=start_date_time)  & Q(to_dt__gte=start_date_time))
+     ).exclude(booking_type__in=[3,4]).count()
+
+     end_time_count = MooringsiteBooking.objects.filter(
+          Q(campsite_id=campsite_id) &
+          ( Q(from_dt__lte=end_date_time)  & Q(to_dt__gte=end_date_time))
+     ).exclude(booking_type__in=[3,4]).count()
+
+     # Temp bookings
+     start_time_temp_count = MooringsiteBooking.objects.filter(
+          Q(campsite_id=campsite_id) & Q(booking_type__in=[3]) & Q(booking__expiry_time__gte=datetime.today())  &
+          ( Q(from_dt__lte=start_date_time)  & Q(to_dt__gte=start_date_time))
+     ).count()
+
+     end_time_temp_count = MooringsiteBooking.objects.filter(
+          Q(campsite_id=campsite_id) & Q(booking_type__in=[3]) & Q(booking__expiry_time__gte=datetime.today())  &
+          ( Q(from_dt__lte=end_date_time)  & Q(to_dt__gte=end_date_time))
+     ).count()
+
+
+     if start_time_count > 0 or end_time_count > 0 or start_time_temp_count > 0 or end_time_temp_count >0:
+        return True
+     return False
 
 def check_mooring_availablity(campsites_qs, start_date, end_date):
     avail_results = get_campsite_availability(campsites_qs, start_date, end_date,None, None)
@@ -367,14 +396,10 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
             date_rotate_forward = start_date+timedelta(days=i)
             mooring_rate = None
             if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).count() > 0:
-                print "IF"
                 mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).order_by('-date_start')[0]
-                print mooring_rate
             else:
-                print "ELSE"
                 if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).count() > 0:
                      mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).order_by('-date_start')[0]
-                print mooring_rate
 #           mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk)[0]
 #            print "DATE ROTATE START"
 #            print site
@@ -427,12 +452,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
 
                         if closure_start.strftime('%Y-%m-%d %H:%M:%S') <= start_dt.strftime('%Y-%m-%d %H:%M:%S') and closure_finish.strftime('%Y-%m-%d %H:%M:%S') >= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
                                booking_period[bp.pk] = 'closed'
-
-            print "DATE ROTATE START"
-            print site
-            print date_rotate_forward
-            print booking_period 
-            print "DATE ROTATE END"
 
             results[site.pk][date_rotate_forward] = ['closed',booking_period,selection_period, bp_result]
             #results[site.pk][start_date+timedelta(days=i)] = ['closed',booking_period,selection_period, bp_result]
@@ -566,8 +585,6 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         Q(campsite__in=campsites_qs),
         Q(date_start__lt=end_date) & (Q(date_end__gte=start_date)|Q(date_end__isnull=True))
     ).prefetch_related('rate')
-    print "RATES QS"
-    print rates_qs
     # prefill all slots
     duration = (end_date-start_date).days+1
     results = {
@@ -594,10 +611,6 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         # for the period of the visit overlapped by the rate, set the amounts
         start = max(start_date, rate.date_start)
         end = min(end_date, rate.date_end) if rate.date_end else end_date
-        print "RATE DATES"
-        print start
-        print end
-        print range((end-start).days)
         for i in range((end-start).days+1):
             if  rate.booking_period is None:
                  continue
