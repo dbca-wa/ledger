@@ -22,7 +22,7 @@ from wildlifecompliance.components.returns.utils_schema import Schema, create_re
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import ApplicationCondition,Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
-from wildlifecompliance.components.returns.email import send_external_submit_email_notification
+from wildlifecompliance.components.returns.email import send_external_submit_email_notification,send_return_accept_email_notification
 
 
 
@@ -167,6 +167,14 @@ class Return(models.Model):
             except:
                 raise
 
+    def accept(self, request):
+        with transaction.atomic():
+            self.processing_status = 'accepted'
+            self.customer_status = 'accepted'
+            self.save()
+            self.log_user_action(ReturnUserAction.ACTION_ACCEPT_REQUEST.format(self.id),request)
+            send_return_accept_email_notification(self,request)
+
 
 
 class ReturnTable(RevisionedMixin):
@@ -190,6 +198,7 @@ class ReturnRow(RevisionedMixin):
 class ReturnUserAction(UserAction):
     ACTION_CREATE = "Lodge Return {}"
     ACTION_SUBMIT_REQUEST = "Submit Return {}"
+    ACTION_ACCEPT_REQUEST="Accept Return {}"
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"

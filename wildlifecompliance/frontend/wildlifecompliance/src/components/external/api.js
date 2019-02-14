@@ -5,5 +5,6 @@ module.exports = {
     organisations: '/api/organisations/',
     my_organisations: '/api/my_organisations/',
     organisation_contacts: '/api/organisation_contacts/',
-    licences_class:'/api/licences_class/'
+    licences_class:'/api/licences_class/',
+    licence_current_purposes:'/api/licence_current_purposes/'
 }
