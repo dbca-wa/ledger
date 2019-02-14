@@ -133,11 +133,10 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-
     @detail_route(methods=['POST',])
     def validate_pins(self, request, *args, **kwargs):
         try:
-            instance = self.get_object()
+            instance = Organisation.objects.get(id=request.data.get('id'))
             serializer = OrganisationPinCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)}
