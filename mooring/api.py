@@ -4091,14 +4091,11 @@ def get_current_booking(ongoing_booking):
          row['amount'] = str(ms.amount)
          row['past_booking'] = False
 #         if ms.from_dt.date() <= datetime.now().date():
-         print "KILLED DT"
          ms_from_ft = datetime.strptime(ms.from_dt.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
          #+timedelta(hours=8)
 #         print datetime.utcnow()+timedelta(hours=8)
          nowtime = datetime.strptime(str(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')
          #+timedelta(hours=8)
-         print nowtime
-         print ms_from_ft
          if ms_from_ft  <= nowtime:
               row['past_booking'] = True 
 #           row['item'] = ms.campsite.name

@@ -639,7 +639,8 @@
             override: function (val){
                 console.log("Something changed");
                 if (val){
-                    this.$nextTick(() =>{
+//                    this.$nextTick(() => {
+                       this.$nextTick(function() {
                         $('.overrideReason').select2({
                             minimumResultsForSearch: Infinity
                         }).

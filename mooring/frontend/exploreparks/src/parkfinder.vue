@@ -1083,7 +1083,9 @@ export default {
                 var layerRemoved = false;
                 var map = this.olmap;
                 var refArray = map.getLayers().getArray().slice();
-                refArray.forEach(function(layer2) {
+//                refArray.forEach(function(layer2) {
+                for (var i = 0; i < refArray.length; i++) {
+                    var layer2 = refArray[i];
                     if (layer2 != null) {
                         var layer = layer2.I;
                         if (layer != null) {
@@ -1096,7 +1098,8 @@ export default {
                             }
                         }
                     }
-                });
+                  }
+//                });
                 if (layerRemoved == true) {
                     // We do this because when we call map.removeLayer it causes the layer 
                     // to go out of sync resulting in pins not being removed as foreach loop is 
@@ -1110,7 +1113,8 @@ export default {
                 var layerRemoved = false;
                 var map = this.olmap;
                 var refArray = map.getLayers().getArray().slice();
-                refArray.forEach(function(layer2) {
+                for (var i = 0; i < refArray.length; i++) {
+                        var layer2 = refArray[i];
                     if (layer2 != null) {
                         var layer = layer2.I;
                         if (layer != null) {
@@ -1123,7 +1127,23 @@ export default {
                             }
                         }
                     }
-                });
+
+                }
+
+//                refArray.forEach(function(layer2) {
+//                    if (layer2 != null) {
+//                        var layer = layer2.I;
+//                        if (layer != null) {
+//                            // map.removeLayer(layer2);
+//                            if (layer.hasOwnProperty("markerGroup")) {
+//                                if (layer.markerGroup == 'anchor') {
+//                                    map.removeLayer(layer2);
+//                                    layerRemoved = true;
+//                                }
+//                            }
+//                        }
+//                    }
+//                });
 
                 // var layersToRemove = [];
 
@@ -1153,9 +1173,16 @@ export default {
             var legit = new Set();
             var filterCb = function (el) {
                 if (vm.filterParams[el.key] === true) {
-                    el.remoteKey.forEach(function (fl) {
-                        legit.add(fl);
-                    });
+                    for (var i = 0; i < el.remoteKey.length; i++) {
+                         console.log(i);
+                         console.log(el.remoteKey[i]);
+                         legit.add(el.remoteKey[i]);
+		    }                  
+ 
+
+                    // el.remoteKey.forEach(function (fl) {
+                    //   legit.add(fl);
+                    // });
                 }
             };
             this.filterList.forEach(filterCb);
@@ -1315,7 +1342,7 @@ export default {
                                                     if (mooring_type == 'rental-available') {
                                                         if (response[x][m]['geometry'] != null ) {
                                                             if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
-                                		                        map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+                                		                     map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
                                                             }
                                                         }
                                                     // }
@@ -1325,7 +1352,7 @@ export default {
                                                             // } else {
                                                             if (response[x][m]['geometry'] != null ) {
                                                                 if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
-                                                                    map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+                                                                   map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
                                                                 }
                                                             }
                                                         }
@@ -1334,7 +1361,7 @@ export default {
                                             } else {
                                                 if (response[x][m]['geometry'] != null ) {
                                                     if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
-                                                map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+                                                       map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
                                                     }
                                                 }
 							                }
@@ -1346,7 +1373,7 @@ export default {
                                         if (mooring_type == 'all') {
                                             if (response[x][m]['geometry'] != null ) {
                                                 if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
-							                        map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+						                      map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
                                                 }
                                             }
                                             vm.updateFilter();
@@ -1356,7 +1383,7 @@ export default {
                                         if (mooring_type == 'all' || mooring_type == 'public-notbookable') {
                                             if (response[x][m]['geometry'] != null ) {
                                                 if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
-                                                    map.addLayer(vm.buildMarkerNotBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
+                                                     map.addLayer(vm.buildMarkerNotBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
                                                     vm.updateFilter();
                                                 }
                                             }
@@ -1392,8 +1419,8 @@ export default {
                         var mooring_vessel_size = response['features'][m]['properties']['vessel_size_limit'];
                         var mooring_vessel_draft = response['features'][m]['properties']['vessel_draft_limit'];
                         var mooring_physical_type = response['features'][m]['properties']['mooring_physical_type'];
-
-                        if (mooring_vessel_size >= vessel_size && mooring_vessel_draft >= vessel_draft && this.weightBeam(response['features'][m]['properties']) && ((pen_filter != 'all' && pen_filter == mooring_physical_type) || pen_filter == 'all') && vm.groundsIds['_c'].has(mooring_id)) {
+//                        if (mooring_vessel_size >= vessel_size && mooring_vessel_draft >= vessel_draft && this.weightBeam(response['features'][m]['properties']) && ((pen_filter != 'all' && pen_filter == mooring_physical_type) || pen_filter == 'all') && vm.groundsIds['_c'].has(mooring_id)) {
+                        if (mooring_vessel_size >= vessel_size && mooring_vessel_draft >= vessel_draft && this.weightBeam(response['features'][m]['properties']) && ((pen_filter != 'all' && pen_filter == mooring_physical_type) || pen_filter == 'all') && vm.groundsIds.has(mooring_id)) {
                             if (vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] == null) { 
                                 vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']] = {};
                                 vm.anchorGroups[response['features'][m]['properties']['park']['district']['region']['id']]['total'] = 1;
@@ -1458,6 +1485,7 @@ export default {
             var iconStyle = new ol.style.Style({
                 image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
                     imgSize: [32, 32],
+                    size: [32,32],
                     snapToPixel: true,
                     anchor: [0.5, 1.0],
                     anchorXUnits: 'fraction',
@@ -1466,7 +1494,7 @@ export default {
                     src: pin_type 
                 })),
             });
-
+            console.log("SET buildMarkerBookable");
             iconFeature.setStyle(iconStyle);
 
             var vectorSource = new ol.source.Vector({
@@ -1496,6 +1524,7 @@ export default {
 		var iconStyle = new ol.style.Style({
 		  image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
                     imgSize: [32, 32],
+                    size: [32,32], 
                     snapToPixel: true,
                     anchor: [0.5, 1.0],
 			//    anchor: [115.864627, -32.007385],
@@ -1506,7 +1535,7 @@ export default {
 
 	         }))
 	    });
-
+            console.log("SET buildMarkerNotBookable");
 	    iconFeature.setStyle(iconStyle);
 	
 	    var vectorSource = new ol.source.Vector({
@@ -1541,6 +1570,8 @@ export default {
 
               var iconStyle = new ol.style.Style({
                         image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+                          imgSize: [48, 46],
+                          size: [48,46],
                           anchor: [0.5, 24],
                           anchorXUnits: 'fraction',
                           anchorYUnits: 'pixels',
@@ -1560,7 +1591,7 @@ export default {
                         //          })
                         })
               });
-
+              console.log("SET buildMarkerGroup");
               iconFeature.setStyle(iconStyle);
 
               var vectorSource = new ol.source.Vector({
@@ -2214,6 +2245,7 @@ export default {
             });
           }
        };
+       console.log("VECTOR 1");
        this.grounds = new ol.layer.Vector({
            source: this.groundsSource,
             style: function (feature) {
@@ -2248,7 +2280,7 @@ export default {
                 return style;
             }
         });
-
+        console.log("VECTOR 2");
 	// Marker Popup Code
         $('#mapPopupClose').on('click', function(ev) {
             $('#mapPopup').hide();
@@ -2272,7 +2304,8 @@ export default {
                 snapToPixel: true,
                 anchor: [0.5, 0.5],
                 anchorXUnits: 'fraction',
-                anchorYUnits: 'fraction'
+                anchorYUnits: 'fraction',
+                imgSize: [32, 32] // JM
             })
         }));
 

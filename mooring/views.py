@@ -570,6 +570,8 @@ class MakeBookingsView(TemplateView):
             'vessel_beam':0,
             'vessel_weight':0,
             'vessel_rego':"",
+            'admission_fees': False,
+           
         }
 
         lines = []
@@ -579,7 +581,7 @@ class MakeBookingsView(TemplateView):
             booking_total = sum(Decimal(i.amount) for i in booking_mooring)
             
             details = booking.details
-
+            booking.details['admission_fees'] = False
             # for bm in booking_mooring:
             #     # Convert the from and to dates of this booking to just plain dates in local time.
             #     # Append them to a list.
@@ -634,6 +636,7 @@ class MakeBookingsView(TemplateView):
                     vessel = vessel[0]
                     if vessel:
                         no_admissions = vessel.admissionsPaid
+            details['admission_fees'] = no_admissions
             
             if not no_admissions:
                 lines_pre_check = utils.admissions_lines(booking_mooring)
@@ -701,7 +704,6 @@ class MakeBookingsView(TemplateView):
             form_context['country'] = booking.old_booking.details['country']
             form_context['email'] = booking.old_booking.customer.email
             form_context['confirm_email'] = booking.old_booking.customer.email
-#            form_context['email'] = 'jason@austwa.com'
             form = MakeBookingsForm(form_context)
             #form.fields['email'].disabled = True
             form.fields['email'].widget.attrs['disabled'] = True
@@ -738,6 +740,7 @@ class MakeBookingsView(TemplateView):
                 form_context['last_name'] = request.user.last_name
                 form_context['phone'] = request.user.phone_number
                 form = MakeBookingsForm(form_context)
+
         print 'FORM VARS'
         print vars(form)
         vehicles = VehicleInfoFormset()
@@ -830,6 +833,7 @@ class MakeBookingsView(TemplateView):
 
         admissionsTotal = 0
         print admissionsJson
+
         for line in admissionsJson:
             group = line['group']
             codes = AdmissionsOracleCode.objects.filter(mooring_group__in=[group,])
@@ -843,12 +847,16 @@ class MakeBookingsView(TemplateView):
                     'oracle_code': oracle_code_admissions
                     })
                 admissionsTotal += Decimal(line['admissionFee'])
+
+        admissionsPaid = True
         admissionLines = utils.admission_lineitems(admissions)
         if RegisteredVessels.objects.filter(rego_no=rego).count() > 0:
             vessel = RegisteredVessels.objects.get(rego_no=rego)
+            admissionsPaid = vessel.admissionsPaid
             if vessel.admissionsPaid:
                 admissionLines = []
-        
+        booking.details['admission_fees'] = admissionsPaid 
+ 
 
         # update vehicle registrations from form
         VEHICLE_CHOICES = {'0': 'vessel', '1': 'concession', '2': 'motorbike'}
@@ -882,18 +890,24 @@ class MakeBookingsView(TemplateView):
            lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
         print "=========================================="
         print booking.details
-        if booking.details['non_online_booking']:
-            print "Inside non_online booking"
-            groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
-            print groups
-            if groups.count() == 1:
-                oracle_code_non_online = GlobalSettings.objects.filter(key=17, mooring_group=groups[0])[0].value
-                print oracle_code_non_online
-                if oracle_code_non_online:
-                    booking_line = utils.nononline_booking_lineitems(oracle_code_non_online, request)
-                    print booking_line
-                    for line in booking_line:
-                        lines.append(line)
+        
+        if 'non_online_booking' in booking.details:
+            if booking.details['non_online_booking'] is True:
+                print "Inside non_online booking"
+                groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
+                print groups
+                if groups.count() == 1:
+                    if GlobalSettings.objects.filter(key=17, mooring_group=groups[0]).count() == 0:
+                        form.add_error(None, 'Non-Online Booking fee oracle code missing for {}.'.format(str(groups[0])))
+                        return self.render_page(request, booking, form, vehicles, show_errors=True)
+                   
+                    oracle_code_non_online = GlobalSettings.objects.filter(key=17, mooring_group=groups[0])[0].value
+                    print oracle_code_non_online
+                    if oracle_code_non_online:
+                        booking_line = utils.nononline_booking_lineitems(oracle_code_non_online, request)
+                        print booking_line
+                        for line in booking_line:
+                            lines.append(line)
         from_earliest = None
         to_latest = None
         if mooring_booking:
