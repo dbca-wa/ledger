@@ -79,9 +79,18 @@ class WildlifeLicenceClassSerializer(serializers.ModelSerializer):
     def get_class_status(self,obj):
         return obj.get_licence_class_status_display()
 
+class UserActivityExcludeSerializer(serializers.ListSerializer):
+    # used to exclude any purposes that the
+    # user already has a current licence for
+
+    def to_representation(self, data):
+        # data = data.exclude(id__in=[2,]) TODO: replace this exclude with ids of current licence purpose ids list
+        return super(UserActivityExcludeSerializer, self).to_representation(data)
+
 class UserActivitySerializer(serializers.ModelSerializer):
     name = serializers.CharField()
     class Meta:
+        list_serializer_class = UserActivityExcludeSerializer
         model = WildlifeLicenceActivity
         fields = (
             'id',

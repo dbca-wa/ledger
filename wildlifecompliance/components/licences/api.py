@@ -36,7 +36,8 @@ from wildlifecompliance.components.licences.models import (
 )
 from wildlifecompliance.components.licences.serializers import (
     WildlifeLicenceSerializer,
-    WildlifeLicenceClassSerializer
+    WildlifeLicenceClassSerializer,
+    UserWildlifeLicenceClassSerializer
 )
 
 
@@ -86,6 +87,9 @@ class WildlifeLicenceClassViewSet(viewsets.ModelViewSet):
     queryset = WildlifeLicenceClass.objects.all()
     serializer_class = WildlifeLicenceClassSerializer
 
-class UserWildlifeLicenceCurrentPurposesViewSet(viewsets.ModelViewSet):
+class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
+    # Filters to only return purposes that are
+    # available for selection when applying for
+    # a new application
     queryset = WildlifeLicenceClass.objects.all()
-    serializer_class = WildlifeLicenceClassSerializer
+    serializer_class = UserWildlifeLicenceClassSerializer

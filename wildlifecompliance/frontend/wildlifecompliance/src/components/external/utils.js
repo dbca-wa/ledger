@@ -65,9 +65,9 @@ export default {
             });
         });
     },
-    fetchLicenceCurrentPurposes: function(){
+    fetchLicenceAvailablePurposes: function(){
         return new Promise ((resolve,reject) => {
-            Vue.http.get(api.licence_current_purposes).then((response) => {
+            Vue.http.get(api.licence_available_purposes).then((response) => {
                 resolve(response.body);
             },
             (error) => {
