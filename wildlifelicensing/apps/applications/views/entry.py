@@ -315,10 +315,10 @@ class SelectLicenceTypeView(LoginRequiredMixin, RedirectApplicationNotInSessionM
 
         for category in WildlifeLicenceCategory.objects.all():
             __populate_category_dict({'name': category.name, 'licence_types': []},
-                                     WildlifeLicenceType.objects.filter(category=category, replaced_by__isnull=True),
+                                     WildlifeLicenceType.objects.filter(category=category, replaced_by__isnull=True).exclude(effective_to__lte=datetime.now()),
                                      categories)
 
-        uncategorised_queryset = WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True)
+        uncategorised_queryset = WildlifeLicenceType.objects.filter(category__isnull=True, replaced_by__isnull=True).exclude(effective_to__lte=datetime.now())
         if uncategorised_queryset.exists():
             __populate_category_dict({'name': 'Other', 'licence_types': []}, uncategorised_queryset, categories)
 

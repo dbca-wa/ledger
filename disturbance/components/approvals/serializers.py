@@ -33,6 +33,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
     activity = serializers.CharField(source='current_proposal.activity')
     title = serializers.CharField(source='current_proposal.title')
     #current_proposal = InternalProposalSerializer(many=False)
+    can_approver_reissue = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Approval
@@ -70,7 +71,8 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'set_to_suspend',
             'can_renew',
             'can_amend',
-            'can_reinstate'
+            'can_reinstate', 
+            'can_approver_reissue',
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data' defined are requested from the serializer. We
         # also require the following additional fields for some of the mRender functions
@@ -97,13 +99,23 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'current_proposal',
             'renewal_document',
             'renewal_sent',
-            'allowed_assessors'
+            'allowed_assessors',
+            'can_approver_reissue',
         )
 
     def get_renewal_document(self,obj):
         if obj.renewal_document and obj.renewal_document._file:
             return obj.renewal_document._file.url
         return None
+
+    def get_can_approver_reissue(self,obj):
+        # Check if currently logged in user has access to process the proposal
+        request = self.context['request']
+        user = request.user
+        if obj.can_reissue:
+            if user in obj.allowed_approvers:
+                return True
+        return False
 
 
 class ApprovalCancellationSerializer(serializers.Serializer):

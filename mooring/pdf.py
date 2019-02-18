@@ -19,12 +19,12 @@ DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring
 LICENCE_HEADER_IMAGE_WIDTH = 840
 LICENCE_HEADER_IMAGE_HEIGHT = 166
 
-DPAW_BUSINESS = 'Marine Park and Visitor Services'
-DPAW_EMAIL = 'moorings@dbca.wa.gov.au'
-DPAW_URL = 'https://mooring.dbca.wa.gov.au'
-DPAW_PHONE = '(08) 9219 9000'
-DPAW_FAX = '(08) 9423 8242'
-DPAW_PO_BOX = 'Locked Bag 104, Bentley Delivery Centre, Western Australia 6983'
+DPAW_BUSINESS = ''
+DPAW_EMAIL = ''
+DPAW_URL = ''
+DPAW_PHONE = ''
+DPAW_FAX = ''
+DPAW_PO_BOX = ''
 
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
@@ -95,17 +95,17 @@ def _create_letter_header_footer(canvas, doc):
     current_x = PAGE_WIDTH - LETTER_HEADER_MARGIN
     current_y = LETTER_HEADER_MARGIN
 
-    canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
-    canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
+    #canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
+    #canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
 
-    canvas.drawRightString(current_x, current_y, DPAW_URL)
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE,
-                           'Phone: {} Fax: {} Email: {}'.format(DPAW_PHONE, DPAW_FAX, DPAW_EMAIL))
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 2, DPAW_PO_BOX)
+    #canvas.drawRightString(current_x, current_y, DPAW_URL)
+    #canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE,
+    #                       'Phone: {} Fax: {} Email: {}'.format(DPAW_PHONE, DPAW_FAX, DPAW_EMAIL))
+    #canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 2, DPAW_PO_BOX)
 
-    canvas.setFont(BOLD_ITALIC_FONTNAME, SMALL_FONTSIZE)
+    #canvas.setFont(BOLD_ITALIC_FONTNAME, SMALL_FONTSIZE)
 
-    canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
+    #canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
 
 
 def create_confirmation(confirmation_buffer, booking):

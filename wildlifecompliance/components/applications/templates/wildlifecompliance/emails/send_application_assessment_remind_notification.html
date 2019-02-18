@@ -1,0 +1,13 @@
+{%  extends 'wildlifecompliance/emails/base_email.html' %}
+
+{% block content %}
+    Reminder: an assessment to an application is required.
+    {% if url %}
+        <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
+        <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
+    {% endif %}
+
+{% endblock %}
+
+
+

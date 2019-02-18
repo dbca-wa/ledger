@@ -87,3 +87,7 @@ class AddressAdmin(VersionAdmin):
 @admin.register(Profile)
 class ProfileAdmin(VersionAdmin):
     form = ProfileAdminForm
+
+    list_display = ('user', 'name', 'email', 'institution', 'postal_address')
+    ordering = ('user',)
+    search_fields = ('user__email', 'name', 'email', 'institution')

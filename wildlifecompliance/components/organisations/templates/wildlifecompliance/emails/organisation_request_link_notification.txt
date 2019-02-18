@@ -1,0 +1,14 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{%  block content %}
+    A user has requested to be linked to the following organisation:
+
+    Organisation: {{ request.name }}
+
+    ABN: {{ request.abn }}
+
+    Link: {{url}}
+
+    Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
+
+{%  endblock %}

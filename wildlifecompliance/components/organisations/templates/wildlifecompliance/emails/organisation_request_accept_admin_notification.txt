@@ -1,0 +1,13 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{%  block content %}
+    The following organisation access request has been approved:
+
+    Access Request No: {{ request.id }}
+
+    Organisation: {{ request.name }}
+
+    ABN: {{ request.abn }}
+
+
+{%  endblock %}
