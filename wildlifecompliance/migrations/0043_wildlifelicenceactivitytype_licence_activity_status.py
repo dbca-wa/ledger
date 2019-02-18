@@ -15,6 +15,19 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='wildlifelicenceactivitytype',
             name='licence_activity_status',
-            field=models.CharField(choices=[('current', 'Current'), ('expired', 'Expired'), ('cancelled', 'Cancelled'), ('surrendered', 'Surrendered'), ('suspended', 'Suspended')], default='current', max_length=40),
+            field=models.CharField(
+                choices=[
+                    ('current',
+                     'Current'),
+                    ('expired',
+                     'Expired'),
+                    ('cancelled',
+                     'Cancelled'),
+                    ('surrendered',
+                     'Surrendered'),
+                    ('suspended',
+                     'Suspended')],
+                default='current',
+                max_length=40),
         ),
     ]

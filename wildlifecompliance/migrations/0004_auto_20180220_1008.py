@@ -15,11 +15,20 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='organisationcontact',
             name='is_admin',
-            field=models.BooleanField(default=True),
+            field=models.BooleanField(
+                default=True),
         ),
         migrations.AddField(
             model_name='organisationcontact',
             name='user_role',
-            field=models.CharField(choices=[('company_admin', 'Company Admin'), ('company_user', 'Company User')], default='company_admin', max_length=40, verbose_name='Role'),
+            field=models.CharField(
+                choices=[
+                    ('company_admin',
+                     'Company Admin'),
+                    ('company_user',
+                     'Company User')],
+                default='company_admin',
+                max_length=40,
+                verbose_name='Role'),
         ),
     ]

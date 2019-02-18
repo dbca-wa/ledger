@@ -18,11 +18,27 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ApplicationGroupType',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('licence_activity_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceActivityType')),
-                ('licence_class', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceClass')),
-                ('members', models.ManyToManyField(blank=True, to=settings.AUTH_USER_MODEL)),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
+                ('name',
+                 models.CharField(
+                     max_length=255)),
+                ('licence_activity_type',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='wildlifecompliance.WildlifeLicenceActivityType')),
+                ('licence_class',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='wildlifecompliance.WildlifeLicenceClass')),
+                ('members',
+                 models.ManyToManyField(
+                     blank=True,
+                     to=settings.AUTH_USER_MODEL)),
             ],
         ),
     ]

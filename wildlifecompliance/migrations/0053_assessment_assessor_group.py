@@ -16,6 +16,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='assessment',
             name='assessor_group',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.ApplicationGroupType'),
+            field=models.ForeignKey(
+                default=1,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.ApplicationGroupType'),
         ),
     ]

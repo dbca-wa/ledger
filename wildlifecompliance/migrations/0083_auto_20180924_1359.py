@@ -16,10 +16,13 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='applicationdecisionpropose',
             name='application',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.Application'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.Application'),
         ),
         migrations.AlterUniqueTogether(
             name='applicationdecisionpropose',
-            unique_together=set([]),
+            unique_together=set(
+                []),
         ),
     ]
