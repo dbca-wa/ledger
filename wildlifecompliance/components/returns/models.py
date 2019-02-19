@@ -105,6 +105,10 @@ class Return(models.Model):
         return self.return_type.data_descriptor.get('resources', [])
 
     @property
+    def type(self):
+        return self.return_type.Name
+
+    @property
     def table(self):
         tables = []
         for resource in self.return_type.resources:
@@ -115,7 +119,8 @@ class Return(models.Model):
                 # print(type(f.name))
                 header = {
                     "title": f.name,
-                    "required": f.required
+                    "required": f.required,
+                    "type": f.type.name
                 }
                 if f.is_species:
                     header["species"] = f.species_type
